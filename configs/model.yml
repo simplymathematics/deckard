@@ -1,0 +1,49 @@
+# - name: sklearn.ensemble.RandomForestRegressor
+#   params: 
+#     'n_estimators' : [10, 50, 100]
+
+- name: sklearn.ensemble.RandomForestClassifier
+  params:
+    n_estimators : [10, 20, 50, 75, 100, 1000]
+    # criterion : ['gini', 'entropy']
+    # max_features : ['auto', 'sqrt', 'log2']
+    # class_weight : ['balanced', 'balanced_subsample']
+
+# - name: sklearn.svm.SVC
+#   params:
+#     'kernel' : ['rbf']
+#     'C' : [1, 10 , 100]
+
+# - name: sklearn.neural_network.MLPClassifier
+#   params:
+#     activation : ['relu', 'logistic']
+#     learning_rate : ['constant', 'invscaling', 'adaptive']
+
+# - name: sklearn.neighbors.KNeighborsClassifier
+#   params:
+#     n_neighbors : [2]
+#     weights : ['uniform', 'distance']
+
+# - name: sklearn.naive_bayes.BernoulliNB
+#   params:
+#     alpha : [0, .5, 1]
+#     fit_prior : [True, False]
+
+# - name : sklearn.naive_bayes.GaussianNB
+#   params:
+#     var_smoothing : [.000000001, .000001, .001]
+
+# - name : sklearn.gaussian_process.GaussianProcessClassifier
+#   params :
+#     multi_class : [one_vs_rest]
+
+# - name: sktime.classification.interval_based.TimeSeriesForestClassifier
+#   params: 
+#     n_estimators : [100, 200, 300]
+#     min_interval : [3, 5, 10]    
+
+# TODO: catch this value error
+# - name: sklearn.cluster.KMeans
+#   params: 
+#     'n_clusters' : [3]
+#     'init' : ['k-means++', 'random']

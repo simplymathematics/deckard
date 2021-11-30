@@ -1,0 +1,1 @@
+{"F1":0.9568549043,"Balanced Accuracy":0.9024021074,"Accuracy":0.9585492228,"Precision":0.9604942869,"Recall":0.9585492228,"fit_time":27984375000,"pred_time":15625000,"Name":"rinex-obs_RandomForestClassifier","uuid":"d744ebbc428649d0b8ae71204a9ec8cb"}
