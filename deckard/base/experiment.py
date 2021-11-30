@@ -8,7 +8,7 @@ import uuid
 from deckard.base.model import Model
 from deckard.base.data import Data
 from time import process_time_ns
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score  
 from sklearn.base import is_regressor
 
 # Create experiment object
@@ -58,7 +58,7 @@ class Experiment(object):
                 logging.info("Model is classifier.")
                 logging.info("No metric specified. Using accuracy.")
                 self.data.y_test = self.data.y_test.astype(int)
-                new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score}
+                new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score,'ROC_AUC': roc_auc_score}
             else:
                 raise ValueError("Model is not estimator")
         elif len(list(self.scorers)) == 1:
@@ -155,19 +155,20 @@ class Experiment(object):
         self.build_model()
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
+            
             if scorer in ['F1', 'Recall', 'Precision']:
                 average = 'weighted'
-                scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
-            elif scorer in ['AUC', 'ROC-AUC']:
-                average = 'weighted'
-                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average = average, multi_class = 'ovr')
+                scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), np.argmax(self.predictions, axis = 1), average = average)
+            elif scorer in ['ROC-AUC']: # deals with multiclass class inbalance
+                average = 'macro'
+                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average = average, multi_class = 'ovo')
             else:
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
-            logging.info("Scorer {} : {}".format(scorer, scores[scorer]))
+            logging.info("Score : {}".format(scores[scorer]))
             
         scores.update(self.time_dict)
         scores.update({'Name': self.name})
-        scores.update({'uuid': self.filename})
+        scores.update({'id_': self.filename})
         self.scores = scores
         self
 

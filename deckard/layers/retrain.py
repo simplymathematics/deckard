@@ -12,7 +12,6 @@ if __name__ == '__main__':
     import argparse
     import os
     import logging
-    import uuid
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
     parser.add_argument('-m', '--model', default = 'configs/model.yml',type=str, help='Model config file to use')
     parser.add_argument('-d', '--dataset', type=str, help='Dataset file to use', default = "data.pkl")
@@ -41,7 +40,7 @@ if __name__ == '__main__':
         experiment = Experiment(data= data, model = model_obj)
         experiment.run()
         score = experiment.scores[args.scorer.upper()]
-        checkpoint(filename = os.path.join("all_retrain", str(uuid.uuid4())), experiment = experiment, result_folder = args.folder)
+        checkpoint(filename = os.path.join("all_retrain", experiment.filename), experiment = experiment, result_folder = args.folder)
         if score > best_score:
             best_score = score
             checkpoint(filename = 'best_retrain', experiment = experiment, result_folder = args.folder)

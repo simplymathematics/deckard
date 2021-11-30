@@ -124,15 +124,15 @@ def save_results(results:dict, experiment:Experiment, identifier: str = None, fo
     model_file = os.path.join(folder, "model_params.json")
 
     results = pd.Series(results.values(), name =  identifier, index = results.keys())
-    data_params = pd.Series(experiment.data.params, name = identifier)
-    model_params = pd.Series(experiment.model.params, name = identifier)
+    data_params = pd.Series(experiment.data.params.update({'id_' : experiment.filename}), name = identifier)
+    model_params = pd.Series(experiment.model.params.update({'id_': experiment.filename}), name = identifier)
     if hasattr(experiment.data, "attack_params"):
         attack_file = os.path.join(folder, "attack_params.json")
-        attack_params = pd.Series(experiment.data.attack_params, name = identifier)
+        attack_params = pd.Series(experiment.data.attack_params.update({'id_': experiment.filename}), name = identifier)
         attack_params.to_json(attack_file)
     if hasattr(experiment.model.model, "cv_results_"):
         cv_file = os.path.join(folder, "cv_results.json")
-        cv_results = pd.Series(experiment.model.model.cv_results_, name = identifier)
+        cv_results = pd.Series(experiment.model.model.cv_results_.update({'id_':experiment.filename}), name = identifier)
         cv_results.to_json(cv_file)
     results.to_json(score_file)
     data_params.to_json(data_file)
