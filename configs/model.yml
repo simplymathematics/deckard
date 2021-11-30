@@ -8,7 +8,7 @@
     # criterion : ['gini', 'entropy']
     # max_features : ['auto', 'sqrt', 'log2']
     # class_weight : ['balanced', 'balanced_subsample']
-
+   
 # - name: sklearn.svm.SVC
 #   params:
 #     'kernel' : ['rbf']

@@ -1,0 +1,7 @@
+Stage 'prepare' didn't change, skipping
+Running stage 'train':
+> python layers/train.py
+Updating lock file 'dvc.lock'
+
+Running stage 'preprocess':
+> python layers/preprocess.py

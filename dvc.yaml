@@ -18,6 +18,7 @@ stages:
     metrics:
     - rinex-obs/best_train/results.json:
         cache: true
+    - rinex-obs/best_train/results.json
   preprocess:
     cmd: python preprocess.py -f rinex-obs 
     deps:
