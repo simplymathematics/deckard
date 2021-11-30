@@ -1,6 +1,6 @@
 
-import deckard.base.data.Data as Data
-from ..deckard.base.utils import save_data
+from deckard.base.data import Data
+from deckard.base.utils import save_data
 import logging, os, yaml
 
 

@@ -76,6 +76,7 @@ if __name__ == '__main__':
     import argparse
     import os
     import logging
+    import uuid
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
     parser.add_argument('-m', '--model', default = 'configs/model.yml',type=str, help='Model file to use')
     parser.add_argument('-f', '--folder', type=str, help='Experiment folder to use', default = './')
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         experiment = Experiment(data= data, model = model_obj)
         experiment.run()
         score = experiment.scores[args.scorer.upper()]
-        checkpoint(filename = os.path.join("all_train", experiment.filename), experiment = experiment, result_folder = args.folder)
+        checkpoint(filename = os.path.join("all_train", ), experiment = experiment, result_folder = args.folder)
         if score > best_score:
             best_score = score
             checkpoint(filename = 'best_train', result_folder= args.folder, experiment = experiment)

@@ -8,7 +8,7 @@ import os
 from deckard.base.model import Model
 from deckard.base.data import Data
 from deckard.base.experiment import Experiment
-from copy import deepcopy
+
 
 
 def check_if_supervised_or_unsupervised(model)-> bool:
@@ -115,25 +115,26 @@ def return_result(scorer:str, filename = 'results.json')-> float:
     return results[scorer.upper()]
 
 def save_results(results:dict, experiment:Experiment, identifier: str = None, folder:str = None) -> None:
-    import json
     assert os.path.exists(folder), "Folder does not exist"
     assert identifier is not None, "Identifier must be specified."
     logging.debug("Saving results")
     score_file = os.path.join(folder, "results.json")
     data_file = os.path.join(folder,"data_params.json")
     model_file = os.path.join(folder, "model_params.json")
-
     results = pd.Series(results.values(), name =  identifier, index = results.keys())
-    data_params = pd.Series(experiment.data.params.update({'id_' : experiment.filename}), name = identifier)
-    model_params = pd.Series(experiment.model.params.update({'id_': experiment.filename}), name = identifier)
+    data_params = pd.Series(experiment.data.params, name = identifier)
+    model_params = pd.Series(experiment.model.params, name = identifier)
     if hasattr(experiment.data, "attack_params"):
         attack_file = os.path.join(folder, "attack_params.json")
-        attack_params = pd.Series(experiment.data.attack_params.update({'id_': experiment.filename}), name = identifier)
+        attack_params = pd.Series(experiment.data.attack_params, name = identifier)
         attack_params.to_json(attack_file)
     if hasattr(experiment.model.model, "cv_results_"):
         cv_file = os.path.join(folder, "cv_results.json")
-        cv_results = pd.Series(experiment.model.model.cv_results_.update({'id_':experiment.filename}), name = identifier)
+        cv_results = pd.Series(experiment.model.model.cv_results_, name = identifier)
         cv_results.to_json(cv_file)
+    logging.info("Results:{}".format(results))
+    logging.info("Data Params: {}".format(data_params))
+    logging.info("Model Params: {}".format(model_params))
     results.to_json(score_file)
     data_params.to_json(data_file)
     model_params.to_json(model_file)

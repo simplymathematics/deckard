@@ -132,7 +132,7 @@ class Data(object):
         assert len(X) == len(y)
         logging.info("X shape split" + str(X.shape))
         logging.info("y shape split" + str(y.shape))
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, **kwargs)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, stratify=stratify, test_size=test_size, random_state=random_state)
         assert len(self.X_train) == len(self.y_train)
         assert len(self.X_test) == len(self.y_test)
         logging.debug("Data Successfully Split.")

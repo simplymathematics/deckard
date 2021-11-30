@@ -8,7 +8,7 @@ import uuid
 from deckard.base.model import Model
 from deckard.base.data import Data
 from time import process_time_ns
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score  
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
 from sklearn.base import is_regressor
 
 # Create experiment object
@@ -58,7 +58,7 @@ class Experiment(object):
                 logging.info("Model is classifier.")
                 logging.info("No metric specified. Using accuracy.")
                 self.data.y_test = self.data.y_test.astype(int)
-                new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score,'ROC_AUC': roc_auc_score}
+                new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score,'ROC_AUC': roc_curve}
             else:
                 raise ValueError("Model is not estimator")
         elif len(list(self.scorers)) == 1:
@@ -95,6 +95,7 @@ class Experiment(object):
         y_pred = self.model.model.predict(self.data.X_test)
         end = process_time_ns()
         pred_time = end - start
+        logging.info("Length of predictions: {}".format(len(y_pred)))
         logging.info("Made predictions")
         return y_pred, (fit_time, pred_time)
 
@@ -109,9 +110,10 @@ class Experiment(object):
             logging.info("X_train shape: {}".format(self.data.X_train.shape))
             logging.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
-            self.model.model.fit_predict(X = self.data.X_train, y = self.data.y_train)
+            self.model.model.fit_predict(X = self.data.X_train)
             end = process_time_ns()
             fit_pred_time = end - start
+            y_pred = self.model.model.predict(self.data.X_test)
             logging.info("Made predictions")
         return y_pred (fit_pred_time)
 
@@ -155,10 +157,9 @@ class Experiment(object):
         self.build_model()
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
-            
             if scorer in ['F1', 'Recall', 'Precision']:
                 average = 'weighted'
-                scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), np.argmax(self.predictions, axis = 1), average = average)
+                scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
             elif scorer in ['ROC-AUC']: # deals with multiclass class inbalance
                 average = 'macro'
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average = average, multi_class = 'ovo')
