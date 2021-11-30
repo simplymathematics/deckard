@@ -13,7 +13,7 @@ class Data(object):
     """
     Creates data object from base.dataset string and other parameters. In lieu of pre-specified dataset, you can pass in an arbitrary dictionary with keys 'data' and 'target'. 
     """
-    def __init__(self, dataset:str = 'iris',  sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=True, flatten:bool = True, stratify = None):
+    def __init__(self, dataset:str = 'iris',  sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
         self.dataset = dataset
         self.random_state = random_state
         self.test_size = test_size
@@ -22,7 +22,7 @@ class Data(object):
         self.stratify = stratify
         self.flatten = flatten
         self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset)
-        self.params = {'X_train': self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test, 'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'stratify': self.stratify}
+        self.params = {'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'stratify': self.stratify, 'flatten': self.flatten}
     def __hash__(self) -> str:
         return int(hash(str(self.params)))
     def __eq__(self, other) -> bool:

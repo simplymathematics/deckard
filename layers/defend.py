@@ -1,17 +1,10 @@
-from data import Data
-from model import Model
-from experiment import Experiment
-
-from utils import checkpoint, load_data, load_model, return_result
-from train import run_experiment
-
-from time import process_time_ns
+from base.data import Data
+from base.model import Model
+from base.experiment import Experiment
+from base.utils import checkpoint, load_data, load_model, return_result
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score
-from utils import check_if_supervised_or_unsupervised
-from sklearn.utils.multiclass import type_of_target
-from sklearn.base import is_regressor, BaseEstimator
+from sklearn.base import BaseEstimator
 import numpy as np
 # import is_regressor from sklearn
 from art.defences.preprocessor import Preprocessor
@@ -99,8 +92,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a defense on a dataset')
     parser.add_argument('-p', '--defend', default = 'configs/defend.yml',type=str, help='defense file to use')
     parser.add_argument('-d', '--dataset', type=str, help='Dataset file to use', default = "iris")
-    parser.add_argument('-o,', '--output', type=str, help='Output file to use', default = 'data')
-    parser.add_argument('-f', '--folder', type=str, default = 'data', help='Folder to use', required=False)
+    parser.add_argument('-o,', '--output', type=str, help='Output file to use', default = './')
+    parser.add_argument('-f', '--folder', type=str, default = './', help='Folder to use', required=False)
     # parse argument for verbosity
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', type = str, default='f1', help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
@@ -125,7 +118,7 @@ if __name__ == '__main__':
     model = load_model(model_file)
     # set sklearn is_fitted flag to false
     assert isinstance(data, Data)
-    from read_yml import parse_layer_from_yml
+    from base.read_yml import parse_layer_from_yml
     pres = parse_layer_from_yml(data, args.defend)
     for data in pres:
         model_obj = Model(model)
@@ -156,7 +149,7 @@ if __name__ == '__main__':
     if os.path.isdir(os.path.join(args.output, 'best_train')):
         result_file = os.path.join(args.output, 'best_train',"results.json")
         if best_score > return_result(scorer = args.scorer, filename = result_file):
-            checkpoint(filename = 'best_train', experiment = experiment, scores = scores, results_folder = args.output)
+            checkpoint(filename = '_defense', experiment = experiment, scores = scores, results_folder = args.output)
     else:
         checkpoint(filename = 'best_train', experiment = experiment, scores = scores, results_folder = args.output)
         

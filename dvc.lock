@@ -26,23 +26,23 @@ stages:
       md5: c76f11eabd538070027d8795d80c3387
       size: 257
     - path: preprocess.py
-      md5: 627b6a329770226af8f848f912cdbbe2
-      size: 6100
+      md5: f66349f94e304aed392ca097fd0b5903
+      size: 6161
     - path: rinex-obs/best_train/data.pkl
       md5: a10d1a6d40c2175b0023f9601efd7e56
       size: 1001753
     - path: rinex-obs/best_train/model.pkl
-      md5: 0cb49ea663cfe28a18bbedf5566cf887
-      size: 928330
+      md5: 22b80f1acd3168f2933b8d157412631e
+      size: 592224
     outs:
     - path: rinex-obs/best_preprocess/data.pkl
       md5: 9a5c5834e8b8067839b4adbc49de3f0b
       size: 1792396
     - path: rinex-obs/best_preprocess/model.pkl
-      md5: 0dfd8f41a97848e34e9de9ac1ad8042e
-      size: 577551
+      md5: 9d2e2c32144fd6d02e97a74bcbb841ea
+      size: 833011
     - path: rinex-obs/best_preprocess/results.json
-      md5: 14b9fd1d2ba8858b3761484c66f432b1
+      md5: c20400c00318cc6b6c463594a8109cb2
       size: 251
   featurize:
     cmd: python featurize.py -f rinex-obs
@@ -51,24 +51,24 @@ stages:
       md5: 8e868a26517d7807395016a0b2f60510
       size: 128
     - path: featurize.py
-      md5: bc4adb6435d6aba755e804571b297494
-      size: 6217
+      md5: 2cebe09f7172cc55808271462592be6a
+      size: 6312
     - path: rinex-obs/best_preprocess/data.pkl
       md5: 9a5c5834e8b8067839b4adbc49de3f0b
       size: 1792396
     - path: rinex-obs/best_preprocess/model.pkl
-      md5: 0dfd8f41a97848e34e9de9ac1ad8042e
-      size: 577551
+      md5: 9d2e2c32144fd6d02e97a74bcbb841ea
+      size: 833011
     outs:
     - path: rinex-obs/best_features/data.pkl
       md5: 363aaaa9024c236c33518223dec9ed16
       size: 1792486
     - path: rinex-obs/best_features/model.pkl
-      md5: 979edc37721e2c6fee76055ffac89eb1
-      size: 844816
+      md5: 21d1a29de663e77b55be75dcfd24bc85
+      size: 110264
     - path: rinex-obs/best_features/results.json
-      md5: ae6388c8ee43b0446608ffa566a74dce
-      size: 251
+      md5: cc51e55fa78966bcfadfc4b3c7b6e6da
+      size: 244
   prepare:
     cmd:
     - python prepare.py -f rinex-obs -d rinex-obs
@@ -84,23 +84,23 @@ stages:
     cmd: python train.py -f rinex-obs
     deps:
     - path: configs/model.yml
-      md5: bd6e8fa003caf0b068efbb755f4e623b
-      size: 1399
+      md5: f10a234aa47ace7989ae7a2fe98f36e0
+      size: 1402
     - path: rinex-obs/data/data.pkl
       md5: 874bc3a7da1546cc2fd2cb508e63b917
       size: 989235
     - path: train.py
-      md5: 0778e8665c4dcba4c8f2865e6b66672f
-      size: 4777
+      md5: 633db79757cbec3008bf48ee28b1b0c5
+      size: 5283
     outs:
     - path: rinex-obs/best_train/data.pkl
       md5: a10d1a6d40c2175b0023f9601efd7e56
       size: 1001753
     - path: rinex-obs/best_train/model.pkl
-      md5: 0cb49ea663cfe28a18bbedf5566cf887
-      size: 928330
+      md5: 22b80f1acd3168f2933b8d157412631e
+      size: 592224
     - path: rinex-obs/best_train/results.json
-      md5: 4268b81ba28e705f7a6aec8ee7ab06bc
+      md5: e2cbb32f8d0eab98ada96e3bffb68d18
       size: 251
   retrain:
     cmd: python retrain.py -f rinex-obs

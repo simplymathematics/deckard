@@ -1,7 +1,7 @@
-from data import Data
-from model import Model
-from experiment import Experiment
-from utils import checkpoint, load_checkpoint, return_result
+from base.data import Data
+from base.model import Model
+from base.experiment import Experiment
+from base.utils import checkpoint, load_checkpoint, return_result
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
 from sklearn.base import BaseEstimator
@@ -57,8 +57,8 @@ def parse_featurizer_from_yml(data:Data, filename:str, obj_type:BaseEstimator) -
             assert isinstance(featurizer_instance, obj_type)
             data.X_train = featurizer_instance.fit_transform(data.X_train, data.y_train)
             data.X_test = featurizer_instance.transform(data.X_test)
-            data.params.update({featurizer_name : dict(featurizer_instance.get_params())})
-            logging.debug("featurizer params: {}".format(data.params[featurizer_name]))
+            data.params.update({"Featurizer" : featurizer_name, "Featurizer Params" : combination})
+            logging.debug("Featurizer params: {}".format(data.params["Featurizer Params"]))
             assert isinstance(data.X_train, np.ndarray)
             assert isinstance(data.X_test, np.ndarray)
             assert isinstance(data, Data)
@@ -81,8 +81,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a featurizer on a dataset')
     parser.add_argument('-p', '--featurize', default = 'configs/featurize.yml',type=str, help='featurizer file to use')
     parser.add_argument('-d', '--dataset', type=str, help='Dataset file to use', default = "data.pkl")
-    parser.add_argument('-o,', '--output', type=str, help='Output file to use', default = 'data')
-    parser.add_argument('-f', '--folder', type=str, default = 'data', help='Folder to use', required=False)
+    parser.add_argument('-f', '--folder', type=str, default = './', help='Folder to use', required=False)
     # parse argument for verbosity
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', type = str, default='f1', help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
@@ -96,11 +95,13 @@ if __name__ == '__main__':
     # logging.info("Found {} folder(s) in {} folder.".format(len(folders), args.folder))
     logging.debug(args.folder)
     folder = os.path.join(args.folder, 'best_preprocess')
-    if os.path.isdir(os.path.join(args.output, 'best_features')):
-        result_file = os.path.join(args.output, 'best_features',"results.json")
+    if os.path.isdir(os.path.join(args.folder, 'best_features')):
+        result_file = os.path.join(args.folder, 'best_features',"results.json")
+        best_score = return_result(filename = result_file, scorer=args.scorer)
+    else:
+        best_score = 0
     assert os.path.isdir(folder), "Folder {} does not exist".format(folder)
     assert os.path.isfile(os.path.join(folder, args.model)), "Model file {} does not exist".format(os.path.join(folder, args.model))
-    best_score = 0
     (data, model) = load_checkpoint(folder = folder, data = args.dataset, model = args.model)
     # set sklearn is_fitted flag to false
     pres = parse_featurizer_from_yml(data, args.featurize, obj_type=BaseEstimator)
@@ -109,10 +110,11 @@ if __name__ == '__main__':
         experiment = Experiment(data= data, model = model_obj)
         experiment.run()
         score = experiment.scores[args.scorer.upper()]
-        checkpoint(filename = os.path.join('all_features', experiment.filename), experiment = experiment, result_folder = args.output)
+        checkpoint(filename = os.path.join('all_features', experiment.filename), experiment = experiment, result_folder = args.folder)
         if score > best_score:
             best_score = score
-            checkpoint(filename = 'best_features', experiment = experiment, result_folder = args.output)
+            checkpoint(filename = 'best_features', experiment = experiment, result_folder = args.folder)
         else:
             logging.info("Score {} is lower than best score {}".format(score, best_score))
+            cmd = "cp -r {} {}".format(os.path.join(args.folder, 'best_preprocess'), os.path.join(args.folder, 'best_retrain'))
     logging.info("Best Score of featurizer: {}".format(best_score))

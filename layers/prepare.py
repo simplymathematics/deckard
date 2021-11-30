@@ -1,6 +1,6 @@
 from numpy.lib.arraysetops import isin
-from data import Data
-from utils import save_data
+from base.data import Data
+from base.utils import save_data
 import logging, os, yaml, importlib
 from sklearn.model_selection import ParameterGrid
 from sklearn.base import BaseEstimator
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Prepare the data')
     parser.add_argument('-dataset', type = str, default = 'rinex_obs', help = "The dataset to use")
-    parser.add_argument('-folder', type = str, default = "data", help = "The folder where data will be stored")
+    parser.add_argument('-folder', type = str, default = "./", help = "The folder where data will be stored")
     parser.add_argument('-config_file', type = str, default = "configs/prepare.yml", help = "The config folder to use")
     parser.add_argument('--verbosity', type = str, default = 'DEBUG', help = "The verbosity level")
     args = parser.parse_args()
