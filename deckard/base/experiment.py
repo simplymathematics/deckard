@@ -1,3 +1,4 @@
+from re import S
 from art.defences import postprocessor
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
@@ -48,7 +49,7 @@ class Experiment(object):
     def __eq__(self, other) -> bool:
         return self.__hash__() == other.__hash__()
 
-    def set_metric_scorer(self, attack) -> dict:
+    def set_metric_scorer(self, attack=None) -> dict:
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True:
                 logging.info("Model is regressor.")
@@ -117,7 +118,7 @@ class Experiment(object):
             logging.info("Made predictions")
         return y_pred (fit_pred_time)
 
-    def build_model(self, attack, defense) -> dict:
+    def build_model(self, attack=None, defense=None) -> dict:
         logging.debug("Model type: {}".format(type(self.model.model)))
         if self.is_supervised() == False:
             self.predictions, time = self._build_unsupervised_model()
@@ -148,9 +149,16 @@ class Experiment(object):
 
 
     def run(self, defense = None, attack = None) -> dict:
-        scores = {}
         self.set_metric_scorer(attack = attack)
         self.build_model(attack = attack, defense = defense)
+        scores = self.evaluate(attack = attack, defense = defense)
+        scores.update(self.time_dict)
+        scores.update({'Name': self.name})
+        scores.update({'id_': self.filename})
+        self.scores = scores
+
+    def evaluate(self, attack = None, defense = None) -> dict:
+        scores = {}
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
             if scorer in ['F1', 'Recall', 'Precision']:
@@ -162,14 +170,7 @@ class Experiment(object):
             else:
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
             logging.info("Score : {}".format(scores[scorer]))
-            
-        scores.update(self.time_dict)
-        scores.update({'Name': self.name})
-        scores.update({'id_': self.filename})
-        self.scores = scores
-        self
-
-
+        return scores
 
 if __name__ == '__main__':
     # set up logging

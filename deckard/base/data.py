@@ -42,8 +42,6 @@ class Data(object):
         # check if file exists and is a csv
         elif dataset == 'mnist':
             data = load_digits()
-        elif dataset == 'cifar10':
-            data = fetch_openml('cifar10')
         elif dataset == 'rinex-obs':
             obs_file = '../../2021.09.17_jamming/parsed-rinex/COM37_210917_110602_jamming.obs'
             obs = gr.load(obs_file)
@@ -58,7 +56,11 @@ class Data(object):
             obs_df = np.nan_to_num(obs_df)
             data = {'data': obs_df, 'target': labels}
         elif os.path.isfile(dataset) and dataset.endswith('.csv'):
-           raise NotImplementedError("CSV files not implemented yet")
+            logging.warning("CSV detected. Assuming last column is the target column.")
+            df = pd.read_csv(dataset)
+            input = df.iloc[:,:-1]
+            target = df.iloc[:,-1]
+            data = {'data': input, 'target': target}
         elif isinstance(dataset, dict) and isinstance(dataset['data'], object) and isinstance(dataset['target'], object):
             data = dataset
         else:
