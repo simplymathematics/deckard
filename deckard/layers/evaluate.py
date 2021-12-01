@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # command line arguments
     parser = argparse.ArgumentParser(description='Evaluate a model')
     parser.add_argument('-f', '--folder', type=str, help='Folder containing the checkpoint.', required=True)
-    parser.add_argument('-s', '--scorer', type=str, default='f1', help='Scorer string.')
+    parser.add_argument('-s', '--scorer', type=str, required = True, help='Scorer string.')
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
     parser.add_argument('--output', type=str, help='Output file.')
@@ -20,6 +20,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
     (data, model) = load_checkpoint(folder = path.join(args.folder, 'best_retrain'), model = 'model.pkl', data = 'data.pkl')
+    
     #####
     # import load_model
     # # Does this run on the tail of the log?
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     # cmd += " -f {}".format(args.folder)
     # cmd += " -o {}".format(args.output)
     # os.system(cmd)
-    # data = Data(args.output)
+    # data = Data(args.output, test_size = 1)
     #####
 
     model = Model(model)
