@@ -1,4 +1,4 @@
-from deckard.base.utils import load_checkpoint
+from deckard.base.utils import load_model
 from deckard.base import Data, Experiment, Model
 from os import path
     
@@ -13,22 +13,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate a model')
     parser.add_argument('-f', '--folder', type=str, help='Folder containing the checkpoint.', required=True)
     parser.add_argument('-s', '--scorer', type=str, required = True, help='Scorer string.')
+    parser.add_argument('-d', '--data', type=str, required = True, help='Data string.')
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
-    parser.add_argument('--output', type=str, help='Output file.')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
-    (data, model) = load_checkpoint(folder = path.join(args.folder, 'best_retrain'), model = 'model.pkl', data = 'data.pkl')
-    
+    model = load_model()
+    data = Data(args.data)
     #####
-    # import load_model
     # # Does this run on the tail of the log?
     # cmd = "marco.py -n {}".format(args.batch_size)
     # cmd += " -f {}".format(args.folder)
-    # cmd += " -o {}".format(args.output)
+    # cmd += " -d {}".format(args.data)
     # os.system(cmd)
-    # data = Data(args.output, test_size = 1)
+    # data = Data(args.data, test_size = 1)
     #####
 
     model = Model(model)
