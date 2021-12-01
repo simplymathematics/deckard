@@ -48,7 +48,7 @@ class Experiment(object):
     def __eq__(self, other) -> bool:
         return self.__hash__() == other.__hash__()
 
-    def set_metric_scorer(self) -> dict:
+    def set_metric_scorer(self, attack) -> dict:
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True:
                 logging.info("Model is regressor.")
@@ -117,7 +117,7 @@ class Experiment(object):
             logging.info("Made predictions")
         return y_pred (fit_pred_time)
 
-    def build_model(self) -> dict:
+    def build_model(self, attack, defense) -> dict:
         logging.debug("Model type: {}".format(type(self.model.model)))
         if self.is_supervised() == False:
             self.predictions, time = self._build_unsupervised_model()
@@ -149,12 +149,8 @@ class Experiment(object):
 
     def run(self, defense = None, attack = None) -> dict:
         scores = {}
-        if defense is not None:
-            raise NotImplementedError("Defenses not yet implemented")
-        if attack is not None:
-            raise NotImplementedError("Attacks not yet implemented")
-        self.set_metric_scorer()
-        self.build_model()
+        self.set_metric_scorer(attack = attack)
+        self.build_model(attack = attack, defense = defense)
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
             if scorer in ['F1', 'Recall', 'Precision']:
