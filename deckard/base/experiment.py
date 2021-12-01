@@ -78,10 +78,14 @@ class Experiment(object):
     
     def _build_supervised_model(self) -> dict:
         assert self.is_supervised()
-        if hasattr( self.model, 'fit_flag' or self.fitted == True):
+        if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
             logging.info("Model is already fitted")
             self.is_fitted = True
+            start = process_time_ns()
             y_pred = self.model.predict(self.data.X_test)
+            end = process_time_ns()
+            fit_time = np.nan
+            pred_time = end - start
         else:
             logging.info("Fitting model")
             logging.info("X_train shape: {}".format(self.data.X_train.shape))
@@ -102,9 +106,13 @@ class Experiment(object):
 
     def _build_unsupervised_model(self) -> dict:
         assert not self.is_supervised()
-        if hasattr(self.model, 'fit_flag'):
+        if hasattr(self.model, 'fit_flag') or self.is_fitted == True:
             logging.warning("Model is already fitted")
+            start = process_time_ns()
             y_pred = self.model.model.predict(self.data.y_test)
+            end = process_time_ns()
+            fit_pred_time = end - start
+            self.is_fitted = True
             assert self.data.y_pred.shape == self.data.y_test.shape, "model appears to be fitted, but something went wrong."
         else:
             logging.info("Fitting and predicting model")
@@ -148,7 +156,7 @@ class Experiment(object):
         return result
 
 
-    def run(self, defense = None, attack = None) -> dict:
+    def run(self, scorer = None, defense = None, attack = None) -> dict:
         self.set_metric_scorer(attack = attack)
         self.build_model(attack = attack, defense = defense)
         scores = self.evaluate(attack = attack, defense = defense)
@@ -157,7 +165,9 @@ class Experiment(object):
         scores.update({'id_': self.filename})
         self.scores = scores
 
-    def evaluate(self, attack = None, defense = None) -> dict:
+    def evaluate(self, scorers = None, attack = None, defense = None) -> dict:
+        if scorers is None:
+            self.set_metric_scorer(attack = attack)
         scores = {}
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
