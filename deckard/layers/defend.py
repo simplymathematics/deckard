@@ -89,7 +89,6 @@ if __name__ == '__main__':
     import argparse
     import os
     import logging
-    import uuid
     parser = argparse.ArgumentParser(description='Run a defense on a dataset')
     parser.add_argument('-p', '--defend', default = 'configs/defend.yml',type=str, help='defense file to use')
     parser.add_argument('-d', '--dataset', type=str, help='Dataset file to use', default = "iris")

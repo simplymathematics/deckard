@@ -68,7 +68,6 @@ if __name__ == '__main__':
     import argparse
     import os
     import logging
-    import uuid
     parser = argparse.ArgumentParser(description='Run a preprocessor on a dataset')
     parser.add_argument('-p', '--preprocess', default = 'configs/preprocess.yml',type=str, help='preprocessor file to use')
     parser.add_argument('-d', '--dataset', type=str, help='Dataset file to use', default = "data.pkl")
