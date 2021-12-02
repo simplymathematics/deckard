@@ -1,4 +1,2 @@
-**/__pycache__/
+*/__pycache__/*
 *.pyc
-base/__pycache__/*
-layers/__pycache__/*rm

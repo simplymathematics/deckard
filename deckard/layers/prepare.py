@@ -1,5 +1,4 @@
-from deckard.layers import Data
-from deckard.base.utils import save_data
+from deckard.base import Data
 import logging, os, yaml
 
 def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
@@ -31,8 +30,8 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
 
 
 if __name__ == "__main__":
-    # initalize logging
-    
+
+    from pickle import dump
     # command line arguments
     import argparse
     parser = argparse.ArgumentParser(description='Prepare the data')
@@ -52,4 +51,5 @@ if __name__ == "__main__":
         else:
             logging.warning(args.folder + " already exists. Overwriting data.")
     logging.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
-    save_data(data, data_file='data.pkl', folder = os.path.join(args.folder, 'data'))
+    
+    dump(data, open(os.path.join(args.folder, 'data', 'data.pkl'), 'wb'))

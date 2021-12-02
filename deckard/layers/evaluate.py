@@ -1,4 +1,4 @@
-from deckard.base.utils import load_model
+from deckard.base.utils import load_data, load_experiment, load_model
 from deckard.base import Data, Experiment, Model
 from os import path
     
@@ -19,8 +19,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
-    model = load_model()
-    data = Data(args.data)
+    if str(args.data.endswith('.csv')):
+        logging.info("Loading {}".format(path.join(args.folder, args.data)))
+        data = Data(args.data, test_size=1)
+    elif str(args.data.endswith('.pkl')):
+        data = load_data(path.join(args.folder, args.data))
+    else:
+        raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
     #####
     # # Does this run on the tail of the log?
     # cmd = "marco.py -n {}".format(args.batch_size)
@@ -29,13 +34,11 @@ if __name__ == '__main__':
     # os.system(cmd)
     # data = Data(args.data, test_size = 1)
     #####
-
-    model = Model(model)
+    model = load_experiment(path.join(args.folder, 'best_features', 'experiment.pkl')).model
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
     experiment = Experiment(data = data, model = model)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
-    
     experiment.run()
     end = process_time()
     logging.info('Evaluation took {} seconds.'.format(end - start))

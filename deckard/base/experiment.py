@@ -11,7 +11,9 @@ from deckard.base.data import Data
 from time import process_time_ns
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
 from sklearn.base import is_regressor
-
+from pandas import Series
+from os import path, mkdir
+from pickle import dump
 # Create experiment object
 class Experiment(object):
     """
@@ -181,6 +183,64 @@ class Experiment(object):
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
             logging.info("Score : {}".format(scores[scorer]))
         return scores
+
+    def save_results(self, folder:str = ".") -> None:
+        if not path.isdir(folder):
+            mkdir(folder)
+        logging.debug("Saving results")
+        results = self.scores
+        score_file = path.join(folder, "results.json")
+        data_file = path.join(folder,"data_params.json")
+        model_file = path.join(folder, "model_params.json")
+        results = Series(results.values(), name =  self.filename, index = results.keys())
+        data_params = Series(self.data.params, name = self.filename)
+        model_params = Series(self.model.params, name = self.filename)
+        if hasattr(self.data, "attack_params"):
+            attack_file = path.join(folder, "attack_params.json")
+            attack_params = Series(self.data.attack_params, name = self.filename)
+            attack_params.to_json(attack_file)
+        if hasattr(self.model.model, "cv_results_"):
+            cv_file = path.join(folder, f"cv_results{self.filename}.json")
+            cv_results = Series(self.model.model.cv_results_, name = self.filename)
+            cv_results.to_json(cv_file)
+        logging.info("Results:{}".format(results))
+        logging.info("Data Params: {}".format(data_params))
+        logging.info("Model Params: {}".format(model_params))
+        results.to_json(score_file)
+        data_params.to_json(data_file)
+        model_params.to_json(model_file)
+        assert path.exists(score_file), "Saving results unsuccessful"
+        assert path.exists(data_file), "Saving data_params unsuccessful"
+        assert path.exists(model_file), "Saving model_params unsuccessful"
+        logging.info("Saved results.")
+        return None
+
+    def save_experiment(self, folder:str = ".") -> None:
+        if not path.isdir(folder):
+            mkdir(folder)
+        exp_file = path.join(folder, "experiment.pkl")
+        dump(self, open(exp_file, "wb"))
+        assert path.exists(exp_file), "Saving experiment unsuccessful"
+        logging.info("Saved experiment to {}".format(exp_file))
+        return None
+
+    def save_model(self, folder:str = ".") -> None:
+        if not path.isdir(folder):
+            mkdir(folder)
+        model_file = path.join(folder, "model.pkl")
+        dump(self.model, open(model_file, "wb"))
+        assert path.exists(model_file), "Saving model unsuccessful"
+        logging.info("Saved model to {}".format(model_file))
+        return None
+
+    def save_data(self, folder:str = ".") -> None:
+        if not path.isdir(folder):
+            mkdir(folder)
+        data_file = path.join(folder, "data.pkl")
+        dump(self.data, open(data_file, "wb"))
+        assert path.exists(data_file), "Saving data unsuccessful"
+        logging.info("Saved data")
+        return None
 
 if __name__ == '__main__':
     # set up logging
