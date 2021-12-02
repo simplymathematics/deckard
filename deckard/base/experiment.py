@@ -1,4 +1,3 @@
-from re import S
 from art.defences import postprocessor
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
@@ -200,7 +199,7 @@ class Experiment(object):
             attack_params = Series(self.data.attack_params, name = self.filename)
             attack_params.to_json(attack_file)
         if hasattr(self.model.model, "cv_results_"):
-            cv_file = path.join(folder, f"cv_results{self.filename}.json")
+            cv_file = path.join(folder, self.filename, "cv_results.json")
             cv_results = Series(self.model.model.cv_results_, name = self.filename)
             cv_results.to_json(cv_file)
         logging.info("Results:{}".format(results))
