@@ -1,20 +1,20 @@
 stages:
   prepare:
     cmd: 
-      - python ../../layers/prepare.py  -d 'car.csv'
+      - python ../../deckard/layers/prepare.py  -d 'lat.csv'
     deps: 
       - configs/prepare.yml
-      - ../../base/data.py
-      - data/pygps.csv
+      - ../../deckard/base/data.py
+      - parsed/lat.csv
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../../layers/train.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/train.py  -f data -s mse -b False
     deps:
-    - ../../base/utils.py
+    - ../../deckard/base/utils.py
     - configs/model.yml
-    - ../../layers/train.py
-    - ../../base/experiment.py
+    - ../../deckard/layers/train.py
+    - ../../deckard/base/experiment.py
     - data/data.pkl
     outs:
     - data/best_train/experiment.pkl
@@ -27,10 +27,10 @@ stages:
         cache: true
     
   preprocess:
-    cmd: python ../../layers/preprocess.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False
     deps:
     - configs/preprocess.yml
-    - ../../layers/preprocess.py
+    - ../../deckard/layers/preprocess.py
     - data/best_train/experiment.pkl
     outs:
     - data/best_preprocess/experiment.pkl
@@ -43,10 +43,10 @@ stages:
         cache: true
    
   featurize:
-    cmd: python ../../layers/featurize.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/featurize.py  -f data -s mse -b False
     deps:
     - configs/featurize.yml
-    - ../../layers/featurize.py
+    - ../../deckard/layers/featurize.py
     - data/best_preprocess/experiment.pkl
     outs:
     - data/best_features/experiment.pkl
@@ -58,10 +58,10 @@ stages:
     - data/best_features/results.json:
         cache: true
   evaluate:
-    cmd: python ../../layers/evaluate.py -f data -s mse -d "test_gps.csv"
+    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv"
     deps: 
       - data/best_features/experiment.pkl
-      - ./test_gps.csv
+      - ./parsed/long.csv
 
 
 

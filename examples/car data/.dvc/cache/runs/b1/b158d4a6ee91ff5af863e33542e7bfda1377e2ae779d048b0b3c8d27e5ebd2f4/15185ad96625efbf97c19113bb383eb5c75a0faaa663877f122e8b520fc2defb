@@ -1,0 +1,16 @@
+cmd:
+- python ../../deckard/layers/prepare.py  -d 'lat.csv'
+deps:
+- path: ../../deckard/base/data.py
+  md5: 6dfc440e9939c40b7359f201cb31916e
+  size: 7990
+- path: configs/prepare.yml
+  md5: 406cbaae38ce0a85847627d1aa8f5dc5
+  size: 144
+- path: parsed/lat.csv
+  md5: bc33196a9a0342b4f0e34848b88dfe2c
+  size: 293289
+outs:
+- path: data/data.pkl
+  md5: 1c1bd03869701f9a31cff309a2d131fe
+  size: 316941
