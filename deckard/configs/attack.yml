@@ -1,3 +1,4 @@
 - name: art.attacks.evasion.FastGradientMethod
   params:
-    'eps' : [.1, .2, .3, .4]
+    'eps' : [1]
+    'eps_step' : [.01, .1, .3]
