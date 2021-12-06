@@ -1,0 +1,8 @@
+- name: sklearn.ensemble.RandomForestRegressor
+  params: 
+    'n_estimators' : [10, 50, 100]
+
+- name: sklearn.neighbors.KNeighborsRegressor
+  params: 
+    'n_neighbors' : [1,2,3,4]
+    'weights' : ['uniform', 'distance']
