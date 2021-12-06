@@ -1,3 +1,9 @@
-`configs` contains all the .yml config files  
-`layers` contains all of the layer information
-`example.ipynb` is the documentation
+```git clone {{this repo}}```
+```cd {{this repo}}```
+```python setup.py develop```
+
+
+Check that deckard works
+
+```$ python```
+```>>> import deckard```

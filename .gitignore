@@ -1,1 +1,6 @@
-/data
+*/__pycache__/*
+*.pyc
+*.ipynb_checkpoints/
+*.json
+*.pkl
+*.csv

@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+deckard/__init__.py
+deckard.egg-info/PKG-INFO
+deckard.egg-info/SOURCES.txt
+deckard.egg-info/dependency_links.txt
+deckard.egg-info/top_level.txt
