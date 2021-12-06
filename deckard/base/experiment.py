@@ -199,7 +199,7 @@ class Experiment(object):
             attack_params = Series(self.data.attack_params, name = self.filename)
             attack_params.to_json(attack_file)
         if hasattr(self.model.model, "cv_results_"):
-            cv_file = path.join(folder, self.filename, "cv_results.json")
+            cv_file = path.join(folder, f"{self.filename}_cv_results.json")
             cv_results = Series(self.model.model.cv_results_, name = self.filename)
             cv_results.to_json(cv_file)
         logging.info("Results:{}".format(results))
