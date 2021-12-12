@@ -54,11 +54,9 @@ class Experiment(object):
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True:
                 logging.info("Model is regressor.")
-                logging.info("No metric specified. Using mean square error.")
                 new_scorers = {"MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score}
             elif is_regressor(self.model.model) == False:
                 logging.info("Model is classifier.")
-                logging.info("No metric specified. Using accuracy.")
                 self.data.y_test = self.data.y_test.astype(int)
                 new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score,'ROC_AUC': roc_curve}
             else:
