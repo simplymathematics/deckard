@@ -12,13 +12,14 @@ class Data(object):
     """
     Creates data object from base.dataset string and other parameters. In lieu of pre-specified dataset, you can pass in an arbitrary dictionary with keys 'data' and 'target'. 
     """
-    def __init__(self, dataset:str = 'iris',  sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
+    def __init__(self, dataset:str = 'iris', target = None, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
         self.random_state = random_state
         self.test_size = test_size
         self.sample_size = sample_size
         self.shuffle = shuffle
         self.stratify = stratify
         self.flatten = flatten
+        self.target = target
         self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset)
         self.params = {'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'stratify': self.stratify, 'flatten': self.flatten}
     def __hash__(self) -> str:
@@ -41,25 +42,16 @@ class Data(object):
         elif dataset.lower() == 'mnist':
             data = load_digits()
             self.dataset = dataset
-        elif dataset.lower() == 'rinex-obs':
-            obs_file = '../../2021.09.17_jamming/parsed-rinex/COM37_210917_110602_jamming.obs'
-            obs = gr.load(obs_file)
-            obs_df = obs.to_dataframe()
-            obs_df.fillna(value = 0, axis = 1)
-            obs_df = obs_df.sort_index()
-            labels = np.zeros(len(obs_df))
-            tmp = int(12350/5)
-            tmp2 = tmp * 2
-            labels[tmp2: tmp2+tmp] = np.ones(tmp)
-            assert set(labels) == set([0,1])
-            obs_df = np.nan_to_num(obs_df)
-            data = {'data': obs_df, 'target': labels}
-            self.dataset = dataset
         elif dataset.endswith('.csv'):
-            logging.warning("CSV detected. Assuming last column is the target column.")
             df = pd.read_csv(dataset)
-            input = df.iloc[:,:-1]
-            target = df.iloc[:,-1]
+            if self.target is None:
+                logging.warning("Target not specified. Assuming last column is the target column.")
+                input = df.iloc[:,:-1]
+                target = df.iloc[:,-1]
+            else:
+                logging.info("Target specified: %s", self.target)
+                target = df.pop(self.target)
+                input = df
             data = {'data': input, 'target': target}
             self.dataset = dataset
         else:
