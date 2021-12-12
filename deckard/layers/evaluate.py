@@ -30,14 +30,14 @@ if __name__ == '__main__':
     model = load_experiment(path.join(args.folder, 'best_features', 'experiment.pkl')).model
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
-    experiment = Experiment(data = data, model = model)
     data = Data(args.data, test_size=1, target = args.target)
+    print(set(data.y_test))
+    experiment = Experiment(data = data, model = model)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
     experiment.run()
     end = process_time()
     logging.info('Evaluation took {} seconds.'.format(end - start))
     logging.info('Number of evaluated sample: {}'.format(len(experiment.data.y_test)))
     logging.info('Time per sample: {} seconds'.format(round((end - start) / len(experiment.data.y_test),3)))
-    print(experiment.scores[args.scorer.upper()])
     logging.debug(experiment.scores)
 
