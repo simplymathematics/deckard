@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--data', type=str, required = True, help='Data string.')
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
+    parser.add_argument('--target', type=str, required = True, help='Target string.')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
@@ -26,18 +27,11 @@ if __name__ == '__main__':
         data = load_data(path.join(args.folder, args.data))
     else:
         raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
-    #####
-    # # Does this run on the tail of the log?
-    # cmd = "marco.py -n {}".format(args.batch_size)
-    # cmd += " -f {}".format(args.folder)
-    # cmd += " -d {}".format(args.data)
-    # os.system(cmd)
-    # data = Data(args.data, test_size = 1)
-    #####
     model = load_experiment(path.join(args.folder, 'best_features', 'experiment.pkl')).model
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
     experiment = Experiment(data = data, model = model)
+    data = Data(args.data, test_size=1, target = args.target)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
     experiment.run()
     end = process_time()
