@@ -12,12 +12,13 @@ class Data(object):
     """
     Creates data object from base.dataset string and other parameters. In lieu of pre-specified dataset, you can pass in an arbitrary dictionary with keys 'data' and 'target'. 
     """
-    def __init__(self, dataset:str = 'iris', target = None, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
+    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
         self.random_state = random_state
         self.test_size = test_size
         self.sample_size = sample_size
         self.shuffle = shuffle
         self.stratify = stratify
+        self.time_series = time_series
         self.flatten = flatten
         self.target = target
         self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset)
@@ -97,21 +98,22 @@ class Data(object):
         logging.debug(str(type(data)))
         logging.info("Sampling dataset")
         logging.info('Sample percentage: ' + str(sample_size * 100) + '%')
-
         assert isinstance(data, dict)
         assert isinstance(data['data'], object)
         assert isinstance(data['target'], object)
-        if sample_size < 1:       
+        if sample_size < 1 and self.time_series == False:       
             _, new_X, _, new_y = train_test_split(data['data'], data['target'], **kwargs, test_size=sample_size, shuffle=shuffle)
             new_X = pd.DataFrame(new_X)
             new_y = pd.Series(new_y)
-        else:
+        elif self.time_series == True or sample_size == 1:
             new_X = pd.DataFrame(data['data'])
             new_y = pd.Series(data['target'])
+        else:
+            raise ValueError("sample_size must be [0 < sample_size <= 1] or time_series must be True")
         assert len(new_X) == len(new_y)
         return (new_X, new_y)
 
-    def _split_data(self, X, y, test_size:float=0.2, random_state:int=0, stratify:pd.Series=None, balanced: bool = False, **kwargs) -> tuple:
+    def _split_data(self, X, y, test_size:float=0.2, random_state:int=0, stratify:pd.Series=None, balanced: bool = False) -> tuple:
         logging.debug("Splitting data")
         # split the data
         if self.dataset != 'mnist' or 'cifar10':
@@ -125,12 +127,19 @@ class Data(object):
         assert len(X) == len(y)
         logging.info("X shape split" + str(X.shape))
         logging.info("y shape split" + str(y.shape))
-        if test_size < 1:
+        if test_size < 1 and self.time_series == False:
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, stratify=stratify, test_size=test_size, random_state=random_state)
-        else:
+        elif test_size == 1 and self.time_series == False:
             logging.warning("No training set specified.")
             self.X_test, self.y_test = X, y
             self.X_train, self.y_train = np.ndarray(), np.ndarray()
+        elif self.time_series == True:
+            from sktime.forecasting.model_selection import temporal_train_test_split
+            self.y_train, self.y_test = temporal_train_test_split(y, test_size=test_size)
+            self.X_train, self.X_test = X.iloc[:len(self.y_train)], X.iloc[len(self.y_train):]
+            self.y_train, self.y_test = pd.Series(self.y_train), pd.Series(self.y_test)
+        else:
+            raise ValueError("test_size must be [0 < test_size <= 1] or time_series must be True")
         assert len(self.X_train) == len(self.y_train)
         assert len(self.X_test) == len(self.y_test)
         logging.debug("Data Successfully Split.")
