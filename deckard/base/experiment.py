@@ -1,7 +1,6 @@
-from art.defences import postprocessor
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
-    mean_squared_error, r2_score
+    mean_squared_error, r2_score, mean_absolute_percentage_error, explained_variance_score
 import logging
 from sklearn.base import is_regressor
 import uuid
@@ -22,6 +21,7 @@ class Experiment(object):
         assert isinstance(model, Model)
         assert isinstance(data, Data)
         assert isinstance(scorers, dict) or scorers is None
+        self.time_series = data.time_series
         self.model = model
         self.data = data
         self.name = data.dataset +"_"+ model.name
@@ -52,9 +52,9 @@ class Experiment(object):
 
     def set_metric_scorer(self, attack=None) -> dict:
         if not hasattr(self, 'scorers'):
-            if is_regressor(self.model.model) == True:
+            if is_regressor(self.model.model) == True or 'sktime' in str(type(self.model.model)):
                 logging.info("Model is regressor.")
-                new_scorers = {"MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score}
+                new_scorers = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
             elif is_regressor(self.model.model) == False:
                 logging.info("Model is classifier.")
                 self.data.y_test = self.data.y_test.astype(int)
@@ -96,9 +96,9 @@ class Experiment(object):
             fit_time = end - start
             logging.info("Model training complete.")
             start = process_time_ns()
-        y_pred = self.model.model.predict(self.data.X_test)
-        end = process_time_ns()
-        pred_time = end - start
+            y_pred = self.model.model.predict(self.data.X_test)
+            end = process_time_ns()
+            pred_time = end - start
         logging.info("Length of predictions: {}".format(len(y_pred)))
         logging.info("Made predictions")
         return y_pred, (fit_time, pred_time)
@@ -124,21 +124,62 @@ class Experiment(object):
             y_pred = self.model.model.predict(self.data.X_test)
             logging.info("Made predictions")
         return y_pred (fit_pred_time)
-
+    
+    def _build_time_series_model(self) -> dict:
+        from sktime.forecasting.base import ForecastingHorizon
+        fh = ForecastingHorizon(self.data.y_test.index, is_relative=False)
+        forecaster = self.model.model
+        
+        
+        if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
+            logging.info("Model is already fitted")
+            self.is_fitted = True
+            start = process_time_ns()
+            y_pred = forecaster.predict(fh = fh)
+            end = process_time_ns()
+            fit_time = np.nan
+            pred_time = end - start
+        else:
+            logging.info("Fitting model")
+            logging.info("X_train shape: {}".format(self.data.X_train.shape))
+            logging.info("y_train shape: {}".format(self.data.y_train.shape))
+            start = process_time_ns()
+            forecaster.fit(y = self.data.y_train, X = self.data.X_train, fh = fh)
+            end = process_time_ns()
+            self.is_fitted = True
+            fit_time = end - start
+            logging.info("Model training complete.")
+            start = process_time_ns()
+            y_pred = forecaster.predict(fh = fh)
+            end = process_time_ns()
+            pred_time = end - start
+        logging.info("Length of predictions: {}".format(len(y_pred)))
+        logging.info("Made predictions")
+        return y_pred, (fit_time, pred_time)
+    
+    
     def build_model(self, attack=None, defense=None) -> dict:
         logging.debug("Model type: {}".format(type(self.model.model)))
-        if self.is_supervised() == False:
+        if self.is_supervised() == False and self.time_series == False:
             self.predictions, time = self._build_unsupervised_model()
             self.time_dict = {'fit_pred_time': time[0]}
-        elif self.is_supervised() == True:
+        elif self.is_supervised() == True and self.time_series == False:
             self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
+        elif self.time_series == True:
+            self.predictions, time = self._build_time_series_model()
+            self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
+        else:
+            type_string = str(type(self.model.model))
+            raise ValueError(f"Model, {type_string}, is not a supported estimator")
         if hasattr(self.data, "post_processor"):
             if postprocessor.__dict__['apply_fit'] == True:
                 self.data.y_train = self.data.post_processor(self.data.y_train)
             if postprocessor.__dict__['apply_predict'] == True:
                 self.data.y_test = self.data.post_processor(self.data.y_test)
         return self
+    
+    
 
     def is_supervised(self)-> bool:
         """
