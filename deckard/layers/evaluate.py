@@ -43,11 +43,12 @@ if __name__ == '__main__':
     logging.info('Number of evaluated sample: {}'.format(len(experiment.data.y_test)))
     logging.info('Time per sample: {} seconds'.format(round((end - start) / len(experiment.data.y_test),3)))
     if 'ROC_AUC' in experiment.scores:
-        del experiment.scores['ROC_AUC']
+        del experiment.scores['ROC_AUC'] # ROC_AUC cannot be json serialized
     if not path.exists(args.output):
         with open(args.output, 'w') as f:
             dump(experiment.scores, f)
     else:
         with open(args.output, 'a') as f:
             dump(experiment.scores, f)
+    assert path.exists(args.output), '{} is not a valid file.'.format(args.output)
 
