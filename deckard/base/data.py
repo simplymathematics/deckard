@@ -1,10 +1,8 @@
 import logging
 import pandas as pd
 import numpy as np
-from hashlib import md5
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris, load_digits, fetch_openml
-from copy import deepcopy
+from sklearn.datasets import load_iris, load_digits
 import georinex as gr
 #TODO: Balanced test set and train set options and functions
 
@@ -114,10 +112,6 @@ class Data(object):
     def _split_data(self, X, y, test_size:float=0.2, random_state:int=0, stratify:pd.Series=None, balanced: bool = False, **kwargs) -> tuple:
         logging.debug("Splitting data")
         # split the data
-        if self.dataset != 'mnist' or 'cifar10':
-            pass
-        else:
-            raise NotImplementedError
         assert len(X) == len(y)
         assert isinstance(X, pd.DataFrame)
         assert isinstance(y, pd.Series)
@@ -131,9 +125,9 @@ class Data(object):
             logging.warning("No training set specified.")
             self.X_test, self.y_test = X, y
             self.X_train, self.y_train = np.ndarray(), np.ndarray()
+            logging.debug("Data Successfully Split.")
         assert len(self.X_train) == len(self.y_train)
         assert len(self.X_test) == len(self.y_test)
-        logging.debug("Data Successfully Split.")
         return (self)
 
 
