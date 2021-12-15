@@ -15,11 +15,14 @@ if __name__ == '__main__':
     parser.add_argument('-b' ,'--bigger_is_better', type = bool, default = True, help='whether the scorer is bigger is better')
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', default = 'f1', type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
+    parser.add_argument('--time_series', type = bool, default = False, help = "Whether to use time series")
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     model_file = args.config
     try:
          data = load_data(path.join(args.folder, args.dataset))
+         if args.time_series == True:
+             data.time_series = True
     except:
         raise ValueError("Unable to load dataset {}".format(path.join(args.folder, args.dataset)))
     assert isinstance(data, Data)

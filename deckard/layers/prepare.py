@@ -39,6 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('-folder', type = str, default = "./", help = "The folder where data will be stored")
     parser.add_argument('-config_file', type = str, default = "configs/prepare.yml", help = "The config folder to use")
     parser.add_argument('--verbosity', type = str, default = 'DEBUG', help = "The verbosity level")
+    parser.add_argument('--target', type = str, default = None, help = "The target to use")
     args = parser.parse_args()
 
     # set the verbosity level
@@ -51,5 +52,5 @@ if __name__ == "__main__":
         else:
             logging.warning(args.folder + " already exists. Overwriting data.")
     logging.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
-    
+
     dump(data, open(os.path.join(args.folder, 'data', 'data.pkl'), 'wb'))

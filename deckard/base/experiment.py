@@ -76,7 +76,7 @@ class Experiment(object):
         return self
     
     def _build_supervised_model(self) -> dict:
-        assert self.is_supervised()
+        # assert self.is_supervised()
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
             logging.info("Model is already fitted")
             self.is_fitted = True
@@ -167,15 +167,16 @@ class Experiment(object):
             self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
         elif self.time_series == True:
-            self.predictions, time = self._build_time_series_model()
+            # TODO: fix time-series pipeline compatibility, ensure that time_series data != time_series model
+            self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
         else:
             type_string = str(type(self.model.model))
             raise ValueError(f"Model, {type_string}, is not a supported estimator")
         if hasattr(self.data, "post_processor"):
-            if postprocessor.__dict__['apply_fit'] == True:
+            if self.data.postprocessor.__dict__['apply_fit'] == True:
                 self.data.y_train = self.data.post_processor(self.data.y_train)
-            if postprocessor.__dict__['apply_predict'] == True:
+            if self.data.postprocessor.__dict__['apply_predict'] == True:
                 self.data.y_test = self.data.post_processor(self.data.y_test)
         return self
     
