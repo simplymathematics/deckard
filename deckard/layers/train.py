@@ -28,20 +28,24 @@ if __name__ == '__main__':
     assert isinstance(data, Data)
     if not path.exists(args.folder):
         mkdir(args.folder)
+    # reads the config file
     model_list = parse_list_from_yml(args.config)
+    # instantiates those objects
     model_list = generate_object_list(model_list)
+    # turns lists of params into a set of permutations
     model_list = transform_params(model_list, 'model')
+    # initalizes the experiment objects using the above data and models
     exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, 'best_train')
-    flag = False
+    flag = False # does a best model exist yet?
     for exp in exp_list:
         exp.run()
-        exp.save_results(folder)
+        exp.save_results(folder) #cache all reults
         if flag == False:
             best = exp
             flag = True
         elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better:
-            best = exp
+            best = exp # only save binaries if they outperform previous models, overwriting said model
     best.save_experiment(folder)
    
