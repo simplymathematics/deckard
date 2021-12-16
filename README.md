@@ -20,7 +20,7 @@ fetches the last experiment and all binary dependencies
 ```dvc push``` I think you can figure this out.
 
 ```dvc dag show``` 
-displays the directed acyclcic graph of dependencies
+displays the directed acyclic  graph of dependencies
 
 ```dvc metrics show``` 
 show current metrics
