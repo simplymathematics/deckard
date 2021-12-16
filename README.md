@@ -30,3 +30,7 @@ shows the change in metrics between HEAD and commit.
 
 ```dvc exp run```
 run a new experiment without overwriting the last dvc metric (but will overwrite binaries on disk because you already know how to push/pull with dvc)
+
+```dvc.yaml``` specifies the pipeline, parameters, configs, etc 
+
+```dvc.lock``` a git-trackable file that links individual dependencies/metrics to things in the remote cache.
