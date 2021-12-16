@@ -32,20 +32,25 @@ if __name__ == '__main__':
     model_list = parse_list_from_yml(args.config)
     # instantiates those objects
     model_list = generate_object_list(model_list)
-    # turns lists of params into a set of permutations
+    # turns lists of params into a set of permutations where len(permutations) = len(list1) * len(list2) ... len(listn)
     model_list = transform_params(model_list, 'model')
     # initalizes the experiment objects using the above data and models
     exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, 'best_train')
     flag = False # does a best model exist yet?
-    for exp in exp_list:
+    for exp in exp_list: #iterates through each object specified in the config file, passes hyper-parameter optimization to GridSearchCV and optimizes for the default metrics. 
         exp.run()
         exp.save_results(folder) #cache all reults
         if flag == False:
             best = exp
             flag = True
-        elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better:
+        elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better: # user specified scoring function from results. 
+#             Divorcing this from the grid search optimization allows for multi-objective optimization. For example, we can select
+#             Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiatiion.
+#             accuracy as our optimization criteria during training, but choose a model based on, for example bandwidth or processor constraints later.
+#             In this way, we can have a primary and secondary objective, which is particularly useful in the context of overdetermined systmes in which
+#             multiple configurations can lead to the same failure rate but have other run-time or robustness characteristics that make one option preferable.
             best = exp # only save binaries if they outperform previous models, overwriting said model
     best.save_experiment(folder)
    
