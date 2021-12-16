@@ -1,4 +1,4 @@
-### __like tears in the rain__
+### _like tears in the rain_
 
 ```git clone {{this repo}}```  
 ```cd {{this repo}}```  
