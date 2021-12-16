@@ -46,8 +46,8 @@ if __name__ == '__main__':
             best = exp
             flag = True
         elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better: # user specified scoring function from results. 
-#             Divorcing this from the grid search optimization allows for multi-objective optimization. For example, we can select
-#             Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiatiion.
+#             Divorcing this from the grid search optimization allows for multi-objective optimization or distributed training. For example, we can select
+#             Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation.
 #             accuracy as our optimization criteria during training, but choose a model based on, for example bandwidth or processor constraints later.
 #             In this way, we can have a primary and secondary objective, which is particularly useful in the context of overdetermined systmes in which
 #             multiple configurations can lead to the same failure rate but have other run-time or robustness characteristics that make one option preferable.
