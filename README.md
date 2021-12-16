@@ -1,5 +1,3 @@
-### _like tears in the rain_
-
 ```git clone {{this repo}}```  
 ```cd {{this repo}}```  
 ```python setup.py develop```  
@@ -36,3 +34,5 @@ run a new experiment without overwriting the last dvc metric (but will overwrite
 ```dvc.yaml``` specifies the pipeline, parameters, configs, etc 
 
 ```dvc.lock``` a git-trackable file that links individual dependencies/metrics to things in the remote cache.
+
+### _like tears in the rain_, this tool is meant for bladerunners. Not intended for use by replicants.
