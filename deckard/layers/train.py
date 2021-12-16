@@ -35,6 +35,10 @@ if __name__ == '__main__':
     # turns lists of params into a set of permutations where len(permutations) = len(list1) * len(list2) ... len(listn)
     model_list = transform_params(model_list, 'model')
     # initalizes the experiment objects using the above data and models
+    # Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation, or specifying it as a model parameter in the config file
+    # Eventually, scoring will rely on the same yaml configs for the sake of consistency
+    # For now, the defaults detect whether the estimator is a classifier or a regressor, using f1 and R2 as the objective measures respectively, while reporting several other common metrics
+    # Fit and predict time are always reported (if available)s
     exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, 'best_train')
@@ -45,9 +49,9 @@ if __name__ == '__main__':
         if flag == False:
             best = exp
             flag = True
+            
         elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better: # user specified scoring function from results. 
 #             Divorcing this from the grid search optimization allows for multi-objective optimization or distributed training. For example, we can select
-#             Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation.
 #             accuracy as our optimization criteria during training, but choose a model based on, for example bandwidth or processor constraints later.
 #             In this way, we can have a primary and secondary objective, which is particularly useful in the context of overdetermined systmes in which
 #             multiple configurations can lead to the same failure rate but have other run-time or robustness characteristics that make one option preferable.
