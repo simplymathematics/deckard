@@ -35,4 +35,4 @@ run a new experiment without overwriting the last dvc metric (but will overwrite
 
 ```dvc.lock``` a git-trackable file that links individual dependencies/metrics to things in the remote cache.
 
-### _like tears in the rain_, this tool is meant for bladerunners. Not intended for use by replicants.
+### _like tears in the rain_, this tool is meant for bladerunners. NOT INTENDED FOR USE BY REPLICANTS
