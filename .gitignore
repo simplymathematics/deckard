@@ -22,7 +22,7 @@ abel/
 
 
 # egg stuff
-*deckard.egg-info/
+deckard.egg-info/
 
 # data science stuff
 *.zip
