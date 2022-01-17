@@ -18,7 +18,12 @@ abel/
 *lock*
 *dvc.lock
 *.dvc/cache/
+*.lock
+
 
 # egg stuff
 *deckard.egg-info/
 
+# data science stuff
+*.zip
+*.db
