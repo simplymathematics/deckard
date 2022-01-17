@@ -20,5 +20,5 @@ abel/
 *.dvc/cache/
 
 # egg stuff
-deckard.egg-info/
+*deckard.egg-info/
 
