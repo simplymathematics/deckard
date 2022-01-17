@@ -4,3 +4,12 @@
 *.json
 *.pkl
 *.csv
+
+# Jupyter Notebooks
+*.ipynb
+
+# Logs
+*.log
+
+# abel's stuff
+abel/
