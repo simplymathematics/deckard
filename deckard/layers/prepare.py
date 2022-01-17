@@ -12,8 +12,8 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     with open(filename, 'r') as stream:
         try:
             data_file = yaml.load(stream, Loader=LOADER)[0]
-            print(data_file)
-            print(type(data_file))
+            logging.info(data_file)
+            logging.info(type(data_file))
         except yaml.YAMLError as exc:
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
@@ -22,7 +22,7 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     params = data_file['params']
     data_name = data_file['name']
     for param, value in params.items():
-        print(param + ": " + str(value))
+        logging.info(param + ": " + str(value))
     data = Data(data_name, **params)
     assert isinstance(data, Data)
     logging.info("{} successfully parsed.".format(filename))

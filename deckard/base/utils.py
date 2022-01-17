@@ -85,27 +85,31 @@ def push_json(json_file:str, remote_folder:str, remote_host:str, remote_user:str
     logging.debug("Pushed json to remote server")
     return None
 
-def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool):
+def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:str):
         """
         Save the best experiment only.
         folder: the folder to save the experiment
         exp_list: the list of experiments
         scorer: the scorer to use
         bigger_is_better: if True, the best experiment is the one with the highest score, otherwise the best is the one with the lowest score
+        name: the name of the experiment
         """
-        folder = os.path.join(folder, 'best_preprocess')
+        new_folder = os.path.join(folder, 'best_'+name)
+        if not os.path.isdir(new_folder):
+            os.mkdir(new_folder)
         flag = False
         for exp in exp_list:
             exp.run()
-            exp.save_results(folder)
+            exp.save_results(new_folder)
             if flag == False:
                 best = exp
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
-        best.save_experiment(folder)
+        best.save_experiment(new_folder)
+        best.save_results(new_folder)
 
-def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool):
+def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:str):
         """
         Save all experiments.
         folder: the folder to save the experiments
@@ -113,15 +117,22 @@ def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool):
         scorer: the scorer to use
         bigger_is_better: if True, the best experiment is the one with the highest score, otherwise the best is the one with the lowest score
         """
-        folder = os.path.join(folder, 'best_preprocess')
+        new_folder = os.path.join(folder, 'best_'+name)
+        if not os.path.isdir(new_folder):
+            os.mkdir(new_folder)
+            logging.info("Created folder: " + new_folder)
         flag = False
         for exp in exp_list:
             exp.run()
-            exp.save_results(os.path.join(folder, exp.filename))
-            exp.save_experiment(os.path.join(folder, exp.filename))
+            if not os.path.isdir(os.path.join(new_folder, exp.filename)):
+                os.mkdir(os.path.join(new_folder, exp.filename))
+                logging.info("Created folder: " + os.path.join(new_folder, exp.filename))
+            exp.save_results(os.path.join(new_folder, exp.filename))
+            exp.save_experiment(os.path.join(new_folder, exp.filename))
             if flag == False:
                 best = exp
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
-        best.save_experiment(folder)
+        best.save_experiment(new_folder)
+        best.save_results(new_folder)

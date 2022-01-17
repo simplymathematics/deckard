@@ -15,8 +15,9 @@ if __name__ == '__main__':
     parser.add_argument('-b' ,'--bigger_is_better', type = bool, default = True, help='whether the scorer is bigger is better')
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', default = 'f1', type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
-    parser.add_argument('--best', type=bool, default = "True", help='only store the best model')
+    parser.add_argument('--best', type=bool, default = False, help='only store the best model')
     parser.add_argument('--time_series', type = bool, default = False, help = "Whether to use time series")
+    parser.add_argument('--name', type=str, default = "train", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     model_file = args.config
@@ -42,10 +43,9 @@ if __name__ == '__main__':
     # Fit and predict time are always reported (if available)s
     exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
-    folder = path.join(args.folder, 'best_train')
-    
+   
     if args.best:
-        save_best_only(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better)
+        save_best_only(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
     else:
-        save_all(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better)
+        save_all(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
    

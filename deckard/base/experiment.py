@@ -289,8 +289,7 @@ if __name__ == '__main__':
     data = Data('iris')
     experiment = Experiment(model=model, data=Data())
     scores = experiment.run()
-    print(scores)
-
+    #logging.info(scores)
     # # Validate experiment object
     sys.exit(0)
     

@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
     parser.add_argument('--target', type=str, required = True, help='Target string.')
+    parser.add_argument('--experiment', type=str, required = True, help='Experiment string.')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
@@ -29,15 +30,13 @@ if __name__ == '__main__':
         data = load_data(path.join(args.folder, args.data))
     else:
         raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
-    model = load_experiment(path.join(args.folder, 'best_features', 'experiment.pkl')).model
+    model = load_experiment(path.join(args.folder, args.experiment, 'experiment.pkl')).model
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
     data = Data(args.data, test_size=1, target = args.target)
-    print(set(data.y_test))
     experiment = Experiment(data = data, model = model)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
     experiment.run()
-    print(experiment.scores)
     end = process_time()
     logging.info('Evaluation took {} seconds.'.format(end - start))
     logging.info('Number of evaluated sample: {}'.format(len(experiment.data.y_test)))

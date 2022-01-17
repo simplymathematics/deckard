@@ -72,7 +72,6 @@ if __name__ == "__main__":
                         json_data = read_json(file)
                         logging.info("Type of json_data: {}".format(type(json_data)))
                         # add results to database
-                        print(json_data)
                         try:
                             append_results_to_database(db = db, collection = collection_name, results = {identifier:json_data})
                         except:
