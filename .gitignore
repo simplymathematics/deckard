@@ -27,3 +27,4 @@ deckard.egg-info/
 # data science stuff
 *.zip
 *.db
+*.csv

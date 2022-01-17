@@ -1,6 +1,6 @@
 
 from deckard.base.data import Data
-from deckard.base.utils import save_data
+from pickle import dump
 import logging, os, yaml
 
 
@@ -15,8 +15,6 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     with open(filename, 'r') as stream:
         try:
             data_file = yaml.load(stream, Loader=LOADER)[0]
-            print(data_file)
-            print(type(data_file))
         except yaml.YAMLError as exc:
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
@@ -24,8 +22,6 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
         raise ValueError("Error parsing yml file {}. It must be a yaml dictionary.".format(filename))
     params = data_file['params']
     data_name = data_file['name']
-    for param, value in params.items():
-        print(param + ": " + str(value))
     data = Data(data_name, **params)
     assert isinstance(data, Data)
     logging.info("{} successfully parsed.".format(filename))
@@ -54,4 +50,4 @@ if __name__ == "__main__":
         else:
             logging.warning(args.folder + " already exists. Overwriting data.")
     logging.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
-    save_data(data, data_file='data.pkl', folder = os.path.join(args.folder, 'data'))
+    dump(data, data_file='data.pkl', folder = os.path.join(args.folder, 'data'))

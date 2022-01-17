@@ -76,7 +76,7 @@ class Experiment(object):
         return self
     
     def _build_supervised_model(self) -> dict:
-        assert self.is_supervised()
+        # assert self.is_supervised()
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
             logging.info("Model is already fitted")
             self.is_fitted = True
@@ -167,7 +167,8 @@ class Experiment(object):
             self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
         elif self.time_series == True:
-            self.predictions, time = self._build_time_series_model()
+            # TODO: fix time-series pipeline compatibility, ensure that time_series data != time_series model
+            self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
         else:
             type_string = str(type(self.model.model))

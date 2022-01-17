@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris, load_digits
 import georinex as gr
 #TODO: Balanced test set and train set options and functions
+from pickle import load
 
 class Data(object):
     """
@@ -34,43 +35,47 @@ class Data(object):
         logging.info("Preparing %s data", dataset)
         # lowercase filename
         # load the data
-        if dataset.lower() == 'iris':
-            data = load_iris()
-            self.dataset = dataset
-        # check if file exists and is a csv
-        elif dataset.lower() == 'mnist':
-            data = load_digits()
-            self.dataset = dataset
-        elif dataset.endswith('.csv'):
-            df = pd.read_csv(dataset)
-            if self.target is None:
-                logging.warning("Target not specified. Assuming last column is the target column.")
-                input = df.iloc[:,:-1]
-                target = df.iloc[:,-1]
-            else:
-                logging.info("Target specified: %s", self.target)
-                target = df.pop(self.target)
-                input = df
-            data = {'data': input, 'target': target}
-            self.dataset = dataset
+        if isinstance(dataset, str) and not dataset.endswith(".pkl"):
+            if dataset.lower() == 'iris':
+                data = load_iris()
+                self.dataset = dataset
+            # check if file exists and is a csv
+            elif dataset.lower() == 'mnist':
+                data = load_digits()
+                self.dataset = dataset
+            elif dataset.endswith('.csv'):
+                df = pd.read_csv(dataset)
+                if self.target is None:
+                    logging.warning("Target not specified. Assuming last column is the target column.")
+                    input = df.iloc[:,:-1]
+                    target = df.iloc[:,-1]
+                else:
+                    logging.info("Target specified: %s", self.target)
+                    target = df.pop(self.target)
+                    input = df
+                data = {'data': input, 'target': target}
+                self.dataset = dataset
+            logging.info("Loaded %s data" % dataset)
+            # log the type of data
+            # check if data is a dict
+            assert isinstance(data, dict)
+            assert isinstance(data['data'], object)
+            assert isinstance(data['target'], object)
+            # log data shape
+            logging.debug("Data shape: %s" % str(data['data'].shape))
+            logging.debug("Target shape: %s" % str(data['target'].shape))
+            if self.flatten == True:
+                logging.debug("Flattening dataset.")
+                data = self._flatten_dataset(data)
+            new_X, new_y = self._sample_data(data)
+            self = self._split_data(new_X, new_y)
+        elif isinstance(dataset, str) and not dataset.endswith('.pkl'):
+            self = load(dataset)
         else:
-            raise ValueError("%s dataset not supported" % dataset)
-        logging.info("Loaded %s data" % dataset)
-        # log the type of data
-        # check if data is a dict
-        assert isinstance(data, dict)
-        assert isinstance(data['data'], object)
-        assert isinstance(data['target'], object)
-        # log data shape
-        logging.debug("Data shape: %s" % str(data['data'].shape))
-        logging.debug("Target shape: %s" % str(data['target'].shape))
-        if self.flatten == True:
-            logging.debug("Flattening dataset.")
-            data = self._flatten_dataset(data)
-        new_X, new_y = self._sample_data(data)
-        self = self._split_data(new_X, new_y)
-        return (self.X_train, self.y_train, self.X_test, self.y_test)
+            raise ValueError("%s dataset not supported. You must pass a path to a csv." % dataset)
 
+        return (self.X_train, self.y_train, self.X_test, self.y_test)
+        
     def _flatten_dataset(self, data, **kwargs):
         X = data['data']
         y = data['target']
