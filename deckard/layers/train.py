@@ -3,7 +3,7 @@
 if __name__ == '__main__':
     import logging
     from deckard.base import Data
-    from deckard.base.utils import load_data, return_result
+    from deckard.base.utils import load_data, save_all, save_best_only
     from deckard.base import Data
     from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params, generate_experiment_list
     from os import path, mkdir
@@ -15,6 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('-b' ,'--bigger_is_better', type = bool, default = True, help='whether the scorer is bigger is better')
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', default = 'f1', type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
+    parser.add_argument('--best', type=bool, default = "True", help='only store the best model')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     model_file = args.config
@@ -31,14 +32,9 @@ if __name__ == '__main__':
     exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, 'best_train')
-    flag = False
-    for exp in exp_list:
-        exp.run()
-        exp.save_results(folder)
-        if flag == False:
-            best = exp
-            flag = True
-        elif exp.scores[scorer] >= best.scores[scorer] and args.bigger_is_better:
-            best = exp
-    best.save_experiment(folder)
+    
+    if args.best:
+        save_best_only(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better)
+    else:
+        save_all(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better)
    

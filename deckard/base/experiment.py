@@ -58,7 +58,7 @@ class Experiment(object):
             elif is_regressor(self.model.model) == False:
                 logging.info("Model is classifier.")
                 self.data.y_test = self.data.y_test.astype(int)
-                new_scorers = {'F1' : f1_score, 'Balanced Accuracy' : balanced_accuracy_score, 'Accuracy' : accuracy_score, 'Precision' : precision_score, 'Recall' : recall_score,'ROC_AUC': roc_curve}
+                new_scorers = {'F1' : f1_score, 'BALACC' : balanced_accuracy_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_curve}
             else:
                 raise ValueError("Model is not estimator")
         elif len(list(self.scorers)) == 1:
@@ -172,11 +172,6 @@ class Experiment(object):
         else:
             type_string = str(type(self.model.model))
             raise ValueError(f"Model, {type_string}, is not a supported estimator")
-        if hasattr(self.data, "post_processor"):
-            if postprocessor.__dict__['apply_fit'] == True:
-                self.data.y_train = self.data.post_processor(self.data.y_train)
-            if postprocessor.__dict__['apply_predict'] == True:
-                self.data.y_test = self.data.post_processor(self.data.y_test)
         return self
     
     

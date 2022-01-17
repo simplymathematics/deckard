@@ -53,3 +53,4 @@ if __name__ == "__main__":
     logging.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
     
     dump(data, open(os.path.join(args.folder, 'data', 'data.pkl'), 'wb'))
+    logging.info("Data successfully saved.")

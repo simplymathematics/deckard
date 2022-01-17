@@ -13,3 +13,11 @@
 
 # abel's stuff
 abel/
+
+# dvc nonsense
+*lock*
+*dvc.lock
+
+# egg stuff
+*.egg-info/
+
