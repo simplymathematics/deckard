@@ -1,15 +1,14 @@
 stages:
   prepare:
     cmd: 
-      - python ../../deckard/layers/prepare.py  -d 'lat.csv' --target lat
+      - python ../../deckard/layers/prepare.py  -d 'mnist'
     deps: 
       - configs/prepare.yml
       - ../../deckard/base/data.py
-      - parsed/lat.csv
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../../deckard/layers/train.py  -f data -s mse -b False --name train
+    cmd: python ../../deckard/layers/train.py  -f data -s f1 -b False --name train
     deps:
     - ../../deckard/base/utils.py
     - configs/model.yml
@@ -27,7 +26,7 @@ stages:
     - data/best_train/results.json:
         cache: true
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name preprocess --experiment best_train
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name preprocess --experiment best_train
     deps:
     - configs/preprocess.yml
     - ../../deckard/layers/preprocess.py
@@ -43,7 +42,7 @@ stages:
     - data/best_preprocess/results.json:
         cache: true
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name featurize --experiment best_preprocess
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name featurize --experiment best_preprocess
     deps:
     - configs/featurize.yml
     - ../../deckard/layers/preprocess.py
@@ -56,13 +55,13 @@ stages:
     - data/best_featurize/model_params.json:
         cache: true
     metrics:
-    - data/best_features/results.json:
+    - data/best_featurize/results.json:
         cache: true
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize
+    cmd: python ../../deckard/layers/evaluate.py -f data -s f1 -d mnist --experiment best_featurize
     deps: 
       - data/best_featurize/experiment.pkl
-      - ./parsed/long.csv
+
 
 
 

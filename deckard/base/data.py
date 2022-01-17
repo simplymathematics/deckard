@@ -42,6 +42,7 @@ class Data(object):
             # check if file exists and is a csv
             elif dataset.lower() == 'mnist':
                 data = load_digits()
+                self.flatten = True
                 self.dataset = dataset
             elif dataset.endswith('.csv'):
                 df = pd.read_csv(dataset)
@@ -55,6 +56,8 @@ class Data(object):
                     input = df
                 data = {'data': input, 'target': target}
                 self.dataset = dataset
+            else:
+                raise ValueError("Dataset must be either 'iris', 'mnist', or a csv file")
             logging.info("Loaded %s data" % dataset)
             # log the type of data
             # check if data is a dict
@@ -64,6 +67,7 @@ class Data(object):
             # log data shape
             logging.debug("Data shape: %s" % str(data['data'].shape))
             logging.debug("Target shape: %s" % str(data['target'].shape))
+            logging.debug("Target Set: {}".format(set(data['target'])))
             if self.flatten == True:
                 logging.debug("Flattening dataset.")
                 data = self._flatten_dataset(data)
@@ -73,7 +77,6 @@ class Data(object):
             self = load(dataset)
         else:
             raise ValueError("%s dataset not supported. You must pass a path to a csv." % dataset)
-
         return (self.X_train, self.y_train, self.X_test, self.y_test)
         
     def _flatten_dataset(self, data, **kwargs):

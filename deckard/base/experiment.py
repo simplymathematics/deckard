@@ -50,7 +50,7 @@ class Experiment(object):
     def __eq__(self, other) -> bool:
         return self.__hash__() == other.__hash__()
 
-    def set_metric_scorer(self, attack=None) -> dict:
+    def set_metric_scorer(self) -> dict:
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True or 'sktime' in str(type(self.model.model)):
                 logging.info("Model is regressor.")
@@ -61,7 +61,7 @@ class Experiment(object):
                 new_scorers = {'F1' : f1_score, 'BALACC' : balanced_accuracy_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_curve}
             else:
                 raise ValueError("Model is not estimator")
-        elif len(list(self.scorers)) == 1:
+        elif len(list(self.scorers)) == 1: # If there's only one scorer, we verify and use it
             assert isinstance(list(self.scorers)[0], str)
             assert isinstance(list(self.values)[0], callable)
             new_scorers = self.scorers
@@ -192,27 +192,30 @@ class Experiment(object):
         return result
 
 
-    def run(self, scorer = None, defense = None, attack = None) -> dict:
-        self.set_metric_scorer(attack = attack)
-        self.build_model(attack = attack, defense = defense)
-        scores = self.evaluate(attack = attack, defense = defense)
+    def run(self, scorer = None, defense = None, ) -> dict:
+        self.set_metric_scorer()
+        self.build_model(defense = defense)
+        scores = self.evaluate(defense = defense)
         scores.update(self.time_dict)
         scores.update({'Name': self.name})
         scores.update({'id_': self.filename})
         self.scores = scores
 
-    def evaluate(self, scorers = None, attack = None, defense = None) -> dict:
+    def evaluate(self, scorers = None,  defense = None) -> dict:
         if scorers is None:
-            self.set_metric_scorer(attack = attack)
+            self.set_metric_scorer()
         scores = {}
         for scorer in self.scorers:
             logging.info("Scoring with {}".format(scorer))
-            if scorer in ['F1', 'Recall', 'Precision']:
+            if scorer in ['F1', 'REC', 'PREC']:
                 average = 'weighted'
                 scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
-            elif scorer in ['ROC-AUC']: # deals with multiclass class inbalance
-                average = 'macro'
-                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average = average, multi_class = 'ovo')
+            elif scorer in ['AUC']: 
+                try:
+                    scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
+                except ValueError:
+                    scores[scorer] = np.nan
+                    logging.warning("AUC score not available for this model")
             else:
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
             logging.info("Score : {}".format(scores[scorer]))
@@ -239,7 +242,7 @@ class Experiment(object):
             cv_results.to_json(cv_file)
         logging.info("Results:{}".format(results))
         logging.info("Data Params: {}".format(data_params))
-        logging.info("Model Params: {}".format(model_params))
+        # logging.debug("Model Params: {}".format(model_params))
         results.to_json(score_file)
         data_params.to_json(data_file)
         model_params.to_json(model_file)

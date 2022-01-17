@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, help='Output file.', default = 'results.json')
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
-    parser.add_argument('--target', type=str, required = True, help='Target string.')
+    parser.add_argument('--target', type=str, default = None, help='Target string.')
     parser.add_argument('--experiment', type=str, required = True, help='Experiment string.')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)

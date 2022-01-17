@@ -106,8 +106,11 @@ def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool,
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
+        
         best.save_experiment(new_folder)
         best.save_results(new_folder)
+        logging.info("Saved best experiment")
+        logging.info("Best score: {}".format(best.scores[scorer]))
 
 def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:str):
         """
@@ -134,5 +137,8 @@ def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
+        
         best.save_experiment(new_folder)
         best.save_results(new_folder)
+        logging.info("Saved best experiment")
+        logging.info("Best score: {}".format(best.scores[scorer]))

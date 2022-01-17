@@ -15,8 +15,8 @@
 abel/
 
 # dvc nonsense
-*.dvc/cache/
-*.dvc/cache/*
+*/.dvc/cache/
+*/.dvc/cache/*
 
 
 
@@ -28,3 +28,4 @@ deckard.egg-info/*
 *.db
 *.csv
 examples/car data/dvc.lock
+examples/car data/.dvc/cache/*

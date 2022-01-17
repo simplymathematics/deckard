@@ -5,4 +5,3 @@ from .train import *
 from .prepare import *
 # from .mnist_gan import *
 # from .mnist_resnet import *
-from .featurize import *
