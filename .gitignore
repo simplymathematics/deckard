@@ -15,10 +15,9 @@
 abel/
 
 # dvc nonsense
-*lock*
-*dvc.lock
 *.dvc/cache/
-*.lock
+*.dvc/cache/*
+
 
 
 # egg stuff

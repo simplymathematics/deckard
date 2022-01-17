@@ -49,18 +49,18 @@ stages:
     - ../../deckard/layers/featurize.py
     - data/best_preprocess/experiment.pkl
     outs:
-    - data/best_features/experiment.pkl
-    - data/best_features/data_params.json:
+    - data/best_featurize/experiment.pkl
+    - data/best_featurize/data_params.json:
         cache: true
-    - data/best_features/model_params.json:
+    - data/best_featurize/model_params.json:
         cache: true
     metrics:
-    - data/best_features/results.json:
+    - data/best_featurize/results.json:
         cache: true
   # evaluate:
   #   cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv"
   #   deps: 
-  #     - data/best_features/experiment.pkl
+  #     - data/best_featurize/experiment.pkl
   #     - ./parsed/long.csv
 
 
