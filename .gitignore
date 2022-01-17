@@ -28,3 +28,4 @@ deckard.egg-info/*
 *.zip
 *.db
 *.csv
+examples/car data/dvc.lock
