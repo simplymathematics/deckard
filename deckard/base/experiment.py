@@ -12,7 +12,11 @@ from sklearn.base import is_regressor
 from pandas import Series
 from os import path, mkdir
 from pickle import dump
+logger = logging.getLogger(__name__)
+
 # Create experiment object
+
+
 class Experiment(object):
     """
     Creates an experiment object
@@ -69,10 +73,10 @@ class Experiment(object):
         """
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True or 'sktime' in str(type(self.model.model)):
-                logging.info("Model is regressor.")
+                logger.info("Model is regressor.")
                 new_scorers = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
             elif is_regressor(self.model.model) == False:
-                logging.info("Model is classifier.")
+                logger.info("Model is classifier.")
                 self.data.y_test = self.data.y_test.astype(int)
                 new_scorers = {'F1' : f1_score, 'BALACC' : balanced_accuracy_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_curve}
             else:
@@ -100,7 +104,7 @@ class Experiment(object):
         """
         # assert self.is_supervised()
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
-            logging.info("Model is already fitted")
+            logger.info("Model is already fitted")
             self.is_fitted = True
             start = process_time_ns()
             y_pred = self.model.predict(self.data.X_test)
@@ -108,21 +112,21 @@ class Experiment(object):
             fit_time = np.nan
             pred_time = end - start
         else:
-            logging.info("Fitting model")
-            logging.info("X_train shape: {}".format(self.data.X_train.shape))
-            logging.info("y_train shape: {}".format(self.data.y_train.shape))
+            logger.info("Fitting model")
+            logger.info("X_train shape: {}".format(self.data.X_train.shape))
+            logger.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
             self.model.model.fit(X = self.data.X_train, y =self.data.y_train)
             end = process_time_ns()
             self.is_fitted = True
             fit_time = end - start
-            logging.info("Model training complete.")
+            logger.info("Model training complete.")
             start = process_time_ns()
             y_pred = self.model.model.predict(self.data.X_test)
             end = process_time_ns()
             pred_time = end - start
-        logging.info("Length of predictions: {}".format(len(y_pred)))
-        logging.info("Made predictions")
+        logger.info("Length of predictions: {}".format(len(y_pred)))
+        logger.info("Made predictions")
         return y_pred, (fit_time, pred_time)
 
     def _build_unsupervised_model(self) -> dict:
@@ -131,7 +135,7 @@ class Experiment(object):
         """
         assert not self.is_supervised()
         if hasattr(self.model, 'fit_flag') or self.is_fitted == True:
-            logging.warning("Model is already fitted")
+            logger.warning("Model is already fitted")
             start = process_time_ns()
             y_pred = self.model.model.predict(self.data.y_test)
             end = process_time_ns()
@@ -139,15 +143,15 @@ class Experiment(object):
             self.is_fitted = True
             assert self.data.y_pred.shape == self.data.y_test.shape, "model appears to be fitted, but something went wrong."
         else:
-            logging.info("Fitting and predicting model")
-            logging.info("X_train shape: {}".format(self.data.X_train.shape))
-            logging.info("y_train shape: {}".format(self.data.y_train.shape))
+            logger.info("Fitting and predicting model")
+            logger.info("X_train shape: {}".format(self.data.X_train.shape))
+            logger.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
             self.model.model.fit_predict(X = self.data.X_train)
             end = process_time_ns()
             fit_pred_time = end - start
             y_pred = self.model.model.predict(self.data.X_test)
-            logging.info("Made predictions")
+            logger.info("Made predictions")
         return y_pred (fit_pred_time)
     
     def _build_time_series_model(self) -> dict:
@@ -158,7 +162,7 @@ class Experiment(object):
         fh = ForecastingHorizon(self.data.y_test.index, is_relative=False)
         forecaster = self.model.model        
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
-            logging.info("Model is already fitted")
+            logger.info("Model is already fitted")
             self.is_fitted = True
             start = process_time_ns()
             y_pred = forecaster.predict(fh = fh)
@@ -166,21 +170,21 @@ class Experiment(object):
             fit_time = np.nan
             pred_time = end - start
         else:
-            logging.info("Fitting model")
-            logging.info("X_train shape: {}".format(self.data.X_train.shape))
-            logging.info("y_train shape: {}".format(self.data.y_train.shape))
+            logger.info("Fitting model")
+            logger.info("X_train shape: {}".format(self.data.X_train.shape))
+            logger.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
             forecaster.fit(y = self.data.y_train, X = self.data.X_train, fh = fh)
             end = process_time_ns()
             self.is_fitted = True
             fit_time = end - start
-            logging.info("Model training complete.")
+            logger.info("Model training complete.")
             start = process_time_ns()
             y_pred = forecaster.predict(fh = fh)
             end = process_time_ns()
             pred_time = end - start
-        logging.info("Length of predictions: {}".format(len(y_pred)))
-        logging.info("Made predictions")
+        logger.info("Length of predictions: {}".format(len(y_pred)))
+        logger.info("Made predictions")
         return y_pred, (fit_time, pred_time)
     
     
@@ -188,7 +192,7 @@ class Experiment(object):
         """
         Builds model and returns self with added time_dict and predictions attributes.
         """
-        logging.debug("Model type: {}".format(type(self.model.model)))
+        logger.debug("Model type: {}".format(type(self.model.model)))
         if self.is_supervised() == False and self.time_series == False:
             self.predictions, time = self._build_unsupervised_model()
             self.time_dict = {'fit_pred_time': time[0]}
@@ -212,10 +216,10 @@ class Experiment(object):
         """
         if hasattr(self.model.model, 'fit_predict'):
             result = False
-            logging.info("Model is unsupervised")
+            logger.info("Model is unsupervised")
         elif hasattr(self.model.model, 'fit') and not hasattr(self.model.model, 'fit_predict'):
             result = True
-            logging.info("Model is supervised")
+            logger.info("Model is supervised")
         else:
             raise ValueError("Model is not regressor or classifier")
         return result
@@ -241,7 +245,7 @@ class Experiment(object):
             self.set_metric_scorer()
         scores = {}
         for scorer in self.scorers:
-            logging.info("Scoring with {}".format(scorer))
+            logger.info("Scoring with {}".format(scorer))
             if scorer in ['F1', 'REC', 'PREC']:
                 average = 'weighted'
                 scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
@@ -250,10 +254,10 @@ class Experiment(object):
                     scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
                 except ValueError:
                     scores[scorer] = np.nan
-                    logging.warning("AUC score not available for this model")
+                    logger.warning("AUC score not available for this model")
             else:
                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
-            logging.info("Score : {}".format(scores[scorer]))
+            logger.info("Score : {}".format(scores[scorer]))
         return scores
 
     def save_results(self, score_file:str = "results.json", data_file:str = "data_params.json", model_file:str = "model_params.json", folder:str = ".") -> None:
@@ -269,7 +273,7 @@ class Experiment(object):
             # set permissions
             from os import chmod
             chmod(folder, 0o770)
-        logging.debug("Saving results")
+        logger.debug("Saving results")
         results = self.scores
         score_file = path.join(folder, score_file)
         data_file = path.join(folder, data_file)
@@ -285,16 +289,16 @@ class Experiment(object):
             cv_file = path.join(folder, f"{self.filename}_cv_results.json")
             cv_results = Series(self.model.model.cv_results_, name = self.filename)
             cv_results.to_json(cv_file)
-        logging.info("Results:{}".format(results))
-        logging.info("Data Params: {}".format(data_params))
-        # logging.debug("Model Params: {}".format(model_params))
+        logger.info("Results:{}".format(results))
+        logger.info("Data Params: {}".format(data_params))
+        # logger.debug("Model Params: {}".format(model_params))
         results.to_json(score_file)
         data_params.to_json(data_file)
         model_params.to_json(model_file)
         assert path.exists(score_file), "Saving results unsuccessful"
         assert path.exists(data_file), "Saving data_params unsuccessful"
         assert path.exists(model_file), "Saving model_params unsuccessful"
-        logging.info("Saved results.")
+        logger.info("Saved results.")
         return None
 
     def save_experiment(self, name:str = "experiment.pkl",  folder:str = ".") -> None:
@@ -308,7 +312,7 @@ class Experiment(object):
         exp_file = path.join(folder, name)
         dump(self, open(exp_file, "wb"))
         assert path.exists(exp_file), "Saving experiment unsuccessful"
-        logging.info("Saved experiment to {}".format(exp_file))
+        logger.info("Saved experiment to {}".format(exp_file))
         return None
 
     def save_model(self, name:str = "model.pkl", folder:str = ".") -> None:
@@ -322,7 +326,7 @@ class Experiment(object):
         model_file = path.join(folder, name)
         dump(self.model, open(model_file, "wb"))
         assert path.exists(model_file), "Saving model unsuccessful"
-        logging.info("Saved model to {}".format(model_file))
+        logger.info("Saved model to {}".format(model_file))
         return None
 
     def save_data(self, name:str = "data.pkl", folder:str = ".") -> None:
@@ -336,13 +340,13 @@ class Experiment(object):
         data_file = path.join(folder, name)
         dump(self.data, open(data_file, "wb"))
         assert path.exists(data_file), "Saving data unsuccessful"
-        logging.info("Saved data")
+        logger.info("Saved data")
         return None
 
 if __name__ == '__main__':
     # set up logging
     import sys
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logger.DEBUG)
     # Create experiment object
     from sklearn.preprocessing import StandardScaler
     # import linear regression
@@ -352,7 +356,7 @@ if __name__ == '__main__':
     data = Data('iris')
     experiment = Experiment(model=model, data=Data())
     scores = experiment.run()
-    #logging.info(scores)
+    #logger.info(scores)
     # # Validate experiment object
     sys.exit(0)
     

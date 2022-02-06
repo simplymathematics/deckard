@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator
 from hashlib import md5 as hash
 import json
 from copy import deepcopy
+logger = logging.getLogger(__name__)
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
@@ -14,7 +15,7 @@ class Model(object):
         estimator: the estimator to use
         verbose: the verbosity level
         """
-        logging.info("Model type during init: {}".format(type(estimator)))
+        logger.info("Model type during init: {}".format(type(estimator)))
         if isinstance(estimator, (Pipeline, BaseEstimator)):
             self.params = dict(estimator.get_params(deep = True))
         else:
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     # set logging to debug
     from sklearn.model_selection import GridSearchCV
     import sys
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logger.DEBUG)
     # import standard scaler
     from sklearn.preprocessing import StandardScaler
     # import linear regression

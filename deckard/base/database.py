@@ -2,6 +2,7 @@
 import os
 # Using mongodb
 from pymongo import MongoClient
+logger = logging.getLogger(__name__)
 
 # create database
 def create_database(db_name):
@@ -39,7 +40,7 @@ def append_results_to_database(db:str, collection:str, results:list):
 def dump_database_to_file(db:str, collection:str, file:str):
     db[collection].to_csv(file)
     assert os.path.isfile(file)
-    logging.info("Database saved to {}".format(file))
+    logger.info("Database saved to {}".format(file))
 
 if __name__ == "__main__":
     # arg parser
@@ -54,23 +55,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
     db = create_database(args.database)
     #log working directory
-    logging.info("Working directory: %s", os.getcwd())
+    logger.info("Working directory: %s", os.getcwd())
     #log args
-    logging.info("Arguments: %s", args)
+    logger.info("Arguments: %s", args)
     collection_names = []
     for folder in parse_folders_from_folder(args.folder):
         if "all_" in folder:
-            logging.info("Parsing folder: {}".format(folder))
+            logger.info("Parsing folder: {}".format(folder))
             for folder in parse_folders_from_folder(folder):    
                 for file in parse_files_from_folder(folder):
                     if file.endswith(".json"):
                         collection_name = file.split(".")[0].split("\\")[-1]
                         identifier = file.split(".")[0].split("\\")[-2]
                         collection_names.append(collection_name)
-                        logging.info("Adding results from %s to %s", file, collection_name)
+                        logger.info("Adding results from %s to %s", file, collection_name)
                         from pandas import read_json
                         json_data = read_json(file)
-                        logging.info("Type of json_data: {}".format(type(json_data)))
+                        logger.info("Type of json_data: {}".format(type(json_data)))
                         # add results to database
                         try:
                             append_results_to_database(db = db, collection = collection_name, results = {identifier:json_data})
@@ -80,14 +81,14 @@ if __name__ == "__main__":
                         # delete file
                         os.remove(file)
                     else:
-                        logging.info("Skipping file: %s", file)
+                        logger.info("Skipping file: %s", file)
         else:
-            logging.info("Skipping folder: %s", folder)
+            logger.info("Skipping folder: %s", folder)
     # dump database to file
     collection_names = list(set(collection_names))
-    logging.info("Collections: {}".format(collection_names))
+    logger.info("Collections: {}".format(collection_names))
     for collection_name in collection_names:
         # log working directory
-        logging.info("Working directory: %s", os.getcwd())
-        logging.info("Dumping results from %s to %s", collection_name, collection_name + ".csv")
+        logger.info("Working directory: %s", os.getcwd())
+        logger.info("Dumping results from %s to %s", collection_name, collection_name + ".csv")
         dump_database_to_file(db, collection_name, collection_name + ".csv")

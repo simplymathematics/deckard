@@ -19,12 +19,13 @@ import logging
 import matplotlib.pyplot as plt
 from tensorflow.python.ops.nn_impl import normalize
 # image display function
+logger = logging.getLogger(__name__)
 
 def load_data(dataset = 'mnist') -> tuple:
     """
     load mnist data
     """
-    logging.info("loading data")
+    logger.info("loading data")
     if dataset != 'mnist':
         raise NotImplementedError
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -58,7 +59,7 @@ def build_discriminator(input_shape:tuple, latent_dim = 100) -> Model:
     """
     build discriminator
     """
-    logging.info("building discriminator")
+    logger.info("building discriminator")
     model = Sequential()
     model.add(Flatten(input_shape=latent_dim))
     model.add(Dense(512))
@@ -73,7 +74,7 @@ def build_generator(input_shape:int) -> Model:
     """
     build generator
     """
-    logging.info("building generator")
+    logger.info("building generator")
     model = Sequential()
     model.add(Dense(256, input_dim=100))
     model.add(LeakyReLU(alpha=0.2))
@@ -93,7 +94,7 @@ def build_gan(generator:Model, discriminator:Model) -> Model:
     """
     build gan
     """
-    logging.info("building gan")
+    logger.info("building gan")
     # define gan
     gan_input = Input(shape=(100,))
     # connect gan input to generator's output
@@ -109,7 +110,7 @@ def train_gan(generator:Model, discriminator:Model, gan:Model, x_train:np.ndarra
     """
     train gan
     """
-    logging.info("training gan")
+    logger.info("training gan")
     # compile models
     generator.compile(loss=loss, optimizer=optimizer)
     discriminator.compile(loss=loss, optimizer=optimizer)
@@ -141,9 +142,9 @@ def train_gan(generator:Model, discriminator:Model, gan:Model, x_train:np.ndarra
         # log loss values
         d_loss_list.append(discriminator_loss)
         g_loss_list.append(generator_loss)
-        logging.info("Epoch: {}/{}".format(str(epoch + 1), epochs))
-        logging.info("discriminator loss: {}".format(discriminator_loss))
-        logging.info("generator loss: {}".format(generator_loss))
+        logger.info("Epoch: {}/{}".format(str(epoch + 1), epochs))
+        logger.info("discriminator loss: {}".format(discriminator_loss))
+        logger.info("generator loss: {}".format(generator_loss))
         # # sample images
         # if epoch % sample_interval == 0 or epoch == epochs - 1:
         #     assert save_array_as_image(fake_images, epoch, save_dir)
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('--save-dir', type=str, default=None, help='save directory')
     parser.add_argument('--loss', type=str, default='binary_crossentropy', help='loss function')
     parser.add_argument('--optimizer', type=str, default='adam', help='optimizer')
-    parser.add_argument('--verbose', type=int, default=logging.INFO, help='verbose')
+    parser.add_argument('--verbose', type=int, default=logger.INFO, help='verbose')
     parser.add_argument('--dataset', type=str, default='mnist', help='dataset')
 
     # parse command line arguments

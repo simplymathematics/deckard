@@ -7,6 +7,8 @@ import georinex as gr
 #TODO: Balanced test set and train set options and functions
 from pickle import load
 
+logger = logging.getLogger(__name__)
+
 class Data(object):
     def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = False,  **kwargs):
         """
@@ -51,7 +53,7 @@ class Data(object):
         :return:
         """
         import os
-        logging.info("Preparing %s data", dataset)
+        logger.info("Preparing %s data", dataset)
         # lowercase filename
         # load the data
         if isinstance(dataset, str) and not dataset.endswith(".pkl"):
@@ -66,29 +68,29 @@ class Data(object):
             elif dataset.endswith('.csv'):
                 df = pd.read_csv(dataset)
                 if self.target is None:
-                    logging.warning("Target not specified. Assuming last column is the target column.")
+                    logger.warning("Target not specified. Assuming last column is the target column.")
                     input = df.iloc[:,:-1]
                     target = df.iloc[:,-1]
                 else:
-                    logging.info("Target specified: %s", self.target)
+                    logger.info("Target specified: %s", self.target)
                     target = df.pop(self.target)
                     input = df
                 data = {'data': input, 'target': target}
                 self.dataset = dataset
             else:
                 raise ValueError("Dataset must be either 'iris', 'mnist', or a csv file")
-            logging.info("Loaded %s data" % dataset)
+            logger.info("Loaded %s data" % dataset)
             # log the type of data
             # check if data is a dict
             assert isinstance(data, dict)
             assert isinstance(data['data'], object)
             assert isinstance(data['target'], object)
             # log data shape
-            logging.debug("Data shape: %s" % str(data['data'].shape))
-            logging.debug("Target shape: %s" % str(data['target'].shape))
-            #logging.debug("Target Set: {}".format(set(data['target'])))
+            logger.debug("Data shape: %s" % str(data['data'].shape))
+            logger.debug("Target shape: %s" % str(data['target'].shape))
+            #logger.debug("Target Set: {}".format(set(data['target'])))
             if self.flatten == True:
-                logging.debug("Flattening dataset.")
+                logger.debug("Flattening dataset.")
                 data = self._flatten_dataset(data)
             new_X, new_y = self._sample_data(data, **kwargs)
             self = self._split_data(new_X, new_y)
@@ -106,10 +108,10 @@ class Data(object):
         """
         X = data['data']
         y = data['target']
-        logging.debug("X type: %s" % str(type(X)))
-        logging.debug("y type: %s" % str(type(y)))
-        logging.debug("X shape: %s" % str(X.shape))
-        logging.debug("y shape: %s" % str(y.shape))
+        logger.debug("X type: %s" % str(type(X)))
+        logger.debug("y type: %s" % str(type(y)))
+        logger.debug("X shape: %s" % str(X.shape))
+        logger.debug("y shape: %s" % str(y.shape))
         try:
             X = X.values.reshape(X.shape[0], -1)
         except AttributeError:
@@ -118,7 +120,7 @@ class Data(object):
         assert isinstance(data, dict)
         assert isinstance(data['data'], object)
         assert isinstance(data['target'], object)
-        logging.info("Flattening succesful")
+        logger.info("Flattening succesful")
         return data
 
     def _sample_data(self, data, sample_size:float = 1, shuffle:bool=True, **kwargs):
@@ -129,9 +131,9 @@ class Data(object):
         :param shuffle: If True, the data is shuffled. Default is True.
         :param kwargs: passes these to the sklearn train_test_split function.
         """
-        logging.debug(str(type(data)))
-        logging.info("Sampling dataset")
-        logging.info('Sample percentage: ' + str(sample_size * 100) + '%')
+        logger.debug(str(type(data)))
+        logger.info("Sampling dataset")
+        logger.info('Sample percentage: ' + str(sample_size * 100) + '%')
         assert isinstance(data, dict)
         assert isinstance(data['data'], object)
         assert isinstance(data['target'], object)
@@ -156,22 +158,22 @@ class Data(object):
         :param random_state: The random seed to use. Default is 0.
         :param balanced: If True, the data is split into a training and testing set, and the training set is balanced.
         """
-        logging.debug("Splitting data")
+        logger.debug("Splitting data")
         # split the data
         assert len(X) == len(y)
         assert isinstance(X, pd.DataFrame)
         assert isinstance(y, pd.Series)
         y = y.ravel()
         assert len(X) == len(y)
-        logging.info("X shape split" + str(X.shape))
-        logging.info("y shape split" + str(y.shape))
+        logger.info("X shape split" + str(X.shape))
+        logger.info("y shape split" + str(y.shape))
         if test_size < 1 and self.time_series == False:
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
         elif test_size == 1 and self.time_series == False:
-            logging.warning("No training set specified.")
+            logger.warning("No training set specified.")
             self.X_test, self.y_test = X, y
             self.X_train, self.y_train = np.ndarray(), np.ndarray()
-            logging.debug("Data Successfully Split.")
+            logger.debug("Data Successfully Split.")
         elif self.time_series == True:
             from sktime.forecasting.model_selection import temporal_train_test_split
             self.y_train, self.y_test = temporal_train_test_split(y, test_size=test_size)
@@ -196,20 +198,20 @@ def validate_data(data:Data) -> None:
     assert len(data.X_train) == len(data.y_train), "Train sets not the same size"
     assert len(data.X_test)  == len(data.y_test), "Test sets not the same size"
     assert isinstance(data.params['shuffle'], bool), "Shuffle not specified"
-    logging.debug("Data type: {}".format(type(data)))
-    logging.debug("X train type: {}".format(str(type(data.X_train))))
-    logging.debug("y train type: {}".format(str(type(data.y_train))))
-    logging.debug("X test type: {}".format(str(type(data.X_test))))
-    logging.debug("y test type: {}".format(str(type(data.y_test))))
-    logging.debug("Data shape: {}".format(str(data.X_train.shape)))
-    logging.debug("Target shape: {}".format(str(data.y_train.shape)))
-    logging.debug("Data validation successful")
+    logger.debug("Data type: {}".format(type(data)))
+    logger.debug("X train type: {}".format(str(type(data.X_train))))
+    logger.debug("y train type: {}".format(str(type(data.y_train))))
+    logger.debug("X test type: {}".format(str(type(data.X_test))))
+    logger.debug("y test type: {}".format(str(type(data.y_test))))
+    logger.debug("Data shape: {}".format(str(data.X_train.shape)))
+    logger.debug("Target shape: {}".format(str(data.y_train.shape)))
+    logger.debug("Data validation successful")
     return None
 
 if __name__ == '__main__':
     import sys
-    logging.basicConfig(level=logging.DEBUG)
-    logging.info("Testing data module")
+    logging.basicConfig(level=logger.DEBUG)
+    logger.info("Testing data module")
     data = Data()
     validate_data(data)
     sys.exit(0)
