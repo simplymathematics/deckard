@@ -5,7 +5,7 @@ import logging
 from sklearn.base import is_regressor
 import uuid
 from deckard.base.model import Model
-from deckard.base.data import Data
+from deckard.base.data import Data, validate_data
 from time import process_time_ns
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
 from sklearn.base import is_regressor
@@ -18,6 +18,16 @@ class Experiment(object):
     Creates an experiment object
     """
     def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, refit = None, name:str = None):
+        """
+        Creates an experiment object
+        :param data: Data object
+        :param model: Model object
+        :param params: Dictionary of parameters
+        :param verbose: Verbosity level
+        :param scorers: Dictionary of scorers
+        :param refit: Name of scorer to refit. If none specified, first scorer is used.
+        :param name: Name of experiment
+        """
         assert isinstance(model, Model)
         assert isinstance(data, Data)
         assert isinstance(scorers, dict) or scorers is None
@@ -48,9 +58,15 @@ class Experiment(object):
         return int(hash(str(self.params)))
     
     def __eq__(self, other) -> bool:
+        """
+        Returns true if two experiments are equal
+        """
         return self.__hash__() == other.__hash__()
 
     def set_metric_scorer(self) -> dict:
+        """
+        Sets metric scorer from dictionary passed during initialization. If no scorers are passed, default is used. If no refit is specified, first scorer is used.
+        """
         if not hasattr(self, 'scorers'):
             if is_regressor(self.model.model) == True or 'sktime' in str(type(self.model.model)):
                 logging.info("Model is regressor.")
@@ -70,12 +86,18 @@ class Experiment(object):
             for score_name, scorer in self.scorers.items():
                 assert isinstance(score_name, str)
                 new_scorers[score_name] = scorer
-        self.refit = list(new_scorers.keys())[0]
+        if self.refit is not None:
+            assert self.refit in new_scorers.keys()
+        else:
+            self.refit = list(new_scorers.keys())[0]
         self.params.update({'Optimization Scorer' : self.refit})
         self.scorers = new_scorers
         return self
     
     def _build_supervised_model(self) -> dict:
+        """
+        Builds a supervised model. Returns predictions as an np.ndarray and time taken to fit and predict as dual-value tuple. 
+        """
         # assert self.is_supervised()
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
             logging.info("Model is already fitted")
@@ -104,6 +126,9 @@ class Experiment(object):
         return y_pred, (fit_time, pred_time)
 
     def _build_unsupervised_model(self) -> dict:
+        """
+        Builds unsupervised model. Returns predictions as an np.ndarray and time taken to fit/predict as single-value tuple.
+        """
         assert not self.is_supervised()
         if hasattr(self.model, 'fit_flag') or self.is_fitted == True:
             logging.warning("Model is already fitted")
@@ -126,11 +151,12 @@ class Experiment(object):
         return y_pred (fit_pred_time)
     
     def _build_time_series_model(self) -> dict:
+        """
+        Builds time series model. Returns predictions as an np.ndarray and time taken to fit and predict as -value tuple.
+        """
         from sktime.forecasting.base import ForecastingHorizon
         fh = ForecastingHorizon(self.data.y_test.index, is_relative=False)
-        forecaster = self.model.model
-        
-        
+        forecaster = self.model.model        
         if hasattr( self.model, 'fit_flag' or self.is_fitted == True):
             logging.info("Model is already fitted")
             self.is_fitted = True
@@ -158,7 +184,10 @@ class Experiment(object):
         return y_pred, (fit_time, pred_time)
     
     
-    def build_model(self, attack=None, defense=None) -> dict:
+    def build_model(self) -> dict:
+        """
+        Builds model and returns self with added time_dict and predictions attributes.
+        """
         logging.debug("Model type: {}".format(type(self.model.model)))
         if self.is_supervised() == False and self.time_series == False:
             self.predictions, time = self._build_unsupervised_model()
@@ -192,16 +221,22 @@ class Experiment(object):
         return result
 
 
-    def run(self, scorer = None, defense = None, ) -> dict:
+    def run(self) -> dict:
+        """
+        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores attribute, predictions, and time_dict attributes.
+        """
         self.set_metric_scorer()
-        self.build_model(defense = defense)
-        scores = self.evaluate(defense = defense)
+        self.build_model()
+        scores = self.evaluate()
         scores.update(self.time_dict)
         scores.update({'Name': self.name})
         scores.update({'id_': self.filename})
         self.scores = scores
 
-    def evaluate(self, scorers = None,  defense = None) -> dict:
+    def evaluate(self, scorers:dict = None) -> dict:
+        """
+        Sets scorers for evalauation if specified, returns a dict of scores in general.
+        """
         if scorers is None:
             self.set_metric_scorer()
         scores = {}
@@ -221,14 +256,24 @@ class Experiment(object):
             logging.info("Score : {}".format(scores[scorer]))
         return scores
 
-    def save_results(self, folder:str = ".") -> None:
+    def save_results(self, score_file:str = "results.json", data_file:str = "data_params.json", model_file:str = "model_params.json", folder:str = ".") -> None:
+        """
+        Saves results as json files in specified folder.
+        :param score_file: name of score file
+        :param data_file: name of data file
+        :param model_file: name of model file
+        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
+        """
         if not path.isdir(folder):
             mkdir(folder)
+            # set permissions
+            from os import chmod
+            chmod(folder, 0o770)
         logging.debug("Saving results")
         results = self.scores
-        score_file = path.join(folder, "results.json")
-        data_file = path.join(folder,"data_params.json")
-        model_file = path.join(folder, "model_params.json")
+        score_file = path.join(folder, score_file)
+        data_file = path.join(folder, data_file)
+        model_file = path.join(folder, model_file)
         results = Series(results.values(), name =  self.filename, index = results.keys())
         data_params = Series(self.data.params, name = self.filename)
         model_params = Series(self.model.params, name = self.filename)
@@ -252,28 +297,43 @@ class Experiment(object):
         logging.info("Saved results.")
         return None
 
-    def save_experiment(self, folder:str = ".") -> None:
+    def save_experiment(self, name:str = "experiment.pkl",  folder:str = ".") -> None:
+        """
+        Saves experiment as specified name to specified folder.
+        :param name: str, name of file to save experiment as. Defaults to "experiment.pkl".
+        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
+        """
         if not path.isdir(folder):
             mkdir(folder)
-        exp_file = path.join(folder, "experiment.pkl")
+        exp_file = path.join(folder, name)
         dump(self, open(exp_file, "wb"))
         assert path.exists(exp_file), "Saving experiment unsuccessful"
         logging.info("Saved experiment to {}".format(exp_file))
         return None
 
-    def save_model(self, folder:str = ".") -> None:
+    def save_model(self, name:str = "model.pkl", folder:str = ".") -> None:
+        """
+        Saves model as specified name to specified folder.
+        :param name: str, name of file to save model as. Defaults to "model.pkl".
+        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
+        """
         if not path.isdir(folder):
             mkdir(folder)
-        model_file = path.join(folder, "model.pkl")
+        model_file = path.join(folder, name)
         dump(self.model, open(model_file, "wb"))
         assert path.exists(model_file), "Saving model unsuccessful"
         logging.info("Saved model to {}".format(model_file))
         return None
 
-    def save_data(self, folder:str = ".") -> None:
+    def save_data(self, name:str = "data.pkl", folder:str = ".") -> None:
+        """
+        Saves data as specified name to specified folder.
+        :param name: str, name of file to save data as. Defaults to "data.pkl".
+        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
+        """
         if not path.isdir(folder):
             mkdir(folder)
-        data_file = path.join(folder, "data.pkl")
+        data_file = path.join(folder, name)
         dump(self.data, open(data_file, "wb"))
         assert path.exists(data_file), "Saving data unsuccessful"
         logging.info("Saved data")

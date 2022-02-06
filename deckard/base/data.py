@@ -8,29 +8,48 @@ import georinex as gr
 from pickle import load
 
 class Data(object):
-    """
-    Creates data object from base.dataset string and other parameters. In lieu of pre-specified dataset, you can pass in an arbitrary dictionary with keys 'data' and 'target'. 
-    """
-    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = True, stratify = None):
+    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = False,  **kwargs):
+        """
+        Initializes the data object.
+        :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
+        :param target: The target column to use. If None, the last column is used.
+        :param time_series: If True, the dataset is treated as a time series. Default is False.
+        :param sample_size: The percentage of the dataset to use. Default is 0.1.
+        :param random_state: The random state to use. Default is 0.
+        :param test_size: The percentage of the dataset to use for testing. Default is 0.2.
+        :param shuffle: If True, the data is shuffled. Default is False.
+        :param flatten: If True, the dataset is flattened. Default is False.
+        """
         self.random_state = random_state
         self.test_size = test_size
         self.sample_size = sample_size
         self.shuffle = shuffle
-        self.stratify = stratify
         self.time_series = time_series
         self.flatten = flatten
         self.target = target
-        self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset)
-        self.params = {'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'stratify': self.stratify, 'flatten': self.flatten}
+        self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset, **kwargs)
+        self.params = {'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'flatten': self.flatten}
     def __hash__(self) -> str:
+        """
+        Hashes the params as specified in the __init__ method.
+        """
         return int(hash(str(self.params)))
     def __eq__(self, other) -> bool:
+        """
+        Checks if the data is equal to another data object, using the params as specified in the __init__ method.
+        """
         if self.params == other.params:
             return True
         else:
             return False
 
-    def _choose_data(self, dataset:str='iris'):
+    def _choose_data(self, dataset:str='iris', **kwargs)->tuple:
+        """
+        Chooses the data to use.
+        :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
+        :param kwargs: passes these to the sklearn train_test_split function.
+        :return:
+        """
         import os
         logging.info("Preparing %s data", dataset)
         # lowercase filename
@@ -67,11 +86,11 @@ class Data(object):
             # log data shape
             logging.debug("Data shape: %s" % str(data['data'].shape))
             logging.debug("Target shape: %s" % str(data['target'].shape))
-            logging.debug("Target Set: {}".format(set(data['target'])))
+            #logging.debug("Target Set: {}".format(set(data['target'])))
             if self.flatten == True:
                 logging.debug("Flattening dataset.")
                 data = self._flatten_dataset(data)
-            new_X, new_y = self._sample_data(data)
+            new_X, new_y = self._sample_data(data, **kwargs)
             self = self._split_data(new_X, new_y)
         elif isinstance(dataset, str) and not dataset.endswith('.pkl'):
             self = load(dataset)
@@ -79,7 +98,12 @@ class Data(object):
             raise ValueError("%s dataset not supported. You must pass a path to a csv." % dataset)
         return (self.X_train, self.y_train, self.X_test, self.y_test)
         
-    def _flatten_dataset(self, data, **kwargs):
+    def _flatten_dataset(self, data:dict)->dict:
+        """
+        Flattens the dataset.
+        :param data: The dataset to flatten.
+        :return:
+        """
         X = data['data']
         y = data['target']
         logging.debug("X type: %s" % str(type(X)))
@@ -100,6 +124,10 @@ class Data(object):
     def _sample_data(self, data, sample_size:float = 1, shuffle:bool=True, **kwargs):
         """
         Samples the dataset
+        :param data: The dataset to sample.
+        :param sample_size: The percentage of the dataset to use. Default is 1.
+        :param shuffle: If True, the data is shuffled. Default is True.
+        :param kwargs: passes these to the sklearn train_test_split function.
         """
         logging.debug(str(type(data)))
         logging.info("Sampling dataset")
@@ -119,7 +147,15 @@ class Data(object):
         assert len(new_X) == len(new_y)
         return (new_X, new_y)
 
-    def _split_data(self, X, y, test_size:float=0.2, random_state:int=0, stratify:pd.Series=None, balanced: bool = False) -> tuple:
+    def _split_data(self, X, y, test_size:float=0.2, random_state:int=0, balanced: bool = False):
+        """
+        Splits the dataset into training and testing sets. Returns self with X_train, X_test, y_train, y_test attributes.
+        :param X: The dataset to split.
+        :param y: The target to split.
+        :param test_size: The percentage of the dataset to use for testing. Default is 0.2.
+        :param random_state: The random seed to use. Default is 0.
+        :param balanced: If True, the data is split into a training and testing set, and the training set is balanced.
+        """
         logging.debug("Splitting data")
         # split the data
         assert len(X) == len(y)
@@ -130,7 +166,7 @@ class Data(object):
         logging.info("X shape split" + str(X.shape))
         logging.info("y shape split" + str(y.shape))
         if test_size < 1 and self.time_series == False:
-            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, stratify=stratify, test_size=test_size, random_state=random_state)
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
         elif test_size == 1 and self.time_series == False:
             logging.warning("No training set specified.")
             self.X_test, self.y_test = X, y
@@ -145,16 +181,18 @@ class Data(object):
             raise ValueError("test_size must be [0 < test_size <= 1] or time_series must be True")
         assert len(self.X_train) == len(self.y_train)
         assert len(self.X_test) == len(self.y_test)
-        return (self)
+        return self
 
 
 def validate_data(data:Data) -> None:
+    """
+    Validates data object.
+    """
     assert isinstance(data, Data), "Data object not valid."
     assert isinstance(data.params, dict), "Params not a dict."
     assert isinstance(data.params['dataset'], str), "Params do not specify dataset."
     assert isinstance(data.params['test_size'], float), "Params do not specify test size"
     assert isinstance(data.params['random_state'], int), "Params do not specify random state"
-    assert isinstance(data.params['stratify'], pd.Series) or isinstance(data.params['stratify'], object), "Params do not specify stratification."
     assert len(data.X_train) == len(data.y_train), "Train sets not the same size"
     assert len(data.X_test)  == len(data.y_test), "Test sets not the same size"
     assert isinstance(data.params['shuffle'], bool), "Shuffle not specified"

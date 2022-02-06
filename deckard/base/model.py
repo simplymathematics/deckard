@@ -9,19 +9,32 @@ from copy import deepcopy
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
     def __init__(self, estimator, verbose : int = 1):
+        """
+        Initialize the model object.
+        estimator: the estimator to use
+        verbose: the verbosity level
+        """
         logging.info("Model type during init: {}".format(type(estimator)))
-        assert isinstance(estimator, (BaseEstimator, Pipeline)), "Estimator must be a sklearn estimator. It is {}".format(type(estimator))
-        self.params = dict(estimator.get_params(deep = True))
+        if isinstance(estimator, (Pipeline, BaseEstimator)):
+            self.params = dict(estimator.get_params(deep = True))
+        else:
+            self.params = estimator.__dict__
         self.model = estimator
         self.verbose = verbose     
         self.name = str(self.__hash__())
         self.params.update({"Name": self.name})
     
     def __hash__(self) -> str:
+        """
+        Return the hash of the model, using the params from __init__. 
+        """
         new_string = str(self.params)
         return int(hash(json.dumps(new_string).encode('utf-8')).hexdigest(), 36)
 
     def __eq__(self, other) -> bool:
+        """
+        Returns True if the models are equal, using the has of the params from __init__.
+        """
         return self.__hash__() == other.__hash__()
             
 

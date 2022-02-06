@@ -56,7 +56,7 @@ stages:
     - data/best_featurize/model_params.json:
         cache: true
     metrics:
-    - data/best_features/results.json:
+    - data/best_featurize/results.json:
         cache: true
   evaluate:
     cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize

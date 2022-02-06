@@ -34,7 +34,7 @@ def load_model(model_file:str = None) -> Pipeline:
     logging.info("Loaded model")
     return model
 
-def load_data(data_file:str = None) -> np.ndarray:
+def load_data(data_file:str = None) -> Data:
     """
     Load a data file.
     data_file: the data file to load
@@ -100,15 +100,15 @@ def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool,
         flag = False
         for exp in exp_list:
             exp.run()
-            exp.save_results(new_folder)
+            exp.save_results(folder = new_folder)
             if flag == False:
                 best = exp
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
         
-        best.save_experiment(new_folder)
-        best.save_results(new_folder)
+        best.save_experiment(folder = new_folder)
+        best.save_results(folder = new_folder)
         logging.info("Saved best experiment")
         logging.info("Best score: {}".format(best.scores[scorer]))
 
@@ -130,15 +130,15 @@ def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:
             if not os.path.isdir(os.path.join(new_folder, exp.filename)):
                 os.mkdir(os.path.join(new_folder, exp.filename))
                 logging.info("Created folder: " + os.path.join(new_folder, exp.filename))
-            exp.save_results(os.path.join(new_folder, exp.filename))
-            exp.save_experiment(os.path.join(new_folder, exp.filename))
+            exp.save_results(folder = os.path.join(new_folder, exp.filename))
+            exp.save_experiment(folder = os.path.join(new_folder, exp.filename))
             if flag == False:
                 best = exp
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
         
-        best.save_experiment(new_folder)
-        best.save_results(new_folder)
+        best.save_experiment(folder = new_folder)
+        best.save_results(folder = new_folder)
         logging.info("Saved best experiment")
         logging.info("Best score: {}".format(best.scores[scorer]))
