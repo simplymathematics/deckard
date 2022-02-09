@@ -19,7 +19,7 @@ abel/
 */.dvc/cache/
 */.dvc/cache/*
 examples/*/.dvc/cache/
-*lock
+
 
 
 # egg stuff
