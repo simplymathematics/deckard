@@ -17,7 +17,8 @@ abel/
 # dvc nonsense
 */.dvc/cache/
 */.dvc/cache/*
-
+examples/*/.dvc/cache/
+*lock
 
 
 # egg stuff
@@ -27,5 +28,13 @@ deckard.egg-info/*
 *.zip
 *.db
 *.csv
-examples/car data/dvc.lock
-examples/car data/.dvc/cache/*
+
+# windows stuff
+*.exe
+*.dll
+*.pyd
+*.pyo
+*.pyc
+*.idb
+*.ilk
+*.stackdump
