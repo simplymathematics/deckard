@@ -3,6 +3,7 @@
 *.ipynb_checkpoints/
 *.json
 *.pkl
+*.h5
 *.csv
 
 # Jupyter Notebooks
