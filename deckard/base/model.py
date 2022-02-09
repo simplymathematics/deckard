@@ -17,7 +17,7 @@ class Model(object):
         """
         logger.info("Model type during init: {}".format(type(estimator)))
         if isinstance(estimator, (Pipeline, BaseEstimator)):
-            self.params = dict(estimator.get_params(deep = True))
+            self.params = dict(estimator.get_params(deep=True))
         else:
             self.params = estimator.__dict__
         self.model = estimator

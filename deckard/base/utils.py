@@ -6,7 +6,6 @@ import pickle
 import os
 from deckard.base.model import Model
 from deckard.base.data import Data
-from deckard.base.experiment import Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ def return_result(scorer:str, filename = 'results.json')-> float:
     # return the result
     return results[scorer.upper()]
 
-def load_model(model_file:str = None) -> Pipeline:
+def load_model(model_file:str = None) -> Model:
     """
     Load a model from a pickle file.
     model_file: the pickle file to load the model from
@@ -32,7 +31,13 @@ def load_model(model_file:str = None) -> Pipeline:
     from deckard.base.model import Model
     logger.debug("Loading model")
     # load the model
-    model = pickle.load(open(model_file, 'rb'))
+    if model_file.endswith('.pkl'):
+        model = pickle.load(open(model_file, 'rb'))
+    elif model_file.endswith('.h5'):
+        from tensorflow.keras.models import load_model as keras_load_model
+        model = Model(keras_load_model(model_file))
+    else:
+        raise ValueError("model_file must be a pickle file or a keras model")
     logger.info("Loaded model")
     return model
 
@@ -49,17 +54,6 @@ def load_data(data_file:str = None) -> Data:
     logger.info("Loaded model")
     return data
 
-def load_experiment(experiment_file:str = None) -> Experiment:
-    """
-    load an experiment from a file
-    experiment_file: the file to load the experiment from
-    """
-    from deckard.base.experiment import Experiment
-    logger.debug("Loading experiment")
-    # load the experiment
-    experiment = pickle.load(open(experiment_file, 'rb'))
-    logger.info("Loaded experiment")
-    return experiment
 
 def push_json(json_file:str, remote_folder:str, remote_host:str, remote_user:str, remote_password:str) -> None:
     """
@@ -109,7 +103,7 @@ def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool,
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
         
-        best.save_experiment(folder = new_folder)
+        best.save_model(folder = new_folder)
         best.save_results(folder = new_folder)
         logger.info("Saved best experiment")
         logger.info("Best score: {}".format(best.scores[scorer]))
@@ -133,14 +127,14 @@ def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:
                 os.mkdir(os.path.join(new_folder, exp.filename))
                 logger.info("Created folder: " + os.path.join(new_folder, exp.filename))
             exp.save_results(folder = os.path.join(new_folder, exp.filename))
-            exp.save_experiment(folder = os.path.join(new_folder, exp.filename))
+            exp.save_model(folder = os.path.join(new_folder, exp.filename))
             if flag == False:
                 best = exp
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
         
-        best.save_experiment(folder = new_folder)
+        best.save_model(folder = new_folder)
         best.save_results(folder = new_folder)
         logger.info("Saved best experiment")
         logger.info("Best score: {}".format(best.scores[scorer]))

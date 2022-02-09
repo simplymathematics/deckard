@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     import logging
     from deckard.base import Experiment
-    from deckard.base.utils import  load_experiment, save_all, save_best_only
+    from deckard.base.utils import save_all, save_best_only, load_data, load_model
     from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params, insert_layer_into_list, generate_experiment_list
     import argparse
     from os import path
@@ -17,16 +17,18 @@ if __name__ == '__main__':
     parser.add_argument('--experiment', type=str,  help='name of the experiment', required=True)
     parser.add_argument('-p', '--position', type = int, default = -1, help='position of the preprocessor in the list')
     parser.add_argument('--best', type=bool, default=False, help='only store the best preprocessor')
+    parser.add_argument('--model_name', type=str, default = "model.pkl", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     preprocessor_file = args.config
-    best = load_experiment(path.join(args.folder,  args.experiment, 'experiment.pkl'))
-    assert isinstance(best, Experiment)
+    from deckard.base.utils import load_model
+    best = load_model(path.join(args.folder, args.experiment, args.model_name))
+    data = load_data(path.join(args.folder, args.dataset))
     preprocessor_list = parse_list_from_yml(args.config)
     object_list = generate_object_list(preprocessor_list)
     transformed_list = transform_params(object_list, args.name)
-    model_list = insert_layer_into_list(transformed_list, best.model.model.estimator, name = args.name, position = args.position)
-    exp_list = generate_experiment_list(model_list, best.data, cv = 10)
+    model_list = insert_layer_into_list(transformed_list, best.model.estimator, name = args.name, position = args.position)
+    exp_list = generate_experiment_list(model_list, data, cv = 10)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, args.name)
     if args.best:

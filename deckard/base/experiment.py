@@ -4,15 +4,18 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import logging
 from sklearn.base import is_regressor
 import uuid
+
 from deckard.base.model import Model
 from deckard.base.data import Data, validate_data
 from time import process_time_ns
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
 from sklearn.base import is_regressor
-from pandas import Series
+from pandas import Series, DataFrame
 from os import path, mkdir
 from pickle import dump
 logger = logging.getLogger(__name__)
+
+
 
 # Create experiment object
 
@@ -26,7 +29,7 @@ class Experiment(object):
         Creates an experiment object
         :param data: Data object
         :param model: Model object
-        :param params: Dictionary of parameters
+        :param params: Dictionary of other parameters you want to add to this object. Obviously everything in self.__dict__.keys() should be treated as a reserved keyword, however.
         :param verbose: Verbosity level
         :param scorers: Dictionary of scorers
         :param refit: Name of scorer to refit. If none specified, first scorer is used.
@@ -39,14 +42,17 @@ class Experiment(object):
         self.model = model
         self.data = data
         self.name = data.dataset +"_"+ model.name
-        self.params = params
+        for key in params.keys():
+            assert key not in self.__dict__.keys(), "Keyword-- {} --is reserved".format(key)
+            setattr(self, key, params[key])
         self.verbose = verbose
         self.filename = str(uuid.uuid4().hex)
         self.refit = refit
-        self.params.update({"Model params" : model.params})
-        self.params.update({"Data params" : data.params})
+        self.params = {"Model params" : model.params, "Data params" : data.params, "Experiment params" : params}
         if scorers is not None:
             assert isinstance(scorers, dict)
+            assert [isinstance(score_name, str) for score_name in scorers.keys()]
+            assert [isinstance(scorer, callable) for scorer in scorers.values()]
             self.scorers = scorers
         else:
            self = self.set_metric_scorer()
@@ -54,6 +60,7 @@ class Experiment(object):
         self.predictions = None
         self.time_dict = None
         self.score_dict = None
+
 
     def __hash__(self):
         """
@@ -116,7 +123,7 @@ class Experiment(object):
             logger.info("X_train shape: {}".format(self.data.X_train.shape))
             logger.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
-            self.model.model.fit(X = self.data.X_train, y =self.data.y_train)
+            self.model.model.fit(self.data.X_train, self.data.y_train)
             end = process_time_ns()
             self.is_fitted = True
             fit_time = end - start
@@ -227,7 +234,7 @@ class Experiment(object):
 
     def run(self) -> dict:
         """
-        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores attribute, predictions, and time_dict attributes.
+        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
         self.set_metric_scorer()
         self.build_model()
@@ -248,11 +255,16 @@ class Experiment(object):
             logger.info("Scoring with {}".format(scorer))
             if scorer in ['F1', 'REC', 'PREC']:
                 average = 'weighted'
+                if not len(self.predictions.shape) == 1:
+                    self.predictions = np.argmax(self.predictions, axis=1)
+                if not len(self.data.y_test.shape) == 1:
+                    self.data.y_test = np.argmax(self.data.y_test, axis=1)
                 scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
             elif scorer in ['AUC']: 
                 try:
                     scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
                 except ValueError:
+                    # Catches when AUC score makes no sense.
                     scores[scorer] = np.nan
                     logger.warning("AUC score not available for this model")
             else:
@@ -260,7 +272,7 @@ class Experiment(object):
             logger.info("Score : {}".format(scores[scorer]))
         return scores
 
-    def save_results(self, score_file:str = "results.json", data_file:str = "data_params.json", model_file:str = "model_params.json", folder:str = ".") -> None:
+    def save_results(self, score_file:str = "results.json", data_file:str = "data_params.json", model_file:str = "model_params.json", predictions_file:str = "predictions.json", indices_file = "indices.json", folder:str = ".") -> None:
         """
         Saves results as json files in specified folder.
         :param score_file: name of score file
@@ -270,7 +282,8 @@ class Experiment(object):
         """
         if not path.isdir(folder):
             mkdir(folder)
-            # set permissions
+            # set permissions to read/write for all
+            # TODO: fix permissions
             from os import chmod
             chmod(folder, 0o770)
         logger.debug("Saving results")
@@ -280,68 +293,73 @@ class Experiment(object):
         model_file = path.join(folder, model_file)
         results = Series(results.values(), name =  self.filename, index = results.keys())
         data_params = Series(self.data.params, name = self.filename)
-        model_params = Series(self.model.params, name = self.filename)
+        data_params.to_json(data_file)
+        if hasattr(self.model, 'params') and isinstance(self.model.params, DataFrame):
+            self.model.params.to_json(model_file)
+        elif hasattr(self.model, 'params') and isinstance(self.model.params, dict):
+            from json import dump
+            new_dict = {}
+            for key, value in self.params.items():
+                new_dict[key] = str(value)
+            with open(model_file, 'w') as f:
+                dump(new_dict, f, indent=4)
         if hasattr(self.data, "attack_params"):
             attack_file = path.join(folder, "attack_params.json")
             attack_params = Series(self.data.attack_params, name = self.filename)
             attack_params.to_json(attack_file)
+        if hasattr(self.data, "defense_params"):  
+            defense_file = path.join(folder, "defense_params.json")
+            defense_params = Series(self.data.defense_params, name = self.filename)
+            defense_params.to_json(defense_file)
         if hasattr(self.model.model, "cv_results_"):
             cv_file = path.join(folder, f"{self.filename}_cv_results.json")
             cv_results = Series(self.model.model.cv_results_, name = self.filename)
             cv_results.to_json(cv_file)
+        if hasattr(self, "predictions"):
+            predictions_file = path.join(folder, "predictions.json")
+            predictions = Series(self.predictions, name = self.filename)
+            predictions.to_json(predictions_file)
+        if hasattr(self, "indices"):
+            indices_file = path.join(folder, "findices.json")
+            indices = Series(self.indices, name = self.filename)
+            indices.to_json(indices_file)
         logger.info("Results:{}".format(results))
         logger.info("Data Params: {}".format(data_params))
-        # logger.debug("Model Params: {}".format(model_params))
+        logger.debug("Model Params: {}".format(self.model.params))
         results.to_json(score_file)
-        data_params.to_json(data_file)
-        model_params.to_json(model_file)
-        assert path.exists(score_file), "Saving results unsuccessful"
-        assert path.exists(data_file), "Saving data_params unsuccessful"
-        assert path.exists(model_file), "Saving model_params unsuccessful"
         logger.info("Saved results.")
         return None
 
-    def save_experiment(self, name:str = "experiment.pkl",  folder:str = ".") -> None:
+
+    def save_model(self, model_name:str = "model",  folder:str = ".", move_from:str = None) -> None:
         """
         Saves experiment as specified name to specified folder.
-        :param name: str, name of file to save experiment as. Defaults to "experiment.pkl".
+        :param moel_name: str, name of file to save experiment as. Defaults to "best.model".
+        :move_from: str, path to move experiment from. If none specified, saves in current working directory using pickle.
         :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
         """
         if not path.isdir(folder):
             mkdir(folder)
-        exp_file = path.join(folder, name)
-        dump(self, open(exp_file, "wb"))
-        assert path.exists(exp_file), "Saving experiment unsuccessful"
-        logger.info("Saved experiment to {}".format(exp_file))
+        model_file = path.join(folder, model_name)
+        logger.info("Model file: {}".format(model_file))
+        if move_from == None:
+            try:
+                dump(self.model, open(model_file+".pkl", 'wb'))
+            except TypeError as e:
+                logger.warning("Model not saved. Check that model is pickleable. This is not the case for TF1 models. Use the move_from option to move the trained .h5 file from current working directory to the specified folder.")
+                raise e
+            assert path.exists(model_file+".pkl"), "Saving experiment unsuccessful"
+        else:
+            import os
+            logger.info("Saving model to new folder: {}. Old folder: {}".format(folder, move_from))
+            old_location = os.path.join(move_from, model_name)
+            assert path.exists(old_location), "Model not found in old location {}".format(old_location)
+            os.rename(old_location, model_file)
+            assert path.exists(model_file), "Saving experiment to {} unsuccessful".format(model_file)
+            
+        logger.info("Saved experiment to {}".format(model_file))
         return None
 
-    def save_model(self, name:str = "model.pkl", folder:str = ".") -> None:
-        """
-        Saves model as specified name to specified folder.
-        :param name: str, name of file to save model as. Defaults to "model.pkl".
-        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
-        """
-        if not path.isdir(folder):
-            mkdir(folder)
-        model_file = path.join(folder, name)
-        dump(self.model, open(model_file, "wb"))
-        assert path.exists(model_file), "Saving model unsuccessful"
-        logger.info("Saved model to {}".format(model_file))
-        return None
-
-    def save_data(self, name:str = "data.pkl", folder:str = ".") -> None:
-        """
-        Saves data as specified name to specified folder.
-        :param name: str, name of file to save data as. Defaults to "data.pkl".
-        :param folder: str, path to folder to save results in. Defaults to "." (current working directory).
-        """
-        if not path.isdir(folder):
-            mkdir(folder)
-        data_file = path.join(folder, name)
-        dump(self.data, open(data_file, "wb"))
-        assert path.exists(data_file), "Saving data unsuccessful"
-        logger.info("Saved data")
-        return None
 
 if __name__ == '__main__':
     # set up logging

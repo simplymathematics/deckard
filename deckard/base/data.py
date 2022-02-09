@@ -1,15 +1,31 @@
 import logging
 import pandas as pd
 import numpy as np
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris, load_digits
-import georinex as gr
 #TODO: Balanced test set and train set options and functions
 from pickle import load
+from tensorflow.keras.utils import to_categorical 
+# mnist dataset from 
 
 logger = logging.getLogger(__name__)
 
 class Data(object):
+    """
+    :attribute dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
+    :attribute target: The target column to use. If None, the last column is used.
+    :attribute time_series: If True, the dataset is treated as a time series. Default is False.
+    :attribute sample_size: The percentage of the dataset to use. Default is 0.1.
+    :attribute random_state: The random state to use. Default is 0.
+    :attribute test_size: The percentage of the dataset to use for testing. Default is 0.2.
+    :attribute shuffle: If True, the data is shuffled. Default is False.
+    :attribute flatten: If True, the dataset is flattened. Default is False.
+    :attribute X_train: The training data. Created during initialization.
+    :attribute X_test: The testing data. Created during initialization.
+    :attribute y_train: The training target. Created during initialization.
+    :attribute y_test: The testing target. Created during initialization.
+    
+    """
     def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, sample_size:float = .1, random_state=0, test_size=0.2, shuffle:bool=False, flatten:bool = False,  **kwargs):
         """
         Initializes the data object.
@@ -29,7 +45,7 @@ class Data(object):
         self.time_series = time_series
         self.flatten = flatten
         self.target = target
-        self.X_train, self.y_train, self.X_test, self.y_test = self._choose_data(dataset, **kwargs)
+        self._choose_data(dataset, **kwargs) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
         self.params = {'dataset': self.dataset, 'sample_size': self.sample_size, 'random_state': self.random_state, 'test_size': self.test_size, 'shuffle': self.shuffle, 'flatten': self.flatten}
     def __hash__(self) -> str:
         """
@@ -45,7 +61,7 @@ class Data(object):
         else:
             return False
 
-    def _choose_data(self, dataset:str='iris', **kwargs)->tuple:
+    def _choose_data(self, dataset:str = None, **kwargs)->tuple:
         """
         Chooses the data to use.
         :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
@@ -56,49 +72,63 @@ class Data(object):
         logger.info("Preparing %s data", dataset)
         # lowercase filename
         # load the data
-        if isinstance(dataset, str) and not dataset.endswith(".pkl"):
-            if dataset.lower() == 'iris':
-                data = load_iris()
-                self.dataset = dataset
-            # check if file exists and is a csv
-            elif dataset.lower() == 'mnist':
-                data = load_digits()
-                self.flatten = True
-                self.dataset = dataset
-            elif dataset.endswith('.csv'):
-                df = pd.read_csv(dataset)
-                if self.target is None:
-                    logger.warning("Target not specified. Assuming last column is the target column.")
-                    input = df.iloc[:,:-1]
-                    target = df.iloc[:,-1]
-                else:
-                    logger.info("Target specified: %s", self.target)
-                    target = df.pop(self.target)
-                    input = df
-                data = {'data': input, 'target': target}
-                self.dataset = dataset
+        if dataset.endswith('.csv'):
+            df = pd.read_csv(dataset)
+            if self.target is None:
+                logger.warning("Target not specified. Assuming last column is the target column.")
+                input = df.iloc[:,:-1]
+                target = df.iloc[:,-1]
             else:
-                raise ValueError("Dataset must be either 'iris', 'mnist', or a csv file")
+                logger.info("Target specified: %s", self.target)
+                target = df.pop(self.target)
+                input = df
+            data = {'data': input, 'target': target}
+            self.dataset = dataset
             logger.info("Loaded %s data" % dataset)
-            # log the type of data
-            # check if data is a dict
-            assert isinstance(data, dict)
-            assert isinstance(data['data'], object)
-            assert isinstance(data['target'], object)
-            # log data shape
             logger.debug("Data shape: %s" % str(data['data'].shape))
             logger.debug("Target shape: %s" % str(data['target'].shape))
-            #logger.debug("Target Set: {}".format(set(data['target'])))
+            if isinstance(data['target'][0], int):
+                logger.debug("Target Set: {}".format(set(data['target'])))
+            elif isinstance(data['target'][0], float):
+                minimum = min(data['target'])
+                maximum = max(data['target'])
+                logger.info("Target Range: [%s, %s]" % (minimum, maximum))
             if self.flatten == True:
                 logger.debug("Flattening dataset.")
                 data = self._flatten_dataset(data)
             new_X, new_y = self._sample_data(data, **kwargs)
             self = self._split_data(new_X, new_y)
-        elif isinstance(dataset, str) and not dataset.endswith('.pkl'):
+        elif isinstance(dataset, str) and dataset.endswith('.pkl'):
             self = load(dataset)
+        elif dataset == 'mnist' or dataset =='digits':
+            # TODO: add mnist dataset to rest of data sampling pipeline
+            from tensorflow.keras.datasets import mnist
+            (X_train, y_train), (X_test, y_test) = mnist.load_data()
+            X_train = X_train.reshape(X_train.shape[0], 28, 28, 1).astype('float32') / 255
+            X_test = X_test.reshape(X_test.shape[0], 28, 28, 1).astype('float32') / 255
+            y_train = to_categorical(y_train, 10)
+            y_test = to_categorical(y_test, 10)
+            self.X_train = X_train[:100, :, :, :]
+            self.X_test = X_test[:100, :, :, :]
+            self.y_train = y_train[:100, :]
+            self.y_test = y_test[:100, :]
+            self.dataset = 'mnist'
+        elif dataset == 'cifar10' or dataset == 'cifar-10' or dataset == 'cifar':
+             # TODO: add cifar10 dataset to rest of data sampling pipeline
+            from tensorflow.keras.datasets import cifar10
+            (X_train, y_train), (X_test, y_test) = cifar10.load_data()
+            X_train = X_train.reshape(X_train.shape[0], 32, 32, 3).astype('float32') # reshape to 32x32x3
+            X_test = X_test.reshape(X_test.shape[0], 32, 32, 3).astype('float32') # reshape to 32x32x3
+            y_train = to_categorical(y_train, 10) # one-hot encode the labels
+            y_test = to_categorical(y_test, 10)  # one-hot encode the labels
+            self.X_train = X_train
+            self.X_test = X_test
+            self.y_train = y_train
+            self.y_test = y_test
+            self.dataset = 'cifar10'
         else:
-            raise ValueError("%s dataset not supported. You must pass a path to a csv." % dataset)
-        return (self.X_train, self.y_train, self.X_test, self.y_test)
+            raise ValueError("%s dataset not supported. You must pass a path to a csv or a pkl file or choose 'mnist' or 'cifar-10' from the results." % dataset)
+        return self
         
     def _flatten_dataset(self, data:dict)->dict:
         """

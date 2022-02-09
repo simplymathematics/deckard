@@ -17,7 +17,7 @@ stages:
     - ../../deckard/base/experiment.py
     - data/data.pkl
     outs:
-    - data/best_train/experiment.pkl:
+    - data/best_train/model.pkl:
         cache: true
     - data/best_train/data_params.json:
         cache: true
@@ -27,13 +27,13 @@ stages:
     - data/best_train/results.json:
         cache: true
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name preprocess --experiment best_train
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name preprocess --experiment best_train --model_name model.pkl
     deps:
     - configs/preprocess.yml
     - ../../deckard/layers/preprocess.py
-    - data/best_train/experiment.pkl
+    - data/best_train/model.pkl
     outs:
-    - data/best_preprocess/experiment.pkl:
+    - data/best_preprocess//model.pkl:
         cache: true
     - data/best_preprocess/data_params.json:
         cache: true
@@ -43,13 +43,13 @@ stages:
     - data/best_preprocess/results.json:
         cache: true
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name featurize --experiment best_preprocess
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name featurize --experiment best_preprocess --model_name model.pkl
     deps:
     - configs/featurize.yml
     - ../../deckard/layers/preprocess.py
-    - data/best_preprocess/experiment.pkl
+    - data/best_preprocess/model.pkl
     outs:
-    - data/best_featurize/experiment.pkl:
+    - data/best_featurize/model.pkl:
         cache: true
     - data/best_featurize/data_params.json:
         cache: true
@@ -59,9 +59,9 @@ stages:
     - data/best_featurize/results.json:
         cache: true
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize
+    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize 
     deps: 
-      - data/best_featurize/experiment.pkl
+      - data/best_featurize/model.pkl
       - ./parsed/long.csv
 
 

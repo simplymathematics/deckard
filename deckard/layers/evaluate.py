@@ -1,4 +1,4 @@
-from deckard.base.utils import load_data, load_experiment, load_model
+from deckard.base.utils import load_data, load_model
 from deckard.base import Data, Experiment, Model
 from os import path
 from json import dump
@@ -23,6 +23,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
     parser.add_argument('--target', type=str, default = None, help='Target string.')
     parser.add_argument('--experiment', type=str, required = True, help='Experiment string.')
+    parser.add_argument('--model_name', type=str, default = "model.pkl", help='name of the experiment')
+
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
@@ -33,7 +35,7 @@ if __name__ == '__main__':
         data = load_data(path.join(args.folder, args.data))
     else:
         raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
-    model = load_experiment(path.join(args.folder, args.experiment, 'experiment.pkl')).model
+    model = load_model(path.join(args.folder, args.experiment, args.model_name))
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
     data = Data(args.data, test_size=1, target = args.target)
@@ -46,11 +48,6 @@ if __name__ == '__main__':
     logger.info('Time per sample: {} seconds'.format(round((end - start) / len(experiment.data.y_test),3)))
     if 'ROC_AUC' in experiment.scores:
         del experiment.scores['ROC_AUC'] # ROC_AUC cannot be json serialized
-    if not path.exists(args.output):
-        with open(args.output, 'w') as f:
-            dump(experiment.scores, f)
-    else:
-        with open(args.output, 'a') as f:
-            dump(experiment.scores, f)
+    experiment.save_results( args.output)
     assert path.exists(args.output), '{} is not a valid file.'.format(args.output)
 

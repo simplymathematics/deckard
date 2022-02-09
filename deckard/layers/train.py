@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation, or specifying it as a model parameter in the config file
     # Eventually, scoring will rely on the same yaml configs for the sake of consistency
     # For now, the defaults detect whether the estimator is a classifier or a regressor, using f1 and R2 as the objective measures respectively, while reporting several other common metrics
-    # Fit and predict time are always reported (if available)s
+    # Fit and predict time are always reported (if available)
     exp_list = generate_experiment_list(model_list, data, cv = 10)
     scorer = args.scorer.upper()
     if args.best:
