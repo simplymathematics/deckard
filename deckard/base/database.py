@@ -6,11 +6,24 @@ logger = logging.getLogger(__name__)
 
 # create database
 def create_database(db_name):
+    """
+    Creates a databse using mongodb.
+    :param db_name: the name of the database
+    
+    """
     client = MongoClient()
     db = client[db_name]
     return db
 
 def connect_to_database(db_name:str, host:str, port:int, **kwargs):
+    """
+    Connect to a database using mongodb.
+    :param db_name: the name of the database
+    :param host: the host of the database
+    :param port: the port of the database
+    :param kwargs: other arguments
+    :return: the database
+    """
     client = MongoClient(**kwargs)
     db = client[db_name]
     return db
@@ -41,6 +54,20 @@ def dump_database_to_file(db:str, collection:str, file:str):
     db[collection].to_csv(file)
     assert os.path.isfile(file)
     logger.info("Database saved to {}".format(file))
+
+def get_subset_from_db(db:str, collection:str, query:dict, n:int) -> list:
+
+
+    """
+    Get a subset of the database.
+    :param db: the database
+    :param collection: the collection
+    :param query: the query
+    :param n: the number of samples
+    """
+
+    return list(db[collection].find(query).limit(n))
+
 
 if __name__ == "__main__":
     # arg parser

@@ -39,3 +39,9 @@ deckard.egg-info/*
 *.idb
 *.ilk
 *.stackdump
+.vscode/deckard.code-workspace
+.gitignore
+.gitignore
+.gitignore
+examples/car data/.dvc/tmp/lock
+examples/car data/.dvc/tmp/rwlock

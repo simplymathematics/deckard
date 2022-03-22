@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--scorer', required=True, type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
     parser.add_argument('--name', type=str, help='name of the experiment', required=True)
     parser.add_argument('--experiment', type=str,  help='name of the experiment', required=True)
-    parser.add_argument('-p', '--position', type = int, default = -1, help='position of the preprocessor in the list')
+    parser.add_argument('-p', '--position', type = int, default = -1, help='position of the preprocessor in the pipeline. Useful for using more than one pre-processor.')
     parser.add_argument('--best', type=bool, default=False, help='only store the best preprocessor')
     parser.add_argument('--model_name', type=str, default = "model.pkl", help='name of the experiment')
     args = parser.parse_args()

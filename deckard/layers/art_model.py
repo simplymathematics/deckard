@@ -38,7 +38,6 @@ def convert_to_art_classifier(model_name:str, model_path:str, model_type:str=Non
     # Define type for ART
     if model_type == 'keras' or 'k':
         from tensorflow.keras.models import load_model as keras_load_model
-        
         classifier_model = keras_load_model(model_path)
         benign = KerasClassifier( model=classifier_model)
     elif model_type == 'tf' or 'tensorflow':

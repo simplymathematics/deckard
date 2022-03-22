@@ -1,5 +1,5 @@
 stages:
-  prepare:
+  prepare_data:
     cmd: 
       - python ../../deckard/layers/prepare.py  -d 'mnist'
     deps: 
@@ -22,42 +22,42 @@ stages:
     metrics:
     - data/best_train/results.json:
         cache: true
-  # preprocess:
-  #   cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name preprocess --experiment best_train
-  #   deps:
-  #   - configs/preprocess.yml
-  #   - ../../deckard/layers/preprocess.py
-  #   - data/best_train/best.model
-  #   outs:
-  #   - data/best_preprocess/best.model:
-  #       cache: true
-  #   - data/best_preprocess/data_params.json:
-  #       cache: true
-  #   - data/best_preprocess/model_params.json:
-  #       cache: true
-  #   metrics:
-  #   - data/best_preprocess/results.json:
-  #       cache: true
-  # featurize:
-  #   cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name featurize --experiment best_preprocess
-  #   deps:
-  #   - configs/featurize.yml
-  #   - ../../deckard/layers/preprocess.py
-  #   - data/best_preprocess/best.model
-  #   outs:
-  #   - data/best_featurize/best.model:
-  #       cache: true
-  #   - data/best_featurize/data_params.json:
-  #       cache: true
-  #   - data/best_featurize/model_params.json:
-  #       cache: true
-  #   metrics:
-  #   - data/best_featurize/results.json:
-  #       cache: true
-  # evaluate:
-  #   cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d mnist --experiment best_featurize
-  #   deps: 
-  #     - data/best_featurize/best.model
+  defense:
+    cmd: python ../../deckard/layers/defense.py  -f data -s f1 -b False --name defense --experiment best_train
+    deps:
+    - configs/defense.yml
+    - ../../deckard/layers/defense.py
+    - data/best_train/model.h5
+    outs:
+    - data/best_defense/model.h5:
+        cache: true
+    - data/best_defense/data_params.json:
+        cache: true
+    - data/best_defense/model_params.json:
+        cache: true
+    metrics:
+    - data/best_defense/results.json:
+        cache: true
+  attack:
+    cmd: python ../../deckard/layers/defense.py  -f data -s f1 -b False --name attack --experiment best_defense
+    deps:
+    - configs/attack.yml
+    - ../../deckard/layers/defense.py
+    - data/best_defense/model.h5
+    outs:
+    - data/best_attack/model.h5:
+        cache: true
+    - data/best_attack/data_params.json:
+        cache: true
+    - data/best_attack/model_params.json:
+        cache: true
+    metrics:
+    - data/best_attack/results.json:
+        cache: true
+  evaluate:
+    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d mnist --experiment best_attack
+    deps: 
+      - data/best_attack/model.h5
 
 
 

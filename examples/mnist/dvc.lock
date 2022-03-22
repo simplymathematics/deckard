@@ -20,8 +20,8 @@ stages:
       "data"
     deps:
     - path: ../../deckard/base/experiment.py
-      md5: 7d241ef573705b6c82ce72cb8d4124e4
-      size: 18104
+      md5: 7b03e1e68f1ae1e7b7778af33ec2ff3e
+      size: 18625
     - path: ../../deckard/base/utils.py
       md5: 6c22f51f7c567b45d2e5e84f4fbfdad1
       size: 5769
@@ -39,8 +39,8 @@ stages:
       md5: e377e25822be887b27e61df78eee8ce5
       size: 32962000
     - path: data/best_train/results.json
-      md5: 5e3acd8c602a3c3da1aa5d2037dcdce8
-      size: 218
+      md5: c79c2e6927410d984c59f08661e229f8
+      size: 216
   preprocess:
     cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name
       preprocess --experiment best_train

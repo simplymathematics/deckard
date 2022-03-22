@@ -8,7 +8,7 @@ import uuid
 from deckard.base.model import Model
 from deckard.base.data import Data, validate_data
 from time import process_time_ns
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_curve
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
 from os import path, mkdir
@@ -85,7 +85,7 @@ class Experiment(object):
             elif is_regressor(self.model.model) == False:
                 logger.info("Model is classifier.")
                 self.data.y_test = self.data.y_test.astype(int)
-                new_scorers = {'F1' : f1_score, 'BALACC' : balanced_accuracy_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_curve}
+                new_scorers = {'F1' : f1_score, 'BALACC' : balanced_accuracy_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_auc_score}
             else:
                 raise ValueError("Model is not estimator")
         elif len(list(self.scorers)) == 1: # If there's only one scorer, we verify and use it
@@ -256,19 +256,25 @@ class Experiment(object):
             if scorer in ['F1', 'REC', 'PREC']:
                 average = 'weighted'
                 if not len(self.predictions.shape) == 1:
-                    self.predictions = np.argmax(self.predictions, axis=1)
+                    predictions = np.argmax(self.predictions, axis=1)
                 if not len(self.data.y_test.shape) == 1:
-                    self.data.y_test = np.argmax(self.data.y_test, axis=1)
-                scores[scorer] = self.scorers[scorer](self.data.y_test.astype(int), self.predictions, average = average)
+                    y_test = np.argmax(self.data.y_test, axis=1)
+                scores[scorer] = self.scorers[scorer](y_test.astype(int), predictions, average = average)
+            elif scorer in ['BALACC', 'ACC']:
+                if not len(self.predictions.shape) == 1:
+                    predictions = np.argmax(self.predictions, axis=1)
+                if not len(self.data.y_test.shape) == 1:
+                    y_test = np.argmax(self.data.y_test, axis=1)
+                scores[scorer] = self.scorers[scorer](y_test, predictions)
             elif scorer in ['AUC']: 
+                y_test = np.argmax(self.data.y_test, axis=1)
+                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
+            else:
                 try:
                     scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
                 except ValueError:
-                    # Catches when AUC score makes no sense.
                     scores[scorer] = np.nan
-                    logger.warning("AUC score not available for this model")
-            else:
-                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
+                    logger.warning("{} score not available for this model".format(scorer))
             logger.info("Score : {}".format(scores[scorer]))
         return scores
 
@@ -305,8 +311,8 @@ class Experiment(object):
                 dump(new_dict, f, indent=4)
         if hasattr(self.data, "attack_params"):
             attack_file = path.join(folder, "attack_params.json")
-            attack_params = Series(self.data.attack_params, name = self.filename)
-            attack_params.to_json(attack_file)
+            attack_params = Series(self.data.attack_params)
+            attack_params.to_json(attack_file, name = self.filename)
         if hasattr(self.data, "defense_params"):  
             defense_file = path.join(folder, "defense_params.json")
             defense_params = Series(self.data.defense_params, name = self.filename)
@@ -317,10 +323,14 @@ class Experiment(object):
             cv_results.to_json(cv_file)
         if hasattr(self, "predictions"):
             predictions_file = path.join(folder, "predictions.json")
-            predictions = Series(self.predictions, name = self.filename)
+            try:
+                predictions = Series(self.predictions, name = self.filename)
+            except:
+                predictions = DataFrame(self.predictions)
+                predictions['id_'] = self.filename
             predictions.to_json(predictions_file)
         if hasattr(self, "indices"):
-            indices_file = path.join(folder, "findices.json")
+            indices_file = path.join(folder, "indices.json")
             indices = Series(self.indices, name = self.filename)
             indices.to_json(indices_file)
         logger.info("Results:{}".format(results))
@@ -364,15 +374,16 @@ class Experiment(object):
 if __name__ == '__main__':
     # set up logging
     import sys
-    logging.basicConfig(level=logger.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     # Create experiment object
     from sklearn.preprocessing import StandardScaler
     # import linear regression
     from sklearn.linear_model import LinearRegression
     model = LinearRegression()
     model = Model(model)
-    data = Data('iris')
-    experiment = Experiment(model=model, data=Data())
+    # Need default linear regressor and easier classifier for testing
+    # data = Data(dataset = 'mnist')
+    experiment = Experiment(model=model, data=data)
     scores = experiment.run()
     #logger.info(scores)
     # # Validate experiment object
