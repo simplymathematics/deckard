@@ -31,7 +31,7 @@
 
 - name : sklearn.gaussian_process.GaussianProcessClassifier
   params :
-    multi_class : [one_vs_rest]
+    multi_class : ['ovr']
 
 # - name: sktime.classification.interval_based.TimeSeriesForestClassifier
 #   params: 

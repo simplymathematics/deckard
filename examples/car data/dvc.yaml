@@ -59,10 +59,9 @@ stages:
     - data/best_featurize/results.json:
         cache: true
   evaluate:
-    cmd: python ../../deckard/elayers/valuate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize 
+    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --experiment best_featurize 
     deps: 
       - data/best_featurize/model.pkl
-      - ./parsed/long.csv
 
 
 

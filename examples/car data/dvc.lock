@@ -15,17 +15,17 @@ stages:
       size: 348267
     outs:
     - path: data/data.pkl
-      md5: 1c355b61486fe686581c3f444c4387de
-      size: 380338
+      md5: aec65af1dba1adb51391a3f1639a7a04
+      size: 380030
   train:
     cmd: python ../../deckard/layers/train.py  -f data -s mse -b False --name train
     deps:
     - path: ../../deckard/base/experiment.py
-      md5: ca64f0b692245dbb27de164662affa4d
-      size: 18596
+      md5: 52459b6f09c7cfcfdc2facf37d586678
+      size: 18352
     - path: ../../deckard/base/utils.py
-      md5: 6c22f51f7c567b45d2e5e84f4fbfdad1
-      size: 5769
+      md5: 67c3310bcc32909f9dbb904a1af26b2e
+      size: 5819
     - path: ../../deckard/layers/train.py
       md5: d34f8cf9f96eaf14dd80207d49b7f648
       size: 3267
@@ -33,38 +33,38 @@ stages:
       md5: 9c0f3af72adc7e5448903f9090e070af
       size: 247
     - path: data/data.pkl
-      md5: 1c355b61486fe686581c3f444c4387de
-      size: 380338
+      md5: aec65af1dba1adb51391a3f1639a7a04
+      size: 380030
     outs:
     - path: data/best_train/data_params.json
       md5: 191417cf24e6c6fb2465a238dcb08e2d
       size: 113
     - path: data/best_train/model.pkl
-      md5: fc2a2bcd1ae148bc76d8c07bf45b1b1f
-      size: 1339796
+      md5: 48ce91cc46f8e92bb1aed0458fab5e96
+      size: 13351953
     - path: data/best_train/model_params.json
       md5: 2d67fe2d9e8a14e6987c869870ceb322
       size: 1418
     - path: data/best_train/results.json
-      md5: 0b55b5f2f6d1d78d4d51f4b919692aea
-      size: 253
+      md5: 5958b46aeb6c610fc4a2f3cc388e7f52
+      size: 262
   preprocess:
     cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name
       preprocess --experiment best_train --model_name model.pkl
     deps:
     - path: ../../deckard/layers/preprocess.py
-      md5: 678a309d20dd776bbed4830eb2c5af45
-      size: 2782
+      md5: e55d59262da7c6cd7b5b40f91050de08
+      size: 2833
     - path: configs/preprocess.yml
       md5: ac4ed79e4a6b628fac4308fdd3e24210
       size: 123
     - path: data/best_train/model.pkl
-      md5: fc2a2bcd1ae148bc76d8c07bf45b1b1f
-      size: 1339796
+      md5: 48ce91cc46f8e92bb1aed0458fab5e96
+      size: 13351953
     outs:
     - path: data/best_preprocess//model.pkl
-      md5: 28184692ecd03134f327af112516bca3
-      size: 13159986
+      md5: 7f6613d46bc62b5694161555fdb78f61
+      size: 13174136
     - path: data/best_preprocess/data_params.json
       md5: 191417cf24e6c6fb2465a238dcb08e2d
       size: 113
@@ -72,33 +72,33 @@ stages:
       md5: 4ed791ee86ab75c62812ac029602e79d
       size: 1916
     - path: data/best_preprocess/results.json
-      md5: 7cd60788b9303d2e01b0d387a5a88806
+      md5: c662c2c28ed59955a9c8616be1bdbb58
       size: 261
   featurize:
     cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name
       featurize --experiment best_preprocess --model_name model.pkl
     deps:
     - path: ../../deckard/layers/preprocess.py
-      md5: 678a309d20dd776bbed4830eb2c5af45
-      size: 2782
+      md5: e55d59262da7c6cd7b5b40f91050de08
+      size: 2833
     - path: configs/featurize.yml
       md5: 8e868a26517d7807395016a0b2f60510
       size: 128
     - path: data/best_preprocess/model.pkl
-      md5: 28184692ecd03134f327af112516bca3
-      size: 13159986
+      md5: 7f6613d46bc62b5694161555fdb78f61
+      size: 13174136
     outs:
     - path: data/best_featurize/data_params.json
       md5: 191417cf24e6c6fb2465a238dcb08e2d
       size: 113
     - path: data/best_featurize/model.pkl
-      md5: 7851e12257bb7756a09363fb35201773
-      size: 13519608
+      md5: d87e48745e3c9da8b8e92dc190c3bd4f
+      size: 13463750
     - path: data/best_featurize/model_params.json
       md5: 58248a2a55c038f44022df02d3b65ee7
       size: 2367
     - path: data/best_featurize/results.json
-      md5: bc2eccae769722e27cb1a57287aae7e8
+      md5: 3c71e7efa13b4b7ef610e9de5059691f
       size: 261
   evaluate:
     cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv"
@@ -108,5 +108,5 @@ stages:
       md5: 176757a3ef6faf20b2c1b464c0111646
       size: 348268
     - path: data/best_featurize/model.pkl
-      md5: 7851e12257bb7756a09363fb35201773
-      size: 13519608
+      md5: 16a7f6053ff63e6d9b318a29ba3877b1
+      size: 13476516

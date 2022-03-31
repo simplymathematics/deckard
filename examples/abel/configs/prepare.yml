@@ -1,0 +1,7 @@
+- name: './US-CAL-CISO 2020.csv'
+  params:
+    shuffle : False
+    random_state : 0
+    test_size : .1
+    sample_size : 1
+    flatten : False
