@@ -20,11 +20,11 @@ stages:
       "data"
     deps:
     - path: ../../deckard/base/experiment.py
-      md5: 52459b6f09c7cfcfdc2facf37d586678
-      size: 18352
+      md5: 763e7886359f44d6d56465c0f8624b61
+      size: 23320
     - path: ../../deckard/base/utils.py
-      md5: 67c3310bcc32909f9dbb904a1af26b2e
-      size: 5819
+      md5: 413d6d5b56f646fdf4f6ec3acc6a6f35
+      size: 5913
     - path: ../../deckard/layers/train.py
       md5: d34f8cf9f96eaf14dd80207d49b7f648
       size: 3267
@@ -39,8 +39,8 @@ stages:
       md5: e377e25822be887b27e61df78eee8ce5
       size: 32962000
     - path: data/best_train/results.json
-      md5: 9dc5d41c64379ab98af3f86b8273dc0d
-      size: 219
+      md5: fd1a55ae60466b90310461173bbc2899
+      size: 170
   preprocess:
     cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b False --name
       preprocess --experiment best_train
@@ -114,3 +114,74 @@ stages:
     - path: data/data.pkl
       md5: d444f815853897651cc2c20736ff8c82
       size: 635721
+  control:
+    cmd: python ../../deckard/layers/art_model.py --input_model "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
+      --output_name "control_model.pb" --model_type "tf1" --dataset "data/data.pkl"
+      --output_folder "data/control"
+    deps:
+    - path: ../../deckard/base/
+      md5: 2974ad49cd72eb2b01663e00d7069806.dir
+      size: 180519
+      nfiles: 29
+    - path: ../../deckard/layers/
+      md5: 6580402386fa435328f3e5a1f53e6126.dir
+      size: 135391
+      nfiles: 34
+    - path: data/data.pkl
+      md5: d444f815853897651cc2c20736ff8c82
+      size: 635721
+    outs:
+    - path: data/control/
+      md5: eaedd40b5b193c721ac6b91779793c17.dir
+      size: 32982270
+      nfiles: 4
+  defend:
+    cmd: python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder
+      "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
+      "data/defenses/" --output_name "defended_model"
+    deps:
+    - path: ../../deckard/base/
+      md5: 2974ad49cd72eb2b01663e00d7069806.dir
+      size: 180519
+      nfiles: 29
+    - path: ../../deckard/layers/
+      md5: 6580402386fa435328f3e5a1f53e6126.dir
+      size: 135391
+      nfiles: 34
+    - path: data/control/
+      md5: eaedd40b5b193c721ac6b91779793c17.dir
+      size: 32982270
+      nfiles: 4
+    - path: data/data.pkl
+      md5: d444f815853897651cc2c20736ff8c82
+      size: 635721
+    outs:
+    - path: data/defenses/
+      md5: bf41760dc4c1f0143f21ce00b9ec0520.dir
+      size: 70927353
+      nfiles: 15
+  attack:
+    cmd: python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder
+      "data/defenses/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
+      "data/attacks/" --output_name "attacked_model"
+    deps:
+    - path: ../../deckard/base/
+      md5: 219e3d4e0bcc26eaf7bb2bae17638e62.dir
+      size: 180427
+      nfiles: 29
+    - path: ../../deckard/layers/
+      md5: 1480b578cc430d849ace71afce1e5072.dir
+      size: 136176
+      nfiles: 34
+    - path: data/data.pkl
+      md5: d444f815853897651cc2c20736ff8c82
+      size: 635721
+    - path: data/defenses/
+      md5: bf41760dc4c1f0143f21ce00b9ec0520.dir
+      size: 70927353
+      nfiles: 15
+    outs:
+    - path: data/attacks/
+      md5: 70bea4978e562e52cad1a33382fe0a7b.dir
+      size: 164572
+      nfiles: 25

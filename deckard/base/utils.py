@@ -23,21 +23,23 @@ def return_result(scorer:str, filename = 'results.json')-> float:
     # return the result
     return results[scorer.upper()]
 
-def load_model(model_file:str = None) -> Model:
+def load_model(filename:str = None) -> Model:
     """
     Load a model from a pickle file.
-    model_file: the pickle file to load the model from
+    filename: the pickle file to load the model from
     """
     from deckard.base.model import Model
     logger.debug("Loading model")
     # load the model
-    if model_file.endswith('.pkl'):
-        model = pickle.load(open(model_file, 'rb'))
-    elif model_file.endswith('.h5'):
-        from tensorflow.keras.models import load_model as keras_load_model
-        model = Model(keras_load_model(model_file))
+    if filename.endswith('.pkl'):
+        model = pickle.load(open(filename, 'rb'))
+    elif filename.endswith('.h5'):
+        from tensorflow.keras.models import load_model as keras_load_model, clone_model
+        # TODO add support for tf, pytorch
+        cloned_model = keras_load_model(filename)
+        model = Model(cloned_model)
     else:
-        raise ValueError("model_file must be a pickle file or a keras model")
+        raise ValueError("filename must be a pickle file or a keras model")
     logger.info("Loaded model")
     return model
 
@@ -105,7 +107,7 @@ def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool,
         
         best.save_model(folder = new_folder)
         best.save_results(folder = new_folder)
-        logger.info("Saved best experiment")
+        logger.info("Saved best experiment to {}".format(new_folder))
         logger.info("Best score: {}".format(best.scores[scorer]))
 
 def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:str):
@@ -133,8 +135,8 @@ def save_all(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:
                 flag = True
             elif exp.scores[scorer] >= best.scores[scorer] and bigger_is_better:
                 best = exp
-        
+        best.filename = 'best_' + name
         best.save_model(folder = new_folder)
         best.save_results(folder = new_folder)
-        logger.info("Saved best experiment")
+        logger.info("Saved best experiment to {}".format(new_folder))
         logger.info("Best score: {}".format(best.scores[scorer]))

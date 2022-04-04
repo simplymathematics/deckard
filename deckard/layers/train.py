@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str, default = "train", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
-    model_file = args.config
+    filename = args.config
     try:
          data = load_data(path.join(args.folder, args.dataset))
          if args.time_series == True:

@@ -238,7 +238,7 @@ def generate_model(data, classifier, defense, def_name, train_size, folder = FOL
         logger.info("Defense not supported. Try running the function again, using your defended model as the classifier.")
         raise ValueError
     res = Experiment(datum, cl, name, defense = defense,  n = train_size,)
-    model_file = folder + res.classifier_id + ".model"
+    filename = folder + res.classifier_id + ".model"
     logger.info("Number of Samples used for Training: "+ str(res.n))
     logger.info("Defense: " +  def_name)
     logger.info("Classifier: " + cl_name)
@@ -248,14 +248,14 @@ def generate_model(data, classifier, defense, def_name, train_size, folder = FOL
     except AttributeError as e: # Catches instance where no defense is provided
         res.def_name = 'None'
     res.classifier_name = cl_name
-    if exists(model_file):
+    if exists(filename):
         logger.info(str(res.classifier_id) + " Classifier Exists!")
-        with open(model_file, 'rb') as file:
+        with open(filename, 'rb') as file:
             res = pickle.load(file)
     else:
         res = res.train(datum, name = cl_name, verbose = verbose)
-        logger.info("Saving classifier to: "+ model_file)
-        with open(model_file, 'wb') as file:
+        logger.info("Saving classifier to: "+ filename)
+        with open(filename, 'wb') as file:
             pickle.dump(res, file)
     experiments[res.id] = res
     assert len(experiments) == len(set(experiments))
@@ -349,21 +349,13 @@ def delete_folder(folder = FOLDER):
      logger.info("Folder '" + folder + "' Deleted")
 
 if __name__ == '__main__':
-    tmp = tempfile.gettempdir()
-    logging.basicConfig(
-        level = logger.DEBUG,
-        format = '%(asctime)s %(name)s %(levelname)s %(message)s',
-        filename=FOLDER +'debug.log',
-        filemode = 'w'
-    )
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger('')
-    logger.setLevel(logger.DEBUG)
     file_logger = logger.FileHandler(FOLDER+'debug.log')
     file_logger.setLevel(logger.INFO)
     file_logger.setFormatter(formatter)
     stream_logger = logging.StreamHandler()
-    stream_logger.setLevel(logger.INFO)
+    stream_logger.setLevel(logger.DEBUG)
     stream_logger.setFormatter(formatter)
     logger.addHandler(file_logger)
     logger.addHandler(stream_logger)
