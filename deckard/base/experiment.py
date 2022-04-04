@@ -454,7 +454,7 @@ class Experiment(object):
                 predictions['id_'] = self.filename
             predictions.to_json(predictions_file)
         if hasattr(self, "adv"):
-            adv_file = path.join(folder, "predictions-adv.json")
+            adv_file = path.join(folder, "predictions_adv.json")
             try:
                 adv = Series(self.adv, name = self.filename)
             except:

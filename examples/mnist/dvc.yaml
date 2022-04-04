@@ -32,27 +32,7 @@ stages:
     outs:
     - data/attacks/:
         cache: true
-  # attack:
-  #   cmd: python ../../deckard/layers/attack.py  -f data -s f1 -b False --name attack --experiment best_defense
-  #   deps:
-  #   - configs/attack.yml
-  #   - ../../deckard/layers/attack.py
-  #   - data/best_defense/model.h5
-  #   - data/data.pkl
-  #   outs:
-  #   - data/best_attack/model.h5:
-  #       cache: true
-  #   - data/best_attack/data_params.json:
-  #       cache: true
-  #   - data/best_attack/model_params.json:
-  #       cache: true
-  #   metrics:
-  #   - data/best_attack/results.json:
-  #       cache: true
-  # evaluate:
-  #   cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d mnist --experiment best_attack
-  #   deps: 
-  #     - data/best_attack/model.h5
+
 
 
 

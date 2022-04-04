@@ -2,6 +2,6 @@
   params:
     shuffle : False
     random_state : 0
-    test_size : .1
-    sample_size : 1
-    flatten : False
+    train_size : .9
+
+    
