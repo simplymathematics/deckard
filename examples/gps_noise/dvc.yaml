@@ -57,7 +57,5 @@ stages:
     metrics:
     - data/best_featurize/results.json:
         cache: true
-  evaluate:
-    cmd: 
 
 

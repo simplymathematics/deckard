@@ -36,7 +36,7 @@ class Data(object):
         :param time_series: If True, the dataset is treated as a time series. Default is False.
         :param train_size: The percentage of the dataset to use. Default is 0.1.
         :param random_state: The random state to use. Default is 0.
-        :param test_size: The percentage of the dataset to use for testing. Default is 0.2.
+        :param train_size: The percentage of the dataset to use for testing. Default is 0.2.
         :param shuffle: If True, the data is shuffled. Default is False.
         :param flatten: If True, the dataset is flattened. Default is False.
         """
@@ -96,6 +96,7 @@ class Data(object):
             (X_train, y_train),(X_test, y_test), minimum, maximum = self._parse_csv(dataset, target)
         else:
             (X_train, y_train),(X_test, y_test), minimum, maximum = load_dataset(dataset)
+            # TODO: fix this
             # from sklearn.model_selection import train_test_split
             # # sets stratify to None if stratify is False
             # stratify = y_train if self.stratify == True else None
@@ -103,7 +104,6 @@ class Data(object):
             # big_y = np.append(y_train, y_test, axis=0)
             # assert len(big_X) == len(big_y), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
             # X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
-
         # Standardize the test/train_size to be integers
         if isinstance(self.train_size, float) or self.train_size == 1:
             self.train_size = int(round(len(X_train) * self.train_size))
@@ -112,7 +112,8 @@ class Data(object):
         self.y_train = y_train
         self.y_test = y_test
         self.dataset = dataset
-        
+        self.clip_values = [minimum, maximum]
+    
     def _parse_csv(self, dataset:str = 'mnist', target = None) -> None:
         """
         :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, and diabetes
@@ -134,8 +135,6 @@ class Data(object):
         else:
             raise NotImplementedError("Time series not yet implemented")
         return (X_train, y_train), (X_test, y_test), minimum, maximum
-        
-
 
 def validate_data(data:Data) -> None:
     """

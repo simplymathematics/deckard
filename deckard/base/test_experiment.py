@@ -1,44 +1,324 @@
+import warnings
+
+from sklearn.exceptions import UndefinedMetricWarning
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+
 import unittest
+from data import Data
+from model import Model
+import numpy as np
+from experiment import Experiment
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cluster import KMeans
+from sklearn.metrics import accuracy_score
+from sklearn.neighbors import  KNeighborsRegressor
+from sklearn.svm import SVC
+from copy import deepcopy
+from collections.abc import Callable
+from art.attacks.evasion import BoundaryAttack
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.defences.preprocessor import FeatureSqueezing
+from art.defences.postprocessor import HighConfidence
+# suppress all warnings
 
+# import tmp from os
+import tempfile
 class TestExperiment(unittest.TestCase):
-    def test_experiment(self):
-        pass
-    def test_hash():
-        pass
-    def test_eq():
-        pass
-    def test_set_metric_scorer():
-        pass
-    def test_build_supervised_model():
-        pass
-    def test_build_unsupervised_model():
-        pass
-    def test_build_time_series_model():
-        pass
-    def test_is_supervised():
-        pass
-    def test_is_unsupervised():
-        pass
-    def test_is_time_series():
-        pass
-    def test_get_model_type():
-        pass
-    def test_get_model_name():
-        pass
-    def test_get_model_params():
-        pass
-    def test_get_model_params_as_dict():
-        pass
-    def test_get_model_params_as_json():
-        pass
-    def test_run_experiment():
-        pass
-    def test_evaluate_experiment():
-        pass
-    def test_save_results():
-        pass
-    def test_save_model():
-        pass
+    def setUp(self):
+        self.path = tempfile.mkdtemp()
+        self.file = 'test_filename'
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_experiment(self):
+
+        data = Data('iris')
+        self.assertIsInstance(data, Data)
+        model = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        self.assertIsInstance(model, Model)
+        experiment = Experiment(data = data, model = model)
+        self.assertIsInstance(experiment, Experiment)
+        self.assertIsInstance(experiment.data, Data)
+        self.assertIsInstance(experiment.model, Model)
+        self.assertIsInstance(experiment.refit, str)
+        self.assertIsInstance(experiment.params, dict)
+        self.assertIsInstance(experiment.scorers, dict)
+        self.assertEqual(experiment.predictions, None)
+        self.assertEqual(experiment.scores, None)
+        self.assertEqual(experiment.time_dict, None)
+        self.assertEqual(experiment.model_type, 'sklearn')
+
+
+    def test_hash(self):
+
+        data = Data('iris')
+        model = Model(KNeighborsRegressor(5), model_type = 'sklearn')
+        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn')
+        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model4 = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment2 = Experiment(data = data, model = model2)
+        experiment3 = Experiment(data = data, model = model3)
+        experiment4 = Experiment(data = data, model = model4)
+        experiment5 = deepcopy(experiment)
+        self.assertEqual(hash(experiment), hash(experiment3))
+        self.assertEqual(hash(experiment), hash(experiment5))
+        self.assertNotEqual(hash(experiment), hash(experiment4))
+        self.assertNotEqual(hash(experiment), hash(experiment2))
+
+
+    def test_eq(self):
+        data = Data('iris')
+        model = Model(KNeighborsRegressor(5), model_type = 'sklearn')
+        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn')
+        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model4 = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment2 = Experiment(data = data, model = model2)
+        experiment3 = Experiment(data = data, model = model3)
+        experiment4 = Experiment(data = data, model = model4)
+        experiment5 = deepcopy(experiment)
+        self.assertEqual(experiment.data, experiment3.data)
+        self.assertEqual(experiment.model, experiment3.model)
+        self.assertEqual(experiment, experiment3)
+        self.assertEqual(experiment, experiment5)
+        self.assertNotEqual(experiment, experiment4)
+        self.assertNotEqual(experiment, experiment2)
+
+    def test_set_metric_scorer(self):
+        data = Data('iris')
+        data2 = Data('diabetes')
+        model = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model2 = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data2, model = model)
+        experiment2 = Experiment(data = data, model = model2)
+        experiment3 = Experiment(data = data, model = model2, scorers = {'accuracy': accuracy_score})
+        self.assertIsInstance(experiment.scorers, dict)
+        self.assertIsInstance(experiment2.scorers, dict)
+        self.assertIsInstance(experiment3.scorers, dict)
+        self.assertIn('MSE', experiment.scorers)
+        self.assertIn('accuracy', experiment3.scorers)
+        self.assertIn('F1', experiment2.scorers)
+        self.assertIsInstance(experiment3.scorers['accuracy'], Callable)
+        self.assertEqual(experiment3.scorers['accuracy'], accuracy_score)
+        self.assertNotEqual(experiment3.scorers, experiment.scorers)
+        self.assertNotEqual(experiment3.scorers, experiment2.scorers)
+
+
+    def test_build_supervised_model(self):
+        data = Data('iris')
+        model = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        y_pred, (fit_time, pred_time) = experiment._build_supervised_model()
+        self.assertIsInstance(y_pred, (list, np.ndarray))
+        self.assertIsInstance(fit_time, (int, float))
+        self.assertIsInstance(pred_time, (int, float))
+        self.assertEqual(len(y_pred), len(data.y_test))
+        self.assertTrue(experiment.is_fitted)
+    
+    def test_build_unsupervised_model(self):
+        data = Data('iris')
+        model = Model(KMeans(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        y_pred, (fit_pred_time) = experiment._build_unsupervised_model()
+        self.assertIsInstance(y_pred, (list, np.ndarray))
+        self.assertIsInstance(fit_pred_time, (int, float))
+        self.assertEqual(len(y_pred), len(data.y_test))
+        self.assertFalse(experiment.is_fitted)
+        
+    
+    def test_build_time_series_model(self):
+        #TODO:
+        pass
+    
+    def test_is_supervised(self):
+        data = Data('iris')
+        model1 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model2 = Model(KMeans(), model_type = 'sklearn')
+        experiment = Experiment(model = model1, data=data)
+        experiment2 = Experiment(model = model2, data=data)
+        self.assertTrue(experiment.is_supervised())
+        self.assertFalse(experiment2.is_supervised())
+
+    def test_build_model(self):
+        data = Data('iris')
+        #Experiment 1
+        model1 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        experiment = Experiment(model = model1, data=data)
+        experiment._build_model()
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIn('fit_time', experiment.time_dict)
+        self.assertIn('pred_time', experiment.time_dict)
+        # Experiment 2
+        model2 = Model(KMeans(), model_type = 'sklearn')
+        experiment2 = Experiment(model = model2, data=data)
+        experiment2._build_model()
+        self.assertIsInstance(experiment2.predictions, (list, np.ndarray))
+        self.assertEqual(len(experiment2.predictions), len(data.y_test))
+        self.assertIn('fit_pred_time', experiment2.time_dict)
+
+    def test_run(self):
+        data = Data('iris')
+        model = Model(KMeans(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIsInstance(experiment.scores, dict)
+        self.assertIn('fit_pred_time', experiment.time_dict)
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIn('fit_time', experiment.time_dict)
+        self.assertIn('pred_time', experiment.time_dict)
+        self.assertIsInstance(experiment.scores, dict)
+    
+    def test_run_attack(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
+        experiment.set_attack(attack)
+    
+        experiment.run()
+        experiment.run_attack()
+        self.assertIsInstance(experiment.attack, BoundaryAttack)
+        self.assertIsInstance(experiment.adv, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict['adv_fit_time'], (int, float))
+        self.assertIsInstance(experiment.time_dict['adv_pred_time'], (int, float))
+        self.assertIsInstance(experiment.adv_scores, dict)
+
+
+
+    def test_set_filename(self):
+        data = Data('iris')
+        model = Model(KMeans(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.set_filename('test_filename')
+        self.assertEqual(experiment.filename, 'test_filename')
+
+    def test_set_attack(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
+        old = hash(experiment)
+        old_name = experiment.filename
+        experiment.set_attack(attack)
+        new = hash(experiment)
+        new_name = experiment.filename
+        self.assertIsInstance(experiment.attack, object)
+        self.assertEqual(experiment.attack, attack)
+        self.assertIn('Attack', experiment.params)
+        self.assertIn('name', experiment.params['Attack'])
+        self.assertIn('params', experiment.params['Attack'])
+        self.assertNotEqual(old, new)
+        self.assertNotEqual(old_name, new_name)
+
+
+    def test_set_defense(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        preprocessor = FeatureSqueezing(clip_values = (0, 255))
+        old = hash(experiment)
+        old_name = experiment.filename
+        experiment.set_defense(preprocessor)
+        new = hash(experiment)
+        new_name = experiment.filename
+        self.assertIsInstance(experiment.defense, object)
+        self.assertEqual(experiment.defense, preprocessor)
+        self.assertIn('Defense', experiment.params)
+        self.assertIn('name', experiment.params['Defense'])
+        self.assertIn('params', experiment.params['Defense'])
+        self.assertNotEqual(old, new)
+        self.assertNotEqual(old_name, new_name)
+
+        experiment2 = Experiment(data = data, model = model)
+        postprocessor = HighConfidence(.95)
+        experiment2.set_defense(postprocessor)
+        self.assertIsInstance(experiment2.defense, object)
+        self.assertEqual(experiment2.defense, postprocessor)
+        self.assertIn('Defense', experiment2.params)
+        self.assertIn('name', experiment2.params['Defense'])
+        self.assertIn('params', experiment2.params['Defense'])
+
+    def test_get_attack(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(estimator, targeted = False, max_iter=10, verbose = False)
+        experiment.set_attack(attack)
+        self.assertIsInstance(experiment.get_attack(), object)
+        self.assertEqual(experiment.get_attack(), attack)
+
+    def test_get_defense(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        preprocessor = FeatureSqueezing(clip_values = (0, 255))
+        experiment.set_defense(preprocessor)
+        self.assertIsInstance(experiment.get_defense(), object)
+        self.assertEqual(experiment.get_defense(), preprocessor)
+
+    
+
+    def test_evaluate(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment._build_model()
+        experiment.evaluate()
+        self.assertIsInstance(experiment.scores, dict)
+        self.assertIsInstance(list(experiment.scores.values())[0], (int, float))
+
+        
+        # TODO: remove try/except and fix function
+        # TODO: fix/test auc--maybe due to dataset?
+
+    def test_evaluate_attack(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
+        experiment._build_model()
+        experiment.set_attack(attack)
+        experiment._build_attack()
+        experiment.evaluate_attack()
+        self.assertIsInstance(experiment.adv_scores, dict)
+        self.assertIsInstance(list(experiment.adv_scores.values())[0], (int, float))
+    
+
+    # def test_save_data(self):
+    #     data = Data('iris')
+    #     model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+    #     experiment = Experiment(data = data, model = model)
+    #     experiment.save_data(filename=self.file, path=self.path)
+        
+    # def test_save_model(self):
+    #     pass
+    # def test_save_predictions(self):
+    #     pass
+    # def test_save_scores(self):
+    #     pass
+    # def test_save_attack(self):
+    #     pass
+    # def test_save_defense(self):
+    #     pass
+    # def test_save_cv_scores(self):
+    #     pass
+    # def test_save(self):
+    #     pass
+
+    
+    
+
