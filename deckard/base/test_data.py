@@ -1,5 +1,5 @@
 import unittest
-from data import Data
+from deckard.base.data import Data
 datasets = ['mnist', 'cifar10']
 # TODO other datasets
 class testData(unittest.TestCase):
@@ -19,6 +19,8 @@ class testData(unittest.TestCase):
                 self.assertIsInstance(data.params['shuffle'], bool)
                 if data.params['target'] is not None:
                     self.assertIsInstance(data.params['target'], str)
+                else:
+                    self.assertIsNone(data.params['target'])
                 self.assertIsInstance(data.params['time_series'], bool)
             self.assertEqual(len(data.X_train), len(data.y_train))
             self.assertEqual(len(data.X_test), len(data.y_test))

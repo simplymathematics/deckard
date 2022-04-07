@@ -2,7 +2,7 @@ if __name__ == '__main__':
     import logging
     from deckard.base import Experiment
     from deckard.base.utils import save_all, save_best_only, load_data, load_model
-    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params, insert_layer_into_list, generate_experiment_list
+    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params_for_pipeline, insert_layer_into_pipeline, generate_experiment_list
     import argparse
     from os import path
     import logging
@@ -26,8 +26,8 @@ if __name__ == '__main__':
     data = load_data(path.join(args.folder, args.dataset))
     preprocessor_list = parse_list_from_yml(args.config)
     object_list = generate_object_list(preprocessor_list)
-    transformed_list = transform_params(object_list, args.name)
-    model_list = insert_layer_into_list(transformed_list, best.model.estimator, name = args.name, position = args.position)
+    transformed_list = transform_params_for_pipeline(object_list, args.name)
+    model_list = insert_layer_into_pipeline(transformed_list, best.model.estimator, name = args.name, position = args.position)
     exp_list = generate_experiment_list(model_list, data, cv = 10)
     scorer = args.scorer.upper()
     folder = path.join(args.folder, args.name)

@@ -1,5 +1,3 @@
-from ftplib import all_errors
-from tkinter import E
 import numpy as np
 from sklearn import multiclass
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \

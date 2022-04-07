@@ -5,7 +5,7 @@ if __name__ == '__main__':
     from deckard.base import Data
     from deckard.base.utils import load_data, save_all, save_best_only
     from deckard.base import Data
-    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params, generate_experiment_list
+    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params_for_pipeline, generate_experiment_list
     from os import path, mkdir
     import argparse
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # instantiates those objects
     model_list = generate_object_list(model_list)
     # turns lists of params into a set of permutations where len(permutations) = len(list1) * len(list2) ... len(listn)
-    model_list = transform_params(model_list, 'model')
+    model_list = transform_params_for_pipeline(model_list, 'model')
     # initalizes the experiment objects using the above data and models
     # Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation, or specifying it as a model parameter in the config file
     # Eventually, scoring will rely on the same yaml configs for the sake of consistency

@@ -201,31 +201,4 @@ if __name__ == '__main__':
                 experiment.save_results(folder = os.path.join(args.output_folder, subdirectory, output_folder))
             else:
                 experiment.save_results(folder = os.path.join(args.output_folder, output_folder))
-    # i = 0
-    # length = len(object_list)
-    # for attack in object_list:
-    #     i += 1
-    #     logger.info("{} of {} experiments.".format(i, length))
-    #     attack_dict = {"Attack" : type(attack), "params": attack.__dict__}
-    #     # initalize model
-    #     art_model = initialize_art_classifier(model_name = args.input_model, filename = args.input_folder, model_type = args.model_type, output_folder = args.output_folder, attacks = [attack])
-    #     art_model = Model(estimator= art_model, model_type =args.model_type)
-    #     # Create experiment
-    #     experiment = Experiment(data = data, model = art_model, name = args.input_model, params = attack_dict)
-    #     logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.input_model))
-    #     # run experiment
-    #     logger.info("Running experiment...")
-    #     experiment.run()
-    #     logger.info("Experiment complete.")
-    #     # Save experiment
-    #     output_folder = os.path.join(args.output_folder, experiment.filename)
-    #     if args.output_name is None:
-    #         args.output_name = "defended_model"
-    #     logger.info("Saving experiment to {}.".format(output_folder))
-    #     experiment.model.model.save(filename = args.output_name, path = output_folder)
-    #     experiment.save_results(folder = output_folder)
-    #     logger.info("Experiment saved.")
-    # assert i == length, "Number of experiments {} does not match number of queries {}".format(i, length)
-    # # count the number of folders in the output folder
-    # num_folders = len(os.listdir(args.output_folder))
-    # assert num_folders >= length
+            logger.info("Finished attack {} of {}".format(j, len(attack_list)))

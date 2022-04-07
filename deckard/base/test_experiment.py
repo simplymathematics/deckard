@@ -6,10 +6,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 import unittest
-from data import Data
-from model import Model
+from deckard.base import Data, Model, Experiment
 import numpy as np
-from experiment import Experiment
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score

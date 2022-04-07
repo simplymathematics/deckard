@@ -33,7 +33,7 @@ class Model(object):
             self.params.update(params)
         else:
             logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually.")
-            self.params = params            
+            self.params = params
         self.model = estimator
         self.verbose = verbose
         if model_type is None:
@@ -89,21 +89,3 @@ class Model(object):
     
     def get_params(self):
         return self.params
-
-if __name__ == "__main__":
-    # set logging to debug
-    from sklearn.model_selection import GridSearchCV
-    import sys
-    logging.basicConfig(level=logger.DEBUG)
-    # import standard scaler
-    from sklearn.preprocessing import StandardScaler
-    # import linear regression
-    from sklearn.linear_model import LinearRegression
-    # import pipeline
-    from sklearn.pipeline import Pipeline
-    model = LinearRegression()
-    params = {'fit_intercept': [True, False], 'normalize': [True, False]}
-    model = Model(model)
-    model2 = Model(GridSearchCV(LinearRegression(), params, cv=5))
-    assert model.name == model2.name
-    sys.exit(0)
