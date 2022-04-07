@@ -56,33 +56,6 @@ def load_data(data_file:str = None) -> Data:
     logger.info("Loaded model")
     return data
 
-
-def push_json(json_file:str, remote_folder:str, remote_host:str, remote_user:str, remote_password:str) -> None:
-    """
-    Push a json file to a remote host.
-    json_file: the json file to push
-    remote_folder: the remote folder to push the json file to
-    remote_host: the remote host to push the json file to
-    remote_user: the remote user to push the json file to
-    remote_password: the remote password to push the json file to
-    """
-    assert isinstance(json_file, str), "json_file must be specified"
-    assert isinstance(remote_folder, str), "remote_folder must be specified"
-    assert isinstance(remote_host, str), "remote_host must be specified"
-    assert isinstance(remote_user, str), "remote_user must be specified"
-    assert isinstance(remote_password, str), "remote_password must be specified"
-    logger.debug("Pushing json to remote server")
-    logger.debug("json_file: " + json_file)
-    logger.debug("remote_folder: " + remote_folder)
-    logger.debug("remote_host: " + remote_host)
-    logger.debug("remote_user: " + remote_user)
-    logger.debug("remote_password: " + "*************************")
-    cmd = 'scp ' + json_file + ' ' + remote_user + '@' + remote_host + ':' + remote_folder
-    logger.debug("cmd: " + cmd)
-    os.system(cmd)
-    logger.debug("Pushed json to remote server")
-    return None
-
 def save_best_only(folder:str, exp_list:list, scorer:str, bigger_is_better:bool, name:str):
         """
         Save the best experiment only.

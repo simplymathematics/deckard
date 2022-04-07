@@ -7,7 +7,13 @@ import json
 from copy import deepcopy
 from art.estimators.classification import PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.estimators import ScikitlearnEstimator
+from art.estimators.regression import ScikitlearnRegressor
 logger = logging.getLogger(__name__)
+
+
+supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier, ScikitlearnRegressor, ScikitlearnEstimator]
+
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
@@ -19,11 +25,11 @@ class Model(object):
         verbose: the verbosity level
         """
         logger.info("Model type during init: {}".format(type(estimator)))
-        if isinstance(estimator, (Pipeline, BaseEstimator)) or model_type == 'sklearn':
+        if isinstance(estimator, (Pipeline, BaseEstimator)):
             self.params = dict(estimator.get_params(deep=True))
             self.params.update(params)
         elif isinstance(estimator, (PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier)):
-            self.params = dict(estimator.get_params())
+            self.params = dict(estimator.get_params())                
             self.params.update(params)
         else:
             logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually.")

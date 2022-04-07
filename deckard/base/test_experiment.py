@@ -14,6 +14,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import  KNeighborsRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from copy import deepcopy
 from collections.abc import Callable
@@ -21,13 +22,14 @@ from art.attacks.evasion import BoundaryAttack
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.defences.preprocessor import FeatureSqueezing
 from art.defences.postprocessor import HighConfidence
-# suppress all warnings
-
-# import tmp from os
+from os import path, listdir, remove, mkdir
 import tempfile
+from json import load
 class TestExperiment(unittest.TestCase):
     def setUp(self):
+        
         self.path = tempfile.mkdtemp()
+        ART_DATA_PATH = path.join(self.path)
         self.file = 'test_filename'
 
     def test_experiment(self):
@@ -297,27 +299,133 @@ class TestExperiment(unittest.TestCase):
         self.assertIsInstance(experiment.adv_scores, dict)
         self.assertIsInstance(list(experiment.adv_scores.values())[0], (int, float))
     
+    def test_evaluate_defense(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        preprocessor = FeatureSqueezing(clip_values = (0, 1))
+        postprocessor = HighConfidence(.95)
+        old = hash(experiment)
+        experiment.set_defense(preprocessor)
+        experiment2 = Experiment(data = data, model = model)
+        experiment2.set_defense(postprocessor)
+        experiment2.run()
+        self.assertNotEqual(hash(experiment), hash(experiment2))
+        self.assertNotEqual(old, hash(experiment))
 
-    # def test_save_data(self):
-    #     data = Data('iris')
-    #     model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
-    #     experiment = Experiment(data = data, model = model)
-    #     experiment.save_data(filename=self.file, path=self.path)
-        
-    # def test_save_model(self):
-    #     pass
-    # def test_save_predictions(self):
-    #     pass
-    # def test_save_scores(self):
-    #     pass
-    # def test_save_attack(self):
-    #     pass
-    # def test_save_defense(self):
-    #     pass
-    # def test_save_cv_scores(self):
-    #     pass
-    # def test_save(self):
-    #     pass
+    def test_save_data(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.save_data(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    
+    def test_save_experiment_params(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.save_experiment_params(data_params_file = self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        self.assertTrue(path.exists(path.join(self.path, 'model_params.json')))
+
+    def test_save_model(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.save_model(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+
+    def test_save_predictions(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        experiment.save_predictions(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    
+    def test_save_scores(self):
+        data = Data('iris')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        experiment.save_scores(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+
+    def test_save_adv_predictions(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
+        experiment.run()
+        experiment.set_attack(attack)
+        experiment.run_attack()
+        experiment.save_adv_predictions(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    
+    def test_save_attack(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
+        experiment.set_attack(attack)
+        experiment.save_attack(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    
+    def test_save_defense(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        preprocessor = FeatureSqueezing(clip_values = (0, 255))
+        experiment.set_defense(preprocessor)
+        experiment.save_defense(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+
+    def test_save_cv_scores(self):
+        from sklearn.model_selection import GridSearchCV
+        data = Data('iris')
+        estimator = DecisionTreeClassifier()
+        grid = GridSearchCV(estimator, {'max_depth': [1, 2, 3, 4, 5]}, cv=3, return_train_score=True)
+        model = Model(grid, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        experiment.run()
+        experiment.save_cv_scores(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    
+
+    def test_save_results(self):
+        data = Data('iris')
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        preprocessor = FeatureSqueezing(clip_values = (0, 255))
+        experiment.set_defense(preprocessor)
+        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
+        experiment.run()
+        experiment.set_attack(attack)
+        experiment.run_attack()
+        experiment.save_results(path=self.path)
+        files = listdir(self.path)
+        self.assertTrue(path.exists(self.path))
+        # self.assertIn('model', files)
+        self.assertIn('predictions.json', files)
+        self.assertIn('adversarial_predictions.json', files)
+        self.assertIn('scores.json', files)
+        self.assertIn('adversarial_scores.json', files)
+        self.assertIn('attack_params.json', files)
+        self.assertIn('defense_params.json', files)
+        self.assertIn('model_params.json', files)
+        self.assertIn('data_params.json', files)
+    
+    def tearDown(self) -> None:
+        from shutil import rmtree
+        rmtree(self.path)
+        del self.path
+        del self.file
 
     
     

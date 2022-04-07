@@ -15,13 +15,13 @@ from time import process_time_ns
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
-from os import path, mkdir
+import os
 logger = logging.getLogger(__name__)
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from json import dumps
+from json import dumps, dump as json_dump
 from pickle import dump
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 
@@ -51,7 +51,6 @@ class Experiment(object):
         self.model = model
         self.model_type = self.model.model_type
         self.data = data
-        self.params = {**self.data.params, **self.model.params, **params}
         self.name = data.dataset +"_"+ model.name if name is None else name
         self.verbose = verbose
         self.is_fitted = is_fitted
@@ -60,6 +59,7 @@ class Experiment(object):
         self.attack = None
         self.defense = None
         self.scores = None
+        self.params = {**self.data.params, **self.model.params, **params}
         if not scorers:
             self.scorers = REGRESSOR_SCORERS if is_regressor(model.model) else CLASSIFIER_SCORERS
         else:
@@ -355,128 +355,168 @@ class Experiment(object):
     def save_data(self, filename:str = "data.pkl", path:str = ".") -> None:
         """
         Saves data to specified file.
-        :param filename: str, name of file to save data to.
-        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory.
+        :param filename: str, name of file to save data to. 
+        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
         assert path is not None, "Path to save data must be specified."
-        with open(path.join(path, filename), 'wb') as f:
+        with open(os.path.join(path, filename), 'wb') as f:
             dump(self.data, f)
-        assert path.exists(path.join(path, filename)), "Data not saved."
-        return None
-
-    def save_model(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        model_file = path.join(path, filename)
-        if 'art' in type(self.model.model):
-            self.model.model.save(filename = model_file)
-        elif 'sklearn' in type(self.model.model):
-            with open(model_file, 'wb') as f:
-                dump(self.model.model, f)
-        else: 
-            raise IOError("Model not saved. Must be 'art' or 'sklearn'")
-        assert path.exists(model_file), "Model file not saved"
-        return None
-
-
-    def save_adv_examples(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified"
-        adv_file = path.join(path, filename)
-        adv_results = DataFrame(self.adv)
-        adv_results.to_json(adv_file)
-        assert path.exists(adv_file), "Adversarial example file not saved"
+        assert os.path.exists(os.path.join(path, filename)), "Data not saved."
         return None
     
-    def save_cv_scores(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified"
-        cv_file = path.join(path, filename)
-        cv_results = Series(self.model.model.cv_results_, name = self.filename)
-        cv_results.to_json(cv_file)
-        assert path.exists(cv_file), "CV results file not saved"
+    def save_experiment_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", path:str = ".") -> None:
+        """
+        Saves data to specified file.
+        :param data_params_file: str, name of file to save data parameters to.
+        :param model_params_file: str, name of file to save model parameters to.
+        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
+        """
+        assert path is not None, "Path to save data must be specified."
+        with open(os.path.join(path, data_params_file), 'w') as f:
+            json_dump(str(self.data.params), f)
+        assert os.path.exists(os.path.join(path, data_params_file)), "Data params not saved."
 
-    def save_model(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        model_file = path.join(path, filename)
-        if 'art' in type(self.model.model):
-            self.model.model.save(filename = model_file)
-        elif 'sklearn' in type(self.model.model):
+        with open(os.path.join(path, model_params_file), 'w') as f:
+            json_dump(str(self.model.params), f)
+        assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
+        return None
+
+    def save_model(self, filename:str = "model", path:str = ".") -> str:
+        """
+        Saves model to specified file (or subfolder).
+        :param filename: str, name of file to save model to. 
+        :param path: str, path to folder to save model. If none specified, model is saved in current working directory. Must exist.
+        :return: str, path to saved model.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist" 
+        model_file = os.path.join(path, filename)
+        if hasattr(self.model, "model") and hasattr(self.model.model, "save"):
+            self.model.model.save(filename = filename, path = path)
+        else:
             with open(model_file, 'wb') as f:
                 dump(self.model.model, f)
-        else: 
-            raise IOError("Model not saved. Must be 'art' or 'sklearn'")
-        assert path.exists(model_file), "Model file not saved"
-        return None
-        
-
-    def save_predictions(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        prediction_file = path.join(path, filename)
+        assert os.path.isfile(model_file) or os.path.isdir(model_file), "Model file not saved"
+    
+    def save_predictions(self, filename:str = "predictions.json", path:str = ".") -> None:
+        """
+        Saves predictions to specified file.
+        :param filename: str, name of file to save predictions to. 
+        :param path: str, path to folder to save predictions. If none specified, predictions are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"    
+        prediction_file = os.path.join(path, filename)
         results = self.predictions
-        results = Series(results.values(), name =  self.filename, index = results.keys())
+        results = Series(results)
         results.to_json(prediction_file)
-        assert path.exists(prediction_file), "Prediction file not saved"
+        assert os.path.exists(prediction_file), "Prediction file not saved"
         return None
 
-    def save_scores(self, filename:str = None, path:str = ".") -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        score_file = path.join(path, filename)
+    def save_adv_predictions(self, filename:str = "adversarial_predictions.json", path:str = ".") -> None:
+        """
+        Saves adversarial predictions to specified file.
+        :param filename: str, name of file to save adversarial predictions to.
+        :param path: str, path to folder to save adversarial predictions. If none specified, predictions are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        adv_file = os.path.join(path, filename)
+        adv_results = DataFrame(self.adv)
+        adv_results.to_json(adv_file)
+        assert os.path.exists(adv_file), "Adversarial example file not saved"
+        return None
+    
+    def save_cv_scores(self, filename:str = "cv_scores.json", path:str = ".") -> None:
+        """
+        Saves crossvalidation scores to specified file.
+        :param filename: str, name of file to save crossvalidation scores to.
+        :param path: str, path to folder to save crossvalidation scores. If none specified, scores are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        assert filename is not None, "Filename must be specified"
+        cv_file = os.path.join(path, filename)
+        cv_results = Series(self.model.model.cv_results_, name = self.filename)
+        cv_results.to_json(cv_file)
+        assert os.path.exists(cv_file), "CV results file not saved"
+
+    def save_scores(self, filename:str = "scores.json", path:str = ".") -> None:
+        """
+        Saves scores to specified file.
+        :param filename: str, name of file to save scores to.
+        :param path: str, path to folder to save scores. If none specified, scores are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        
+        score_file = os.path.join(path, filename)
         results = self.scores
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(score_file)
-        assert path.exists(score_file), "Score file not saved"
+        assert os.path.exists(score_file), "Score file not saved"
         return None
     
-    def save_adv_scores(self, filename:str = None, path:str = ".") -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        adv_score_file = path.join(path, filename)
+    def save_adv_scores(self, filename:str = "adversarial_scores.json", path:str = ".") -> None:
+        """
+        Saves adversarial scores to specified file.
+        :param filename: str, name of file to save adversarial scores to.
+        :param path: str, path to folder to save adversarial scores. If none specified, scores are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        
+        adv_score_file = os.path.join(path, filename)
         results = self.adv_scores
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(adv_score_file)
-        assert path.exists(adv_score_file), "Adversarial score file not saved."
+        assert os.path.exists(adv_score_file), "Adversarial score file not saved."
         return None
     
-    def save_attack(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        attack_file = path.join(path, filename)
+    def save_attack(self, filename:str = "attack_params.json", path:str = ".") -> None:
+        """
+        Saves attack params to specified file.
+        :param filename: str, name of file to save attack params to.
+        :param path: str, path to folder to save attack params. If none specified, attack params are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        
+        attack_file = os.path.join(path, filename)
         results = self.params['Attack']
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(attack_file)
-        assert path.exists(attack_file), "Attack file not saved."
+        assert os.path.exists(attack_file), "Attack file not saved."
         return None
 
-    def save_defense(self, filename:str = None, path:str = None) -> None:
-        assert path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified."
-        defense_file = path.join(path, filename)
+    def save_defense(self, filename:str = "defense_params.json", path:str = ".") -> None:
+        """
+        Saves defense params to specified file.
+        :param filename: str, name of file to save defense params to.
+        :param path: str, path to folder to save defense params. If none specified, defense params are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        
+        defense_file = os.path.join(path, filename)
         results = self.params['Defense']
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(defense_file)
-        assert path.exists(defense_file), "Defense file not saved."
+        assert os.path.exists(defense_file), "Defense file not saved."
         return None
 
-    def save(self, filename:str = None, path:str = None) -> None:
-        self.save_model(filename = filename, path = path)
-        self.save_scores(filename = filename, path = path)
-        self.save_predictions(filename = filename, path = path)
+    def save_results(self, path:str = ".") -> None:
+        """
+        Saves all data to specified folder, using default filenames.
+        """
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        # self.save_model(path = path)
+        self.save_scores(path = path)
+        self.save_predictions(path = path)
+        self.save_experiment_params(path = path)
         if isinstance(self.attack, object):
-            self.save_attack(filename = filename, path = path)
+            self.save_attack(path = path)
         if isinstance(self.defense, object):
-            self.save_defense(filename = filename, path = path)
-        if hasattr(self, "adv"):
-            self.save_adv_scores(filename = filename, path = path)
+            self.save_defense(path = path)
+        if hasattr(self, "adv_scores"):
+            self.save_adv_scores(path = path)
         if hasattr(self.model.model, 'cv_results_'):
-            self.save_cv_scores(filename = filename, path = path)
+            self.save_cv_scores(path = path)
         if hasattr(self, "adv"):
-            self.save_adv_examples(filename = filename, path = path)
-        if hasattr(self, "indices"):
-            self.save_indices(filename = filename, path = path)
+            self.save_adv_predictions(path = path)
         return None
         
 

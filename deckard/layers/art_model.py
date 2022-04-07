@@ -2,8 +2,8 @@ from os.path import exists
 from os import mkdir, chmod, rename
 import logging
 from deckard.base.experiment import Experiment, Model
-from deckard.base.utils import load_data, load_model
-from deckard.base.data import validate_data
+from deckard.base.utils import load_data
+
 import parser
 import os
 from art.estimators.classification import PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier
