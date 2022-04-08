@@ -4,25 +4,21 @@ from sklearn.exceptions import UndefinedMetricWarning
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-
+import tempfile
 import unittest
 from deckard.base import Data, Model, Experiment
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
-from sklearn.neighbors import  KNeighborsRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+from sklearn.neighbors import  KNeighborsClassifier, KNeighborsRegressor
 from copy import deepcopy
 from collections.abc import Callable
 from art.attacks.evasion import BoundaryAttack
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.defences.preprocessor import FeatureSqueezing
 from art.defences.postprocessor import HighConfidence
-from os import path, listdir, remove, mkdir
-import tempfile
-from json import load
+from os import path, listdir
 class TestExperiment(unittest.TestCase):
     def setUp(self):
         
@@ -133,7 +129,7 @@ class TestExperiment(unittest.TestCase):
     
     def test_is_supervised(self):
         data = Data('iris')
-        model1 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model1 = Model(KNeighborsClassifier(), model_type = 'sklearn')
         model2 = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(model = model1, data=data)
         experiment2 = Experiment(model = model2, data=data)
@@ -143,7 +139,7 @@ class TestExperiment(unittest.TestCase):
     def test_build_model(self):
         data = Data('iris')
         #Experiment 1
-        model1 = Model(KNeighborsRegressor(), model_type = 'sklearn')
+        model1 = Model(KNeighborsClassifier(), model_type = 'sklearn')
         experiment = Experiment(model = model1, data=data)
         experiment._build_model()
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))

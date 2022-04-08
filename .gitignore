@@ -37,11 +37,7 @@ deckard.egg-info/*
 *.idb
 *.ilk
 *.stackdump
-.vscode/deckard.code-workspace
+.vscode/
 .gitignore
-examples/car data/.dvc/tmp/lock
-examples/car data/.dvc/tmp/rwlock
-deckard/layers/evaluate_old.py
-examples/mnist/data/.gitignore
-deckard/layers/evaluate_old.py
 .coverage
+

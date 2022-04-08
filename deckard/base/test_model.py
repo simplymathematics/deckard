@@ -1,7 +1,7 @@
 import unittest
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from model import Model
+from deckard.base.model import Model
 from copy import deepcopy
 class Test_Model(unittest.TestCase):
     
@@ -39,7 +39,3 @@ class Test_Model(unittest.TestCase):
         self.assertEqual(model1.model_type, 'sklearn')
         model1.set_params({'foo': 'bar'})
         self.assertEqual(model1.params['foo'], 'bar')
-    def test_set_model_name(self):
-        pass
-    def test_set_model_name(self):
-        pass

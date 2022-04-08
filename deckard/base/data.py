@@ -136,39 +136,4 @@ class Data(object):
             raise NotImplementedError("Time series not yet implemented")
         return (X_train, y_train), (X_test, y_test), minimum, maximum
 
-def validate_data(data:Data) -> None:
-    """
-    Validates data object.
-    """
-    assert isinstance(data, Data), "Data object not valid."
-
-    if isinstance(data.params, dict):
-        assert isinstance(data.params['dataset'], str), "Params do not specify dataset."
-        assert isinstance(data.params['train_size'], float), "Params do not specify train size"
-        assert isinstance(data.params['random_state'], int), "Params do not specify random state"
-        assert isinstance(data.params['shuffle'], bool), "Shuffle not specified"
-    assert len(data.X_train) == len(data.y_train), "Train sets not the same size"
-    assert len(data.X_test)  == len(data.y_test), "Test sets not the same size"
-    
-    logger.debug("Data type: {}".format(type(data)))
-    logger.debug("X train type: {}".format(str(type(data.X_train))))
-    logger.debug("y train type: {}".format(str(type(data.y_train))))
-    logger.debug("X test type: {}".format(str(type(data.X_test))))
-    logger.debug("y test type: {}".format(str(type(data.y_test))))
-    logger.debug("Data shape: {}".format(str(data.X_train.shape)))
-    logger.debug("Target shape: {}".format(str(data.y_train.shape)))
-    logger.debug("Data validation successful")
-    return None
-
-if __name__ == '__main__':
-    import sys
-    logger = logging.getLogger(__name__)
-    logger.setLevel(level=logging.DEBUG)
-    logger.info("Testing data module")
-    data = Data('mnist')
-    validate_data(data)
-    sys.exit(0)
-
-    
-
     

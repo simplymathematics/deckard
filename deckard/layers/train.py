@@ -5,7 +5,7 @@ if __name__ == '__main__':
     from deckard.base import Data
     from deckard.base.utils import load_data, save_all, save_best_only
     from deckard.base import Data
-    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params_for_pipeline, generate_experiment_list
+    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params_for_pipeline, generate_sklearn_experiment_list
     from os import path, mkdir
     import argparse
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # Eventually, scoring will rely on the same yaml configs for the sake of consistency
     # For now, the defaults detect whether the estimator is a classifier or a regressor, using f1 and R2 as the objective measures respectively, while reporting several other common metrics
     # Fit and predict time are always reported (if available)
-    exp_list = generate_experiment_list(model_list, data, cv = 10)
+    exp_list = generate_sklearn_experiment_list(model_list, data, cv = 10)
     scorer = args.scorer.upper()
     if args.best:
         save_best_only(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)

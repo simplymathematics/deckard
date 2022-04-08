@@ -3,7 +3,6 @@ from os import mkdir, chmod, rename
 import logging
 from deckard.base.experiment import Experiment, Model
 from deckard.base.utils import load_data, load_model
-from deckard.base.data import validate_data
 import parser
 import os
 from art.estimators.classification import PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier
@@ -113,7 +112,6 @@ if __name__ == '__main__':
     model_object = Model(art_model, model_type = 'tf1')
     # load dataset
     data = load_data(data_file  = args.dataset)
-    validate_data(data)
     # logger.info("Loaded dataset {}".format(args.dataset))
     # Create experiment
     experiment = Experiment(data = data, model = model_object, name = args.output_name, params = {'model_type':args.model_type, 'model_path':args.input_model, 'dataset':args.dataset})

@@ -54,8 +54,6 @@ class Experiment(object):
         self.is_fitted = is_fitted
         self.predictions = None
         self.time_dict = None
-        self.attack = None
-        self.defense = None
         self.scores = None
         self.params = {**self.data.params, **self.model.params, **params}
         if not scorers:
@@ -102,9 +100,19 @@ class Experiment(object):
             logger.info("y_train shape: {}".format(self.data.y_train.shape))
             start = process_time_ns()
             if  hasattr(self.model.model, 'fit'):
-                start = process_time_ns()
-                self.model.model.fit(self.data.X_train, self.data.y_train)
-                end = process_time_ns()
+                
+                try:
+                    start = process_time_ns()
+                    self.model.model.fit(self.data.X_train, self.data.y_train)
+                    end = process_time_ns()
+                except ValueError as e:
+                    if 'y should be a 1d array' in str(e):
+                        start = process_time_ns()
+                        self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
+                        end = process_time_ns()
+                    else:
+                        raise e
+                
             elif hasattr(self.model.model.model, 'fit'):
                 start = process_time_ns()
                 self.model.model.model.fit(self.data.X_train, self.data.y_train)
@@ -218,13 +226,6 @@ class Experiment(object):
         self.evaluate_attack()
 
         
-
-    def set_filename(self, filename: str) -> None:
-        """
-        Sets filename attribute.
-        """
-        self.filename = filename
-        return None
     def set_attack(self, attack:object) -> None:
         """
         Adds an attack to an experiment
@@ -297,7 +298,24 @@ class Experiment(object):
         """
         return self.defense
         
+    def get_scorers(self):
+        """
+        Sets the scorer for an experiment
+        :param experiment: experiment to set scorer for
+        :param scorer: scorer to set
+        """
+        return self.scorers
 
+    def set_scorers(self, scorers:list) -> None:
+        """
+        Sets the scorer for an experiment
+        :param experiment: experiment to set scorer for
+        :param scorer: scorer to set
+        """
+        for scorer in scorers:
+            assert isinstance(scorer, Callable), "Scorer must be callable"
+        self.scorers = scorers
+        return None
 
 
     def evaluate(self) -> None:
@@ -505,9 +523,9 @@ class Experiment(object):
         self.save_scores(path = path)
         self.save_predictions(path = path)
         self.save_experiment_params(path = path)
-        if isinstance(self.attack, object):
+        if hasattr(self, 'attack'):
             self.save_attack(path = path)
-        if isinstance(self.defense, object):
+        if hasattr(self, 'defense'):
             self.save_defense(path = path)
         if hasattr(self, "adv_scores"):
             self.save_adv_scores(path = path)
