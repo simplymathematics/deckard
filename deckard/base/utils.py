@@ -126,6 +126,12 @@ def initialize_art_classifier(filename:str, path:str = None, model_type:str=None
     return art_model
 
 
+def loggerCall():
+    logger = logging.getLogger(__name__)
+    logger.debug('SUBMODULE: DEBUG LOGGING MODE : ')
+    logger.info('Submodule: INFO LOG')
+    return logger
+
 def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  best_score:float = None):
         """
         Save the best experiment only.

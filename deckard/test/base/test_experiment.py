@@ -19,7 +19,7 @@ from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.defences.preprocessor import FeatureSqueezing
 from art.defences.postprocessor import HighConfidence
 from os import path, listdir
-class TestExperiment(unittest.TestCase):
+class testExperiment(unittest.TestCase):
     def setUp(self):
         
         self.path = tempfile.mkdtemp()

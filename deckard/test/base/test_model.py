@@ -3,9 +3,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from deckard.base.model import Model
 from copy import deepcopy
-class Test_Model(unittest.TestCase):
+
+class testModel(unittest.TestCase):
     
-    def test_Model(self):
+    def test_model(self):
         estimators = [LogisticRegression(), DecisionTreeClassifier()]
         for estimator in estimators:
             model = Model(estimator, model_type = 'sklearn')

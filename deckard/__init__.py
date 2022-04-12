@@ -1,2 +1,2 @@
-from .base import *
-from .layers import *
+from deckard.base import *
+from deckard.layers import *

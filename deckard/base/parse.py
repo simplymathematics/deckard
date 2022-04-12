@@ -120,7 +120,33 @@ def transform_params_for_pipeline(object_list:list, object_name:str)-> list:
         new_object_list.append((obj, param_grid))
     return new_object_list
 
-def insert_layer_into_model(model, name, layer, position, params):
+# def insert_layer_into_pipeline(model:Pipeline, params:dict, name:str = "model",  layer:object=None, position=0) -> Pipeline:
+#     """
+#     Insert layer into sklearn pipeline. Returns a new pipeline
+#     :param model: sklearn pipeline
+#     :param name: name of layer
+#     :param layer: layer to insert
+#     :param position: position to insert layer
+#     :param params: parameters for layer
+#     """
+#     if not isinstance(model, Pipeline):
+#         raise ValueError("model must be a sklearn pipeline")
+#     if name not in model.steps and layer is None:
+        
+#     elif name not in model.steps and layer is not None:
+#         assert name is not None, "Name must be speficied for existing pipeline."
+#         model.steps.insert(position, (name, layer))
+#     else:
+#         raise ValueError(f"{name} already found in pipeline")
+#     if params is not None:
+#         new_params = params
+#     else:
+#         new_params = model.get_params()
+#     new_params.update(params)
+#     model.set_params(**new_params)
+#     return model
+
+def insert_layer_into_pipeline(model, name, layer, position, params):
     """
     Insert layer into sklearn pipeline. Returns a new pipeline
     :param model: sklearn pipeline
@@ -141,7 +167,8 @@ def insert_layer_into_model(model, name, layer, position, params):
     model.set_params(**new_params)
     return model
 
-def insert_layer_into_pipeline(input_list, model:Pipeline, name = 'featurize', position = 0):
+
+def insert_layer_into_pipeline_list(input_list:list, model:Pipeline = None, name:str = "model", position:int = 0) -> list:
     """
     Insert layer into list of models. Returns a new list of models.
     :param input_list: list of models
@@ -151,10 +178,12 @@ def insert_layer_into_pipeline(input_list, model:Pipeline, name = 'featurize', p
     """
     model_list = list()
     for (obj, params) in input_list:
-        model = insert_layer_into_model(model, name, obj, position, params)    
-        if not isinstance(model, Pipeline) and isinstance(model, BaseEstimator):
-            model = Pipeline([('model', model)])
-    model_list.append((model, params))
+        if model is not None: 
+            new_model = insert_layer_into_pipeline(model, name, obj, position, params)
+        else:
+            new_model = Pipeline([(name, obj)])
+            new_model.set_params(**params)
+        model_list.append(new_model)
     return model_list
 
 def generate_sklearn_experiment_list(model_list:list, data, cv = None) -> list:

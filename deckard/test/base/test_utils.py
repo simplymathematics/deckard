@@ -15,7 +15,7 @@ from art.estimators.classification import PyTorchClassifier, KerasClassifier, Te
 from art.estimators.classification.scikitlearn import SklearnClassifier
 
 SUPPORTED_MODELS = (PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier)
-class TestUtils(unittest.TestCase):
+class testUtils(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
         self.file = 'test_model'
