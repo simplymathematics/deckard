@@ -41,4 +41,5 @@ jobs:
     - name: Test 'mnist' repo for TF support
       working-directory: ../examples/mnist
       run: | 
-       
+       python -m pip install dvc
+       dvc repro
