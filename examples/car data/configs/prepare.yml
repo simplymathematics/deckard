@@ -1,7 +1,8 @@
 - name: './parsed/lat.csv'
   params:
-    shuffle : False
+    shuffle : True
     random_state : 0
     # test_size : .1
-    train_size : 1
+    train_size : .9
+    stratify: None
     

@@ -23,22 +23,22 @@ if __name__ == '__main__':
     parser.add_argument('--verbosity', type=str, default='INFO', help='Verbosity level.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size.')
     parser.add_argument('--target', type=str, default = None, help='Target string.')
-    parser.add_argument('--experiment', type=str, required = True, help='Experiment string.')
-    parser.add_argument('--model_name', type=str, default = "model.pkl", help='name of the experiment')
+    parser.add_argument('--input', type=str, required = True, help='Experiment string.')
+    parser.add_argument('--model_name', type=str, default = "model", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
     if str(args.data.endswith('.csv')):
         logger.info("Loading {}".format(path.join(args.folder, args.data)))
-        data = Data(args.data, train_size=1)
+        data = Data(args.data, train_size=.9)
     elif str(args.data.endswith('.pkl')):
         data = load_data(path.join(args.folder, args.data))
     else:
         raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
-    model = load_model(path.join(args.folder, args.experiment, args.model_name))
+    model = load_model(path.join(args.folder, args.input, args.model_name))
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
-    data = Data(args.data, train_size=0, target = args.target)
+    data = Data(args.data, train_size=.9, target = args.target)
     experiment = Experiment(data = data, model = model)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
     experiment.run()

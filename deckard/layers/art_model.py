@@ -111,7 +111,7 @@ if __name__ == '__main__':
     art_model = convert_to_art_classifier(output_name=args.output_name, model_path=args.input_model, model_type=args.model_type, output_folder=args.output_folder)
     model_object = Model(art_model, model_type = 'tf1')
     # load dataset
-    data = load_data(data_file  = args.dataset)
+    data = load_data( filename  = args.dataset)
     # logger.info("Loaded dataset {}".format(args.dataset))
     # Create experiment
     experiment = Experiment(data = data, model = model_object, name = args.output_name, params = {'model_type':args.model_type, 'model_path':args.input_model, 'dataset':args.dataset})
@@ -123,5 +123,5 @@ if __name__ == '__main__':
     # Save experiment
     logger.info("Saving experiment.")
     experiment.model.model.save(filename = args.output_folder)
-    experiment.save_results(folder = args.output_folder)
+    experiment.save_results(path = args.output_folder)
     logger.info("Experiment saved.")

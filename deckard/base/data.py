@@ -28,7 +28,7 @@ class Data(object):
     :attribute y_test: The testing target. Created during initialization.
     
     """
-    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, train_size:float = .01, random_state=0, shuffle:bool=True,  stratify=True):
+    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, train_size:float = .01, random_state=0, shuffle:bool=True,  stratify=None, test_size:int = 100):
         """
         Initializes the data object.
         :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
@@ -47,6 +47,7 @@ class Data(object):
         self.target = target
         self.dataset = dataset
         self.stratify = stratify
+        self.test_size = test_size
         self._choose_data(dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
         self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         
@@ -97,13 +98,13 @@ class Data(object):
         else:
             (X_train, y_train),(X_test, y_test), minimum, maximum = load_dataset(dataset)
             # TODO: fix this
-            # from sklearn.model_selection import train_test_split
-            # # sets stratify to None if stratify is False
-            # stratify = y_train if self.stratify == True else None
-            # big_X = np.append(X_train, X_test, axis=0)
-            # big_y = np.append(y_train, y_test, axis=0)
-            # assert len(big_X) == len(big_y), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
-            # X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
+            from sklearn.model_selection import train_test_split
+            # sets stratify to None if stratify is False
+            stratify = y_train if self.stratify == True else None
+            big_X = np.append(X_train, X_test, axis=0)
+            big_y = np.append(y_train, y_test, axis=0)
+            assert len(big_X) == len(big_y), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
+            X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
         # Standardize the test/train_size to be integers
         if isinstance(self.train_size, float) or self.train_size == 1:
             self.train_size = int(round(len(X_train) * self.train_size))
@@ -113,6 +114,14 @@ class Data(object):
         self.y_test = y_test
         self.dataset = dataset
         self.clip_values = [minimum, maximum]
+        if hasattr(self, 'test_size'):
+            assert isinstance(self.test_size, int), "test_size must be an integer"
+            if self.test_size <= len(self.X_test):
+                self.X_test = self.X_test[:self.test_size]
+                self.y_test = self.y_test[:self.test_size]
+            else:
+                self.X_test = self.X_test
+                self.y_test = self.y_test
     
     def _parse_csv(self, dataset:str = 'mnist', target = None) -> None:
         """

@@ -61,10 +61,11 @@ class testUtils(unittest.TestCase):
         self.assertIn('model_params.json', files)
 
     def test_save_all(self):
-        save_all(path = self.path, scorer = 'ACC', exp_list=self.list, bigger_is_better=True)
+        old = [x[0] for x in os.walk(self.path)]
+        save_all(path = self.path, scorer = 'ACC', exp_list=self.list, bigger_is_better=True, name = 'test')
         files = [x for x in os.listdir(self.path) if x.endswith('.json') or x == 'model.pkl']
         folders = [x[0] for x in os.walk(self.path)]
-        self.assertEqual(len(folders), len(self.list)+1) #+1 for the root folder
+        self.assertTrue(len(folders)> len(old)) #+1 for the root folder
         self.assertIn('model.pkl', files)
         self.assertIn('scores.json', files)
         self.assertIn('predictions.json', files)

@@ -38,25 +38,40 @@ def load_model(filename:str = None, path:str = ".", mtype:str =None) -> Model:
     logger.debug("Loading model")
     # load the model
     filename = os.path.join(path, filename)
-    if filename.endswith('.pkl') or mtype == 'sklearn' or 'pipeline' or 'gridsearch' or 'pickel':
-        with open(filename, 'rb') as f:
-            model = pickle.load(f)
-        model = Model(model)
-    elif mtype == 'keras' or filename.endswith('.h5'):
+    if mtype == 'keras' or filename.endswith('.h5'):
         from tensorflow.keras.models import load_model as keras_load_model
         # TODO add support for tf, pytorch
         cloned_model = keras_load_model(filename)
-        model = Model(cloned_model)
-    elif 'mtype' =='torch' or 'pytorch':
+        cloned_model = KerasClassifier(cloned_model)
+        model = Model(cloned_model, model_type=mtype)
+    elif mtype == 'torch' or  mtype == 'pytorch':
         from torch import load as torch_load
         model = torch_load(filename)
-        model = Model(model)
-    elif 'mtype' == 'tf' or 'tensorflow':
+        model = PyTorchClassifier(model)
+        model = Model(model, model_type = mtype)
+    elif mtype == 'tf' or mtype == 'tensorflow':
         from tensorflow.keras.models import load_model as tf_load_model
         model = tf_load_model(filename)
-        model = Model(model)
+        model = KerasClassifier(model)
+        model = Model(model, model_type = mtype)
+    elif mtype == 'tfv1' or mtype == 'tensorflowv1' or mtype == 'tf1':
+        import tensorflow.compat.v1 as tfv1
+        tfv1.disable_eager_execution()
+        from tensorflow.keras.models import load_model as tf_load_model
+        model = tf_load_model(filename)
+        model = KerasClassifier(model)
+        model = Model(model, model_type = mtype)
+    elif mtype == 'sklearn' or mtype == 'pipeline' or mtype == 'gridsearch' or mtype == 'pickle':
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        model = Model(model, model_type = mtype)
     else:
-        raise TypeError("Model type {} is not supported".format(mtype))
+        try:
+            with open(filename, 'rb') as f:
+                model = pickle.load(f)
+            model = Model(model, model_type = mtype)
+        except:
+            raise ValueError("Model type {} not supported".format(mtype))
     logger.info("Loaded model")
     return model
 
@@ -105,22 +120,22 @@ def initialize_art_classifier(filename:str, path:str = None, model_type:str=None
         tfv1.disable_eager_execution()
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
-        art_model = TensorFlowClassifier( model=classifier_model)
+        art_model = KerasClassifier( classifier_model)
     elif model_type == 'keras' or 'k':
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
-        art_model = KerasClassifier( model=classifier_model)
+        art_model = KerasClassifier( classifier_model)
     elif model_type == 'tf' or 'tensorflow':
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
-        art_model = TensorFlowClassifier( model=classifier_model)
+        art_model = TensorFlowClassifier( classifier_model)
     elif model_type == 'pytorch' or 'torch':
         raise NotImplementedError("Pytorch not implemented yet")
     elif model_type == 'sklearn' or 'scikit-learn':
         from pickle import load
         with open(model_path, 'rb') as f:
             classifier_model = load(f)
-        art_model = SklearnClassifier(model=classifier_model)
+        art_model = SklearnClassifier(classifier_model)
     else:
         raise ValueError("Unknown model type {}".format(model_type))
     return art_model
@@ -132,7 +147,7 @@ def loggerCall():
     logger.info('Submodule: INFO LOG')
     return logger
 
-def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  best_score:float = None):
+def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  best_score:float = None, name:str = None):
         """
         Save the best experiment only.
         path: the path to save the experiment
@@ -151,7 +166,6 @@ def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  
                 best = exp
             else:
                 pass
-
         if not os.path.isdir(path):
             os.mkdir(path)
         best.save_model(path = path)
@@ -159,7 +173,7 @@ def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  
         logger.info("Saved best experiment to {}".format(path))
         logger.info("Best score: {}".format(best.scores[scorer]))
 
-def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_score:float=None):
+def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_score:float=None, name:str = None):
         """
         Runs and saves all experiments.
         path: the path to save the experiments
@@ -170,6 +184,10 @@ def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_sc
         if not os.path.isdir(path):
             os.mkdir(path)
             logger.info("Created path: " + path)
+        if not os.path.isdir(os.path.join(path, name)):
+            os.mkdir(os.path.join(path, name))
+            logger.info("Created path: " + os.path.join(path, name))
+        path = os.path.join(path,name)
         if best_score == None and bigger_is_better:
             best_score = -1e10
         elif best_score == None and not bigger_is_better:
@@ -186,5 +204,4 @@ def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_sc
                 best = exp
         best.save_model(path = path)
         best.save_results(path = path)
-        logger.info("Saved best experiment to {}".format(path))
         logger.info("Best score: {}".format(best.scores[scorer]))

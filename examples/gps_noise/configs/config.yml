@@ -1,0 +1,48 @@
+# - stage: initialize 
+#   scorer : 'acc'
+#   folder : "./data"
+#   bigger_is_better: True
+#   best : False
+#   time_series : False
+  
+
+- stage: data
+  layer: prepare
+  dataset: 'data.csv'
+  params:
+    shuffle : False
+    random_state : 0
+    train_size : 1
+
+- stage: "preprocessed"
+  layer: preprocess
+  params:
+  - position: 0
+  - name: sklearn.preprocessing.StandardScaler
+    params: 
+      'with_mean' : [False, True]
+      'with_std' : [False, True]
+
+- stage: "featurized"
+  layer: preprocess
+  params: 
+  - position : 1
+  - name: sklearn.preprocessing.StandardScaler
+    params: 
+      'with_mean' : [False, True]
+      'with_std' : [False, True]
+
+- stage: "modelled"
+  layer: train
+  params:
+    - position : 2
+    - name: sklearn.ensemble.RandomForestClassifier
+      params:
+        n_estimators : [10]
+        criterion : ['gini', 'entropy']
+        max_features : ['auto', 'sqrt', 'log2']
+        class_weight : ['balanced', 'balanced_subsample']
+
+  
+  
+    

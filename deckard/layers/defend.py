@@ -51,7 +51,7 @@ if __name__ == '__main__':
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
         mkdir(args.output_folder)
     # load dataset
-    data = load_data(data_file  = args.data_file)
+    data = load_data(filename  = args.data_file)
     logger.info("Loaded dataset {}".format(args.data_file))
     yml_list = generate_tuple_list_from_yml('configs/defend.yml');
     object_list = generate_object_list_from_tuple(yml_list)
@@ -62,10 +62,11 @@ if __name__ == '__main__':
         logger.info("{} of {} experiments.".format(i, length))
         defense_dict = {"Defense" : type(defense), "params": defense.__dict__}
         # initalize model
-        art_model = initialize_art_classifier(model_name = args.input_model, model_path = args.input_folder, model_type = args.model_type, output_folder = args.output_folder, defenses = [defense])
-        art_model = Model(estimator= art_model, model_type =args.model_type)
+        art_model = initialize_art_classifier(filename = args.input_model, path = args.input_folder, model_type = args.model_type, output_dir = args.output_folder)
+        art_model = Model(estimator= art_model, model_type ="keras")
         # Create experiment
         experiment = Experiment(data = data, model = art_model, name = args.input_model, params = defense_dict)
+        experiment.set_defense(defense)
         logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.input_model))
         # run experiment
         logger.info("Running experiment...")
@@ -77,7 +78,7 @@ if __name__ == '__main__':
             args.output_name = "defended_model"
         logger.info("Saving experiment to {}.".format(output_folder))
         experiment.model.model.save(filename = args.output_name, path = output_folder)
-        experiment.save_results(folder = output_folder)
+        experiment.save_results(path = output_folder)
         logger.info("Experiment saved.")
     assert i == length, "Number of experiments {} does not match number of queries {}".format(i, length)
     # count the number of folders in the output folder

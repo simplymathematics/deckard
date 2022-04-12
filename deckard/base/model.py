@@ -46,7 +46,7 @@ class Model(object):
             elif isinstance(estimator, (ScikitlearnClassifier, Pipeline, BaseEstimator)):
                 self.model_type = 'sklearn'
             else:
-                raise ValueError("Model type not specified and cannot be auto detected.")
+                raise ValueError("Model type not specified and cannot be auto detected. Type is {}".format(type(estimator)))
         else:
             self.model_type = model_type   
         self.name = self._set_name(params)

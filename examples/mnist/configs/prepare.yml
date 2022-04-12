@@ -2,6 +2,7 @@
   params:
     shuffle : False
     random_state : 0
-    train_size : .9
+    train_size : .003
+    test_size: 100
 
     

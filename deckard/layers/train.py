@@ -1,11 +1,8 @@
-
-
 if __name__ == '__main__':
     import logging
     from deckard.base import Data
+    from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
     from deckard.base.utils import load_data, save_all, save_best_only
-    from deckard.base import Data
-    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params_for_pipeline, generate_sklearn_experiment_list
     from os import path, mkdir
     import argparse
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
@@ -30,21 +27,15 @@ if __name__ == '__main__':
     assert isinstance(data, Data)
     if not path.exists(args.folder):
         mkdir(args.folder)
-    # reads the config file
-    model_list = parse_list_from_yml(args.config)
-    # instantiates those objects
-    model_list = generate_object_list(model_list)
-    # turns lists of params into a set of permutations where len(permutations) = len(list1) * len(list2) ... len(listn)
-    model_list = transform_params_for_pipeline(model_list, 'model')
-    # initalizes the experiment objects using the above data and models
-    # Change the default scorer with Experiment.set_metric_scorer by passing scorer= during instantiation, or specifying it as a model parameter in the config file
-    # Eventually, scoring will rely on the same yaml configs for the sake of consistency
-    # For now, the defaults detect whether the estimator is a classifier or a regressor, using f1 and R2 as the objective measures respectively, while reporting several other common metrics
-    # Fit and predict time are always reported (if available)
-    exp_list = generate_sklearn_experiment_list(model_list, data, cv = 10)
+    # reads the configs, generating a set of tuples such that
+    # each tuple is a combination of parameters a given estimator
+    # the length of the list is = len(list of estimators)*len(param_1)*len(param_2)*...len(param_n)
+    tuple_list = generate_tuple_list_from_yml(args.config)
+    model_list = generate_object_list_from_tuple(tuple_list)
+    exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     if args.best:
-        save_best_only(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
+        save_best_only(path=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
     else:
-        save_all(folder=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
+        save_all(path=args.folder, exp_list=exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name=args.name)
    

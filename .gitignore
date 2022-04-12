@@ -41,3 +41,4 @@ deckard.egg-info/*
 .gitignore
 .coverage
 
+*model

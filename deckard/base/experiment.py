@@ -62,7 +62,6 @@ class Experiment(object):
             self.scorers = scorers
         self.refit = list(self.scorers.keys())[0]
         for key in params.keys():
-            assert key not in self.__dict__.keys(), "Keyword-- {} --is reserved".format(key)
             setattr(self, key, params[key])
         self.filename = str(my_hash(dumps(str(self.params)).encode('utf-8')).hexdigest()) if filename is None else filename
 
@@ -139,7 +138,7 @@ class Experiment(object):
         if hasattr(self.model, 'fit_flag') or self.is_fitted == True or hasattr(self, 'y_pred'):
             logger.warning("Model is already fitted")
             start = process_time_ns()
-            y_pred = self.model.model.predict(self.data.y_test)
+            y_pred = self.model.model.predict(self.data.X_test)
             end = process_time_ns()
             fit_pred_time = end - start
             self.is_fitted = True
@@ -201,11 +200,17 @@ class Experiment(object):
         if hasattr(self.model.model, 'fit_predict'):
             result = False
             logger.info("Model is unsupervised")
-        elif hasattr(self.model.model, 'fit') and not hasattr(self.model.model, 'fit_predict'):
+        elif hasattr(self.model.model, 'fit'):
             result = True
             logger.info("Model is supervised")
+        elif hasattr(self.model.model, 'model') and hasattr(self.model.model.model, 'fit'): # for art support
+            result = True
+            logger.info("Model is supervised")
+        elif hasattr(self.model.model, 'model') and hasattr(self.model.model.model.model, 'fit_predict'): # for art support
+            result = False
+            logger.info("Model is unsupervised")
         else:
-            raise ValueError("Model is not regressor or classifier")
+            raise ValueError("Model is not regressor or classifier. It is type {}".format(type(self.model.model)))
         return result
 
     
@@ -404,8 +409,9 @@ class Experiment(object):
         :param path: str, path to folder to save model. If none specified, model is saved in current working directory. Must exist.
         :return: str, path to saved model.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist" 
+        assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
         model_file = os.path.join(path, filename)
+        logger.info("Saving model to {}".format(model_file))
         if hasattr(self.model, "model") and hasattr(self.model.model, "save"):
             self.model.model.save(filename = filename, path = path)
         else:
