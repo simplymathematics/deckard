@@ -109,6 +109,10 @@ class Experiment(object):
                         start = process_time_ns()
                         self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
                         end = process_time_ns()
+                    # elif "nb_classes must be greater than or equal to 2" in str(e):
+                    #     start = process_time_ns()
+                    #     self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
+                    #     end = process_time_ns()
                     else:
                         raise e
                 
@@ -187,8 +191,9 @@ class Experiment(object):
         self.time_dict['adv_fit_time'] = end - start
         start = process_time_ns()
         adv = self.model.model.predict(adv_samples)
-        self.adv = adv
         end = process_time_ns()
+        self.adv = adv
+        self.adv_samples = adv_samples
         self.time_dict['adv_pred_time'] = end - start
         return None
     
@@ -239,8 +244,14 @@ class Experiment(object):
         """
         attack_params = {}
         for key, value in attack.__dict__.items():
-            if not key.startswith('_'):
+            if isinstance(value, int):
                 attack_params[key] = value
+            elif isinstance(value, float):
+                attack_params[key] = value
+            elif isinstance(value, str):
+                attack_params[key] = value
+            elif isinstance(value, object):
+                attack_params[key] = str(type(value))
             else:
                 attack_params[key] = str(type(value))
         assert isinstance(attack, object)
@@ -248,6 +259,7 @@ class Experiment(object):
         self.attack = attack
         self.filename = str(hash(self))
         return None
+   
     def set_filename(self, filename:str = None) -> None:
         """
         Sets filename attribute.
@@ -257,6 +269,7 @@ class Experiment(object):
         else:
             self.filename = filename
         return None
+    
     def set_defense(self, defense:object) -> None:
         """
         Adds a defense to an experiment
@@ -266,8 +279,14 @@ class Experiment(object):
         def_params = {}
         assert isinstance(defense, object)
         for key, value in defense.__dict__.items():
-            if not key.startswith('_'):
+            if isinstance(value, int):
                 def_params[key] = value
+            elif isinstance(value, float):
+                def_params[key] = value
+            elif isinstance(value, str):
+                def_params[key] = value
+            elif isinstance(value, object):
+                def_params[key] = str(type(value))
             else:
                 def_params[key] = str(type(value))
         self.params['Defense'] = {'name': str(type(defense)), 'params': def_params}
@@ -380,6 +399,7 @@ class Experiment(object):
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
         assert path is not None, "Path to save data must be specified."
+        assert hasattr(self, "data")
         with open(os.path.join(path, filename), 'wb') as f:
             dump(self.data, f)
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
@@ -489,6 +509,21 @@ class Experiment(object):
         assert os.path.exists(adv_score_file), "Adversarial score file not saved."
         return None
     
+    def save_adversarial_samples(self, filename:str = "adversarial_examples.json", path:str = "."):
+        """
+        Saves adversarial examples to specified file.
+        :param filename: str, name of file to save adversarial examples to.
+        :param path: str, path to folder to save adversarial examples. If none specified, examples are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        assert hasattr(self, "adv_samples"), "No adversarial samples to save"
+        adv_file = os.path.join(path, filename)
+        adv_results = DataFrame(self.adv_samples)
+        adv_results.to_json(adv_file)
+        assert os.path.exists(adv_file), "Adversarial example file not saved"
+        return None
+
+
     def save_attack(self, filename:str = "attack_params.json", path:str = ".") -> None:
         """
         Saves attack params to specified file.
@@ -539,6 +574,8 @@ class Experiment(object):
             self.save_cv_scores(path = path)
         if hasattr(self, "adv"):
             self.save_adv_predictions(path = path)
+        if hasattr(self, "adv_samples"):
+            self.save_adversarial_samples(path = path)
         return None
         
 

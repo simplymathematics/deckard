@@ -103,6 +103,7 @@ if __name__ == '__main__':
             j+=1
             experiment.set_attack(attack = attack)
             experiment.run()
+            experiment.run_attack()
             output_folder = experiment.filename
             if subdirectory != "":
                 experiment.save_results(path = os.path.join(args.output_folder, subdirectory, output_folder))

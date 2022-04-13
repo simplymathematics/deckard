@@ -31,7 +31,7 @@ class testUtils(unittest.TestCase):
         self.experiment.save_results(path = self.path)
         self.experiment.save_model(filename = 'model.pkl', path = self.path)
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
-        self.list = [self.experiment, self.experiment2, self.experiment3]
+        self.list = [self.experiment, self.experiment2]
     
     def test_return_score(self):
         result = return_score(scorer = 'acc', filename="scores.json", path=self.path)

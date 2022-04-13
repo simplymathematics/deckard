@@ -19,16 +19,16 @@ stages:
     deps:
     - data/data.pkl
     - data/control/
+    - configs/defend.yml
     outs:
     - data/defenses/:
         cache: true
   attack:
     cmd: python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder "data/defenses/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
     deps:
-    - ../../deckard/base/
-    - ../../deckard/layers/
     - data/data.pkl
     - data/defenses/
+    - configs/attack.yml
     outs:
     - data/attacks/:
         cache: true
