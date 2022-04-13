@@ -1,8 +1,12 @@
+
+
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
+from copy import deepcopy
 if __name__ == '__main__':
     import logging
-    from deckard.base import Experiment
-    from deckard.base.utils import  load_experiment, save_all, save_best_only
-    from deckard.base.parse import parse_list_from_yml, generate_object_list, transform_params, insert_layer_into_list, generate_experiment_list
+    from deckard.base.utils import save_all, save_best_only, load_data, load_model
+    from deckard.base.parse import generate_experiment_list, generate_object_list_from_tuple, generate_tuple_list_from_yml
     import argparse
     from os import path
     import logging
@@ -14,22 +18,31 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', required=True, type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
     parser.add_argument('--name', type=str, help='name of the experiment', required=True)
-    parser.add_argument('--experiment', type=str,  help='name of the experiment', required=True)
-    parser.add_argument('-p', '--position', type = int, default = -1, help='position of the preprocessor in the list')
+    parser.add_argument('--input', type=str,  help='name of the experiment', required=True)
+    parser.add_argument('-p', '--position', type = int, default = 0, help='position of the preprocessor in the pipeline. Useful for using more than one pre-processor.')
     parser.add_argument('--best', type=bool, default=False, help='only store the best preprocessor')
+    parser.add_argument('--model_name', type=str, default = "model", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     preprocessor_file = args.config
-    best = load_experiment(path.join(args.folder,  args.experiment, 'experiment.pkl'))
-    assert isinstance(best, Experiment)
-    preprocessor_list = parse_list_from_yml(args.config)
-    preprocessor_list = generate_object_list(preprocessor_list)
-    preprocessor_list = transform_params(preprocessor_list, args.name)
-    model_list = insert_layer_into_list(preprocessor_list, best.model.model.estimator, name = args.name, position = args.position)
-    exp_list = generate_experiment_list(model_list, best.data)
+    from deckard.base.utils import load_model
+    best = load_model(path.join(args.folder, args.input, args.model_name))
+    data = load_data(path.join(args.folder, args.dataset))
+    tuple_list = generate_tuple_list_from_yml(args.config)
+    preprocessor_list = generate_object_list_from_tuple(tuple_list)
+    model_list = []
+    model = load_model(path.join(args.folder, args.input, args.model_name))
+    if isinstance(model.model, (BaseEstimator, TransformerMixin)) and not isinstance(model.model, Pipeline):
+        model.model = Pipeline([('model', model.model)])
+    for preprocessor in preprocessor_list:
+        new_model = deepcopy(model)
+        new_model.model.steps.insert(args.position, (args.name, preprocessor))
+        model_list.append(new_model)
+
+    
+    exp_list = generate_experiment_list(model_list, data, cv = 10)
     scorer = args.scorer.upper()
-    folder = path.join(args.folder, args.name)
     if args.best:
-        save_best_only(folder = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)
+        save_best_only(path = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)
     else:
-        save_all(folder = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)
+        save_all(path = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)

@@ -1,0 +1,100 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd:
+    - python ../deckard/layers/prepare.py  -d "US-CAL-CISO 2020.csv"
+    deps:
+    - path: ../deckard/base/data.py
+      md5: 6dfc440e9939c40b7359f201cb31916e
+      size: 7990
+    - path: US-CAL-CISO 2020.csv
+      md5: ae283bfbb48ca15407dca5d2423600cf
+      size: 4656066
+    - path: configs/prepare.yml
+      md5: dbcbea862101ad5875f6ad9dc97f2f6e
+      size: 150
+    outs:
+    - path: data/data.pkl
+      md5: 7b5b7d973da868ac3116055fc73eec9b
+      size: 7032895
+  train:
+    cmd: python ../deckard/layers/train.py  -f data -s mse -b False
+    deps:
+    - path: ../deckard/base/experiment.py
+      md5: f1a923fa9a8983d3dd6c54f4cab3d470
+      size: 11947
+    - path: ../deckard/base/utils.py
+      md5: 4e0d9df173cb0f85329b9fb841ecf07b
+      size: 2559
+    - path: ../deckard/layers/train.py
+      md5: 9f3e5b29608f98a3110ad21b4c11b889
+      size: 2174
+    - path: configs/model.yml
+      md5: 9c0f3af72adc7e5448903f9090e070af
+      size: 247
+    - path: data/data.pkl
+      md5: 7b5b7d973da868ac3116055fc73eec9b
+      size: 7032895
+    outs:
+    - path: data/best_train/data_params.json
+      md5: a8ae5a808f4f851c93e0f297f7a0a33b
+      size: 134
+    - path: data/best_train/experiment.pkl
+      md5: b229f8a2ac23a1ec1a1e3d01e566413f
+      size: 12562726
+    - path: data/best_train/model_params.json
+      md5: 819ec065a49d5d940b5b0f7187812c28
+      size: 1187
+    - path: data/best_train/results.json
+      md5: f3675334cf8eaf6375da48e6393f4c5c
+      size: 234
+  preprocess:
+    cmd: python ../deckard/layers/preprocess.py  -f data -s mse -b False
+    deps:
+    - path: ../deckard/layers/preprocess.py
+      md5: fd2bf15980ef68979cada9a181873d28
+      size: 2262
+    - path: configs/preprocess.yml
+      md5: ac4ed79e4a6b628fac4308fdd3e24210
+      size: 123
+    - path: data/best_train/experiment.pkl
+      md5: b229f8a2ac23a1ec1a1e3d01e566413f
+      size: 12562726
+    outs:
+    - path: data/best_preprocess/data_params.json
+      md5: a8ae5a808f4f851c93e0f297f7a0a33b
+      size: 134
+    - path: data/best_preprocess/experiment.pkl
+      md5: f2e3e02345221de875418a1fa715b6df
+      size: 12560735
+    - path: data/best_preprocess/model_params.json
+      md5: 2d676ea30f6a4546c0c9d68244b8bb34
+      size: 1530
+    - path: data/best_preprocess/results.json
+      md5: bdd6ee1fc95fc2cd58a7feacd791b87f
+      size: 235
+  featurize:
+    cmd: python ../deckard/layers/featurize.py  -f data -s mse -b False
+    deps:
+    - path: ../deckard/layers/featurize.py
+      md5: ac4fc4a980a282c57db1d67bec81be42
+      size: 2245
+    - path: configs/featurize.yml
+      md5: 8e868a26517d7807395016a0b2f60510
+      size: 128
+    - path: data/best_preprocess/experiment.pkl
+      md5: f2e3e02345221de875418a1fa715b6df
+      size: 12560735
+    outs:
+    - path: data/best_features/data_params.json
+      md5: a8ae5a808f4f851c93e0f297f7a0a33b
+      size: 134
+    - path: data/best_features/experiment.pkl
+      md5: 483cfaaf1ef12d5e6a054c810cbd69a7
+      size: 12564424
+    - path: data/best_features/model_params.json
+      md5: 869c577d13a24baf0c18d469dc955dd6
+      size: 2358
+    - path: data/best_features/results.json
+      md5: 1138d0e34f3ce80528dd4205f10a6471
+      size: 236

@@ -1,0 +1,102 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd:
+    - python ../../deckard/layers/prepare.py  -d 'data.csv'
+    deps:
+    - path: ../../deckard/base/data.py
+      md5: 5db4cc1bb4ef42a6718ce4fbe5fb6bbc
+      size: 7290
+    - path: configs/prepare.yml
+      md5: 77d749cd5ec92ebd0622298eaa645b5a
+      size: 144
+    - path: data.csv
+      md5: b2acffe10ae363fd8dd237946fb8848c
+      size: 78826
+    outs:
+    - path: data/data.pkl
+      md5: a88ea723b145ea52cfed0eb0d96bb603
+      size: 247666
+  train:
+    cmd: python ../../deckard/layers/train.py  -f data -s f1 -b  True --name train
+    deps:
+    - path: ../../deckard/base/experiment.py
+      md5: f6698e6d004e9b5b2394aa4d4a7080b8
+      size: 24888
+    - path: ../../deckard/base/utils.py
+      md5: 4dd7680091a8af23146e23a0de27c054
+      size: 9038
+    - path: ../../deckard/layers/train.py
+      md5: 8a82db21d726ee9b1c27f91dc2e5da85
+      size: 2644
+    - path: configs/model.yml
+      md5: 51e2beefc5c3ac826bcce8e6775a1012
+      size: 1219
+    - path: data/data.pkl
+      md5: a88ea723b145ea52cfed0eb0d96bb603
+      size: 247666
+    outs:
+    - path: data/train/data_params.json
+      md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
+      size: 120
+    - path: data/train/model
+      md5: e9883490604c85ba514d6cf944700bfc
+      size: 84415
+    - path: data/train/model_params.json
+      md5: 13e7771b2ae9ba68dee69c6e3fdec3bd
+      size: 471
+    - path: data/train/scores.json
+      md5: 2abd84695ad303e0bd88c10600ff031f
+      size: 86
+  preprocess:
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name preprocess
+      --input train
+    deps:
+    - path: ../../deckard/layers/preprocess.py
+      md5: 69441eb20947429d67ad57fa5ab8bdf1
+      size: 3126
+    - path: configs/preprocess.yml
+      md5: ac4ed79e4a6b628fac4308fdd3e24210
+      size: 123
+    - path: data/train/model
+      md5: e9883490604c85ba514d6cf944700bfc
+      size: 84415
+    outs:
+    - path: data/preprocess/data_params.json
+      md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
+      size: 120
+    - path: data/preprocess/model
+      md5: 09166aed6e65ed974f0134430f1c53cd
+      size: 72699
+    - path: data/preprocess/model_params.json
+      md5: 13e7771b2ae9ba68dee69c6e3fdec3bd
+      size: 471
+    - path: data/preprocess/scores.json
+      md5: 2abd84695ad303e0bd88c10600ff031f
+      size: 86
+  featurize:
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name featurize
+      --input preprocess
+    deps:
+    - path: ../../deckard/layers/preprocess.py
+      md5: 69441eb20947429d67ad57fa5ab8bdf1
+      size: 3126
+    - path: configs/featurize.yml
+      md5: 8e868a26517d7807395016a0b2f60510
+      size: 128
+    - path: data/preprocess/model
+      md5: 09166aed6e65ed974f0134430f1c53cd
+      size: 72699
+    outs:
+    - path: data/featurize/data_params.json
+      md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
+      size: 120
+    - path: data/featurize/model
+      md5: eeb82f93f70c4015874b9972e48d5c16
+      size: 81083
+    - path: data/featurize/model_params.json
+      md5: 78f70df593573ab91d8ad0864468782e
+      size: 1141
+    - path: data/featurize/scores.json
+      md5: bcf3e03acc1e5315872661d737781f4e
+      size: 95

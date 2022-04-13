@@ -1,6 +1,8 @@
 from deckard.base import Data
 import logging, os, yaml
 
+logger = logging.getLogger(__name__)
+
 def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
@@ -12,8 +14,8 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     with open(filename, 'r') as stream:
         try:
             data_file = yaml.load(stream, Loader=LOADER)[0]
-            logging.info(data_file)
-            logging.info(type(data_file))
+            logger.info(data_file)
+            logger.info(type(data_file))
         except yaml.YAMLError as exc:
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
@@ -22,10 +24,10 @@ def parse_data_from_yml(filename:str, obj_type:Data) -> dict:
     params = data_file['params']
     data_name = data_file['name']
     for param, value in params.items():
-        logging.info(param + ": " + str(value))
+        logger.info(param + ": " + str(value))
     data = Data(data_name, **params)
     assert isinstance(data, Data)
-    logging.info("{} successfully parsed.".format(filename))
+    logger.info("{} successfully parsed.".format(filename))
     return data
 
 
@@ -50,8 +52,8 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(args.folder, 'data')):
             os.makedirs(os.path.join(args.folder, 'data'))
         else:
-            logging.warning(args.folder + " already exists. Overwriting data.")
-    logging.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
+            logger.warning(args.folder + " already exists. Overwriting data.")
+    logger.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
     
     dump(data, open(os.path.join(args.folder, 'data', 'data.pkl'), 'wb'))
-    logging.info("Data successfully saved.")
+    logger.info("Data successfully saved.")

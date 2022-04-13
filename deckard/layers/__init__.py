@@ -1,7 +1,7 @@
-from .attack import *
-from .defend import *
-from .preprocess import *
-from .train import *
-from .prepare import *
-# from .mnist_gan import *
-# from .mnist_resnet import *
+from deckard.layers.attack import *
+from deckard.layers.defend import *
+from deckard.layers.preprocess import *
+from deckard.layers.train import *
+from deckard.layers.prepare import *
+from deckard.layers.evaluate import *
+from deckard.layers.art_model import *

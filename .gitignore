@@ -3,6 +3,7 @@
 *.ipynb_checkpoints/
 *.json
 *.pkl
+*.h5
 *.csv
 
 # Jupyter Notebooks
@@ -10,13 +11,12 @@
 
 # Logs
 *.log
-
-# abel's stuff
-abel/
+*.txt
 
 # dvc nonsense
 */.dvc/cache/
 */.dvc/cache/*
+examples/*/.dvc/cache/
 
 
 
@@ -27,5 +27,18 @@ deckard.egg-info/*
 *.zip
 *.db
 *.csv
-examples/car data/dvc.lock
-examples/car data/.dvc/cache/*
+
+# windows stuff
+*.exe
+*.dll
+*.pyd
+*.pyo
+*.pyc
+*.idb
+*.ilk
+*.stackdump
+.vscode/
+.gitignore
+.coverage
+
+*model

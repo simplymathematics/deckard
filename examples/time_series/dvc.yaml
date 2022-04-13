@@ -1,0 +1,62 @@
+stages:
+  prepare:
+    cmd: 
+      - python ../deckard/layers/prepare.py  -d "US-CAL-CISO 2020.csv"
+    deps: 
+      - configs/prepare.yml
+      - ../deckard/base/data.py
+      - US-CAL-CISO 2020.csv
+    outs: 
+      - data/data.pkl
+  train:
+    cmd: python ../deckard/layers/train.py  -f data -s mse -b False
+    deps:
+    - ../deckard/base/utils.py
+    - configs/model.yml
+    - ../deckard/layers/train.py
+    - ../deckard/base/experiment.py
+    - data/data.pkl
+    outs:
+    - data/best_train/experiment.pkl
+    - data/best_train/data_params.json:
+        cache: true
+    - data/best_train/model_params.json:
+        cache: true
+    metrics:
+    - data/best_train/results.json:
+        cache: true
+    
+  preprocess:
+    cmd: python ../deckard/layers/preprocess.py  -f data -s mse -b False
+    deps:
+    - configs/preprocess.yml
+    - ../deckard/layers/preprocess.py
+    - data/best_train/experiment.pkl
+    outs:
+    - data/best_preprocess/experiment.pkl
+    - data/best_preprocess/data_params.json:
+        cache: true
+    - data/best_preprocess/model_params.json:
+        cache: true
+    metrics:
+    - data/best_preprocess/results.json:
+        cache: true
+   
+  featurize:
+    cmd: python ../deckard/layers/featurize.py  -f data -s mse -b False
+    deps:
+    - configs/featurize.yml
+    - ../deckard/layers/featurize.py
+    - data/best_preprocess/experiment.pkl
+    outs:
+    - data/best_features/experiment.pkl
+    - data/best_features/data_params.json:
+        cache: true
+    - data/best_features/model_params.json:
+        cache: true
+    metrics:
+    - data/best_features/results.json:
+        cache: true
+
+
+

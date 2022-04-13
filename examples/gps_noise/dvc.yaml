@@ -9,7 +9,7 @@ stages:
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../../deckard/layers/train.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/train.py  -f data -s f1 -b  True --name train
     deps:
     - ../../deckard/base/utils.py
     - configs/model.yml
@@ -17,51 +17,45 @@ stages:
     - ../../deckard/base/experiment.py
     - data/data.pkl
     outs:
-    - data/best_train/experiment.pkl
-    - data/best_train/data_params.json:
+    - data/train/model
+    - data/train/data_params.json:
         cache: true
-    - data/best_train/model_params.json:
+    - data/train/model_params.json:
         cache: true
     metrics:
-    - data/best_train/results.json:
+    - data/train/scores.json:
         cache: true
     
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name preprocess --input train
     deps:
     - configs/preprocess.yml
     - ../../deckard/layers/preprocess.py
-    - data/best_train/experiment.pkl
+    - data/train/model
     outs:
-    - data/best_preprocess/experiment.pkl
-    - data/best_preprocess/data_params.json:
+    - data/preprocess/model
+    - data/preprocess/data_params.json:
         cache: true
-    - data/best_preprocess/model_params.json:
+    - data/preprocess/model_params.json:
         cache: true
     metrics:
-    - data/best_preprocess/results.json:
+    - data/preprocess/scores.json:
         cache: true
    
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False
+    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name featurize --input preprocess
     deps:
     - configs/featurize.yml
-    - ../../deckard/layers/featurize.py
-    - data/best_preprocess/experiment.pkl
+    - ../../deckard/layers/preprocess.py
+    - data/preprocess/model
     outs:
-    - data/best_featurize/experiment.pkl
-    - data/best_featurize/data_params.json:
+    - data/featurize/model
+    - data/featurize/data_params.json:
         cache: true
-    - data/best_featurize/model_params.json:
+    - data/featurize/model_params.json:
         cache: true
     metrics:
-    - data/best_featurize/results.json:
+    - data/featurize/scores.json:
         cache: true
-  # evaluate:
-  #   cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv"
-  #   deps: 
-  #     - data/best_featurize/experiment.pkl
-  #     - ./parsed/long.csv
-
 
 

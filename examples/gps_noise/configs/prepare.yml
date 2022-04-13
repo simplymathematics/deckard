@@ -1,7 +1,8 @@
 - name: './data.csv'
   params:
-    shuffle : False
+    shuffle : True
     random_state : 0
-    test_size : .1
-    sample_size : 1
-    flatten : False
+    # test_size : .1
+    train_size : .9
+    stratify: True
+    

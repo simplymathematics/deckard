@@ -11,6 +11,7 @@ from tensorflow.keras.applications.resnet50 import ResNet50
 
 # import preprocessing from tf.keras.applications
 from tensorflow.keras.applications.resnet50 import preprocess_input
+logger = logging.getLogger(__name__)
 
 
 # import tf
@@ -27,7 +28,7 @@ def main(level:int = 1, filename:str = 'mnist_resnet.h5', data = 'mnist'):
     logging.getLogger().setLevel(level)
     # set start time
     start_time = time.time()
-    logging.info("Start time: %s", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(start_time)))
+    logger.info("Start time: %s", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(start_time)))
     # set seed
     np.random.seed(0)
     # set tf seed
@@ -35,19 +36,19 @@ def main(level:int = 1, filename:str = 'mnist_resnet.h5', data = 'mnist'):
     # set tf eager execution
     # load resnet50 model
     model = ResNet50(weights = "imagenet")
-    logging.info("Model loaded")
+    logger.info("Model loaded")
     # load data
     # data string to uppercase
     data = data.upper()
     # check if data is valid
     if data == 'MNIST':
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-        logging.info("Data loaded")
+        logger.info("Data loaded")
     elif data == 'CIFAR10':
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
-        logging.info("Data loaded")
+        logger.info("Data loaded")
     else:
-        logging.error("Invalid data")
+        logger.error("Invalid data")
         sys.exit(1)
     # normalize data with preprocessing
     x_train = preprocess_input(x_train)
@@ -58,48 +59,48 @@ def main(level:int = 1, filename:str = 'mnist_resnet.h5', data = 'mnist'):
     # reshape data
     x_train = np.expand_dims(x_train, axis = 3)
     x_test = np.expand_dims(x_test, axis = 3)
-    logging.info("Data reshaped")
+    logger.info("Data reshaped")
     # convert data to tensor
     x_train = tf.convert_to_tensor(x_train, dtype = tf.float32)
     x_test = tf.convert_to_tensor(x_test, dtype = tf.float32)
-    logging.info("Data converted to tensor")
+    logger.info("Data converted to tensor")
     # convert labels to tensor
     y_train = tf.convert_to_tensor(y_train, dtype = tf.int32)
     y_test = tf.convert_to_tensor(y_test, dtype = tf.int32)
-    logging.info("Labels converted to tensor")
+    logger.info("Labels converted to tensor")
     # create dataset
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-    logging.info("Dataset created")
+    logger.info("Dataset created")
     # create iterators
     # train_iter = train_dataset.shuffle(60000).batch(32).repeat().make_one_shot_iterator()
     # test_iter = test_dataset.batch(32).make_one_shot_iterator()
-    logging.info("Iterators created")
+    logger.info("Iterators created")
     # define input
     x = tf.placeholder(tf.float32, [None, 28, 28, 1])
-    logging.info("Input defined")
+    logger.info("Input defined")
     # define output
     y = tf.placeholder(tf.int32, [None])
-    logging.info("Output defined")
+    logger.info("Output defined")
     # define loss
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels = y, logits = model(x)))
-    logging.info("Loss defined")
+    logger.info("Loss defined")
     # define optimizer
     optimizer = tf.train.AdamOptimizer(learning_rate = 0.001)
-    logging.info("Optimizer defined")
+    logger.info("Optimizer defined")
     # define train op
     train_op = optimizer.minimize(loss)
-    logging.info("Train op defined")
+    logger.info("Train op defined")
     # define accuracy
     correct_pred = tf.equal(tf.argmax(model(x), 1), y)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-    logging.info("Accuracy defined")
+    logger.info("Accuracy defined")
     # create session
     sess = tf.Session()
-    logging.info("Session created")
+    logger.info("Session created")
     # initialize variables
     sess.run(tf.global_variables_initializer())
-    logging.info("Variables initialized")
+    logger.info("Variables initialized")
     # add new classifier layers
     # flatten
     new_model = tf.keras.layers.Flatten()(model.output)
@@ -109,28 +110,28 @@ def main(level:int = 1, filename:str = 'mnist_resnet.h5', data = 'mnist'):
     new_model = tf.keras.Model(inputs = model.input, outputs = new_model)
     # compile new model
     new_model.compile(optimizer = optimizer, loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels = y, logits = new_model(x))), metrics = ["accuracy"])
-    logging.info("New model created")
+    logger.info("New model created")
     # train new model
     new_model.fit(x_train, y_train, epochs = 10, batch_size = 32, validation_data = (x_test, y_test))
-    logging.info("New model trained")
+    logger.info("New model trained")
     # evaluate new model
     new_model.evaluate(x_test, y_test)
-    logging.info("New model evaluated")
+    logger.info("New model evaluated")
     # save new model
     new_model.save(filename)
-    logging.info("New model saved")
+    logger.info("New model saved")
     # set end time
     end_time = time.time()
     # log accuracy
-    logging.info("Accuracy: %s", sess.run(accuracy, feed_dict = {x: x_test, y: y_test}))
+    logger.info("Accuracy: %s", sess.run(accuracy, feed_dict = {x: x_test, y: y_test}))
     # log time
-    logging.info("End time: %s", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(end_time)))
+    logger.info("End time: %s", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(end_time)))
     # define elapsed time
     elapsed_time = end_time - start_time
     # log elapsed time
-    logging.info("Elapsed time: %s", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+    logger.info("Elapsed time: %s", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
     # evaluate model
-    logging.info("Accuracy: %s", sess.run(accuracy, feed_dict = {x: x_test, y: y_test}))
+    logger.info("Accuracy: %s", sess.run(accuracy, feed_dict = {x: x_test, y: y_test}))
     # close session
     sess.close()
 
@@ -157,7 +158,7 @@ def main(level:int = 1, filename:str = 'mnist_resnet.h5', data = 'mnist'):
     assert isinstance(correct_pred, np.ndarray)
     assert isinstance(accuracy, float)
     assert sess.run(tf.report_uninitialized_variables()) == []
-    logging.info("Session closed")
+    logger.info("Session closed")
     return 0
 
 if __name__ == "__main__":
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     import argparse
     # accept command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--level", type = int, default = logging.INFO, help = "set logging level")
+    parser.add_argument("-l", "--level", type = int, default = logger.INFO, help = "set logging level")
     parser.add_argument("-f", "--filename", type = str, default = "model.h5", help = "set filename")
     parser.add_argument("-d", "--data", type = str, default = "mnist", help = "set data. Choose mnist or cifar10.")
     args = parser.parse_args()
