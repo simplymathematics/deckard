@@ -239,8 +239,14 @@ class Experiment(object):
         """
         attack_params = {}
         for key, value in attack.__dict__.items():
-            if not key.startswith('_'):
+            if isinstance(value, int):
                 attack_params[key] = value
+            elif isinstance(value, float):
+                attack_params[key] = value
+            elif isinstance(value, str):
+                attack_params[key] = value
+            elif isinstance(value, object):
+                attack_params[key] = str(type(value))
             else:
                 attack_params[key] = str(type(value))
         assert isinstance(attack, object)
@@ -266,8 +272,14 @@ class Experiment(object):
         def_params = {}
         assert isinstance(defense, object)
         for key, value in defense.__dict__.items():
-            if not key.startswith('_'):
+            if isinstance(value, int):
                 def_params[key] = value
+            elif isinstance(value, float):
+                def_params[key] = value
+            elif isinstance(value, str):
+                def_params[key] = value
+            elif isinstance(value, object):
+                def_params[key] = str(type(value))
             else:
                 def_params[key] = str(type(value))
         self.params['Defense'] = {'name': str(type(defense)), 'params': def_params}
