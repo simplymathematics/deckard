@@ -28,7 +28,7 @@ class testExperiment(unittest.TestCase):
 
     def test_experiment(self):
 
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         self.assertIsInstance(data, Data)
         model = Model(KNeighborsRegressor(), model_type = 'sklearn')
         self.assertIsInstance(model, Model)
@@ -47,7 +47,7 @@ class testExperiment(unittest.TestCase):
 
     def test_hash(self):
 
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KNeighborsRegressor(5), model_type = 'sklearn')
         model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn')
         model3 = Model(KNeighborsRegressor(), model_type = 'sklearn')
@@ -64,7 +64,7 @@ class testExperiment(unittest.TestCase):
 
 
     def test_eq(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KNeighborsRegressor(5), model_type = 'sklearn')
         model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn')
         model3 = Model(KNeighborsRegressor(), model_type = 'sklearn')
@@ -82,7 +82,7 @@ class testExperiment(unittest.TestCase):
         self.assertNotEqual(experiment, experiment2)
 
     def test_set_metric_scorer(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         data2 = Data('diabetes')
         model = Model(KNeighborsRegressor(), model_type = 'sklearn')
         model2 = Model(DecisionTreeClassifier(), model_type = 'sklearn')
@@ -102,7 +102,7 @@ class testExperiment(unittest.TestCase):
 
 
     def test_build_supervised_model(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KNeighborsRegressor(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         y_pred, (fit_time, pred_time) = experiment._build_supervised_model()
@@ -113,7 +113,7 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(experiment.is_fitted)
     
     def test_build_unsupervised_model(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         y_pred, (fit_pred_time) = experiment._build_unsupervised_model()
@@ -128,7 +128,7 @@ class testExperiment(unittest.TestCase):
         pass
     
     def test_is_supervised(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model1 = Model(KNeighborsClassifier(), model_type = 'sklearn')
         model2 = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(model = model1, data=data)
@@ -137,7 +137,7 @@ class testExperiment(unittest.TestCase):
         self.assertFalse(experiment2.is_supervised())
 
     def test_build_model(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         #Experiment 1
         model1 = Model(KNeighborsClassifier(), model_type = 'sklearn')
         experiment = Experiment(model = model1, data=data)
@@ -155,7 +155,7 @@ class testExperiment(unittest.TestCase):
         self.assertIn('fit_pred_time', experiment2.time_dict)
 
     def test_run(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.run()
@@ -173,7 +173,7 @@ class testExperiment(unittest.TestCase):
         self.assertIsInstance(experiment.scores, dict)
     
     def test_run_attack(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -191,14 +191,14 @@ class testExperiment(unittest.TestCase):
 
 
     def test_set_filename(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.set_filename('test_filename')
         self.assertEqual(experiment.filename, 'test_filename')
 
     def test_set_attack(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -218,7 +218,7 @@ class testExperiment(unittest.TestCase):
 
 
     def test_set_defense(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -246,7 +246,7 @@ class testExperiment(unittest.TestCase):
         self.assertIn('params', experiment2.params['Defense'])
 
     def test_get_attack(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -256,7 +256,7 @@ class testExperiment(unittest.TestCase):
         self.assertEqual(experiment.get_attack(), attack)
 
     def test_get_defense(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -268,7 +268,7 @@ class testExperiment(unittest.TestCase):
     
 
     def test_evaluate(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment._build_model()
@@ -281,7 +281,7 @@ class testExperiment(unittest.TestCase):
         # TODO: fix/test auc--maybe due to dataset?
 
     def test_evaluate_attack(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -294,7 +294,7 @@ class testExperiment(unittest.TestCase):
         self.assertIsInstance(list(experiment.adv_scores.values())[0], (int, float))
     
     def test_evaluate_defense(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
@@ -310,14 +310,14 @@ class testExperiment(unittest.TestCase):
         self.assertNotEqual(old, hash(experiment))
 
     def test_save_data(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.save_data(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
     def test_save_experiment_params(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.save_experiment_params(data_params_file = self.file, path=self.path)
@@ -325,14 +325,14 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, 'model_params.json')))
 
     def test_save_model(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.save_model(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
 
     def test_save_predictions(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.run()
@@ -340,7 +340,7 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
     def test_save_scores(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
         experiment.run()
@@ -348,7 +348,7 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, self.file)))
 
     def test_save_adv_predictions(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator, model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
@@ -360,7 +360,7 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
     def test_save_attack(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator, model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
@@ -370,7 +370,7 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
     def test_save_defense(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator, model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)
@@ -381,7 +381,7 @@ class testExperiment(unittest.TestCase):
 
     def test_save_cv_scores(self):
         from sklearn.model_selection import GridSearchCV
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = DecisionTreeClassifier()
         grid = GridSearchCV(estimator, {'max_depth': [1, 2, 3, 4, 5]}, cv=3, return_train_score=True)
         model = Model(grid, model_type = 'sklearn')
@@ -390,9 +390,20 @@ class testExperiment(unittest.TestCase):
         experiment.save_cv_scores(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
-
+    def test_save_adv_scores(self):
+        data = Data('iris', train_size = .8)
+        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
+        model = Model(estimator, model_type = 'sklearn')
+        experiment = Experiment(data = data, model = model)
+        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
+        experiment.set_attack(attack)
+        experiment.run()
+        experiment.run_attack()
+        experiment.save_adversarial_samples(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        
     def test_save_results(self):
-        data = Data('iris')
+        data = Data('iris', train_size = .8)
         estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
         model = Model(estimator, model_type = 'sklearn')
         experiment = Experiment(data = data, model = model)

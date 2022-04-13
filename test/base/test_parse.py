@@ -15,12 +15,12 @@ class testParse(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
         self.file = 'test_filename'
-        self.configs = [x for x in os.listdir("../../../examples/gps_noise/configs") if x.endswith('.yml')]
+        self.configs = [x for x in os.listdir("../../examples/gps_noise/configs") if x.endswith('.yml')]
         self.yml_lists = []
-        self.config_folder = "../../../examples/gps_noise/configs"
-        self.model_yml = "../../../examples/gps_noise/configs/model.yml"
-        self.preprocess_yml = "../../../examples/gps_noise/configs/preprocess.yml"
-        self.attack_yml = "../../../examples/gps_noise/configs/attack.yml"        
+        self.config_folder = "../../examples/gps_noise/configs"
+        self.model_yml = "../../examples/gps_noise/configs/model.yml"
+        self.preprocess_yml = "../../examples/gps_noise/configs/preprocess.yml"
+        self.attack_yml = "../../examples/gps_noise/configs/attack.yml"        
         self.model = DecisionTreeClassifier()
         self.pipeline = [('model', self.model)]
         self.grid = GridSearchCV(self.model, {'max_depth': [1, 2]})
