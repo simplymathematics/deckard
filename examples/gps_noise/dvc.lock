@@ -21,8 +21,8 @@ stages:
     cmd: python ../../deckard/layers/train.py  -f data -s f1 -b  True --name train
     deps:
     - path: ../../deckard/base/experiment.py
-      md5: f6698e6d004e9b5b2394aa4d4a7080b8
-      size: 24888
+      md5: eda8e3fd71f54473f6b0b82500e25e85
+      size: 26714
     - path: ../../deckard/base/utils.py
       md5: 4dd7680091a8af23146e23a0de27c054
       size: 9038
@@ -40,8 +40,8 @@ stages:
       md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
       size: 120
     - path: data/train/model
-      md5: e9883490604c85ba514d6cf944700bfc
-      size: 84415
+      md5: cb8732b6479378a80eb5c4fb1d9eb64d
+      size: 76063
     - path: data/train/model_params.json
       md5: 13e7771b2ae9ba68dee69c6e3fdec3bd
       size: 471
@@ -59,15 +59,15 @@ stages:
       md5: ac4ed79e4a6b628fac4308fdd3e24210
       size: 123
     - path: data/train/model
-      md5: e9883490604c85ba514d6cf944700bfc
-      size: 84415
+      md5: cb8732b6479378a80eb5c4fb1d9eb64d
+      size: 76063
     outs:
     - path: data/preprocess/data_params.json
       md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
       size: 120
     - path: data/preprocess/model
-      md5: 09166aed6e65ed974f0134430f1c53cd
-      size: 72699
+      md5: cf7305cafbb3c5993a7fba5603b00d4c
+      size: 76980
     - path: data/preprocess/model_params.json
       md5: 13e7771b2ae9ba68dee69c6e3fdec3bd
       size: 471
@@ -85,18 +85,18 @@ stages:
       md5: 8e868a26517d7807395016a0b2f60510
       size: 128
     - path: data/preprocess/model
-      md5: 09166aed6e65ed974f0134430f1c53cd
-      size: 72699
+      md5: cf7305cafbb3c5993a7fba5603b00d4c
+      size: 76980
     outs:
     - path: data/featurize/data_params.json
       md5: 8ffbe08936d39ecbe7861a2c83ac6b3e
       size: 120
     - path: data/featurize/model
-      md5: eeb82f93f70c4015874b9972e48d5c16
-      size: 81083
+      md5: 4acc3fc3f2b49c014a86d7ea4e109bd4
+      size: 80153
     - path: data/featurize/model_params.json
-      md5: 78f70df593573ab91d8ad0864468782e
-      size: 1141
+      md5: d9ee43ab654f46ac4a0617f15f594d56
+      size: 1174
     - path: data/featurize/scores.json
-      md5: bcf3e03acc1e5315872661d737781f4e
-      size: 95
+      md5: 2abd84695ad303e0bd88c10600ff031f
+      size: 86
