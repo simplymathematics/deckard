@@ -5,22 +5,21 @@ import unittest
 import os
 import tempfile
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+
 from sklearn.model_selection import GridSearchCV
-from collections.abc import Callable
 from deckard.base import Data, Experiment
 from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list    
 class testParse(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
         self.file = 'test_filename'
-        self.configs = [x for x in os.listdir("../configs") if x.endswith('.yml')]
+        config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configs')
+        self.configs = [x for x in os.listdir(config_file) if x.endswith('.yml')]
         self.yml_lists = []
-        self.config_folder = "../configs"
-        self.model_yml = "../configs/model.yml"
-        self.preprocess_yml = "../configs/preprocess.yml"
-        self.attack_yml = "../configs/attack.yml"        
+        self.config_folder = config_file
+        self.model_yml = os.path.join(self.config_folder, 'model.yml')
+        self.preprocess_yml = os.path.join(self.config_folder, 'preprocess.yml')
+        self.attack_yml = os.path.join(self.config_folder, 'attack.yml')
         self.model = DecisionTreeClassifier()
         self.pipeline = [('model', self.model)]
         self.grid = GridSearchCV(self.model, {'max_depth': [1, 2]})
@@ -47,8 +46,6 @@ class testParse(unittest.TestCase):
         experiment_list = generate_experiment_list(obj_list, data = data)
         self.assertIsInstance(experiment_list, list)
         self.assertIsInstance(experiment_list[0], Experiment)
-
-   
 
     def tearDown(self):
         import shutil
