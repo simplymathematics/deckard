@@ -518,6 +518,19 @@ class Experiment(object):
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
 
+    def save_time_dict(self, filename:str = "time_dict.json", path:str = "."):
+        """
+        Saves time dictionary to specified file.
+        :param filename: str, name of file to save time dictionary to.
+        :param path: str, path to folder to save time dictionary. If none specified, time dictionary is saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        assert hasattr(self, "time_dict"), "No time dictionary to save"
+        time_file = os.path.join(path, filename)
+        time_results = Series(self.time_dict)
+        time_results.to_json(time_file)
+        assert os.path.exists(time_file), "Time dictionary file not saved"
+        return None
 
     def save_attack(self, filename:str = "attack_params.json", path:str = ".") -> None:
         """
