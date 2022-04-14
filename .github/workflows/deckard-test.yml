@@ -41,7 +41,8 @@ jobs:
 #         python -m unittest deckard/deckard/test/base/test_data.py 
 #         python -m unittest deckard/deckard/test/base/test_model.py 
 #         python -m unittest deckard/deckard/test/base/test_experiment.py
-# #     - name: Test 'mnist' repo for TF support
-# #       working-directory: deckard/examples/mnist
-# #       run: | 
-# #        python -m
+#       - name: Test 'mnist' repo for TF support
+#         path: deckard/examples/mnist
+#         run: |
+#           dvc repro
+

@@ -109,10 +109,6 @@ class Experiment(object):
                         start = process_time_ns()
                         self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
                         end = process_time_ns()
-                    # elif "nb_classes must be greater than or equal to 2" in str(e):
-                    #     start = process_time_ns()
-                    #     self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
-                    #     end = process_time_ns()
                     else:
                         raise e
                 
@@ -399,7 +395,6 @@ class Experiment(object):
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
         assert path is not None, "Path to save data must be specified."
-        assert hasattr(self, "data")
         with open(os.path.join(path, filename), 'wb') as f:
             dump(self.data, f)
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
@@ -576,6 +571,8 @@ class Experiment(object):
             self.save_adv_predictions(path = path)
         if hasattr(self, "adv_samples"):
             self.save_adversarial_samples(path = path)
+        if hasattr(self, 'time_dict'):
+            self.save_time_dict(path = path)
         return None
         
 
