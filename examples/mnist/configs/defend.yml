@@ -19,7 +19,7 @@
     clip_values : (0,1)
     prob : [.001, .01, .1]
     norm : [1, 2, 3]
-    lamb : [.05, .5, .95]
+    lamb : [.01, .5, .99]
     max_iter : 100
 
 - name : art.defences.postprocessor.ClassLabels

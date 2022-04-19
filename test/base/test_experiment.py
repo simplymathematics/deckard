@@ -427,7 +427,6 @@ class testExperiment(unittest.TestCase):
         experiment.save_results(path=self.path)
         files = listdir(self.path)
         self.assertTrue(path.exists(self.path))
-        # self.assertIn('model', files)
         self.assertIn('predictions.json', files)
         self.assertIn('adversarial_predictions.json', files)
         self.assertIn('scores.json', files)
