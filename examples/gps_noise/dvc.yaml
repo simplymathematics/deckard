@@ -1,20 +1,16 @@
 stages:
   prepare:
     cmd: 
-      - python ../../deckard/layers/prepare.py  -d 'data.csv'
+      - python -m deckard.layers.prepare  -d 'data.csv'
     deps: 
       - configs/prepare.yml
-      - ../../deckard/base/data.py
       - data.csv
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../../deckard/layers/train.py  -f data -s f1 -b  True --name train
+    cmd: python -m deckard.layers.train  -f data -s f1 -b  True --name train
     deps:
-    - ../../deckard/base/utils.py
     - configs/model.yml
-    - ../../deckard/layers/train.py
-    - ../../deckard/base/experiment.py
     - data/data.pkl
     outs:
     - data/train/model
@@ -27,10 +23,9 @@ stages:
         cache: true
     
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name preprocess --input train
+    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name preprocess --input train
     deps:
     - configs/preprocess.yml
-    - ../../deckard/layers/preprocess.py
     - data/train/model
     outs:
     - data/preprocess/model
@@ -43,10 +38,9 @@ stages:
         cache: true
    
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s f1 -b True --name featurize --input preprocess
+    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name featurize --input preprocess
     deps:
     - configs/featurize.yml
-    - ../../deckard/layers/preprocess.py
     - data/preprocess/model
     outs:
     - data/featurize/model

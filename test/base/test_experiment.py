@@ -127,14 +127,16 @@ class testExperiment(unittest.TestCase):
         #TODO:
         pass
     
-    def test_is_supervised(self):
+
+    def test__is_supervised(self):
         data = Data('iris', train_size = .8)
         model1 = Model(KNeighborsClassifier(), model_type = 'sklearn')
         model2 = Model(KMeans(), model_type = 'sklearn')
         experiment = Experiment(model = model1, data=data)
         experiment2 = Experiment(model = model2, data=data)
-        self.assertTrue(experiment.is_supervised())
-        self.assertFalse(experiment2.is_supervised())
+        self.assertTrue(experiment._is_supervised())
+        self.assertFalse(experiment2._is_supervised())
+
 
     def test_build_model(self):
         data = Data('iris', train_size = .8)
