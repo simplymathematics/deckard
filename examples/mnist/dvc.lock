@@ -104,8 +104,8 @@ stages:
     - python ../../deckard/layers/prepare.py  -d 'mnist'
     deps:
     - path: ../../deckard/base/data.py
-      md5: 5db4cc1bb4ef42a6718ce4fbe5fb6bbc
-      size: 7290
+      md5: cdf56c0e58c0bc4217ca828c2b640ee6
+      size: 7369
     - path: configs/prepare.yml
       md5: 12c0c368170c5d304326eed4bb808d8a
       size: 122
@@ -123,9 +123,9 @@ stages:
       size: 1957303
     outs:
     - path: data/control/
-      md5: fc5f19f1b6cbbf08689c86c87ca65956.dir
-      size: 32963284
-      nfiles: 5
+      md5: 91b34c96ed2ccf2047c7df836cdf3fad.dir
+      size: 32963333
+      nfiles: 6
   defend:
     cmd: python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder
       "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
@@ -135,17 +135,17 @@ stages:
       md5: 1c73d80a7576fbb1e847c863494b55bb
       size: 195
     - path: data/control/
-      md5: fc5f19f1b6cbbf08689c86c87ca65956.dir
-      size: 32963284
-      nfiles: 5
+      md5: 91b34c96ed2ccf2047c7df836cdf3fad.dir
+      size: 32963333
+      nfiles: 6
     - path: data/data.pkl
       md5: 42ce1673018ca83c2712c57a02979733
       size: 1957303
     outs:
     - path: data/defenses/
-      md5: 1f7829354c3788374f05c28d6988b5f5.dir
-      size: 70889135
-      nfiles: 19
+      md5: e03edd9c0e312de2899b6a3956ef4e61.dir
+      size: 70889233
+      nfiles: 21
   attack:
     cmd: python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder
       "data/defenses/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
@@ -158,11 +158,11 @@ stages:
       md5: 42ce1673018ca83c2712c57a02979733
       size: 1957303
     - path: data/defenses/
-      md5: 1f7829354c3788374f05c28d6988b5f5.dir
-      size: 70889135
-      nfiles: 19
+      md5: e03edd9c0e312de2899b6a3956ef4e61.dir
+      size: 70889233
+      nfiles: 21
     outs:
     - path: data/attacks/
-      md5: 1e683571c84f7369b9985835fc99a806.dir
-      size: 9764
-      nfiles: 29
+      md5: d2f9dcc8dee01e441fe1cc7e9684630c.dir
+      size: 5645794
+      nfiles: 37

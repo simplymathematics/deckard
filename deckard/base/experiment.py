@@ -14,15 +14,16 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
 import os
-logger = logging.getLogger(__name__)
+
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from json import dumps, dump as json_dump
+from json import dumps
+from json import dump as json_dump
 from pickle import dump
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
-
+logger = logging.getLogger(__name__)
 
 # Default scorers
 REGRESSOR_SCORERS = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
@@ -84,8 +85,7 @@ class Experiment(object):
         """
         Builds a supervised model. Returns predictions as an np.ndarray and time taken to fit and predict as dual-value tuple. 
         """
-        # assert self.is_supervised()
-        if hasattr(self.model, 'fit_flag') or self.is_fitted == True or hasattr(self, 'y_pred'):
+        if hasattr(self.model, 'fit_flag') or self.is_fitted == True or self.predictions is not None:
             logger.info("Model is already fitted")
             self.is_fitted = True
             start = process_time_ns()
@@ -134,7 +134,7 @@ class Experiment(object):
         """
         Builds unsupervised model. Returns predictions as an np.ndarray and time taken to fit/predict as single-value tuple.
         """
-        assert not self.is_supervised()
+        assert not self._is_supervised()
         if hasattr(self.model, 'fit_flag') or self.is_fitted == True or hasattr(self, 'y_pred'):
             logger.warning("Model is already fitted")
             start = process_time_ns()
@@ -162,10 +162,10 @@ class Experiment(object):
         Builds model and returns self with added time_dict and predictions attributes.
         """
         logger.debug("Model type: {}".format(type(self.model.model)))
-        if self.is_supervised() == False:
+        if self._is_supervised() == False:
             self.predictions, time = self._build_unsupervised_model()
             self.time_dict = {'fit_pred_time': time}
-        elif self.is_supervised() == True:
+        elif self._is_supervised() == True:
             self.predictions, time = self._build_supervised_model()
             self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
         else:
@@ -194,7 +194,7 @@ class Experiment(object):
         return None
     
 
-    def is_supervised(self)-> bool:
+    def _is_supervised(self)-> bool:
         """
         Returns true if supervised, false if unsupervised. 
         """
@@ -239,6 +239,7 @@ class Experiment(object):
         :param attack: attack to add
         """
         attack_params = {}
+        attack_params['name'] = str(type(attack))
         for key, value in attack.__dict__.items():
             if isinstance(value, int):
                 attack_params[key] = value
@@ -274,6 +275,7 @@ class Experiment(object):
         """
         def_params = {}
         assert isinstance(defense, object)
+        def_params['name'] = str(type(defense))
         for key, value in defense.__dict__.items():
             if isinstance(value, int):
                 def_params[key] = value
@@ -513,11 +515,24 @@ class Experiment(object):
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert hasattr(self, "adv_samples"), "No adversarial samples to save"
         adv_file = os.path.join(path, filename)
-        adv_results = DataFrame(self.adv_samples)
+        adv_results = DataFrame(self.adv_samples.reshape(self.adv_samples.shape[0], -1))
         adv_results.to_json(adv_file)
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
 
+    def save_time_dict(self, filename:str = "time_dict.json", path:str = "."):
+        """
+        Saves time dictionary to specified file.
+        :param filename: str, name of file to save time dictionary to.
+        :param path: str, path to folder to save time dictionary. If none specified, time dictionary is saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
+        assert hasattr(self, "time_dict"), "No time dictionary to save"
+        time_file = os.path.join(path, filename)
+        time_results = Series(self.time_dict)
+        time_results.to_json(time_file)
+        assert os.path.exists(time_file), "Time dictionary file not saved"
+        return None
 
     def save_attack(self, filename:str = "attack_params.json", path:str = ".") -> None:
         """

@@ -32,7 +32,7 @@ class Model(object):
             self.params = dict(estimator.get_params())                
             self.params.update(params)
         else:
-            logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually.")
+            logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually. Setting params to {}".format(params))
             self.params = params
         self.model = estimator
         self.verbose = verbose

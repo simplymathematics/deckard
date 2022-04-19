@@ -3,8 +3,8 @@ import pickle
 import os
 from deckard.base.model import Model
 from deckard.base.data import Data
-from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier
-from art.estimators.classification.scikitlearn import SklearnClassifier
+from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
+from art.estimators import ScikitlearnEstimator
 from art.defences.preprocessor import Preprocessor
 from art.defences.postprocessor import Postprocessor
 from art.defences.trainer import Trainer
@@ -90,8 +90,8 @@ def load_data(filename:str = None, path:str=".") -> Data:
     logger.info("Loaded model")
     return data
 
-SUPPORTED_DEFENSES = [Postprocessor, Preprocessor, Transformer, Trainer]
-SUPPORTED_MODELS = [PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier]
+SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
+SUPPORTED_MODELS = (PyTorchClassifier, ScikitlearnEstimator, KerasClassifier, TensorFlowClassifier)
 
 def initialize_art_classifier(filename:str, path:str = None, model_type:str=None, url:str = None, output_dir:str = None,):
     """
@@ -112,26 +112,28 @@ def initialize_art_classifier(filename:str, path:str = None, model_type:str=None
     if url is not None:
         # download model
         model_path = get_file(filename = filename, extract=False, path=path, url=url, verbose = True)
+        logging.info("Downloaded model from {} to {}".format(url, model_path))
     else:
         model_path = os.path.join(path, filename)
+        logging.info("Loading model from {}".format(model_path))
     # Define type for ART
-    if model_type == 'tfv1' or 'tensorflowv1' or 'tf1':
+    if model_type == 'tfv1' or model_type == 'tensorflowv1' or model_type == 'tf1':
         import tensorflow.compat.v1 as tfv1
         tfv1.disable_eager_execution()
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
         art_model = KerasClassifier( classifier_model)
-    elif model_type == 'keras' or 'k':
+    elif model_type == 'keras' or model_type == 'k':
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
         art_model = KerasClassifier( classifier_model)
-    elif model_type == 'tf' or 'tensorflow':
+    elif model_type == 'tf' or model_type == 'tensorflow':
         from tensorflow.keras.models import load_model as keras_load_model
         classifier_model = keras_load_model(model_path)
         art_model = TensorFlowClassifier( classifier_model)
-    elif model_type == 'pytorch' or 'torch':
+    elif model_type == 'pytorch' or model_type == 'torch':
         raise NotImplementedError("Pytorch not implemented yet")
-    elif model_type == 'sklearn' or 'scikit-learn':
+    elif model_type == 'sklearn' or model_type == 'scikit-learn':
         from pickle import load
         with open(model_path, 'rb') as f:
             classifier_model = load(f)

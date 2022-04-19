@@ -45,4 +45,3 @@ jobs:
 #         path: deckard/examples/mnist
 #         run: |
 #           dvc repro
-

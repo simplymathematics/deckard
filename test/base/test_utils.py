@@ -7,14 +7,14 @@ import unittest
 import os
 import tempfile
 from deckard.base import Data, Experiment, Model
-from deckard.base.utils import SUPPORTED_MODELS, return_score, load_data, load_model, save_best_only, save_all, initialize_art_classifier
+from deckard.base.utils import SUPPORTED_MODELS, return_score, load_data, load_model, save_best_only, save_all, initialize_art_classifier, loggerCall
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier
-from art.estimators.classification.scikitlearn import SklearnClassifier
+from art.estimators.classification.scikitlearn import SklearnClassifier, ScikitlearnRandomForestClassifier
+from logging import Logger
 
-SUPPORTED_MODELS = (PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier)
 class testUtils(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
@@ -72,6 +72,20 @@ class testUtils(unittest.TestCase):
         self.assertIn('data_params.json', files)
         self.assertIn('model_params.json', files)
     
+    def test_loggerCall(self):
+        logger = loggerCall()
+        self.assertIsInstance(logger, Logger)
+
+    def test_initialize_art_classifier(self):
+        from deckard.base.utils import initialize_art_classifier
+        data = Data('iris')
+        model = Model(RandomForestClassifier(), 'sklearn')
+        experiment = Experiment(data, model)
+        experiment.save_model(filename = 'model.pkl', path = self.path)
+        art_model = initialize_art_classifier(filename = "model.pkl", path = self.path, model_type = 'sklearn')
+        self.assertIn('art.', str(type(art_model)))
+        self.assertIsInstance(art_model, SUPPORTED_MODELS)
+
     def tearDown(self) -> None:
         import shutil
         shutil.rmtree(self.path)
