@@ -257,6 +257,10 @@ class testExperiment(unittest.TestCase):
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
         experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
+        experiment.run()
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIsInstance(experiment.scores, dict)
 
     def test_get_attack(self):
         data = Data('iris', train_size = .8)
