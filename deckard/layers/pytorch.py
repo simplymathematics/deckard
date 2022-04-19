@@ -1,4 +1,3 @@
-
 # # Use pytorch to train an image recognition model on mnist
 
 # # import pytorch
