@@ -9,11 +9,6 @@ from sklearn.model_selection import train_test_split
 from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
 from art.utils import load_dataset
-from tensorflow.keras.utils import to_categorical 
-# mnist dataset from 
-from hashlib import md5 as my_hash
-logger = logging.getLogger(__name__)
-from art.utils import load_dataset
 
 class Data(object):
     """

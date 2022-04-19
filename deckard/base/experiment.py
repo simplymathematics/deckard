@@ -14,15 +14,16 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
 import os
-logger = logging.getLogger(__name__)
+
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from json import dumps, dump as json_dump
+from json import dumps
+from json import dump as json_dump
 from pickle import dump
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
-
+logger = logging.getLogger(__name__)
 
 # Default scorers
 REGRESSOR_SCORERS = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
