@@ -15,7 +15,6 @@ from art.estimators.classification import PyTorchClassifier, KerasClassifier, Te
 from art.estimators.classification.scikitlearn import SklearnClassifier, ScikitlearnRandomForestClassifier
 from logging import Logger
 
-SUPPORTED_MODELS = (PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier)
 class testUtils(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
@@ -86,7 +85,7 @@ class testUtils(unittest.TestCase):
         art_model = initialize_art_classifier(filename = "model.pkl", path = self.path, model_type = 'sklearn')
         self.assertIn('art.', str(type(art_model)))
         self.assertIsInstance(art_model, SUPPORTED_MODELS)
-        
+
     def tearDown(self) -> None:
         import shutil
         shutil.rmtree(self.path)

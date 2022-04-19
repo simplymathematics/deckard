@@ -12,7 +12,6 @@
 # # import preprocessing from tf.keras.applications
 # from tensorflow.keras.applications.resnet50 import preprocess_input
 # logger = logging.getLogger(__name__)
-# import preprocessing from tf.keras.applications
 
 # # import tf
 # import tensorflow as tf

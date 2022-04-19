@@ -2,7 +2,6 @@ import logging
 from telnetlib import X3PAD
 import pandas as pd
 import numpy as np
-from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 #TODO: Balanced test set and train set options and functions
 # mnist dataset from 
