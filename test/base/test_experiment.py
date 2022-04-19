@@ -12,6 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import  KNeighborsClassifier, KNeighborsRegressor
+from sklearn.impute import SimpleImputer
 from copy import deepcopy
 from collections.abc import Callable
 from art.attacks.evasion import BoundaryAttack
@@ -246,6 +247,20 @@ class testExperiment(unittest.TestCase):
         self.assertIn('Defense', experiment2.params)
         self.assertIn('name', experiment2.params['Defense'])
         self.assertIn('params', experiment2.params['Defense'])
+    
+    def test_insert_sklearn_preprocessor(self):
+        preprocessor = SimpleImputer
+        preprocessor_params = {'strategy': 'mean'}
+        preprocessor = SimpleImputer(**preprocessor_params)
+        data = Data('iris', train_size = .8)
+        estimator = DecisionTreeClassifier()
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
+        experiment.run()
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIsInstance(experiment.scores, dict)
 
     def test_get_attack(self):
         data = Data('iris', train_size = .8)
@@ -267,8 +282,6 @@ class testExperiment(unittest.TestCase):
         self.assertIsInstance(experiment.get_defense(), object)
         self.assertEqual(experiment.get_defense(), preprocessor)
 
-    
-
     def test_evaluate(self):
         data = Data('iris', train_size = .8)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn')
@@ -277,10 +290,6 @@ class testExperiment(unittest.TestCase):
         experiment.evaluate()
         self.assertIsInstance(experiment.scores, dict)
         self.assertIsInstance(list(experiment.scores.values())[0], (int, float))
-
-        
-        # TODO: remove try/except and fix function
-        # TODO: fix/test auc--maybe due to dataset?
 
     def test_evaluate_attack(self):
         data = Data('iris', train_size = .8)

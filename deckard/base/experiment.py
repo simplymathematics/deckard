@@ -14,7 +14,9 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
 import os
-
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
+from copy import deepcopy
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
@@ -256,6 +258,21 @@ class Experiment(object):
         self.attack = attack
         self.filename = str(hash(self))
         return None
+
+    def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
+        """
+        Add a sklearn preprocessor to the experiment.
+        :param name: name of the preprocessor
+        :param preprocessor: preprocessor to add
+        :param position: position to add preprocessor
+        """
+        if isinstance(self.model.model, (BaseEstimator, TransformerMixin)) and not isinstance(self.model.model, Pipeline):
+            self.model.model = Pipeline([('model', self.model.model)])
+        elif not isinstance(self.model.model, Pipeline):
+            raise ValueError("Model {} is not a sklearn compatible estimator".format(type(self.model.model)))
+        new_model = deepcopy(self.model)
+        new_model.model.steps.insert(position, (name, preprocessor))
+        self.model = new_model
    
     def set_filename(self, filename:str = None) -> None:
         """
