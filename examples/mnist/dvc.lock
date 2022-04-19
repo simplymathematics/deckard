@@ -104,8 +104,8 @@ stages:
     - python ../../deckard/layers/prepare.py  -d 'mnist'
     deps:
     - path: ../../deckard/base/data.py
-      md5: cdf56c0e58c0bc4217ca828c2b640ee6
-      size: 7369
+      md5: 8787648b788a575619075bd87336814e
+      size: 7149
     - path: configs/prepare.yml
       md5: 12c0c368170c5d304326eed4bb808d8a
       size: 122
