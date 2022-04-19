@@ -24,7 +24,8 @@
 
 - name : art.defences.postprocessor.ClassLabels
   params:
-    
+    apply_fit : False
+    apply_predict : True
 
 - name : art.defences.postprocessor.GaussianNoise
   params:
