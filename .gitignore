@@ -42,3 +42,6 @@ deckard.egg-info/*
 .coverage
 
 *model
+
+# package files
+build/
