@@ -9,6 +9,7 @@ from art.estimators.classification import PyTorchClassifier, TensorFlowClassifie
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.estimators.regression import ScikitlearnRegressor
+from collections.abc import Callable
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +18,7 @@ supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
-    def __init__(self, estimator:callable, model_type:str = None, verbose : int = 1, params:dict = {}):
+    def __init__(self, estimator:callable, model_type:str = None, verbose : int = 1, params:dict = None):
         """
         Initialize the model object.
         estimator: the estimator to use
@@ -25,15 +26,7 @@ class Model(object):
         verbose: the verbosity level
         """
         logger.info("Model type during init: {}".format(type(estimator)))
-        if isinstance(estimator, (Pipeline, BaseEstimator)):
-            self.params = dict(estimator.get_params(deep=True))
-            self.params.update(params)
-        elif isinstance(estimator, (PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier)):
-            self.params = dict(estimator.get_params())                
-            self.params.update(params)
-        else:
-            logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually. Setting params to {}".format(params))
-            self.params = params
+        
         self.model = estimator
         self.verbose = verbose
         if model_type is None:
@@ -48,10 +41,14 @@ class Model(object):
             else:
                 raise ValueError("Model type not specified and cannot be auto detected. Type is {}".format(type(estimator)))
         else:
-            self.model_type = model_type   
-        self.name = self._set_name(params)
-        self.params.update({"id_": self.name})
-    
+            self.model_type = model_type
+        if params is None:
+            self.params = self.get_params()
+        else:
+            self.set_params(params)
+
+        
+
     def __hash__(self) -> str:
         """
         Return the hash of the model, using the params from __init__. 
@@ -85,7 +82,41 @@ class Model(object):
         assert params is not None, "Params must be specified"
         assert isinstance(params, dict), "Params must be a dictionary"
         for key, value in params.items():
-                self.params[key] = value
+            if isinstance(value, int):
+                params[key] = value
+            elif isinstance(value, float):
+                params[key] = value
+            elif isinstance(value, str):
+                params[key] = value
+            elif isinstance(value, Callable):
+                params[key] = str(type(value))
+            else:
+                params[key] = str(type(value))
+        self.params = params
+        self.name = self._set_name(params)
+        self.params.update({"id_": self.name})
+        return self.params
     
     def get_params(self):
-        return self.params
+        if isinstance(self.model, (Pipeline, BaseEstimator)):
+            self.params = dict(self.model.get_params(deep=True))
+            self.params.update(params)
+        elif isinstance(self.model, (PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier)):
+            self.params = dict(self.model.get_params())
+            params = self.model.get_params()
+            self.params.update(params)
+        else:
+            logger.warning("Cannot auto detect reproducible model parameters. Please specify params manually. Setting params to {}".format(params))
+            self.params = params
+        for key, value in params.items():
+            if isinstance(value, int):
+                params[key] = value
+            elif isinstance(value, float):
+                params[key] = value
+            elif isinstance(value, str):
+                params[key] = value
+            elif isinstance(value, Callable):
+                params[key] = str(type(value))
+            else:
+                params[key] = str(type(value))
+        return params

@@ -5,59 +5,54 @@
     'eps_step' : [.001, .003, .01]
     'batch_size' : [100]
 
-
 - name: art.attacks.evasion.ProjectedGradientDescent
   params:
     'eps' : [.01, .03, .1]
     'norm' : ['inf', 1, 2]
     'eps_step' : [.001, .003, .01]
     'batch_size' : [100]
-    'max_iter' : 100
+    'max_iter' : [10]
 
 - name: art.attacks.evasion.CarliniL0Method
   params:
     'batch_size' : [100]
-    'max_iter' : 100
-    'confidence' : [.5, .9, .99]
+    'max_iter' : [10]
+    'confidence' : [.1, .9, .99]
 
 - name: art.attacks.evasion.CarliniL2Method
-   params:
+  params:
     'batch_size' : [100]
-    'max_iter' : 100
-    'confidence' : [.5, .9, .99]
+    'max_iter' : [10]
+    'confidence' : [.1, .9, .99]
 
 - name: art.attacks.evasion.CarliniInfMethod
-   params:
-    'max_iter' : 100
-    'confidence' : [.5, .9, .99]
+  params:
+    'max_iter' : [10]
+    'confidence' : [.1, .9, .99]
 
 - name: art.attacks.evasion.DeepFool
-   params:
-    'max_iter' : 100
+  params:
+    'max_iter' : [10]
     'batch_size' : [100]
     'nb_grads' : [10, 100, 1000]
     
 - name: art.attacks.evasion.HopSkipJump
-   params:
-    'max_iter' : 100
+  params:
+    'max_iter' : [10]
     'norm' : ['inf', 2]
     'max_eval' : [10, 50, 100]
 
 - name: art.attacks.evasion.PixelAttack
-   params:
+  params:
     'th' : [.5, .9, .99]
-    'max_iter' : 100
+    'max_iter' : [10]
 
 - name: art.attacks.evasion.ThresholdAttack
-   params:
+  params:
     'th' : [.5, .9, .99]
-    'max_iter' : 100
+    'max_iter' : [10]
 
 - name: art.attacks.evasion.AdversarialPatch
   params:
-    'max_iter' : 100
+    'max_iter' : [10]
     'learning_rate' : [.5, 5, 50]
-    
-
-
-

@@ -22,7 +22,6 @@ from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
 from json import dumps
-from json import dump as json_dump
 from pickle import dump
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 logger = logging.getLogger(__name__)
@@ -58,7 +57,6 @@ class Experiment(object):
         self.predictions = None
         self.time_dict = None
         self.scores = None
-        self.params = {**self.data.params, **self.model.params, **params}
         if not scorers:
             self.scorers = REGRESSOR_SCORERS if is_regressor(model.model) else CLASSIFIER_SCORERS
         else:
@@ -66,7 +64,14 @@ class Experiment(object):
         self.refit = list(self.scorers.keys())[0]
         for key in params.keys():
             setattr(self, key, params[key])
-        self.filename = str(my_hash(dumps(str(self.params)).encode('utf-8')).hexdigest()) if filename is None else filename
+        self.params = dict()
+        self.params['Model'] = self.model.params
+        self.params['Data'] = self.data.params
+        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : bool(self.predictions), "has_scores" : bool(self.scores), "has_time_dict" : bool(self.time_dict)}
+        self.filename = hash(self) if filename is None else filename
+        self.params['Experiment']['experiment'] = self.filename
+        self.params['Model']['experiment'] = self.filename
+        self.params['Data']['experiment'] = self.filename
 
 
     def __hash__(self):
@@ -218,20 +223,24 @@ class Experiment(object):
 
     
 
-    def run(self) -> None:
+    def run(self, path) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
+        self.save_experiment_params(path = path)
         self._build_model()
         self.evaluate()
+        self.save_results(path = path)
 
-    def run_attack(self):
+    def run_attack(self, path):
         """
         Runs attack.
         """
         assert hasattr(self, 'attack')
+        self.save_attack_params(path = path)
         self._build_attack()
         self.evaluate_attack()
+        self.save_attack_results(path = path)
 
         
     def set_attack(self, attack:object) -> None:
@@ -241,7 +250,6 @@ class Experiment(object):
         :param attack: attack to add
         """
         attack_params = {}
-        attack_params['name'] = str(type(attack))
         for key, value in attack.__dict__.items():
             if isinstance(value, int):
                 attack_params[key] = value
@@ -249,7 +257,7 @@ class Experiment(object):
                 attack_params[key] = value
             elif isinstance(value, str):
                 attack_params[key] = value
-            elif isinstance(value, object):
+            elif isinstance(value, Callable):
                 attack_params[key] = str(type(value))
             else:
                 attack_params[key] = str(type(value))
@@ -257,6 +265,7 @@ class Experiment(object):
         self.params['Attack'] = {'name': str(type(attack)), 'params': attack_params}
         self.attack = attack
         self.filename = str(hash(self))
+        self.params['Attack']['experiment'] = self.filename
         return None
 
     def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
@@ -284,6 +293,7 @@ class Experiment(object):
             self.filename = filename
         return None
     
+    
     def set_defense(self, defense:object) -> None:
         """
         Adds a defense to an experiment
@@ -292,7 +302,6 @@ class Experiment(object):
         """
         def_params = {}
         assert isinstance(defense, object)
-        def_params['name'] = str(type(defense))
         for key, value in defense.__dict__.items():
             if isinstance(value, int):
                 def_params[key] = value
@@ -300,15 +309,19 @@ class Experiment(object):
                 def_params[key] = value
             elif isinstance(value, str):
                 def_params[key] = value
-            elif isinstance(value, object):
+            elif isinstance(value, tuple):
+                def_params[key] = value
+            elif isinstance(value, Callable):
                 def_params[key] = str(type(value))
             else:
                 def_params[key] = str(type(value))
         self.params['Defense'] = {'name': str(type(defense)), 'params': def_params}
         self.defense = defense
         if 'preprocessor' in str(type(defense)):
+            self.is_fitted = self.defense.apply_fit
             self.model.model.preprocessing_defences = [defense]
         elif 'postprocessor' in str(type(defense)):
+            self.is_fitted = self.defense.apply_fit
             self.model.model.postprocessing_defences = [defense]
         elif 'transformer' in str(type(defense)):
             logging.error("Transformer defense not yet supported")
@@ -320,6 +333,7 @@ class Experiment(object):
             logging.error("Detector defense not yet supported")
             raise NotImplementedError
         self.filename = str(hash(self))
+        self.params['Defense']['experiment'] = self.filename
         return None
 
 
@@ -419,7 +433,7 @@ class Experiment(object):
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
         return None
     
-    def save_experiment_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", path:str = ".") -> None:
+    def save_experiment_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", exp_params_file:str = "experiment_params.json", path:str = ".") -> None:
         """
         Saves data to specified file.
         :param data_params_file: str, name of file to save data parameters to.
@@ -427,13 +441,22 @@ class Experiment(object):
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
         assert path is not None, "Path to save data must be specified."
-        with open(os.path.join(path, data_params_file), 'w') as f:
-            json_dump(str(self.data.params), f)
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        identity = self.filename
+        data_params = Series(self.params['Data'])
+        model_params = Series(self.params['Model'])
+        exp_params = Series(self.params['Experiment'])
+        data_params.to_json(os.path.join(path, data_params_file),)
+        model_params.to_json(os.path.join(path, model_params_file))
+        exp_params.to_json(os.path.join(path, exp_params_file))
         assert os.path.exists(os.path.join(path, data_params_file)), "Data params not saved."
-
-        with open(os.path.join(path, model_params_file), 'w') as f:
-            json_dump(str(self.model.params), f)
         assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
+        assert os.path.exists(os.path.join(path, exp_params_file)), "Model params not saved."
+        if 'Defense' in self.params:
+            defense_params = Series(self.params['Defense'])
+            defense_params.to_json(os.path.join(path, "defense_params.json"))
+            assert os.path.exists(os.path.join(path, "defense_params.json")), "Defense params not saved."
         return None
 
     def save_model(self, filename:str = "model", path:str = ".") -> str:
@@ -551,22 +574,23 @@ class Experiment(object):
         assert os.path.exists(time_file), "Time dictionary file not saved"
         return None
 
-    def save_attack(self, filename:str = "attack_params.json", path:str = ".") -> None:
+    def save_attack_params(self, filename:str = "attack_params.json", path:str = ".") -> None:
         """
         Saves attack params to specified file.
         :param filename: str, name of file to save attack params to.
         :param path: str, path to folder to save attack params. If none specified, attack params are saved in current working directory. Must exist.
         """
+        if not os.path.isdir(path):
+            os.mkdir(path)
         assert os.path.isdir(path), "Path to experiment does not exist"
-        
         attack_file = os.path.join(path, filename)
         results = self.params['Attack']
-        results = Series(results.values(), name =  self.filename, index = results.keys())
+        results = Series(results.values(), index = results.keys())
         results.to_json(attack_file)
         assert os.path.exists(attack_file), "Attack file not saved."
         return None
 
-    def save_defense(self, filename:str = "defense_params.json", path:str = ".") -> None:
+    def save_defense_params_params(self, filename:str = "defense_params.json", path:str = ".") -> None:
         """
         Saves defense params to specified file.
         :param filename: str, name of file to save defense params to.
@@ -590,11 +614,6 @@ class Experiment(object):
         # self.save_model(path = path)
         self.save_scores(path = path)
         self.save_predictions(path = path)
-        self.save_experiment_params(path = path)
-        if hasattr(self, 'attack'):
-            self.save_attack(path = path)
-        if hasattr(self, 'defense'):
-            self.save_defense(path = path)
         if hasattr(self, "adv_scores"):
             self.save_adv_scores(path = path)
         if hasattr(self.model.model, 'cv_results_'):

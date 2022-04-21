@@ -9,9 +9,6 @@ from sklearn.model_selection import train_test_split
 from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
 from art.utils import load_dataset
-
-from torch import minimum
-from tensorflow.keras.utils import to_categorical 
 # mnist dataset from 
 from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
@@ -31,7 +28,7 @@ class Data(object):
     :attribute y_test: The testing target. Created during initialization.
     
     """
-    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, train_size:float = .01, random_state=0, shuffle:bool=True,  stratify=None, test_size:int = 100):
+    def __init__(self, dataset:str = 'iris', target = None, time_series:bool = False, train_size:int = 100, random_state=0, shuffle:bool=True,  stratify=None, test_size:int = 100):
         """
         Initializes the data object.
         :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
@@ -96,21 +93,28 @@ class Data(object):
         if target is not None:
             self.target = target
         # sets dataset, if specified
+        
         if dataset.endswith(".csv"):
             (X_train, y_train),(X_test, y_test), minimum, maximum = self._parse_csv(dataset, target)
         else:
             (X_train, y_train),(X_test, y_test), minimum, maximum = load_dataset(dataset)
+            stratify = y_test if self.stratify == True else None
             # TODO: fix this
             from sklearn.model_selection import train_test_split
             # sets stratify to None if stratify is False
-            stratify = y_train if self.stratify == True else None
-            big_X = np.append(X_train, X_test, axis=0)
-            big_y = np.append(y_train, y_test, axis=0)
+            
+            big_X = np.vstack((X_train, X_test))
+            print(big_X.shape)
+            input("X. Press Enter to continue...")
+            big_y = np.vstack((y_train, y_test))
+            print(big_y.shape)
+            input("y. Press Enter to continue...")
             assert len(big_X) == len(big_y), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
-            X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
-        # Standardize the test/train_size to be integers
-        if isinstance(self.train_size, float) or self.train_size == 1:
-            self.train_size = int(round(len(X_train) * self.train_size))
+            assert big_X.shape[0] == big_y.shape[0], "X has {} rows. y has {} rows.".format(big_X.shape[0], big_y.shape[0])
+            if self.train_size == 1:
+                pass
+            else:
+                X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -120,9 +124,12 @@ class Data(object):
         if hasattr(self, 'test_size'):
             assert isinstance(self.test_size, int), "test_size must be an integer"
             if self.test_size <= len(self.X_test):
-                self.X_test = self.X_test[:self.test_size]
-                self.y_test = self.y_test[:self.test_size]
+                _, X_test, _, y_test = train_test_split(self.X_test, self.y_test, test_size = self.test_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
+                self.X_test = X_test[:self.test_size]
+                self.y_test = y_test[:self.test_size]
+                assert len(self.X_test) == self.test_size, "X_test has {} rows. test_size is {}".format(len(self.X_test), self.test_size)
             else:
+                logger.warning("test_size is greater than the number of test samples. Setting test_size to {}".format(len(self.X_test)))
                 self.X_test = self.X_test
                 self.y_test = self.y_test
     

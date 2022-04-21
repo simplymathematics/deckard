@@ -4,11 +4,11 @@ import logging
 from deckard.base.experiment import Experiment, Model
 from deckard.base.utils import load_data, initialize_art_classifier
 from deckard.base.parse import generate_tuple_list_from_yml, generate_object_list_from_tuple
-import parser
-import os
 
+import os
+logger = logging.getLogger(__name__)
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
+    
     # arguments
     import argparse
     parser = argparse.ArgumentParser(description='Prepare model and dataset as an experiment object. Then runs the experiment.')
@@ -27,26 +27,7 @@ if __name__ == '__main__':
     ART_DATA_PATH = os.path.join(args.output_folder)
     if not os.path.exists(ART_DATA_PATH):
         os.makedirs(ART_DATA_PATH)
-    # Create a logger
-    logger = logging.getLogger('art_logger')
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # Create stream handler
-    stream_handler = logging.StreamHandler()
-    # set formatting
-    stream_handler.setFormatter(formatter)
-    # set stream_handler level
-    stream_handler.setLevel(args.verbosity)
-    # Add handler to logger
-    logger.addHandler(stream_handler)
-    # Create file handler
-    file_handler = logging.FileHandler(os.path.join(ART_DATA_PATH, args.log_file))
-    # set file_handler level to max
-    file_handler.setLevel(logging.DEBUG)
-    # set formatting
-    file_handler.setFormatter(formatter)
-    # Add handler to logger
-    logger.addHandler(file_handler)
-    # attempts to load model
+    # Creates folder
     if not exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
         mkdir(args.output_folder)
@@ -60,6 +41,7 @@ if __name__ == '__main__':
     for defense in object_list:
         i += 1
         logger.info("{} of {} experiments.".format(i, length))
+        print("{} of {} experiments.".format(i, length))
         defense_dict = {"Defense" : type(defense), "params": defense.__dict__}
         # initalize model
         art_model = initialize_art_classifier(filename = args.input_model, path = args.input_folder, model_type = args.model_type, output_dir = args.output_folder)
@@ -68,18 +50,23 @@ if __name__ == '__main__':
         experiment = Experiment(data = data, model = art_model, name = args.input_model, params = defense_dict)
         experiment.set_defense(defense)
         logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.input_model))
-        # run experiment
-        logger.info("Running experiment...")
-        experiment.run()
-        logger.info("Experiment complete.")
-        # Save experiment
+        # Seeing if experiment exists
         output_folder = os.path.join(args.output_folder, experiment.filename)
-        if args.output_name is None:
-            args.output_name = "defended_model"
-        logger.info("Saving experiment to {}.".format(output_folder))
-        experiment.model.model.save(filename = args.output_name, path = output_folder)
-        experiment.save_results(path = output_folder)
-        logger.info("Experiment saved.")
+        scores_file = os.path.join(output_folder, 'scores.json')
+        if os.path.isfile(scores_file):
+            logger.info("Experiment {} already exists. Skipping.".format(experiment.filename))
+            continue
+        else:
+            # run experiment
+            logger.info("Running experiment...")
+            experiment.run(path = output_folder)
+            logger.info("Experiment complete.")
+            # Save experiment
+            if args.output_name is None:
+                args.output_name = "defended_model"
+            logger.info("Saving experiment to {}.".format(output_folder))
+            experiment.model.model.save(filename = args.output_name, path = output_folder)
+            logger.info("Experiment saved.")
     assert i == length, "Number of experiments {} does not match number of queries {}".format(i, length)
     # count the number of folders in the output folder
     num_folders = len(os.listdir(args.output_folder))

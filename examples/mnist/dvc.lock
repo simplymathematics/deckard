@@ -104,27 +104,27 @@ stages:
     - python ../../deckard/layers/prepare.py  -d 'mnist'
     deps:
     - path: ../../deckard/base/data.py
-      md5: 8787648b788a575619075bd87336814e
-      size: 7149
+      md5: 70759cd2056bbc3093d1f61b1260d7e6
+      size: 7792
     - path: configs/prepare.yml
-      md5: 12c0c368170c5d304326eed4bb808d8a
-      size: 122
+      md5: c175aeb5ea069b5904780edd6da02a60
+      size: 112
     outs:
     - path: data/data.pkl
-      md5: 42ce1673018ca83c2712c57a02979733
-      size: 1957303
+      md5: 777bc1217de663c15352501f79bf8407
+      size: 379351787
   control:
     cmd: python ../../deckard/layers/art_model.py --input_model "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
       --output_name "control_model.pb" --model_type "tf1" --dataset "data/data.pkl"
       --output_folder "data/control"
     deps:
     - path: data/data.pkl
-      md5: 42ce1673018ca83c2712c57a02979733
-      size: 1957303
+      md5: 777bc1217de663c15352501f79bf8407
+      size: 379351787
     outs:
     - path: data/control/
-      md5: 91b34c96ed2ccf2047c7df836cdf3fad.dir
-      size: 32963333
+      md5: f87a48c37d067b016d91bf26fb71e9f4.dir
+      size: 32963371
       nfiles: 6
   defend:
     cmd: python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder

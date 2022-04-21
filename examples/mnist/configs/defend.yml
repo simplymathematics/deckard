@@ -1,29 +1,31 @@
 - name: art.defences.preprocessor.FeatureSqueezing
   params:
-    clip_values : (0,1)
+    clip_values : !!python/tuple [0,1]
     bit_depth : [4, 8, 16, 32, 64]
 
 - name: art.defences.preprocessor.GaussianAugmentation
   params:
-    clip_values : (0,1)
+    clip_values : !!python/tuple [0,1]
     sigma : [.1, .3, 1]
     ratio : [.1, .5, 1]
 
 - name: art.defences.preprocessor.SpatialSmoothing
   params:
-    clip_values : (0,1)
+    clip_values : !!python/tuple [0,1]
     window_size : [2,3,4]
 
 - name: art.defences.preprocessor.TotalVarMin
   params:
-    clip_values : (0,1)
+    clip_values : !!python/tuple [0,1]
     prob : [.001, .01, .1]
     norm : [1, 2, 3]
     lamb : [.05, .5, .95]
-    max_iter : 100
+    max_iter : [100]
 
 - name : art.defences.postprocessor.ClassLabels
   params:
+    apply_predict : [True]
+    apply_fit : [False]
     
 
 - name : art.defences.postprocessor.GaussianNoise
@@ -41,5 +43,5 @@
 
 - name : art.defences.postprocessor.Rounded
   params:
-    decimals : [0, 2, 4, 8]
+    decimals : [1, 2, 4, 8]
   

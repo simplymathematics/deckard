@@ -3,17 +3,18 @@ from os import mkdir, chmod, rename
 import logging
 from deckard.base.experiment import Experiment, Model
 from deckard.base.utils import load_data, load_model
-import parser
+from art.attacks import Attack
 import os
 from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
-
 logger = logging.getLogger(__name__)
+
 
 import yaml
 from os import path
-from sklearn.model_selection import ParameterGrid
+
 
 if __name__ == '__main__':
+    
     # arguments
     import argparse
     parser = argparse.ArgumentParser(description='Prepare model and dataset as an experiment object. Then runs the experiment.')
@@ -32,32 +33,13 @@ if __name__ == '__main__':
     ART_DATA_PATH = os.path.join(args.output_folder)
     if not os.path.exists(ART_DATA_PATH):
         os.makedirs(ART_DATA_PATH)
-    # Create a logger
-    logger = logging.getLogger(__name__)
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # Create stream handler
-    stream_handler = logging.StreamHandler()
-    # set formatting
-    stream_handler.setFormatter(formatter)
-    # set stream_handler level
-    stream_handler.setLevel(args.verbosity)
-    # Add handler to logger
-    logger.addHandler(stream_handler)
-    # Create file handler
-    file_handler = logging.FileHandler(os.path.join(ART_DATA_PATH, args.log_file))
-    # set file_handler level to max
-    file_handler.setLevel(logging.DEBUG)
-    # set formatting
-    file_handler.setFormatter(formatter)
-    # Add handler to logger
-    logger.addHandler(file_handler)
-    # attempts to load model
     if not exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
         mkdir(args.output_folder)
     # load dataset
     data = load_data(filename  = args.data_file)
+    data.X_test = data.X_test[:100]
+    data.y_test = data.y_test[:100]
     logger.info("Loaded dataset {}".format(args.data_file))
     yml_list = generate_tuple_list_from_yml('configs/attack.yml');
     art_models = []
@@ -100,13 +82,27 @@ if __name__ == '__main__':
         if not path.exists(output_folder):
             mkdir(output_folder)
         for attack in attack_list:
-            j+=1
-            experiment.set_attack(attack = attack)
-            experiment.run()
-            experiment.run_attack()
-            output_folder = experiment.filename
-            if subdirectory != "":
-                experiment.save_results(path = os.path.join(args.output_folder, subdirectory, output_folder))
+            if isinstance(attack, Attack):
+                j+=1
+                experiment.set_attack(attack = attack)
+                output_folder = experiment.filename
+                # Seeing if experiment exists
+                output_folder = os.path.join(args.output_folder, experiment.filename)
+                scores_file = os.path.join(output_folder, 'adversarial_scores.json')
+                if os.path.isfile(scores_file):
+                    logger.info("Experiment {} already exists. Skipping.".format(experiment.filename))
+                    continue
+                else:
+                    # run experiment
+                    logger.info("Running experiment...")
+                    experiment.run(path = output_folder)
+                    experiment.run_attack(path = output_folder)
+                    logger.info("Experiment complete.")
+                    # Save experiment
+                    if args.output_name is None:
+                        args.output_name = "defended_model"
+                    logger.info("Saving experiment to {}.".format(output_folder))
+                    experiment.model.model.save(filename = args.output_name, path = output_folder)
+                    logger.info("Experiment saved.")
             else:
-                experiment.save_results(path = os.path.join(args.output_folder, output_folder))
-            logger.info("Finished attack {} of {}".format(j, len(attack_list)))
+                logger.warning("Attack {} is not an instance of Attack".format(attack))

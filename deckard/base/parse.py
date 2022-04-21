@@ -24,13 +24,18 @@ def generate_tuple_list_from_yml(filename:str) -> list:
             yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
             raise ValueError("Error parsing yml file {}".format(filename))
-    # check that featurizers is a list
     for entry in yml_list:
         if not isinstance(entry, dict):
             raise ValueError("Error parsing yml file {}".format(filename))
+        for key, value in entry['params'].items():
+            if isinstance(value, (tuple, float, int, str)):
+                special_values = value
+                special_key = key
         grid = ParameterGrid(entry['params'])
         name = entry['name']
         for param in grid:
+            if special_key in param:
+                param[special_key] = special_values
             full_list.append((name, param))
     return full_list
 
@@ -52,7 +57,12 @@ def generate_object_list_from_tuple(yml_tuples:list, **kwargs) -> list:
         params = entry[1]
         params.update(kwargs)
         exec("from {} import {}".format(library_name, class_name), globals())
-        exec(f"object_instance = {class_name}(**params)", globals())
+        try:
+            exec(f"object_instance = {class_name}(**params)", globals())
+        except ValueError as e:
+            print(f"Error initializing {entry[0]} with params {params}")
+            input("Press enter to continue")
+            raise e
         obj_list.append(object_instance)
     return obj_list
 

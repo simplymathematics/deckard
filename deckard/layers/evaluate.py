@@ -1,4 +1,3 @@
-from catboost import train
 from deckard.base.utils import load_data, load_model
 from deckard.base import Data, Experiment, Model
 from os import path
