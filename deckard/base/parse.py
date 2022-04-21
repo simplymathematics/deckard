@@ -61,7 +61,6 @@ def generate_object_list_from_tuple(yml_tuples:list, **kwargs) -> list:
             exec(f"object_instance = {class_name}(**params)", globals())
         except ValueError as e:
             print(f"Error initializing {entry[0]} with params {params}")
-            input("Press enter to continue")
             raise e
         obj_list.append(object_instance)
     return obj_list
