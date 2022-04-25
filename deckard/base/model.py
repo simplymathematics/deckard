@@ -269,17 +269,15 @@ class Model(object):
         else:
             raise ValueError("Defence type {} not supported".format(self.params['Defence']['type']))
         # Iinitialize model by type
+        if isinstance(self.model, (PyTorchClassifier, TensorFlowV2Classifier, ScikitlearnClassifier, TensorFlowClassifier, KerasClassifier)):
+            self.model = self.model.model
         if self.model_type in ['pytorch', 'torch', 'pyt']:
-            from art.estimators.classification import PyTorchClassifier
             model = PyTorchClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
         elif self.model_type in ['keras']:
-            from art.estimators.classification import KerasClassifier
             model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
         elif self.model_type in ['tensorflow', 'tf', 'tf1', 'tfv1', 'tensorflowv1']:
-            from art.estimators.classification import KerasClassifier
             model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
         elif self.model_type in ['tf2', 'tensorflow2', 'tfv2', 'tensorflowv2']:
-            from art.estimators.classification import KerasClassifier
             model = KerasClassifier(self.model)
         elif self.model_type in ['sklearn', 'pipeline', 'gridsearch', 'pickle', 'scikit', 'scikit-learn']:
             model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)

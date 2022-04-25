@@ -35,7 +35,7 @@ class Experiment(object):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False, filename = None):
+    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False):
         """
         Creates an experiment object
         :param data: Data object
@@ -57,7 +57,6 @@ class Experiment(object):
         self.predictions = None
         self.time_dict = None
         self.scores = None
-        self.filename = str(filename)
         if not scorers:
             self.scorers = REGRESSOR_SCORERS if (is_regressor(model.model.model) or is_regressor(model.model)) else CLASSIFIER_SCORERS
         else:
@@ -69,7 +68,7 @@ class Experiment(object):
         self.params['Model'] = self.model.params
         self.params['Data'] = self.data.params
         self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : bool(self.predictions), "has_scores" : bool(self.scores), "has_time_dict" : bool(self.time_dict)}
-        
+        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36))
 
 
     def __hash__(self):
@@ -89,10 +88,7 @@ class Experiment(object):
         Builds model.
         """
         self.model.run_model(self.data, **kwargs)
-        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36)) if self.filename is None else self.filename
-        self.params['Experiment']['experiment'] = self.filename
-        self.params['Model']['experiment'] = self.filename
-        self.params['Data']['experiment'] = self.filename
+        
         return None
     
     
@@ -114,14 +110,7 @@ class Experiment(object):
         self.adv = adv
         self.adv_samples = adv_samples
         self.time_dict['adv_pred_time'] = end - start
-        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36))
-        self.params['Experiment']['experiment'] = self.filename
-        self.params['Model']['experiment'] = self.filename
-        self.params['Data']['experiment'] = self.filename
         return None
-    
-
-    
 
     def run(self, path, **kwargs) -> None:
         """
@@ -188,12 +177,12 @@ class Experiment(object):
         :param preprocessor: preprocessor to add
         :param position: position to add preprocessor
         """
-        if isinstance(self.model.model, (BaseEstimator, TransformerMixin)) and not isinstance(self.model.model, Pipeline):
-            self.model.model = Pipeline([('model', self.model.model)])
+        if isinstance(self.model.model.model, (BaseEstimator, TransformerMixin)) and not isinstance(self.model.model, Pipeline):
+            self.model.model = Pipeline([('model', self.model.model.model)])
         elif not isinstance(self.model.model, Pipeline):
             raise ValueError("Model {} is not a sklearn compatible estimator".format(type(self.model.model)))
         new_model = deepcopy(self.model)
-        new_model.model.steps.insert(position, (name, preprocessor))
+        new_model.model.model.steps.insert(position, (name, preprocessor))
         self.model = new_model
    
     def set_filename(self, filename:str = None) -> None:
@@ -319,8 +308,11 @@ class Experiment(object):
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
         assert path is not None, "Path to save data must be specified."
-        if not os.path.isdir(path):
+        if not os.path.isdir(path) and not os.path.exists(path):
             os.mkdir(path)
+        self.params['Experiment']['experiment'] = self.filename
+        self.params['Model']['experiment'] = self.filename
+        self.params['Data']['experiment'] = self.filename
         data_params = Series(self.params['Data'])
         model_params = Series(self.params['Model'])
         exp_params = Series(self.params['Experiment'])
@@ -331,7 +323,7 @@ class Experiment(object):
         assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
         assert os.path.exists(os.path.join(path, exp_params_file)), "Model params not saved."
         if 'Defence' in model_params:
-            model_params['Defence']['experiment'] = str(hash(self))
+            model_params['Defence']['experiment'] = self.filename
             defence_params = Series(model_params['Defence'])
             defence_params.to_json(os.path.join(path, "defence_params.json"))
             assert os.path.exists(os.path.join(path, "defence_params.json")), "Defence params not saved."

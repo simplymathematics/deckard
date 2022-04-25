@@ -1,6 +1,6 @@
 
 import logging
-from deckard.base.experiment import Experiment, Model
+from deckard.base.experiment import Experiment, Model, Data
 import os
 from art.estimators.classification import PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier
 from art.utils import get_file
@@ -102,23 +102,22 @@ if __name__ == '__main__':
     else:
         logger.info("Model Name is {}".format(args.output_name))
     # attempts to load model
-    if not exists(args.output_folder):
+    if not os.path.exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
-        mkdir(args.output_folder)
-    art_model = convert_to_art_classifier(output_name=args.output_name, model_path=args.input_model, model_type=args.model_type, output_folder=args.output_folder)
-    model_object = Model(art_model, model_type = 'tf1')
+        os.mkdir(args.output_folder)
+    model_object = Model(model_type = 'tf1', path = args.output_folder, model = args.output_name, url = args.input_model)
     # load dataset
-    data = load_data( filename  = args.dataset)
+    data = Data(args.dataset)
     # logger.info("Loaded dataset {}".format(args.dataset))
     # Create experiment
     experiment = Experiment(data = data, model = model_object, name = args.output_name, params = {'model_type':args.model_type, 'model_path':args.input_model, 'dataset':args.dataset})
     logger.info("Created experiment object from {} dataset and {} model".format(args.dataset, args.output_name))
     # run experiment
     logger.info("Running experiment...")
-    experiment.run()
+    experiment.run(args.output_folder)
     logger.info("Experiment complete.")
     # Save experiment
     logger.info("Saving experiment.")
-    experiment.model.model.save(filename = args.output_folder)
+    experiment.model.model.save(filename = args.output_folder, path = args.output_name)
     experiment.save_results(path = args.output_folder)
     logger.info("Experiment saved.")

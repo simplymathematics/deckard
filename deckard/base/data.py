@@ -118,11 +118,12 @@ class Data(object):
             (X_train, y_train),(X_test, y_test), minimum, maximum = self._parse_csv(dataset, target)
         else:
             (X_train, y_train),(X_test, y_test), minimum, maximum = load_dataset(dataset)
-            stratify = y_train if self.stratify == True else None
+            
             # TODO: fix this
             # sets stratify to None if stratify is False          
             big_X = np.vstack((X_train, X_test))
             big_y = np.vstack((y_train, y_test))
+            stratify = big_y if self.stratify == True else None
             assert len(big_X) == len(big_y), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
             assert big_X.shape[0] == big_y.shape[0], "X has {} rows. y has {} rows.".format(big_X.shape[0], big_y.shape[0])
             if self.train_size == 1:

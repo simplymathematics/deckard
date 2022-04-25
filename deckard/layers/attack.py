@@ -58,9 +58,10 @@
 #             output_folder = os.path.join(args.output_folder, subdirectory)
 #             filename = os.path.join(filename, model_name)
 #             logger.info("Loading model {}".format(filename))
-#             art_model = load_model(filename=filename, mtype = 'tf1')
+#             # art_model = load_model(filename=filename, mtype = 'tf1')
+#             model_object = Model(model = args.input_model, path = args.input_folder, model_type = args.model_type)
 #             attack_list = generate_object_list_from_tuple(yml_list, estimator = art_model.model)
-#             experiment = Experiment(data = data, model = art_model, is_fitted=True, filename = subdirectory)
+#             experiment = Experiment(data = data, model = model_object, is_fitted=True, filename = subdirectory)
 #         # loading file otherwise
 #         elif os.path.isfile(os.path.join(args.input_folder, filepath)) and filepath == args.input_model:
 #             filename = args.input_folder
@@ -69,9 +70,9 @@
 #             output_folder = args.output_folder
 #             filename = os.path.join(filename, model_name)
 #             logger.info("Loading model {}".format(filename))
-#             art_model = load_model(filename=filename, mtype = 'tf1')
-#             attack_list = generate_object_list_from_tuple(yml_list, estimator = art_model.model_type)
-#             model_object = Model(estimator = art_model, model_type = args.model_type)
+#             # art_model = load_model(filename=filename, mtype = 'tf1')
+#             attack_list = generate_object_list_from_tuple(yml_list, estimator = art_model.model)
+#             model_object = Model(model = args.input_model, path = args.input_folder, model_type = args.model_type)
 #             experiment = Experiment(data = data, model = model_object, is_fitted=True, filename = args.output_name)
 #         else:
 #             # skips files that aren't == input_model
