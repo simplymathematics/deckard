@@ -7,7 +7,7 @@ import unittest
 import os
 import tempfile
 from deckard.base import Data, Experiment, Model
-from deckard.base.utils import SUPPORTED_MODELS, return_score, load_data, load_model, save_best_only, save_all, initialize_art_classifier, loggerCall
+from deckard.base.utils import SUPPORTED_MODELS, return_score,  save_best_only, save_all, loggerCall
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -27,9 +27,9 @@ class testUtils(unittest.TestCase):
         self.experiment = Experiment(self.data, self.model)
         self.experiment2 = Experiment(self.data, self.model2)
         self.experiment3 = Experiment(self.data, self.model3)
-        self.experiment.run()
+        self.experiment.run(self.path)
         self.experiment.save_results(path = self.path)
-        self.experiment.save_model(filename = 'model.pkl', path = self.path)
+        self.experiment.save_model(filename = 'model', path = self.path)
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
         self.list = [self.experiment, self.experiment2]
     
@@ -37,24 +37,10 @@ class testUtils(unittest.TestCase):
         result = return_score(scorer = 'acc', filename="scores.json", path=self.path)
         self.assertIsInstance(result, float)
 
-    
-    def test_load_model(self):
-        self.experiment.save_model(filename = self.file, path = self.path)
-        self.assertIsInstance(load_model(filename = self.file, path = self.path), Model)
-
-    def test_initialize_art_classifier(self):
-        from deckard.base.utils import load_model
-        model = load_model(filename = 'model.pkl', path = self.path)
-        # self.assertIsInstance(initialize_art_classifier(model), SUPPORTED_MODELS)
-        # self.assertIsInstance(initialize_art_classifier(filename=self.file, path=self.path, model_type = 'sklearn'), SUPPORTED_MODELS)
-
-    def test_load_data(self):
-        self.assertIsInstance(load_data(filename = 'data.pkl', path = self.path), Data)
-
     def test_save_best_only(self):
         save_best_only(path = self.path, scorer = 'ACC', exp_list=self.list, bigger_is_better=True)
-        files = [x for x in os.listdir(self.path) if x.endswith('.json') or x == 'model.pkl']
-        self.assertIn('model.pkl', files)
+        files = [x for x in os.listdir(self.path)]
+        self.assertIn('model.pickle', files)
         self.assertIn('scores.json', files)
         self.assertIn('predictions.json', files)
         self.assertIn('data_params.json', files)
@@ -63,10 +49,10 @@ class testUtils(unittest.TestCase):
     def test_save_all(self):
         old = [x[0] for x in os.walk(self.path)]
         save_all(path = self.path, scorer = 'ACC', exp_list=self.list, bigger_is_better=True, name = 'test')
-        files = [x for x in os.listdir(self.path) if x.endswith('.json') or x == 'model.pkl']
+        files = [x for x in os.listdir(self.path)]
         folders = [x[0] for x in os.walk(self.path)]
         self.assertTrue(len(folders)> len(old)) #+1 for the root folder
-        self.assertIn('model.pkl', files)
+        self.assertIn('model.pickle', files)
         self.assertIn('scores.json', files)
         self.assertIn('predictions.json', files)
         self.assertIn('data_params.json', files)
@@ -76,17 +62,7 @@ class testUtils(unittest.TestCase):
         logger = loggerCall()
         self.assertIsInstance(logger, Logger)
 
-    def test_initialize_art_classifier(self):
-        from deckard.base.utils import initialize_art_classifier
-        data = Data('iris')
-        model = Model(RandomForestClassifier(), 'sklearn')
-        experiment = Experiment(data, model)
-        experiment.save_model(filename = 'model.pkl', path = self.path)
-        art_model = initialize_art_classifier(filename = "model.pkl", path = self.path, model_type = 'sklearn')
-        self.assertIn('art.', str(type(art_model)))
-        self.assertIsInstance(art_model, SUPPORTED_MODELS)
-
     def tearDown(self) -> None:
         import shutil
         shutil.rmtree(self.path)
-        return super().tearDown()   
+        

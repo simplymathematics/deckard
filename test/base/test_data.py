@@ -1,9 +1,15 @@
-import unittest
+import unittest, tempfile, os, shutil
 from deckard.base.data import Data
 datasets = ['mnist', 'cifar10']
 # TODO other datasets
 class testData(unittest.TestCase):
-    
+
+    def setUp(self):
+        self.filename = 'test_data.pkl'
+        self.path = tempfile.mkdtemp()
+        self.data = Data('mnist')
+       
+
     def test_init(self):
         """
         Validates data object.
@@ -69,10 +75,16 @@ class testData(unittest.TestCase):
     
     def test_parse_data(self):
         dataset = "https://raw.githubusercontent.com/simplymathematics/datasets/master/titanic.csv"
-        data = Data(dataset, target = 'Survived', shuffle = False, stratify = False)
+        data = Data(dataset, target = 'Survived', shuffle = True, stratify = None)
         self.assertIsInstance(data, Data)
-        data2 = Data(dataset, target = 'Ticket', shuffle = False, stratify = False)
+        data2 = Data(dataset, target = 'Ticket', shuffle =  True, stratify = None)
         self.assertIsInstance(data2, Data)
         self.assertNotEqual(data, data2)
 
+    def test_save_data(self):
+        data = Data('iris')
+        data.save(filename = self.filename, path = self.path)
+        self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
     
+    def tearDown(self):
+        shutil.rmtree(self.path)

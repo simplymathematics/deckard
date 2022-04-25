@@ -5,7 +5,7 @@ from sklearn.pipeline import Pipeline
 from copy import deepcopy
 if __name__ == '__main__':
     import logging
-    from deckard.base.utils import save_all, save_best_only, load_data, load_model
+    from deckard.base.utils import save_all, save_best_only
     from deckard.base.parse import generate_experiment_list, generate_object_list_from_tuple, generate_tuple_list_from_yml
     import argparse
     from os import path
@@ -25,7 +25,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     preprocessor_file = args.config
-    from deckard.base.utils import load_model
     best = load_model(path.join(args.folder, args.input, args.model_name))
     data = load_data(path.join(args.folder, args.dataset))
     tuple_list = generate_tuple_list_from_yml(args.config)

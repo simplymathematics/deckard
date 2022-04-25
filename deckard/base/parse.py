@@ -34,7 +34,7 @@ def generate_tuple_list_from_yml(filename:str) -> list:
         grid = ParameterGrid(entry['params'])
         name = entry['name']
         for param in grid:
-            if special_key in param:
+            if "special_key" in locals() and special_key in param:
                 param[special_key] = special_values
             full_list.append((name, param))
     return full_list
@@ -65,7 +65,7 @@ def generate_object_list_from_tuple(yml_tuples:list, **kwargs) -> list:
         obj_list.append(object_instance)
     return obj_list
 
-def generate_experiment_list(model_list:list, data, cv = None) -> list:
+def generate_experiment_list(model_list:list, data, cv = None, model_type = 'sklearn') -> list:
     """
     Generates experiment list from model list.
     :param model_list: list of models
@@ -76,7 +76,7 @@ def generate_experiment_list(model_list:list, data, cv = None) -> list:
     for model in model_list:
         model = model
         if not isinstance(model, Model):
-            model = Model(model)
+            model = Model(model, model_type = model_type)
         experiment = Experiment(data, model)
         experiment_list.append(experiment)
     return experiment_list    

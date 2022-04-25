@@ -57,8 +57,9 @@ class Experiment(object):
         self.predictions = None
         self.time_dict = None
         self.scores = None
+        self.filename = str(filename)
         if not scorers:
-            self.scorers = REGRESSOR_SCORERS if is_regressor(model.model) else CLASSIFIER_SCORERS
+            self.scorers = REGRESSOR_SCORERS if (is_regressor(model.model.model) or is_regressor(model.model)) else CLASSIFIER_SCORERS
         else:
             self.scorers = scorers
         self.refit = list(self.scorers.keys())[0]
@@ -68,19 +69,14 @@ class Experiment(object):
         self.params['Model'] = self.model.params
         self.params['Data'] = self.data.params
         self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : bool(self.predictions), "has_scores" : bool(self.scores), "has_time_dict" : bool(self.time_dict)}
-        self.filename = hash(self) if filename is None else filename
-        self.params['Experiment']['experiment'] = self.filename
-        self.params['Model']['experiment'] = self.filename
-        self.params['Data']['experiment'] = self.filename
+        
 
 
     def __hash__(self):
         """
         Returns a hash of the experiment object
         """
-        
-        new_string = str(self.params)
-        return int(my_hash(dumps(new_string).encode('utf-8')).hexdigest(), 36)
+        return int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36)
     
     def __eq__(self, other) -> bool:
         """
@@ -88,99 +84,19 @@ class Experiment(object):
         """
         return self.__hash__() == other.__hash__()
     
-    def _build_supervised_model(self) -> tuple:
+    def _build_model(self, **kwargs) -> None:
         """
-        Builds a supervised model. Returns predictions as an np.ndarray and time taken to fit and predict as dual-value tuple. 
+        Builds model.
         """
-        if hasattr(self.model, 'fit_flag') or self.is_fitted == True or self.predictions is not None:
-            logger.info("Model is already fitted")
-            self.is_fitted = True
-            start = process_time_ns()
-            y_pred = self.model.model.predict(self.data.X_test)
-            end = process_time_ns()
-            fit_time = np.nan
-            pred_time = end - start
-        else:
-            logger.info("Fitting model")
-            logger.info("X_train shape: {}".format(self.data.X_train.shape))
-            logger.info("y_train shape: {}".format(self.data.y_train.shape))
-            start = process_time_ns()
-            if  hasattr(self.model.model, 'fit'):
-                
-                try:
-                    start = process_time_ns()
-                    self.model.model.fit(self.data.X_train, self.data.y_train)
-                    end = process_time_ns()
-                except ValueError as e:
-                    if 'y should be a 1d array' in str(e):
-                        start = process_time_ns()
-                        self.model.model.fit(self.data.X_train, np.argmax(self.data.y_train, axis=1))
-                        end = process_time_ns()
-                    else:
-                        raise e
-                
-            elif hasattr(self.model.model.model, 'fit'):
-                start = process_time_ns()
-                self.model.model.model.fit(self.data.X_train, self.data.y_train)
-                end = process_time_ns()
-            else:
-                raise TypeError("Model has no fit method")
-            self.is_fitted = True
-            fit_time = end - start
-            logger.info("Model training complete.")
-            start = process_time_ns()
-            y_pred = self.model.model.predict(self.data.X_test)
-            end = process_time_ns()
-            pred_time = end - start
-        logger.info("Length of predictions: {}".format(len(y_pred)))
-        logger.info("Made predictions")
-        y_pred = np.array(y_pred)
-        return y_pred, (fit_time, pred_time)
-
-    def _build_unsupervised_model(self) -> tuple:
-        """
-        Builds unsupervised model. Returns predictions as an np.ndarray and time taken to fit/predict as single-value tuple.
-        """
-        assert not self._is_supervised()
-        if hasattr(self.model, 'fit_flag') or self.is_fitted == True or hasattr(self, 'y_pred'):
-            logger.warning("Model is already fitted")
-            start = process_time_ns()
-            y_pred = self.model.model.predict(self.data.X_test)
-            end = process_time_ns()
-            fit_pred_time = end - start
-            self.is_fitted = True
-            assert self.data.y_pred.shape == self.data.y_test.shape, "model appears to be fitted, but something went wrong."
-        else:
-            logger.info("Fitting and predicting model")
-            logger.info("X_train shape: {}".format(self.data.X_train.shape))
-            logger.info("y_train shape: {}".format(self.data.y_train.shape))
-            start = process_time_ns()
-            self.model.model.fit_predict(X = self.data.X_train)
-            end = process_time_ns()
-            fit_pred_time = end - start
-            y_pred = self.model.model.predict(self.data.X_test)
-            logger.info("Made predictions")
-        y_pred = np.array(y_pred)
-        return y_pred, fit_pred_time
-    
-    
-    def _build_model(self) -> None:
-        """
-        Builds model and returns self with added time_dict and predictions attributes.
-        """
-        logger.debug("Model type: {}".format(type(self.model.model)))
-        if self._is_supervised() == False:
-            self.predictions, time = self._build_unsupervised_model()
-            self.time_dict = {'fit_pred_time': time}
-        elif self._is_supervised() == True:
-            self.predictions, time = self._build_supervised_model()
-            self.time_dict = {'fit_time': time[0], 'pred_time': time[1]}
-        else:
-            type_string = str(type(self.model.model))
-            raise ValueError(f"Model, {type_string}, is not a supported estimator")
+        self.model.run_model(self.data, **kwargs)
+        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36)) if self.filename is None else self.filename
+        self.params['Experiment']['experiment'] = self.filename
+        self.params['Model']['experiment'] = self.filename
+        self.params['Data']['experiment'] = self.filename
         return None
     
-    def _build_attack(self, targeted: bool = False) -> None:
+    
+    def _build_attack(self, targeted: bool = False, **kwargs) -> None:
         """
         Runs the attack on the model
         """
@@ -189,7 +105,7 @@ class Experiment(object):
         if targeted == False:
             adv_samples = self.attack.generate(self.data.X_test)
         else:
-            adv_samples = self.attack.generate(self.data.X_test, self.data.y_test)
+            adv_samples = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
         end = process_time_ns()
         self.time_dict['adv_fit_time'] = end - start
         start = process_time_ns()
@@ -198,37 +114,23 @@ class Experiment(object):
         self.adv = adv
         self.adv_samples = adv_samples
         self.time_dict['adv_pred_time'] = end - start
+        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36))
+        self.params['Experiment']['experiment'] = self.filename
+        self.params['Model']['experiment'] = self.filename
+        self.params['Data']['experiment'] = self.filename
         return None
     
 
-    def _is_supervised(self)-> bool:
-        """
-        Returns true if supervised, false if unsupervised. 
-        """
-        if hasattr(self.model.model, 'fit_predict'):
-            result = False
-            logger.info("Model is unsupervised")
-        elif hasattr(self.model.model, 'fit'):
-            result = True
-            logger.info("Model is supervised")
-        elif hasattr(self.model.model, 'model') and hasattr(self.model.model.model, 'fit'): # for art support
-            result = True
-            logger.info("Model is supervised")
-        elif hasattr(self.model.model, 'model') and hasattr(self.model.model.model.model, 'fit_predict'): # for art support
-            result = False
-            logger.info("Model is unsupervised")
-        else:
-            raise ValueError("Model is not regressor or classifier. It is type {}".format(type(self.model.model)))
-        return result
-
     
 
-    def run(self, path) -> None:
+    def run(self, path, **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
         self.save_experiment_params(path = path)
-        self._build_model()
+        self._build_model(**kwargs)
+        self.predictions = self.model.predictions
+        self.time_dict = self.model.time_dict
         self.evaluate()
         self.save_results(path = path)
 
@@ -238,10 +140,10 @@ class Experiment(object):
         """
         assert hasattr(self, 'attack')
         self.save_attack_params(path = path)
-        self._build_attack()
+        self._build_attack(**kwargs)
         self.evaluate_attack()
         self.save_attack_results(path = path)
-
+        return None
         
     def set_attack(self, attack:object) -> None:
         """
@@ -268,6 +170,17 @@ class Experiment(object):
         self.params['Attack']['experiment'] = self.filename
         return None
 
+    def set_defence(self, defence:object) -> None:
+        """
+        Adds a defence to an experiment
+        :param experiment: experiment to add defence to
+        :param defence: defence to add
+        """
+        model = self.model.model
+        model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
+        self.model = model
+        return None
+
     def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
         """
         Add a sklearn preprocessor to the experiment.
@@ -292,49 +205,6 @@ class Experiment(object):
         else:
             self.filename = filename
         return None
-    
-    
-    def set_defense(self, defense:object) -> None:
-        """
-        Adds a defense to an experiment
-        :param experiment: experiment to add defense to
-        :param defense: defense to add
-        """
-        def_params = {}
-        assert isinstance(defense, object)
-        for key, value in defense.__dict__.items():
-            if isinstance(value, int):
-                def_params[key] = value
-            elif isinstance(value, float):
-                def_params[key] = value
-            elif isinstance(value, str):
-                def_params[key] = value
-            elif isinstance(value, tuple):
-                def_params[key] = value
-            elif isinstance(value, Callable):
-                def_params[key] = str(type(value))
-            else:
-                def_params[key] = str(type(value))
-        self.params['Defense'] = {'name': str(type(defense)), 'params': def_params}
-        self.defense = defense
-        if 'preprocessor' in str(type(defense)):
-            self.is_fitted = self.defense.apply_fit
-            self.model.model.preprocessing_defences = [defense]
-        elif 'postprocessor' in str(type(defense)):
-            self.is_fitted = self.defense.apply_fit
-            self.model.model.postprocessing_defences = [defense]
-        elif 'transformer' in str(type(defense)):
-            logging.error("Transformer defense not yet supported")
-            raise NotImplementedError
-        elif 'trainer' in str(type(defense)):
-            logging.error("Trainer defense not yet supported")
-            raise NotImplementedError
-        elif 'detector' in str(type(defense)):
-            logging.error("Detector defense not yet supported")
-            raise NotImplementedError
-        self.filename = str(hash(self))
-        self.params['Defense']['experiment'] = self.filename
-        return None
 
 
     def get_attack(self):
@@ -344,12 +214,12 @@ class Experiment(object):
         """
         return self.attack
 
-    def get_defense(self):
+    def get_defence(self):
         """
-        Returns the defense from an experiment
-        :param experiment: experiment to get defense from
+        Returns the defence from an experiment
+        :param experiment: experiment to get defence from
         """
-        return self.defense
+        return self.defence
         
     def get_scorers(self):
         """
@@ -393,6 +263,10 @@ class Experiment(object):
                     scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
                 else:
                     raise e
+            except AxisError as e:
+                y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
+                predictions = LabelBinarizer().fit(self.data.y_train).transform(self.predictions)
+                scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
         self.scores = scores
         return None
 
@@ -418,6 +292,10 @@ class Experiment(object):
                     scores[scorer] = self.scorers[scorer](y_test, adv, multi_class='ovr')
                 else:
                     raise e
+            except AxisError as e:
+                y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
+                adv = LabelBinarizer().fit(self.data.y_train).transform(self.adv)
+                scores[scorer] = self.scorers[scorer](y_test, adv, multi_class='ovr')
         self.adv_scores = scores
         return None
 
@@ -443,7 +321,6 @@ class Experiment(object):
         assert path is not None, "Path to save data must be specified."
         if not os.path.isdir(path):
             os.mkdir(path)
-        identity = self.filename
         data_params = Series(self.params['Data'])
         model_params = Series(self.params['Model'])
         exp_params = Series(self.params['Experiment'])
@@ -453,10 +330,11 @@ class Experiment(object):
         assert os.path.exists(os.path.join(path, data_params_file)), "Data params not saved."
         assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
         assert os.path.exists(os.path.join(path, exp_params_file)), "Model params not saved."
-        if 'Defense' in self.params:
-            defense_params = Series(self.params['Defense'])
-            defense_params.to_json(os.path.join(path, "defense_params.json"))
-            assert os.path.exists(os.path.join(path, "defense_params.json")), "Defense params not saved."
+        if 'Defence' in model_params:
+            model_params['Defence']['experiment'] = str(hash(self))
+            defence_params = Series(model_params['Defence'])
+            defence_params.to_json(os.path.join(path, "defence_params.json"))
+            assert os.path.exists(os.path.join(path, "defence_params.json")), "Defence params not saved."
         return None
 
     def save_model(self, filename:str = "model", path:str = ".") -> str:
@@ -467,14 +345,8 @@ class Experiment(object):
         :return: str, path to saved model.
         """
         assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
-        model_file = os.path.join(path, filename)
-        logger.info("Saving model to {}".format(model_file))
-        if hasattr(self.model, "model") and hasattr(self.model.model, "save"):
-            self.model.model.save(filename = filename, path = path)
-        else:
-            with open(model_file, 'wb') as f:
-                dump(self.model.model, f)
-        assert os.path.isfile(model_file) or os.path.isdir(model_file), "Model file not saved"
+        logger.info("Saving model to {}".format(os.path.join(path,filename)))
+        self.model.save(filename = filename, path = path)
     
     def save_predictions(self, filename:str = "predictions.json", path:str = ".") -> None:
         """
@@ -502,7 +374,7 @@ class Experiment(object):
         adv_results.to_json(adv_file)
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
-    
+
     def save_cv_scores(self, filename:str = "cv_scores.json", path:str = ".") -> None:
         """
         Saves crossvalidation scores to specified file.
@@ -512,7 +384,7 @@ class Experiment(object):
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert filename is not None, "Filename must be specified"
         cv_file = os.path.join(path, filename)
-        cv_results = Series(self.model.model.cv_results_, name = self.filename)
+        cv_results = Series(self.model.model.model.cv_results_, name = self.filename)
         cv_results.to_json(cv_file)
         assert os.path.exists(cv_file), "CV results file not saved"
 
@@ -590,19 +462,19 @@ class Experiment(object):
         assert os.path.exists(attack_file), "Attack file not saved."
         return None
 
-    def save_defense_params_params(self, filename:str = "defense_params.json", path:str = ".") -> None:
+    def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
         """
-        Saves defense params to specified file.
-        :param filename: str, name of file to save defense params to.
-        :param path: str, path to folder to save defense params. If none specified, defense params are saved in current working directory. Must exist.
+        Saves defence params to specified file.
+        :param filename: str, name of file to save defence params to.
+        :param path: str, path to folder to save defence params. If none specified, defence params are saved in current working directory. Must exist.
         """
         assert os.path.isdir(path), "Path to experiment does not exist"
         
-        defense_file = os.path.join(path, filename)
-        results = self.params['Defense']
+        defence_file = os.path.join(path, filename)
+        results = self.params['Defence']
         results = Series(results.values(), name =  self.filename, index = results.keys())
-        results.to_json(defense_file)
-        assert os.path.exists(defense_file), "Defense file not saved."
+        results.to_json(defence_file)
+        assert os.path.exists(defence_file), "Defence file not saved."
         return None
 
     def save_results(self, path:str = ".") -> None:
@@ -614,10 +486,24 @@ class Experiment(object):
         # self.save_model(path = path)
         self.save_scores(path = path)
         self.save_predictions(path = path)
-        if hasattr(self, "adv_scores"):
-            self.save_adv_scores(path = path)
         if hasattr(self.model.model, 'cv_results_'):
             self.save_cv_scores(path = path)
+            self.save_adversarial_samples(path = path)
+        if hasattr(self, 'time_dict'):
+            self.save_time_dict(path = path)
+        return None
+
+    def save_attack_results(self, path:str = ".") -> None:
+        """
+        Saves all data to specified folder, using default filenames.
+        """
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        # self.save_model(path = path)
+        self.save_scores(path = path)
+        self.save_predictions(path = path)
+        if hasattr(self, "adv_scores"):
+            self.save_adv_scores(path = path)
         if hasattr(self, "adv"):
             self.save_adv_predictions(path = path)
         if hasattr(self, "adv_samples"):

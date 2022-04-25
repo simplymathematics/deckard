@@ -1,6 +1,5 @@
-from deckard.base.utils import load_data, load_model
 from deckard.base import Data, Experiment, Model
-from os import path
+import os
 from json import dump
 import logging 
 logger = logging.getLogger(__name__)
@@ -26,15 +25,15 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default = "model", help='name of the experiment')
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
-    assert path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
+    assert os.path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
     if str(args.data.endswith('.csv')):
-        logger.info("Loading {}".format(path.join(args.folder, args.data)))
+        logger.info("Loading {}".format(os.path.join(args.folder, args.data)))
         data = Data(args.data, train_size=.9)
     elif str(args.data.endswith('.pkl')):
-        data = load_data(path.join(args.folder, args.data))
+        data = load_data(os.path.join(args.folder, args.data))
     else:
         raise ValueError('{} is not a valid filetype.'.format(args.data.split['.'][-1]))
-    model = load_model(path.join(args.folder, args.input, args.model_name))
+    model = load_model(os.path.join(args.folder, args.input, args.model_name))
     assert isinstance(data, Data), 'data is not a valid Data object.'
     assert isinstance(model, Model), 'model is not a valid Model object.'
     data = Data(args.data, train_size=.9, target = args.target)
@@ -48,5 +47,5 @@ if __name__ == '__main__':
     if 'ROC_AUC' in experiment.scores:
         del experiment.scores['ROC_AUC'] # ROC_AUC cannot be json serialized
     experiment.save_results( args.output)
-    assert path.exists(args.output), '{} is not a valid file.'.format(args.output)
+    assert os.path.exists(args.output), '{} is not a valid file.'.format(args.output)
 

@@ -15,19 +15,19 @@ stages:
     - data/control/:
         cache: true
   defend:
-    cmd: CUDA_VISIBILE_DEVICES=0,1 python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/defenses/" --output_name "defended_model"
+    cmd: CUDA_VISIBILE_DEVICES=0,1 python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/defences/" --output_name "defended_model"
     deps:
     - data/data.pkl
     - data/control/
     - configs/defend.yml
     outs:
-    - data/defenses/:
+    - data/defences/:
         cache: true
   attack:
-    cmd: CUDA_VISIBILE_DEVICES=2,3 python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder "data/defenses/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
+    cmd: CUDA_VISIBILE_DEVICES=2,3 python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
     deps:
     - data/data.pkl
-    - data/defenses/
+    - data/defences/
     - configs/attack.yml
     outs:
     - data/attacks/:
