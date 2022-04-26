@@ -328,15 +328,22 @@ class testExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
-        defence = FeatureSqueezing(bit_depth=1, clip_values = (0, 1))
+        defence = FeatureSqueezing(bit_depth=1, clip_values = (0, 255))
         model2 = Model(estimator, model_type = 'sklearn', path = self.path, defence = defence)
         experiment2 = Experiment(data = data, model = model2)
+        experiment.set_defence('defence_params.json')
         experiment.run(path = self.path)
         scores1 = experiment.scores
         experiment2.run(path = self.path)
         scores2 = experiment2.scores
         for key, value in scores1.items():
-            self.assertTrue(scores1[key] > scores2[key])
+            self.assertTrue(scores1[key] == scores2[key])
+        
+        experiment.set_defence('blank_defence_params.json')
+        experiment.run(path = self.path)
+        scores3 = experiment.scores
+        for key, value in scores3.items():
+            self.assertTrue(scores1[key] != scores3[key])
 
     def tearDown(self) -> None:
         from shutil import rmtree

@@ -21,8 +21,9 @@ from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from json import dumps
+from json import dumps, load
 from pickle import dump
+from typing import Union
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class Experiment(object):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False):
+    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False, defence = None):
         """
         Creates an experiment object
         :param data: Data object
@@ -123,7 +124,7 @@ class Experiment(object):
         self.evaluate()
         self.save_results(path = path)
 
-    def run_attack(self, path):
+    def run_attack(self, path, **kwargs):
         """
         Runs attack.
         """
@@ -159,15 +160,24 @@ class Experiment(object):
         self.params['Attack']['experiment'] = self.filename
         return None
 
-    def set_defence(self, defence:object) -> None:
+    def set_defence(self, defence:Union[object,str]) -> None:
         """
         Adds a defence to an experiment
         :param experiment: experiment to add defence to
         :param defence: defence to add
         """
+         
         model = self.model.model
-        model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
+        if isinstance(defence, str):
+            defence = self.get_defence(defence)
+        if isinstance(defence, object):
+            model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
+        else:
+            raise ValueError("Defence must be a string or an object")
         self.model = model
+        self.defence = defence
+        if hasattr(self.defence, '_apply_fit') and self.defence._apply_fit == False:
+            self.is_fitted = True
         return None
 
     def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
@@ -203,12 +213,34 @@ class Experiment(object):
         """
         return self.attack
 
-    def get_defence(self):
+    def get_defence(self, filename:str=None, path:str = "."):
         """
         Returns the defence from an experiment
         :param experiment: experiment to get defence from
         """
-        return self.defence
+        from deckard.base.parse import generate_object_list_from_tuple
+        if filename is None:
+            defence = self.defence
+        else:
+            location = os.path.join(path, filename)
+            with open(location, 'rb') as f:
+                defence_json = load(f)
+            if defence_json['name'] is not None:
+                name = defence_json['name'].split("'")[1]
+                params = defence_json['params']
+                new_params = {}
+                for param, value in params.items():
+                    if param.startswith("_"):
+                        continue
+                    else:
+                        new_params[param] = value
+                defence_tuple = (name, new_params)
+                defence_list = [defence_tuple]
+                defences = generate_object_list_from_tuple(defence_list)
+                defence = defences[0]
+            else:
+                defence = None
+        return defence
         
     def get_scorers(self):
         """

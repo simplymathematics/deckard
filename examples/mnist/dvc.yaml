@@ -8,14 +8,14 @@ stages:
     outs: 
       - data/data.pkl
   control:
-    cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/art_model.py --input_model "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1" --output_name "control_model.pb" --model_type "tf1" --dataset "data/data.pkl" --output_folder "data/control"
+    cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/art_model.py --input_model "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1" --output_name "control_model" --model_type "tf1" --dataset "data/data.pkl" --output_folder "data/control"
     deps:
     - data/data.pkl
     outs:
     - data/control/:
         cache: true
   defend:
-    cmd: CUDA_VISIBILE_DEVICES=0 python ../../deckard/layers/defend.py --input_model "control_model.pb" --input_folder "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/defences/" --output_name "defended_model"
+    cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/defend.py --input_model "control_model" --input_folder "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/defences/" --output_name "defended_model"
     deps:
     - data/data.pkl
     - data/control/
@@ -24,7 +24,7 @@ stages:
     - data/defences/:
         cache: true
   attack:
-    cmd: CUDA_VISIBILE_DEVICES=0 python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
+    cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
     deps:
     - data/data.pkl
     - data/defences/

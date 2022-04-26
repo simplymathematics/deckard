@@ -39,7 +39,7 @@ def generate_tuple_list_from_yml(filename:str) -> list:
             full_list.append((name, param))
     return full_list
 
-def generate_object_list_from_tuple(yml_tuples:list, **kwargs) -> list:
+def generate_object_list_from_tuple(yml_tuples:list, *args) -> list:
     """
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
@@ -55,14 +55,19 @@ def generate_object_list_from_tuple(yml_tuples:list, **kwargs) -> list:
         object_instance = None
         global params
         params = entry[1]
-        params.update(kwargs)
         exec("from {} import {}".format(library_name, class_name), globals())
-        try:
+        if len(args) == 1:
+            global positional_arg
+            positional_arg = args[0]
+            exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
+            del positional_arg
+        elif len(args) == 0:
             exec(f"object_instance = {class_name}(**params)", globals())
-        except ValueError as e:
-            print(f"Error initializing {entry[0]} with params {params}")
-            raise e
+        else:
+            raise ValueError("Too many positional arguments")
         obj_list.append(object_instance)
+        del params
+        del dependency
     return obj_list
 
 def generate_experiment_list(model_list:list, data, cv = None, model_type = 'sklearn') -> list:

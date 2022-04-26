@@ -25,7 +25,7 @@
     'max_iter' : [10]
     'confidence' : [.1, .9, .99]
 
-- name: art.attacks.evasion.CarliniInfMethod
+- name: art.attacks.evasion.CarliniLInfMethod
   params:
     'max_iter' : [10]
     'confidence' : [.1, .9, .99]
@@ -42,17 +42,17 @@
     'norm' : ['inf', 2]
     'max_eval' : [10, 50, 100]
 
-- name: art.attacks.evasion.PixelAttack
-  params:
-    'th' : [.5, .9, .99]
-    'max_iter' : [10]
+# - name: art.attacks.evasion.PixelAttack
+#   params:
+#     'th' : [.5, .9, .99]
+#     'max_iter' : [10]
 
-- name: art.attacks.evasion.ThresholdAttack
-  params:
-    'th' : [.5, .9, .99]
-    'max_iter' : [10]
+# - name: art.attacks.evasion.ThresholdAttack
+#   params:
+#     'th' : [.5, .9, .99]
+#     'max_iter' : [10]
 
-- name: art.attacks.evasion.AdversarialPatch
-  params:
-    'max_iter' : [10]
-    'learning_rate' : [.5, 5, 50]
+# - name: art.attacks.evasion.AdversarialPatch
+#   params:
+#     'max_iter' : [10]
+#     'learning_rate' : [.5, 5, 50]

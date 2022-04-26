@@ -24,7 +24,7 @@ supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
-    def __init__(self, model:Union[str, object], model_type:str,  defence: object = None, path = ".", url = None, is_fitted:bool = False):
+    def __init__(self, model:Union[str, object], model_type:str,  defence: object = None, path = ".", url = None, is_fitted:bool = False, **kwargs):
         """
         Initialize the model object.
         estimator: the estimator to use
@@ -38,11 +38,11 @@ class Model(object):
         self.is_fitted = is_fitted
         if isinstance(model, str):
             self.filename = model
-            self.load(model)
+            self.load(model, **kwargs)
         elif isinstance(model, object):
             self.filename = str(type(model))
             self.model = model
-            self.load(model)
+            self.load(model, **kwargs)
         else:
             raise ValueError("Model must be a string or a callable")
         assert self.classifier or self.regressor, "Model is neither classifier nor regressor"
@@ -178,7 +178,7 @@ class Model(object):
             # download model
             model_path = get_file(filename = filename, extract=False, path=path, url=url, verbose = True)
             logging.info("Downloaded model from {} to {}".format(url, model_path))
-            filename = os.path.join(path, filename)   
+        filename = os.path.join(path, filename)   
         if model_type == 'keras' or filename.endswith('.h5'):
             from tensorflow.keras.models import load_model as keras_load_model
             model = keras_load_model(filename)
@@ -203,7 +203,7 @@ class Model(object):
             logger.info("Loaded model")
         return model
     
-    def load(self, filename:str) -> None:
+    def load(self, filename:str, **kwargs) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
@@ -221,9 +221,9 @@ class Model(object):
         self._set_name(self.params)
         logger.info("Loaded model")
         if self.classifier:
-            self.initialize_art_classifier()
+            self.initialize_art_classifier(**kwargs)
         elif self.regressor:
-            self.initialize_art_regressor()
+            self.initialize_art_regressor(**kwargs)
         self.is_supervised = self._is_supervised()
  
         
@@ -247,7 +247,7 @@ class Model(object):
             raise ValueError("Model is not a classifier or regressor. It is type {}".format(type(self.model)))
         return result
 
-    def initialize_art_classifier(self):
+    def initialize_art_classifier(self, **kwargs) -> None:
         """
         Initialize the classifier.
         """
@@ -272,19 +272,19 @@ class Model(object):
         if isinstance(self.model, (PyTorchClassifier, TensorFlowV2Classifier, ScikitlearnClassifier, TensorFlowClassifier, KerasClassifier)):
             self.model = self.model.model
         if self.model_type in ['pytorch', 'torch', 'pyt']:
-            model = PyTorchClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
+            model = PyTorchClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         elif self.model_type in ['keras']:
-            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         elif self.model_type in ['tensorflow', 'tf', 'tf1', 'tfv1', 'tensorflowv1']:
-            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         elif self.model_type in ['tf2', 'tensorflow2', 'tfv2', 'tensorflowv2']:
-            model = KerasClassifier(self.model)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         elif self.model_type in ['sklearn', 'pipeline', 'gridsearch', 'pickle', 'scikit', 'scikit-learn']:
-            model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
+            model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         self.model = model
         
     
-    def initialize_art_regressor(self):
+    def initialize_art_regressor(self, **kwargs) -> None:
         preprocessors = []
         postprocessors = []
         trainers = []
@@ -304,7 +304,7 @@ class Model(object):
             raise ValueError("Defence type {} not supported".format(self.params['Defence']['type']))
         # Initialize model by type
         if self.model_type in ['sklearn', 'scikit-learn', 'scikit']:
-            model = ScikitlearnRegressor(model=self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors)
+            model = ScikitlearnRegressor(model=self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         else:
             raise ValueError("Model type {} not supported".format(self.model_type))
         self.model = model
@@ -346,16 +346,7 @@ class Model(object):
         """
         Fits model.
         """
-        if self.defence is not None:
-            # Skips defences that don't need to be fit
-            if self.defence._apply_fit == True and self.is_fitted == False:
-                self.is_fitted = False 
-            elif self.defence._apply_fit == False and self.is_fitted == True:
-                self.is_fitted = True
-            elif self.defence._apply_fit == False and self.is_fitted == False:
-                self.is_fitted = False
-            else:
-                self.is_fitted = False
+       
         if self.is_fitted:
             logger.warning("Model is already fitted")
             self.time_dict = {'fit_time': np.nan}

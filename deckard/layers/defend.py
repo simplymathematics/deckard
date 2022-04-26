@@ -4,6 +4,7 @@ import logging
 from deckard.base.experiment import Experiment, Model, Data
 from deckard.base.parse import generate_tuple_list_from_yml, generate_object_list_from_tuple
 from random import shuffle
+import numpy as np
 
 import os
 logger = logging.getLogger(__name__)
@@ -33,6 +34,9 @@ if __name__ == '__main__':
         mkdir(args.output_folder)
     # load dataset
     data = Data(args.data_file)
+    mini = np.amin(data.X_train)
+    maxi = np.amax(data.X_train)
+    clip_values = (mini, maxi)
     logger.info("Loaded dataset {}".format(args.data_file))
     yml_list = generate_tuple_list_from_yml('configs/defend.yml');
     object_list = generate_object_list_from_tuple(yml_list)
@@ -45,10 +49,9 @@ if __name__ == '__main__':
         print("{} of {} experiments.".format(i, length))
         defence_dict = {"Defence" : type(defence), "params": defence.__dict__}
         # initalize model
-        # art_model = initialize_art_classifier(filename = args.input_model, path = args.input_folder, model_type = args.model_type, output_dir = args.output_folder)
-        art_model = Model(model=os.path.join(args.input_folder, args.input_model), model_type =args.model_type, path = args.output_folder, defence = defence)
+        art_model = Model(model=args.input_model, model_type =args.model_type, path = args.input_folder, defence = defence, clip_values = clip_values)
         # Create experiment
-        experiment = Experiment(data = data, model = art_model, name = args.input_model, params = defence_dict)
+        experiment = Experiment(data = data, model = art_model, name = args.input_model, params = defence_dict, is_fitted=False)
         logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.input_model))
         # Seeing if experiment exists
         output_folder = os.path.join(args.output_folder, str(experiment.filename))

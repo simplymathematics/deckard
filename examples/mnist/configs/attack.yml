@@ -25,7 +25,7 @@
     'max_iter' : [10]
     'confidence' : [.1, .9, .99]
 
-- name: art.attacks.evasion.CarliniInfMethod
+- name: art.attacks.evasion.CarliniLInfMethod
   params:
     'max_iter' : [10]
     'confidence' : [.1, .9, .99]
