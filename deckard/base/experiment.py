@@ -9,7 +9,8 @@ from collections.abc import Callable
 from hashlib import md5 as my_hash
 from deckard.base.model import Model
 from deckard.base.data import Data
-from time import process_time_ns
+from deckard.base.storage import DiskstorageMixin
+from time import process_time
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score
 from sklearn.base import is_regressor
 from pandas import Series, DataFrame
@@ -32,11 +33,11 @@ REGRESSOR_SCORERS = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_square
 CLASSIFIER_SCORERS = {'F1' : f1_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_auc_score}
 
 # Create experiment object
-class Experiment(object):
+class Experiment(DiskstorageMixin):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False, defence = None):
+    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False, defence = None, filename:str = None):
         """
         Creates an experiment object
         :param data: Data object
@@ -52,7 +53,7 @@ class Experiment(object):
         self.model = model
         self.model_type = self.model.model_type
         self.data = data
-        self.name = data.dataset +"_"+ model.name if name is None else name
+        self.name = self.data.dataset +"_"+ self.model.name if name is None else name
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
@@ -69,14 +70,17 @@ class Experiment(object):
         self.params['Model'] = self.model.params
         self.params['Data'] = self.data.params
         self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : bool(self.predictions), "has_scores" : bool(self.scores), "has_time_dict" : bool(self.time_dict)}
-        self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36))
+        if filename is None:
+            self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16))
+        else:
+            self.filename = filename
 
 
     def __hash__(self):
         """
         Returns a hash of the experiment object
         """
-        return int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 36)
+        return int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16)
     
     def __eq__(self, other) -> bool:
         """
@@ -88,26 +92,40 @@ class Experiment(object):
         """
         Builds model.
         """
-        self.model.run_model(self.data, **kwargs)
-        
-        return None
+        time_dict = {}
+        self.model.is_fitted = self.is_fitted
+        if not self.is_fitted:
+            start = process_time()
+            self.model.fit(self.data.X_train, self.data.y_train, **kwargs)
+            end = process_time()
+            time_dict['fit'] = end - start
+        else:
+            time_dict['fit'] = np.nan
+        start = process_time()
+        self.predictions =self.model.predict(self.data.X_test)
+        end = process_time()
+        time_dict['predict'] = end - start
+        self.time_dict = time_dict
+        return 
     
     
-    def _build_attack(self, targeted: bool = False, **kwargs) -> None:
+    def _build_attack(self, targeted: bool = False, filename:str = None, **kwargs) -> None:
         """
         Runs the attack on the model
         """
+        if not hasattr(self, 'time_dict') or self.time_dict is None:
+            self.time_dict = dict()
         assert hasattr(self, 'attack'), "Attack not set"
-        start = process_time_ns()
+        start = process_time()
         if targeted == False:
             adv_samples = self.attack.generate(self.data.X_test)
         else:
             adv_samples = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
-        end = process_time_ns()
+        end = process_time()
         self.time_dict['adv_fit_time'] = end - start
-        start = process_time_ns()
+        start = process_time()
         adv = self.model.model.predict(adv_samples)
-        end = process_time_ns()
+        end = process_time()
         self.adv = adv
         self.adv_samples = adv_samples
         self.time_dict['adv_pred_time'] = end - start
@@ -117,25 +135,28 @@ class Experiment(object):
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
-        self.save_experiment_params(path = path)
+        self.save_params(path = path)
         self._build_model(**kwargs)
-        self.predictions = self.model.predictions
-        self.time_dict = self.model.time_dict
         self.evaluate()
         self.save_results(path = path)
+        self.save_params(path = path)
 
     def run_attack(self, path, **kwargs):
         """
         Runs attack.
         """
         assert hasattr(self, 'attack')
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        self.save_params(path = path)
         self.save_attack_params(path = path)
         self._build_attack(**kwargs)
         self.evaluate_attack()
         self.save_attack_results(path = path)
+        self.save_params(path = path)
         return None
         
-    def set_attack(self, attack:object) -> None:
+    def set_attack(self, attack:object, filename:str = None) -> None:
         """
         Adds an attack to an experiment
         :param experiment: experiment to add attack to
@@ -156,7 +177,10 @@ class Experiment(object):
         assert isinstance(attack, object)
         self.params['Attack'] = {'name': str(type(attack)), 'params': attack_params}
         self.attack = attack
-        self.filename = str(hash(self))
+        if filename is None:
+            self.filename = str(hash(self))
+        else:
+            self.filename = filename
         self.params['Attack']['experiment'] = self.filename
         return None
 
@@ -174,10 +198,15 @@ class Experiment(object):
             model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
         else:
             raise ValueError("Defence must be a string or an object")
-        self.model = model
-        self.defence = defence
-        if hasattr(self.defence, '_apply_fit') and self.defence._apply_fit == False:
+        self.model.defence = defence
+        self.model.set_defence_params()
+        if hasattr(self.model.defence, '_apply_fit') and self.model.defence._apply_fit != True:
             self.is_fitted = True
+        self.params['Model'] = self.model.params
+        self.params['Defence'] = self.params['Model']['Defence']
+        del self.params['Model']['Defence']
+        self.filename = str(hash(self))
+        self.params['Defence']['experiment'] = self.filename
         return None
 
     def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
@@ -320,220 +349,6 @@ class Experiment(object):
         self.adv_scores = scores
         return None
 
-    def save_data(self, filename:str = "data.pkl", path:str = ".") -> None:
-        """
-        Saves data to specified file.
-        :param filename: str, name of file to save data to. 
-        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
-        """
-        assert path is not None, "Path to save data must be specified."
-        with open(os.path.join(path, filename), 'wb') as f:
-            dump(self.data, f)
-        assert os.path.exists(os.path.join(path, filename)), "Data not saved."
-        return None
     
-    def save_experiment_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", exp_params_file:str = "experiment_params.json", path:str = ".") -> None:
-        """
-        Saves data to specified file.
-        :param data_params_file: str, name of file to save data parameters to.
-        :param model_params_file: str, name of file to save model parameters to.
-        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
-        """
-        assert path is not None, "Path to save data must be specified."
-        if not os.path.isdir(path) and not os.path.exists(path):
-            os.mkdir(path)
-        self.params['Experiment']['experiment'] = self.filename
-        self.params['Model']['experiment'] = self.filename
-        self.params['Data']['experiment'] = self.filename
-        data_params = Series(self.params['Data'])
-        model_params = Series(self.params['Model'])
-        exp_params = Series(self.params['Experiment'])
-        data_params.to_json(os.path.join(path, data_params_file),)
-        model_params.to_json(os.path.join(path, model_params_file))
-        exp_params.to_json(os.path.join(path, exp_params_file))
-        assert os.path.exists(os.path.join(path, data_params_file)), "Data params not saved."
-        assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
-        assert os.path.exists(os.path.join(path, exp_params_file)), "Model params not saved."
-        if 'Defence' in model_params:
-            model_params['Defence']['experiment'] = self.filename
-            defence_params = Series(model_params['Defence'])
-            defence_params.to_json(os.path.join(path, "defence_params.json"))
-            assert os.path.exists(os.path.join(path, "defence_params.json")), "Defence params not saved."
-        return None
-
-    def save_model(self, filename:str = "model", path:str = ".") -> str:
-        """
-        Saves model to specified file (or subfolder).
-        :param filename: str, name of file to save model to. 
-        :param path: str, path to folder to save model. If none specified, model is saved in current working directory. Must exist.
-        :return: str, path to saved model.
-        """
-        assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
-        logger.info("Saving model to {}".format(os.path.join(path,filename)))
-        self.model.save(filename = filename, path = path)
-    
-    def save_predictions(self, filename:str = "predictions.json", path:str = ".") -> None:
-        """
-        Saves predictions to specified file.
-        :param filename: str, name of file to save predictions to. 
-        :param path: str, path to folder to save predictions. If none specified, predictions are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"    
-        prediction_file = os.path.join(path, filename)
-        results = self.predictions
-        results = Series(results)
-        results.to_json(prediction_file)
-        assert os.path.exists(prediction_file), "Prediction file not saved"
-        return None
-
-    def save_adv_predictions(self, filename:str = "adversarial_predictions.json", path:str = ".") -> None:
-        """
-        Saves adversarial predictions to specified file.
-        :param filename: str, name of file to save adversarial predictions to.
-        :param path: str, path to folder to save adversarial predictions. If none specified, predictions are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        adv_file = os.path.join(path, filename)
-        adv_results = DataFrame(self.adv)
-        adv_results.to_json(adv_file)
-        assert os.path.exists(adv_file), "Adversarial example file not saved"
-        return None
-
-    def save_cv_scores(self, filename:str = "cv_scores.json", path:str = ".") -> None:
-        """
-        Saves crossvalidation scores to specified file.
-        :param filename: str, name of file to save crossvalidation scores to.
-        :param path: str, path to folder to save crossvalidation scores. If none specified, scores are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified"
-        cv_file = os.path.join(path, filename)
-        cv_results = Series(self.model.model.model.cv_results_, name = self.filename)
-        cv_results.to_json(cv_file)
-        assert os.path.exists(cv_file), "CV results file not saved"
-
-    def save_scores(self, filename:str = "scores.json", path:str = ".") -> None:
-        """
-        Saves scores to specified file.
-        :param filename: str, name of file to save scores to.
-        :param path: str, path to folder to save scores. If none specified, scores are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        
-        score_file = os.path.join(path, filename)
-        results = self.scores
-        results = Series(results.values(), name =  self.filename, index = results.keys())
-        results.to_json(score_file)
-        assert os.path.exists(score_file), "Score file not saved"
-        return None
-    
-    def save_adv_scores(self, filename:str = "adversarial_scores.json", path:str = ".") -> None:
-        """
-        Saves adversarial scores to specified file.
-        :param filename: str, name of file to save adversarial scores to.
-        :param path: str, path to folder to save adversarial scores. If none specified, scores are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        
-        adv_score_file = os.path.join(path, filename)
-        results = self.adv_scores
-        results = Series(results.values(), name =  self.filename, index = results.keys())
-        results.to_json(adv_score_file)
-        assert os.path.exists(adv_score_file), "Adversarial score file not saved."
-        return None
-    
-    def save_adversarial_samples(self, filename:str = "adversarial_examples.json", path:str = "."):
-        """
-        Saves adversarial examples to specified file.
-        :param filename: str, name of file to save adversarial examples to.
-        :param path: str, path to folder to save adversarial examples. If none specified, examples are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        assert hasattr(self, "adv_samples"), "No adversarial samples to save"
-        adv_file = os.path.join(path, filename)
-        adv_results = DataFrame(self.adv_samples.reshape(self.adv_samples.shape[0], -1))
-        adv_results.to_json(adv_file)
-        assert os.path.exists(adv_file), "Adversarial example file not saved"
-        return None
-
-    def save_time_dict(self, filename:str = "time_dict.json", path:str = "."):
-        """
-        Saves time dictionary to specified file.
-        :param filename: str, name of file to save time dictionary to.
-        :param path: str, path to folder to save time dictionary. If none specified, time dictionary is saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        assert hasattr(self, "time_dict"), "No time dictionary to save"
-        time_file = os.path.join(path, filename)
-        time_results = Series(self.time_dict)
-        time_results.to_json(time_file)
-        assert os.path.exists(time_file), "Time dictionary file not saved"
-        return None
-
-    def save_attack_params(self, filename:str = "attack_params.json", path:str = ".") -> None:
-        """
-        Saves attack params to specified file.
-        :param filename: str, name of file to save attack params to.
-        :param path: str, path to folder to save attack params. If none specified, attack params are saved in current working directory. Must exist.
-        """
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        attack_file = os.path.join(path, filename)
-        results = self.params['Attack']
-        results = Series(results.values(), index = results.keys())
-        results.to_json(attack_file)
-        assert os.path.exists(attack_file), "Attack file not saved."
-        return None
-
-    def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
-        """
-        Saves defence params to specified file.
-        :param filename: str, name of file to save defence params to.
-        :param path: str, path to folder to save defence params. If none specified, defence params are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        
-        defence_file = os.path.join(path, filename)
-        results = self.params['Defence']
-        results = Series(results.values(), name =  self.filename, index = results.keys())
-        results.to_json(defence_file)
-        assert os.path.exists(defence_file), "Defence file not saved."
-        return None
-
-    def save_results(self, path:str = ".") -> None:
-        """
-        Saves all data to specified folder, using default filenames.
-        """
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        # self.save_model(path = path)
-        self.save_scores(path = path)
-        self.save_predictions(path = path)
-        if hasattr(self.model.model, 'cv_results_'):
-            self.save_cv_scores(path = path)
-            self.save_adversarial_samples(path = path)
-        if hasattr(self, 'time_dict'):
-            self.save_time_dict(path = path)
-        return None
-
-    def save_attack_results(self, path:str = ".") -> None:
-        """
-        Saves all data to specified folder, using default filenames.
-        """
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        # self.save_model(path = path)
-        self.save_scores(path = path)
-        self.save_predictions(path = path)
-        if hasattr(self, "adv_scores"):
-            self.save_adv_scores(path = path)
-        if hasattr(self, "adv"):
-            self.save_adv_predictions(path = path)
-        if hasattr(self, "adv_samples"):
-            self.save_adversarial_samples(path = path)
-        if hasattr(self, 'time_dict'):
-            self.save_time_dict(path = path)
-        return None
         
 
