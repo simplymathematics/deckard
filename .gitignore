@@ -45,3 +45,5 @@ deckard.egg-info/*
 
 # package files
 build/
+
+*.pickle
