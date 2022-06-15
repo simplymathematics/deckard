@@ -1,29 +1,18 @@
-import logging, yaml, json
-from sklearn.model_selection import ParameterGrid
-from sklearn.base import BaseEstimator
-import os
-import importlib
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from deckard.base import Experiment, Model, Data
-from deckard.base.utils import loggerCall
-from hashlib import md5 as my_hash  
+import logging, yaml, json, os
 import pandas as pd
 from uuid import uuid4
-
-import logging
-import pickle
-import os
-from deckard.base.model import Model
-from deckard.base.data import Data
+from deckard.base.utils import loggerCall
+from hashlib import md5 as my_hash  
+from sklearn.model_selection import ParameterGrid
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import GridSearchCV
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.defences.preprocessor import Preprocessor
 from art.defences.postprocessor import Postprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from art.utils import get_file
-import shutil
+
 
 logger = loggerCall()
 
@@ -103,7 +92,7 @@ class Generator():
         # check that featurizers is a list
         for entry in yml_list:
             if not isinstance(entry, dict):
-                print("{} is not a dictionary".format(entry))
+                logger.info("{} is not a dictionary".format(entry))
                 raise ValueError("Error parsing yml file {}".format(filename))
             grid = ParameterGrid(entry['params'])
             name = entry['name']
@@ -123,8 +112,8 @@ class Generator():
         assert isinstance(params, dict), "Params {} must be a dict.".format(params)
         assert os.path.isdir(path), f"{path} is not a directory"
         dictionary = {}
-        dictionary['name'] = name
-        dictionary['params'] = params
+        dictionary['Name'] = name
+        dictionary['Params'] = params
         with open(os.path.join(path, filename + ".json"), 'w') as f:
             json.dump(dictionary, f)
 
@@ -140,8 +129,8 @@ class Generator():
         assert isinstance(params, dict), "Params {} must be a dict.".format(params)
         assert os.path.isdir(path), f"{path} is not a directory"
         dictionary = {}
-        dictionary['name'] = name
-        dictionary['params'] = params
+        dictionary['Name'] = name
+        dictionary['Params'] = params
         with open(os.path.join(path, filename), 'w') as f:
             yaml.dump(dictionary, f)
 
@@ -177,7 +166,7 @@ class Generator():
         names = [path.split(os.sep)[-1] for path in paths]
         df = pd.DataFrame(self.list)
         df['ID'] = names
-        df.columns = ['object_type', 'params', 'ID']
+        df.columns = ['object_type', 'Params', 'ID']
         filename = os.path.join(self.output, filename + ".csv")
         if os.path.isfile(filename):
             df.to_csv(filename, mode='a', header=False)
