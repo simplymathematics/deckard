@@ -1,15 +1,15 @@
 stages:
   prepare:
     cmd: 
-      - python ../../deckard/layers/prepare.py  -d 'lat.csv' --target lat
+      - python ../../deckard/layers/prepare.py   --target latitude
     deps: 
       - configs/prepare.yml
       - ../../deckard/base/data.py
-      - parsed/lat.csv
+      - parsed/gps.txt
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../../deckard/layers/train.py  -f data -s mse -b False --name train
+    cmd: python ../../deckard/layers/train.py  -f data -b False --name train -s mse
     deps:
     - ../../deckard/base/utils.py
     - configs/model.yml
@@ -17,7 +17,7 @@ stages:
     - ../../deckard/base/experiment.py
     - data/data.pkl
     outs:
-    - data/train/model:
+    - data/train/model.pickle:
         cache: true
     - data/train/data_params.json:
         cache: true
@@ -27,13 +27,13 @@ stages:
     - data/train/scores.json:
         cache: true
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name preprocess --input train --model_name model
+    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name preprocess --input train --model_name model.pickle -s mse
     deps:
     - configs/preprocess.yml
     - ../../deckard/layers/preprocess.py
-    - data/train/model
+    - data/train/model.pickle
     outs:
-    - data/preprocess/model:
+    - data/preprocess/model.pickle:
         cache: true
     - data/preprocess/data_params.json:
         cache: true
@@ -43,13 +43,13 @@ stages:
     - data/preprocess/scores.json:
         cache: true
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -s mse -b False --name featurize --input preprocess --model_name model
+    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name featurize --input preprocess --model_name model.pickle -s mse
     deps:
     - configs/featurize.yml
     - ../../deckard/layers/preprocess.py
-    - data/preprocess/model
+    - data/preprocess/model.pickle
     outs:
-    - data/featurize/model:
+    - data/featurize/model.pickle:
         cache: true
     - data/featurize/data_params.json:
         cache: true
@@ -59,9 +59,9 @@ stages:
     - data/featurize/scores.json:
         cache: true
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -f data -s mse -d "parsed/long.csv" --target "long" --input featurize 
+    cmd: python ../../deckard/layers/evaluate.py -f data -d "parsed/gps.txt" --target "longitude" --input featurize 
     deps: 
-      - data/featurize/model
+      - data/featurize/model.pickle
 
 
 

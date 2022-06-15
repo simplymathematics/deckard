@@ -15,7 +15,7 @@ stages:
       md5: a88ea723b145ea52cfed0eb0d96bb603
       size: 247666
   train:
-    cmd: python -m deckard.layers.train  -f data -s f1 -b  True --name train
+    cmd: python -m deckard.layers.train  -f data -b  True --name train
     deps:
     - path: configs/model.yml
       md5: 51e2beefc5c3ac826bcce8e6775a1012
@@ -37,7 +37,7 @@ stages:
       md5: 2abd84695ad303e0bd88c10600ff031f
       size: 86
   preprocess:
-    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name preprocess
+    cmd: python -m deckard.layers.preprocess  -f data -b True --name preprocess
       --input train
     deps:
     - path: configs/preprocess.yml
@@ -60,7 +60,7 @@ stages:
       md5: 2abd84695ad303e0bd88c10600ff031f
       size: 86
   featurize:
-    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name featurize
+    cmd: python -m deckard.layers.preprocess  -f data -b True --name featurize
       --input preprocess
     deps:
     - path: configs/featurize.yml

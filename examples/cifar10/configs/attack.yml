@@ -36,11 +36,13 @@
     'batch_size' : [100]
     'nb_grads' : [10, 100, 1000]
     
-- name: art.attacks.evasion.HopSkipJump
-  params:
-    'max_iter' : [10]
-    'norm' : ['inf', 2]
-    'max_eval' : [10, 50, 100]
+# - name: art.attacks.evasion.HopSkipJump
+#   params:
+#     'max_iter' : [10]
+#     'norm' : ['inf', 2]
+#     'max_eval' : [50, 100]
+#     'init_eval' : [10]
+#     ''
 
 # - name: art.attacks.evasion.PixelAttack
 #   params:

@@ -1,8 +1,6 @@
-- name: './parsed/lat.csv'
+- name: './parsed/gps.txt'
   params:
     shuffle : True
     random_state : 0
-    # test_size : .1
     train_size : .9
-    stratify: None
-    
+    stratify : False    

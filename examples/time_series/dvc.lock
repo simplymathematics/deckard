@@ -18,7 +18,7 @@ stages:
       md5: 7b5b7d973da868ac3116055fc73eec9b
       size: 7032895
   train:
-    cmd: python ../deckard/layers/train.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/train.py  -f data -b False
     deps:
     - path: ../deckard/base/experiment.py
       md5: f1a923fa9a8983d3dd6c54f4cab3d470
@@ -49,7 +49,7 @@ stages:
       md5: f3675334cf8eaf6375da48e6393f4c5c
       size: 234
   preprocess:
-    cmd: python ../deckard/layers/preprocess.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/preprocess.py  -f data -b False
     deps:
     - path: ../deckard/layers/preprocess.py
       md5: fd2bf15980ef68979cada9a181873d28
@@ -74,7 +74,7 @@ stages:
       md5: bdd6ee1fc95fc2cd58a7feacd791b87f
       size: 235
   featurize:
-    cmd: python ../deckard/layers/featurize.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/featurize.py  -f data -b False
     deps:
     - path: ../deckard/layers/featurize.py
       md5: ac4fc4a980a282c57db1d67bec81be42
