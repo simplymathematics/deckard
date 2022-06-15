@@ -2,7 +2,6 @@ import logging, os, pickle
 from telnetlib import X3PAD
 import pandas as pd
 import numpy as np
-from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 #TODO: Balanced test set and train set options and functions
 # mnist dataset from 
@@ -40,7 +39,7 @@ class Data(object):
         :param shuffle: If True, the data is shuffled. Default is False.
         :param flatten: If True, the dataset is flattened. Default is False.
         """
-        if os.path.isfile(dataset):
+        if os.path.isfile(dataset) and not dataset.endswith(".csv") and not dataset.endswith(".txt"):
             filename = os.path.basename(dataset)
             path = os.path.dirname(dataset)
             tmp = self.load_data(filename = filename, path = path)
@@ -114,7 +113,7 @@ class Data(object):
             self.target = target
         # sets dataset, if specified
         
-        if dataset.endswith(".csv"):
+        if dataset.endswith(".csv") or dataset.endswith(".txt"):
             (X_train, y_train),(X_test, y_test), minimum, maximum = self._parse_csv(dataset, target)
         else:
             (X_train, y_train),(X_test, y_test), minimum, maximum = load_dataset(dataset)
@@ -130,10 +129,10 @@ class Data(object):
                 pass
             else:
                 X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
-        self.X_train = X_train
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_test = y_test
+        self.X_train = X_train.to_numpy(dtype = np.float32)
+        self.X_test = X_test.to_numpy(dtype = np.float32)
+        self.y_train = y_train.to_numpy(dtype = np.float32)
+        self.y_test = y_test.to_numpy(dtype = np.float32)
         self.dataset = dataset
         self.clip_values = [minimum, maximum]
         if hasattr(self, 'test_size'):
@@ -154,8 +153,9 @@ class Data(object):
         :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, and diabetes
         Chooses the dataset to use. Returns self.
         """
-        assert dataset.endswith(".csv"), "Dataset must be a csv file"
+        assert dataset.endswith(".csv") or dataset.endswith(".txt"), "Dataset must be a .csv  or .txt file"
         df = pd.read_csv(dataset)
+        df = df.dropna(axis = 0, how = 'any')
         if target is None:
             self.target = df.columns[-1]
         else:
