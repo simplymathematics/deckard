@@ -129,10 +129,22 @@ class Data(object):
                 pass
             else:
                 X_train, X_test, y_train, y_test = train_test_split(big_X, big_y, train_size = self.train_size, random_state=self.random_state, shuffle=self.shuffle, stratify=stratify)
-        self.X_train = X_train.to_numpy(dtype = np.float32)
-        self.X_test = X_test.to_numpy(dtype = np.float32)
-        self.y_train = y_train.to_numpy(dtype = np.float32)
-        self.y_test = y_test.to_numpy(dtype = np.float32)
+        if isinstance(X_train, pd.DataFrame):
+            self.X_train = X_train.to_numpy()
+        else:
+            self.X_train = X_train
+        if isinstance(X_test, pd.DataFrame):
+            self.X_test = X_test.to_numpy()
+        else:
+            self.X_test = X_test
+        if isinstance(y_train, pd.DataFrame):
+            self.y_train = y_train.to_numpy()
+        else:
+            self.y_train = y_train
+        if isinstance(y_test, pd.DataFrame):
+            self.y_test = y_test.to_numpy()
+        else:
+            self.y_test = y_test
         self.dataset = dataset
         self.clip_values = [minimum, maximum]
         if hasattr(self, 'test_size'):
@@ -147,6 +159,9 @@ class Data(object):
                 logger.warning("test_size is greater than the number of test samples. Setting test_size to {}".format(len(self.X_test)))
                 self.X_test = self.X_test
                 self.y_test = self.y_test
+        else:
+            self.X_test = X_test
+            self.y_test = y_test
     
     def _parse_csv(self, dataset:str = 'mnist', target = None) -> None:
         """

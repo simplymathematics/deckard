@@ -61,11 +61,14 @@ class testModel(unittest.TestCase):
     def test_set_params(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn')
         self.assertEqual(model1.model_type, 'sklearn')
-        model1.set_params({'model_type': 'sklearn'})
-        self.assertEqual(model1.model_type, 'sklearn')
-        model1.set_params({'foo': 'bar'})
-        self.assertEqual(model1.params['foo'], 'bar')
-    
+        model1.set_params({'penalty' : 'l1'})
+        model1.set_params({'clip_values': (0, 1)})
+        dictionary = model1.model.__dict__
+        self.assertEqual(dictionary['_clip_values'][0], 0)
+        self.assertEqual(dictionary['_clip_values'][1], 1)
+        self.assertIn("penalty='l1'", str(dictionary))
+        self.assertRaises(ValueError, model1.set_params, {'potato' : 'potato'})
+
     def test_save_model(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn', path = self.path)
         filename = model1.save(path = self.path, filename = self.file)
@@ -122,10 +125,10 @@ class testModel(unittest.TestCase):
         self.assertTrue(model1.is_supervised)
         self.assertFalse(model2.is_supervised)
 
-    def test_run_model(self):
+    def test_fit(self):
         data = Data('iris', train_size = .8)
         model = Model(KNeighborsClassifier(), model_type = 'sklearn')
-        model.run_model(data)
+        model.fit(data.X_train, data.y_train)
         predictions = model.predictions
         self.assertIsInstance(predictions, (list, np.ndarray))
         self.assertIsInstance(model.is_fitted, bool)
@@ -135,8 +138,9 @@ class testModel(unittest.TestCase):
 
         fsq = FeatureSqueezing(bit_depth = 1, clip_values = (0, 1))
         model2 = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = fsq)
-        model2.run_model(data)
-        predictions2 = model2.predictions
+        model2.fit(data)
+        predictions = model.predict(data.X_test)
+        predictions2 = model2.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
         self.assertIsInstance(model2.is_fitted, bool)
         self.assertTrue(model2.is_fitted)

@@ -4,17 +4,17 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=ResourceWarning)
 import unittest
-import os
+import os, json
 import tempfile
 from deckard.base import Data, Experiment, Model
-from deckard.base.utils import SUPPORTED_MODELS, return_score,  save_best_only, save_all, loggerCall
+from deckard.base.utils import SUPPORTED_MODELS, return_score,  save_best_only, save_all, loggerCall, find_successes, remove_successes_from_queue
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier
 from art.estimators.classification.scikitlearn import SklearnClassifier, ScikitlearnRandomForestClassifier
 from logging import Logger
-
+logger = loggerCall()
 class testUtils(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
@@ -61,6 +61,16 @@ class testUtils(unittest.TestCase):
     def test_loggerCall(self):
         logger = loggerCall()
         self.assertIsInstance(logger, Logger)
+    
+    def test_find_successes(self):
+        self.experiment = Experiment(self.data, self.model)
+        self.experiment.run(self.path)
+        self.experiment.save_params(path = self.path)
+        self.experiment.save_results(path = self.path)
+        self.experiment.save_model(filename = 'model.pickle', path = self.path)
+        successes, failures = find_successes(self.path, 'model_params.json')
+        self.assertIsInstance(successes, list)
+        self.assertEqual(len(failures), 0)
 
     def tearDown(self) -> None:
         import shutil

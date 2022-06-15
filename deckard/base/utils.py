@@ -1,6 +1,4 @@
-import logging
-import pickle
-import os
+import os, json, logging, pickle
 from deckard.base.model import Model
 from deckard.base.data import Data
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
@@ -28,7 +26,54 @@ def return_score(scorer:str, filename = 'results.json', path:str=".")-> float:
     # return the result
     return results[scorer.upper()]
 
+def find_successes(input_folder, filename:str, dict_name:str = None):
+        failures = []
+        successes = []
+        for folder in os.listdir(input_folder):
+            if os.path.isdir(os.path.join(input_folder, folder)):
+                files = os.listdir(os.path.join(input_folder, folder))
+                if 'scores.json' or 'adversarial_scores.json' in files:
+                    if dict_name is not None:
+                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))[dict_name]
+                    else:
+                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))
+                    model_name = model_params['name']
+                    model_params = model_params['params']
+                    successes.append((model_name, model_params))
+                else:
+                    failures.append(folder)
+            else:
+                files = os.listdir(input_folder)
+                if 'scores.json' or 'adversarial_scores.json' in files:
+                    if dict_name is not None:
+                        model_params = json.load(open(os.path.join(input_folder, filename)))[dict_name]                       
+                    else:
+                        model_params = json.load(open(os.path.join(input_folder, filename)))
+                    if 'Name' in model_params.keys():
+                        model_name = model_params['Name']
+                    else:
+                        model_name = str(type(model_params['Model'])).split("'")[1]
+                    if 'params' in model_params.items():
+                        model_params = model_params['params']
+                    else:
+                        model_params = model_params
+                    successes.append((model_name, model_params))
+                else:
+                    failures.append(folder)           
+        return successes, failures
 
+def remove_successes_from_queue(successes, todos):
+    completed_tasks = []
+    for model_name, model_params in successes:
+        i = 0
+        for queue_name, queue_params in todos:
+            queue_name = queue_name.split(".")[-1]
+            i += 1
+            if model_name.split("'")[1].split(".")[-1] == queue_name and queue_params.items() <= model_params.items():
+                completed_tasks.append(i)    
+    todos = [i for j, i in enumerate(todos) if j not in completed_tasks]
+    return todos
+    
 
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
@@ -66,6 +111,7 @@ def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  
             os.mkdir(path)
         best.save_model(filename = 'model', path = path)
         best.save_results(path = path)
+        best.save_params(path = path)
         logger.info("Saved best experiment to {}".format(path))
         logger.info("Best score: {}".format(best.scores[scorer]))
 
@@ -101,4 +147,5 @@ def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_sc
                 best = exp
         best.save_model(filename = 'model', path = path)
         best.save_results(path = path)
+        best.save_params(path = path)
         logger.info("Best score: {}".format(best.scores[scorer]))

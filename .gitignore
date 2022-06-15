@@ -27,6 +27,9 @@ deckard.egg-info/*
 *.zip
 *.db
 *.csv
+*.pickle
+*.pb
+*.txt
 
 # windows stuff
 *.exe
@@ -46,4 +49,4 @@ deckard.egg-info/*
 # package files
 build/
 
-*.pickle
+
