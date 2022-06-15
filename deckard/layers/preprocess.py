@@ -2,6 +2,7 @@
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
+from deckard.base import Model, Data
 from copy import deepcopy
 if __name__ == '__main__':
     import logging
@@ -25,17 +26,23 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     preprocessor_file = args.config
-    best = load_model(path.join(args.folder, args.input, args.model_name))
-    data = load_data(path.join(args.folder, args.dataset))
+    best = Model(path.join(args.folder, args.input, args.model_name))
+    data = Data(path.join(args.folder, args.dataset))
     tuple_list = generate_tuple_list_from_yml(args.config)
     preprocessor_list = generate_object_list_from_tuple(tuple_list)
     model_list = []
-    model = load_model(path.join(args.folder, args.input, args.model_name))
+    model = Model(path.join(args.folder, args.input, args.model_name))
     if isinstance(model.model, (BaseEstimator, TransformerMixin)) and not isinstance(model.model, Pipeline):
         model.model = Pipeline([('model', model.model)])
     for preprocessor in preprocessor_list:
         new_model = deepcopy(model)
-        new_model.model.steps.insert(args.position, (args.name, preprocessor))
+        try:
+            new_model.model.steps.insert(args.position, (args.name, preprocessor))
+        except AttributeError:
+            logging.warning("Cannot add preprocessor to initialized ART estimator. Attempting to add to pipeline. Defenses should be applied after this step as they have been removed.")
+            new_model = Pipeline([('model', new_model.model.model)])
+            new_model.steps.insert(args.position, (args.name, preprocessor))
+            new_model = Model(new_model)
         model_list.append(new_model)
 
     

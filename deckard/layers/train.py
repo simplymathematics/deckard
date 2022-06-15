@@ -19,7 +19,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.verbosity)
     filename = args.config
     try:
-         data = load_data(path.join(args.folder, args.dataset))
+         data = Data(path.join(args.folder, args.dataset))
          if args.time_series == True:
              data.time_series = True
     except:
