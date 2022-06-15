@@ -13,7 +13,6 @@ from art.defences.postprocessor import Postprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
 
-
 logger = loggerCall()
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)

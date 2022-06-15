@@ -2,12 +2,20 @@ import logging, os, pickle
 from telnetlib import X3PAD
 import pandas as pd
 import numpy as np
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 #TODO: Balanced test set and train set options and functions
 # mnist dataset from 
 from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
 from art.utils import load_dataset
+# mnist dataset from 
+from hashlib import md5 as my_hash
+logger = logging.getLogger(__name__)
+from art.utils import load_dataset
+
+from torch import minimum
+from tensorflow.keras.utils import to_categorical 
 # mnist dataset from 
 from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
