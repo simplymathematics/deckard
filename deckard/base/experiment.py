@@ -117,7 +117,10 @@ class Experiment(DiskstorageMixin):
             self.time_dict = dict()
         assert hasattr(self, 'attack'), "Attack not set"
         start = process_time()
-        if targeted == False:
+        if "Patch" in str(type(self.attack)):
+            patches, masks = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
+            adv_samples = self.attack.apply_patch(self.data.X_test, scale = self.attack._attack.scale_max)
+        elif targeted == False:
             adv_samples = self.attack.generate(self.data.X_test)
         else:
             adv_samples = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
@@ -131,7 +134,7 @@ class Experiment(DiskstorageMixin):
         self.time_dict['adv_pred_time'] = end - start
         return None
 
-    def run(self, path, **kwargs) -> None:
+    def run(self, path, filename = "scores.json", **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """

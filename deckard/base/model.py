@@ -248,7 +248,7 @@ class Model(object):
             raise ValueError("Model is not a classifier or regressor. It is type {}".format(type(self.model)))
         return result
 
-    def initialize_art_classifier(self, **kwargs) -> None:
+    def initialize_art_classifier(self, clip_values:tuple = (0,255), **kwargs) -> None:
         """
         Initialize the classifier.
         """
@@ -273,15 +273,15 @@ class Model(object):
         if isinstance(self.model, (PyTorchClassifier, TensorFlowV2Classifier, ScikitlearnClassifier, TensorFlowClassifier, KerasClassifier)):
             self.model = self.model.model
         if self.model_type in ['pytorch', 'torch', 'pyt']:
-            model = PyTorchClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
+            model = PyTorchClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         elif self.model_type in ['keras']:
-            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         elif self.model_type in ['tensorflow', 'tf', 'tf1', 'tfv1', 'tensorflowv1']:
-            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         elif self.model_type in ['tf2', 'tensorflow2', 'tfv2', 'tensorflowv2']:
-            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
+            model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         elif self.model_type in ['sklearn', 'pipeline', 'gridsearch', 'pickle', 'scikit', 'scikit-learn']:
-            model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
+            model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         self.model = model
         
     

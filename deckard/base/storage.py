@@ -189,18 +189,17 @@ class DiskstorageMixin(object):
         assert os.path.exists(defence_file), "Defence file not saved."
         return None
 
-    def save_results(self, path:str = ".") -> None:
+    def save_results(self, path:str = ".", scores_filename = 'scores.json') -> None:
         """
         Saves all data to specified folder, using default filenames.
         """
         if not os.path.isdir(path):
             os.mkdir(path)
         # self.save_model(path = path)
-        self.save_scores(path = path)
+        self.save_scores(path = path, filename = scores_filename)
         self.save_predictions(path = path)
         if hasattr(self.model.model, 'cv_results_'):
             self.save_cv_scores(path = path)
-            self.save_adversarial_samples(path = path)
         if hasattr(self, 'time_dict'):
             self.save_time_dict(path = path)
         return None
@@ -221,4 +220,7 @@ class DiskstorageMixin(object):
             self.save_time_dict(path = path)
         if 'Defence' in self.params:
             self.save_defence_params(path = path)
+        if hasattr(self.model.model, 'cv_results_'):
+            self.save_cv_scores(path = path)
+            self.save_adversarial_samples(path = path)
         return None

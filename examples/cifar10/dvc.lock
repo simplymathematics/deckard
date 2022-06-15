@@ -2,7 +2,7 @@ schema: '2.0'
 stages:
   prepare:
     cmd:
-    - python ../../deckard/layers/prepare.py  -d 'mnist'
+    - python ../../deckard/layers/prepare.py  
     deps:
     - path: ../../deckard/base/data.py
       md5: 24aeb008f86ce0ed8bfd8586e83dff8a
@@ -94,7 +94,7 @@ stages:
       md5: 682544741bf8c999bd2eedd1369ba7be
       size: 259
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -f data -d mnist --input best_featurize
+    cmd: python ../../deckard/layers/evaluate.py -f data  --input best_featurize
     deps:
     - path: data/best_featurize/experiment.pkl
       md5: c69aef545fda81048b9119d07e7e11f0

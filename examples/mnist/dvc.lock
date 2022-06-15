@@ -2,7 +2,7 @@ schema: '2.0'
 stages:
   prepare:
     cmd:
-    - python ../../deckard/layers/prepare.py  -d 'mnist'
+    - python ../../deckard/layers/prepare.py
     deps:
     - path: ../../deckard/base/data.py
       md5: 24aeb008f86ce0ed8bfd8586e83dff8a
@@ -42,8 +42,8 @@ stages:
       md5: fd1a55ae60466b90310461173bbc2899
       size: 170
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name
-      preprocess --input best_train
+    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name preprocess
+      --input best_train
     deps:
     - path: ../../deckard/layers/preprocess.py
       md5: b93dd7e500d506bd978679bc8752bbef
@@ -68,8 +68,8 @@ stages:
       md5: d8637e70833e2499f3a99889e35755a0
       size: 244
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name
-      featurize --input best_preprocess
+    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name featurize
+      --input best_preprocess
     deps:
     - path: ../../deckard/layers/preprocess.py
       md5: b93dd7e500d506bd978679bc8752bbef
@@ -94,18 +94,18 @@ stages:
       md5: 682544741bf8c999bd2eedd1369ba7be
       size: 259
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -f data -d mnist --input best_featurize
+    cmd: python ../../deckard/layers/evaluate.py -f data  --input best_featurize
     deps:
     - path: data/best_featurize/experiment.pkl
       md5: c69aef545fda81048b9119d07e7e11f0
       size: 1692650
   prepare_data:
     cmd:
-    - python ../../deckard/layers/prepare.py  -d 'mnist'
+    - python ../../deckard/layers/prepare.py
     deps:
     - path: ../../deckard/base/data.py
-      md5: 2e910a6ca1d542d34bdf09f00b015c88
-      size: 9553
+      md5: b1e94fb82e31b108257eaa7754562892
+      size: 10211
     - path: configs/prepare.yml
       md5: c175aeb5ea069b5904780edd6da02a60
       size: 112
@@ -128,42 +128,42 @@ stages:
       size: 32963897
       nfiles: 8
   defend:
-    cmd: python ../../deckard/layers/defend.py --input_model "control_model" --input_folder
-      "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
-      "data/defences/" --output_name "defended_model"
+    cmd: CUDA_VISIBLE_DEVICES=3 python ../../deckard/layers/defend.py --input_model
+      "control_model.pb" --input_folder "data/control/" --model_type "tf1" --data_file
+      "data/data.pkl" --output_folder "data/defences/" --output_name "defended_model"
     deps:
     - path: configs/defend.yml
-      md5: 1c73d80a7576fbb1e847c863494b55bb
-      size: 195
+      md5: ca3d4b313008affb0fed5921c1d92fe5
+      size: 1232
     - path: data/control/
-      md5: 91b34c96ed2ccf2047c7df836cdf3fad.dir
-      size: 32963333
-      nfiles: 6
+      md5: 263f321491e7e2aecc3379e3e4705c60.dir
+      size: 32963897
+      nfiles: 8
     - path: data/data.pkl
-      md5: 42ce1673018ca83c2712c57a02979733
-      size: 1957303
+      md5: 777bc1217de663c15352501f79bf8407
+      size: 379351787
     outs:
     - path: data/defences/
-      md5: e03edd9c0e312de2899b6a3956ef4e61.dir
-      size: 70889233
-      nfiles: 21
+      md5: f835f2253cefbca063859595f56d213f.dir
+      size: 141814925
+      nfiles: 44
   attack:
-    cmd: python ../../deckard/layers/attack.py --input_model "defended_model" --input_folder
-      "data/defences/" --model_type "tf1" --data_file "data/data.pkl" --output_folder
-      "data/attacks/" --output_name "attacked_model"
+    cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/attack.py --input_model
+      "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file
+      "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
     deps:
     - path: configs/attack.yml
-      md5: 5dc27a223dd2377ea604dff0f1ce782f
-      size: 79
+      md5: fe286dcdfd5acfc662b5f066c7cf0cc6
+      size: 1444
     - path: data/data.pkl
-      md5: 42ce1673018ca83c2712c57a02979733
-      size: 1957303
+      md5: 777bc1217de663c15352501f79bf8407
+      size: 379351787
     - path: data/defences/
-      md5: e03edd9c0e312de2899b6a3956ef4e61.dir
-      size: 70889233
-      nfiles: 21
+      md5: f835f2253cefbca063859595f56d213f.dir
+      size: 141814925
+      nfiles: 44
     outs:
     - path: data/attacks/
-      md5: d2f9dcc8dee01e441fe1cc7e9684630c.dir
-      size: 5645794
-      nfiles: 37
+      md5: 3c9e79e3cdd3182b65da7391764f9f20.dir
+      size: 240882666
+      nfiles: 160
