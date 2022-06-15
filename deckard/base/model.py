@@ -24,7 +24,7 @@ supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
-    def __init__(self, model:Union[str, object], model_type:str,  defence: object = None, path = ".", url = None, is_fitted:bool = False, **kwargs):
+    def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", url = None, is_fitted:bool = False, **kwargs):
         """
         Initialize the model object.
         estimator: the estimator to use
@@ -83,12 +83,13 @@ class Model(object):
         """
         assert params is not None, "Params must be specified"
         assert isinstance(params, dict), "Params must be a dictionary"
-        if hasattr(self.model, 'set_params'):
-            self.model.set_params(**params)
-        elif hasattr(self.model.model, 'set_params'):
-            self.model.model.set_params(**params)
-        else:
-            self.model.__dict__.update(params)
+        for param, value in params.items():
+            if hasattr(self.model.model, 'set_params') and param in self.model.model.get_params():
+                self.model.model.set_params(**{param : value})
+            elif hasattr(self.model, 'set_params') and "_"+param in self.model.__dict__.keys():
+                self.model.set_params(**{param : value})
+            else:
+                raise ValueError("Parameter {} not found in \n {} or \n {}".format(param, self.model.model.get_params(), self.model.__dict__.keys()))
 
     
     def get_params(self):
@@ -330,15 +331,6 @@ class Model(object):
             with open(os.path.join(path, filename), 'wb') as f:
                 pickle.dump(self.model, f)
         return os.path.join(path, filename)
-    
-    def run_model(self, data:Data, **kwargs) -> None:
-        """
-        Builds model and returns self with added time_dict and predictions attributes.
-        """
-        self.time_dict = {}
-        self.fit(data.X_train, data.y_train, **kwargs)
-        self.predictions = self.predict(data.X_test)
-        return None
 
 
     
@@ -371,6 +363,7 @@ class Model(object):
         predictions = self.model.predict(X_test)
         end = process_time()
         if not hasattr(self, 'time_dict'):
+            self.time_dict = {}
             self.time_dict['fit_time'] = None
         self.time_dict['pred_time'] = end - start
         return predictions
