@@ -179,19 +179,19 @@ class testExperiment(unittest.TestCase):
 
     
     
-    # def test_insert_sklearn_preprocessor(self):
-    #     preprocessor = SimpleImputer
-    #     preprocessor_params = {'strategy': 'mean'}
-    #     preprocessor = SimpleImputer(**preprocessor_params)
-    #     data = Data('iris', test_size = 30)
-    #     estimator = DecisionTreeClassifier()
-    #     model = Model(estimator)
-    #     experiment = Experiment(data = data, model = model)
-    #     experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
-    #     experiment.run(path = self.path)
-    #     self.assertIsInstance(experiment.predictions, (list, np.ndarray))
-    #     self.assertIsInstance(experiment.time_dict, dict)
-    #     self.assertIsInstance(experiment.scores, dict)
+    def test_insert_sklearn_preprocessor(self):
+        preprocessor = SimpleImputer
+        preprocessor_params = {'strategy': 'mean'}
+        preprocessor = SimpleImputer(**preprocessor_params)
+        data = Data('iris', test_size = 30)
+        estimator = DecisionTreeClassifier()
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
+        experiment.run(path = self.path)
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+        self.assertIsInstance(experiment.scores, dict)
 
     def test_get_attack(self):
         data = Data('iris', test_size = 30)

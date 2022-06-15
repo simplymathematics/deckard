@@ -224,7 +224,10 @@ class Experiment(DiskstorageMixin):
         elif not isinstance(self.model.model, Pipeline):
             raise ValueError("Model {} is not a sklearn compatible estimator".format(type(self.model.model)))
         new_model = deepcopy(self.model)
-        new_model.model.model.steps.insert(position, (name, preprocessor))
+        try:
+            new_model.model.model.steps.insert(position, (name, preprocessor))
+        except AttributeError:
+            new_model.model.steps.insert(position, (name, preprocessor))
         self.model = new_model
    
     def set_filename(self, filename:str = None) -> None:
