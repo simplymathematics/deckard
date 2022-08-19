@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubi8
 RUN apt update
 RUN apt -y upgrade
 RUN apt install -y python3 python3-pip build-essential libssl-dev libffi-dev python3-dev
