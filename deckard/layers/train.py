@@ -2,7 +2,7 @@ if __name__ == '__main__':
     import logging
     from deckard.base import Data
     from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
-    from deckard.base.utils import load_data, save_all, save_best_only
+    from deckard.base.utils import  save_all, save_best_only
     from os import path, mkdir
     import argparse
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.verbosity)
     filename = args.config
     try:
-         data = load_data(path.join(args.folder, args.dataset))
+         data = Data(path.join(args.folder, args.dataset))
          if args.time_series == True:
              data.time_series = True
     except:

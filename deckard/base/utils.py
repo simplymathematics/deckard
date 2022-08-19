@@ -1,6 +1,4 @@
-import logging
-import pickle
-import os
+import os, json, logging, pickle
 from deckard.base.model import Model
 from deckard.base.data import Data
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
@@ -28,119 +26,60 @@ def return_score(scorer:str, filename = 'results.json', path:str=".")-> float:
     # return the result
     return results[scorer.upper()]
 
-def load_model(filename:str = None, path:str = ".", mtype:str =None) -> Model:
-    """
-    Load a model from a pickle file.
-    filename: the pickle file to load the model from
-    mtype: the type of model to load
-    """
-    from deckard.base.model import Model
-    logger.debug("Loading model")
-    # load the model
-    filename = os.path.join(path, filename)
-    if mtype == 'keras' or filename.endswith('.h5'):
-        from tensorflow.keras.models import load_model as keras_load_model
-        # TODO add support for tf, pytorch
-        cloned_model = keras_load_model(filename)
-        cloned_model = KerasClassifier(cloned_model)
-        model = Model(cloned_model, model_type=mtype)
-    elif mtype == 'torch' or  mtype == 'pytorch':
-        from torch import load as torch_load
-        model = torch_load(filename)
-        model = PyTorchClassifier(model)
-        model = Model(model, model_type = mtype)
-    elif mtype == 'tf' or mtype == 'tensorflow':
-        from tensorflow.keras.models import load_model as tf_load_model
-        model = tf_load_model(filename)
-        model = KerasClassifier(model)
-        model = Model(model, model_type = mtype)
-    elif mtype == 'tfv1' or mtype == 'tensorflowv1' or mtype == 'tf1':
-        import tensorflow.compat.v1 as tfv1
-        tfv1.disable_eager_execution()
-        from tensorflow.keras.models import load_model as tf_load_model
-        model = tf_load_model(filename)
-        model = KerasClassifier(model)
-        model = Model(model, model_type = mtype)
-    elif mtype == 'sklearn' or mtype == 'pipeline' or mtype == 'gridsearch' or mtype == 'pickle':
-        with open(filename, 'rb') as f:
-            model = pickle.load(f)
-        model = Model(model, model_type = mtype)
-    else:
-        try:
-            with open(filename, 'rb') as f:
-                model = pickle.load(f)
-            model = Model(model, model_type = mtype)
-        except:
-            raise ValueError("Model type {} not supported".format(mtype))
-    logger.info("Loaded model")
-    return model
+def find_successes(input_folder, filename:str, dict_name:str = None):
+        failures = []
+        successes = []
+        for folder in os.listdir(input_folder):
+            if os.path.isdir(os.path.join(input_folder, folder)):
+                files = os.listdir(os.path.join(input_folder, folder))
+                if 'scores.json' or 'adversarial_scores.json' in files:
+                    if dict_name is not None:
+                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))[dict_name]
+                    else:
+                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))
+                    model_name = model_params['name']
+                    model_params = model_params['params']
+                    successes.append((model_name, model_params))
+                else:
+                    failures.append(folder)
+            else:
+                files = os.listdir(input_folder)
+                if 'scores.json' or 'adversarial_scores.json' in files:
+                    if dict_name is not None:
+                        model_params = json.load(open(os.path.join(input_folder, filename)))[dict_name]                       
+                    else:
+                        model_params = json.load(open(os.path.join(input_folder, filename)))
+                    if 'Name' in model_params.keys():
+                        model_name = model_params['Name']
+                    else:
+                        model_name = str(type(model_params['Model'])).split("'")[1]
+                    if 'params' in model_params.items():
+                        model_params = model_params['params']
+                    else:
+                        model_params = model_params
+                    successes.append((model_name, model_params))
+                else:
+                    failures.append(folder)           
+        return successes, failures
 
-def load_data(filename:str = None, path:str=".") -> Data:
-    """
-    Load a data file.
-    data_file: the data file to load
-    """
-    data_file = os.path.join(path, filename)
-    from deckard.base.data import Data
-    logger.debug("Loading data")
-    # load the data
-    with open(data_file, 'rb') as f:
-        data = pickle.load(f)
-    assert isinstance(data, Data), "Data is not an instance of Data. It is type: {}".format(type(data))
-    logger.info("Loaded model")
-    return data
+def remove_successes_from_queue(successes, todos):
+    completed_tasks = []
+    for model_name, model_params in successes:
+        i = 0
+        for queue_name, queue_params in todos:
+            queue_name = queue_name.split(".")[-1]
+            i += 1
+            if model_name.split("'")[1].split(".")[-1] == queue_name and queue_params.items() <= model_params.items():
+                completed_tasks.append(i)    
+    todos = [i for j, i in enumerate(todos) if j not in completed_tasks]
+    return todos
+    
+
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (PyTorchClassifier, ScikitlearnEstimator, KerasClassifier, TensorFlowClassifier)
 
-def initialize_art_classifier(filename:str, path:str = None, model_type:str=None, url:str = None, output_dir:str = None,):
-    """
-    Load an ART model.
-    :param model_name: the name of the model
-    :param model_path: the path to the model
-    :param model_type: the type of the model
-    :param output_dir: the output folder to save the model to
-    :return: the loaded art model
-    
-    """
-    # Download/load model
-    assert model_type is not None, "model_type must be specified"
-    assert filename is not None, "filename must be specified"
-    assert path is not None or url is not None, "path or url must be specified"
-    if output_dir == None:
-        output_dir = os.path.dirname(path)
-    if url is not None:
-        # download model
-        model_path = get_file(filename = filename, extract=False, path=path, url=url, verbose = True)
-        logging.info("Downloaded model from {} to {}".format(url, model_path))
-    else:
-        model_path = os.path.join(path, filename)
-        logging.info("Loading model from {}".format(model_path))
-    # Define type for ART
-    if model_type == 'tfv1' or model_type == 'tensorflowv1' or model_type == 'tf1':
-        import tensorflow.compat.v1 as tfv1
-        tfv1.disable_eager_execution()
-        from tensorflow.keras.models import load_model as keras_load_model
-        classifier_model = keras_load_model(model_path)
-        art_model = KerasClassifier( classifier_model)
-    elif model_type == 'keras' or model_type == 'k':
-        from tensorflow.keras.models import load_model as keras_load_model
-        classifier_model = keras_load_model(model_path)
-        art_model = KerasClassifier( classifier_model)
-    elif model_type == 'tf' or model_type == 'tensorflow':
-        from tensorflow.keras.models import load_model as keras_load_model
-        classifier_model = keras_load_model(model_path)
-        art_model = TensorFlowClassifier( classifier_model)
-    elif model_type == 'pytorch' or model_type == 'torch':
-        raise NotImplementedError("Pytorch not implemented yet")
-    elif model_type == 'sklearn' or model_type == 'scikit-learn':
-        from pickle import load
-        with open(model_path, 'rb') as f:
-            classifier_model = load(f)
-        art_model = SklearnClassifier(classifier_model)
-    else:
-        raise ValueError("Unknown model type {}".format(model_type))
-    return art_model
+
 
 
 def loggerCall():
@@ -163,15 +102,16 @@ def save_best_only(path:str, exp_list:list, scorer:str, bigger_is_better:bool,  
         elif best_score == None and not bigger_is_better:
             best_score = 1e10
         for exp in exp_list:
-            exp.run()
+            exp.run(path)
             if exp.scores[scorer] >= best_score and bigger_is_better:
                 best = exp
             else:
                 pass
         if not os.path.isdir(path):
             os.mkdir(path)
-        best.save_model(path = path)
+        best.save_model(filename = 'model', path = path)
         best.save_results(path = path)
+        best.save_params(path = path)
         logger.info("Saved best experiment to {}".format(path))
         logger.info("Best score: {}".format(best.scores[scorer]))
 
@@ -195,15 +135,17 @@ def save_all(path:str, exp_list:list, scorer:str, bigger_is_better:bool, best_sc
         elif best_score == None and not bigger_is_better:
             best_score = 1e10
         for exp in exp_list:
-            exp.run()
-            if not os.path.isdir(os.path.join(path, exp.filename)):
+            exp.filename = str(exp.filename)
+            if path is not None and not os.path.isdir(os.path.join(path, exp.filename)):
                 os.mkdir(os.path.join(path, exp.filename))
                 logger.info("Created path: " + os.path.join(path, exp.filename))
+            exp.run(os.path.join(path, exp.filename))
             exp.save_results(path = os.path.join(path, exp.filename))
-            exp.save_model(path = os.path.join(path, exp.filename))
+            exp.save_model(filename = 'model', path = os.path.join(path, exp.filename))
             if exp.scores[scorer] >= best_score and bigger_is_better:
                 best_score = exp.scores[scorer]
                 best = exp
-        best.save_model(path = path)
+        best.save_model(filename = 'model', path = path)
         best.save_results(path = path)
+        best.save_params(path = path)
         logger.info("Best score: {}".format(best.scores[scorer]))

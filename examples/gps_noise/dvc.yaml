@@ -8,7 +8,7 @@ stages:
     outs: 
       - data/data.pkl
   train:
-    cmd: python -m deckard.layers.train  -f data -s f1 -b  True --name train
+    cmd: python -m deckard.layers.train  -f data -b  True --name train
     deps:
     - configs/model.yml
     - data/data.pkl
@@ -23,7 +23,7 @@ stages:
         cache: true
     
   preprocess:
-    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name preprocess --input train
+    cmd: python -m deckard.layers.preprocess  -f data -b True --name preprocess --input train
     deps:
     - configs/preprocess.yml
     - data/train/model
@@ -38,12 +38,12 @@ stages:
         cache: true
    
   featurize:
-    cmd: python -m deckard.layers.preprocess  -f data -s f1 -b True --name featurize --input preprocess
+    cmd: python -m deckard.layers.preprocess  -f data -b True --name featurize --input preprocess
     deps:
     - configs/featurize.yml
-    - data/preprocess/model
+    - data/preprocess/model.pickle
     outs:
-    - data/featurize/model
+    - data/featurize/model.pickle
     - data/featurize/data_params.json:
         cache: true
     - data/featurize/model_params.json:

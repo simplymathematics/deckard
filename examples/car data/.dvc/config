@@ -1,5 +1,6 @@
 [core]
-    no_scm = True
+    no_scm = false
     remote = gdrive
+    autostage = true
 ['remote "gdrive"']
     url = gdrive://12_A25ljvYOW40HI3q0FQW6yga2y8sn_u

@@ -1,0 +1,39 @@
+stages:
+  prepare_data:
+    cmd: 
+      - python ../../deckard/layers/prepare.py  -d 'cifar10'
+    deps: 
+      - configs/prepare.yml
+      - ../../deckard/base/data.py
+    outs: 
+      - data/data.pkl
+  control:
+    cmd: CUDA_VISIBLE_DEVICES=1 python ../../deckard/layers/art_model.py --input_model "https://www.dropbox.com/s/hbvua7ynhvara12/cifar-10_ratio%3D0.h5?dl=1" --output_name "control_model" --model_type "tf1" --dataset "data/data.pkl" --output_folder "data/control"
+    deps:
+    - data/data.pkl
+    outs:
+    - data/control/:
+        cache: true
+  defend:
+    cmd: CUDA_VISIBLE_DEVICES=1 python ../../deckard/layers/defend.py --input_model "control_model" --input_folder "data/control/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/defences/" --output_name "defended_model"
+    deps:
+    - data/data.pkl
+    - data/control/
+    - configs/defend.yml
+    outs:
+    - data/defences/:
+        cache: true
+  attack:
+    cmd: CUDA_VISIBLE_DEVICES=2 python ../../deckard/layers/attack.py --input_model "defended_model/" --input_folder "data/defences/" --model_type "tf1" --data_file "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
+    deps:
+    - data/data.pkl
+    - data/defences/
+    - configs/attack.yml
+    outs:
+    - data/attacks/:
+        cache: true
+
+
+
+
+

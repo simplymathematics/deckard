@@ -9,7 +9,7 @@ stages:
     outs: 
       - data/data.pkl
   train:
-    cmd: python ../deckard/layers/train.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/train.py  -f data -b False
     deps:
     - ../deckard/base/utils.py
     - configs/model.yml
@@ -27,7 +27,7 @@ stages:
         cache: true
     
   preprocess:
-    cmd: python ../deckard/layers/preprocess.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/preprocess.py  -f data -b False
     deps:
     - configs/preprocess.yml
     - ../deckard/layers/preprocess.py
@@ -43,7 +43,7 @@ stages:
         cache: true
    
   featurize:
-    cmd: python ../deckard/layers/featurize.py  -f data -s mse -b False
+    cmd: python ../deckard/layers/featurize.py  -f data -b False
     deps:
     - configs/featurize.yml
     - ../deckard/layers/featurize.py
