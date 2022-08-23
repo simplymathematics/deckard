@@ -25,10 +25,10 @@ class testModel(unittest.TestCase):
             self.assertIsInstance(model, Model)
             self.assertIsInstance(model.model_type, str)
             self.assertIsInstance(model.model, object)
-        model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflowv1')
-        self.assertIsInstance(model, Model)
-        self.assertIsInstance(model.model_type, str)
-        self.assertIsInstance(model.model, object)
+        # model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflow')
+        # self.assertIsInstance(model, Model)
+        # self.assertIsInstance(model.model_type, str)
+        # self.assertIsInstance(model.model, object)
     
     def test_hash(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn')
