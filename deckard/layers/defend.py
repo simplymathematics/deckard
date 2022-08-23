@@ -1,6 +1,7 @@
-import logging, os, json
+import logging, os
 from deckard.base.experiment import Experiment, Model, Data
 from deckard.base.parse import generate_tuple_list_from_yml, generate_object_list_from_tuple
+from deckard.base.utils import find_successes, remove_successes_from_queue
 from random import shuffle
 import numpy as np
 
@@ -8,37 +9,6 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def find_successes(input_folder, filename:str, dict_name:str = None):
-        failures = []
-        successes = []
-        logger.info(input_folder)
-        for folder in os.listdir(input_folder):
-            if os.path.isdir(os.path.join(input_folder, folder)):
-                files = os.listdir(os.path.join(input_folder, folder))
-                if 'scores.json' or 'adversarial_scores.json' in files:
-                    if dict_name is not None:
-                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))[dict_name]
-                    else:
-                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))
-                    model_name = model_params['name']
-                    model_params = model_params['params']
-                    successes.append((model_name, model_params))
-                else:
-                    failures.append(folder)
-        return successes, failures
-
-def remove_successes_from_queue(successes, todos):
-    completed_tasks = []
-    for model_name, model_params in successes:
-        i = 0
-        for queue_name, queue_params in todos:
-            queue_name = queue_name.split(".")[-1]
-            i += 1
-            if model_name.split("'")[1].split(".")[-1] == queue_name and queue_params.items() <= model_params.items():
-                completed_tasks.append(i)    
-    todos = [i for j, i in enumerate(todos) if j not in completed_tasks]
-    return todos
-    
 
 if __name__ == '__main__':
     
@@ -92,15 +62,15 @@ if __name__ == '__main__':
         logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.input_model))
         # Seeing if experiment exists
         output_folder = os.path.join(args.output_folder, str(experiment.filename))
-        # Makes directory if it doesn't exist
-        if not os.path.exists(output_folder):
-            logger.info("Experiment path {} does not exist. Creating it.".format(output_folder))
-            os.mkdir(output_folder)
         logger.info("Experiment path is {}".format(output_folder))
         scores_file = os.path.join(output_folder, 'scores.json')
         # run experiment
         logger.info("Running experiment...")
-        if not os.path.exists(os.path.join(output_folder, 'scores.json')):
+        if not os.path.isfile(scores_file):
+            # Makes directory if it doesn't exist
+            if not os.path.exists(output_folder):
+                logger.info("Experiment path {} does not exist. Creating it.".format(output_folder))
+                os.mkdir(output_folder)
             try:
                 experiment.run(path = output_folder)
                 logger.info("Experiment complete.")

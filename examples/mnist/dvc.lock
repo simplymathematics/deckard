@@ -107,25 +107,25 @@ stages:
       md5: b1e94fb82e31b108257eaa7754562892
       size: 10211
     - path: configs/prepare.yml
-      md5: c175aeb5ea069b5904780edd6da02a60
-      size: 112
+      md5: 9221ba95eb25413927a6c7f6fde5b5f4
+      size: 107
     outs:
     - path: data/data.pkl
-      md5: 777bc1217de663c15352501f79bf8407
-      size: 379351787
+      md5: cdb226f18d6bd132ec336841d2747a62
+      size: 5050192
   control:
     cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/art_model.py --input_model
       "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1" --output_name
-      "control_model" --model_type "tf1" --dataset "data/data.pkl" --output_folder
+      "control_model.pb" --model_type "tf1" --dataset "data/data.pkl" --output_folder
       "data/control"
     deps:
     - path: data/data.pkl
-      md5: 777bc1217de663c15352501f79bf8407
-      size: 379351787
+      md5: cdb226f18d6bd132ec336841d2747a62
+      size: 5050192
     outs:
     - path: data/control/
-      md5: 263f321491e7e2aecc3379e3e4705c60.dir
-      size: 32963897
+      md5: 4ce73eb33fc5a9d995b380b043aea91b.dir
+      size: 32963817
       nfiles: 8
   defend:
     cmd: CUDA_VISIBLE_DEVICES=3 python ../../deckard/layers/defend.py --input_model
@@ -136,34 +136,37 @@ stages:
       md5: ca3d4b313008affb0fed5921c1d92fe5
       size: 1232
     - path: data/control/
-      md5: 263f321491e7e2aecc3379e3e4705c60.dir
-      size: 32963897
+      md5: 4ce73eb33fc5a9d995b380b043aea91b.dir
+      size: 32963817
       nfiles: 8
     - path: data/data.pkl
-      md5: 777bc1217de663c15352501f79bf8407
-      size: 379351787
+      md5: cdb226f18d6bd132ec336841d2747a62
+      size: 5050192
     outs:
     - path: data/defences/
-      md5: f835f2253cefbca063859595f56d213f.dir
-      size: 141814925
-      nfiles: 44
+      md5: 8986ecc37d60df769360fd5ca21bddc6.dir
+      size: 143372075
+      nfiles: 40
   attack:
     cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/attack.py --input_model
       "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file
       "data/data.pkl" --output_folder "data/attacks/" --output_name "attacked_model"
     deps:
+    - path: ../../deckard/layers/attack.py
+      md5: 1fe82e8a119b7cbd15b391d5fb496dfb
+      size: 6887
     - path: configs/attack.yml
       md5: fe286dcdfd5acfc662b5f066c7cf0cc6
       size: 1444
     - path: data/data.pkl
-      md5: 777bc1217de663c15352501f79bf8407
-      size: 379351787
+      md5: cdb226f18d6bd132ec336841d2747a62
+      size: 5050192
     - path: data/defences/
-      md5: f835f2253cefbca063859595f56d213f.dir
-      size: 141814925
-      nfiles: 44
+      md5: 8986ecc37d60df769360fd5ca21bddc6.dir
+      size: 143372075
+      nfiles: 40
     outs:
     - path: data/attacks/
-      md5: 3c9e79e3cdd3182b65da7391764f9f20.dir
-      size: 240882666
-      nfiles: 160
+      md5: 41b0e05dd9de0bfba37149c011a7b60f.dir
+      size: 244684207
+      nfiles: 144

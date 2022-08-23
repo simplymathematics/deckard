@@ -138,7 +138,8 @@ class Experiment(DiskstorageMixin):
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
-        self.save_params(path = path)
+        if not os.path.isdir(path):
+            os.mkdir(path)
         self._build_model(**kwargs)
         self.evaluate()
         self.save_results(path = path)
@@ -151,7 +152,6 @@ class Experiment(DiskstorageMixin):
         assert hasattr(self, 'attack')
         if not os.path.isdir(path):
             os.mkdir(path)
-        self.save_params(path = path)
         self.save_attack_params(path = path)
         self._build_attack(**kwargs)
         self.evaluate_attack()

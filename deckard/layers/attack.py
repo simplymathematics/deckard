@@ -3,7 +3,7 @@ from deckard.base.experiment import Experiment, Model, Data
 import os
 from art.attacks import Attack
 from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
-
+from deckard.base.utils import find_successes, remove_successes_from_queue
 from random import shuffle
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_name', type=str, default=None, help='Name of the output file')
     parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')
     parser.add_argument('--data_file', type=str, default = "data.pkl", help='Path to the data file')
-    parser.add_argument('--attack_config', '-d', type=str, default = None, help='Path to the attack config file')
+    parser.add_argument('--attack_config', '-d', type=str, default = "configs/attack.yml", help='Path to the attack config file')
     parser.add_argument('--attack_size', '-n', type=int, default=100, help='Number of adversarial samples to generate')
     # parse arguments
     args = parser.parse_args()
@@ -36,7 +36,11 @@ if __name__ == '__main__':
     data.X_test = data.X_test[:args.attack_size]
     data.y_test = data.y_test[:args.attack_size]
     logger.info("Loaded dataset {}".format(args.data_file))
-    yml_list = generate_tuple_list_from_yml('configs/attack.yml');
+    yml_list = generate_tuple_list_from_yml(args.attack_config);
+    # successes, failures = find_successes(args.output_folder, 'model_params.json', dict_name = 'Defence')
+    # todos = remove_successes_from_queue(successes, yml_list)
+    # model_object = Model(model =args.input_model, path = os.path.join(args.input_folder, filepath), model_type = args.model_type)
+    # object_list = generate_object_list_from_tuple(todos, classifier = )
     art_models = []
     # find all models
     i = 0 
@@ -72,7 +76,6 @@ if __name__ == '__main__':
             experiment.set_defence(os.path.join(args.input_folder, filepath, "defence_params.json"))
             if not os.path.isdir(os.path.join(output_folder, subdirectory)):
                 os.makedirs(os.path.join(output_folder, subdirectory))
-            experiment.save_params(os.path.join(args.output_folder, subdirectory, "experiment_params.json"))
         # loading file otherwise
         elif os.path.isfile(os.path.join(args.input_folder, filepath)) and filepath == args.input_model:
             filename = args.input_folder
@@ -90,7 +93,6 @@ if __name__ == '__main__':
             except TypeError as e:
                 attack_list = generate_object_list_from_tuple(yml_list)
             experiment = Experiment(data = data, model = model_object, is_fitted=True, filename = filepath)
-            experiment.save_params(path = args.output_folder)
         else:
             # skips files that aren't == input_model
             continue
@@ -105,7 +107,6 @@ if __name__ == '__main__':
                 output_folder = os.path.join(args.output_folder, filepath, experiment.filename)
                 experiment.set_attack(attack = attack)
                 # Seeing if experiment exists
-                
                 scores_file = os.path.join(output_folder, 'adversarial_scores.json')
                 if os.path.isfile(scores_file):
                     logger.info("Experiment {} already exists. Skipping.".format(experiment.filename))
