@@ -36,11 +36,7 @@ jobs:
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test base folder with unittest
       run: |
-        python -m unittest deckard/deckard/test/base/test_parse.py 
-        python -m unittest deckard/deckard/test/base/test_utils.py 
-        python -m unittest deckard/deckard/test/base/test_data.py 
-        python -m unittest deckard/deckard/test/base/test_model.py 
-        python -m unittest deckard/deckard/test/base/test_experiment.py
+        python -m unittest discover
     - name: Test 'mnist' repo for TF support
       run: |
           cd deckard/examples/mnist
