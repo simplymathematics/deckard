@@ -52,6 +52,13 @@ class Crawler():
             self.data[dir] = scores
             for filename in self.config['filenames']:
                 if os.path.isfile(os.path.join(dir, filename + '.json')):
+                    if filename == 'adversarial_scores':
+                        adv_scores = data[dir]['adversarial_scores']
+                        new_scores = {}
+                        for key in adv_scores.keys():
+                            new_name = "adv_" + key
+                            new_scores[new_name] = adv_scores[key]
+                        self.data[dir] = new_scores
                     self.data[dir][filename] = os.path.join(dir, filename + '.json')
         self.data = pd.DataFrame(self.data).T
         return self.data

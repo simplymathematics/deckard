@@ -80,7 +80,7 @@ class testCrawler(unittest.TestCase):
         self.assertEqual(len(clean_result), 2)
         self.assertEqual(len(clean_result.columns), 17)
 
-    def test_save_date(self):
+    def test_save_data(self):
         crawler = Crawler(config_file = 'config.yml', path = self.path, output = self.file)
         crawler2 = Crawler(config_file = 'config.yml', path = self.path, output = self.file)
         result = crawler.crawl_tree()
@@ -89,6 +89,7 @@ class testCrawler(unittest.TestCase):
         self.assertTrue(path.exists(json_file))
         csv_file = crawler2.save_data(clean_result, filetype = 'csv')
         self.assertTrue(path.exists(csv_file))
+
     
     def tearDown(self) -> None:
         from shutil import rmtree
