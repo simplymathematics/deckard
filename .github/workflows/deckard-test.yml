@@ -38,8 +38,8 @@ jobs:
     - name: Test base folder with unittest
       run: |
         python -m unittest discover
-    - name: Test 'mnist' repo for TF support
-      run: |
-          cd deckard/examples/mnist
-          dvc repro
+#    - name: Test 'mnist' repo for TF support
+#      run: |
+#          cd deckard/examples/mnist
+#          dvc repro
 
