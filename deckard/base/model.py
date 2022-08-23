@@ -38,7 +38,7 @@ class Model(object):
         self.is_fitted = is_fitted
         if isinstance(model, str):
             self.filename = model
-            self.load(model, **kwargs)
+            self.load(self.filename, **kwargs)
         elif isinstance(model, object):
             self.filename = str(type(model))
             self.model = model
