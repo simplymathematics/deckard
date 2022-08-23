@@ -19,6 +19,7 @@ install_requires = [
     "georinex",
     "dvc",
     "adversarial-robustness-toolbox>=1.6.2",
+    "pandas",
 ]
 
 docs_require = [
