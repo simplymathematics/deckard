@@ -1,2 +1,7 @@
 [core]
     autostage = true
+    remote = home
+['remote "gdrive"']
+    url = gdrive://1GYKTz217vWhYywg7XP0IxWUf6yons3Yh
+['remote "home"']
+    url = /Home/staff/cmeyers/dvc
