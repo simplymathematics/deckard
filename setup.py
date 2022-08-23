@@ -20,7 +20,7 @@ install_requires = [
     "dvc",
     "adversarial-robustness-toolbox>=1.6.2",
     "pandas",
-    "yaml",
+    "PyYAML",
 ]
 
 docs_require = [
