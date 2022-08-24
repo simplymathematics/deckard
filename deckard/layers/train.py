@@ -10,13 +10,11 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--folder', type=str, help='Experiment folder to use', default = './')
     parser.add_argument('-d', '--dataset', type=str, help='Data file to use', default = "data.pkl")
     parser.add_argument('-b' ,'--bigger_is_better', type = bool, default = True, help='whether the scorer is bigger is better')
-    parser.add_argument('-v', '--verbosity', type = str, default='DEBUG', help='set python verbosity level')
     parser.add_argument('-s', '--scorer', default = 'f1', type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
     parser.add_argument('--best', type=bool, default = False, help='only store the best model')
     parser.add_argument('--time_series', type = bool, default = False, help = "Whether to use time series")
     parser.add_argument('--name', type=str, default = "train", help='name of the experiment')
     args = parser.parse_args()
-    logging.basicConfig(level=args.verbosity)
     filename = args.config
     try:
          data = Data(path.join(args.folder, args.dataset))

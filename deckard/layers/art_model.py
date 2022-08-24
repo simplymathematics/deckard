@@ -70,7 +70,6 @@ if __name__ == '__main__':
     parser.add_argument('--input_model', type=str, default=None, help='Name of the model. Can be the name of a file or a URL.')
     parser.add_argument('--input_folder', type=str, default = ".", help='Folder where the model is located. Defaults to folder where the script is run.')
     parser.add_argument('--model_type', type=str, required = True, help='Type of the model')
-    parser.add_argument('--verbosity', type=int, default=10, help='Verbosity level')
     parser.add_argument('--dataset', type=str, required = True, help='Path to the dataset')
     # parser.add_argument('--scorer', type=str, required = True, help='Scorer for optimization')
     parser.add_argument('--output_folder', type=str, default=None, help='Path to the output folder')

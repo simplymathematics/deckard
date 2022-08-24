@@ -4,9 +4,6 @@ import logging, os, yaml
 
 logger = logging.getLogger(__name__)
 
-
-
-
 if __name__ == "__main__":
 
     from pickle import dump
@@ -15,12 +12,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Prepare the data')
     parser.add_argument('-folder', type = str, default = "./", help = "The folder where data will be stored")
     parser.add_argument('-config_file', type = str, default = "configs/prepare.yml", help = "The config folder to use")
-    parser.add_argument('--verbosity', type = str, default = 'DEBUG', help = "The verbosity level")
     parser.add_argument('--target', type = str, default = None, help = "The target to use")
     args = parser.parse_args()
 
     # set the verbosity level
-    logging.basicConfig(level=args.verbosity)
 
     data = parse_data_from_yml(args.config_file)
     if args.folder != None:

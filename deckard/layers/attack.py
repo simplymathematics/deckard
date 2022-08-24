@@ -15,7 +15,6 @@ if __name__ == '__main__':
     parser.add_argument('--input_model', type=str, default=None, help='Name of the model')
     parser.add_argument('--input_folder', type=str, default = ".", help='Path to the model')
     parser.add_argument('--model_type', type=str, default=None, help='Type of the model')
-    parser.add_argument('--verbosity', type=int, default=10, help='Verbosity level')
     parser.add_argument('--output_folder', type=str, required = True, help='Path to the output folder')
     parser.add_argument('--output_name', type=str, default=None, help='Name of the output file')
     parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')
