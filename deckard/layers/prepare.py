@@ -15,8 +15,6 @@ if __name__ == "__main__":
     parser.add_argument('--target', type = str, default = None, help = "The target to use")
     args = parser.parse_args()
 
-    # set the verbosity level
-
     data = parse_data_from_yml(args.config_file)
     if args.folder != None:
         if not os.path.exists(os.path.join(args.folder, 'data')):
