@@ -48,3 +48,6 @@ deckard.egg-info/*
 
 # package files
 build/
+env/
+*.deb
+*.deb*

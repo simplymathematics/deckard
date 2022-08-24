@@ -1,7 +1,7 @@
 from deckard import base, layers
 import logging
 # Semantic Version
-__version__ = "0.20"
+__version__ = "0.30"
 
 # pylint: disable=C0103
 
@@ -26,7 +26,7 @@ LOGGING = {
     },
     "loggers": {
         "art": {"handlers": ["default"]},
-        "tests": {"handlers": ["test"], "level": "INFO", "propagate": True},
+        "tests": {"handlers": ["test"], "level": "DEBUG", "propagate": True},
     },
 }
 logging.config.dictConfig(LOGGING)
