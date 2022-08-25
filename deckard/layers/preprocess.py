@@ -1,5 +1,5 @@
 
-
+import logging
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from deckard.base import Model, Data
