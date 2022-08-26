@@ -7,9 +7,9 @@ from sklearn.metrics import accuracy_score
 class testScorer(unittest.TestCase):
     def setUp(self):
         self.input_folder = '../data/'
-        self.predictions_file = '../data/adv/adversarial_predictions.json'
-        self.ground_truth_file = '../data/ben/predictions.json'
-        self.scores_file = '../data/ben/scores.json'
+        self.predictions_file = '../data/attacks/44237341343125383753414498103201859838/265329158026005788/adversarial_predictions.json'
+        self.ground_truth_file = '../data/control/predictions.json'
+        self.scores_file = '../data/control/scores.json'
         self.scorer_function = accuracy_score
         self.scorer_name = 'ACC'
     def test_scorer(self):
