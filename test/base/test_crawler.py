@@ -12,11 +12,11 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 class testCrawler(unittest.TestCase):
     def setUp(self):
         self.path = "../data/"
-        self.file = "../data/tmp_results.csv"
+        self.file = "tmp_results.csv"
         self.config = crawler_config
 
     def test_crawler(self):
-        crawler = Crawler(config = self.config, path = self.path, output = self.file)
+        crawler = Crawler(config = self.config)
         self.assertIsInstance(crawler, Crawler)
         self.assertIs(crawler.data, None)
         self.assertIsInstance(crawler.config, dict)
@@ -24,7 +24,7 @@ class testCrawler(unittest.TestCase):
         self.assertEqual(crawler.output, self.file)
     
     def test_crawl_folder(self):
-        c1 = Crawler(config = self.config, path = self.path, output = self.file)
+        c1 = Crawler(config = self.config)
         d1 = c1()
         self.assertIsInstance(d1, DataFrame)
         print(c1.output)
