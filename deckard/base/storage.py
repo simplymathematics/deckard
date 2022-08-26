@@ -29,7 +29,7 @@ class DiskstorageMixin(object):
         assert path is not None, "Path to save data must be specified."
         if not os.path.isdir(path) and not os.path.exists(path):
             os.mkdir(path)
-        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : hasattr(self, "ben_pred"), "has_scores" : hasattr(self, "scores"), "has_time_dict" : bool(self.time_dict)}
+        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit}
         self.params['Experiment']['experiment'] = self.filename
         self.params['Model']['experiment'] = self.filename
         self.params['Data']['experiment'] = self.filename
