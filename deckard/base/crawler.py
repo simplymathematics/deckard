@@ -16,7 +16,7 @@ crawler_config = {
     "schema" :  [
             'root', 'path', 'data', 'directory', 'layer', 'defence_id', 'attack_id'
         ],
-    "root" : '../data/',
+    "root" : '/data/',
 }
 logger = logging.getLogger(__name__)
 class Crawler():

@@ -153,7 +153,7 @@ class DiskstorageMixin(object):
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert hasattr(self, "time_dict"), "No time dictionary to save"
         time_file = os.path.join(path, filename)
-        time_results = Series(self.time_dict)
+        time_results = Series(self.time_dict, name = path.split(os.sep)[-1])
         time_results.to_json(time_file)
         assert os.path.exists(time_file), "Time dictionary file not saved"
         return None

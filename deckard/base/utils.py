@@ -34,9 +34,11 @@ def find_successes(input_folder, filename:str, dict_name:str = None):
                 files = os.listdir(os.path.join(input_folder, folder))
                 if 'scores.json' or 'adversarial_scores.json' in files:
                     if dict_name is not None:
-                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))[dict_name]
+                        with open(os.path.join(input_folder, folder, filename)) as f:
+                            model_params = json.load(f)[dict_name]
                     else:
-                        model_params = json.load(open(os.path.join(input_folder, folder, filename)))
+                        with open(os.path.join(input_folder, folder, filename)) as f:
+                            model_params = json.load(f)
                     model_name = model_params['name']
                     model_params = model_params['params']
                     successes.append((model_name, model_params))
@@ -46,9 +48,11 @@ def find_successes(input_folder, filename:str, dict_name:str = None):
                 files = os.listdir(input_folder)
                 if 'scores.json' or 'adversarial_scores.json' in files:
                     if dict_name is not None:
-                        model_params = json.load(open(os.path.join(input_folder, filename)))[dict_name]                       
+                        with open(os.path.join(input_folder, filename)) as f:
+                            model_params = json.load(f)[dict_name]                       
                     else:
-                        model_params = json.load(open(os.path.join(input_folder, filename)))
+                        with open(os.path.join(input_folder, filename)) as f:
+                            model_params = json.load(f)
                     if 'Name' in model_params.keys():
                         model_name = model_params['Name']
                     else:

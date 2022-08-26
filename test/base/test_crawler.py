@@ -11,8 +11,6 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 class testCrawler(unittest.TestCase):
     def setUp(self):
-        self.path = "../data/"
-        self.file = "results.json"
         self.config = crawler_config
 
     def test_crawler(self):
@@ -20,8 +18,6 @@ class testCrawler(unittest.TestCase):
         self.assertIsInstance(crawler, Crawler)
         self.assertIs(crawler.data, None)
         self.assertIsInstance(crawler.config, dict)
-        self.assertIsInstance(crawler.path, str)
-        self.assertEqual(crawler.result_file, self.file)
     
     def test_crawl_folder(self):
         c1 = Crawler(config = self.config)
