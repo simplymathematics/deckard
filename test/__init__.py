@@ -1,2 +1,2 @@
-from test import base
-from test import layers
+from base import *
+import layers
