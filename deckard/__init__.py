@@ -1,5 +1,5 @@
 from deckard import base, layers
-import logging
+import tempfile, logging, os
 # Semantic Version
 __version__ = "0.30"
 
@@ -16,16 +16,19 @@ LOGGING = {
     },
     "handlers": {
         "default": {
-            "class": "logging.NullHandler",
+            "class": "logging.FileHandler",
+            "filename":os.path.join(tempfile.gettempdir(), "deckard.log"),
+            "mode": "a",
+            
         },
         "test": {
             "class": "logging.StreamHandler",
             "formatter": "std",
-            "level": logging.INFO,
+            "level": logging.DEBUG,
         },
     },
     "loggers": {
-        "art": {"handlers": ["default"]},
+        "deckard": {"handlers": ["default"]},
         "tests": {"handlers": ["test"], "level": "DEBUG", "propagate": True},
     },
 }

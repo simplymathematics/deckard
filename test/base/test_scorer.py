@@ -1,15 +1,15 @@
-import warnings
+import warnings, logging, unittest, os
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import unittest
 from deckard.base import Scorer
 from sklearn.metrics import accuracy_score
+logger = logging.getLogger(__name__)
 class testScorer(unittest.TestCase):
     def setUp(self):
-        self.input_folder = './data/'
-        self.predictions_file = './data/attacks/44237341343125383753414498103201859838/265329158026005788/adversarial_predictions.json'
-        self.ground_truth_file = './data/control/predictions.json'
-        self.scores_file = './data/control/scores.json'
+        self.input_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data")
+        self.predictions_file = os.path.join(self.input_folder, 'attacks/44237341343125383753414498103201859838/265329158026005788/adversarial_predictions.json')
+        self.ground_truth_file = os.path.join(self.input_folder, 'control/predictions.json')
+        self.scores_file = os.path.join(self.input_folder, 'control/scores.json')
         self.scorer_function = accuracy_score
         self.scorer_name = 'ACC'
     def test_scorer(self):
@@ -61,6 +61,8 @@ class testScorer(unittest.TestCase):
         self.assertEqual(scorer.get_name(), self.scorer_name)
     
     def test_evaluate_function(self):
+        logger.debug(self.ground_truth_file, self.predictions_file)
+        logger.debug(os.path.dirname(os.path.realpath(__file__)))
         scorer = Scorer(name = self.scorer_name, score_function = self.scorer_function)
         score = scorer.evaluate_function(self.ground_truth_file, self.predictions_file)
         self.assertEqual(score, 0.1)
