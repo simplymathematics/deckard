@@ -10,7 +10,7 @@ crawler_config = {
         'attack_params', 'predictions', 'adversarial_predictions', 'adversarial_scores', 'scores', 
         'time_dict'
     ],
-    "filetypes" : ['json'],
+    "filetype" : 'json',
     "results" : 'tmp_results.csv',
     "status" : 'status.json',
     "schema" :  [
@@ -38,7 +38,7 @@ class Crawler():
             path = self.path
         data = {}
         for filename in self.config['filenames']:
-            json_file = os.path.join(path, filename + '.json')
+            json_file = os.path.join(path, filename + self.config['filetype'])
             if os.path.exists(json_file):
                 with open(json_file, 'r') as f:
                     datum = json.load(f)
@@ -142,7 +142,7 @@ class Crawler():
         for dir in data.keys():
             self.data[dir] = {}
             for filename in self.config['filenames']:
-                if os.path.isfile(os.path.join(dir, filename + '.json')):
+                if os.path.isfile(os.path.join(dir, filename + self.config['filetype'])):
                     value = data[dir][filename]
                     self.data[dir][filename] = value
         self.data = pd.DataFrame(self.data).T
