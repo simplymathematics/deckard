@@ -11,18 +11,20 @@ crawler_config = {
         'time_dict'
     ],
     "filetypes" : ['json'],
-    "output" : 'data.csv',
-    "path" :  [
+    "results" : 'tmp_results.csv',
+    "status" : 'status.json',
+    "schema" :  [
             'root', 'path', 'data', 'directory', 'layer', 'defence_id', 'attack_id'
         ],
+    "root" : '../data/',
 }
 logger = logging.getLogger(__name__)
 class Crawler():
-    def __init__(self, config, path, output):
+    def __init__(self, config):
         self.config = config
-        self.path = path
-        self.output = output
-        self.config = crawler_config
+        self.path = self.config['root']
+        self.output = self.config['results']
+        self.status = self.config['status']
         self.data = None
     
     def __call__(self, filetypes = ['csv']):
@@ -45,7 +47,10 @@ class Crawler():
             data[filename] = datum
         return data
     
-    def crawl_tree(self):
+    def _crawl_tree(self):
+        """
+        Crawls the tree and returns a dictionary of dataframes.
+        """
         data = {}
         tuples = os.walk(self.path)
         dir_list = [x[0] for x in tuples]
@@ -103,13 +108,16 @@ class Crawler():
         attack_data = attack_data.dropna(axis = 1)
         defense_data = defense_data.dropna(axis = 1)
         # # Explode params
-        # attack_data = self._explode_params(attack_data)
-        # defense_data = self._explode_params(defense_data)
-        # Parse attack data from path
+        attack_data = self._explode_params(attack_data)
+        defense_data = self._explode_params(defense_data)
+        # Drop duplicate columns
+        attack_data = attack_data.loc[:,~attack_data.columns.duplicated()]
+        defense_data = defense_data.loc[:,~defense_data.columns.duplicated()]
+        # Parse Attack data from path
         attack_paths = pd.Series(attack_data.index).str.split(os.sep)
         attack_paths = pd.DataFrame(attack_paths.values.tolist())
         no_cols = attack_paths.shape[1]
-        attack_paths.columns = self.config['path'][-no_cols:]
+        attack_paths.columns = self.config['schema'][-no_cols:]
         attack_data = attack_data.reset_index()
         attack_paths = attack_paths.reset_index()
         attack_data = pd.concat([attack_data, attack_paths], axis = 1)
@@ -117,21 +125,19 @@ class Crawler():
         defense_paths = pd.Series(defense_data.index).str.split(os.sep)
         defense_paths = pd.DataFrame(defense_paths.values.tolist())
         no_cols = defense_paths.shape[1]
-        defense_path_cols = self.config['path'][-no_cols:]
+        defense_path_cols = self.config['schema'][-no_cols:]
         defense_paths.columns = defense_path_cols
         defense_data.reset_index(inplace = True)
         defense_paths.reset_index(inplace = True)
         defense_data = pd.concat([defense_data, defense_paths], axis = 1)
-        # Drop duplicate columns
-        attack_data = attack_data.loc[:,~attack_data.columns.duplicated()]
-        defense_data = defense_data.loc[:,~defense_data.columns.duplicated()]
+        
         # Merge attack and defense data
         df = defense_data.merge(attack_data, on = 'defence_id', how = 'outer')
         df = df.drop([x for x in df.columns if '_y' in str(x)], axis = 1)
         df.columns = [str(x).replace("_x", "") for x in df.columns]
         df.columns = [str(x).replace("adversarial", "adv") for x in df.columns]
         return df
-    def clean_data(self, data):
+    def _clean_data(self, data):
         self.data = {}
         for dir in data.keys():
             self.data[dir] = {}
@@ -143,7 +149,7 @@ class Crawler():
         self.data = self._merge_data(self.data).drop('index', axis = 1)
         return self.data
 
-    def save_data(self, data:pd.DataFrame = None):
+    def _save_data(self, data:pd.DataFrame = None):
         try:
             filetype = self.output.split('.')[-1]
         except:
@@ -166,10 +172,10 @@ class Crawler():
     
     def __call__(self, path = None):
         if path is None:
-            data = self.crawl_tree()
+            data = self._crawl_tree()
         else:
-            data = self.crawl_tree(path)
-        data = self.clean_data(data)
+            data = self._crawl_tree(path)
+        data = self._clean_data(data)
         logger.debug("Saving file to {}".format(self.output))
-        self.save_data(data)
+        self._save_data(data)
         return self.data
