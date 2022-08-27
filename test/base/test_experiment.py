@@ -26,6 +26,7 @@ class testExperiment(unittest.TestCase):
         self.path = tempfile.mkdtemp()
         ART_DATA_PATH = self.path
         self.file = 'test_filename'
+        self.here = path.dirname(path.abspath(__file__))
 
     def test_experiment(self):
 
@@ -340,14 +341,14 @@ class testExperiment(unittest.TestCase):
         model2 = Model(estimator, model_type = 'sklearn', path = self.path, defence = defence)
         experiment2 = Experiment(data = data, model = model2, is_fitted = False)
         experiment.run(path = self.path)
-        experiment.set_defence(path.join(self.path,'defence_params.json'))
+        experiment.set_defence(path.join(self.here,'defence_params.json'))
         experiment.run(path = self.path)
         scores1 = experiment.scores
         experiment2.run(path = self.path)
         scores2 = experiment2.scores
         for key, value in scores1.items():
             self.assertTrue(scores1[key] != scores2[key])    
-        experiment.set_defence(path.join(self.path,'defence_params.json'))
+        experiment.set_defence(path.join(self.here,'defence_params.json'))
         experiment.run(path = self.path)
         scores3 = experiment.scores
         for key, value in scores3.items():
