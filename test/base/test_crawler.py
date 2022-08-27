@@ -1,6 +1,6 @@
 import warnings
 import unittest
-from deckard.base.crawler import Crawler, crawler_config
+from deckard.base.crawler import Crawler
 from os import path, remove
 from pandas import DataFrame
 from sklearn.exceptions import UndefinedMetricWarning
@@ -8,7 +8,22 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
-
+crawler_config = {
+    "filenames" : [
+        'data_params', 'defence_params', 'experiment_params', 'model_params',
+        'attack_params', 'predictions', 'adversarial_predictions', 'adversarial_scores', 'scores', 
+        'time_dict'
+    ],
+    "filetype" : 'json',
+    "results" : 'results.json',
+    "status" : 'status.json',
+    "scores_file" : 'scores.json',
+    "adversarial_scores_file" : 'adversarial_scores.json',
+    "schema" :  [
+            'root', 'path', 'data', 'directory', 'layer', 'defence_id', 'attack_id'
+        ],
+    "root" :  path.join(path.dirname(path.realpath(__file__)), ".../data/"),
+}
 class testCrawler(unittest.TestCase):
     def setUp(self):
         self.config = crawler_config
@@ -25,8 +40,8 @@ class testCrawler(unittest.TestCase):
         self.assertIsInstance(d1, dict)
         self.assertTrue(path.isfile(c1.result_file))
         self.assertTrue(path.isfile(c1.status_file))
-        remove(c1.result_file)
-        remove(c1.status_file)
+        # remove(c1.result_file)
+        # remove(c1.status_file)
 
     def tearDown(self):
         pass

@@ -1,6 +1,6 @@
-from pandas import Series, DataFrame
 import os, logging
 from pickle import dump
+from pandas import Series, DataFrame
 logger = logging.getLogger(__name__)
 
 
@@ -42,8 +42,8 @@ class DiskstorageMixin(object):
         assert os.path.exists(os.path.join(path, data_params_file)), "Data params not saved."
         assert os.path.exists(os.path.join(path, model_params_file)), "Model params not saved."
         assert os.path.exists(os.path.join(path, exp_params_file)), "Model params not saved."
-        if 'Defence' in model_params:
-            model_params['Defence']['experiment'] = self.filename
+        if 'Defence' in exp_params:
+            exp_params['Defence']['experiment'] = self.filename
             defence_params = Series(model_params['Defence'])
             defence_params.to_json(os.path.join(path, "defence_params.json"))
             assert os.path.exists(os.path.join(path, "defence_params.json")), "Defence params not saved."

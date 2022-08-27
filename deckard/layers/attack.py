@@ -54,14 +54,12 @@ if __name__ == '__main__':
         filename = str()
         output_folder = str()
         subdirectory = str()
-        # finding subdirectories, if there are any
+        # finding subdirectories, if there are any, then handles a bunch of
         if os.path.isdir(os.path.join(args.input_folder, filepath)):
             subdirectory = filepath
             filename = os.path.join(args.input_folder, subdirectory)
-            model_name = args.input_model
-            model_type = args.model_type
             output_folder = os.path.join(args.output_folder, subdirectory)
-            filename = os.path.join(filename, model_name)
+            filename = os.path.join(filename, args.input_model)
             logger.info("Loading model {}".format(filename))
             try:
                 model_object = Model(model =args.input_model, path = os.path.join(args.input_folder, filepath), model_type = args.model_type)
@@ -78,10 +76,8 @@ if __name__ == '__main__':
         # loading file otherwise
         elif os.path.isfile(os.path.join(args.input_folder, filepath)) and filepath == args.input_model:
             filename = args.input_folder
-            model_name = args.input_model
-            model_type = args.model_type
             output_folder = args.output_folder
-            filename = os.path.join(filename, model_name)
+            filename = os.path.join(filename, args.input_model)
             logger.info("Loading model {}".format(filename))
             try:
                 model_object = Model(model = args.input_model, path = args.input_folder, model_type = args.model_type)

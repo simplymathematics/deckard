@@ -1,23 +1,23 @@
 import logging, os, json, pickle
-import numpy as np
-# import pipeline from sklearn
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator
-from hashlib import md5 as my_hash
+from time import process_time
 from urllib.parse import urlparse as is_url
 from copy import deepcopy
+from hashlib import md5 as my_hash
+
+import numpy as np
+
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator
 from art.estimators.classification import PyTorchClassifier, TensorFlowClassifier, KerasClassifier, TensorFlowV2Classifier
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import is_classifier, is_regressor
-from typing import Callable, Union
 from deckard.base import Data
-from time import process_time
+from typing import Callable, Union
 
 logger = logging.getLogger(__name__)
-
 
 supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier, ScikitlearnRegressor, ScikitlearnEstimator, TensorFlowV2Classifier]
 

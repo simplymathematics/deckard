@@ -13,6 +13,8 @@ crawler_config = {
     "filetype" : 'json',
     "results" : 'results.json',
     "status" : 'status.json',
+    "scores_file" : 'scores.json',
+    "adversarial_scores_file" : 'adversarial_scores.json',
     "schema" :  [
             'root', 'path', 'data', 'directory', 'layer', 'defence_id', 'attack_id'
         ],
@@ -59,8 +61,8 @@ class Crawler():
         status = {}
         tuples = os.walk(self.path)
         dir_list = [x[0] for x in tuples]
-        good_dirs = [x for x in dir_list if "scores.json"  in os.listdir(x)]
-        adv_dirs = [x for x in dir_list if "adversarial_scores.json" in os.listdir(x)]
+        good_dirs = [x for x in dir_list if self.config["scores"]  in os.listdir(x)]
+        adv_dirs = [x for x in dir_list if self.config["adversarial_scores"] in os.listdir(x)]
         for dir in good_dirs:
             data[dir], status[dir] = self._crawl_folder(dir)
         for dir in adv_dirs:

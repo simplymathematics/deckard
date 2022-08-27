@@ -1,21 +1,16 @@
-import logging, yaml, json
-from sklearn.model_selection import ParameterGrid
-from sklearn.base import BaseEstimator
-import os
-import importlib
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from deckard.base import Experiment, Model, Data
-from deckard.base.utils import loggerCall
-from hashlib import md5 as my_hash  
+# Standard Library:
+import logging, yaml, json, pickle, os, importlib, shutil
 import pandas as pd
+from hashlib import md5 as my_hash  
 from uuid import uuid4
 
-import logging
-import pickle
-import os
-from deckard.base.model import Model
-from deckard.base.data import Data
+# Scikit-learn:
+from sklearn.model_selection import ParameterGrid
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
+
+# Adversarial Robustness Toolbox
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.defences.preprocessor import Preprocessor
@@ -23,12 +18,13 @@ from art.defences.postprocessor import Postprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
 from art.utils import get_file
-import shutil
-
-logger = loggerCall()
-
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (PyTorchClassifier, ScikitlearnEstimator, KerasClassifier, TensorFlowClassifier)
+
+# Deckard:
+from deckard.base import Experiment, Model, Data
+
+logger = logging.getLogger(__name__)
 class Generator():
     def __init__(self, config_file:str, root_path:str, result_path:str, config_path:str = "configs", **kwargs):
         """

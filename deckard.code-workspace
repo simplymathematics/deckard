@@ -7,5 +7,9 @@
 			"path": "../../../Home/staff/cmeyers/.art"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"python.testing.pytestEnabled": true,
+    	"python.testing.pytestPath": "${workspaceFolder}/deckard/test/",
+		"python.envFile": "${workspaceFolder}/.env"
+	}
 }
