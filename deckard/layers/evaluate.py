@@ -1,17 +1,11 @@
-from deckard.base import Data, Experiment, Model
-import os
+import os, logging, argparse
+from time import process_time
 from json import dump
-import logging 
+from deckard.base import Data, Experiment, Model
+
 logger = logging.getLogger(__name__)
 
-
 if __name__ == '__main__':
-    from time import process_time
-    start = process_time()
-    import argparse
-    import logging
-    
-
     # command line arguments
     parser = argparse.ArgumentParser(description='Evaluate a model')
     parser.add_argument('-f', '--folder', type=str, help='Folder containing the checkpoint.', required=True)
@@ -33,8 +27,6 @@ if __name__ == '__main__':
     logger.info('Evaluation took {} seconds.'.format(end - start))
     logger.info('Number of evaluated sample: {}'.format(len(experiment.data.y_test)))
     logger.info('Time per sample: {} seconds'.format(round((end - start) / len(experiment.data.y_test),3)))
-    if 'ROC_AUC' in experiment.scores:
-        del experiment.scores['ROC_AUC'] # ROC_AUC cannot be json serialized
     experiment.save_results( args.output)
     assert os.path.exists(args.output), '{} is not a valid file.'.format(args.output)
 
