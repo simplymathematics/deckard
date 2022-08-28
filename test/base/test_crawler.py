@@ -1,7 +1,5 @@
-import warnings
-import unittest
+import warnings, os, unittest
 from deckard.base.crawler import Crawler
-from os import path, remove
 from pandas import DataFrame
 from sklearn.exceptions import UndefinedMetricWarning
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -17,12 +15,16 @@ crawler_config = {
     "filetype" : 'json',
     "results" : 'results.json',
     "status" : 'status.json',
-    "scores_file" : 'scores.json',
+    "scores_files" : 'scores.json',
     "adversarial_scores_file" : 'adversarial_scores.json',
     "schema" :  [
             'root', 'path', 'data', 'directory', 'layer', 'defence_id', 'attack_id'
         ],
-    "root" :  path.join(path.dirname(path.realpath(__file__)), ".../data/"),
+    "structured" : ["defence_params", "attack_params", "adversarial_scores", "scores", "time_dict"],
+    "db" : {},
+    "root_folder" : os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/"),
+    "layers" : ['control', 'defences', 'attacks'],
+    "exclude" : [],
 }
 class testCrawler(unittest.TestCase):
     def setUp(self):
@@ -37,11 +39,10 @@ class testCrawler(unittest.TestCase):
     def test_crawl_folder(self):
         c1 = Crawler(config = self.config)
         d1 = c1()
-        self.assertIsInstance(d1, dict)
-        self.assertTrue(path.isfile(c1.result_file))
-        self.assertTrue(path.isfile(c1.status_file))
-        # remove(c1.result_file)
-        # remove(c1.status_file)
+        self.assertTrue(os.path.isfile(c1.result_file))
+        self.assertTrue(os.path.isfile(c1.status_file))
+        # os.remove(c1.result_file)
+        # os.remove(c1.status_file)
 
     def tearDown(self):
         pass
