@@ -217,7 +217,7 @@ class DiskstorageMixin(object):
         if hasattr(self, "adv_samples"):
             self.save_adversarial_samples(path = path)
         if hasattr(self, 'time_dict'):
-            self.save_time_dict(path = path)
+            self.save_time_dict(path = path, filename = 'adeversarial_time_dict.json')
         if 'Defence' in self.params:
             self.save_defence_params(path = path)
         if hasattr(self.model.model, 'cv_results_'):
