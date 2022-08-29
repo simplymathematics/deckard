@@ -1,6 +1,6 @@
 import os, json, logging, pickle
-from deckard.base.model import Model
-from deckard.base.data import Data
+from .model import Model
+from .data import Data
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.defences.preprocessor import Preprocessor

@@ -1,6 +1,4 @@
-# Create database to store all results
-import os
-# Using mongodb
+import os, logging, argparse, glob, yaml
 from pymongo import MongoClient
 logger = logging.getLogger(__name__)
 

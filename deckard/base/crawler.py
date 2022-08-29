@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import os, logging, json, yaml
-from deckard.base import Experiment, Model, Data
-from deckard.base.scorer import Scorer
+from .experiment import Experiment
+from .data import Data
+from .model import Model
+from .scorer import Scorer
 
 crawler_config = {
     "filenames" : [
@@ -55,16 +57,15 @@ class Crawler():
                 with open(json_file, 'r') as f:
                     datum = json.load(f)
                     stat = True
+                data[filename] = datum
             else:
                 stat = False
-                datum = None
-            data[filename] = datum
             status[filename] = stat
         return data, status
     
     def crawl_layer(self, path:str = None):
         """
-        Crawls the tree and returns a dictionary of dataframes.
+        Crawls the tree and returns a dictionary of dictionaries.
         """
         logging.info("Crawling layer: {}".format(path))
         if path is None:
@@ -105,15 +106,13 @@ class Crawler():
         for col in same:
             df1.drop(col, axis = 1, inplace = True)
         merge = df1.merge(df2, left_index = True, right_on = 'parent', how = 'outer')
-        try:
+        
+        if 'parent_x' in merge.columns:
             merge.drop('parent_x', axis = 1, inplace = True)
-        except KeyError:
-            pass
-        try:
+        if 'parent_y' in merge.columns:
             merge['parent'] = merge['parent_y']
             merge.drop('parent_y', axis = 1, inplace = True)
-        except KeyError:
-            pass
+
         return merge
 
     def crawl_tree(self, path = None):
@@ -133,8 +132,13 @@ class Crawler():
         return big_df, big_st
 
 
-    def save_data(self, data:pd.DataFrame, filename:str):
-        data.to_csv(filename, index = True, header = True, mode = 'w')
+    def save_data(self, data:pd.DataFrame, filename:str, filetype = 'csv'):
+        if filetype == 'csv':
+            data.to_csv(filename, index = True, header = True, mode = 'w')
+        elif filetype == 'json':
+            data.to_json(filename, orient = 'index', indent = 4)
+        elif filetype == 'db':
+            raise NotImplementedError("Saving to database not implemented")
 
     def __call__(self, path = None):
         if path is None:

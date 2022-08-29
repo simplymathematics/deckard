@@ -1,4 +1,4 @@
-from deckard import base, layers
+from . import base
 import tempfile, logging, os
 # Semantic Version
 __version__ = "0.30"

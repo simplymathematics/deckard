@@ -38,11 +38,16 @@ class testCrawler(unittest.TestCase):
     
     def test_crawl_folder(self):
         c1 = Crawler(config = self.config)
-        d1 = c1()
+        df, sf = c1()
         self.assertTrue(os.path.isfile(c1.result_file))
         self.assertTrue(os.path.isfile(c1.status_file))
-        # os.remove(c1.result_file)
-        # os.remove(c1.status_file)
+        self.assertTrue(os.stat(c1.status_file).st_size >= 0)
+        self.assertTrue(os.stat(c1.result_file).st_size >= 0)
+        self.assertIsInstance(df, DataFrame)
+        self.assertIsInstance(sf, DataFrame)
+        self.assertTrue(df.shape[0] >= 12 and df.shape[1] >= 11)
+        self.assertTrue(sf.shape[0] >= 12 and sf.shape[1] >= 11)
+
 
     def tearDown(self):
         pass

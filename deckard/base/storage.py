@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class DiskstorageMixin(object):
     def __init__(self):
         pass
-    def save_data(self, filename:str = "data.pkl", path:str = ".") -> None:
+    def save_data(self, filename:str = "data.pkl", prefix = None, path:str = ".") -> None:
         """
         Saves data to specified file.
         :param filename: str, name of file to save data to. 
@@ -19,7 +19,7 @@ class DiskstorageMixin(object):
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
         return None
     
-    def save_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", exp_params_file:str = "experiment_params.json", path:str = ".") -> None:
+    def save_params(self, data_params_file:str = "data_params.json", model_params_file:str = "model_params.json", exp_params_file:str = "experiment_params.json", prefix = None, path:str = ".") -> None:
         """
         Saves data to specified file.
         :param data_params_file: str, name of file to save data parameters to.
@@ -49,7 +49,7 @@ class DiskstorageMixin(object):
             assert os.path.exists(os.path.join(path, "defence_params.json")), "Defence params not saved."
         return None
 
-    def save_model(self, filename:str = "model", path:str = ".") -> str:
+    def save_model(self, filename:str = "model", prefix = None, path:str = ".") -> str:
         """
         Saves model to specified file (or subfolder).
         :param filename: str, name of file to save model to. 
@@ -60,7 +60,7 @@ class DiskstorageMixin(object):
         logger.info("Saving model to {}".format(os.path.join(path,filename)))
         self.model.save(filename = filename, path = path)
     
-    def save_predictions(self, filename:str = "predictions.json", path:str = ".") -> None:
+    def save_predictions(self, filename:str = "predictions.json", prefix = None, path:str = ".") -> None:
         """
         Saves predictions to specified file.
         :param filename: str, name of file to save predictions to. 
@@ -73,7 +73,6 @@ class DiskstorageMixin(object):
         results.to_json(prediction_file)
         assert os.path.exists(prediction_file), "Prediction file not saved"
         return None
-
     def save_adv_predictions(self, filename:str = "adversarial_predictions.json", path:str = ".") -> None:
         """
         Saves adversarial predictions to specified file.
@@ -86,8 +85,9 @@ class DiskstorageMixin(object):
         adv_results.to_json(adv_file)
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
+    
 
-    def save_cv_scores(self, filename:str = "cv_scores.json", path:str = ".") -> None:
+    def save_cv_scores(self, filename:str = "cv_scores.json", prefix = None, path:str = ".") -> None:
         """
         Saves crossvalidation scores to specified file.
         :param filename: str, name of file to save crossvalidation scores to.
@@ -100,7 +100,7 @@ class DiskstorageMixin(object):
         cv_results.to_json(cv_file)
         assert os.path.exists(cv_file), "CV results file not saved"
 
-    def save_scores(self, filename:str = "scores.json", path:str = ".") -> None:
+    def save_scores(self, filename:str = "scores.json", prefix = None, path:str = ".") -> None:
         """
         Saves scores to specified file.
         :param filename: str, name of file to save scores to.
@@ -144,7 +144,7 @@ class DiskstorageMixin(object):
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
 
-    def save_time_dict(self, filename:str = "time_dict.json", path:str = "."):
+    def save_time_dict(self, filename:str = "time_dict.json", prefix = None, path:str = "."):
         """
         Saves time dictionary to specified file.
         :param filename: str, name of file to save time dictionary to.
@@ -189,7 +189,8 @@ class DiskstorageMixin(object):
         assert os.path.exists(defence_file), "Defence file not saved."
         return None
 
-    def save_results(self, path:str = ".", scores_filename = 'scores.json') -> None:
+    
+    def save_results(self, prefix = None, path:str = ".", prefix = None, scores_filename = 'scores.json') -> None:
         """
         Saves all data to specified folder, using default filenames.
         """

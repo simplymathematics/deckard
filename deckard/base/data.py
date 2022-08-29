@@ -192,7 +192,7 @@ class Data(object):
         data_file: the data file to load
         """
         data_file = os.path.join(path, filename)
-        from deckard.base.data import Data
+        from .data import Data
         logger.debug("Loading data")
         # load the data
         with open(data_file, 'rb') as f:

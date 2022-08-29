@@ -1,5 +1,5 @@
 from deckard.base import Data
-from deckard.base.parse import parse_data_from_yml
+from .parse import parse_data_from_yml
 import logging, os, yaml, argparse
 from pickle import dump
 

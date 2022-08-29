@@ -2,8 +2,12 @@ import logging, yaml
 from sklearn.model_selection import ParameterGrid
 import os.path as path
 import importlib
-from deckard.base import Experiment, Model, Data
-from deckard.base.scorer import Scorer
+from .data import Data
+from .model import Model
+from .experiment import Experiment
+from .scorer import Scorer
+
+
 
 # specify the logger
 logger = logging.getLogger(__name__)

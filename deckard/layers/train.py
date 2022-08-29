@@ -1,8 +1,8 @@
 if __name__ == '__main__':
     import logging
     from deckard.base import Data
-    from deckard.base.parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
-    from deckard.base.utils import  save_all, save_best_only
+    from .parse import generate_object_list_from_tuple, generate_tuple_list_from_yml, generate_experiment_list
+    from .utils import  save_all, save_best_only
     from os import path, mkdir
     import argparse
     parser = argparse.ArgumentParser(description='Run a model on a dataset')
