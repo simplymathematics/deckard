@@ -48,7 +48,7 @@ if __name__ == '__main__':
     assert len(todos) <= len(yml_list)
     i = 0
     length = len(object_list)
-    while len(object_list) > 1:
+    while len(object_list) >= 1:
         defence = object_list.pop()
         i += 1
         logger.info("{} of {} experiments.".format(i, length))

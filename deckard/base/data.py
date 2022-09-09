@@ -42,22 +42,7 @@ class Data(object):
         if os.path.isfile(dataset) and not dataset.endswith(".csv") and not dataset.endswith(".txt"):
             filename = os.path.basename(dataset)
             path = os.path.dirname(dataset)
-            tmp = self.load_data(filename = filename, path = path)
-            self.random_state = tmp.random_state
-            self.train_size = tmp.train_size
-            self.test_size = tmp.test_size
-            self.shuffle = tmp.shuffle
-            self.stratify = tmp.stratify
-            self.time_series = tmp.time_series
-            self.dataset = tmp.dataset
-            self.target = tmp.target
-            self.dataset = tmp.dataset
-            self.params = tmp.params
-            self.X_train = tmp.X_train
-            self.X_test = tmp.X_test
-            self.y_train = tmp.y_train
-            self.y_test = tmp.y_test
-            del tmp
+            self = self.load_data(filename = filename, path = path)
         else:
             self.random_state = random_state
             self.train_size = train_size
@@ -67,7 +52,7 @@ class Data(object):
             self.dataset = dataset
             self.stratify = stratify
             self.test_size = test_size
-            self._choose_data(dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
+            self._sample_data(dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
             self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         
     def __hash__(self) -> str:
@@ -83,6 +68,25 @@ class Data(object):
         """
         return hash(str(self.params)) == hash(str(other.params))
 
+    def __str__(self) -> str:
+        """
+        Returns the human-readable string representation of the dataset
+        """
+        return str(self.params)
+    
+    def __repr__(self) -> str:
+        """
+        Returns the reproducible representation of the data object.
+        """
+        return "deckard.base.data.Data(dataset={}, target={}, time_series={}, train_size={}, random_state={}, shuffle={})".format(self.dataset, self.target, self.time_series, self.train_size, self.random_state, self.shuffle)
+    
+    def __iter__(self):
+        """
+        Iterates through the data object.
+        """
+        for key, value in self.params.items():
+            yield key, value
+    
     def get_params(self):
         """
         Returns the parameters of the data object.
@@ -101,8 +105,10 @@ class Data(object):
                 self.__dict__[key] = value
             else:
                 self.params[key] = value
+        self._sample_data(self.dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
+        self.params = {'dataset':self.dataset, 'target':self.target, 'time_series':self.time_series, 'train_size':self.train_size, 'random_state':self.random_state,  'shuffle':self.shuffle}
 
-    def _choose_data(self, dataset:str = 'mnist', target = None, stratify:bool = True) -> None:
+    def _sample_data(self, dataset:str = 'mnist', target = None, stratify:bool = True) -> None:
         """
         :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, diabetes, and an arbitrary csv. 
         :param target: The target column to use. If None, the last column is used.
@@ -192,14 +198,14 @@ class Data(object):
         data_file: the data file to load
         """
         data_file = os.path.join(path, filename)
-        from deckard.base.data import Data
+        from .data import Data
         logger.debug("Loading data")
         # load the data
         with open(data_file, 'rb') as f:
-            data = pickle.load(f)
-        assert isinstance(data, Data), "Data is not an instance of Data. It is type: {}".format(type(data))
+            self = pickle.load(f)
+        assert isinstance(self, Data), "Data is not an instance of Data. It is type: {}".format(type(self))
         logger.info("Loaded model")
-        return data
+        return self
     
     def save(self, filename:str, path:str=None) -> None:
         """

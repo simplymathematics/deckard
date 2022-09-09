@@ -1,6 +1,6 @@
 
 import logging
-from deckard.base.experiment import Experiment, Model, Data
+from .experiment import Experiment, Model, Data
 import os
 from art.estimators.classification import PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier
 from art.utils import get_file
@@ -14,7 +14,6 @@ if __name__ == '__main__':
     parser.add_argument('--input_model', type=str, default=None, help='Name of the model. Can be the name of a file or a URL.')
     parser.add_argument('--input_folder', type=str, default = ".", help='Folder where the model is located. Defaults to folder where the script is run.')
     parser.add_argument('--model_type', type=str, required = True, help='Type of the model')
-    parser.add_argument('--verbosity', type=int, default=10, help='Verbosity level')
     parser.add_argument('--dataset', type=str, required = True, help='Path to the dataset')
     # parser.add_argument('--scorer', type=str, required = True, help='Scorer for optimization')
     parser.add_argument('--output_folder', type=str, default=None, help='Path to the output folder')
@@ -33,7 +32,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
         os.mkdir(args.output_folder)
-    model_object = Model(model_type = 'tf1', path = args.output_folder, model = args.output_name, url = args.input_model)
+    model_object = Model(model_type = args.model_type, path = args.output_folder, model = args.output_name, url = args.input_model)
     # load dataset
     data = Data(args.dataset)
     # logger.info("Loaded dataset {}".format(args.dataset))

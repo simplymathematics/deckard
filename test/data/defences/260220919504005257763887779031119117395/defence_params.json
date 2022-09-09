@@ -1,0 +1,1 @@
+{"name":"<class 'art.defences.preprocessor.feature_squeezing.FeatureSqueezing'>","params":{"_is_fitted":true,"_apply_fit":false,"_apply_predict":true,"clip_values":[0,255],"bit_depth":4},"type":"preprocessor","experiment":"260220919504005257763887779031119117395"}

@@ -8,19 +8,19 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "numpy>=1.18.0,<1.23.0",
-    "scipy>=1.4.1",
-    "scikit-learn>=0.22.2,<1.1.0",
+    "numpy",
+    "scipy",
+    "scikit-learn",
     "six",
     "setuptools",
     "tqdm",
-    "numba>=0.53.1",
+    "numba",
     "pillow",
-    "georinex",
+    "wheel",
     "dvc",
-    "adversarial-robustness-toolbox>=1.6.2",
     "pandas",
     "PyYAML",
+    "pytest",
 ]
 
 docs_require = [
@@ -96,6 +96,7 @@ setup(
             "cma",
             "librosa",
             "opencv-python",
+            "tensorflow-gpu",
         ],
         "non_framework": [
             "matplotlib",

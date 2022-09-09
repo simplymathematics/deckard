@@ -2,7 +2,12 @@ import logging, yaml
 from sklearn.model_selection import ParameterGrid
 import os.path as path
 import importlib
-from deckard.base import Experiment, Model, Data
+from .data import Data
+from .model import Model
+from .experiment import Experiment
+from .scorer import Scorer
+
+
 
 # specify the logger
 logger = logging.getLogger(__name__)
@@ -117,6 +122,38 @@ def parse_data_from_yml(filename:str) -> dict:
     for param, value in params.items():
         logger.info(param + ": " + str(value))
     data = Data(data_name, **params)
+    assert isinstance(data, Data)
+    logger.info("{} successfully parsed.".format(filename))
+    return data
+
+def parse_scorer_from_yml(filename:str) -> dict:
+    assert isinstance(filename, str)
+    LOADER = yaml.FullLoader
+    # check if the file exists
+    params = dict()
+    if not path.isfile(str(filename)):
+        raise ValueError(str(filename) + " file does not exist")
+    # read the yml file
+    with open(filename, 'r') as stream:
+        try:
+            scorer_file = yaml.load(stream, Loader=LOADER)[0]
+            logger.info(scorer_file)
+            logger.info(type(scorer_file))
+        except yaml.YAMLError as exc:
+            raise ValueError("Error parsing yml file {}".format(filename))
+    # check that datas is a list
+    if not isinstance(scorer_file, dict):
+        raise ValueError("Error parsing yml file {}. It must be a yaml dictionary.".format(filename))
+    if 'scorer_function' in scorer_file:
+        params['scorer_function'] = scorer_file['scorer_function']
+    elif 'name' in scorer_file:
+        params['name'] = scorer_file['name']
+    else:
+        raise ValueError("Error parsing yml file {}. It must contain a scorer_function or a name.".format(filename))
+    logger.info(f"Parsing data from {filename}")
+    for param, value in params.items():
+        logger.info(param + ": " + str(value))
+    data = Scorer(**params)
     assert isinstance(data, Data)
     logger.info("{} successfully parsed.".format(filename))
     return data

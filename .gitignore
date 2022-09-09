@@ -30,6 +30,10 @@ deckard.egg-info/*
 *.pickle
 *.pb
 *.txt
+*.model
+*variables.index
+*variables.data*
+*model
 
 # windows stuff
 *.exe
@@ -44,7 +48,6 @@ deckard.egg-info/*
 .gitignore
 .coverage
 
-*model
 
 # package files
 build/
@@ -52,3 +55,8 @@ env/
 *.deb
 *.deb*
 *.egg
+test/*/pytest_report.html
+
+# include everything in the .github folder
+!.github/
+

@@ -1,43 +1,40 @@
-import numpy as np
-from sklearn import multiclass
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
-    mean_squared_error, r2_score, mean_absolute_percentage_error, explained_variance_score
-import logging
-from sklearn.base import is_regressor
-from sklearn.preprocessing import LabelBinarizer
-from collections.abc import Callable
-from hashlib import md5 as my_hash
-from deckard.base.model import Model
-from deckard.base.data import Data
-from deckard.base.storage import DiskstorageMixin
+import logging, os
+
+
+# Operating System
 from time import process_time
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score
-from sklearn.base import is_regressor
-from pandas import Series, DataFrame
-import os
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
+from json import dumps, load
+from pickle import dump
+from typing import Union
 from copy import deepcopy
+
+
+# Math Stuff
+import numpy as np
+from pandas import Series
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+from hashlib import md5 as my_hash
+from .model import Model
+from .data import Data
+from .storage import DiskstorageMixin
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from json import dumps, load
-from pickle import dump
-from typing import Union
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
+
 logger = logging.getLogger(__name__)
 
-# Default scorers
-REGRESSOR_SCORERS = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
-CLASSIFIER_SCORERS = {'F1' : f1_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_auc_score}
 
 # Create experiment object
 class Experiment(DiskstorageMixin):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, params:dict = {}, verbose : int = 1, scorers:dict = None, name:str = None, is_fitted:bool = False, defence = None, filename:str = None):
+    def __init__(self, data:Data, model:Model, verbose : int = 1, name:str = None, is_fitted:bool = False, filename:str = None):
         """
         Creates an experiment object
         :param data: Data object
@@ -47,33 +44,22 @@ class Experiment(DiskstorageMixin):
         :param scorers: Dictionary of scorers
         :param name: Name of experiment
         """
-        # assert isinstance(model, Model)
-        # assert isinstance(data, Data)
-        # assert isinstance(scorers, dict) or scorers is None
         self.model = model
         self.model_type = self.model.model_type
         self.data = data
-        self.name = self.data.dataset +"_"+ self.model.name if name is None else name
+        self.name = str(hash(self.data.dataset)) +"_"+ str(hash(model)) if name is None else name
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
         self.time_dict = None
-        self.scores = None
-        if not scorers:
-            self.scorers = REGRESSOR_SCORERS if (is_regressor(model.model.model) or is_regressor(model.model)) else CLASSIFIER_SCORERS
-        else:
-            self.scorers = scorers
-        self.refit = list(self.scorers.keys())[0]
-        for key in params.keys():
-            setattr(self, key, params[key])
         self.params = dict()
-        self.params['Model'] = self.model.params
-        self.params['Data'] = self.data.params
-        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'refit' : self.refit, "has_pred" : bool(self.predictions), "has_scores" : bool(self.scores), "has_time_dict" : bool(self.time_dict)}
+        self.params['Model'] = dict(model)
+        self.params['Data'] = dict(data)
         if filename is None:
             self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16))
         else:
             self.filename = filename
+        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'id': self.filename}
 
 
     def __hash__(self):
@@ -87,6 +73,25 @@ class Experiment(DiskstorageMixin):
         Returns true if two experiments are equal
         """
         return self.__hash__() == other.__hash__()
+    
+    def __str__(self) -> str:
+        """
+        Returns human-readable string representation of Experiment object.
+        """
+        return str({"Data": self.data, "Model": self.model, "Params": self.params})
+    
+    def __repr__(self) -> str:
+        """
+        Returns reproducible string representation of Experiment object.
+        """
+        return "deckard.base.experiment.Experiment({})".format(dumps(self.params, sort_keys = True))
+
+    def __iter__(self):
+        """
+        Returns an iterator over the experiment object
+        """
+        for key, value in self.params.items():
+            yield key, value
     
     def _build_model(self, **kwargs) -> None:
         """
@@ -109,85 +114,31 @@ class Experiment(DiskstorageMixin):
         return 
     
     
-    def _build_attack(self, targeted: bool = False, filename:str = None, **kwargs) -> None:
+    def set_filename(self, filename:str = None) -> None:
         """
-        Runs the attack on the model
+        Sets filename attribute.
         """
-        if not hasattr(self, 'time_dict') or self.time_dict is None:
-            self.time_dict = dict()
-        assert hasattr(self, 'attack'), "Attack not set"
-        start = process_time()
-        if "Patch" in str(type(self.attack)):
-            patches, masks = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
-            adv_samples = self.attack.apply_patch(self.data.X_test, scale = self.attack._attack.scale_max)
-        elif targeted == False:
-            adv_samples = self.attack.generate(self.data.X_test)
+        if filename is None:
+            self.filename = str(hash(self))
         else:
-            adv_samples = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
-        end = process_time()
-        self.time_dict['adv_fit_time'] = end - start
-        start = process_time()
-        adv = self.model.model.predict(adv_samples)
-        end = process_time()
-        self.adv = adv
-        self.adv_samples = adv_samples
-        self.time_dict['adv_pred_time'] = end - start
+            self.filename = filename
         return None
 
-    def run(self, model_name, path, filename = "scores.json", **kwargs) -> None:
+    def run(self, path, filename = "scores.json", **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
         if not os.path.isdir(path):
             os.mkdir(path)
+        
         self._build_model(**kwargs)
-        self.evaluate()
-        self.save_results(path = path)
         self.save_params(path = path)
+        model_name = str(hash(self.model))
         self.model.save(filename = model_name, path = path)
 
-    def run_attack(self, path, **kwargs):
-        """
-        Runs attack.
-        """
-        assert hasattr(self, 'attack')
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        self.save_attack_params(path = path)
-        self._build_attack(**kwargs)
-        self.evaluate_attack()
-        self.save_attack_results(path = path)
-        self.save_params(path = path)
-        return None
-        
-    def set_attack(self, attack:object, filename:str = None) -> None:
-        """
-        Adds an attack to an experiment
-        :param experiment: experiment to add attack to
-        :param attack: attack to add
-        """
-        attack_params = {}
-        for key, value in attack.__dict__.items():
-            if isinstance(value, int):
-                attack_params[key] = value
-            elif isinstance(value, float):
-                attack_params[key] = value
-            elif isinstance(value, str):
-                attack_params[key] = value
-            elif isinstance(value, Callable):
-                attack_params[key] = str(type(value))
-            else:
-                attack_params[key] = str(type(value))
-        assert isinstance(attack, object)
-        self.params['Attack'] = {'name': str(type(attack)), 'params': attack_params}
-        self.attack = attack
-        if filename is None:
-            self.filename = str(hash(self))
-        else:
-            self.filename = filename
-        self.params['Attack']['experiment'] = self.filename
-        return None
-
+    ####################################################################################################################
+    #                                                     DEFENSES                                                     #
+    ####################################################################################################################
     def set_defence(self, defence:Union[object,str]) -> None:
         """
         Adds a defence to an experiment
@@ -231,24 +182,6 @@ class Experiment(DiskstorageMixin):
             new_model.model.steps.insert(position, (name, preprocessor))
         self.model = new_model
    
-    def set_filename(self, filename:str = None) -> None:
-        """
-        Sets filename attribute.
-        """
-        if filename is None:
-            self.filename = str(hash(self))
-        else:
-            self.filename = filename
-        return None
-
-
-    def get_attack(self):
-        """
-        Returns the attack from an experiment
-        :param experiment: experiment to get attack from
-        """
-        return self.attack
-
     def get_defence(self, filename:str=None, path:str = "."):
         """
         Returns the defence from an experiment
@@ -277,86 +210,25 @@ class Experiment(DiskstorageMixin):
             else:
                 defence = None
         return defence
+    
+    def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
+        """
+        Saves defence params to specified file.
+        :param filename: str, name of file to save defence params to.
+        :param path: str, path to folder to save defence params. If none specified, defence params are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist"
         
-    def get_scorers(self):
-        """
-        Sets the scorer for an experiment
-        :param experiment: experiment to set scorer for
-        :param scorer: scorer to set
-        """
-        return self.scorers
-
-    def set_scorers(self, scorers:list) -> None:
-        """
-        Sets the scorer for an experiment
-        :param experiment: experiment to set scorer for
-        :param scorer: scorer to set
-        """
-        for scorer in scorers:
-            assert isinstance(scorer, Callable), "Scorer must be callable"
-        self.scorers = scorers
-        return None
-
-
-    def evaluate(self) -> None:
-        """
-        Sets scorers for evalauation if specified, returns a dict of scores in general.
-        """
-        assert hasattr(self, "predictions"), "Model needs to be built before evaluation. Use the .run method."
-        scores = {}
-        if len(self.data.y_test.shape) > 1:
-            self.data.y_test = np.argmax(self.data.y_test, axis=1)
-        if len(self.predictions.shape) > 1:
-            self.predictions = np.argmax(self.predictions, axis=1)
-        for scorer in self.scorers:
-            try:
-                scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
-            except ValueError as e:
-                if "average=" in str(e):
-                    scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average='weighted')
-                elif 'multi_class must be in' in str(e):
-                    y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-                    predictions = LabelBinarizer().fit(self.data.y_train).transform(self.predictions)
-                    scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
-                else:
-                    raise e
-            except AxisError as e:
-                y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-                predictions = LabelBinarizer().fit(self.data.y_train).transform(self.predictions)
-                scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
-        self.scores = scores
-        return None
-
-    def evaluate_attack(self) -> None:
-        """
-        Sets scorers for evalauation if specified, returns a dict of scores in general.
-        """
-        assert hasattr(self, "adv"), "Attack needs to be built before evaluation. Use the .run_attack method."
-        if len(self.data.y_test.shape) > 1:
-            self.data.y_test = np.argmax(self.data.y_test, axis=1)
-        if len(self.adv.shape) > 1:
-            self.adv = np.argmax(self.adv, axis=1)
-        scores = {}
-        for scorer in self.scorers:
-            try:
-                scores[scorer] = self.scorers[scorer](self.data.y_test, self.adv)
-            except ValueError as e:
-                if "average=" in str(e):
-                    scores[scorer] = self.scorers[scorer](self.data.y_test, self.adv, average='weighted')
-                elif "multi_class must be in" in str(e):
-                    y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-                    adv = LabelBinarizer().fit(self.data.y_train).transform(self.adv)
-                    scores[scorer] = self.scorers[scorer](y_test, adv, multi_class='ovr')
-                else:
-                    raise e
-            except AxisError as e:
-                y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-                adv = LabelBinarizer().fit(self.data.y_train).transform(self.adv)
-                scores[scorer] = self.scorers[scorer](y_test, adv, multi_class='ovr')
-        self.adv_scores = scores
+        defence_file = os.path.join(path, filename)
+        results = self.params['Defence']
+        results = Series(results.values(), name =  self.filename, index = results.keys())
+        results.to_json(defence_file)
+        assert os.path.exists(defence_file), "Defence file not saved."
         return None
     
     
+    
+
 
     
         

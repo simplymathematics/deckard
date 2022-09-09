@@ -15,7 +15,6 @@ if __name__ == '__main__':
     parser.add_argument('--input_model', type=str, default=None, help='Name of the model')
     parser.add_argument('--input_folder', type=str, default = ".", help='Path to the model')
     parser.add_argument('--model_type', type=str, default=None, help='Type of the model')
-    parser.add_argument('--verbosity', type=int, default=10, help='Verbosity level')
     parser.add_argument('--output_folder', type=str, required = True, help='Path to the output folder')
     parser.add_argument('--output_name', type=str, default=None, help='Name of the output file')
     parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')
@@ -55,14 +54,12 @@ if __name__ == '__main__':
         filename = str()
         output_folder = str()
         subdirectory = str()
-        # finding subdirectories, if there are any
+        # finding subdirectories, if there are any, then handles a bunch of
         if os.path.isdir(os.path.join(args.input_folder, filepath)):
             subdirectory = filepath
             filename = os.path.join(args.input_folder, subdirectory)
-            model_name = args.input_model
-            model_type = args.model_type
             output_folder = os.path.join(args.output_folder, subdirectory)
-            filename = os.path.join(filename, model_name)
+            filename = os.path.join(filename, args.input_model)
             logger.info("Loading model {}".format(filename))
             try:
                 model_object = Model(model =args.input_model, path = os.path.join(args.input_folder, filepath), model_type = args.model_type)
@@ -79,10 +76,8 @@ if __name__ == '__main__':
         # loading file otherwise
         elif os.path.isfile(os.path.join(args.input_folder, filepath)) and filepath == args.input_model:
             filename = args.input_folder
-            model_name = args.input_model
-            model_type = args.model_type
             output_folder = args.output_folder
-            filename = os.path.join(filename, model_name)
+            filename = os.path.join(filename, args.input_model)
             logger.info("Loading model {}".format(filename))
             try:
                 model_object = Model(model = args.input_model, path = args.input_folder, model_type = args.model_type)
