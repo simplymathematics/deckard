@@ -36,13 +36,14 @@ class Model(object):
         self.path = path
         self.url = url
         self.is_fitted = is_fitted
+        self.kwargs = kwargs
         if isinstance(model, str):
             self.filename = model
-            self.load(self.filename, **kwargs)
+            self.load(self.filename, **self.kwargs)
         elif isinstance(model, object):
             self.filename = str(type(model))
             self.model = model
-            self.load(model, **kwargs)
+            self.load(model, **self.kwargs)
         else:
             raise ValueError("Model must be a string or a callable")
         assert self.classifier or self.regressor, "Model is neither classifier nor regressor"
@@ -58,11 +59,30 @@ class Model(object):
         new_string = str(self.get_params())
         return int(my_hash(str(new_string).encode('utf-8')).hexdigest(), 36)
 
+    def __repr__(self) -> str:
+        """
+        Return the reproducible representation of the model.
+        """
+        return "deckard.base.model.Model(model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{})".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
+        
+    def __str__(self) -> str:
+        """
+        Return the human readable representation of the model.
+        """
+        return "{model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{}}".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
+
     def __eq__(self, other) -> bool:
         """
         Returns True if the models are equal, using the has of the params from __init__.
         """
         return self.__hash__() == other.__hash__()
+    
+    def __iter__(self):
+        """
+        Iterates through the data object.
+        """
+        for key, value in self.params.items():
+            yield key, value
     
     def _set_name(self, params):
         """
@@ -83,6 +103,7 @@ class Model(object):
         """
         assert params is not None, "Params must be specified"
         assert isinstance(params, dict), "Params must be a dictionary"
+        self.kwargs.update(params)
         for param, value in params.items():
             if hasattr(self.model.model, 'set_params') and param in self.model.model.get_params():
                 self.model.model.set_params(**{param : value})
@@ -159,7 +180,6 @@ class Model(object):
         else:
             self.params['Defence'] = {'name': None, 'params': None, 'type' : None}
 
-
     def load_from_string(self, filename:str) -> None:
         """
         Load a model from a pickle file.
@@ -201,14 +221,16 @@ class Model(object):
                 model = pickle.load(f)
         else:
             raise ValueError("Model type {} not supported".format(model_type))
-            logger.info("Loaded model")
+        logger.info("Loaded model")
         return model
     
-    def load(self, filename:str, **kwargs) -> None:
+    def load(self, filename:str, art:bool = True, **kwargs) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
         """
+        if len(kwargs) > 0:
+            assert art == True, "art must be True if kwargs are specified"
         logger.debug("Loading model")
         if not hasattr(self, 'model'):
             # load the model
@@ -221,16 +243,12 @@ class Model(object):
         self.set_defence_params()
         self._set_name(self.params)
         logger.info("Loaded model")
-        if self.classifier:
+        if self.classifier and art:
             self.initialize_art_classifier(**kwargs)
-        elif self.regressor:
+        elif self.regressor and art:
             self.initialize_art_regressor(**kwargs)
         self.is_supervised = self._is_supervised()
- 
-        
-       
-    
-    
+
     def _is_supervised(self)-> bool:
         """
         Returns true if supervised, false if unsupervised. 

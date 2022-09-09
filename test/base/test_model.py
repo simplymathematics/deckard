@@ -166,7 +166,18 @@ class testModel(unittest.TestCase):
         model.fit(data.X_train, data.y_train)
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
-
-
+        defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
+        model = Model(LinearRegression(), model_type = 'sklearn', defence = defence)
+        model.fit(data.X_train, data.y_train)
+        predictions = model.predict(data.X_test)
+        self.assertIsInstance(predictions, (list, np.ndarray))
+    
+    def test_str(self):
+        data = Data('iris', train_size = .8)
+        params = dict(data)
+        data2 = Data(**params)
+        self.assertEqual(data, data2)
+        self.assertDictEqual(dict(data), dict(data2))
+    
     def tearDown(self):
         shutil.rmtree(self.path)
