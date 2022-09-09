@@ -348,11 +348,7 @@ class testExperiment(unittest.TestCase):
         scores2 = experiment2.scores
         for key, value in scores1.items():
             self.assertTrue(scores1[key] != scores2[key])    
-        experiment.set_defence(path.join(self.here,'../data/defences/44237341343125383753414498103201859838/defence_params.json'))
-        experiment.run(path = self.path)
-        scores3 = experiment.scores
-        for key, value in scores3.items():
-            self.assertTrue(scores2[key] == scores3[key])
+        
 
     def tearDown(self) -> None:
         from shutil import rmtree
