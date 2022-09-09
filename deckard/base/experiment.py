@@ -17,9 +17,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 from hashlib import md5 as my_hash
-from deckard.base.model import Model
-from deckard.base.data import Data
-from deckard.base.storage import DiskstorageMixin
+from .model import Model
+from .data import Data
+from .storage import DiskstorageMixin
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer

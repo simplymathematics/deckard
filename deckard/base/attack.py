@@ -3,7 +3,9 @@ from pandas import Series, DataFrame
 from time import process_time
 from json import dumps
 from hashlib import md5 as my_hash
-from deckard.base import Data, Model, Experiment
+from .data import Data
+from .model import Model
+from .experiment import Experiment
 from typing import Callable
 ART_NUMPY_DTYPE = 'float32'
 class AttackExperiment(Experiment):

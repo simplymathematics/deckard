@@ -1,5 +1,6 @@
-from . import base
-import tempfile, logging, os
+from deckard import base, layers
+import tempfile, logging, os, warnings
+from sklearn.exceptions import UndefinedMetricWarning
 # Semantic Version
 __version__ = "0.30"
 
@@ -34,3 +35,8 @@ LOGGING = {
 }
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
+
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)

@@ -1,5 +1,5 @@
 import unittest, tempfile, os, shutil
-from deckard.base.data import Data
+from deckard.base import Data
 import numpy as np
 datasets = ['mnist', 'cifar10', 'iris']
 # TODO other datasets

@@ -13,8 +13,8 @@ from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
-from sklearn.base import is_classifier, is_regressor
-from deckard.base import Data
+from sklearn.base import is_regressor
+from .data import Data
 from typing import Callable, Union
 
 logger = logging.getLogger(__name__)

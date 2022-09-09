@@ -38,12 +38,6 @@ class Crawler():
         self.layers = self.config['layers']
         self.data = None
     
-    def __call__(self, filetypes = ['csv']):
-        data = self.crawl_tree()
-        data = self.clean_data(data)
-        self.save_data()
-        return self.data
-
     def crawl_folder(self, path = None):
         if path is None:
             path = self.path
@@ -72,19 +66,13 @@ class Crawler():
             path = self.path
         data = {}
         status = {}
+        i = 0 
         for root, dirs, files, there in os.fwalk(path):
+            root = os.path.join(path, root)
             for directory in dirs:
-                parents = os.path.relpath(root).split(os.sep)
-                depth =  len(parents)- len(os.path.relpath(path).split(os.sep))
-                if depth > 0:
-                    parent = parents[-1]
-                elif depth == 0:
-                    parent = parents[0]
-                else:
-                    parent = None
                 if any(f.endswith(self.filetype) for f in os.listdir(os.path.join(root, directory))):
                     data[directory], status[directory] = self.crawl_folder(os.path.join(root, directory))
-                    data[directory]['parent'] = parent;  status[directory]['parent'] = parent
+                    data[directory]['parent'] = root.split(os.sep)[-1]; status[directory]['parent'] = root.split(os.sep)[-1]
         return data, status
     
     
@@ -132,7 +120,9 @@ class Crawler():
         return big_df, big_st
 
 
-    def save_data(self, data:pd.DataFrame, filename:str, filetype = 'csv'):
+    def save_data(self, data:pd.DataFrame, filename:str, path = "."):
+        filetype = filename.split('.')[-1]
+        filename = os.path.join(path, filename)
         if filetype == 'csv':
             data.to_csv(filename, index = True, header = True, mode = 'w')
         elif filetype == 'json':
@@ -147,9 +137,9 @@ class Crawler():
             data, statuses = self.crawl_tree(path)
         # data = self._clean_data(data)
         logging.info("Saving file to {}".format(self.result_file))
-        self.save_data(data, self.result_file)
+        self.save_data(data, self.result_file, path = path)
         logging.info("Saving file to {}".format(self.status_file))
-        self.save_data(statuses, self.status_file)
+        self.save_data(statuses, self.status_file, path = path)
         self.data = data
         self.status = statuses
         return data, statuses

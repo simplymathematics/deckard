@@ -5,3 +5,4 @@ from .test_parse import testParse
 from .test_utils import testUtils
 from .test_crawler import testCrawler
 from .test_scorer import testScorer
+from .test_generator import testGenerator
