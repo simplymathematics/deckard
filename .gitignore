@@ -65,3 +65,5 @@ test/*/pytest_report.html
 !.github/
 !test/
 
+# the submodule
+adversarial-robustness-toolbox
