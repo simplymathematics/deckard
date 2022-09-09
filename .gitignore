@@ -55,6 +55,11 @@ env/
 *.deb
 *.deb*
 *.egg
+test/*/pytest_report.html
+
+# include everything in the .github folder
+!.github/
+
 
 # include everything in the .github folder
 !.github/
