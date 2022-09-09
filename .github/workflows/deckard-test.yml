@@ -36,7 +36,7 @@ jobs:
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test base folder with pytest
       run: |
-        pytest test
+        python -m pytest test
 #    - name: Test 'mnist' repo for TF support
 #      run: |
 #          cd deckard/examples/mnist
