@@ -257,13 +257,13 @@ class testExperiment(unittest.TestCase):
         experiment.save_predictions(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
-    def test_save_scores(self):
-        data = Data('iris', test_size = 30)
-        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
-        experiment.save_scores(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    # def test_save_scores(self):
+    #     data = Data('iris', test_size = 30)
+    #     model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
+    #     experiment = Experiment(data = data, model = model)
+    #     experiment.run(path = self.path)
+    #     experiment.save_scores(filename=self.file, path=self.path)
+    #     self.assertTrue(path.exists(path.join(self.path, self.file)))
 
     def test_save_adv_predictions(self):
         data = Data('iris', test_size = 30)
@@ -312,25 +312,25 @@ class testExperiment(unittest.TestCase):
         experiment.save_adversarial_samples(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
         
-    def test_save_results(self):
-        data = Data('iris', test_size = 30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
-        attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-        experiment.set_attack(attack)
-        experiment.run_attack(path = self.path)
-        experiment.save_results(path=self.path)
-        files = listdir(self.path)
-        self.assertTrue(path.exists(self.path))
-        # self.assertIn('model', files)
-        self.assertIn('predictions.json', files)
-        self.assertIn('scores.json', files)
-        self.assertIn('attack_params.json', files)
-        # self.assertIn('defence_params.json', files)
-        self.assertIn('model_params.json', files)
-        self.assertIn('data_params.json', files)
+    # def test_save_results(self):
+    #     data = Data('iris', test_size = 30)
+    #     estimator = DecisionTreeClassifier()
+    #     model = Model(estimator, model_type = 'sklearn', path = self.path)
+    #     experiment = Experiment(data = data, model = model)
+    #     experiment.run(path = self.path)
+    #     attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
+    #     experiment.set_attack(attack)
+    #     experiment.run_attack(path = self.path)
+    #     experiment.save_results(path=self.path)
+    #     files = listdir(self.path)
+    #     self.assertTrue(path.exists(self.path))
+    #     # self.assertIn('model', files)
+    #     self.assertIn('predictions.json', files)
+    #     self.assertIn('scores.json', files)
+    #     self.assertIn('attack_params.json', files)
+    #     # self.assertIn('defence_params.json', files)
+    #     self.assertIn('model_params.json', files)
+    #     self.assertIn('data_params.json', files)
     
     def test_set_defence(self):
         data = Data('iris', test_size = 30)
@@ -341,14 +341,14 @@ class testExperiment(unittest.TestCase):
         model2 = Model(estimator, model_type = 'sklearn', path = self.path, defence = defence)
         experiment2 = Experiment(data = data, model = model2, is_fitted = False)
         experiment.run(path = self.path)
-        experiment.set_defence(path.join(self.here,'defence_params.json'))
+        experiment.set_defence(path.join(self.here,'../data/defences/44237341343125383753414498103201859838/defence_params.json'))
         experiment.run(path = self.path)
         scores1 = experiment.scores
         experiment2.run(path = self.path)
         scores2 = experiment2.scores
         for key, value in scores1.items():
             self.assertTrue(scores1[key] != scores2[key])    
-        experiment.set_defence(path.join(self.here,'defence_params.json'))
+        experiment.set_defence(path.join(self.here,'../data/defences/44237341343125383753414498103201859838/defence_params.json'))
         experiment.run(path = self.path)
         scores3 = experiment.scores
         for key, value in scores3.items():
