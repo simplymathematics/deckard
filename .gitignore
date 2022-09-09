@@ -16,7 +16,7 @@
 # dvc nonsense
 */.dvc/cache/
 */.dvc/cache/*
-examples/*/.dvc/cache/
+examples/*/.dvc/cache/*
 
 
 
@@ -59,4 +59,9 @@ test/*/pytest_report.html
 
 # include everything in the .github folder
 !.github/
+
+
+# include everything in the .github folder
+!.github/
+!test/
 
