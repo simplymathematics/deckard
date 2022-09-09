@@ -22,6 +22,7 @@ if __name__ == '__main__':
     assert isinstance(model, Model), 'model is not a valid Model object.'
     experiment = Experiment(data = data, model = model)
     assert isinstance(experiment, Experiment), 'experiment is not a valid Experiment object.'
+    start = process_time()
     experiment.run(path = args.output)
     end = process_time()
     logger.info('Evaluation took {} seconds.'.format(end - start))

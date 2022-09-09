@@ -29,7 +29,6 @@ class testExperiment(unittest.TestCase):
         self.here = path.dirname(path.abspath(__file__))
 
     def test_experiment(self):
-
         data = Data('iris', test_size = 30)
         self.assertIsInstance(data, Data)
         model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
@@ -38,14 +37,10 @@ class testExperiment(unittest.TestCase):
         self.assertIsInstance(experiment, Experiment)
         self.assertIsInstance(experiment.data, Data)
         self.assertIsInstance(experiment.model, Model)
-        self.assertIsInstance(experiment.refit, str)
         self.assertIsInstance(experiment.params, dict)
-        self.assertIsInstance(experiment.scorers, dict)
         self.assertEqual(experiment.predictions, None)
-        self.assertEqual(experiment.scores, None)
         self.assertEqual(experiment.time_dict, None)
         self.assertEqual(experiment.model_type, 'sklearn')
-
 
     def test_hash(self):
         defence = FeatureSqueezing(bit_depth = 1, clip_values = (0, 1))
@@ -91,28 +86,6 @@ class testExperiment(unittest.TestCase):
         self.assertNotEqual(experiment, experiment4)
         self.assertNotEqual(experiment, experiment2)
 
-    def test_set_metric_scorer(self):
-        data = Data('iris', test_size = 30)
-        data2 = Data('iris', test_size = 30)
-        model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
-        model2 = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data2, model = model)
-        experiment2 = Experiment(data = data, model = model2)
-        experiment3 = Experiment(data = data, model = model2, scorers = {'accuracy': accuracy_score})
-        self.assertIsInstance(experiment.scorers, dict)
-        self.assertIsInstance(experiment2.scorers, dict)
-        self.assertIsInstance(experiment3.scorers, dict)
-        self.assertIn('MSE', experiment.scorers)
-        self.assertIn('accuracy', experiment3.scorers)
-        self.assertIn('F1', experiment2.scorers)
-        self.assertIsInstance(experiment3.scorers['accuracy'], Callable)
-        self.assertEqual(experiment3.scorers['accuracy'], accuracy_score)
-        self.assertNotEqual(experiment3.scorers, experiment.scorers)
-        self.assertNotEqual(experiment3.scorers, experiment2.scorers)
-
-
-    
-
     def test_run(self):
         data = Data('iris', test_size = 30)
         model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
@@ -120,7 +93,6 @@ class testExperiment(unittest.TestCase):
         experiment.run(path = self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIsInstance(experiment.scores, dict)
         self.assertIn('fit', experiment.time_dict)
         self.assertIn('predict', experiment.time_dict)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
@@ -130,26 +102,6 @@ class testExperiment(unittest.TestCase):
         self.assertIsInstance(experiment.time_dict, dict)
         self.assertIn('fit', experiment.time_dict)
         self.assertIn('predict', experiment.time_dict)
-        self.assertIsInstance(experiment.scores, dict)
-    
-    def test_run_attack(self):
-        data = Data('iris', test_size = 30)
-        model = DecisionTreeClassifier()
-        model = Model(model, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        # experiment.run(self.path)
-        attack = BoundaryAttack(experiment.model.model, targeted = False, max_iter = 10, verbose = False)
-        experiment.set_attack(attack)
-    
-        experiment.run(path = self.path)
-        experiment.run_attack(path = self.path)
-        self.assertIsInstance(experiment.attack, BoundaryAttack)
-        self.assertIsInstance(experiment.adv, (list, np.ndarray))
-        self.assertIsInstance(experiment.time_dict['adv_fit_time'], (int, float))
-        self.assertIsInstance(experiment.time_dict['adv_pred_time'], (int, float))
-        self.assertIsInstance(experiment.adv_scores, dict)
-
-
 
     def test_set_filename(self):
         data = Data('iris', test_size = 30)
@@ -158,73 +110,16 @@ class testExperiment(unittest.TestCase):
         experiment.set_filename('test_filename')
         self.assertEqual(experiment.filename, 'test_filename')
 
-    def test_set_attack(self):
-        data = Data('iris', test_size = 30)
-        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
-        old = hash(experiment)
-        old_name = experiment.filename
-        experiment.set_attack(attack)
-        new = hash(experiment)
-        new_name = experiment.filename
-        self.assertIsInstance(experiment.attack, object)
-        self.assertEqual(experiment.attack, attack)
-        self.assertIn('Attack', experiment.params)
-        self.assertIn('name', experiment.params['Attack'])
-        self.assertIn('params', experiment.params['Attack'])
-        self.assertNotEqual(old, new)
-        self.assertNotEqual(old_name, new_name)
-
-
-    
-    
-    def test_insert_sklearn_preprocessor(self):
-        preprocessor = SimpleImputer
-        preprocessor_params = {'strategy': 'mean'}
-        preprocessor = SimpleImputer(**preprocessor_params)
+    def test_save_cv_scores(self):
+        from sklearn.model_selection import GridSearchCV
         data = Data('iris', test_size = 30)
         estimator = DecisionTreeClassifier()
-        model = Model(estimator)
-        experiment = Experiment(data = data, model = model)
-        experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
-        experiment.run(path = self.path)
-        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
-        self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIsInstance(experiment.scores, dict)
-
-    def test_get_attack(self):
-        data = Data('iris', test_size = 30)
-        estimator = ScikitlearnClassifier(model = DecisionTreeClassifier())
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        attack = BoundaryAttack(estimator, targeted = False, max_iter=10, verbose = False)
-        experiment.set_attack(attack)
-        self.assertIsInstance(experiment.get_attack(), object)
-        self.assertEqual(experiment.get_attack(), attack)
-
-   
-    def test_evaluate(self):
-        data = Data('iris', test_size = 30)
-        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(self.path)
-        self.assertIsInstance(experiment.scores, dict)
-        self.assertIsInstance(list(experiment.scores.values())[0], (int, float))
-
-    def test_evaluate_attack(self):
-        data = Data('iris', test_size = 30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
+        grid = GridSearchCV(estimator, {'max_depth': [1, 2, 3, 4, 5]}, cv=3, return_train_score=True)
+        model = Model(grid, model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
         experiment.run(path = self.path)
-        attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-        experiment.set_attack(attack)
-        experiment.run_attack(path = self.path)
-        self.assertIsInstance(experiment.adv_scores, dict)
-        self.assertIsInstance(list(experiment.adv_scores.values())[0], (int, float))
-    
+        experiment.save_cv_scores(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(path.join(self.path, self.file)))
 
     def test_save_data(self):
         data = Data('iris', test_size = 30)
@@ -237,8 +132,7 @@ class testExperiment(unittest.TestCase):
         data = Data('iris', test_size = 30)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
-        experiment.save_params(data_params_file = self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        experiment.save_params(path=self.path)
         self.assertTrue(path.exists(path.join(self.path, 'model_params.json')))
 
     def test_save_model(self):
@@ -257,81 +151,23 @@ class testExperiment(unittest.TestCase):
         experiment.save_predictions(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
-    # def test_save_scores(self):
-    #     data = Data('iris', test_size = 30)
-    #     model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
-    #     experiment = Experiment(data = data, model = model)
-    #     experiment.run(path = self.path)
-    #     experiment.save_scores(filename=self.file, path=self.path)
-    #     self.assertTrue(path.exists(path.join(self.path, self.file)))
-
-    def test_save_adv_predictions(self):
-        data = Data('iris', test_size = 30)
-        model = DecisionTreeClassifier()
-        model = Model(model, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-        experiment.run(path = self.path)
-        experiment.set_attack(attack)
-        experiment.run_attack(path = self.path)
-        experiment.save_adv_predictions(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
-    
-    def test_save_attack(self):
-        data = Data('iris', test_size = 30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(self.path)
-        attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-        experiment.set_attack(attack)
-        experiment.save_attack_params(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
-
-
-    def test_save_cv_scores(self):
-        from sklearn.model_selection import GridSearchCV
-        data = Data('iris', test_size = 30)
-        estimator = DecisionTreeClassifier()
-        grid = GridSearchCV(estimator, {'max_depth': [1, 2, 3, 4, 5]}, cv=3, return_train_score=True)
-        model = Model(grid, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
-        experiment.save_cv_scores(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
-    
-    def test_save_adv_scores(self):
-        data = Data('iris', test_size = 30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type = 'sklearn', path = self.path)
-        experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
-        attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-        experiment.set_attack(attack)
-        experiment.run_attack(self.path)
-        experiment.save_adversarial_samples(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+    ####################################################################################################################
+    #                                                    DEFENSES                                                      #
+    ####################################################################################################################
         
-    # def test_save_results(self):
-    #     data = Data('iris', test_size = 30)
-    #     estimator = DecisionTreeClassifier()
-    #     model = Model(estimator, model_type = 'sklearn', path = self.path)
-    #     experiment = Experiment(data = data, model = model)
-    #     experiment.run(path = self.path)
-    #     attack = BoundaryAttack(experiment.model.model, targeted=False, max_iter=10, verbose = False)
-    #     experiment.set_attack(attack)
-    #     experiment.run_attack(path = self.path)
-    #     experiment.save_results(path=self.path)
-    #     files = listdir(self.path)
-    #     self.assertTrue(path.exists(self.path))
-    #     # self.assertIn('model', files)
-    #     self.assertIn('predictions.json', files)
-    #     self.assertIn('scores.json', files)
-    #     self.assertIn('attack_params.json', files)
-    #     # self.assertIn('defence_params.json', files)
-    #     self.assertIn('model_params.json', files)
-    #     self.assertIn('data_params.json', files)
-    
+    def test_insert_sklearn_preprocessor(self):
+        preprocessor = SimpleImputer
+        preprocessor_params = {'strategy': 'mean'}
+        preprocessor = SimpleImputer(**preprocessor_params)
+        data = Data('iris', test_size = 30)
+        estimator = DecisionTreeClassifier()
+        model = Model(estimator)
+        experiment = Experiment(data = data, model = model)
+        experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
+        experiment.run(path = self.path)
+        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
+        self.assertIsInstance(experiment.time_dict, dict)
+
     def test_set_defence(self):
         data = Data('iris', test_size = 30)
         estimator = DecisionTreeClassifier()
@@ -343,13 +179,11 @@ class testExperiment(unittest.TestCase):
         experiment.run(path = self.path)
         experiment.set_defence(path.join(self.here,'../data/defences/44237341343125383753414498103201859838/defence_params.json'))
         experiment.run(path = self.path)
-        scores1 = experiment.scores
         experiment2.run(path = self.path)
-        scores2 = experiment2.scores
-        for key, value in scores1.items():
-            self.assertTrue(scores1[key] != scores2[key])    
-        
-
+        pred1 = experiment.predictions
+        pred2 = experiment2.predictions
+        self.assertTrue(not np.array_equal(pred1, pred2))  
+    
     def tearDown(self) -> None:
         from shutil import rmtree
         rmtree(self.path)
