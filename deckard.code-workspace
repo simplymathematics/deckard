@@ -4,5 +4,9 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"yaml.schemas": {
+			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json": "file:///home/cmeyers/deckard/examples/mnist/configs/main_config.yml"
+		}
+	}
 }

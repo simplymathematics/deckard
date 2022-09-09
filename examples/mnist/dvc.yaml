@@ -29,7 +29,6 @@ stages:
     - data/data.pkl
     - data/defences/
     - configs/attack.yml
-    - ../../deckard/layers/attack.py
     outs:
     - data/attacks/:
         cache: true
