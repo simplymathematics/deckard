@@ -26,7 +26,7 @@ jobs:
       run: |
         git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
         cd adversarial-robustness-toolbox && python3 -m pip install .
-        python -m pip install pytest pandas pillow PyYayml ffmpeg
+        python -m pip install pytest pandas pillow PyYAML ffmpeg
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
