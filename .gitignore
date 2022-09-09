@@ -51,3 +51,4 @@ build/
 env/
 *.deb
 *.deb*
+*.egg

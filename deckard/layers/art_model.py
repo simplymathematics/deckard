@@ -7,62 +7,6 @@ from art.utils import get_file
 
 logger = logging.getLogger(__name__)
 
-def convert_to_art_classifier(output_name:str, model_path:str, model_type:str=None, output_folder:str = None,):
-    """
-    Load an ART model.
-    :param output_name: the name of the model
-    :param model_path: the path to the model
-    :param model_type: the type of the model
-    :param output_folder: the output folder to save the model to
-    :return: the loaded art model
-    
-    """
-
-    # disable eager execution
-    import tensorflow.compat.v1 as tfv1
-    tfv1.disable_eager_execution()
-
-    # Download/load model
-    assert model_type is not None, "model_type must be specified"
-    if 'http' in model_path:
-        # download model
-        model_path = get_file(filename = output_name, extract=False, path=output_folder, url=model_path, verbose = True)
-    elif not os.path.exists(os.path.join(model_path, output_name)):
-        raise FileNotFoundError("Model {} does not exist in {}".format(output_name, model_path))
-    else:
-        model_path = os.path.join(model_path, output_name)
-    # Define type for ART
-    if model_type == 'keras' or 'k':
-        from tensorflow.keras.models import load_model as keras_load_model
-        classifier_model = keras_load_model(model_path)
-        art_model = KerasClassifier( model=classifier_model)
-    elif model_type == 'tf' or 'tensorflow':
-        # load model
-        from tensorflow.keras.models import load_model as keras_load_model
-        classifier_model = keras_load_model(model_path)
-        art_model = TensorFlowClassifier( model=classifier_model)
-    elif model_type == 'tfv1' or 'tensorflowv1' or 'tf1':
-        import tensorflow.compat.v1 as tfv1
-        from tfv1.keras.models import load_model as keras_load_model
-        tfv1.disable_eager_execution()
-        classifier_model = keras_load_model(model_path)
-        art_model = KerasClassifier( model=classifier_model)
-    elif model_type == 'pytorch' or 'py':
-        # load model
-        from torch import load
-        classifier_model = load(model_path)
-        art_model = PyTorchClassifier( model=classifier_model)
-    elif model_type == 'sklearn' or 'sk':
-        # load model using pickle
-        from pickle import load
-        classifier_model = load(model_path)
-        art_model = SklearnClassifier( model=classifier_model)
-    else:
-        raise ValueError("Model type {} not supported".format(model_type))
-    return art_model
-
-
-
 if __name__ == '__main__':
     # arguments
     import argparse
@@ -75,25 +19,9 @@ if __name__ == '__main__':
     # parser.add_argument('--scorer', type=str, required = True, help='Scorer for optimization')
     parser.add_argument('--output_folder', type=str, default=None, help='Path to the output folder')
     parser.add_argument('--output_name', type=str, required = True, help='Name of the output file')
-    parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')
-    
+    parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')    
     # parse arguments
     args = parser.parse_args()
-    # set up logging
-    ART_DATA_PATH = os.path.join(args.output_folder)
-    # Create a logger
-    logger = logging.getLogger(__name__)
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Set logger level
-    logger.setLevel('DEBUG')
-    # Create stream handler
-    stream_handler = logging.StreamHandler()
-    # set formatting
-    stream_handler.setFormatter(formatter)
-    # Add handler to logger
-    logger.addHandler(stream_handler)
 
     if args.output_name == None:
         # uuid for model name
