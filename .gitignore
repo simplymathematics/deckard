@@ -16,7 +16,7 @@
 # dvc nonsense
 */.dvc/cache/
 */.dvc/cache/*
-examples/*/.dvc/cache/
+examples/*/.dvc/cache/*
 
 
 
@@ -55,8 +55,8 @@ env/
 *.deb
 *.deb*
 *.egg
-test/*/pytest_report.html
 
 # include everything in the .github folder
 !.github/
+!test/
 
