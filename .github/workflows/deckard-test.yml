@@ -27,6 +27,7 @@ jobs:
       run: |
         git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
         cd adversarial-robustness-toolbox && python -m pip install .
+        python -m pip install pytest
         python -m pip install --editable .
     - name: Lint with flake8
       run: |
