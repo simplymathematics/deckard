@@ -18,13 +18,9 @@ if __name__ == '__main__':
     # parser.add_argument('--scorer', type=str, required = True, help='Scorer for optimization')
     parser.add_argument('--output_folder', type=str, default=None, help='Path to the output folder')
     parser.add_argument('--output_name', type=str, required = True, help='Name of the output file')
-    parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')
-    
+    parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')    
     # parse arguments
     args = parser.parse_args()
-    ART_DATA_PATH = os.path.join(args.output_folder)
-    # Create a logger
-    logger = logging.getLogger(__name__)
 
     if args.output_name == None:
         # uuid for model name

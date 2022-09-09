@@ -105,10 +105,10 @@ stages:
     deps:
     - path: ../../deckard/base/data.py
       md5: b1e94fb82e31b108257eaa7754562892
-      size: 10430
+      size: 10211
     - path: configs/prepare.yml
       md5: 9221ba95eb25413927a6c7f6fde5b5f4
-      size: 112
+      size: 107
     outs:
     - path: data/data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
@@ -124,8 +124,8 @@ stages:
       size: 5050192
     outs:
     - path: data/control/
-      md5: 4ce73eb33fc5a9d995b380b043aea91b.dir
-      size: 32963817
+      md5: 47b8b4d00778746045b7348d4bd862db.dir
+      size: 32963764
       nfiles: 8
   defend:
     cmd: CUDA_VISIBLE_DEVICES=3 python ../../deckard/layers/defend.py --input_model
@@ -136,17 +136,17 @@ stages:
       md5: ca3d4b313008affb0fed5921c1d92fe5
       size: 1232
     - path: data/control/
-      md5: 4ce73eb33fc5a9d995b380b043aea91b.dir
-      size: 32963817
+      md5: 47b8b4d00778746045b7348d4bd862db.dir
+      size: 32963764
       nfiles: 8
     - path: data/data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
     outs:
     - path: data/defences/
-      md5: 8986ecc37d60df769360fd5ca21bddc6.dir
-      size: 143372075
-      nfiles: 40
+      md5: 53b84c6298e0e16a79541d174c70310e.dir
+      size: 141814635
+      nfiles: 44
   attack:
     cmd: CUDA_VISIBLE_DEVICES=0 python ../../deckard/layers/attack.py --input_model
       "defended_model" --input_folder "data/defences/" --model_type "tf1" --data_file
@@ -162,11 +162,11 @@ stages:
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
     - path: data/defences/
-      md5: 8986ecc37d60df769360fd5ca21bddc6.dir
-      size: 143372075
-      nfiles: 40
+      md5: 53b84c6298e0e16a79541d174c70310e.dir
+      size: 141814635
+      nfiles: 44
     outs:
     - path: data/attacks/
-      md5: 41b0e05dd9de0bfba37149c011a7b60f.dir
-      size: 244684207
-      nfiles: 144
+      md5: 00f386c8f9f7c0ca33c335a0c64b06f2.dir
+      size: 240889809
+      nfiles: 156

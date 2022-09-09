@@ -36,7 +36,6 @@ if __name__ == '__main__':
         os.path.mkdir(args.output_folder)
     # load dataset
     data = Data(args.data_file, train_size = 100)
-
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
@@ -49,7 +48,7 @@ if __name__ == '__main__':
     assert len(todos) <= len(yml_list)
     i = 0
     length = len(object_list)
-    while len(object_list) > 0:
+    while len(object_list) >= 1:
         defence = object_list.pop()
         i += 1
         logger.info("{} of {} experiments.".format(i, length))
@@ -74,12 +73,6 @@ if __name__ == '__main__':
             try:
                 experiment.run(path = output_folder)
                 logger.info("Experiment complete.")
-                if args.output_name is None:
-                    args.output_name = "defended_model"
-                logger.info("Saving experiment to {}.".format(output_folder))
-                # Save model
-                experiment.model.model.save(filename = args.output_name, path = output_folder)
-                logger.info("Experiment saved.")
             except Exception as e:
                 # raise e
                 logger.error("Experiment {} failed. Error: {}".format(experiment.filename, e))

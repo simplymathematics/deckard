@@ -142,7 +142,7 @@ class Experiment(DiskstorageMixin):
         self.time_dict['adv_pred_time'] = end - start
         return None
 
-    def run(self, path, filename = "scores.json", **kwargs) -> None:
+    def run(self, model_name, path, filename = "scores.json", **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
@@ -152,6 +152,7 @@ class Experiment(DiskstorageMixin):
         self.evaluate()
         self.save_results(path = path)
         self.save_params(path = path)
+        self.model.save(filename = model_name, path = path)
 
     def run_attack(self, path, **kwargs):
         """
@@ -362,6 +363,8 @@ class Experiment(DiskstorageMixin):
                 scores[scorer] = self.scorers[scorer](y_test, adv, multi_class='ovr')
         self.adv_scores = scores
         return None
+    
+    
 
     
         
