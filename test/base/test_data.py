@@ -1,6 +1,7 @@
 import unittest, tempfile, os, shutil
 from deckard.base.data import Data
-datasets = ['mnist', 'cifar10']
+import numpy as np
+datasets = ['mnist', 'cifar10', 'iris']
 # TODO other datasets
 class testData(unittest.TestCase):
 
@@ -9,7 +10,6 @@ class testData(unittest.TestCase):
         self.path = tempfile.mkdtemp()
         self.data = Data('mnist')
        
-
     def test_init(self):
         """
         Validates data object.
@@ -60,13 +60,16 @@ class testData(unittest.TestCase):
         self.assertEqual(data.params['dataset'], 'mnist')
         data.set_params({'dataset': 'cifar10'})
         self.assertEqual(data.dataset, 'cifar10')
-        data.set_params({'foo': 'bar'})
-        self.assertEqual(data.params['foo'], 'bar')
-
-    def test_choose_data(self):
+        set1 = set(np.argmax(data.y_train, axis = 1))
+        data.set_params({'dataset': 'iris'})
+        self.assertEqual(data.params['dataset'], 'iris')
+        set2 = set(np.argmax(data.y_train, axis = 1))
+        self.assertNotEqual(set1, set2)
+        
+    def test_sample_data(self):
         data = Data('mnist', random_state = 220)
         old = str(data.X_train)
-        data._choose_data('cifar10')
+        data._sample_data('cifar10')
         new = str(data.X_train)
         self.assertEqual(data.dataset, 'cifar10')
         self.assertNotEqual(old, new)
@@ -85,6 +88,12 @@ class testData(unittest.TestCase):
         data = Data('iris')
         data.save(filename = self.filename, path = self.path)
         self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
+        
+    def test_rpr_(self):
+        data = Data('iris')
+        default_dict = {'dataset': 'iris', 'target': None, 'time_series': False, 'train_size': 100, 'random_state': 0, 'shuffle': True}
+        second_dict = dict(data)
+        self.assertDictEqual(default_dict, second_dict)
     
     def tearDown(self):
         shutil.rmtree(self.path)
