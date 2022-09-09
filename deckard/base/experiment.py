@@ -11,19 +11,11 @@ from copy import deepcopy
 
 # Math Stuff
 import numpy as np
-from sklearn import multiclass
-from sklearn.base import is_regressor
+from pandas import Series
 from sklearn.pipeline import Pipeline
-from sklearn.base import is_regressor, BaseEstimator, TransformerMixin
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
-    mean_squared_error, r2_score, mean_absolute_percentage_error, explained_variance_score
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score, \
-    balanced_accuracy_score, accuracy_score, precision_score, recall_score, roc_auc_score
+from sklearn.base import BaseEstimator, TransformerMixin
 
-# For typing
-from pandas import Series, DataFrame
-from collections.abc import Callable
+
 from hashlib import md5 as my_hash
 from deckard.base.model import Model
 from deckard.base.data import Data
@@ -36,10 +28,6 @@ DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 
 logger = logging.getLogger(__name__)
 
-
-# Default scorers
-REGRESSOR_SCORERS = {'MAPE': mean_absolute_percentage_error, "MSE" : mean_squared_error, 'MAE': mean_absolute_error,  "R2" : r2_score, "EXVAR" : explained_variance_score}
-CLASSIFIER_SCORERS = {'F1' : f1_score, 'ACC' : accuracy_score, 'PREC' : precision_score, 'REC' : recall_score,'AUC': roc_auc_score}
 
 # Create experiment object
 class Experiment(DiskstorageMixin):
@@ -59,7 +47,7 @@ class Experiment(DiskstorageMixin):
         self.model = model
         self.model_type = self.model.model_type
         self.data = data
-        self.name = self.data.dataset +"_"+ self.model.name if name is None else name
+        self.name = str(hash(self.data.dataset)) +"_"+ str(hash(model)) if name is None else name
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
@@ -90,7 +78,7 @@ class Experiment(DiskstorageMixin):
         """
         Returns human-readable string representation of Experiment object.
         """
-        return dumps({"Data": self.data, "Model": self.model, "Params": self.params}, sort_keys = True)
+        return str({"Data": self.data, "Model": self.model, "Params": self.params})
     
     def __repr__(self) -> str:
         """
@@ -237,57 +225,7 @@ class Experiment(DiskstorageMixin):
         results.to_json(defence_file)
         assert os.path.exists(defence_file), "Defence file not saved."
         return None
-    ####################################################################################################################
-    #                                                     Evaluation                                                   #
-    ####################################################################################################################
-    # def get_scorers(self):
-    #     """
-    #     Sets the scorer for an experiment
-    #     :param experiment: experiment to set scorer for
-    #     :param scorer: scorer to set
-    #     """
-    #     return self.scorers
-
-    # def set_scorers(self, scorers:list) -> None:
-    #     """
-    #     Sets the scorer for an experiment
-    #     :param experiment: experiment to set scorer for
-    #     :param scorer: scorer to set
-    #     """
-    #     for scorer in scorers:
-    #         assert isinstance(scorer, Callable), "Scorer must be callable"
-    #     self.scorers = scorers
-    #     return None
-
-
-    # def evaluate(self) -> None:
-    #     """
-    #     Sets scorers for evalauation if specified, returns a dict of scores in general.
-    #     """
-    #     assert hasattr(self, "predictions"), "Model needs to be built before evaluation. Use the .run method."
-    #     scores = {}
-    #     if len(self.data.y_test.shape) > 1:
-    #         self.data.y_test = np.argmax(self.data.y_test, axis=1)
-    #     if len(self.predictions.shape) > 1:
-    #         self.predictions = np.argmax(self.predictions, axis=1)
-    #     for scorer in self.scorers:
-    #         try:
-    #             scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions)
-    #         except ValueError as e:
-    #             if "average=" in str(e):
-    #                 scores[scorer] = self.scorers[scorer](self.data.y_test, self.predictions, average='weighted')
-    #             elif 'multi_class must be in' in str(e):
-    #                 y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-    #                 predictions = LabelBinarizer().fit(self.data.y_train).transform(self.predictions)
-    #                 scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
-    #             else:
-    #                 raise e
-    #         except AxisError as e:
-    #             y_test = LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-    #             predictions = LabelBinarizer().fit(self.data.y_train).transform(self.predictions)
-    #             scores[scorer] = self.scorers[scorer](y_test, predictions, multi_class='ovr')
-    #     self.scores = scores
-    #     return None
+    
     
     
 

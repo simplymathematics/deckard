@@ -8,17 +8,9 @@ import unittest
 from deckard.base import Data, Model, AttackExperiment
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import  KNeighborsClassifier, KNeighborsRegressor
-from sklearn.impute import SimpleImputer
-from copy import deepcopy
-from collections.abc import Callable
+
 from art.attacks.evasion import BoundaryAttack
-from art.defences.preprocessor import FeatureSqueezing
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from art.defences.preprocessor import FeatureSqueezing
-from art.defences.postprocessor import HighConfidence
 from os import path, listdir
 class testAttackExperiment(unittest.TestCase):
     def setUp(self):
