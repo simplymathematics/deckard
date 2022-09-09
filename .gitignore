@@ -33,6 +33,7 @@ deckard.egg-info/*
 *.model
 *variables.index
 *variables.data*
+*model
 
 # windows stuff
 *.exe

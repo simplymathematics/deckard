@@ -9,13 +9,13 @@ from sklearn.tree import DecisionTreeClassifier
 logger = logging.getLogger(__name__)
 class testScorer(unittest.TestCase):
     def setUp(self):
-        self.input_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data")
-        self.predictions_file = os.path.join(self.input_folder, 'attacks/44237341343125383753414498103201859838/265329158026005788/adversarial_predictions.json')
-        self.ground_truth_file = os.path.join(self.input_folder, 'control/predictions.json')
-        self.scores_file = os.path.join(self.input_folder, 'control/scores.json')
+        self.input_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"data")
+        self.predictions_file = os.path.join(self.input_folder, 'attacks' , '44237341343125383753414498103201859838','265329158026005788', 'adversarial_predictions.json')
+        self.ground_truth_file = os.path.join(self.input_folder, 'control', 'predictions.json')
+        self.scores_file = os.path.join(self.input_folder, 'control' ,'scores.json')
         self.scorer = accuracy_score
         self.scorer_name = 'ACC'
-        self.path = os.path.join(self.input_folder, 'tmp/')
+        self.path = os.path.join(self.input_folder, 'tmp')
     
     def test_scorer(self):
         scorer = Scorer(name = self.scorer_name, scorers = self.scorer)

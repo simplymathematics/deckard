@@ -22,7 +22,7 @@ crawler_config = {
         ],
     "structured" : ["defence_params", "attack_params", "adversarial_scores", "scores", "time_dict"],
     "db" : {},
-    "root_folder" : os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/"),
+    "root_folder" : os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "data"),
     "layers" : ['control', 'defences', 'attacks'],
     "exclude" : [],
 }

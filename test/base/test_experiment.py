@@ -177,7 +177,7 @@ class testExperiment(unittest.TestCase):
         model2 = Model(estimator, model_type = 'sklearn', path = self.path, defence = defence)
         experiment2 = Experiment(data = data, model = model2, is_fitted = False)
         experiment.run(path = self.path)
-        experiment.set_defence(path.join(self.here,'../data/defences/44237341343125383753414498103201859838/defence_params.json'))
+        experiment.set_defence(path.join(self.here,'..', 'data', 'defences' ,'44237341343125383753414498103201859838' ,'defence_params.json'))
         experiment.run(path = self.path)
         experiment2.run(path = self.path)
         pred1 = experiment.predictions

@@ -67,7 +67,7 @@ class Crawler():
         data = {}
         status = {}
         i = 0 
-        for root, dirs, files, there in os.fwalk(path):
+        for root, dirs, files in os.walk(path):
             root = os.path.join(path, root)
             for directory in dirs:
                 if any(f.endswith(self.filetype) for f in os.listdir(os.path.join(root, directory))):
