@@ -25,14 +25,14 @@ class testUtils(unittest.TestCase):
         self.experiment = Experiment(self.data, self.model)
         self.experiment2 = Experiment(self.data, self.model2)
         self.experiment3 = Experiment(self.data, self.model3)
-        self.experiment.run(self.path)
+        self.experiment(self.path)
         self.experiment.save_model(filename = 'model', path = self.path)
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
         self.list = [(self.experiment.name, self.experiment.params), (self.experiment2.name, self.experiment2.params)]
     
     def test_find_successes(self):
         self.experiment = Experiment(self.data, self.model)
-        self.experiment.run(self.path)
+        self.experiment(self.path)
         self.experiment.save_params(path = self.path)
         self.experiment.save_model(filename = 'model.pickle', path = self.path)
         successes, failures = find_successes(self.path, 'model_params.json')
@@ -41,7 +41,7 @@ class testUtils(unittest.TestCase):
     
     def test_remove_successes_from_queue(self):
         self.experiment = Experiment(self.data, self.model)
-        self.experiment.run(self.path)
+        self.experiment(self.path)
         self.experiment.save_params(path = self.path)
         self.experiment.save_model(filename = 'model.pickle', path = self.path)
         successes, failures = find_successes(self.path, 'model_params.json')

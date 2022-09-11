@@ -129,7 +129,7 @@ class AttackExperiment(Experiment):
         if hasattr(self, "adv_samples"):
             self.save_attack_samples(path = path)
         if hasattr(self, 'time_dict'):
-            self.save_time_dict(path = path, filename = 'adversarial_time_dict.json')
+            self.save_time_dict(path = path, filename = 'attack_time_dict.json')
         if 'Defence' in self.params:
             self.save_defence_params(path = path)
         if hasattr(self.model.model, 'cv_results_'):

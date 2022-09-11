@@ -55,7 +55,7 @@ class DiskstorageMixin(object):
             filename = prefix + "_" + filename
         assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
         logger.info("Saving model to {}".format(os.path.join(path,filename)))
-        self.model.save(filename = filename, path = path)
+        self.model.save_model(filename = filename, path = path)
     
     def save_predictions(self, filename:str = "predictions.json", prefix = None, path:str = ".") -> None:
         """

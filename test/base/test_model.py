@@ -71,12 +71,12 @@ class testModel(unittest.TestCase):
 
     def test_save_model(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn', path = self.path)
-        filename = model1.save(path = self.path, filename = self.file)
+        filename = model1.save_model(path = self.path, filename = self.file)
         self.assertTrue(os.path.exists(filename+".pickle"))
 
     def test_load(self):
         model = Model(LogisticRegression(), model_type = 'sklearn', path = self.path)
-        path = model.save(filename = 'model', path = self.path)
+        path = model.save_model(filename = 'model', path = self.path)
         filename = os.path.basename(path) + ".pickle"
         path = os.path.dirname(path)
         model2 = Model(path = path, model = filename, model_type = 'sklearn')
@@ -84,7 +84,7 @@ class testModel(unittest.TestCase):
 
         defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = defence, path = self.path)
-        path = model.save(filename = 'model', path = self.path)
+        path = model.save_model(filename = 'model', path = self.path)
         filename = os.path.basename(path) + ".pickle"
         path = os.path.dirname(path)
         model2 = Model(path = path, model = filename, model_type = 'sklearn')

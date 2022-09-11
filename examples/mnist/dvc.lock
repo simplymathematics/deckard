@@ -3,17 +3,21 @@ stages:
   prepare:
     cmd:
     - python ../../deckard/layers/prepare.py
-    deps:
-    - path: ../../deckard/base/data.py
-      md5: 24aeb008f86ce0ed8bfd8586e83dff8a
-      size: 12793
-    - path: configs/prepare.yml
-      md5: bc3ffffb2b9a714eb6401ce7487d7550
-      size: 133
+    params:
+      params.yaml:
+        prepare:
+          name: mnist
+          params:
+            shuffle: true
+            stratify: true
+            random_state: 0
+            train_size: 0.01
+          data_file: data.pkl
+          output_folder: .
     outs:
-    - path: data/data.pkl
-      md5: dd49b46274a56ed5b6a2b3b116e3cf9e
-      size: 635783
+    - path: data.pkl
+      md5: cdb226f18d6bd132ec336841d2747a62
+      size: 5050192
   train:
     cmd: python ../../deckard/layers/art_model.py --model_path "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
       --model_name "model.h5" --model_type "tf1" --dataset "data/data.pkl" --output_folder
@@ -112,10 +116,18 @@ stages:
     - path: data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
+    params:
+      params.yaml:
+        control:
+          input_model: https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1
+          model_type: tf1
+          data_file: data.pkl
+          output_folder: control
+          output_name: control_model
     outs:
     - path: control/
-      md5: db6e4f835eece1958a5938a50feb8ef7.dir
-      size: 32984204
+      md5: 37fcb126a49d66ee35793f975f54b3ef.dir
+      size: 32984350
       nfiles: 7
   defend:
     cmd: python ../../deckard/layers/defend.py --layer_name defend
@@ -129,10 +141,20 @@ stages:
     - path: data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
+    params:
+      params.yaml:
+        defend:
+          defence_config: configs/defence_config.yaml
+          input_model: control_model
+          input_folder: control/
+          model_type: tf1
+          data_file: data.pkl
+          output_folder: defences/
+          output_name: defended_model
     outs:
     - path: defences/
-      md5: 7975e40e34840398ad0ae0fd081f03a8.dir
-      size: 35550014
+      md5: e9552a258b7470a0532da3edc3a3b8a5.dir
+      size: 35550193
       nfiles: 10
   attack:
     cmd: python ../../deckard/layers/attack.py --layer_name attack
@@ -147,8 +169,19 @@ stages:
       md5: ddcf4227ef9ef84668a2e8ab6c43e0ad.dir
       size: 35522209
       nfiles: 4
+    params:
+      params.yaml:
+        attack:
+          attack_config: configs/attack_config.yaml
+          input_model: defended_model
+          input_folder: defences/
+          model_type: tf1
+          data_file: data.pkl
+          output_folder: attacks/
+          output_name: attacked_model
+          attack_size: 100
     outs:
     - path: attacks/
-      md5: c5fc8088315fb4df46091cc076b49b38.dir
-      size: 1378833
+      md5: fe0aba79b925fb5145afd72b8261394b.dir
+      size: 1379961
       nfiles: 7

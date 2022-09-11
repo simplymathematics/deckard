@@ -139,7 +139,6 @@ class Experiment(DiskstorageMixin):
         self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename
         self.model.save_model(filename = model_name, path = path)
-        assert os.path.exists(os.path.join(path, model_name))
         if hasattr(self.model, 'defence'):
             self.save_defence_params(path = path)
 
