@@ -127,7 +127,7 @@ class Model(object):
                 params = dict(self.model.get_params())
         else:
             params = {'model' : self.model, 'model_type' : self.model_type, 'path' : self.path, 'url' : self.url, 'defence' : self.defence}
-        for key, value in params.items():
+        for key, value in self.__dict__.items():
             if isinstance(value, int):
                 params[key] = value
             elif isinstance(value, float):
@@ -136,6 +136,14 @@ class Model(object):
                 params[key] = value
             elif isinstance(value, Callable):
                 params[key] = str(type(value))
+            elif isinstance(value, list):
+                params[key] = value
+            elif isinstance(value, dict):
+                params[key] = str(value)
+            elif isinstance(value, tuple):
+                params[key] = value
+            elif isinstance(value, type(None)):
+                params[key] = None
             else:
                 params[key] = str(type(value))
         self.name = self._set_name(params)
@@ -152,17 +160,22 @@ class Model(object):
         if self.defence is not None:
             def_params = {}
             for key, value in self.defence.__dict__.items():
-                # Parses the parameters
                 if isinstance(value, int):
                     def_params[key] = value
                 elif isinstance(value, float):
                     def_params[key] = value
                 elif isinstance(value, str):
                     def_params[key] = value
-                elif isinstance(value, tuple):
-                    def_params[key] = value
                 elif isinstance(value, Callable):
                     def_params[key] = str(type(value))
+                elif isinstance(value, list):
+                    def_params[key] = value
+                elif isinstance(value, dict):
+                    def_params[key] = str(value)
+                elif isinstance(value, tuple):
+                    def_params[key] = value
+                elif isinstance(value, type(None)):
+                    def_params[key] = None
                 else:
                     def_params[key] = str(type(value))
                 # Finds type and records it

@@ -94,6 +94,12 @@ class AttackExperiment(Experiment):
                 attack_params[key] = value
             elif isinstance(value, Callable):
                 attack_params[key] = str(type(value))
+            elif isinstance(value, list):
+                attack_params[key] = value
+            elif isinstance(value, dict):
+                attack_params[key] = str(value)
+            elif isinstance(value, tuple):
+                attack_params[key] = value
             elif isinstance(value, type(None)):
                 attack_params[key] = None
             else:

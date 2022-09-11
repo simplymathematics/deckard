@@ -1,7 +1,6 @@
 
 import logging, os
 from deckard.base import Experiment, Model, Data
-from pickle import load
 logger = logging.getLogger(__name__)
 
 
