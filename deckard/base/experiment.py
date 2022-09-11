@@ -52,6 +52,7 @@ class Experiment(DiskstorageMixin):
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
+        self.ground_truth = self.data.y_test
         self.time_dict = None
         self.params = dict()
         self.params['Model'] = dict(model)
@@ -125,7 +126,7 @@ class Experiment(DiskstorageMixin):
             self.filename = filename
         return None
 
-    def __call__(self, path, filename = None, **kwargs) -> None:
+    def __call__(self, path, prefix = None, filename = None, **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
@@ -133,7 +134,9 @@ class Experiment(DiskstorageMixin):
             os.mkdir(path)
         
         self._build_model(**kwargs)
-        self.save_params(path = path)
+        self.save_params(path = path, prefix = prefix)
+        self.save_predictions(path = path, prefix = prefix)
+        self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename
         self.model.save_model(filename = model_name, path = path)
         assert os.path.exists(os.path.join(path, model_name))

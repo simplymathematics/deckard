@@ -109,26 +109,20 @@ stages:
   control:
     cmd: python ../../deckard/layers/art_model.py --layer_name control
     deps:
-    - path: configs/control.yaml
-      md5: d638a4b48d8dc1d0d16d7331315cb870
-      size: 187
     - path: data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
     outs:
     - path: control/
-      md5: b681eab25584ea6fa4116010da4a2814.dir
-      size: 32962722
-      nfiles: 5
+      md5: db6e4f835eece1958a5938a50feb8ef7.dir
+      size: 32984204
+      nfiles: 7
   defend:
     cmd: python ../../deckard/layers/defend.py --layer_name defend
     deps:
     - path: configs/defence_config.yaml
       md5: eec1f9116a02f622a0c15db66045a6c3
       size: 101
-    - path: configs/defend.yaml
-      md5: cb439fbe0b9482ea7c70c300304a1d29
-      size: 193
     - path: control/control_model
       md5: e377e25822be887b27e61df78eee8ce5
       size: 32962000
@@ -137,15 +131,12 @@ stages:
       size: 5050192
     outs:
     - path: defences/
-      md5: 6e7543f16bff513e5782f80afd988149.dir
-      size: 35523292
-      nfiles: 8
+      md5: 7975e40e34840398ad0ae0fd081f03a8.dir
+      size: 35550014
+      nfiles: 10
   attack:
     cmd: python ../../deckard/layers/attack.py --layer_name attack
     deps:
-    - path: configs/attack.yaml
-      md5: 6df463fead925fde4e47aebaef17458a
-      size: 242
     - path: configs/attack_config.yaml
       md5: abf1157d152bec8de7a7c394c47ec11e
       size: 92
@@ -158,6 +149,6 @@ stages:
       nfiles: 4
     outs:
     - path: attacks/
-      md5: 17fee7858ba4a471ac12320e46dc6f6c.dir
-      size: 1379720
+      md5: c5fc8088315fb4df46091cc076b49b38.dir
+      size: 1378833
       nfiles: 7

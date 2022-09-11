@@ -51,6 +51,8 @@ class DiskstorageMixin(object):
         :param path: str, path to folder to save model. If none specified, model is saved in current working directory. Must exist.
         :return: str, path to saved model.
         """
+        if prefix is not None:
+            filename = prefix + "_" + filename
         assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
         logger.info("Saving model to {}".format(os.path.join(path,filename)))
         self.model.save(filename = filename, path = path)
@@ -62,8 +64,26 @@ class DiskstorageMixin(object):
         :param path: str, path to folder to save predictions. If none specified, predictions are saved in current working directory. Must exist.
         """
         assert os.path.isdir(path), "Path to experiment does not exist"    
+        if prefix is not None:
+            filename = prefix + "_" + filename
         prediction_file = os.path.join(path, filename)
         results = self.predictions
+        results = DataFrame(results)
+        results.to_json(prediction_file)
+        assert os.path.exists(prediction_file), "Prediction file not saved"
+        return None
+    
+    def save_ground_truth(self, filename:str = "ground_truth.json", prefix = None, path:str = ".") -> None:
+        """
+        Saves ground_truth to specified file.
+        :param filename: str, name of file to save ground_truth to. 
+        :param path: str, path to folder to save ground_truth. If none specified, ground_truth are saved in current working directory. Must exist.
+        """
+        assert os.path.isdir(path), "Path to experiment does not exist" 
+        if prefix is not None:
+            filename = prefix + "_" + filename  
+        prediction_file = os.path.join(path, filename)
+        results = self.ground_truth
         results = DataFrame(results)
         results.to_json(prediction_file)
         assert os.path.exists(prediction_file), "Prediction file not saved"
@@ -77,6 +97,8 @@ class DiskstorageMixin(object):
         """
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert filename is not None, "Filename must be specified"
+        if prefix is not None:
+            filename = prefix + "_" + filename
         cv_file = os.path.join(path, filename)
         cv_results = Series(self.model.model.model.cv_results_, name = self.filename)
         cv_results.to_json(cv_file)
@@ -90,6 +112,8 @@ class DiskstorageMixin(object):
         """
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert hasattr(self, "time_dict"), "No time dictionary to save"
+        if prefix is not None:
+            filename = prefix + "_" + filename
         time_file = os.path.join(path, filename)
         time_results = Series(self.time_dict, name = path.split(os.sep)[-1])
         time_results.to_json(time_file)
