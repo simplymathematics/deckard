@@ -1,24 +1,35 @@
-from deckard.base import Data
-from .parse import parse_data_from_yml
+from deckard.base import Data, parse_data_from_yml
 import logging, os, yaml, argparse
 from pickle import dump
 
 logger = logging.getLogger(__name__)
+def prepare(args) -> None:
+    data = Data(dataset = args.name, **args.params)
+    if args.data_file != None:
+        logger.info("Saving file as {}.".format(os.path.join(args.data_file)))
+        data.save(args.data_file)
+        logger.info("Data successfully saved.")
+    else:
+        raise ValueError("No data file specified.")
+    return None
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Prepare the data, according to the config file. Then it saves the Data object to a pickle file.')
-    parser.add_argument('-folder', type = str, default = "./", help = "The folder where data will be stored")
-    parser.add_argument('-config_file', type = str, default = "configs/prepare.yml", help = "The config folder to use")
-    parser.add_argument('--target', type = str, default = None, help = "The target to use")
-    args = parser.parse_args()
-
-    data = parse_data_from_yml(args.config_file)
-    if args.folder != None:
-        if not os.path.exists(os.path.join(args.folder, 'data')):
-            os.makedirs(os.path.join(args.folder, 'data'))
-        else:
-            logger.warning(args.folder + " already exists. Overwriting data.")
-    logger.info("Saving file as {}.".format(os.path.join(args.folder, 'data', 'data.pkl')))
+if __name__ == '__main__':
+    # arguments
+    import argparse
+    import dvc.api
+    parser = argparse.ArgumentParser(description='Prepare model and dataset as an experiment object. Then runs the experiment.')
+    parser.add_argument('--output_folder', '-p', type=str, help='Path to the output folder')
+    parser.add_argument('--data_file', '-d', type=str, help='Path to the data file')
+    # parse arguments
+    cli_args = parser.parse_args()
+    params = dvc.api.params_show()
+    args = argparse.Namespace(**params['prepare'])
+    for k, v in vars(cli_args).items():
+        if v is not None and k in params:
+            setattr(args, k, v)
+    if not os.path.exists(args.output_folder):
+        logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
+        os.mkdir(args.output_folder)
+    prepare(args)
     
-    dump(data, open(os.path.join(args.folder, 'data', 'data.pkl'), 'wb'))
-    logger.info("Data successfully saved.")
+    

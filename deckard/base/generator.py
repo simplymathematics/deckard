@@ -2,7 +2,6 @@
 import logging, yaml, json, pickle, os, importlib, shutil
 import pandas as pd
 from hashlib import md5 as my_hash  
-from uuid import uuid4
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid

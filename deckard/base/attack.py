@@ -12,7 +12,7 @@ class AttackExperiment(Experiment):
     """
     
     """
-    def __init__(self, data:Data, model:Model, attack:Callable, verbose : int = 1, name:str = None, is_fitted:bool = False, filename:str = None, model_type = 'sklearn', **kwargs):
+    def __init__(self, data:Data, model:Model, attack:Callable, verbose : int = 1, name:str = None, is_fitted:bool = False, filename:str = None, model_type = 'sklearn'):
         """
         Creates an experiment object
         :param data: Data object
@@ -25,7 +25,7 @@ class AttackExperiment(Experiment):
         self.model = model
         self.model_type = model_type
         self.data = data
-        self.name = self.data.dataset +"_"+ str(hash(model)) if name is None else name
+        self.name = self.data.dataset +"_"+ str(hash(model)) + "_" + str(hash(attack)) if name is None else name
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
@@ -40,7 +40,7 @@ class AttackExperiment(Experiment):
             self.filename = filename
         self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'id': self.filename}
 
-    def run_attack(self, path, **kwargs):
+    def __call__(self, path, **kwargs):
         """
         Runs attack.
         """
@@ -53,7 +53,7 @@ class AttackExperiment(Experiment):
         self.save_params(path = path)
         return None
 
-    def _build_attack(self, targeted: bool = False, filename:str = None) -> None:
+    def _build_attack(self, targeted: bool = False, **kwargs) -> None:
         """
         Runs the attack on the model
         """
@@ -62,12 +62,12 @@ class AttackExperiment(Experiment):
         assert hasattr(self, 'attack'), "Attack not set"
         start = process_time()
         if "AdversarialPatch" in str(type(self.attack)):
-            patches, masks = self.attack.generate(self.data.X_test, self.data.y_test)
+            patches, masks = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
             adv_samples = self.attack.apply_patch(self.data.X_test, scale = self.attack._attack.scale_max)
         elif targeted == False:
-            adv_samples = self.attack.generate(self.data.X_test)
+            adv_samples = self.attack.generate(self.data.X_test, **kwargs)
         else:
-            adv_samples = self.attack.generate(self.data.X_test, self.data.y_test)
+            adv_samples = self.attack.generate(self.data.X_test, self.data.y_test, **kwargs)
         end = process_time()
         self.time_dict['adv_fit_time'] = end - start
         start = process_time()
@@ -152,20 +152,6 @@ class AttackExperiment(Experiment):
         results.to_json(attack_file)
         assert os.path.exists(attack_file), "Attack file not saved."
         return None
-    # def save_adv_scores(self, filename:str = "attack_scores.json", path:str = ".") -> None:
-    #     """
-    #     Saves adversarial scores to specified file.
-    #     :param filename: str, name of file to save adversarial scores to.
-    #     :param path: str, path to folder to save adversarial scores. If none specified, scores are saved in current working directory. Must exist.
-    #     """
-    #     assert os.path.isdir(path), "Path to experiment does not exist"
-        
-    #     adv_score_file = os.path.join(path, filename)
-    #     results = self.adv_scores
-    #     results = Series(results.values(), name =  self.filename, index = results.keys())
-    #     results.to_json(adv_score_file)
-    #     assert os.path.exists(adv_score_file), "Adversarial score file not saved."
-    #     return None
     
     def save_attack_samples(self, filename:str = "attack_examples.json", path:str = "."):
         """

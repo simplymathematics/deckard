@@ -17,9 +17,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 from hashlib import md5 as my_hash
-from .model import Model
-from .data import Data
-from .storage import DiskstorageMixin
+from deckard.base.model import Model
+from deckard.base.data import Data
+from deckard.base.storage import DiskstorageMixin
+
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
@@ -124,7 +125,7 @@ class Experiment(DiskstorageMixin):
             self.filename = filename
         return None
 
-    def run(self, path, filename = "scores.json", **kwargs) -> None:
+    def __call__(self, path, filename = None, **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
@@ -133,8 +134,11 @@ class Experiment(DiskstorageMixin):
         
         self._build_model(**kwargs)
         self.save_params(path = path)
-        model_name = str(hash(self.model))
-        self.model.save(filename = model_name, path = path)
+        model_name = str(hash(self.model)) if filename is None else filename
+        self.model.save_model(filename = model_name, path = path)
+        assert os.path.exists(os.path.join(path, model_name))
+        if hasattr(self.model, 'defence'):
+            self.save_defence_params(path = path)
 
     ####################################################################################################################
     #                                                     DEFENSES                                                     #
@@ -187,29 +191,9 @@ class Experiment(DiskstorageMixin):
         Returns the defence from an experiment
         :param experiment: experiment to get defence from
         """
-        from deckard.base.parse import generate_object_list_from_tuple
-        if filename is None:
-            defence = self.defence
-        else:
-            location = os.path.join(path, filename)
-            with open(location, 'rb') as f:
-                defence_json = load(f)
-            if defence_json['name'] is not None:
-                name = defence_json['name'].split("'")[1]
-                params = defence_json['params']
-                new_params = {}
-                for param, value in params.items():
-                    if param.startswith("_"):
-                        continue
-                    else:
-                        new_params[param] = value
-                defence_tuple = (name, new_params)
-                defence_list = [defence_tuple]
-                defences = generate_object_list_from_tuple(defence_list)
-                defence = defences[0]
-            else:
-                defence = None
-        return defence
+        from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
+        return generate_object_from_tuple(generate_tuple_from_yml(os.path.join(path, filename)))
+        
     
     def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
         """
@@ -220,7 +204,12 @@ class Experiment(DiskstorageMixin):
         assert os.path.isdir(path), "Path to experiment does not exist"
         
         defence_file = os.path.join(path, filename)
-        results = self.params['Defence']
+        if 'Defence' in self.params:
+            results = self.params['Defence']
+        elif 'Defence' in self.model.params:
+            results = self.model.params['Defence']
+        else:
+            raise ValueError("No defence params found in experiment")
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(defence_file)
         assert os.path.exists(defence_file), "Defence file not saved."

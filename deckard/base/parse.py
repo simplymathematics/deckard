@@ -6,7 +6,7 @@ from .data import Data
 from .model import Model
 from .experiment import Experiment
 from .scorer import Scorer
-
+from typing import Union
 
 
 # specify the logger
@@ -80,7 +80,59 @@ def generate_object_list_from_tuple(yml_tuples:list, *args) -> list:
         del dependency
     return obj_list
 
-def generate_experiment_list(model_list:list, data, cv = None, model_type = 'sklearn') -> list:
+
+
+def generate_tuple_from_yml(filename:Union[str, dict]) -> list:
+    """
+    Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
+    """
+    assert isinstance(filename, (str, dict))
+    if isinstance(filename, str):
+        LOADER = yaml.FullLoader
+        assert path.isfile(filename), f"{filename} does not exist"
+        with open(filename, 'r') as stream:
+            try:
+                entry = yaml.load(stream, Loader=LOADER)
+            except yaml.YAMLError as exc:
+                raise ValueError("Error parsing yml file {}".format(filename))
+    if not path.isfile(str(filename)):
+        assert isinstance(filename, dict), "filename must be a dict or a yml file"
+        entry = filename
+    return (entry['name'], entry['params'])
+
+def generate_object_from_tuple(obj_tuple:list, *args) -> list:
+    """
+    Imports and initializes objects from yml file. Returns a list of instantiated objects.
+    :param yml_list: list of yml entries
+    """
+    library_name = ".".join(obj_tuple[0].split('.')[:-1] )
+    class_name = obj_tuple[0].split('.')[-1]
+    global dependency
+    dependency = None
+    dependency = importlib.import_module(library_name)
+    global object_instance
+    object_instance = None
+    global params
+    params = obj_tuple[1]
+    exec("from {} import {}".format(library_name, class_name), globals())
+    if len(args) == 1:
+        global positional_arg
+        positional_arg = args[0]
+        exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
+        del positional_arg
+    elif len(args) == 0:
+        exec(f"object_instance = {class_name}(**params)", globals())
+    else:
+        raise ValueError("Too many positional arguments")
+    del params
+    del dependency
+    return object_instance
+
+
+
+
+
+def generate_experiment_list(model_list:list, data,  model_type = 'sklearn', **kwargs) -> list:
     """
     Generates experiment list from model list.
     :param model_list: list of models
@@ -91,7 +143,7 @@ def generate_experiment_list(model_list:list, data, cv = None, model_type = 'skl
     for model in model_list:
         model = model
         if not isinstance(model, Model):
-            model = Model(model, model_type = model_type)
+            model = Model(model, model_type = model_type, **kwargs)
         experiment = Experiment(data = data, model = model)
         experiment_list.append(experiment)
     return experiment_list    

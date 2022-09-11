@@ -1,0 +1,4 @@
+name: art.attacks.evasion.AdversarialPatch
+params:
+  max_iter : 10
+  learning_rate : .5

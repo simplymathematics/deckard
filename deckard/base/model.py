@@ -328,7 +328,7 @@ class Model(object):
             raise ValueError("Model type {} not supported".format(self.model_type))
         self.model = model
     
-    def save(self, filename:str = None, path:str = None):
+    def save_model(self, filename:str = None, path:str = None):
         """
         Saves the experiment to a pickle file or directory, depending on model type.
         """
@@ -343,8 +343,12 @@ class Model(object):
             self.filename = filename
         else:
             filename = self.filename
-        if hasattr(self.model, "save"):
-            self.model.save(filename = filename, path = path)
+        if hasattr(self, "model") and hasattr(self.model, "save"):
+            try:
+                self.model.save(filename = filename, path = path)
+            except:
+                fullpath = os.path.join(path, filename)
+                self.model.save(fullpath)
         else:
             with open(os.path.join(path, filename), 'wb') as f:
                 pickle.dump(self.model, f)

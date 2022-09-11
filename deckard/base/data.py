@@ -42,7 +42,20 @@ class Data(object):
         if os.path.isfile(dataset) and not dataset.endswith(".csv") and not dataset.endswith(".txt"):
             filename = os.path.basename(dataset)
             path = os.path.dirname(dataset)
-            self = self.load_data(filename = filename, path = path)
+            tmp = self.load_data(filename = filename, path = path)
+            self.random_state = tmp.random_state
+            self.train_size = tmp.train_size
+            self.shuffle = tmp.shuffle
+            self.time_series = tmp.time_series
+            self.target = tmp.target
+            self.dataset = tmp.dataset
+            self.stratify = tmp.stratify
+            self.test_size = tmp.test_size
+            self.X_train = tmp.X_train
+            self.X_test = tmp.X_test
+            self.y_test = tmp.y_test
+            self.y_train = tmp.y_train
+            self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         else:
             self.random_state = random_state
             self.train_size = train_size
@@ -223,4 +236,7 @@ class Data(object):
             pickle.dump(self, f)
         logger.info("Saved model")
 
+    def __call__(self, filename:str = None, path:str=".") -> None:
+        self.save(filename, path)
+        return None
     

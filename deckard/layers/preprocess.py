@@ -44,7 +44,7 @@ if __name__ == '__main__':
         model_list.append(new_model)
 
     
-    exp_list = generate_experiment_list(model_list, data, cv = 10)
+    exp_list = generate_experiment_list(model_list, data)
     scorer = args.scorer.upper()
     if args.best:
         save_best_only(path = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)

@@ -1,50 +1,43 @@
 
-import logging
-from .experiment import Experiment, Model, Data
-import os
-from art.estimators.classification import PyTorchClassifier, SklearnClassifier, KerasClassifier, TensorFlowClassifier
-from art.utils import get_file
-
+import logging, os
+from deckard.base import Experiment, Model, Data
+from pickle import load
 logger = logging.getLogger(__name__)
+
+
+def art_model(args) -> None:
+        model_object = Model(model_type = args.model_type, path = args.output_folder, model = args.output_name, url = args.input_model)
+        # load dataset
+        data = Data(dataset = args.data_file)
+        # logger.info("Loaded dataset {}".format(args.data_file))
+        # Create experiment
+        experiment = Experiment(data = data, model = model_object, name = args.output_name, is_fitted=True)
+        logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.output_name))
+        experiment(path = args.output_folder,  filename=args.output_name)
+        return None
 
 if __name__ == '__main__':
     # arguments
     import argparse
+    import dvc.api
     parser = argparse.ArgumentParser(description='Prepare model and dataset as an experiment object. Then runs the experiment.')
-    parser.add_argument('--input_model', type=str, default=None, help='Name of the model. Can be the name of a file or a URL.')
-    parser.add_argument('--input_folder', type=str, default = ".", help='Folder where the model is located. Defaults to folder where the script is run.')
-    parser.add_argument('--model_type', type=str, required = True, help='Type of the model')
-    parser.add_argument('--dataset', type=str, required = True, help='Path to the dataset')
-    # parser.add_argument('--scorer', type=str, required = True, help='Scorer for optimization')
-    parser.add_argument('--output_folder', type=str, default=None, help='Path to the output folder')
-    parser.add_argument('--output_name', type=str, required = True, help='Name of the output file')
-    parser.add_argument('--log_file', type=str, default = "log.txt", help='Path to the log file')    
+    parser.add_argument('--input_model', '-m', type=str, default=None, help='Name of the model')
+    parser.add_argument('--input_folder', '-i', type=str, default = ".", help='Path to the model')
+    parser.add_argument('--model_type', '-t', type=str, default=None, help='Type of the model')
+    parser.add_argument('--output_folder', '-p', type=str, help='Path to the output folder')
+    parser.add_argument('--output_name','-o', type=str, default=None, help='Name of the output file')
+    parser.add_argument('--data_file', '-d', type=str, default = "data.pkl", help='Path to the data file')
+    parser.add_argument('--layer_name','-l', type=str, required = True, help='Name of layer, e.g. "attack"')
+    parser.add_argument('--config','-c', type=str, default = None, help='Path to the attack config file')
     # parse arguments
-    args = parser.parse_args()
-
-    if args.output_name == None:
-        # uuid for model name
-        import uuid
-        args.output_name = str(uuid.uuid4())
-    else:
-        logger.info("Model Name is {}".format(args.output_name))
-    # attempts to load model
+    cli_args = parser.parse_args()
+    params = dvc.api.params_show()
+    args = argparse.Namespace(**params[cli_args.layer_name])
+    for k, v in vars(cli_args).items():
+        if v is not None and k in params:
+            setattr(args, k, v)
     if not os.path.exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
         os.mkdir(args.output_folder)
-    model_object = Model(model_type = args.model_type, path = args.output_folder, model = args.output_name, url = args.input_model)
-    # load dataset
-    data = Data(args.dataset)
-    # logger.info("Loaded dataset {}".format(args.dataset))
-    # Create experiment
-    experiment = Experiment(data = data, model = model_object, name = args.output_name, params = {'model_type':args.model_type, 'model_path':args.input_model, 'dataset':args.dataset})
-    logger.info("Created experiment object from {} dataset and {} model".format(args.dataset, args.output_name))
-    # run experiment
-    logger.info("Running experiment...")
-    experiment.run(args.output_folder)
-    logger.info("Experiment complete.")
-    # Save experiment
-    logger.info("Saving experiment.")
-    experiment.model.model.save(filename = args.output_folder, path = args.output_name)
-    experiment.save_results(path = args.output_folder)
-    logger.info("Experiment saved.")
+    ART_DATA_PATH = args.output_folder
+    art_model(args)

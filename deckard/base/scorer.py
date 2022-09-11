@@ -80,6 +80,10 @@ class Scorer():
         for scorer, name in zip(self.scorers, self.name):
             try:
                 scores[name] = scorer(ground_truth, predictions)
+            except AxisError as e:
+                y_test = LabelBinarizer().fit(ground_truth).transform(ground_truth)
+                predictions = LabelBinarizer().fit(ground_truth).transform(predictions)
+                scores[name] = scorer(y_test, predictions, multi_class='ovr')
             except ValueError as e:
                 if "average=" in str(e):
                     scores[name] = scorer(ground_truth, predictions, average='weighted')
@@ -91,10 +95,6 @@ class Scorer():
                     pass
                 else:
                     raise e
-            except AxisError as e:
-                y_test = LabelBinarizer().fit(ground_truth).transform(ground_truth)
-                predictions = LabelBinarizer().fit(ground_truth).transform(predictions)
-                scores[name] = scorer(y_test, predictions, multi_class='ovr')
         self.scores = scores
         return self.scores
     
