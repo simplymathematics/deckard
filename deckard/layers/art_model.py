@@ -5,15 +5,15 @@ logger = logging.getLogger(__name__)
 
 
 def art_model(args) -> None:
-        model_object = Model(model_type = args.model_type, path = args.output_folder, model = args.output_name, url = args.input_model)
-        # load dataset
-        data = Data(dataset = args.data_file)
-        # logger.info("Loaded dataset {}".format(args.data_file))
-        # Create experiment
-        experiment = Experiment(data = data, model = model_object, name = args.output_name, is_fitted=True)
-        logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.output_name))
-        experiment(path = args.output_folder,  filename=args.output_name)
-        return None
+    model_object = Model(model_type = args.model_type, path = args.output_folder, model = args.output_name, url = args.input_model, art = True)
+    # load dataset
+    data = Data(dataset = args.data_file)
+    # logger.info("Loaded dataset {}".format(args.data_file))
+    # Create experiment
+    experiment = Experiment(data = data, model = model_object, filename = args.output_name, is_fitted=True)
+    logger.info("Created experiment object from {} dataset and {} model".format(args.data_file, args.output_name))
+    experiment(path = args.output_folder,  filename=args.output_name)
+    return None
 
 if __name__ == '__main__':
     # arguments

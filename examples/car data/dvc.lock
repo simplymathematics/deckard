@@ -2,104 +2,82 @@ schema: '2.0'
 stages:
   prepare:
     cmd:
-    - python ../../deckard/layers/prepare.py   --target latitude
+    - python ../../deckard/layers/prepare.py
     deps:
     - path: ../../deckard/base/data.py
-      md5: b3f135fd5b3af19a0423ae8174bc9f45
-      size: 9813
-    - path: configs/prepare.yml
+      md5: 9aff056201873fe565f4cda55b434a08
+      size: 11619
+    - path: configs/prepare.yaml
       md5: a89d046645cddeb47942c9328da7e8dc
-      size: 122
+      size: 128
     - path: parsed/gps.txt
       md5: ea9d1bdb2019c5c23bc470fa2e5a7442
-      size: 242289
+      size: 244920
     outs:
-    - path: data/data.pkl
-      md5: 11af74a2a99e5d2d5bb0cedebffbcfa1
-      size: 97037
+    - path: data.pkl
+      md5: 3d178144652d069cb39870f31989aa3e
+      size: 336302
   train:
-    cmd: python ../../deckard/layers/train.py  -f data -b False --name train -s mse
+    cmd: python ../../deckard/layers/sklearn_model.py --layer_name train
     deps:
     - path: ../../deckard/base/experiment.py
-      md5: 49dc974b75cd545624811f01e02f9b17
-      size: 14924
+      md5: 9c54dc27c68598aff5acd5e42737e54a
+      size: 9138
     - path: ../../deckard/base/utils.py
-      md5: 4460f86a34179dc45b1f158ca0570bcf
-      size: 6827
-    - path: ../../deckard/layers/train.py
-      md5: 1740c7634b746b776c20470eccc086bb
-      size: 2588
-    - path: configs/model.yml
+      md5: a7ae2819c925d8fe136055959a6b31e2
+      size: 3401
+    - path: ../../deckard/layers/sklearn_model.py
+      md5: 3735210ee93e90dd554a2a28fdf6cef2
+      size: 2553
+    - path: configs/model.yaml
       md5: 9c0f3af72adc7e5448903f9090e070af
-      size: 239
-    - path: data/data.pkl
-      md5: 11af74a2a99e5d2d5bb0cedebffbcfa1
-      size: 97037
+      size: 247
+    - path: data.pkl
+      md5: 3d178144652d069cb39870f31989aa3e
+      size: 336302
     outs:
-    - path: data/train/data_params.json
-      md5: 7561189202e70696c33a61bdff97057f
-      size: 170
-    - path: data/train/model.pickle
-      md5: 9fb86674c67d403c5d6b6f0bc3d009ad
-      size: 300996
-    - path: data/train/model_params.json
-      md5: 89f79ebb9a562ca15a76f13ce5be2bce
-      size: 525
-    - path: data/train/scores.json
-      md5: 205ace0c5e132649909970ea6a752260
-      size: 98
+    - path: train/
+      md5: 80ab9576dcdd0a83c27a03fd758a1d74.dir
+      size: 24578923
+      nfiles: 161
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name preprocess
-      --input train --model_name model.pickle -s mse
+    cmd: python ../../deckard/layers/preprocess.py  --layer_name preprocess --position
+      0
     deps:
     - path: ../../deckard/layers/preprocess.py
-      md5: 1e3360e344308255cfc8bc3624fa0f3d
-      size: 3453
-    - path: configs/preprocess.yml
+      md5: 9572b0fa5087d210b2d2042d05dc6aa4
+      size: 3738
+    - path: configs/preprocess.yaml
       md5: ac4ed79e4a6b628fac4308fdd3e24210
-      size: 119
-    - path: data/train/model.pickle
-      md5: 9fb86674c67d403c5d6b6f0bc3d009ad
-      size: 300996
+      size: 123
+    - path: train/
+      md5: 80ab9576dcdd0a83c27a03fd758a1d74.dir
+      size: 24578923
+      nfiles: 161
     outs:
-    - path: data/preprocess/data_params.json
-      md5: 782e70ccf9dfa73fe5c60a4dde8b6ba7
-      size: 170
-    - path: data/preprocess/model.pickle
-      md5: c8ce9b161c8a6ab75e58c3c9e5d38224
-      size: 301387
-    - path: data/preprocess/model_params.json
-      md5: 3160bf71bdf93ba582d4098412e1ef9d
-      size: 1171
-    - path: data/preprocess/scores.json
-      md5: 205ace0c5e132649909970ea6a752260
-      size: 98
+    - path: preprocess/
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py  -f data -b False --name featurize
-      --input preprocess --model_name model.pickle -s mse
+    cmd: python ../../deckard/layers/preprocess.py --layer_name featurize --position
+      1
     deps:
     - path: ../../deckard/layers/preprocess.py
-      md5: 1e3360e344308255cfc8bc3624fa0f3d
-      size: 3453
-    - path: configs/featurize.yml
+      md5: 11c765533c57bb75d1a95c05accd514b
+      size: 3689
+    - path: configs/featurize.yaml
       md5: 8e868a26517d7807395016a0b2f60510
-      size: 125
-    - path: data/preprocess/model.pickle
-      md5: c8ce9b161c8a6ab75e58c3c9e5d38224
-      size: 301387
+      size: 128
+    - path: preprocess/
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
     outs:
-    - path: data/featurize/data_params.json
-      md5: d0bac5528e0cdd875a25f107f9fbe844
-      size: 169
-    - path: data/featurize/model.pickle
-      md5: 10d5e4dca4d1a588c96cf5ee0ab8bc0f
-      size: 301634
-    - path: data/featurize/model_params.json
-      md5: 53e6f5aaf5a9c67c5e6d629c63324253
-      size: 1895
-    - path: data/featurize/scores.json
-      md5: 205ace0c5e132649909970ea6a752260
-      size: 98
+    - path: featurize/
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
   evaluate:
     cmd: python ../../deckard/layers/evaluate.py -f data -d "parsed/gps.txt" --target
       "longitude" --input featurize

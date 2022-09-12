@@ -56,6 +56,23 @@ class testExperiment(unittest.TestCase):
         experiment4 = Experiment(data = data, model = model4)
         experiment5 = deepcopy(experiment)
         before = hash(experiment)
+        
+        for key, value in dict(experiment).items():
+            exp3 = dict(experiment3)
+            if exp3[key] != value:
+                print("Key:")
+                print(key)
+                print("Value:")
+                print(value)
+                print("Experiment3:")
+                print(exp3[key])
+                print(model)
+                print(model3)
+                input("Press Enter to continue...")
+            else:
+                pass
+        self.assertEqual(hash(experiment.data), hash(experiment3.data))
+        self.assertEqual(hash(experiment.model), hash(experiment3.model))
         self.assertEqual(hash(experiment), hash(experiment3))
         self.assertEqual(hash(experiment), hash(experiment5))
         self.assertNotEqual(hash(experiment), hash(experiment4))
@@ -70,9 +87,9 @@ class testExperiment(unittest.TestCase):
 
     def test_eq(self):
         data = Data('iris', test_size = 30)
-        model = Model(KNeighborsRegressor(5), model_type = 'sklearn', path = self.path)
-        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn', path = self.path)
-        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
+        model = Model(KNeighborsRegressor(5), model_type = 'sklearn', path = self.path, classifier = False)
+        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn', path = self.path, classifier = False)
+        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path, classifier = False)
         model4 = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
         experiment2 = Experiment(data = data, model = model2)
@@ -88,7 +105,7 @@ class testExperiment(unittest.TestCase):
 
     def test_run(self):
         data = Data('iris', test_size = 30)
-        model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
+        model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path, classifier = False)
         experiment = Experiment(data = data, model = model)
         experiment(path = self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))

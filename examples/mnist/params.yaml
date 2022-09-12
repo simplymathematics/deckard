@@ -12,10 +12,10 @@ control:
   model_type : "tf1" 
   data_file : "data.pkl" 
   output_folder : "control"
-  output_name : control_model
+  output_name : control_model.pb
 defend:
   defence_config: "configs/defence_config.yaml"
-  input_model : "control_model" 
+  input_model : "control_model.pb" 
   input_folder : "control/" 
   model_type : "tf1" 
   data_file : "data.pkl" 

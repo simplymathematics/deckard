@@ -13,7 +13,7 @@ def defend(args) -> None:
     clip_values = (mini, maxi)
     defence = generate_object_from_tuple(generate_tuple_from_yml(args.defence_config))
     art_model = Model(model=args.input_model, model_type =args.model_type, path = args.input_folder, clip_values = clip_values, defence = defence)
-    experiment = Experiment(data = data, model = art_model, name = args.input_model,  is_fitted=True)
+    experiment = Experiment(data = data, model = art_model, filename = args.input_model,  is_fitted=True)
     experiment(path = args.output_folder, filename = args.output_name)
     return None
 

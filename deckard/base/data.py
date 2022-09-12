@@ -68,12 +68,6 @@ class Data(object):
             self._sample_data(dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
             self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         
-    def __hash__(self) -> str:
-        """
-        Hashes the params as specified in the __init__ method.
-        """
-        params = self.get_params()
-        return int(my_hash(str(params).encode('utf-8')).hexdigest(), 36)
 
     def __eq__(self, other) -> bool:
         """
@@ -99,6 +93,12 @@ class Data(object):
         """
         for key, value in self.params.items():
             yield key, value
+    
+    def __hash__(self) -> str:
+        """
+        Hashes the params as specified in the __init__ method.
+        """
+        return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
     
     def get_params(self):
         """

@@ -18,7 +18,7 @@ stages:
     cmd:  python ../../deckard/layers/defend.py --layer_name defend
     deps:
     - data.pkl
-    - control/control_model
+    - control/control_model.pb
     - configs/defence_config.yaml
     params:
     - defend

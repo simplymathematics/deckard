@@ -44,7 +44,6 @@ if __name__ == '__main__':
     parser.add_argument('--attack_size', '-n', type=int, default=None, help='Number of adversarial samples to generate')
     cli_args = parser.parse_args()
     params = dvc.api.params_show()
-    print(params.keys())
     args = argparse.Namespace(**params[cli_args.layer_name])
     for k, v in vars(cli_args).items():
         if v is not None and k in params:

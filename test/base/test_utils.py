@@ -28,7 +28,7 @@ class testUtils(unittest.TestCase):
         self.experiment(self.path)
         self.experiment.save_model(filename = 'model', path = self.path)
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
-        self.list = [(self.experiment.name, self.experiment.params), (self.experiment2.name, self.experiment2.params)]
+        self.list = [(self.experiment.filename, self.experiment.params), (self.experiment2.filename, self.experiment2.params)]
     
     def test_find_successes(self):
         self.experiment = Experiment(self.data, self.model)

@@ -98,7 +98,6 @@ class Generator():
         # check that featurizers is a list
         for entry in yml_list:
             if not isinstance(entry, dict):
-                print("{} is not a dictionary".format(entry))
                 raise ValueError("Error parsing yml file {}".format(filename))
             grid = ParameterGrid(entry['params'])
             name = entry['name']

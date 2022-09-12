@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, help='Output file.', default = 'results.json')
     parser.add_argument('--target', type=str, default = None, help='Target string.')
     parser.add_argument('--input', type=str, required = True, help='Experiment string.')
-    parser.add_argument('--model_name', type=str, default = "model.pickle", help='name of the experiment')
+    parser.add_argument('--model_name', type=str, default = "model", help='name of the experiment')
     args = parser.parse_args()
     assert os.path.isdir(args.folder), '{} is not a valid folder.'.format(args.folder)
     model = Model(os.path.join(args.folder, args.input, args.model_name))

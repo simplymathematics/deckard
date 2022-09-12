@@ -1,0 +1,37 @@
+prepare: 
+  name: data.csv
+  params:
+    shuffle : True 
+    stratify : True
+    random_state : 0
+    train_size : .01
+    target : latitude
+  data_file : "data.pkl"
+  output_folder : "."
+  input_folder : "."
+train:
+  input_folder : "."
+  output_folder : "train"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : train
+  config : "configs/train.yaml"
+  is_fitted : False
+preprocess:
+  input_folder : ""
+  output_folder : "preprocess"
+  input_name : "model.pickle"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : train
+  config : "configs/train.yaml"
+  is_fitted : False
+featurize:
+  input_folder : "."
+  input_name : "model.pickle"
+  output_folder : "featurize"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : train
+  config : "configs/train.yaml"
+  is_fitted : False

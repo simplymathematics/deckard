@@ -35,6 +35,12 @@ class AttackExperiment(Experiment):
         self.params['Data'] = dict(data)
         self.set_attack(attack)
         if filename is None:
+            # Helps diagnose issues with hashing
+            for param in self.params:
+                try:
+                    dumps(self.params[param])
+                except:
+                    self.params[param] = str(type(self.params[param]))
             self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16))
         else:
             self.filename = filename
@@ -92,8 +98,6 @@ class AttackExperiment(Experiment):
                 attack_params[key] = value
             elif isinstance(value, str):
                 attack_params[key] = value
-            elif isinstance(value, Callable):
-                attack_params[key] = str(type(value))
             elif isinstance(value, list):
                 attack_params[key] = value
             elif isinstance(value, dict):
