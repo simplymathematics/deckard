@@ -383,3 +383,6 @@ class Model(object):
             self.time_dict['fit_time'] = None
         self.time_dict['pred_time'] = end - start
         return predictions
+    
+    # TODO:
+    # def transform(self, X_train, y_train = None):
