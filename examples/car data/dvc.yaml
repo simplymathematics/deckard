@@ -6,6 +6,8 @@ stages:
       - configs/prepare.yaml
       - ../../deckard/base/data.py
       - parsed/gps.txt
+    params:
+      - prepare
     outs: 
       - data.pkl
   train:
@@ -16,6 +18,8 @@ stages:
     - ../../deckard/layers/sklearn_model.py
     - ../../deckard/base/experiment.py
     - data.pkl
+    params:
+      - train
     outs:
     - train/ :
         cache : true
@@ -25,6 +29,8 @@ stages:
     - configs/preprocess.yaml
     - ../../deckard/layers/preprocess.py
     - train/
+    params:
+      - preprocess
     outs:
     - preprocess/:
         cache: true
@@ -34,13 +40,17 @@ stages:
     - configs/featurize.yaml
     - ../../deckard/layers/preprocess.py
     - preprocess/
+    params:
+      - featurize
     outs:
     - featurize/:
         cache: true
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py -d "parsed/gps.txt" --target "longitude" --input_folder featurize 
+    cmd: python ../../deckard/layers/evaluate.py --layer_name evaluate
     deps: 
       - featurize/
+    params:
+      - evaluate
 
 
 

@@ -56,21 +56,20 @@ class testExperiment(unittest.TestCase):
         experiment4 = Experiment(data = data, model = model4)
         experiment5 = deepcopy(experiment)
         before = hash(experiment)
-        
-        for key, value in dict(experiment).items():
-            exp3 = dict(experiment3)
-            if exp3[key] != value:
-                print("Key:")
-                print(key)
-                print("Value:")
-                print(value)
-                print("Experiment3:")
-                print(exp3[key])
-                print(model)
-                print(model3)
-                input("Press Enter to continue...")
-            else:
-                pass
+        self.assertDictEqual(dict(experiment), dict(experiment3))
+        # for key, value in dict(experiment).items():
+            # if exp3[key] != value:
+                # print("Key:")
+                # print(key)
+                # print("Value:")
+                # print(value)
+                # print("Experiment3:")
+                # print(exp3[key])
+                # print(model)
+                # print(model3)
+                # input("Press Enter to continue...")
+            # else:
+            #     pass
         self.assertEqual(hash(experiment.data), hash(experiment3.data))
         self.assertEqual(hash(experiment.model), hash(experiment3.model))
         self.assertEqual(hash(experiment), hash(experiment3))
@@ -206,6 +205,5 @@ class testExperiment(unittest.TestCase):
         del self.path
         del self.file
 
-    
-    
-
+if __name__ == '__main__':
+    unittest.main()

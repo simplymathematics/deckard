@@ -5,14 +5,6 @@ from deckard.base.parse import generate_object_from_tuple, generate_tuple_from_y
 logger = logging.getLogger(__name__)
 
 def attack(args) -> None:
-    # set up logging
-    ART_DATA_PATH = os.path.join(args.output_folder)
-    if not os.path.exists(ART_DATA_PATH):
-        os.makedirs(ART_DATA_PATH)
-    if not os.path.exists(args.output_folder):
-        logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
-        os.path.mkdir(args.output_folder)
-    # load dataset
     data = Data(args.data_file)
     data.X_test = data.X_test[:args.attack_size]
     data.y_test = data.y_test[:args.attack_size]

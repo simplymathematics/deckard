@@ -1,0 +1,8 @@
+config:
+  'F1' : f1_score, 
+  'ACC' : accuracy_score, 
+  'PREC' : precision_score, 
+  'REC' : recall_score,
+  'AUC': roc_auc_score, 
+  'ROC': roc_curve, 
+  "BALACC" : balanced_accuracy_score}

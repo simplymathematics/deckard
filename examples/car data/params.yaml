@@ -43,3 +43,9 @@ featurize:
   classifier : False
   model_type : 'sklearn'
   is_fitted : False
+evaluate:
+  input_folder : train
+  ground_truth_file : "ground_truth.json"
+  predictions_file : "predictions.json"
+  layer_name : evaluate
+  config : "configs/evaluate.yaml"

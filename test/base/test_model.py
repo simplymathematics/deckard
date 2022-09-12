@@ -25,7 +25,7 @@ class testModel(unittest.TestCase):
             self.assertIsInstance(model, Model)
             self.assertIsInstance(model.model_type, str)
             self.assertIsInstance(model.model, object)
-        model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflow')
+        model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tfv1')
         self.assertIsInstance(model, Model)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.model, object)
@@ -52,7 +52,7 @@ class testModel(unittest.TestCase):
         self.assertIsInstance(model1, Model)
         self.assertIsInstance(model1.params, dict)
 
-        model2 = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflowv1')
+        model2 = Model(model = self.file, path = self.path, url = self.url, model_type = 'tfv1')
         self.assertIsInstance(model2.model_type, str)
         self.assertIsInstance(model2, Model)
         self.assertIsInstance(model2.params, dict)

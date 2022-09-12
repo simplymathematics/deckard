@@ -1,0 +1,7 @@
+stages:
+  mnist:
+    cmd: cd mnist/
+    deps:
+    - mnist/
+    params:
+    - mnist/dvc.yaml

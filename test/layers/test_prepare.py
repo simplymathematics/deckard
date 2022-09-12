@@ -1,4 +1,4 @@
-import warnings, tempfile, unittest, os, argparse, dvc.api, yaml
+import warnings, tempfile, unittest, os, argparse, dvc.api, yaml, subprocess
 from sklearn.exceptions import UndefinedMetricWarning
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -23,7 +23,7 @@ class testPrepare(unittest.TestCase):
         with open(os.path.join(self.here, 'dvc.yaml')) as f:
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
         command = dictionary['stages']['prepare']['cmd']
-        output = os.popen(command).read()
+        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             
     def tearDown(self) -> None:
         from shutil import rmtree
