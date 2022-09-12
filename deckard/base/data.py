@@ -2,7 +2,7 @@ import logging, os, pickle
 from telnetlib import X3PAD
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, TimeSeriesSplit
 #TODO: Balanced test set and train set options and functions
 # mnist dataset from 
 from hashlib import md5 as my_hash
@@ -202,7 +202,14 @@ class Data(object):
             maximum = max(X_train)
             minimum = min(X_train)
         else:
-            raise NotImplementedError("Time series not yet implemented")
+            if isinstance(self.train_size, float):
+                train_size = int(len(X) * self.train_size)
+            splitter = TimeSeriesSplit(n_splits =2 , max_train_size=self.train_size)
+            for tr_i, te_i in splitter.split(X):
+                X_train, X_test = X.iloc[tr_i], X.iloc[te_i]
+                y_train, y_test = y.iloc[tr_i], y.iloc[te_i]
+            maximum = max(X_train)
+            minimum = min(X_train)
         return (X_train, y_train), (X_test, y_test), minimum, maximum
     
     def load_data(self, filename:str = None, path:str="."):

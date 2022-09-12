@@ -1,11 +1,11 @@
 prepare: 
-  name: data.csv
+  name: original.csv
   params:
     shuffle : True 
-    stratify : True
+    stratify : False
     random_state : 0
-    train_size : .01
-    target : latitude
+    train_size : .8
+    target : carbon_intensity_avg
   data_file : "data.pkl"
   output_folder : "."
   input_folder : "."

@@ -1,3 +1,0 @@
-- name: art.attacks.evasion.HopSkipJump
-  params:
-    - norm : [2, 'inf']

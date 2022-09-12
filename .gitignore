@@ -72,3 +72,4 @@ test/base/__pycache__/test_experiment.cpython-310-pytest-7.1.3.pyc.21416
 
 # Mounted blob storage
 simplymathematics.blob.core.windows.net/
+examples/time_series/timeseries/
