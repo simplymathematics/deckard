@@ -51,7 +51,7 @@ class DiskStorageMixin(object):
                     raise e
             filenames.append(os.path.join(path,filename))
         logger.info("Saving {} parameters to {}".format(key, os.path.join(path,filename)))
-        pd.DataFrame(attributes).to_json(os.path.join(path, prefix + "attributes" + filetype))
+        DataFrame(attributes).to_json(os.path.join(path, prefix + "attributes" + filetype))
         filenames.append(os.path.join(path, prefix + "attributes" + filetype))
         return filenames
 
