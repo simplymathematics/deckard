@@ -1,4 +1,4 @@
-import os
+import os, logging
 from pandas import Series, DataFrame
 from time import process_time
 from json import dumps
@@ -8,6 +8,8 @@ from .model import Model
 from .experiment import Experiment
 from typing import Callable
 ART_NUMPY_DTYPE = 'float32'
+
+logger = logging.getLogger(__name__)
 class AttackExperiment(Experiment):
     """
     
@@ -29,6 +31,7 @@ class AttackExperiment(Experiment):
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
+        self.ground_truth = None
         self.time_dict = None
         self.params = dict()
         self.params['Model'] = dict(model)
@@ -40,6 +43,7 @@ class AttackExperiment(Experiment):
                 try:
                     dumps(self.params[param])
                 except:
+                    logger.error("Error with param: {}".format(param))
                     self.params[param] = str(type(self.params[param]))
             self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16))
         else:
@@ -56,7 +60,6 @@ class AttackExperiment(Experiment):
         self.save_attack_params(path = path)
         self._build_attack(**kwargs)
         self.save_attack_results(path = path)
-        self.save_params(path = path)
         return None
 
     def _build_attack(self, targeted: bool = False, **kwargs) -> None:

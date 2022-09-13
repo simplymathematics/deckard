@@ -31,18 +31,20 @@ class DiskStorageMixin(object):
         :param model_params_file: str, name of file to save model parameters to.
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
+        if filetype != '.json':
+            raise NotImplementedError("Only json files are supported at the moment")
         filenames = []
         assert path is not None, "Path to save data must be specified."
         if not os.path.isdir(path) and not os.path.exists(path):
             os.mkdir(path)
         attributes = {}
-        for key in self.params:
+        for key in self.params.keys():
             if prefix is not None:
                 filename = prefix + key.lower() + "_" + key + filetype
             else:
                 filename = key.lower() +"_params" + filetype
             try:
-                params = Series(dict(self.params[key])).to_json(os.path.join(path,filename))
+                Series(dict(self.params[key])).to_json(os.path.join(path,filename))
             except ValueError as e:
                 if "has length 1":
                     logger.warning("Parameter {} has length 1. Skipping. Value is {}.".format(key, self.params[key]))
@@ -51,8 +53,12 @@ class DiskStorageMixin(object):
                     raise e
             filenames.append(os.path.join(path,filename))
         logger.info("Saving {} parameters to {}".format(key, os.path.join(path,filename)))
-        DataFrame(attributes).to_json(os.path.join(path, prefix + "attributes" + filetype))
-        filenames.append(os.path.join(path, prefix + "attributes" + filetype))
+        if prefix is not None:
+            filename = prefix + "attributes" + filetype
+        else:
+            filname = "attributes" + filetype
+        DataFrame(attributes).to_json(os.path.join(path, filename))
+        filenames.append(os.path.join(path, filename))
         return filenames
 
     def save_model(self, filename:str = "model", prefix = None, path:str = ".") -> str:
