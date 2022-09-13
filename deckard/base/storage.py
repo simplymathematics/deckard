@@ -4,7 +4,7 @@ from pandas import Series, DataFrame
 logger = logging.getLogger(__name__)
 
 
-class DiskstorageMixin(object):
+class DiskStorageMixin(object):
     def __init__(self):
         pass
     

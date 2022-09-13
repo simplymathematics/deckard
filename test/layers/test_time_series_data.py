@@ -39,7 +39,7 @@ class testTimeSeriesData(unittest.TestCase):
         self.assertIsInstance(data.params['time_series'], bool)
     
     def test_model_init(self):
-        
+        pass
      
     
     def tearDown(self):

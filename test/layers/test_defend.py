@@ -23,7 +23,7 @@ class testArtDefend(unittest.TestCase):
         with open(os.path.join(self.here, 'dvc.yaml')) as f:
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
         command = dictionary['stages']['defend']['cmd']
-        subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     def tearDown(self) -> None:
         from shutil import rmtree

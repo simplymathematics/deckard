@@ -19,7 +19,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from hashlib import md5 as my_hash
 from deckard.base.model import Model
 from deckard.base.data import Data
-from deckard.base.storage import DiskstorageMixin
+from deckard.base.storage import DiskStorageMixin
 
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 # Create experiment object
-class Experiment(DiskstorageMixin):
+class Experiment(DiskStorageMixin):
     """
     Creates an experiment object
     """
@@ -136,7 +136,7 @@ class Experiment(DiskstorageMixin):
         self.save_predictions(path = path, prefix = prefix)
         self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename
-        self.model.save_model(filename = model_name, path = path)
+        self.save_model(filename = model_name, path = path)
         if hasattr(self.model, 'defence'):
             self.save_defence_params(path = path)
         

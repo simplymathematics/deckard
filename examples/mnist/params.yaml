@@ -30,3 +30,9 @@ attack:
   output_folder : "attacks/" 
   output_name : "attacked_model"
   attack_size : 100
+roc_auc:
+  input_folder : control/
+  ground_truth_file : "ground_truth.json"
+  predictions_file : "predictions.json"
+  layer_name : evaluate
+  config : "configs/evaluate.yaml"
