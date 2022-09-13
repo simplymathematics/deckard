@@ -1,17 +1,16 @@
-import logging, os, pickle
-from telnetlib import X3PAD
-import pandas as pd
+import logging
+import os
+import pickle
+from hashlib import md5 as my_hash
+from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split, TimeSeriesSplit
-#TODO: Balanced test set and train set options and functions
+import pandas as pd
+from sklearn.model_selection import TimeSeriesSplit, train_test_split
+
 # mnist dataset from 
 from hashlib import md5 as my_hash
-logger = logging.getLogger(__name__)
 from art.utils import load_dataset
-# mnist dataset from 
-from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
-from art.utils import load_dataset
 
 class Data(object):
     """
@@ -39,7 +38,7 @@ class Data(object):
         :param shuffle: If True, the data is shuffled. Default is False.
         :param flatten: If True, the dataset is flattened. Default is False.
         """
-        if os.path.isfile(dataset) and not dataset.endswith(".csv") and not dataset.endswith(".txt"):
+        if os.path.isfile(dataset) and not Path(dataset).suffix in ['.csv', '.txt']:
             filename = os.path.basename(dataset)
             path = os.path.dirname(dataset)
             tmp = self.load_data(filename = filename, path = path)

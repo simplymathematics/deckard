@@ -183,6 +183,8 @@ class Experiment(DiskStorageMixin):
             pipe = self.model.model.model  
         elif 'art.estimators' in str(type(self.model.model)) and not isinstance(self.model.model.model, Pipeline):
             pipe = Pipeline([('model', self.model.model.model)])
+        elif isinstance(self.model.model, BaseEstimator) and not isinstance(self.model.model, Pipeline):
+            pipe = Pipeline([('model', self.model.model)])
         else:
             raise ValueError("Cannot make model type {} into a pipeline".format(type(self.model.model)))
         new_model = deepcopy(pipe)
