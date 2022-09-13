@@ -7,22 +7,22 @@ stages:
         prepare:
           name: iris
           params:
-            shuffle: false
+            shuffle: true
             stratify: true
             random_state: 0
-            train_size: 1
+            train_size: 0.8
           data_file: data.pkl
           output_folder: .
     outs:
     - path: data.pkl
-      md5: d58c55049821b1583a848353f081e9ff
-      size: 4713
+      md5: a909cdf3e4ea7e9ef4e0fe487b0849f3
+      size: 4727
   train:
     cmd: python -m deckard.layers.sklearn_model --layer_name train
     deps:
     - path: data.pkl
-      md5: d58c55049821b1583a848353f081e9ff
-      size: 4713
+      md5: a909cdf3e4ea7e9ef4e0fe487b0849f3
+      size: 4727
     params:
       params.yaml:
         train:
@@ -33,24 +33,24 @@ stages:
           data_file: data.pkl
           layer_name: train
           config:
-            name: sklearn.ensemble.RandomForestClassifier
+            name: sklearn.linear_model.LogisticRegression
             params:
-              n_estimators: 100
+              penalty: l2
           classifier: false
           model_type: sklearn
           is_fitted: false
     outs:
     - path: train/
-      md5: 80148d5c9f1d0bdee4fb392b342b5a91.dir
-      size: 217466
-      nfiles: 4
+      md5: d9b1e1e5fce7620c8cfb36a71a3aa982.dir
+      size: 1834
+      nfiles: 3
   preprocess:
     cmd: python -m deckard.layers.preprocess  --layer_name preprocess --position 0
     deps:
     - path: train/
-      md5: 80148d5c9f1d0bdee4fb392b342b5a91.dir
-      size: 217466
-      nfiles: 4
+      md5: d9b1e1e5fce7620c8cfb36a71a3aa982.dir
+      size: 1834
+      nfiles: 3
     params:
       params.yaml:
         preprocess:
@@ -71,16 +71,16 @@ stages:
           is_fitted: false
     outs:
     - path: preprocess/
-      md5: 8ed848649ff73fce6b6253e05cadb75a.dir
-      size: 220225
-      nfiles: 4
+      md5: 73f54c8af7a5c450130bf268f3a7f39f.dir
+      size: 2307
+      nfiles: 3
   featurize:
     cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
     deps:
     - path: preprocess/
-      md5: 8ed848649ff73fce6b6253e05cadb75a.dir
-      size: 220225
-      nfiles: 4
+      md5: 73f54c8af7a5c450130bf268f3a7f39f.dir
+      size: 2307
+      nfiles: 3
     params:
       params.yaml:
         featurize:
@@ -100,6 +100,35 @@ stages:
           is_fitted: false
     outs:
     - path: featurize/
-      md5: 90eb23e806cfba805ac3057bc93a269d.dir
-      size: 216960
-      nfiles: 4
+      md5: 8b01a9aa7381a107a29c4799d6859829.dir
+      size: 2578
+      nfiles: 3
+  visualise:
+    cmd: python -m deckard.layers.visualise --layer_name visualise
+    deps:
+    - path: train/
+      md5: d9b1e1e5fce7620c8cfb36a71a3aa982.dir
+      size: 1834
+      nfiles: 3
+    params:
+      params.yaml:
+        visualise:
+          input_folder: train/
+          data_file: data.pkl
+          data_folder: .
+          model_folder: train/
+          model_file: model.pickle
+          defense_file: None
+          preprocessor_file: None
+          config:
+            name:
+          output_folder: plots
+          root_folder: .
+          model_type: sklearn
+          art: false
+          plot_folder: plots
+    outs:
+    - path: plots/
+      md5: 465d80a03306fdea82bfae7b6bf90a77.dir
+      size: 15742
+      nfiles: 1

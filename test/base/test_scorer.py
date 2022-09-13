@@ -8,7 +8,7 @@ from deckard.base.scorer import REGRESSOR_SCORERS, CLASSIFIER_SCORERS
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from sklearn.metrics import f1_score, roc_curve, balanced_accuracy_score, \
-    accuracy_score, precision_score, recall_score, roc_auc_score, make_scorer
+    accuracy_score, precision_score, recall_score, make_scorer
     
 
 logger = logging.getLogger(__name__)

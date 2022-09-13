@@ -31,22 +31,29 @@ class DiskStorageMixin(object):
         :param model_params_file: str, name of file to save model parameters to.
         :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
         """
+        filenames = []
         assert path is not None, "Path to save data must be specified."
         if not os.path.isdir(path) and not os.path.exists(path):
             os.mkdir(path)
+        attributes = {}
         for key in self.params:
             if prefix is not None:
-                filename = prefix + "_" + key + filetype
+                filename = prefix + key.lower() + "_" + key + filetype
             else:
                 filename = key.lower() +"_params" + filetype
-            params = Series(self.params[key])
-            if filetype == '.json':
-                params.to_json(os.path.join(path, filename))
-            elif filetype == '.csv':
-                params.to_csv(os.path.join(path, filename))
-            else:
-                raise NotImplementedError("Filetype {} not implemented".format(filetype))
-        return None
+            try:
+                params = Series(dict(self.params[key])).to_json(os.path.join(path,filename))
+            except ValueError as e:
+                if "has length 1":
+                    logger.warning("Parameter {} has length 1. Skipping. Value is {}.".format(key, self.params[key]))
+                    attributes[key] = self.params[key]
+                else:
+                    raise e
+            filenames.append(os.path.join(path,filename))
+        logger.info("Saving {} parameters to {}".format(key, os.path.join(path,filename)))
+        pd.DataFrame(attributes).to_json(os.path.join(path, prefix + "attributes" + filetype))
+        filenames.append(os.path.join(path, prefix + "attributes" + filetype))
+        return filenames
 
     def save_model(self, filename:str = "model", prefix = None, path:str = ".") -> str:
         """

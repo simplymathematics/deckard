@@ -1,0 +1,48 @@
+stages:
+  prepare:
+    cmd: python -m deckard.layers.prepare
+    params:
+      - prepare
+    outs: 
+      - data.pkl
+  train:
+    cmd:  python -m deckard.layers.sklearn_model --layer_name train
+    deps:
+    - data.pkl
+    params:
+    - train
+    outs:
+    - train/:
+        cache: true
+  preprocess:
+    cmd: python -m deckard.layers.preprocess  --layer_name preprocess --position 0
+    deps:
+    - train/
+    params:
+      - preprocess
+    outs:
+    - preprocess/:
+        cache: true
+  featurize:
+    cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+    deps:
+    - preprocess/
+    params:
+      - featurize
+    outs:
+    - featurize/:
+        cache: true
+  visualise:
+    cmd: python -m deckard.layers.visualise --layer_name visualise
+    deps: 
+      - train/
+    params:
+      - visualise
+    outs:
+      - plots/
+
+
+
+
+
+

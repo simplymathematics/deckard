@@ -40,6 +40,8 @@ class Model(object):
         self.kwargs = kwargs
         self.classifier = classifier
         if isinstance(model, (str, Path)):
+            logger.info("Loading model from file")
+            logger.info("Model type is {}".format(model_type))
             self.filename = model
             self.load(self.filename, art = art, **self.kwargs)
         elif isinstance(model, object):
@@ -47,8 +49,9 @@ class Model(object):
             self.model = model
             self.load(model, art = art, **self.kwargs)
         else:
-            raise ValueError("Model must be a string or a callable")
+            raise ValueError("Model must be a string or a callable. Instead got {}".format(type(model)))
         assert hasattr(self, 'model'), "Error initializing model"
+        self.filename = hash(model)
 
     def __repr__(self) -> str:
         """
@@ -356,19 +359,23 @@ class Model(object):
                 pickle.dump(self.model, f)
         return os.path.join(path, filename)
 
-
-    
     def fit(self, X_train:np.ndarray, y_train:np.ndarray = None) -> None:
         """
         Fits model.
         """
-       
         if self.is_fitted:
             logger.warning("Model is already fitted")
             self.time_dict = {'fit_time': np.nan}
         else:
             start = process_time()
-            self.model.fit(X_train, y_train)
+            try:
+                self.model.fit(X_train, y_train)
+            except ValueError as e:
+                if "y should be a 1d array" in str(e):
+                    y_train = np.argmax(y_train, axis=1)
+                    self.model.fit(X_train, y_train)
+                else:
+                    raise e
             end = process_time()
             self.time_dict = {'fit_time': end - start}
             self.is_fitted = True

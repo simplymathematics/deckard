@@ -15,7 +15,7 @@ def generate_tuple_list_from_yml(filename:str) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
-    assert isinstance(filename, str)
+    assert isinstance(filename, (str, Path, dict)), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     assert os.path.isfile(filename), f"{filename} does not exist"
     full_list = list()
     LOADER = yaml.FullLoader
@@ -85,7 +85,7 @@ def generate_tuple_from_yml(filename:Union[str, dict]) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
-    assert isinstance(filename, (str, dict))
+    assert isinstance(filename, (str, Path, dict)), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     if isinstance(filename, str):
         LOADER = yaml.FullLoader
         assert os.path.isfile(filename), f"{filename} does not exist"

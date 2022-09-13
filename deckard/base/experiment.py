@@ -132,13 +132,14 @@ class Experiment(DiskStorageMixin):
         if not os.path.isdir(path):
             os.mkdir(path)
         self._build_model(**kwargs)
-        self.save_params(path = path, prefix = prefix)
+        # TODO: Fix params
+        # self.save_params(path = path, prefix = prefix)
         self.save_predictions(path = path, prefix = prefix)
         self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename
         self.save_model(filename = model_name, path = path)
-        if hasattr(self.model, 'defence'):
-            self.save_defence_params(path = path)
+        # if hasattr(self.model, 'defence'):
+        #     self.save_defence_params(path = path)
         
     ####################################################################################################################
     #                                                     DEFENSES                                                     #

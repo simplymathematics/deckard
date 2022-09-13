@@ -5,3 +5,5 @@ from .evaluate import evaluate
 from .preprocess import preprocess
 from .prepare import prepare
 from .sklearn_model import sklearn_model
+from .visualise import visualise_classifier_experiment
+from .utils import *
