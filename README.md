@@ -1,10 +1,13 @@
+
+For Developers:
 ```
+sudo apt install python3, python3-dev, 
 git clone https://github.com/simplymathematics/deckard.git
 cd deckard
 git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
-cd adversarial-robustness-toolbox && python -m pip install -e . && cd ..
-python -m pip isntall -e .
-source env
+python3 -m venv env 
+cd adversarial-robustness-toolbox && python3 -m pip install -e . && cd ..
+python3 -m pip install -e .
 ```
 
 Check that deckard works
