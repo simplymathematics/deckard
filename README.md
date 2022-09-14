@@ -1,7 +1,9 @@
-```git clone {{this repo}}```  
-```cd {{this repo}}```  
-```python setup.py develop```  
+git clone https://github.com/simplymathematics/deckard.git
+cd deckard
+git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
+cd adversarial-robustness-toolbox && python -m pip install . && cd ..
 
+```python setup.py develop```  
 
 Check that deckard works
 
@@ -10,7 +12,7 @@ Check that deckard works
 
 # Navigate to your favorite subfolder in `examples`
 
-```dvc repro``` 
+```dvc repro --force``` 
 
 Reproduces the last experiment.
 
