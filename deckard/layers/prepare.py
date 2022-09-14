@@ -1,8 +1,9 @@
-from deckard.base import Data, parse_data_from_yml
-import logging, os, yaml, argparse
-from pickle import dump
+from deckard.base import Data
+import logging, os, argparse
+
 
 logger = logging.getLogger(__name__)
+
 def prepare(args) -> None:
     data = Data(dataset = args.name, **args.params)
     if args.data_file != None:
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     params = dvc.api.params_show()
     args = argparse.Namespace(**params['prepare'])
     for k, v in vars(cli_args).items():
-        if v is not None and k in params:
+        if v is not None and not hasattr(args, k):
             setattr(args, k, v)
     if not os.path.exists(args.output_folder):
         logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))

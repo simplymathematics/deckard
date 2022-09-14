@@ -61,10 +61,58 @@ visualise:
   model_file : "model.pickle"
   defense_file : None
   preprocessor_file : None
-  config : 
-    name : 
+  config: 
+    name:
+    params:
   output_folder : plots
   root_folder : "."
   model_type : "sklearn"
   art : False
   plot_folder : "plots"
+control:
+  # input_model : "train/model.pickle"
+  # url : 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "control"
+  input_folder : "."
+  output_name : control_model.pickle
+  config:
+    name: sklearn.linear_model.LogisticRegression
+    params: 
+      'penalty' : 'l2' 
+defend:
+  input_model : "control_model.pickle" 
+  input_folder : "control" 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "defences" 
+  output_name : "defended_model"
+  config:
+    name: art.defences.preprocessor.FeatureSqueezing
+    params: 
+      bit_depth : 8
+      clip_values : [0, 255]
+attack:
+  config: 
+    name: art.attacks.evasion.HopSkipJump
+    params: 
+      max_iter : 100
+  input_model : "defended_model.pickle" 
+  input_folder : "defences" 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "attacks" 
+  output_name : "attacked_model"
+  attack_size : 100
+evaluate:
+  input_folder : "."
+  ground_truth_file : "ground_truth.json"
+  predictions_file : "predictions.json"
+  layer_name : evaluate
+  config : 
+    name:
+    params:
+  output_folder: scores/
+  output_name : "scores.json"
+  is_regressor : True

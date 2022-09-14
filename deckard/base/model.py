@@ -349,6 +349,8 @@ class Model(object):
         else:
             filename = self.filename
         if hasattr(self, "model") and hasattr(self.model, "save"):
+            if filename.endswith(".pickle"):
+                filename = filename[:-7]
             try:
                 self.model.save(filename = filename, path = path)
             except:

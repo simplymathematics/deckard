@@ -4,33 +4,30 @@ import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Union
 
 import dvc.api
 from deckard.base import Data, Experiment, Model
-from deckard.base.parse import (generate_experiment_list,
-                                generate_object_from_tuple,
-                                generate_tuple_from_yml)
 from deckard.layers.utils import make_output_folder
 from sklearn.pipeline import Pipeline
-from tqdm import tqdm
 from .utils import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)
 
-def preprocess(input_folder:Union[str,Path], model:Union[str,Path], data:Union[str,Path], name:Union[str, Path], output_folder:Union[str,Path], preprocessor:object, position:int, model_type:str, layer:str) -> None:    
-    data = Data(data)
-    model_file = Path(input_folder, model)
+def preprocess(args) -> Experiment:    
+    data = Data(args.data_file)
+    model_file = Path(args.input_folder, args.input_name)
+    preprocessor = parse_config(args.config)
     assert model_file.exists(), "Problem finding model file: {}".format(model_file)
-    model = Model(model_file, art = False, model_type = model_type)
+    model = Model(model_file, art = False, model_type = args.model_type)
     exp = Experiment(data = data, model = model)
     assert isinstance(exp, Experiment), "Problem initializing experiment"
     new = deepcopy(exp)
-    new.insert_sklearn_preprocessor(preprocessor = preprocessor, position = position, name = layer)
+    new.insert_sklearn_preprocessor(preprocessor = preprocessor, position = args.position, name = args.layer_name)
     assert isinstance(new, Experiment), "Problem inserting preprocessor"
     assert isinstance(new.model.model, Pipeline), "Problem inserting preprocessor. Model is not a Pipeline. It is a {}".format(type(new.model))
-    new(filename = name, path = output_folder)
-    assert Path(output_folder, name).exists(), "Problem creating file: {}".format(Path(output_folder, name))
+    new(filename = args.output_name, path = output_folder)
+    assert Path(output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(output_folder, args.output_name))
+    logger.debug("Preprocessing complete")
     return new
 
 if __name__ == '__main__':
@@ -50,18 +47,17 @@ if __name__ == '__main__':
     assert isinstance(args.layer_name, str), "Layer name must be a string. It is a {}".format(type(args.layer_name))
     args = argparse.Namespace(**params[cli_args.layer_name])
     for k, v in vars(cli_args).items():
-        if v is not None and k in params:
+        if v is not None and not hasattr(args, k):
             setattr(args, k, v)
     # create output folder
     assert isinstance(args.output_folder, (str, Path)), "Output folder must be a string or a Path object. It is a {}".format(type(args.output_folder))
     output_folder = make_output_folder(args.output_folder)
     assert isinstance(args.config, dict), "Config must be a dictionary. It is a {}".format(type(args.config))
-    preprocessor = parse_config(args.config)
+    
     assert isinstance(args.input_name, (str, Path)), "Input name must be a string or a Path object. It is a {}".format(type(args.input_name))
     assert isinstance(args.data_file, (str, Path)), "Data file must be a string or a Path object. It is a {}".format(type(args.data_file))
     assert isinstance(args.output_name, (str, Path)), "Output name must be a string or a Path object. It is a {}".format(type(args.output_name))
     assert isinstance(args.position, int), "Position must be an integer. It is a {}".format(type(args.position))
-    assert isinstance(preprocessor, object), "Preprocessor must be an object. It is a {}".format(type(preprocessor))
     assert isinstance(args.input_folder, (str, Path)), "Input folder must be a string or a Path object. It is a {}".format(type(args.input_folder))
-    preprocess(input_folder = args.input_folder, model = args.input_name, data = args.data_file, name = args.output_name, position = args.position, output_folder = output_folder, preprocessor = preprocessor, model_type = args.model_type, layer = args.layer_name)
+    preprocess(args)
 

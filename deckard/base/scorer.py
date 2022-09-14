@@ -4,7 +4,7 @@ import pandas as pd
 import os, logging, json, yaml
 from typing import Union, Callable
 from pathlib import Path
-
+from pandas import Series
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, \
     mean_squared_error, r2_score, mean_absolute_percentage_error, explained_variance_score
@@ -27,7 +27,7 @@ class Scorer():
         assert config or is_regressor is not None, "Must specify either config or is_regressor."
         if config is None:
             assert is_regressor is not None, "If no config is provided, is_regressor must be specified."
-            if self.is_regressor:
+            if is_regressor:
                 scorers = list(REGRESSOR_SCORERS.values())
                 names = list(REGRESSOR_SCORERS.keys())
             else:
@@ -67,8 +67,8 @@ class Scorer():
         Sets scorers for evalauation if specified, returns a dict of scores in general.
         """
         scores = {}
-        if predictions.shape != ground_truth.shape:
-            raise ValueError("Predictions and ground truth must have the same shape.")
+        # if predictions.shape != ground_truth.shape:
+        #     raise ValueError("Predictions and ground truth must have the same shape.")
         for name, scorer in zip(self.names, self.scorers):
             try:
                 scores[name] = scorer(ground_truth, predictions)
@@ -77,22 +77,24 @@ class Scorer():
                 if "Target is multilabel-indicator but average='binary'" in str(e):
                     logger.warning("Average binary not supported for multilabel-indicator. Using micro.")
                     scores[name] = scorer(ground_truth, predictions, average='weighted')
-                elif "multilabel-indicator" and "not supported" in str(e):
-                    try:
-                        pred = np.argmax(pd.DataFrame(predictions).reset_index(), axis = 1)
-                        test = np.argmax(pd.DataFrame(ground_truth).reset_index(), axis = 1)
-                        scores[name] = scorer(test, pred)
-                    except ValueError as e:
-                        logger.warning("Pred shape before/after argmax: ", predictions.shape)
-                        logger.warning("Test shape before/after argmax: ", ground_truth.shape)
-                        logger.warning("Score {} not supported for multilabel-indicator".format(name))
-                        logger.warning("Error Type: {}".format(type(e)))
-                        logger.warning("Error: {}".format(e))
-                        continue
+                if "multilabel-indicator" and "not supported" in str(e):
+                    pred = np.argmax(pd.DataFrame(predictions).reset_index(), axis = 1)
+                    test = np.argmax(pd.DataFrame(ground_truth).reset_index(), axis = 1)
+                    scores[name] = scorer(test, pred)
+                if "can't hand a  mix of multiclass and continuous" in str(e):
+                    gr = LabelBinarizer().fit_transform(ground_truth) 
+                    pr = LabelBinarizer().fit_transform(predictions)
+                    pr = np.argmax(pr, axis = 1)
+                    gr = np.argmax(gr, axis = 1)
+                    scores[name] = scorer(gr, pr, average = 'weighted')
                 else:
-                    raise e
+                    #TODO: fix scoring for multilabel, currently only works for binary
+                    scores[name] = 'Error'
+                    continue
+            finally:
+                assert name in scores, "Scorer {} not found in scores.".format(name)
                 
-        self.scores = pd.Series(scores)
+        self.scores = pd.Series(scores).T
         return self.scores
     
     
@@ -197,11 +199,15 @@ class Scorer():
     def __call__(self, ground_truth_file:str, predictions_file:str, path:str = ".", prefix:str =None, filetype = '.json'):
         """ Score the predictions from the file and updates best score. """
         logger.info("Reading from {} and {}.".format(ground_truth_file, predictions_file))
-        try:
-            predictions = self.read_data_from_json(predictions_file)
-            ground_truth = self.read_data_from_json(ground_truth_file)
-            self.scores = self.score(ground_truth, predictions)
-        except Exception as e:
-            raise e
+        test = self.read_data_from_json(predictions_file)
+        
+        true = self.read_data_from_json(ground_truth_file)
+        self.scores = self.score(true, test)
         self.save_results(prefix = prefix, path = path, filetype = filetype)
         return self
+
+    def __str__(self):
+        string = "Scorer with scorers: "
+        for scorer, score in zip(self.names, self.scorers):
+            string += ("{}: {}".format(scorer, score))
+        return string

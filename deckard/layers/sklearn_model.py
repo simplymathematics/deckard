@@ -1,6 +1,5 @@
 import logging, argparse
 from ..base import Data, Model, Experiment
-from ..base.parse import generate_object_from_tuple, generate_tuple_from_yml, generate_experiment_list
 import dvc.api
 from os import path, mkdir
 from typing import Union
@@ -9,17 +8,18 @@ from .utils import make_output_folder, parse_config
 logger = logging.getLogger(__name__)
 
 
-def sklearn_model(output_name:Union[str, Path], output_folder:Union[str, Path], data_file:Union[str, Path], model:object, input_folder:Union[str, Path] = None) -> Experiment:
-    if input_folder is None:
-        assert Path(data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(data_file, Path.cwd())
-        data = Data(data_file)
+def sklearn_model(args) -> Experiment:
+    model = parse_config(args.config)
+    if args.input_folder is None:
+        assert Path(args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, Path.cwd())
+        data = Data(args.data_file)
     else:
-        assert Path(input_folder, data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(data_file, Path.cwd())
-        data = Data(Path(input_folder, data_file))
+        assert Path(args.input_folder, args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, Path.cwd())
+        data = Data(Path(args.input_folder, args.data_file))
     model = Model(model, art = False)
-    exp = Experiment(data = data, model = model, filename = output_folder)
-    exp(filename = output_name, path = output_folder)
-    assert Path(output_folder, output_name).exists(), "Problem creating file: {}".format(Path(output_folder, output_name))
+    exp = Experiment(data = data, model = model, filename = args.output_folder)
+    exp(filename = args.output_name, path = args.output_folder)
+    assert Path(args.output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(args.output_folder, args.output_name))
     return exp
 
 if __name__ == '__main__':
@@ -37,14 +37,12 @@ if __name__ == '__main__':
     assert isinstance(args.layer_name, str), "Layer name must be a string"
     args = argparse.Namespace(**params[cli_args.layer_name])
     for k, v in vars(cli_args).items():
-        if v is not None and k in params:
+        if v is not None and not hasattr(args, k):
             setattr(args, k, v)
     output = make_output_folder(args.output_folder)
     assert Path(output).exists(), "Problem finding output folder: {}".format(output)
     assert isinstance(args.config, dict), "Config must be a dictionary. It is type: {}".format(type(args.config))
-    model = parse_config(args.config)
-    assert isinstance(model, object), "Problem parsing config file: {}. It is type: {}".format(args.config, type(args.config))
     assert isinstance(args.output_name, (str, Path)), "Output name must be a string. It is type: {}".format(type(args.output_name))
     assert isinstance(args.data_file, (str, Path)), "Data file must be a string. It is type: {}".format(type(args.data_file))
-    sklearn_model(input_folder = args.input_folder, output_folder = output, output_name = args.output_name, data_file = args.data_file, model = model)
+    sklearn_model(args)
    

@@ -1,12 +1,12 @@
 stages:
   prepare:
-    cmd: python ../../deckard/layers/prepare.py
+    cmd: python -m deckard.layers.prepare.py
     params:
       - prepare
     outs: 
       - data.pkl
   control:
-    cmd:  python ../../deckard/layers/art_model.py --layer_name control
+    cmd:  python -m deckard.layers.art_model --layer_name control
     deps:
     - data.pkl
     params:
@@ -15,7 +15,7 @@ stages:
     - control/:
         cache: true
   defend:
-    cmd:  python ../../deckard/layers/defend.py --layer_name defend
+    cmd:  python -m deckard.layers.defend --layer_name defend
     deps:
     - data.pkl
     - control/control_model.pb
@@ -26,7 +26,7 @@ stages:
     - defences/:
         cache: true
   attack:
-    cmd:  python ../../deckard/layers/attack.py --layer_name attack
+    cmd:  python -m deckard.layers.attack --layer_name attack
     deps:
     - data.pkl
     - defences/defended_model

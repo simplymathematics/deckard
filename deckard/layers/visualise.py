@@ -1,19 +1,16 @@
 import argparse
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Callable, Union
 import dvc.api
 import numpy as np
-import yaml
 from deckard.base import Data, Model
-from tqdm import tqdm
 from yellowbrick.exceptions import YellowbrickValueError
 
 logger = logging.getLogger(__name__)
 
-def visualise_classifier_experiment(args:argparse.Namespace, path:[str,Path] = Path("."), type:str = 'ROC_AUC') -> None:    
+def visualise_classifier_experiment(args:argparse.Namespace, path:Union[str,Path] = Path("."), type:str = 'ROC_AUC') -> None:    
     """
     Visualise the results of a single experiment.
     :param args: a dictionary read at run-time
@@ -54,8 +51,7 @@ def visualise_classifier_experiment(args:argparse.Namespace, path:[str,Path] = P
     func.fit(data.X_train, y_train)
     func.score(data.X_test, y_test)
     func.show(outpath = outpath) 
-    print("Saving visualisation to {}".format(outpath))
-    input("Press enter to continue")
+    logger.info("Saving visualisation to {}".format(outpath))
     return outpath.resolve()
         
 if __name__ == '__main__':
@@ -70,7 +66,7 @@ if __name__ == '__main__':
     params = dvc.api.params_show()
     args = argparse.Namespace(**params[cli_args.layer_name])
     for k, v in vars(cli_args).items():
-        if v is not None and k in params:
+        if v is not None and not hasattr(args, k):
             setattr(args, k, v)
     logger.info(f"Running {cli_args.layer_name} with args: {args}")
     # assert Path(args.config).exists(), f"Config file {args.config} does not exist"
