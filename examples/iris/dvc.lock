@@ -1,0 +1,263 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m deckard.layers.prepare
+    params:
+      params.yaml:
+        prepare:
+          name: iris
+          params:
+            shuffle: true
+            stratify: true
+            random_state: 0
+            train_size: 0.8
+          data_file: data.pkl
+          output_folder: .
+    outs:
+    - path: data.pkl
+      md5: 4dd321a781de4c2fda050707c3930143
+      size: 4727
+  train:
+    cmd: python -m deckard.layers.sklearn_model --layer_name train
+    deps:
+    - path: data.pkl
+      md5: 4dd321a781de4c2fda050707c3930143
+      size: 4727
+    params:
+      params.yaml:
+        train:
+          input_folder: .
+          input_name: model.pickle
+          output_folder: train
+          output_name: model.pickle
+          data_file: data.pkl
+          layer_name: train
+          config:
+            name: sklearn.linear_model.LogisticRegression
+            params:
+              penalty: l2
+          classifier: false
+          model_type: sklearn
+          is_fitted: false
+    outs:
+    - path: train/
+      md5: 709e69c0d7df49c4e66889b0aab7353b.dir
+      size: 1834
+      nfiles: 3
+  preprocess:
+    cmd: python -m deckard.layers.preprocess  --layer_name preprocess --position 0
+    deps:
+    - path: train/
+      md5: 709e69c0d7df49c4e66889b0aab7353b.dir
+      size: 1834
+      nfiles: 3
+    params:
+      params.yaml:
+        preprocess:
+          input_folder: train
+          output_folder: preprocess
+          input_name: model.pickle
+          output_name: model
+          data_file: data.pkl
+          layer_name: preprocess
+          position: 0
+          config:
+            name: sklearn.preprocessing.StandardScaler
+            params:
+              with_mean: true
+              with_std: true
+          classifier: false
+          model_type: sklearn
+          is_fitted: false
+    outs:
+    - path: preprocess/
+      md5: 2823394ac11b6bce4bac628d9765b71d.dir
+      size: 2307
+      nfiles: 3
+  featurize:
+    cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+    deps:
+    - path: preprocess/
+      md5: 2823394ac11b6bce4bac628d9765b71d.dir
+      size: 2307
+      nfiles: 3
+    params:
+      params.yaml:
+        featurize:
+          input_folder: preprocess
+          output_folder: featurize
+          input_name: model
+          output_name: model.pickle
+          data_file: data.pkl
+          layer_name: featurize
+          position: 1
+          config:
+            name: sklearn.impute.SimpleImputer
+            params:
+              strategy: mean
+          classifier: false
+          model_type: sklearn
+          is_fitted: false
+    outs:
+    - path: featurize/
+      md5: cc4139fd4014dd4f778731b0907f1a78.dir
+      size: 2578
+      nfiles: 3
+  visualise:
+    cmd: python -m deckard.layers.visualise --layer_name visualise
+    deps:
+    - path: train/
+      md5: 709e69c0d7df49c4e66889b0aab7353b.dir
+      size: 1834
+      nfiles: 3
+    params:
+      params.yaml:
+        visualise:
+          input_folder: train/
+          data_file: data.pkl
+          data_folder: .
+          model_folder: train/
+          model_file: model.pickle
+          defense_file: None
+          preprocessor_file: None
+          config:
+            name:
+            params:
+          output_folder: plots
+          root_folder: .
+          model_type: sklearn
+          art: false
+          plot_folder: plots
+    outs:
+    - path: plots/
+      md5: 90eb5d0006ba6dd53c5dd074938eb1ff.dir
+      size: 16024
+      nfiles: 1
+  control:
+    cmd: python -m deckard.layers.art_model --layer_name control
+    deps:
+    - path: data.pkl
+      md5: 4dd321a781de4c2fda050707c3930143
+      size: 4727
+    params:
+      params.yaml:
+        control:
+          model_type: sklearn
+          data_file: data.pkl
+          output_folder: control
+          input_folder: .
+          output_name: control_model.pickle
+          config:
+            name: sklearn.linear_model.LogisticRegression
+            params:
+              penalty: l2
+    outs:
+    - path: control/
+      md5: df6927bb83f7365666bc09c559913985.dir
+      size: 3225
+      nfiles: 3
+  evaluate:
+    cmd: python -m deckard.layers.evaluate --layer_name evaluate
+    deps:
+    - path: attacks/
+      md5: fccd769b0024ce562eb11c9750f43238.dir
+      size: 4180
+      nfiles: 4
+    - path: control/
+      md5: df6927bb83f7365666bc09c559913985.dir
+      size: 3225
+      nfiles: 3
+    - path: defences/
+      md5: df86dd67fd59e58edf7a102bb17ee9dc.dir
+      size: 3185
+      nfiles: 3
+    - path: featurize/
+      md5: cc4139fd4014dd4f778731b0907f1a78.dir
+      size: 2578
+      nfiles: 3
+    - path: preprocess/
+      md5: 2823394ac11b6bce4bac628d9765b71d.dir
+      size: 2307
+      nfiles: 3
+    - path: train/
+      md5: 709e69c0d7df49c4e66889b0aab7353b.dir
+      size: 1834
+      nfiles: 3
+    params:
+      params.yaml:
+        evaluate:
+          input_folder: .
+          ground_truth_file: ground_truth.json
+          predictions_file: predictions.json
+          layer_name: evaluate
+          config:
+            name:
+            params:
+          output_folder: scores/
+          output_name: scores.json
+          is_regressor: true
+    outs:
+    - path: scores/
+      md5: 576f83ef82f14d6d3e27ae9580728875.dir
+      size: 1618
+      nfiles: 1
+  defend:
+    cmd: python -m deckard.layers.defend --layer_name defend
+    deps:
+    - path: control/
+      md5: df6927bb83f7365666bc09c559913985.dir
+      size: 3225
+      nfiles: 3
+    - path: data.pkl
+      md5: 4dd321a781de4c2fda050707c3930143
+      size: 4727
+    params:
+      params.yaml:
+        defend:
+          input_model: control_model.pickle
+          input_folder: control
+          model_type: sklearn
+          data_file: data.pkl
+          output_folder: defences
+          output_name: defended_model
+          config:
+            name: art.defences.preprocessor.FeatureSqueezing
+            params:
+              bit_depth: 8
+              clip_values:
+              - 0
+              - 255
+    outs:
+    - path: defences/
+      md5: df86dd67fd59e58edf7a102bb17ee9dc.dir
+      size: 3185
+      nfiles: 3
+  attack:
+    cmd: python -m deckard.layers.attack --layer_name attack
+    deps:
+    - path: data.pkl
+      md5: 4dd321a781de4c2fda050707c3930143
+      size: 4727
+    - path: defences/
+      md5: df86dd67fd59e58edf7a102bb17ee9dc.dir
+      size: 3185
+      nfiles: 3
+    params:
+      params.yaml:
+        attack:
+          config:
+            name: art.attacks.evasion.HopSkipJump
+            params:
+              max_iter: 100
+          input_model: defended_model.pickle
+          input_folder: defences
+          model_type: sklearn
+          data_file: data.pkl
+          output_folder: attacks
+          output_name: attacked_model
+          attack_size: 100
+    outs:
+    - path: attacks/
+      md5: fccd769b0024ce562eb11c9750f43238.dir
+      size: 4180
+      nfiles: 4

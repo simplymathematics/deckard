@@ -17,9 +17,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 from hashlib import md5 as my_hash
-from .model import Model
-from .data import Data
-from .storage import DiskstorageMixin
+from deckard.base.model import Model
+from deckard.base.data import Data
+from deckard.base.storage import DiskStorageMixin
+
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
@@ -30,11 +31,11 @@ logger = logging.getLogger(__name__)
 
 
 # Create experiment object
-class Experiment(DiskstorageMixin):
+class Experiment(DiskStorageMixin):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, verbose : int = 1, name:str = None, is_fitted:bool = False, filename:str = None):
+    def __init__(self, data:Data, model:Model, verbose : int = 1, is_fitted:bool = False, filename:str = None):
         """
         Creates an experiment object
         :param data: Data object
@@ -47,26 +48,20 @@ class Experiment(DiskstorageMixin):
         self.model = model
         self.model_type = self.model.model_type
         self.data = data
-        self.name = str(hash(self.data.dataset)) +"_"+ str(hash(model)) if name is None else name
+        __dh = hash(self.data)
+        __dh = __dh if int(__dh) > 0 else -1 * int(__dh)
+        __mh = hash(self.model)
+        __mh = __mh if int(__mh) > 0 else -1 * int(__mh)
+        self.filename =  f"{__dh}_{__mh}" if filename is None else filename
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.predictions = None
+        self.ground_truth = self.data.y_test
         self.time_dict = None
         self.params = dict()
         self.params['Model'] = dict(model)
         self.params['Data'] = dict(data)
-        if filename is None:
-            self.filename = str(int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16))
-        else:
-            self.filename = filename
-        self.params['Experiment'] = {'name': self.name, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'id': self.filename}
-
-
-    def __hash__(self):
-        """
-        Returns a hash of the experiment object
-        """
-        return int(my_hash(dumps(self.params, sort_keys = True).encode('utf-8')).hexdigest(), 16)
+        self.params['Experiment'] = {'name': self.filename, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'id': self.filename}
     
     def __eq__(self, other) -> bool:
         """
@@ -78,7 +73,7 @@ class Experiment(DiskstorageMixin):
         """
         Returns human-readable string representation of Experiment object.
         """
-        return str({"Data": self.data, "Model": self.model, "Params": self.params})
+        return str(self.params)
     
     def __repr__(self) -> str:
         """
@@ -92,6 +87,12 @@ class Experiment(DiskstorageMixin):
         """
         for key, value in self.params.items():
             yield key, value
+            
+    def __hash__(self) -> str:
+        """
+        Hashes the params as specified in the __init__ method.
+        """
+        return int(my_hash(str(self.__str__()).encode('utf-8')).hexdigest(), 32)
     
     def _build_model(self, **kwargs) -> None:
         """
@@ -124,18 +125,22 @@ class Experiment(DiskstorageMixin):
             self.filename = filename
         return None
 
-    def run(self, path, filename = "scores.json", **kwargs) -> None:
+    def __call__(self, path, prefix = None, filename = None, **kwargs) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
         if not os.path.isdir(path):
             os.mkdir(path)
-        
         self._build_model(**kwargs)
-        self.save_params(path = path)
-        model_name = str(hash(self.model))
-        self.model.save(filename = model_name, path = path)
-
+        # TODO: Fix params
+        # self.save_params(path = path, prefix = prefix)
+        self.save_predictions(path = path, prefix = prefix)
+        self.save_ground_truth(path = path, prefix = prefix)
+        model_name = str(hash(self.model)) if filename is None else filename
+        self.save_model(filename = model_name, path = path)
+        # if hasattr(self.model, 'defence'):
+        #     self.save_defence_params(path = path)
+        
     ####################################################################################################################
     #                                                     DEFENSES                                                     #
     ####################################################################################################################
@@ -170,46 +175,32 @@ class Experiment(DiskstorageMixin):
         :param name: name of the preprocessor
         :param preprocessor: preprocessor to add
         :param position: position to add preprocessor
+        
         """
-        if isinstance(self.model.model.model, (BaseEstimator, TransformerMixin)) and not isinstance(self.model.model, Pipeline):
-            self.model.model = Pipeline([('model', self.model.model.model)])
-        elif not isinstance(self.model.model, Pipeline):
-            raise ValueError("Model {} is not a sklearn compatible estimator".format(type(self.model.model)))
-        new_model = deepcopy(self.model)
-        try:
-            new_model.model.model.steps.insert(position, (name, preprocessor))
-        except AttributeError:
-            new_model.model.steps.insert(position, (name, preprocessor))
-        self.model = new_model
+        # If it's already a pipeline
+        if isinstance(self.model.model, Pipeline):
+            pipe = self.model.model
+        elif hasattr(self.model.model, 'model') and isinstance(self.model.model.model, Pipeline):
+            pipe = self.model.model.model  
+        elif 'art.estimators' in str(type(self.model.model)) and not isinstance(self.model.model.model, Pipeline):
+            pipe = Pipeline([('model', self.model.model.model)])
+        elif isinstance(self.model.model, BaseEstimator) and not isinstance(self.model.model, Pipeline):
+            pipe = Pipeline([('model', self.model.model)])
+        else:
+            raise ValueError("Cannot make model type {} into a pipeline".format(type(self.model.model)))
+        new_model = deepcopy(pipe)
+        assert isinstance(new_model, Pipeline)
+        new_model.steps.insert(position, (name, preprocessor))
+        self.model.model = new_model
    
     def get_defence(self, filename:str=None, path:str = "."):
         """
         Returns the defence from an experiment
         :param experiment: experiment to get defence from
         """
-        from deckard.base.parse import generate_object_list_from_tuple
-        if filename is None:
-            defence = self.defence
-        else:
-            location = os.path.join(path, filename)
-            with open(location, 'rb') as f:
-                defence_json = load(f)
-            if defence_json['name'] is not None:
-                name = defence_json['name'].split("'")[1]
-                params = defence_json['params']
-                new_params = {}
-                for param, value in params.items():
-                    if param.startswith("_"):
-                        continue
-                    else:
-                        new_params[param] = value
-                defence_tuple = (name, new_params)
-                defence_list = [defence_tuple]
-                defences = generate_object_list_from_tuple(defence_list)
-                defence = defences[0]
-            else:
-                defence = None
-        return defence
+        from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
+        return generate_object_from_tuple(generate_tuple_from_yml(os.path.join(path, filename)))
+        
     
     def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
         """
@@ -220,7 +211,12 @@ class Experiment(DiskstorageMixin):
         assert os.path.isdir(path), "Path to experiment does not exist"
         
         defence_file = os.path.join(path, filename)
-        results = self.params['Defence']
+        if 'Defence' in self.params:
+            results = self.params['Defence']
+        elif 'Defence' in self.model.params:
+            results = self.model.params['Defence']
+        else:
+            raise ValueError("No defence params found in experiment")
         results = Series(results.values(), name =  self.filename, index = results.keys())
         results.to_json(defence_file)
         assert os.path.exists(defence_file), "Defence file not saved."

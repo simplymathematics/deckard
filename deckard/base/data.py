@@ -1,17 +1,16 @@
-import logging, os, pickle
-from telnetlib import X3PAD
-import pandas as pd
+import logging
+import os
+import pickle
+from hashlib import md5 as my_hash
+from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split
-#TODO: Balanced test set and train set options and functions
+import pandas as pd
+from sklearn.model_selection import TimeSeriesSplit, train_test_split
+
 # mnist dataset from 
 from hashlib import md5 as my_hash
-logger = logging.getLogger(__name__)
 from art.utils import load_dataset
-# mnist dataset from 
-from hashlib import md5 as my_hash
 logger = logging.getLogger(__name__)
-from art.utils import load_dataset
 
 class Data(object):
     """
@@ -39,10 +38,23 @@ class Data(object):
         :param shuffle: If True, the data is shuffled. Default is False.
         :param flatten: If True, the dataset is flattened. Default is False.
         """
-        if os.path.isfile(dataset) and not dataset.endswith(".csv") and not dataset.endswith(".txt"):
+        if os.path.isfile(dataset) and not Path(dataset).suffix in ['.csv', '.txt']:
             filename = os.path.basename(dataset)
             path = os.path.dirname(dataset)
-            self = self.load_data(filename = filename, path = path)
+            tmp = self.load_data(filename = filename, path = path)
+            self.random_state = tmp.random_state
+            self.train_size = tmp.train_size
+            self.shuffle = tmp.shuffle
+            self.time_series = tmp.time_series
+            self.target = tmp.target
+            self.dataset = tmp.dataset
+            self.stratify = tmp.stratify
+            self.test_size = tmp.test_size
+            self.X_train = tmp.X_train
+            self.X_test = tmp.X_test
+            self.y_test = tmp.y_test
+            self.y_train = tmp.y_train
+            self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         else:
             self.random_state = random_state
             self.train_size = train_size
@@ -55,12 +67,6 @@ class Data(object):
             self._sample_data(dataset) # adds X_train, X_test, y_train, y_test attributes to self, using parameters specified above.
             self.params = {'dataset':dataset, 'target':target, 'time_series':time_series, 'train_size':train_size, 'random_state':random_state,  'shuffle':shuffle}
         
-    def __hash__(self) -> str:
-        """
-        Hashes the params as specified in the __init__ method.
-        """
-        params = self.get_params()
-        return int(my_hash(str(params).encode('utf-8')).hexdigest(), 36)
 
     def __eq__(self, other) -> bool:
         """
@@ -86,6 +92,12 @@ class Data(object):
         """
         for key, value in self.params.items():
             yield key, value
+    
+    def __hash__(self) -> str:
+        """
+        Hashes the params as specified in the __init__ method.
+        """
+        return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
     
     def get_params(self):
         """
@@ -189,7 +201,14 @@ class Data(object):
             maximum = max(X_train)
             minimum = min(X_train)
         else:
-            raise NotImplementedError("Time series not yet implemented")
+            if isinstance(self.train_size, float):
+                train_size = int(len(X) * self.train_size)
+            splitter = TimeSeriesSplit(n_splits =2 , max_train_size=self.train_size)
+            for tr_i, te_i in splitter.split(X):
+                X_train, X_test = X.iloc[tr_i], X.iloc[te_i]
+                y_train, y_test = y.iloc[tr_i], y.iloc[te_i]
+            maximum = max(X_train)
+            minimum = min(X_train)
         return (X_train, y_train), (X_test, y_test), minimum, maximum
     
     def load_data(self, filename:str = None, path:str="."):
@@ -223,4 +242,7 @@ class Data(object):
             pickle.dump(self, f)
         logger.info("Saved model")
 
+    def __call__(self, filename:str = None, path:str=".") -> None:
+        self.save(filename, path)
+        return None
     

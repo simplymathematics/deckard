@@ -1,52 +1,63 @@
 
+import argparse
 import logging
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
-from deckard.base import Model, Data
+import os
 from copy import deepcopy
-logger = logging.getLogger(__name__)
-if __name__ == '__main__':
-    import logging
-    from deckard.base.utils import save_all, save_best_only
-    from deckard.base.parse import generate_experiment_list, generate_object_list_from_tuple, generate_tuple_list_from_yml
-    import argparse
-    from os import path
-    parser = argparse.ArgumentParser(description='Run a preprocessor on a dataset')
-    parser.add_argument('-c', '--config', default = 'configs/preprocess.yml',type=str, help='preprocessor file to use')
-    parser.add_argument('-f', '--folder', type=str, help='Experiment folder to use', default = './')
-    parser.add_argument('-d', '--dataset', type=str, help='Data file to use', default = "data.pkl")
-    parser.add_argument('-b' ,'--bigger_is_better', required=True, default = True, help='whether the scorer is bigger is better')
-    parser.add_argument('-s', '--scorer', required=True, type = str, help='scorer for optimization. Other metrics can be set using the Experiment.set_metric method.')
-    parser.add_argument('--name', type=str, help='name of the experiment', required=True)
-    parser.add_argument('--input', type=str,  help='name of the experiment', required=True)
-    parser.add_argument('-p', '--position', type = int, default = 0, help='position of the preprocessor in the pipeline. Useful for using more than one pre-processor.')
-    parser.add_argument('--best', type=bool, default=False, help='only store the best preprocessor')
-    parser.add_argument('--model_name', type=str, default = "model", help='name of the experiment')
-    args = parser.parse_args()
-    preprocessor_file = args.config
-    best = Model(path.join(args.folder, args.input, args.model_name))
-    data = Data(path.join(args.folder, args.dataset))
-    tuple_list = generate_tuple_list_from_yml(args.config)
-    preprocessor_list = generate_object_list_from_tuple(tuple_list)
-    model_list = []
-    model = Model(path.join(args.folder, args.input, args.model_name))
-    if isinstance(model.model, (BaseEstimator, TransformerMixin)) and not isinstance(model.model, Pipeline):
-        model.model = Pipeline([('model', model.model)])
-    for preprocessor in preprocessor_list:
-        new_model = deepcopy(model)
-        try:
-            new_model.model.steps.insert(args.position, (args.name, preprocessor))
-        except AttributeError:
-            logging.warning("Cannot add preprocessor to initialized ART estimator. Attempting to add to pipeline. Defenses should be applied after this step as they have been removed.")
-            new_model = Pipeline([('model', new_model.model.model)])
-            new_model.steps.insert(args.position, (args.name, preprocessor))
-            new_model = Model(new_model)
-        model_list.append(new_model)
+from pathlib import Path
 
+import dvc.api
+from deckard.base import Data, Experiment, Model
+from deckard.layers.utils import make_output_folder
+from sklearn.pipeline import Pipeline
+from .utils import make_output_folder, parse_config
+
+logger = logging.getLogger(__name__)
+
+def preprocess(args) -> Experiment:    
+    data = Data(args.data_file)
+    model_file = Path(args.input_folder, args.input_name)
+    preprocessor = parse_config(args.config)
+    assert model_file.exists(), "Problem finding model file: {}".format(model_file)
+    model = Model(model_file, art = False, model_type = args.model_type)
+    exp = Experiment(data = data, model = model)
+    assert isinstance(exp, Experiment), "Problem initializing experiment"
+    new = deepcopy(exp)
+    new.insert_sklearn_preprocessor(preprocessor = preprocessor, position = args.position, name = args.layer_name)
+    assert isinstance(new, Experiment), "Problem inserting preprocessor"
+    assert isinstance(new.model.model, Pipeline), "Problem inserting preprocessor. Model is not a Pipeline. It is a {}".format(type(new.model))
+    new(filename = args.output_name, path = output_folder)
+    assert Path(output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(output_folder, args.output_name))
+    logger.debug("Preprocessing complete")
+    return new
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run a preprocessor on a dataset')
+    parser.add_argument('--input_folder', '-i', type=str, default = ".", help='Path to the model')
+    parser.add_argument('--output_folder', '-p', type=str, help='Path to the output folder')
+    parser.add_argument('--output_name','-o', type=str, default=None, help='Name of the output file')
+    parser.add_argument('--data_file', '-d', type=str, default = "data.pkl", help='Path to the data file')
+    parser.add_argument('--layer_name','-l', type=str, required = True, help='Name of layer, e.g. "attack"')
+    parser.add_argument('--config','-c', type=str, default = None, help='Path to the attack config file')
+    parser.add_argument('--position', '-n', type=int, default = 0, help='Position of the preprocessor in the pipeline')
+    parser.add_argument('--input_name', '-m', type=str, default = None, help='Name of the input file')
+    args = parser.parse_args()
+    # parse arguments
+    cli_args = parser.parse_args()
+    params = dvc.api.params_show()
+    assert isinstance(args.layer_name, str), "Layer name must be a string. It is a {}".format(type(args.layer_name))
+    args = argparse.Namespace(**params[cli_args.layer_name])
+    for k, v in vars(cli_args).items():
+        if v is not None and not hasattr(args, k):
+            setattr(args, k, v)
+    # create output folder
+    assert isinstance(args.output_folder, (str, Path)), "Output folder must be a string or a Path object. It is a {}".format(type(args.output_folder))
+    output_folder = make_output_folder(args.output_folder)
+    assert isinstance(args.config, dict), "Config must be a dictionary. It is a {}".format(type(args.config))
     
-    exp_list = generate_experiment_list(model_list, data, cv = 10)
-    scorer = args.scorer.upper()
-    if args.best:
-        save_best_only(path = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)
-    else:
-        save_all(path = args.folder, exp_list = exp_list, scorer=scorer, bigger_is_better=args.bigger_is_better, name = args.name)
+    assert isinstance(args.input_name, (str, Path)), "Input name must be a string or a Path object. It is a {}".format(type(args.input_name))
+    assert isinstance(args.data_file, (str, Path)), "Data file must be a string or a Path object. It is a {}".format(type(args.data_file))
+    assert isinstance(args.output_name, (str, Path)), "Output name must be a string or a Path object. It is a {}".format(type(args.output_name))
+    assert isinstance(args.position, int), "Position must be an integer. It is a {}".format(type(args.position))
+    assert isinstance(args.input_folder, (str, Path)), "Input folder must be a string or a Path object. It is a {}".format(type(args.input_folder))
+    preprocess(args)
+

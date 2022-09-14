@@ -25,10 +25,10 @@ class testModel(unittest.TestCase):
             self.assertIsInstance(model, Model)
             self.assertIsInstance(model.model_type, str)
             self.assertIsInstance(model.model, object)
-        # model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflow')
-        # self.assertIsInstance(model, Model)
-        # self.assertIsInstance(model.model_type, str)
-        # self.assertIsInstance(model.model, object)
+        model = Model(model = self.file, path = self.path, url = self.url, model_type = 'tfv1')
+        self.assertIsInstance(model, Model)
+        self.assertIsInstance(model.model_type, str)
+        self.assertIsInstance(model.model, object)
     
     def test_hash(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn')
@@ -52,11 +52,10 @@ class testModel(unittest.TestCase):
         self.assertIsInstance(model1, Model)
         self.assertIsInstance(model1.params, dict)
 
-        # model2 = Model(model = self.file, path = self.path, url = self.url, model_type = 'tensorflowv1')
-        # self.assertIsInstance(model2.model_type, str)
-        # self.assertIsInstance(model2, Model)
-        # params = model2.get_params()
-        # self.assertIsInstance(params, dict)
+        model2 = Model(model = self.file, path = self.path, url = self.url, model_type = 'tfv1')
+        self.assertIsInstance(model2.model_type, str)
+        self.assertIsInstance(model2, Model)
+        self.assertIsInstance(model2.params, dict)
     
     def test_set_params(self):
         model1 = Model(LogisticRegression(), model_type = 'sklearn')
@@ -70,24 +69,21 @@ class testModel(unittest.TestCase):
         self.assertRaises(ValueError, model1.set_params, {'potato' : 'potato'})
 
     def test_save_model(self):
-        model1 = Model(LogisticRegression(), model_type = 'sklearn', path = self.path)
-        filename = model1.save(path = self.path, filename = self.file)
+        model1 = Model(LogisticRegression(), model_type = 'sklearn', path = self.path, classifier=False)
+        filename = model1.save_model(path = self.path, filename = self.file)
         self.assertTrue(os.path.exists(filename+".pickle"))
 
     def test_load(self):
-        model = Model(LogisticRegression(), model_type = 'sklearn', path = self.path)
-        path = model.save(filename = 'model', path = self.path)
-        filename = os.path.basename(path) + ".pickle"
-        path = os.path.dirname(path)
-        model2 = Model(path = path, model = filename, model_type = 'sklearn')
+        model = Model(LogisticRegression(), model_type = 'sklearn', path = self.path, classifier=False, art = False)
+        file = model.save_model(filename = 'model', path = self.path)
+        model2 = Model(path = self.path, model = file, model_type = 'sklearn', classifier=False, art = False)
         self.assertEqual(model, model2)
-
+        
+    def test_load_with_defence(self):
         defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
-        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = defence, path = self.path)
-        path = model.save(filename = 'model', path = self.path)
-        filename = os.path.basename(path) + ".pickle"
-        path = os.path.dirname(path)
-        model2 = Model(path = path, model = filename, model_type = 'sklearn')
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = defence, path = self.path, classifier = True, art = True)
+        file = model.save_model(filename = 'model', path = self.path)
+        model2 = Model(path = self.path, model = file+".pickle", model_type = 'sklearn', classifier = True, art = True, defence = defence)
         self.assertEqual(model, model2)
         
     def test_set_defence_params(self):
@@ -102,7 +98,7 @@ class testModel(unittest.TestCase):
 
     def test_initialize_art_classifier(self):
         defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
-        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = defence)
+        model = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = defence, art = True)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -111,7 +107,7 @@ class testModel(unittest.TestCase):
 
     def test_initialize_art_regressor(self):
         defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
-        model = Model(LinearRegression(), model_type = 'sklearn', defence = defence)
+        model = Model(LinearRegression(), model_type = 'sklearn', defence = defence, art = True, classifier=False)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -129,36 +125,8 @@ class testModel(unittest.TestCase):
         data = Data('iris', train_size = .8)
         model = Model(KNeighborsClassifier(), model_type = 'sklearn')
         model.fit(data.X_train, data.y_train)
-        predictions = model.predictions
-        self.assertIsInstance(predictions, (list, np.ndarray))
-        self.assertIsInstance(model.is_fitted, bool)
-        self.assertTrue(model.is_fitted)
-        self.assertIsInstance(model.model, object)
-        self.assertIn('time_dict', model.__dict__.keys())
-
-        fsq = FeatureSqueezing(bit_depth = 1, clip_values = (0, 1))
-        model2 = Model(DecisionTreeClassifier(), model_type = 'sklearn', defence = fsq)
-        model2.fit(data)
-        predictions = model.predict(data.X_test)
-        predictions2 = model2.predict(data.X_test)
-        self.assertIsInstance(predictions, (list, np.ndarray))
-        self.assertIsInstance(model2.is_fitted, bool)
-        self.assertTrue(model2.is_fitted)
-        self.assertIsInstance(model2.model, object)
-        self.assertIn('time_dict', model2.__dict__.keys())
-        self.assertIn('Defence', model2.params.keys())
+        self.assertIsInstance(model.predict(data.X_test), np.ndarray)
     
-
-    def test_fit(self):
-        data = Data('iris', train_size = .8)
-        model = Model(KNeighborsClassifier(), model_type = 'sklearn')
-        before = model.is_fitted
-        model.fit(data.X_train, data.y_train)
-        after = model.is_fitted
-        self.assertTrue(model.is_fitted)
-        self.assertIsInstance(model.model, object)
-        self.assertIn('time_dict', model.__dict__.keys())
-        self.assertFalse(before == after)
 
     def test_predict(self):
         data = Data('iris', train_size = .8)
@@ -167,7 +135,7 @@ class testModel(unittest.TestCase):
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
         defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
-        model = Model(LinearRegression(), model_type = 'sklearn', defence = defence)
+        model = Model(LinearRegression(), model_type = 'sklearn', defence = defence, classifier = False)
         model.fit(data.X_train, data.y_train)
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))

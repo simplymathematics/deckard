@@ -1,0 +1,118 @@
+prepare:
+  name: 'iris'
+  params:
+    shuffle : True
+    stratify : True
+    random_state : 0
+    # test_size : .1
+    train_size : .8
+  data_file : "data.pkl"
+  output_folder : "."
+train:
+  input_folder : "."
+  input_name : "model.pickle"
+  output_folder : "train"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : train
+  config : 
+    name: sklearn.linear_model.LogisticRegression
+    params: 
+      'penalty' : 'l2'
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+preprocess:
+  input_folder : "train"
+  output_folder : "preprocess"
+  input_name : "model.pickle"
+  output_name : "model"
+  data_file : "data.pkl"
+  layer_name : preprocess
+  position : 0
+  config : 
+    name: sklearn.preprocessing.StandardScaler
+    params: 
+      'with_mean' : True
+      'with_std' : True
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+featurize:
+  input_folder : "preprocess"
+  output_folder : "featurize"
+  input_name : "model"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : featurize
+  position : 1
+  config : 
+      name: sklearn.impute.SimpleImputer
+      params: 
+        'strategy' : 'mean'
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+visualise:
+  input_folder : train/
+  data_file : "data.pkl"
+  data_folder : "."
+  model_folder : "train/"
+  model_file : "model.pickle"
+  defense_file : None
+  preprocessor_file : None
+  config: 
+    name:
+    params:
+  output_folder : plots
+  root_folder : "."
+  model_type : "sklearn"
+  art : False
+  plot_folder : "plots"
+control:
+  # input_model : "train/model.pickle"
+  # url : 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "control"
+  input_folder : "."
+  output_name : control_model.pickle
+  config:
+    name: sklearn.linear_model.LogisticRegression
+    params: 
+      'penalty' : 'l2' 
+defend:
+  input_model : "control_model.pickle" 
+  input_folder : "control" 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "defences" 
+  output_name : "defended_model"
+  config:
+    name: art.defences.preprocessor.FeatureSqueezing
+    params: 
+      bit_depth : 8
+      clip_values : [0, 255]
+attack:
+  config: 
+    name: art.attacks.evasion.HopSkipJump
+    params: 
+      max_iter : 100
+  input_model : "defended_model.pickle" 
+  input_folder : "defences" 
+  model_type : "sklearn" 
+  data_file : "data.pkl" 
+  output_folder : "attacks" 
+  output_name : "attacked_model"
+  attack_size : 100
+evaluate:
+  input_folder : "."
+  ground_truth_file : "ground_truth.json"
+  predictions_file : "predictions.json"
+  layer_name : evaluate
+  config : 
+    name:
+    params:
+  output_folder: scores/
+  output_name : "scores.json"
+  is_regressor : True

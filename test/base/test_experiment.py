@@ -23,7 +23,7 @@ from os import path, listdir
 class testExperiment(unittest.TestCase):
     def setUp(self):
         
-        self.path = tempfile.mkdtemp()
+        self.path = path.abspath(tempfile.mkdtemp())
         ART_DATA_PATH = self.path
         self.file = 'test_filename'
         self.here = path.dirname(path.abspath(__file__))
@@ -56,6 +56,22 @@ class testExperiment(unittest.TestCase):
         experiment4 = Experiment(data = data, model = model4)
         experiment5 = deepcopy(experiment)
         before = hash(experiment)
+        self.assertDictEqual(dict(experiment), dict(experiment3))
+        # for key, value in dict(experiment).items():
+            # if exp3[key] != value:
+                # print("Key:")
+                # print(key)
+                # print("Value:")
+                # print(value)
+                # print("Experiment3:")
+                # print(exp3[key])
+                # print(model)
+                # print(model3)
+                # input("Press Enter to continue...")
+            # else:
+            #     pass
+        self.assertEqual(hash(experiment.data), hash(experiment3.data))
+        self.assertEqual(hash(experiment.model), hash(experiment3.model))
         self.assertEqual(hash(experiment), hash(experiment3))
         self.assertEqual(hash(experiment), hash(experiment5))
         self.assertNotEqual(hash(experiment), hash(experiment4))
@@ -70,9 +86,9 @@ class testExperiment(unittest.TestCase):
 
     def test_eq(self):
         data = Data('iris', test_size = 30)
-        model = Model(KNeighborsRegressor(5), model_type = 'sklearn', path = self.path)
-        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn', path = self.path)
-        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
+        model = Model(KNeighborsRegressor(5), model_type = 'sklearn', path = self.path, classifier = False)
+        model2 = Model(KNeighborsRegressor(4), model_type = 'sklearn', path = self.path, classifier = False)
+        model3 = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path, classifier = False)
         model4 = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
         experiment2 = Experiment(data = data, model = model2)
@@ -88,16 +104,16 @@ class testExperiment(unittest.TestCase):
 
     def test_run(self):
         data = Data('iris', test_size = 30)
-        model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path)
+        model = Model(KNeighborsRegressor(), model_type = 'sklearn', path = self.path, classifier = False)
         experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
+        experiment(path = self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
         self.assertIn('fit', experiment.time_dict)
         self.assertIn('predict', experiment.time_dict)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
+        experiment(path = self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
         self.assertIn('fit', experiment.time_dict)
@@ -117,7 +133,7 @@ class testExperiment(unittest.TestCase):
         grid = GridSearchCV(estimator, {'max_depth': [1, 2, 3, 4, 5]}, cv=3, return_train_score=True)
         model = Model(grid, model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
+        experiment(path = self.path)
         experiment.save_cv_scores(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
 
@@ -136,7 +152,6 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.exists(path.join(self.path, 'model_params.json')))
 
     def test_save_model(self):
-        import os
         data = Data('iris', test_size = 30)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
@@ -147,7 +162,7 @@ class testExperiment(unittest.TestCase):
         data = Data('iris', test_size = 30)
         model = Model(DecisionTreeClassifier(), model_type = 'sklearn', path = self.path)
         experiment = Experiment(data = data, model = model)
-        experiment.run(path = self.path)
+        experiment(path = self.path)
         experiment.save_predictions(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
@@ -164,7 +179,7 @@ class testExperiment(unittest.TestCase):
         model = Model(estimator)
         experiment = Experiment(data = data, model = model)
         experiment.insert_sklearn_preprocessor(name = "Preprocessor", preprocessor = preprocessor, position = 0)
-        experiment.run(path = self.path)
+        experiment(path = self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
 
@@ -176,10 +191,10 @@ class testExperiment(unittest.TestCase):
         defence = FeatureSqueezing(bit_depth=1, clip_values = (0, 255), apply_fit = True)
         model2 = Model(estimator, model_type = 'sklearn', path = self.path, defence = defence)
         experiment2 = Experiment(data = data, model = model2, is_fitted = False)
-        experiment.run(path = self.path)
-        experiment.set_defence(path.join(self.here,'..', 'data', 'defences' ,'44237341343125383753414498103201859838' ,'defence_params.json'))
-        experiment.run(path = self.path)
-        experiment2.run(path = self.path)
+        experiment(path = self.path)
+        experiment.set_defence(defence)
+        experiment(path = self.path)
+        experiment2(path = self.path)
         pred1 = experiment.predictions
         pred2 = experiment2.predictions
         self.assertTrue(not np.array_equal(pred1, pred2))  
@@ -190,6 +205,5 @@ class testExperiment(unittest.TestCase):
         del self.path
         del self.file
 
-    
-    
-
+if __name__ == '__main__':
+    unittest.main()

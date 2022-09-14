@@ -21,6 +21,8 @@ install_requires = [
     "pandas",
     "PyYAML",
     "pytest",
+    "tensorflow",
+    "yellowbrick",
 ]
 
 docs_require = [

@@ -3,7 +3,7 @@ from time import process_time
 from urllib.parse import urlparse as is_url
 from copy import deepcopy
 from hashlib import md5 as my_hash
-
+from pathlib import Path
 import numpy as np
 
 from sklearn.pipeline import Pipeline
@@ -14,6 +14,7 @@ from art.estimators import ScikitlearnEstimator
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import is_regressor
+
 from .data import Data
 from typing import Callable, Union
 
@@ -24,7 +25,7 @@ supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 
 class Model(object):
     """Creates a model object that includes a dicitonary of passed parameters."""
-    def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", url = None, is_fitted:bool = False, **kwargs):
+    def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", url = None, is_fitted:bool = False, classifier = True, art:bool = True, **kwargs):
         """
         Initialize the model object.
         estimator: the estimator to use
@@ -37,27 +38,20 @@ class Model(object):
         self.url = url
         self.is_fitted = is_fitted
         self.kwargs = kwargs
-        if isinstance(model, str):
+        self.classifier = classifier
+        if isinstance(model, (str, Path)):
+            logger.info("Loading model from file")
+            logger.info("Model type is {}".format(model_type))
             self.filename = model
-            self.load(self.filename, **self.kwargs)
+            self.load(self.filename, art = art, **self.kwargs)
         elif isinstance(model, object):
             self.filename = str(type(model))
             self.model = model
-            self.load(model, **self.kwargs)
+            self.load(model, art = art, **self.kwargs)
         else:
-            raise ValueError("Model must be a string or a callable")
-        assert self.classifier or self.regressor, "Model is neither classifier nor regressor"
-        assert not (self.classifier and self.regressor), "Model detected as both classifier and regressor"
+            raise ValueError("Model must be a string or a callable. Instead got {}".format(type(model)))
         assert hasattr(self, 'model'), "Error initializing model"
-        
-       
-
-    def __hash__(self) -> str:
-        """
-        Return the hash of the model, using the params from __init__. 
-        """
-        new_string = str(self.get_params())
-        return int(my_hash(str(new_string).encode('utf-8')).hexdigest(), 36)
+        self.filename = hash(model)
 
     def __repr__(self) -> str:
         """
@@ -69,7 +63,7 @@ class Model(object):
         """
         Return the human readable representation of the model.
         """
-        return "{model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{}}".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
+        return "model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{}".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
 
     def __eq__(self, other) -> bool:
         """
@@ -83,6 +77,12 @@ class Model(object):
         """
         for key, value in self.params.items():
             yield key, value
+            
+    def __hash__(self) -> str:
+        """
+        Hashes the params as specified in the __init__ method.
+        """
+        return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
     
     def _set_name(self, params):
         """
@@ -113,21 +113,15 @@ class Model(object):
                 raise ValueError("Parameter {} not found in \n {} or \n {}".format(param, self.model.model.get_params(), self.model.__dict__.keys()))
 
     
-    def get_params(self):
+    def get_model_params(self):
         params = {}
-        if hasattr(self.model, 'model') and hasattr(self.model.model, 'get_params'):
-            try:
-                params = dict(self.model.model.get_params(deep=True))
-            except:
-                params = dict(self.model.model.get_params())
-        elif hasattr(self.model, 'get_params'):
-            try:
-                params = dict(self.model.get_params(deep=True))
-            except:
-                params = dict(self.model.get_params())
+        if hasattr(self.model, 'get_params'):
+            params = dict(self.model.get_params())
+        elif hasattr(self.model, 'model') and hasattr(self.model.model, 'get_params'):
+            params = dict(self.model.model.get_params())
         else:
             params = {'model' : self.model, 'model_type' : self.model_type, 'path' : self.path, 'url' : self.url, 'defence' : self.defence}
-        for key, value in params.items():
+        for key, value in self.__dict__.items():
             if isinstance(value, int):
                 params[key] = value
             elif isinstance(value, float):
@@ -136,6 +130,14 @@ class Model(object):
                 params[key] = value
             elif isinstance(value, Callable):
                 params[key] = str(type(value))
+            elif isinstance(value, list):
+                params[key] = value
+            elif isinstance(value, dict):
+                params[key] = str(value)
+            elif isinstance(value, tuple):
+                params[key] = value
+            elif isinstance(value, type(None)):
+                params[key] = None
             else:
                 params[key] = str(type(value))
         self.name = self._set_name(params)
@@ -152,17 +154,22 @@ class Model(object):
         if self.defence is not None:
             def_params = {}
             for key, value in self.defence.__dict__.items():
-                # Parses the parameters
                 if isinstance(value, int):
                     def_params[key] = value
                 elif isinstance(value, float):
                     def_params[key] = value
                 elif isinstance(value, str):
                     def_params[key] = value
-                elif isinstance(value, tuple):
-                    def_params[key] = value
                 elif isinstance(value, Callable):
                     def_params[key] = str(type(value))
+                elif isinstance(value, list):
+                    def_params[key] = value
+                elif isinstance(value, dict):
+                    def_params[key] = str(value)
+                elif isinstance(value, tuple):
+                    def_params[key] = value
+                elif isinstance(value, type(None)):
+                    def_params[key] = None
                 else:
                     def_params[key] = str(type(value))
                 # Finds type and records it
@@ -232,20 +239,18 @@ class Model(object):
         if len(kwargs) > 0:
             assert art == True, "art must be True if kwargs are specified"
         logger.debug("Loading model")
-        if not hasattr(self, 'model'):
+        if isinstance(filename, (str, Path)):
             # load the model
             self.model = self.load_from_string(filename)
         else:
             logger.info("Model already in memory.")
-        self.regressor = is_regressor(self.model)
-        self.classifier = not self.regressor
-        self.params = self.get_params()
+        self.params = self.get_model_params()
         self.set_defence_params()
         self._set_name(self.params)
         logger.info("Loaded model")
-        if self.classifier and art:
+        if self.classifier == True and art == True:
             self.initialize_art_classifier(**kwargs)
-        elif self.regressor and art:
+        elif self.classifier == False and art == True:
             self.initialize_art_regressor(**kwargs)
         self.is_supervised = self._is_supervised()
 
@@ -328,7 +333,7 @@ class Model(object):
             raise ValueError("Model type {} not supported".format(self.model_type))
         self.model = model
     
-    def save(self, filename:str = None, path:str = None):
+    def save_model(self, filename:str = None, path:str = None):
         """
         Saves the experiment to a pickle file or directory, depending on model type.
         """
@@ -343,35 +348,37 @@ class Model(object):
             self.filename = filename
         else:
             filename = self.filename
-        if hasattr(self.model, "save"):
-            self.model.save(filename = filename, path = path)
+        if hasattr(self, "model") and hasattr(self.model, "save"):
+            if filename.endswith(".pickle"):
+                filename = filename[:-7]
+            try:
+                self.model.save(filename = filename, path = path)
+            except:
+                ART_DATA_PATH = path
+                self.model.save(filename = filename)
         else:
             with open(os.path.join(path, filename), 'wb') as f:
                 pickle.dump(self.model, f)
         return os.path.join(path, filename)
 
-
-    
     def fit(self, X_train:np.ndarray, y_train:np.ndarray = None) -> None:
         """
         Fits model.
         """
-       
         if self.is_fitted:
             logger.warning("Model is already fitted")
             self.time_dict = {'fit_time': np.nan}
         else:
+            start = process_time()
             try:
-                start = process_time()
                 self.model.fit(X_train, y_train)
-                end = process_time()
-            except np.AxisError as e:
-                from sklearn.preprocessing import LabelBinarizer
-                y_train = LabelBinarizer().fit(y_train).transform(y_train)
-                start = process_time()
-                self.model.fit(X_train, y_train)
-                end = process_time()
-                # raise e
+            except ValueError as e:
+                if "y should be a 1d array" in str(e):
+                    y_train = np.argmax(y_train, axis=1)
+                    self.model.fit(X_train, y_train)
+                else:
+                    raise e
+            end = process_time()
             self.time_dict = {'fit_time': end - start}
             self.is_fitted = True
         return None
@@ -385,3 +392,6 @@ class Model(object):
             self.time_dict['fit_time'] = None
         self.time_dict['pred_time'] = end - start
         return predictions
+    
+    # TODO:
+    # def transform(self, X_train, y_train = None):

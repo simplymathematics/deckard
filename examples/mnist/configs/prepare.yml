@@ -1,6 +1,0 @@
-- name: 'mnist'
-  params:
-    shuffle : True 
-    stratify : True
-    random_state : 0
-    train_size : .01

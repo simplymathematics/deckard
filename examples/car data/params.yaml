@@ -1,0 +1,51 @@
+prepare: 
+  name: parsed/lat.csv
+  params:
+    shuffle : True 
+    stratify : None
+    random_state : 0
+    train_size : .8
+    target : latitude
+  data_file : "data.pkl"
+  output_folder : "."
+train:
+  input_folder : "."
+  input_name : "model.pickle"
+  output_folder : "train"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : train
+  config : "configs/model.yaml"
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+preprocess:
+  input_folder : "train"
+  output_folder : "preprocess"
+  input_name : "model.pickle"
+  output_name : "model"
+  data_file : "data.pkl"
+  layer_name : preprocess
+  position : 0
+  config : "configs/preprocess.yaml"
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+featurize:
+  input_folder : "preprocess"
+  output_folder : "featurize"
+  input_name : "model"
+  output_name : "model.pickle"
+  data_file : "data.pkl"
+  layer_name : featurize
+  position : 1
+  config : "configs/featurize.yaml"
+  classifier : False
+  model_type : 'sklearn'
+  is_fitted : False
+evaluate:
+  input_folder : train
+  ground_truth_file : "ground_truth.json"
+  predictions_file : "predictions.json"
+  layer_name : evaluate
+  config : "configs/evaluate.yaml"

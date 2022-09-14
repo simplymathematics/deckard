@@ -42,7 +42,7 @@ class testParse(unittest.TestCase):
         data = Data('iris')
         tuple_list = generate_tuple_list_from_yml(self.model_yml)
         obj_list = generate_object_list_from_tuple(tuple_list)
-        experiment_list = generate_experiment_list(obj_list, data = data)
+        experiment_list = generate_experiment_list(obj_list, data_list = data)
         self.assertIsInstance(experiment_list, list)
         self.assertIsInstance(experiment_list[0], Experiment)
 

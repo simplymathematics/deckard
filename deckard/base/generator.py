@@ -1,15 +1,10 @@
 # Standard Library:
-import logging, yaml, json, pickle, os, importlib, shutil
+import logging, yaml, json, os, importlib, shutil
 import pandas as pd
 from hashlib import md5 as my_hash  
-from uuid import uuid4
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-
 # Adversarial Robustness Toolbox
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier, SklearnClassifier
 from art.estimators import ScikitlearnEstimator
@@ -20,10 +15,6 @@ from art.defences.transformer import Transformer
 from art.utils import get_file
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (PyTorchClassifier, ScikitlearnEstimator, KerasClassifier, TensorFlowClassifier)
-
-# Deckard:
-from deckard.base import Experiment, Model, Data
-
 logger = logging.getLogger(__name__)
 class Generator():
     def __init__(self, config_file:str, root_path:str, result_path:str, config_path:str = "configs", **kwargs):
@@ -99,7 +90,6 @@ class Generator():
         # check that featurizers is a list
         for entry in yml_list:
             if not isinstance(entry, dict):
-                print("{} is not a dictionary".format(entry))
                 raise ValueError("Error parsing yml file {}".format(filename))
             grid = ParameterGrid(entry['params'])
             name = entry['name']
