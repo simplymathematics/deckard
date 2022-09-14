@@ -1,9 +1,9 @@
+```
 git clone https://github.com/simplymathematics/deckard.git
 cd deckard
 git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
-cd adversarial-robustness-toolbox && python -m pip install . && cd ..
-
-```python setup.py develop```  
+cd adversarial-robustness-toolbox && python -m pip install . && cd .. 
+```
 
 Check that deckard works
 
