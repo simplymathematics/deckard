@@ -1,6 +1,6 @@
 stages:
   prepare:
-    cmd: python ../../deckard/layers/prepare.py
+    cmd: python -m deckard.layers.prepare
     params:
       - prepare.config
     outs: 
@@ -13,7 +13,7 @@ stages:
     # plots:
     #   - prepare.plots
   train:
-    cmd:  python ../../deckard/layers/sklearn_model.py --layer_name train
+    cmd:  python -m deckard.layers.sklearn_model --layer_name train
     deps:
     - data.pkl
     params:
@@ -22,7 +22,7 @@ stages:
     - train/:
         cache: true
   preprocess:
-    cmd: python  ../../deckard/layers/preprocess .py --layer_name preprocess --position 0
+    cmd: python  -m deckard.layers.preprocess --layer_name preprocess --position 0
     deps:
     - train/
     params:
@@ -31,7 +31,7 @@ stages:
     - ${preprocess.outputs.folder}:
         cache: true
   featurize:
-    cmd: python  ../../deckard/layers/preprocess.py --layer_name featurize --position 1
+    cmd: python  -m deckard.layers.preprocess --layer_name featurize --position 1
     deps:
     - preprocess/
     params:
@@ -40,7 +40,7 @@ stages:
     - ${featurize.outputs.folder}:
         cache: true
   visualise:
-    cmd: python  ../../deckard/layers/visualise.py --layer_name visualise
+    cmd: python  -m deckard.layers.visualise --layer_name visualise
     deps: 
       - train/
     params:
@@ -49,7 +49,7 @@ stages:
       - plots/:
           cache: true
   control:
-    cmd:  python  ../../deckard/layers/art_model.py --layer_name control
+    cmd:  python  -m deckard.layers.art_model --layer_name control
     deps:
     - data.pkl
     params:
@@ -58,7 +58,7 @@ stages:
     - control/:
         cache: true
   defend:
-    cmd:  python  ../../deckard/layers/defend.py --layer_name defend
+    cmd:  python  -m deckard.layers.defend --layer_name defend
     deps:
     - data.pkl
     - control/
@@ -68,7 +68,7 @@ stages:
     - defences/:
         cache: true
   attack:
-    cmd:  python  ../../deckard/layers/attack.py --layer_name attack
+    cmd:  python  -m deckard.layers.attack --layer_name attack
     deps:
     - data.pkl
     - defences/
@@ -78,7 +78,7 @@ stages:
     - attacks/:
         cache: true
   evaluate:
-    cmd: python  ../../deckard/layers/evaluate.py --layer_name evaluate
+    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
     deps: 
       - featurize/
       - control/
