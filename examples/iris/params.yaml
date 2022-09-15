@@ -163,8 +163,6 @@ evaluate:
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "evaluate_model.pickle"
-    params : "evaluate_params.json"
   metrics:
     scores : "evaluate_scores.json"
 visualise:
