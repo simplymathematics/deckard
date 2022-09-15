@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder', '-p', type=str, help='Path to the output folder')
     parser.add_argument('--output_name','-o', type=str, default=None, help='Name of the output file')
     parser.add_argument('--data_file', '-d', type=str, default = "data.pkl", help='Path to the data file')
-    parser.add_argument('--layer_name','-l', type=str, required = True, help='Name of layer, e.g. "attack"')
+    parser.add_argument('layer_name','-l', type=str, required = True, help='Name of layer, e.g. "attack"')
     parser.add_argument('--config','-c', type=str, default = None, help='Does Nothing')
     args = parser.parse_args()
     # parse arguments
