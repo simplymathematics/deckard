@@ -1,19 +1,24 @@
 
 For Developers:
 ```
+######################################
+# Ubuntu 22.04
+sudo apt update
+sudo apt install python3-venv python3-pip python3-dev python3-setuptools python3-distutils
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+######################################
 python3 -m venv env
-source activate env/bin/activate
+source env/bin/activate
 git clone --recurse-submodules -j8 https://github.com/simplymathematics/deckard.git
 python3 -m pip install deckard/adversarial-robustness-toolbox/ 
 python3 -m pip install -e deckard/
 python3 -m pip install pyinstaller
+python3 -m pip install -u numba pip setuptools
 cd deckard && pyinstaller --onefile deckard.py -n deckard
-./dist/deckard examples/iris
+export alias deckard="$HOME/deckard/dist/deckard"
+deckard examples/iris
 ```
-or run the above script in bash using curl:
-```
-bash <(curl -sL https://gist.githubusercontent.com/simplymathematics/8acd1015751081c4cb05e6766ffee5b0/raw/837bab134e32f7af801b344c56ffdae6af676194/build.sh)
-```
+
 Check that deckard works
 
 ```$ python```  
