@@ -4,12 +4,18 @@ stages:
     cmd: python -m deckard.layers.prepare
     params:
       params.yaml:
+<<<<<<< HEAD
+        prepare.config:
+=======
         prepare:
+>>>>>>> f94663d (fixed build)
           name: iris
           params:
             shuffle: true
             stratify: true
             random_state: 0
+<<<<<<< HEAD
+            test_size:
             train_size: 0.8
           data_file: data.pkl
           output_folder: .
@@ -20,8 +26,47 @@ stages:
   train:
     cmd: python -m deckard.layers.sklearn_model --layer_name train
     deps:
+    - path: prepare/data.pickle
+      md5: 00709c0ce9102f9b40600ac0e451c800
+      size: 4753
+    params:
+      params.yaml:
+        control:
+          model_type: sklearn
+          data_file: data.pkl
+          output_folder: control
+          input_folder: .
+          output_name: control_model.pickle
+          config:
+            name: sklearn.linear_model.LogisticRegression
+            params:
+              penalty: l2
+    outs:
+    - path: train/ground_truth.json
+      md5: ebd226610027480795b3ad51a79f3e20
+      size: 799
+    - path: train/model_params.json
+      md5: d590cf74eabc4aff20b4a0048725848f
+      size: 155
+    - path: train/predictions.json
+      md5: cf78b1d66265e57751091d704e15766b
+      size: 207
+    - path: train/train_model.pickle
+      md5: 32f9a7805777bbd6ac45547790864061
+      size: 828
+=======
+            train_size: 0.8
+          data_file: data.pkl
+          output_folder: .
+    outs:
     - path: data.pkl
-      md5: 4cb45af79f0ad08ff7dca71fdd07417a
+      md5: 5e24f999b20d8b03d828f4a665f1224f
+      size: 4727
+  train:
+    cmd: python -m deckard.layers.sklearn_model --layer_name train
+    deps:
+    - path: data.pkl
+      md5: 5e24f999b20d8b03d828f4a665f1224f
       size: 4727
     params:
       params.yaml:
@@ -41,14 +86,14 @@ stages:
           is_fitted: false
     outs:
     - path: train/
-      md5: 5510ef03c580bda71dca883ea3c9dd0e.dir
+      md5: dc3484a648e0fef6563efb2d455dfe80.dir
       size: 1834
       nfiles: 3
   preprocess:
-    cmd: python -m deckard.layers.preprocess  --layer_name preprocess --position 0
+    cmd: python  -m deckard.layers.preprocess --layer_name preprocess --position 0
     deps:
     - path: train/
-      md5: 5510ef03c580bda71dca883ea3c9dd0e.dir
+      md5: dc3484a648e0fef6563efb2d455dfe80.dir
       size: 1834
       nfiles: 3
     params:
@@ -71,14 +116,14 @@ stages:
           is_fitted: false
     outs:
     - path: preprocess/
-      md5: 2953631c5a77cd21f18da91b993fa7a5.dir
+      md5: 21db0d42215e9ef967549362712432d7.dir
       size: 2307
       nfiles: 3
   featurize:
-    cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+    cmd: python  -m deckard.layers.preprocess --layer_name featurize --position 1
     deps:
     - path: preprocess/
-      md5: 2953631c5a77cd21f18da91b993fa7a5.dir
+      md5: 21db0d42215e9ef967549362712432d7.dir
       size: 2307
       nfiles: 3
     params:
@@ -100,14 +145,14 @@ stages:
           is_fitted: false
     outs:
     - path: featurize/
-      md5: 84198255f0d963c44acee14af401a3b9.dir
+      md5: 6df1f120ac8b5ff4d75d83e648700bd3.dir
       size: 2578
       nfiles: 3
   control:
-    cmd: python -m deckard.layers.art_model --layer_name control
+    cmd: python  -m deckard.layers.art_model --layer_name control
     deps:
     - path: data.pkl
-      md5: 4cb45af79f0ad08ff7dca71fdd07417a
+      md5: 5e24f999b20d8b03d828f4a665f1224f
       size: 4727
     params:
       params.yaml:
@@ -123,18 +168,18 @@ stages:
               penalty: l2
     outs:
     - path: control/
-      md5: 90850d6a81f4c5fcfe9f9e33114de859.dir
+      md5: f2d7f465fe9db5e924bb6d3280d2e9de.dir
       size: 3220
       nfiles: 3
   defend:
-    cmd: python -m deckard.layers.defend --layer_name defend
+    cmd: python  -m deckard.layers.defend --layer_name defend
     deps:
     - path: control/
-      md5: 90850d6a81f4c5fcfe9f9e33114de859.dir
+      md5: f2d7f465fe9db5e924bb6d3280d2e9de.dir
       size: 3220
       nfiles: 3
     - path: data.pkl
-      md5: 4cb45af79f0ad08ff7dca71fdd07417a
+      md5: 5e24f999b20d8b03d828f4a665f1224f
       size: 4727
     params:
       params.yaml:
@@ -154,18 +199,18 @@ stages:
               - 255
     outs:
     - path: defences/
-      md5: 79565b919c35a59988a058e16d4571b3.dir
-      size: 3223
+      md5: fd4590a72a1451587d405abdae63f8ee.dir
+      size: 3198
       nfiles: 3
   attack:
-    cmd: python -m deckard.layers.attack --layer_name attack
+    cmd: python  -m deckard.layers.attack --layer_name attack
     deps:
     - path: data.pkl
-      md5: 4cb45af79f0ad08ff7dca71fdd07417a
+      md5: 5e24f999b20d8b03d828f4a665f1224f
       size: 4727
     - path: defences/
-      md5: 79565b919c35a59988a058e16d4571b3.dir
-      size: 3223
+      md5: fd4590a72a1451587d405abdae63f8ee.dir
+      size: 3198
       nfiles: 3
     params:
       params.yaml:
@@ -183,34 +228,34 @@ stages:
           attack_size: 100
     outs:
     - path: attacks/
-      md5: 1cbb7771bfd5c5a233e3e0583f40c587.dir
-      size: 4180
+      md5: 5a21be7f9eee58a73c99c9706006db1e.dir
+      size: 4174
       nfiles: 4
   evaluate:
-    cmd: python -m deckard.layers.evaluate --layer_name evaluate
+    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
     deps:
     - path: attacks/
-      md5: 1cbb7771bfd5c5a233e3e0583f40c587.dir
-      size: 4180
+      md5: 5a21be7f9eee58a73c99c9706006db1e.dir
+      size: 4174
       nfiles: 4
     - path: control/
-      md5: 90850d6a81f4c5fcfe9f9e33114de859.dir
+      md5: f2d7f465fe9db5e924bb6d3280d2e9de.dir
       size: 3220
       nfiles: 3
     - path: defences/
-      md5: 79565b919c35a59988a058e16d4571b3.dir
-      size: 3223
+      md5: fd4590a72a1451587d405abdae63f8ee.dir
+      size: 3198
       nfiles: 3
     - path: featurize/
-      md5: 84198255f0d963c44acee14af401a3b9.dir
+      md5: 6df1f120ac8b5ff4d75d83e648700bd3.dir
       size: 2578
       nfiles: 3
     - path: preprocess/
-      md5: 2953631c5a77cd21f18da91b993fa7a5.dir
+      md5: 21db0d42215e9ef967549362712432d7.dir
       size: 2307
       nfiles: 3
     - path: train/
-      md5: 5510ef03c580bda71dca883ea3c9dd0e.dir
+      md5: dc3484a648e0fef6563efb2d455dfe80.dir
       size: 1834
       nfiles: 3
     params:
@@ -228,14 +273,14 @@ stages:
           is_regressor: true
     outs:
     - path: scores/
-      md5: a5d8127bbbe92dc2c029c25e0f5bb963.dir
+      md5: 05af576cca8924b1117f588e8e34b9a7.dir
       size: 1512
       nfiles: 1
   visualise:
-    cmd: python -m deckard.layers.visualise --layer_name visualise
+    cmd: python  -m deckard.layers.visualise --layer_name visualise
     deps:
     - path: train/
-      md5: 5510ef03c580bda71dca883ea3c9dd0e.dir
+      md5: dc3484a648e0fef6563efb2d455dfe80.dir
       size: 1834
       nfiles: 3
     params:
@@ -258,6 +303,7 @@ stages:
           plot_folder: plots
     outs:
     - path: plots/
-      md5: 639a544d4dbac9a708e87f854a37a5f1.dir
-      size: 14204
+      md5: 492d66c61ec724d7eed4bb034ed1515f.dir
+      size: 14259
       nfiles: 1
+>>>>>>> f94663d (fixed build)
