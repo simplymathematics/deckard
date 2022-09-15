@@ -9,7 +9,7 @@ import dvc.api
 from deckard.base import Data, Experiment, Model
 from deckard.layers.utils import make_output_folder
 from sklearn.pipeline import Pipeline
-from .utils import make_output_folder, parse_config
+from deckard.layers.utils import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)
 

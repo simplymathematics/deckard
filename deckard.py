@@ -1,4 +1,4 @@
-import deckard, argparse
+import deckard, argparse, sys
 from pathlib import Path
 import subprocess, logging
 from os import chdir, getcwd, listdir
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     dag_cmd = "dvc dag"
     print(f"Running: {dag_cmd}")
     # run command and wait for it to finish
-    output = subprocess.run(dag_cmd, shell=True, check=True, stdout=subprocess.PIPE, universal_newlines=True)
-    print(output.stdout)
+    out = subprocess.run(dag_cmd, shell=True, check=True, stdout=sys.stdout, universal_newlines=True, stderr=sys.stderr)
+    print(out)
     print("Pipeline: %s", args.pipeline)
     
     if args.configuration is not None:
@@ -41,12 +41,11 @@ if __name__ == "__main__":
     else:
         print("Processing pipeline %s" % args.pipeline)
         print("Working Directory: %s" % getcwd())
-        print("Files are: %s" % listdir())
         pipeline_command = f"dvc repro {args.pipeline} --verbose"
         if args.force:
             pipeline_command += " --force"
         print("Pipeline: %s" % pipeline_command)
         print("Running pipeline. This may take a while...")
-        output = subprocess.run(pipeline_command, shell=True, check=True, stdout=subprocess.PIPE, universal_newlines=True, stderr=subprocess.PIPE)
+        subprocess.run(['ls'], stderr=sys.stderr, stdout=sys.stdout)
         print("Pipeline: done")
-    print("Results shoud be in %s" % path)
+    print("Results are in %s" % path.resolve())
