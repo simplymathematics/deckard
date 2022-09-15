@@ -99,6 +99,7 @@ setup(
             "librosa",
             "opencv-python",
             "tensorflow-gpu",
+            "dvc-gdrive",
         ],
         "non_framework": [
             "matplotlib",
