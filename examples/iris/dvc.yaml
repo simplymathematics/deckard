@@ -13,32 +13,16 @@ stages:
     # plots:
     #   - prepare.plots
   train:
-<<<<<<< HEAD
-    cmd: python -m deckard.layers.train  ${params.prepare.config}
-=======
-<<<<<<< HEAD
-    cmd: python -m deckard.layers.sklearn_model --layer_name train
->>>>>>> bb2938c (fixed build)
-    params:
-      - params.train.config
-    outs: 
-      - ${train.outputs.folder}/:
-          cache: true
-=======
     cmd:  python -m deckard.layers.sklearn_model --layer_name train
     deps:
     - data.pkl
     params:
-    - train
-    outs:
-    - train/:
-        cache: true
-  preprocess:
-    cmd: python  -m deckard.layers.preprocess --layer_name preprocess --position 0
->>>>>>> f94663d (fixed build)
+      - train.config
+    outs: 
+      - ${train.outputs.folder}/:
+          cache: true
     deps:
-      - params.prepare.output.file
-      - params.prepare.output.folder
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
     # metrics:
     #   - train.scores
     # plots:
