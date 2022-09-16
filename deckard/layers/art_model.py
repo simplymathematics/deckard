@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 
 
 def art_model(args) -> Experiment:
-    assert Path(args.input_folder, args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, args.input_folder)
+    assert Path(args.input_folder, args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, args.inputs['folder'])
     data = Data(Path(args.input_folder, args.data_file))
     model = parse_config(args.config)
     model = Model(model, art = True)
-    exp = Experiment(data = data, model = model, filename = args.output_folder)
-    exp(filename = args.output_name, path = args.output_folder)
-    assert Path(args.output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(args.output_folder, args.output_name))
+    exp = Experiment(dataset =data, model = model, filename = args.outputs['folder'])
+    exp(filename = args.outputs['model'], path = args.outputs['folder'])
+    assert Path(args.outputs['folder'], args.outputs['model']).exists(), "Problem creating file: {}".format(Path(args.outputs['folder'], args.output_name))
     logger.debug("Experiment hash: {}".format(hash(exp)))
     return exp
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     for k, v in vars(cli_args).items():
         if v is not None and k in params:
             setattr(args, k, v)
-    output = make_output_folder(args.output_folder)
+    output = make_output_folder(args.outputs['folder'])
     assert Path(output).exists(), "Problem finding output folder: {}".format(output)
     assert hasattr(args, "config") or hasattr(args, "input_model") or hasattr(args, 'url'), "Must have either a config file or a model"
     assert not (hasattr(args, "config") and hasattr(args, "input_model")), "Must have either a config, model file, or url, but only one."
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     if hasattr(args, "config"):
         model = parse_config(args.config)
     elif hasattr(args, "input_model"):
-        model = args.input_model
+        model = args.inputs['model']
     elif hasattr(args, 'url'):
         model = args.url
     assert isinstance(model, object), "Problem parsing config file: {}. It is type: {}".format(args.config, type(args.config))

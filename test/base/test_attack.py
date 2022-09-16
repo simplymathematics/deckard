@@ -25,8 +25,8 @@ class testAttackExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
-        experiment._build_model()
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
+        experiment.fit_model()
         experiment(path = self.path)
         experiment(path = self.path)
         experiment.save_attack_predictions(filename=self.file, path=self.path)
@@ -37,7 +37,7 @@ class testAttackExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
         experiment.save_attack_params(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
     
@@ -46,7 +46,7 @@ class testAttackExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
         self.assertIsInstance(experiment.get_attack(), object)
         self.assertEqual(experiment.get_attack(), attack)  
         
@@ -57,7 +57,7 @@ class testAttackExperiment(unittest.TestCase):
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         estimator.fit(data.X_train, data.y_train)
         attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
         experiment.set_attack(attack)
         experiment(path = self.path)
         self.assertIsInstance(experiment.attack, BoundaryAttack)
@@ -72,7 +72,7 @@ class testAttackExperiment(unittest.TestCase):
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         estimator.fit(data.X_train, data.y_train)
         attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
         old = hash(experiment)
         old_name = experiment.filename
         experiment.set_attack(attack)
@@ -94,7 +94,7 @@ class testAttackExperiment(unittest.TestCase):
         model = Model(estimator, model_type = 'sklearn', path = self.path)
         estimator.fit(data.X_train, data.y_train)
         attack = BoundaryAttack(estimator, targeted = False, max_iter = 10, verbose = False)
-        experiment = AttackExperiment(data = data, model = model, attack = attack)
+        experiment = AttackExperiment(dataset =data, model = model, attack = attack)
         experiment(path = self.path)
         these = ['attack_params.json', 'attack_examples.json', 'attack_time_dict.json']
         for file in these:

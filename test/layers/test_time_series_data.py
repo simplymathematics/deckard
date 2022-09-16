@@ -1,7 +1,7 @@
 import unittest, tempfile, os, shutil
 from deckard.base import Data
 import numpy as np
-dataset = '../../examples/time_series/US-CAL-CISO 2020.csv'
+data ='../../examples/time_series/US-CAL-CISO 2020.csv'
 # TODO other datasets
 class testTimeSeriesData(unittest.TestCase):
 

@@ -20,6 +20,7 @@ from hashlib import md5 as my_hash
 from deckard.base.model import Model
 from deckard.base.data import Data
 from deckard.base.storage import DiskStorageMixin
+from deckard.base.hashable import BaseHashable
 
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
@@ -31,11 +32,11 @@ logger = logging.getLogger(__name__)
 
 
 # Create experiment object
-class Experiment(DiskStorageMixin):
+class Experiment(BaseHashable, DiskStorageMixin):
     """
     Creates an experiment object
     """
-    def __init__(self, data:Data, model:Model, verbose : int = 1, is_fitted:bool = False, filename:str = None):
+    def __init__(self, data:Data, model:Model, verbose : int = 1, is_fitted:bool = False):
         """
         Creates an experiment object
         :param data: Data object
@@ -46,55 +47,16 @@ class Experiment(DiskStorageMixin):
         :param name: Name of experiment
         """
         self.model = model
-        self.model_type = self.model.model_type
         self.data = data
-        __dh = hash(self.data)
-        __dh = __dh if int(__dh) > 0 else -1 * int(__dh)
-        __mh = hash(self.model)
-        __mh = __mh if int(__mh) > 0 else -1 * int(__mh)
-        self.filename =  f"{__dh}_{__mh}" if filename is None else filename
         self.verbose = verbose
         self.is_fitted = is_fitted
-        self.predictions = None
-        self.ground_truth = self.data.y_test
         self.time_dict = None
-        self.params = dict()
-        self.params['Model'] = dict(model)
-        self.params['Data'] = dict(data)
-        self.params['Experiment'] = {'name': self.filename, 'verbose': self.verbose, 'is_fitted': self.is_fitted, 'id': self.filename}
-    
-    def __eq__(self, other) -> bool:
-        """
-        Returns true if two experiments are equal
-        """
-        return self.__hash__() == other.__hash__()
-    
-    def __str__(self) -> str:
-        """
-        Returns human-readable string representation of Experiment object.
-        """
-        return str(self.params)
-    
-    def __repr__(self) -> str:
-        """
-        Returns reproducible string representation of Experiment object.
-        """
-        return "deckard.base.experiment.Experiment({})".format(dumps(self.params, sort_keys = True))
-
-    def __iter__(self):
-        """
-        Returns an iterator over the experiment object
-        """
-        for key, value in self.params.items():
-            yield key, value
-            
-    def __hash__(self) -> str:
-        """
-        Hashes the params as specified in the __init__ method.
-        """
-        return int(my_hash(str(self.__str__()).encode('utf-8')).hexdigest(), 32)
-    
-    def _build_model(self, **kwargs) -> None:
+        self.params = {}
+        self.params['Experiment'] = {"data": hash(self.data), "model": hash(self.model), "is_fitted": self.is_fitted}
+        self.params['Model'] = self.model.params
+        self.params['Data'] = self.data.params
+        
+    def fit_model(self, **kwargs) -> None:
         """
         Builds model.
         """
@@ -112,62 +74,51 @@ class Experiment(DiskStorageMixin):
         end = process_time()
         time_dict['predict'] = end - start
         self.time_dict = time_dict
-        return 
     
-    
-    def set_filename(self, filename:str = None) -> None:
-        """
-        Sets filename attribute.
-        """
-        if filename is None:
-            self.filename = str(hash(self))
-        else:
-            self.filename = filename
-        return None
 
-    def __call__(self, path, prefix = None, filename = None, **kwargs) -> None:
+    def __call__(self, path, prefix = None, filename = None) -> None:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
         """
+        self.data()
+        self.model()
+        self.ground_truth = self.data.y_test
         if not os.path.isdir(path):
             os.mkdir(path)
-        self._build_model(**kwargs)
+        self.fit_model()
         # TODO: Fix params
-        # self.save_params(path = path, prefix = prefix)
-        self.save_predictions(path = path, prefix = prefix)
-        self.save_ground_truth(path = path, prefix = prefix)
+        params_file = self.save_params(path = path, prefix = prefix)
+        preds_file = self.save_predictions(path = path, prefix = prefix)
+        truth_File = self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename
-        self.save_model(filename = model_name, path = path)
-        # if hasattr(self.model, 'defence'):
-        #     self.save_defence_params(path = path)
-        
+        model_file = self.save_model(filename = model_name, path = path)
+        # TODO: Fix scoring
+        return (params_file, preds_file, truth_File, model_file)
     ####################################################################################################################
     #                                                     DEFENSES                                                     #
     ####################################################################################################################
-    def set_defence(self, defence:Union[object,str]) -> None:
-        """
-        Adds a defence to an experiment
-        :param experiment: experiment to add defence to
-        :param defence: defence to add
-        """
-         
-        model = self.model.model
-        if isinstance(defence, str):
-            defence = self.get_defence(defence)
-        if isinstance(defence, object):
-            model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
-        else:
-            raise ValueError("Defence must be a string or an object")
-        self.model.defence = defence
-        self.model.set_defence_params()
-        if hasattr(self.model.defence, '_apply_fit') and self.model.defence._apply_fit != True:
-            self.is_fitted = True
-        self.params['Model'] = self.model.params
-        self.params['Defence'] = self.params['Model']['Defence']
-        del self.params['Model']['Defence']
-        self.filename = str(hash(self))
-        self.params['Defence']['experiment'] = self.filename
-        return None
+    # def set_defence(self, defence:Union[object,str]) -> None:
+    #     """
+    #     Adds a defence to an experiment
+    #     :param experiment: experiment to add defence to
+    #     :param defence: defence to add
+    #     """
+    #     model = self.model.model
+    #     if isinstance(defence, str):
+    #         defence = self.get_defence(defence)
+    #     if isinstance(defence, object):
+    #         model = Model(model, defence = defence, model_type = self.model.model_type, path = self.model.path, url = self.model.url, is_fitted = self.is_fitted)
+    #     else:
+    #         raise ValueError("Defence must be a string or an object")
+    #     self.model.defence = defence
+    #     self.model.set_defence_params()
+    #     if hasattr(self.model.defence, '_apply_fit') and self.model.defence._apply_fit != True:
+    #         self.is_fitted = True
+    #     self.params['Model'] = self.model.params
+    #     self.params['Defence'] = self.params['Model']['Defence']
+    #     del self.params['Model']['Defence']
+    #     self.params['Defence']['experiment'] = hash(self)
+    #     return None
 
     def insert_sklearn_preprocessor(self, name:str, preprocessor: object, position:int):
         """
@@ -193,34 +144,34 @@ class Experiment(DiskStorageMixin):
         new_model.steps.insert(position, (name, preprocessor))
         self.model.model = new_model
    
-    def get_defence(self, filename:str=None, path:str = "."):
-        """
-        Returns the defence from an experiment
-        :param experiment: experiment to get defence from
-        """
-        from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
-        return generate_object_from_tuple(generate_tuple_from_yml(os.path.join(path, filename)))
+    # def get_defence(self, filename:str=None, path:str = "."):
+    #     """
+    #     Returns the defence from an experiment
+    #     :param experiment: experiment to get defence from
+    #     """
+    #     from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
+    #     return generate_object_from_tuple(generate_tuple_from_yml(os.path.join(path, filename)))
         
     
-    def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
-        """
-        Saves defence params to specified file.
-        :param filename: str, name of file to save defence params to.
-        :param path: str, path to folder to save defence params. If none specified, defence params are saved in current working directory. Must exist.
-        """
-        assert os.path.isdir(path), "Path to experiment does not exist"
+    # def save_defence_params(self, filename:str = "defence_params.json", path:str = ".") -> None:
+    #     """
+    #     Saves defence params to specified file.
+    #     :param filename: str, name of file to save defence params to.
+    #     :param path: str, path to folder to save defence params. If none specified, defence params are saved in current working directory. Must exist.
+    #     """
+    #     assert os.path.isdir(path), "Path to experiment does not exist"
         
-        defence_file = os.path.join(path, filename)
-        if 'Defence' in self.params:
-            results = self.params['Defence']
-        elif 'Defence' in self.model.params:
-            results = self.model.params['Defence']
-        else:
-            raise ValueError("No defence params found in experiment")
-        results = Series(results.values(), name =  self.filename, index = results.keys())
-        results.to_json(defence_file)
-        assert os.path.exists(defence_file), "Defence file not saved."
-        return None
+    #     defence_file = os.path.join(path, filename)
+    #     if 'Defence' in self.params:
+    #         results = self.params['Defence']
+    #     elif 'Defence' in self.model.params:
+    #         results = self.model.params['Defence']
+    #     else:
+    #         raise ValueError("No defence params found in experiment")
+    #     results = Series(results.values(), name =  hash(self), index = results.keys())
+    #     results.to_json(defence_file)
+    #     assert os.path.exists(defence_file), "Defence file not saved."
+    #     return None
     
     
     

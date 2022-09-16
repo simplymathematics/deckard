@@ -1,5 +1,4 @@
-import os, logging
-from pickle import dump
+import os, logging, json, pickle
 from pandas import Series, DataFrame
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class DiskStorageMixin(object):
         else:
             filename = os.path.join(path, filename)
         with open(filename, 'wb') as f:
-            dump(self.data, f)
+            pickle.dump(self.data, f)
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
         return None
     
@@ -37,28 +36,18 @@ class DiskStorageMixin(object):
         assert path is not None, "Path to save data must be specified."
         if not os.path.isdir(path) and not os.path.exists(path):
             os.mkdir(path)
-        attributes = {}
-        for key in self.params.keys():
+        
+        for key, value in self.params.items():
             if prefix is not None:
                 filename = prefix + key.lower() + "_" + key + filetype
             else:
                 filename = key.lower() +"_params" + filetype
-            try:
-                Series(dict(self.params[key])).to_json(os.path.join(path,filename))
-            except ValueError as e:
-                if "has length 1":
-                    logger.warning("Parameter {} has length 1. Skipping. Value is {}.".format(key, self.params[key]))
-                    attributes[key] = self.params[key]
-                else:
-                    raise e
+            filename = os.path.join(path, filename)
+            Series(dict(self.params[key])).to_json(filename)
+            # with open(filename, 'w') as f:
+            #     json.dump(dict(self.params[key]), f, indent = 4)
             filenames.append(os.path.join(path,filename))
-        logger.info("Saving {} parameters to {}".format(key, os.path.join(path,filename)))
-        if prefix is not None:
-            filename = prefix + "attributes" + filetype
-        else:
-            filname = "attributes" + filetype
-        DataFrame(attributes).to_json(os.path.join(path, filename))
-        filenames.append(os.path.join(path, filename))
+            logger.info("Saving {} parameters to {}".format(key, os.path.join(path,filename)))
         return filenames
 
     def save_model(self, filename:str = "model", prefix = None, path:str = ".") -> str:
@@ -117,7 +106,10 @@ class DiskStorageMixin(object):
         if prefix is not None:
             filename = prefix + "_" + filename
         cv_file = os.path.join(path, filename)
-        cv_results = Series(self.model.model.model.cv_results_, name = self.filename)
+        try:
+            cv_results = Series(self.model.model.model.cv_results_, name = hash(self))
+        except:
+            cv_results = Series(self.model.model.cv_results_, name = hash(self))
         cv_results.to_json(cv_file)
         assert os.path.exists(cv_file), "CV results file not saved"
 

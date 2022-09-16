@@ -148,7 +148,7 @@ def generate_experiment_list(model_list:Union[Model, list], data_list:Union[Data
         for model in model_list:
             if not isinstance(model, Model):
                 model = Model(model, model_type = model_type, **kwargs)
-            experiment = Experiment(data = data, model = model)
+            experiment = Experiment(data =data, model = model)
             experiment_list.append(experiment)
     return experiment_list    
 

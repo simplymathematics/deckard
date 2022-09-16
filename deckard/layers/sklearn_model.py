@@ -10,16 +10,16 @@ logger = logging.getLogger(__name__)
 
 def sklearn_model(args) -> Experiment:
     model = parse_config(args.config)
-    if args.input_folder is None:
-        assert Path(args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, Path.cwd())
-        data = Data(args.data_file)
+    if args.inputs['folder'] is None:
+        assert Path(args.inputs['data']).exists(), "Problem finding data file: {} in this working directory: {}".format(args.inputs['data'], Path.cwd())
+        data = Data(args.inputs['data'])
     else:
-        assert Path(args.input_folder, args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, Path.cwd())
-        data = Data(Path(args.input_folder, args.data_file))
+        assert Path(args.inputs['folder'], args.inputs['data']).exists(), "Problem finding data file: {} in this working directory: {}".format(args.inputs['data'], Path.cwd())
+        data = Data(Path(args.inputs['folder'], args.inputs['data']))
     model = Model(model, art = False)
-    exp = Experiment(data = data, model = model, filename = args.output_folder)
-    exp(filename = args.output_name, path = args.output_folder)
-    assert Path(args.output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(args.output_folder, args.output_name))
+    exp = Experiment(data =data, model = model, filename = args.outputs['folder'])
+    exp(filename = args.outputs['model'], path = args.outputs['folder'])
+    assert Path(args.outputs['folder'], args.outputs['model']).exists(), "Problem creating file: {}".format(Path(args.outputs['folder'], args.outputs['model']))
     return exp
 
 if __name__ == '__main__':
@@ -39,10 +39,10 @@ if __name__ == '__main__':
     for k, v in vars(cli_args).items():
         if v is not None and not hasattr(args, k):
             setattr(args, k, v)
-    output = make_output_folder(args.output_folder)
+    output = make_output_folder(args.outputs['folder'])
     assert Path(output).exists(), "Problem finding output folder: {}".format(output)
     assert isinstance(args.config, dict), "Config must be a dictionary. It is type: {}".format(type(args.config))
-    assert isinstance(args.output_name, (str, Path)), "Output name must be a string. It is type: {}".format(type(args.output_name))
-    assert isinstance(args.data_file, (str, Path)), "Data file must be a string. It is type: {}".format(type(args.data_file))
+    assert isinstance(args.outputs['model'], (str, Path)), "Output name must be a string. It is type: {}".format(type(args.outputs['model']))
+    assert isinstance(args.inputs['data'], (str, Path)), "Data file must be a string. It is type: {}".format(type(args.inputs['data']))
     sklearn_model(args)
    

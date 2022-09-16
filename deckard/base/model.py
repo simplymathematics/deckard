@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier, ScikitlearnClassifier, ScikitlearnRegressor, ScikitlearnEstimator, TensorFlowV2Classifier]
 
-
-class Model(object):
+from deckard.base.hashable import BaseHashable
+class Model(BaseHashable):
     """Creates a model object that includes a dicitonary of passed parameters."""
     def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", url = None, is_fitted:bool = False, classifier = True, art:bool = True, **kwargs):
         """
@@ -33,69 +33,35 @@ class Model(object):
         verbose: the verbosity level
         """
         self.model_type =  model_type
-        self.defence = defence
         self.path = path
         self.url = url
         self.is_fitted = is_fitted
         self.kwargs = kwargs
         self.classifier = classifier
-        if isinstance(model, (str, Path)):
-            logger.info("Loading model from file")
-            logger.info("Model type is {}".format(model_type))
-            self.filename = model
-            self.load(self.filename, art = art, **self.kwargs)
-        elif isinstance(model, object):
-            self.filename = str(type(model))
-            self.model = model
-            self.load(model, art = art, **self.kwargs)
-        else:
-            raise ValueError("Model must be a string or a callable. Instead got {}".format(type(model)))
-        assert hasattr(self, 'model'), "Error initializing model"
-        self.filename = hash(model)
-
-    def __repr__(self) -> str:
-        """
-        Return the reproducible representation of the model.
-        """
-        return "deckard.base.model.Model(model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{})".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
+        self.model = model
+        self.art = art
+        self.defence = defence
+        self.params = dict(vars(self))
+        del self.params['kwargs']
+        if defence is not None:
+            self.params['defence'] = {'name' : defence, 'params' : {}}
+            for key in vars(defence):
+                if key != 'estimator' or 'classifier' or 'regressor':
+                    self.params['defence']['params'][key] = getattr(defence, key)
+            if  'preprocessor' in str(type(self.defence)):
+                self.params['defence']['params']['type'] = 'preprocessor'
+            elif 'postprocessor' in str(type(self.defence)):
+                self.params['defence']['params']['type'] = 'postprocessor'
+            elif 'trainer' in str(type(self.defence)):
+                self.params['defence']['params']['type'] = 'trainer'
+            elif 'transformer' in str(type(self.defence)):
+                self.params['defence']['params']['type'] = 'transformer'
         
-    def __str__(self) -> str:
-        """
-        Return the human readable representation of the model.
-        """
-        return "model={}, model_type={}, path={}, url={}, defence={}, is_fitted={}, **{}".format(self.model, self.model_type, self.path, self.url, self.defence, self.is_fitted, self.kwargs)
+        
+        
 
-    def __eq__(self, other) -> bool:
-        """
-        Returns True if the models are equal, using the has of the params from __init__.
-        """
-        return self.__hash__() == other.__hash__()
+        
     
-    def __iter__(self):
-        """
-        Iterates through the data object.
-        """
-        for key, value in self.params.items():
-            yield key, value
-            
-    def __hash__(self) -> str:
-        """
-        Hashes the params as specified in the __init__ method.
-        """
-        return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
-    
-    def _set_name(self, params):
-        """
-        :param params: A dictionary of parameters to set.
-        Sets the name of the model. 
-        """
-        assert params is not None, "Params must be specified"
-        assert isinstance(params, dict), "Params must be a dictionary"
-        name = str(type(self.model)).replace("<class '", "").replace("'>", "") + "_"
-        for key, value in params.items():
-            name += "_" + str(key) + ":" + str(value)
-        return name
-
     def set_params(self, params:dict = None):
         """
         :param params: A dictionary of parameters to set.
@@ -105,87 +71,19 @@ class Model(object):
         assert isinstance(params, dict), "Params must be a dictionary"
         self.kwargs.update(params)
         for param, value in params.items():
-            if hasattr(self.model.model, 'set_params') and param in self.model.model.get_params():
-                self.model.model.set_params(**{param : value})
-            elif hasattr(self.model, 'set_params') and "_"+param in self.model.__dict__.keys():
+            if hasattr(self, param):
+                # Attempts to set attribute on self first
+                setattr(self, param, value)
+                # Tries a generic set_params method
+            elif hasattr(self.model, 'set_params'):
                 self.model.set_params(**{param : value})
+                  # Tries to set the art attribute if it exists
+            elif hasattr(self.model, 'model') and hasattr(self.model.model, 'set_params') and param in self.model.model.get_params():
+                self.model.model.set_params(**{param : value})
             else:
                 raise ValueError("Parameter {} not found in \n {} or \n {}".format(param, self.model.model.get_params(), self.model.__dict__.keys()))
+            # self.params.update({param : value})
 
-    
-    def get_model_params(self):
-        params = {}
-        if hasattr(self.model, 'get_params'):
-            params = dict(self.model.get_params())
-        elif hasattr(self.model, 'model') and hasattr(self.model.model, 'get_params'):
-            params = dict(self.model.model.get_params())
-        else:
-            params = {'model' : self.model, 'model_type' : self.model_type, 'path' : self.path, 'url' : self.url, 'defence' : self.defence}
-        for key, value in self.__dict__.items():
-            if isinstance(value, int):
-                params[key] = value
-            elif isinstance(value, float):
-                params[key] = value
-            elif isinstance(value, str):
-                params[key] = value
-            elif isinstance(value, Callable):
-                params[key] = str(type(value))
-            elif isinstance(value, list):
-                params[key] = value
-            elif isinstance(value, dict):
-                params[key] = str(value)
-            elif isinstance(value, tuple):
-                params[key] = value
-            elif isinstance(value, type(None)):
-                params[key] = None
-            else:
-                params[key] = str(type(value))
-        self.name = self._set_name(params)
-        params.update({"Name": self.name})
-        return params
-    
-    def set_defence_params(self) -> None:
-        """
-        Adds a defence to an experiment
-        :param experiment: experiment to add defence to
-        :param defence: defence to add
-        """
-        assert isinstance(self.defence, object)
-        if self.defence is not None:
-            def_params = {}
-            for key, value in self.defence.__dict__.items():
-                if isinstance(value, int):
-                    def_params[key] = value
-                elif isinstance(value, float):
-                    def_params[key] = value
-                elif isinstance(value, str):
-                    def_params[key] = value
-                elif isinstance(value, Callable):
-                    def_params[key] = str(type(value))
-                elif isinstance(value, list):
-                    def_params[key] = value
-                elif isinstance(value, dict):
-                    def_params[key] = str(value)
-                elif isinstance(value, tuple):
-                    def_params[key] = value
-                elif isinstance(value, type(None)):
-                    def_params[key] = None
-                else:
-                    def_params[key] = str(type(value))
-                # Finds type and records it
-                if 'trainer' in str(type(self.defence)):
-                    raise NotImplementedError("Trainer defence not supported")
-                elif 'transformer' in str(type(self.defence)):
-                    raise NotImplementedError("Transformer defence not supported")
-                elif 'preprocessor' in str(type(self.defence)):
-                    defence_type = 'preprocessor'
-                elif 'postprocessor' in str(type(self.defence)):
-                    defence_type = 'postprocessor'
-                else:
-                    raise NotImplementedError("Defence {} not supported".format(type(self.defence)))
-            self.params['Defence'] = {'name': str(type(self.defence)), 'params': def_params, 'type' : defence_type}
-        else:
-            self.params['Defence'] = {'name': None, 'params': None, 'type' : None}
 
     def load_from_string(self, filename:str) -> None:
         """
@@ -231,45 +129,29 @@ class Model(object):
         logger.info("Loaded model")
         return model
     
-    def load(self, filename:str, art:bool = True, **kwargs) -> None:
+    def __call__(self, filename:str = None, art:bool = None, **kwargs) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
         """
+        if art is None:
+            art = self.art
         if len(kwargs) > 0:
             assert art == True, "art must be True if kwargs are specified"
         logger.debug("Loading model")
-        if isinstance(filename, (str, Path)):
+        if isinstance(self.model, (str, Path)):
             # load the model
-            self.model = self.load_from_string(filename)
+            self.model = self.load_from_string(self.model)
+            self.params['model'] = self.model
         else:
             logger.info("Model already in memory.")
-        self.params = self.get_model_params()
-        self.set_defence_params()
-        self._set_name(self.params)
+            pass
         logger.info("Loaded model")
         if self.classifier == True and art == True:
-            self.initialize_art_classifier(**kwargs)
+            self.model = self.initialize_art_classifier(**kwargs)
         elif self.classifier == False and art == True:
-            self.initialize_art_regressor(**kwargs)
-        self.is_supervised = self._is_supervised()
-
-    def _is_supervised(self)-> bool:
-        """
-        Returns true if supervised, false if unsupervised. 
-        """
-        if hasattr(self.model, 'fit_predict') or  hasattr(self.model, 'fit_transform'):
-            result = False
-            logger.info("Model is unsupervised")
-        elif hasattr(self.model, 'model') and (hasattr(self.model.model, 'fit_predict') or  hasattr(self.model.model, 'fit_transform')):
-            result = False
-            logger.info("Model is unsupervised")
-        elif hasattr(self.model, 'fit'):
-            result = True
-            logger.info("Model is supervised")
-        else:
-            raise ValueError("Model is not a classifier or regressor. It is type {}".format(type(self.model)))
-        return result
+            self.model = self.initialize_art_regressor(**kwargs)
+        return self
 
     def initialize_art_classifier(self, clip_values:tuple = (0,255), **kwargs) -> None:
         """
@@ -280,18 +162,22 @@ class Model(object):
         trainers = []
         transformers = []
         # Find defence type
-        if self.params['Defence']['type'] == 'preprocessor':
+        if  'preprocessor' in str(type(self.defence)):
             preprocessors.append(self.defence)
-        elif self.params['Defence']['type'] == 'postprocessor':
+            self.params['defence']['params']['type'] = 'preprocessor'
+        elif 'postprocessor' in str(type(self.defence)):
             postprocessors.append(self.defence)
-        elif self.params['Defence']['type'] == 'trainer':
+            self.params['defence']['params']['type'] = 'postprocessor'
+        elif 'trainer' in str(type(self.defence)):
             trainers.append(self.defence)
-        elif self.params['Defence']['type'] == 'transformer':
+            self.params['defence']['params']['type'] = 'trainer'
+        elif 'transformer' in str(type(self.defence)):
             transformers.append(self.defence)
-        elif self.params['Defence']['type'] == None:
-            pass
+            self.params['defence']['params']['type'] = 'transformer'
+        elif self.defence is not None:
+            raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
         else:
-            raise ValueError("Defence type {} not supported".format(self.params['Defence']['type']))
+            pass
         # Iinitialize model by type
         if isinstance(self.model, (PyTorchClassifier, TensorFlowV2Classifier, ScikitlearnClassifier, TensorFlowClassifier, KerasClassifier)):
             self.model = self.model.model
@@ -305,7 +191,7 @@ class Model(object):
             model = KerasClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
         elif self.model_type in ['sklearn', 'pipeline', 'gridsearch', 'pickle', 'scikit', 'scikit-learn']:
             model = ScikitlearnClassifier(self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, clip_values=clip_values, **kwargs)
-        self.model = model
+        return model
         
     
     def initialize_art_regressor(self, **kwargs) -> None:
@@ -314,24 +200,28 @@ class Model(object):
         trainers = []
         transformers = []
         # Find defence type
-        if self.params['Defence']['type'] == 'preprocessor':
+        if  'preprocessor' in str(type(self.defence)):
             preprocessors.append(self.defence)
-        elif self.params['Defence']['type'] == 'postprocessor':
+            self.params['defence']['params']['type'] = 'preprocessor'
+        elif 'postprocessor' in str(type(self.defence)):
             postprocessors.append(self.defence)
-        elif self.params['Defence']['type'] == 'trainer':
+            self.params['defence']['params']['type'] = 'postprocessor'
+        elif 'trainer' in str(type(self.defence)):
             trainers.append(self.defence)
-        elif self.params['Defence']['type'] == 'transformer':
+            self.params['defence']['params']['type'] = 'trainer'
+        elif 'transformer' in str(type(self.defence)):
             transformers.append(self.defence)
-        elif self.params['Defence']['type'] == None:
-            pass
+            self.params['defence']['params']['type'] = 'transformer'
+        elif self.defence is not None:
+            raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
         else:
-            raise ValueError("Defence type {} not supported".format(self.params['Defence']['type']))
+            pass
         # Initialize model by type
         if self.model_type in ['sklearn', 'scikit-learn', 'scikit']:
             model = ScikitlearnRegressor(model=self.model, preprocessing_defences = preprocessors, postprocessing_defences = postprocessors, **kwargs)
         else:
             raise ValueError("Model type {} not supported".format(self.model_type))
-        self.model = model
+        return model
     
     def save_model(self, filename:str = None, path:str = None):
         """

@@ -110,7 +110,7 @@ stages:
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
   control:
-    cmd: python ../../deckard/layers/art_model.py --layer_name control
+    cmd: python ../../deckard/layers/art_model.py  control
     deps:
     - path: data.pkl
       md5: cdb226f18d6bd132ec336841d2747a62
@@ -129,7 +129,7 @@ stages:
       size: 32984302
       nfiles: 7
   defend:
-    cmd: python ../../deckard/layers/defend.py --layer_name defend
+    cmd: python ../../deckard/layers/defend.py  defend
     deps:
     - path: configs/defence_config.yaml
       md5: eec1f9116a02f622a0c15db66045a6c3
@@ -156,7 +156,7 @@ stages:
       size: 35550145
       nfiles: 10
   attack:
-    cmd: python ../../deckard/layers/attack.py --layer_name attack
+    cmd: python ../../deckard/layers/attack.py  attack
     deps:
     - path: configs/attack_config.yaml
       md5: abf1157d152bec8de7a7c394c47ec11e

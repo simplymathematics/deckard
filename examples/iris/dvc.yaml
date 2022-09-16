@@ -13,25 +13,29 @@ stages:
     # plots:
     #   - prepare.plots
   train:
-    cmd:  python -m deckard.layers.sklearn_model --layer_name train
-    deps:
-    - data.pkl
+    cmd: python -m deckard.layers.sklearn_model --layer_name train
     params:
-    - train
-    outs:
-    - train/:
-        cache: true
+      - train.config
+    outs: 
+      - ${train.outputs.folder}/${train.outputs.model}
+      - ${train.outputs.folder}/${train.outputs.params}
+      - ${train.outputs.folder}/${train.outputs.ground_truth}
+      - ${train.outputs.folder}/${train.outputs.predictions}
+    deps:
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+    # metrics:
+    #   - train.scores
+    # plots:
+    #   - train.plots
   preprocess:
-    cmd: python  -m deckard.layers.preprocess --layer_name preprocess --position 0
-    deps:
-    - train/
+    cmd: python -m deckard.layers.preprocess --layer_name preprocess
     params:
-      - preprocess
-    outs:
-    - ${preprocess.outputs.folder}:
-        cache: true
-  featurize:
-    cmd: python  -m deckard.layers.preprocess --layer_name featurize --position 1
+      - preprocess.config
+    outs: 
+      - ${preprocess.outputs.folder}/${preprocess.outputs.model}
+      - ${preprocess.outputs.folder}/${preprocess.outputs.params}
+      - ${preprocess.outputs.folder}/${preprocess.outputs.ground_truth}
+      - ${preprocess.outputs.folder}/${preprocess.outputs.predictions}
     deps:
     - preprocess/
     params:

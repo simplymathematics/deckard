@@ -7,3 +7,4 @@ from .parse import generate_experiment_list, generate_object_list_from_tuple, ge
 from .storage import DiskStorageMixin
 from .crawler import Crawler
 from .generator import Generator
+from .hashable import BaseHashable

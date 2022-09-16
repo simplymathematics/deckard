@@ -19,23 +19,23 @@ prepare:
       stratify : True
       random_state : 0
       test_size : 
-      size : .8
+      train_size : .8
   outputs:
-    folder : "."
-    file : ${data_file}
+    folder : prepare
+    file : data.pickle
     predictions : 
     ground_truth : 
   scores:
     file: 
-    folder:
-    time_dict:
+    folder: 
+    time_dict: 
   plots:
     file:
     folder:
 train:
   inputs:
-    folder :
-    data : 
+    folder : prepare
+    data : data.pickle
     type : 'sklearn'
     classifier : True
     is_fitted : True
@@ -45,16 +45,15 @@ train:
     params: 
       'penalty' : 'l2'
   outputs:
-    folder : "."
+    folder : train
     model : "model.pickle"
-    params : "params.json"
     ground_truth : "ground_truth.json"
     predictions : "predictions.json"
   metrics:
-    scores : "scores.json"
+    scores : params.scores_file
 preprocess:
   inputs:
-    folder : train.outputs.folder
+    folder : "."
     data : train.outputs.file
     type : 'sklearn'
     classifier : True
@@ -67,7 +66,7 @@ preprocess:
       'with_mean' : True
       'with_std' : True
   outputs:
-    folder : "."
+    folder : "preprocess"
     model : "model.pickle"
     params : "params.json"
     ground_truth : "ground_truth.json"
@@ -88,7 +87,7 @@ featurize:
     params: 
       'strategy' : 'mean'
   outputs:
-    folder : "."
+    folder : featurize
     model : "model.pickle"
     params : "params.json"
     ground_truth : "ground_truth.json"

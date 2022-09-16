@@ -6,7 +6,7 @@ stages:
     outs: 
       - data.pkl
   control:
-    cmd:  python -m deckard.layers.art_model --layer_name control
+    cmd:  python -m deckard.layers.art_model  control
     deps:
     - data.pkl
     params:
@@ -15,7 +15,7 @@ stages:
     - control/:
         cache: true
   defend:
-    cmd:  python -m deckard.layers.defend --layer_name defend
+    cmd:  python -m deckard.layers.defend  defend
     deps:
     - data.pkl
     - control/control_model.pb
@@ -26,7 +26,7 @@ stages:
     - defences/:
         cache: true
   attack:
-    cmd:  python -m deckard.layers.attack --layer_name attack
+    cmd:  python -m deckard.layers.attack  attack
     deps:
     - data.pkl
     - defences/defended_model

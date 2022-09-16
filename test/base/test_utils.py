@@ -9,7 +9,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from art.estimators.classification import PyTorchClassifier, KerasClassifier, TensorFlowClassifier
 from art.estimators.classification.scikitlearn import SklearnClassifier, ScikitlearnRandomForestClassifier
-
+from pathlib import Path
 logger = logging.getLogger(__name__)
 class testUtils(unittest.TestCase):
     def setUp(self):
@@ -26,9 +26,8 @@ class testUtils(unittest.TestCase):
         self.experiment(self.path)
         self.experiment.save_model(filename = 'model', path = self.path)
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
-        self.list = [(self.experiment.filename, self.experiment.params), (self.experiment2.filename, self.experiment2.params)]
+        self.list = [(Path(self.path, str(hash(self))), self.experiment.params), (Path(self.path, str(hash(self))), self.experiment2.params)]
     
-    # TODO: Test layer utils, move layer utils
     # def test_find_successes(self):
     #     self.experiment = Experiment(self.data, self.model)
     #     self.experiment(self.path)

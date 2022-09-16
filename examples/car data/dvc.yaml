@@ -11,7 +11,7 @@ stages:
     outs: 
       - data.pkl
   train:
-    cmd: python -m deckard.layers.sklearn_model --layer_name train
+    cmd: python -m deckard.layers.sklearn_model  train
     deps:
     - ../../deckard/base/utils.py
     - configs/model.yaml
@@ -24,7 +24,7 @@ stages:
     - train/ :
         cache : true
   preprocess:
-    cmd: python -m deckard.layers.preprocess --layer_name preprocess --position 0
+    cmd: python -m deckard.layers.preprocess  preprocess --position 0
     deps:
     - configs/preprocess.yaml
     - ../../deckard/layers/preprocess.py
@@ -35,7 +35,7 @@ stages:
     - preprocess/:
         cache: true
   featurize:
-    cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+    cmd: python -m deckard.layers.preprocess  featurize --position 1
     deps:
     - configs/featurize.yaml
     - ../../deckard/layers/preprocess.py
@@ -46,7 +46,7 @@ stages:
     - featurize/:
         cache: true
   evaluate:
-    cmd: python -m deckard.layers.evaluate --layer_name evaluate
+    cmd: python -m deckard.layers.evaluate  evaluate
     deps: 
       - featurize/
     params:
