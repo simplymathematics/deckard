@@ -4,7 +4,6 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=ResourceWarning)
 import unittest, logging, tempfile
 from deckard.base import Data, Experiment, Model
-from deckard.base.utils import SUPPORTED_MODELS, find_successes, remove_successes_from_queue
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
