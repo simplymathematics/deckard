@@ -19,7 +19,7 @@ prepare:
       stratify : True
       random_state : 0
       test_size : 
-      train_size : .8
+      size : .8
   outputs:
     folder : "."
     file : ${data_file}
@@ -46,12 +46,12 @@ train:
       'penalty' : 'l2'
   outputs:
     folder : "."
-    model : "train_model.pickle"
-    params : "train_params.json"
-    ground_truth : "train_ground_truth.json"
-    predictions : "train_predictions.json"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
-    scores : "train_scores.json"
+    scores : "scores.json"
 preprocess:
   inputs:
     folder : train.outputs.folder
@@ -68,12 +68,12 @@ preprocess:
       'with_std' : True
   outputs:
     folder : "."
-    model : "preprocess_model.pickle"
-    params : "preprocess_params.json"
-    ground_truth : "preprocess_ground_truth.json"
-    predictions : "preprocess_predictions.json"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
-    scores : "preprocess_scores.json"
+    scores : "scores.json"
 featurize:
   inputs:
     folder : preprocess.outputs.folder
@@ -89,12 +89,12 @@ featurize:
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "featurize_model.pickle"
-    params : "featurize_params.json"
-    ground_truth : "featurize_ground_truth.json"
-    predictions : "featurize_predictions.json"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
-    scores : "featurize_scores.json"
+    scores : "scores.json"
 art:
   inputs:
     folder : featurize.outputs.folder
@@ -145,7 +145,7 @@ attack:
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "attackd_model.pickle"
+    model : "attack_model.pickle"
     params : "attack_params.json"
   metrics:
     scores : "attack_scores.json"
@@ -163,10 +163,10 @@ evaluate:
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "evaluate_model.pickle"
-    params : "evaluate_params.json"
+    model : "model.pickle"
+    params : "params.json"
   metrics:
-    scores : "evaluate_scores.json"
+    scores : "scores.json"
 visualise:
   inputs:
     folder : preprocess.outputs.folder
@@ -181,7 +181,7 @@ visualise:
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "visualise_model.pickle"
-    params : "visualise_params.json"
+    model : "model.pickle"
+    params : "params.json"
   metrics:
-    scores : "visualise_scores.json"
+    scores : "scores.json"
