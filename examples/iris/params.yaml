@@ -9,9 +9,6 @@ vars:
   
 
 prepare:
-  inputs:
-    folder : 
-    file : 
   config:
     name: 'iris'
     params:
@@ -54,12 +51,12 @@ train:
 preprocess:
   inputs:
     folder : "."
-    data : train.outputs.file
+    data : prepare/data.pickle
     type : 'sklearn'
     classifier : True
     is_fitted : True
     position : 0
-    model: train.outputs.model
+    model: train/model.pickle
   config : 
     name: sklearn.preprocessing.StandardScaler
     params: 
@@ -75,13 +72,13 @@ preprocess:
     scores : "scores.json"
 featurize:
   inputs:
-    folder : preprocess.outputs.folder
-    data : preprocess.outputs.file
+    folder : "."
+    data : prepare/data.pickle
     type : 'sklearn'
     classifier : True
     is_fitted : True
     position : 1
-    model: preprocess.outputs.model
+    model: preprocess/model.pickle
   config : 
     name: sklearn.impute.SimpleImputer
     params: 
@@ -94,93 +91,93 @@ featurize:
     predictions : "predictions.json"
   metrics:
     scores : "scores.json"
-art:
+art_model:
   inputs:
-    folder : featurize.outputs.folder
-    data : featurize.outputs.file
+    folder : "."
+    data : prepare/data.pickle
     type : 'sklearn'
     classifier : True
-    is_fitted : False
-    model: 
-  config : 
-    name: sklearn.impute.SimpleImputer
-    params: 
-      'strategy' : 'mean'
+    is_fitted : True
+    model: featurize/model.pickle
   outputs:
-    folder : "."
-    model : "art_model.pickle"
-    params : "art_params.json"
+    folder : "art_model"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
-    scores : "art_scores.json"
+    scores : "scores.json"
 defend:
   inputs:
-    folder : art.outputs.folder
-    data : art.outputs.file
+    folder : "."
+    data : prepare/data.pickle
     type : 'sklearn'
     classifier : True
     is_fitted : False
-    model: 
+    model: art_model/model.pickle
   config : 
-    name: sklearn.impute.SimpleImputer
+    name: art.defences.preprocessor.FeatureSqueezing
     params: 
-      'strategy' : 'mean'
+      'bit_depth' : 8
   outputs:
-    folder : "."
-    model : "defend_model.pickle"
-    params : "defend_params.json"
+    folder : "defend"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
     scores : "defend_scores.json"
 attack:
   inputs:
-    folder : preprocess.outputs.folder
-    data : preprocess.outputs.file
+    folder : "."
+    data : prepare/data.pickle
     type : 'sklearn'
     classifier : True
     is_fitted : True
-    model: 
+    model: defend/model.pickle
   config : 
-    name: sklearn.impute.SimpleImputer
+    name:  art.attacks.evasion.HopSkipJump
     params: 
-      'strategy' : 'mean'
+      max_iter : 100
   outputs:
-    folder : "."
-    model : "attack_model.pickle"
-    params : "attack_params.json"
+    folder : "attack"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
   metrics:
-    scores : "attack_scores.json"
+    scores : "scores.json"
 evaluate:
   inputs:
-    folder : preprocess.outputs.folder
-    data : preprocess.outputs.file
-    type : 'sklearn'
+    folder : train
+    ground_truth : "predictions.json"
+    predictions : 'ground_truth.json'
     classifier : True
-    is_fitted : True
-    model: 
+    recursive : True
   config : 
     name: sklearn.impute.SimpleImputer
     params: 
       'strategy' : 'mean'
   outputs:
-    folder : "."
+    folder : "evaluate"
     model : "model.pickle"
     params : "params.json"
   metrics:
     scores : "scores.json"
 visualise:
   inputs:
-    folder : preprocess.outputs.folder
-    data : preprocess.outputs.file
+    folder : "."
+    data : prepare/data.pickle
     type : 'sklearn'
+    art : False
     classifier : True
     is_fitted : True
-    model: 
+    model: defend/model.pickle
   config : 
     name: sklearn.impute.SimpleImputer
     params: 
       'strategy' : 'mean'
   outputs:
     folder : "."
-    model : "model.pickle"
-    params : "params.json"
-  metrics:
-    scores : "scores.json"
+  plots:
+    roc_auc: "ROC_AUC.pdf"

@@ -14,19 +14,20 @@ from deckard.layers.utils import make_output_folder, parse_config
 logger = logging.getLogger(__name__)
 
 def preprocess(args) -> Experiment:    
-    data = Data(args.data_file)
-    model_file = Path(args.input_folder, args.input_name)
+    data = Data(args.inputs['data'])
+    model_file = Path(args.inputs['folder'], args.inputs['model'])
     preprocessor = parse_config(args.config)
     assert model_file.exists(), "Problem finding model file: {}".format(model_file)
-    model = Model(model_file, art = False, model_type = args.model_type)
+    model = Model(model_file, art = False, model_type = args.inputs['type'])
+    model()
     exp = Experiment(data = data, model = model)
     assert isinstance(exp, Experiment), "Problem initializing experiment"
     new = deepcopy(exp)
     new.insert_sklearn_preprocessor(preprocessor = preprocessor, position = args.position, name = args.layer_name)
     assert isinstance(new, Experiment), "Problem inserting preprocessor"
     assert isinstance(new.model.model, Pipeline), "Problem inserting preprocessor. Model is not a Pipeline. It is a {}".format(type(new.model))
-    new(filename = args.output_name, path = output_folder)
-    assert Path(output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(output_folder, args.output_name))
+    new(filename = args.outputs['model'], path = output_folder)
+    assert Path(output_folder, args.outputs['model']).exists(), "Problem creating file: {}".format(Path(output_folder, args.outputs['model']))
     logger.debug("Preprocessing complete")
     return new
 
@@ -50,14 +51,14 @@ if __name__ == '__main__':
         if v is not None and not hasattr(args, k):
             setattr(args, k, v)
     # create output folder
-    assert isinstance(args.output_folder, (str, Path)), "Output folder must be a string or a Path object. It is a {}".format(type(args.output_folder))
-    output_folder = make_output_folder(args.output_folder)
+    assert isinstance(args.outputs['folder'], (str, Path)), "Output folder must be a string or a Path object. It is a {}".format(type(args.outputs['folder']))
+    output_folder = make_output_folder(args.outputs['folder'])
     assert isinstance(args.config, dict), "Config must be a dictionary. It is a {}".format(type(args.config))
-    
-    assert isinstance(args.input_name, (str, Path)), "Input name must be a string or a Path object. It is a {}".format(type(args.input_name))
-    assert isinstance(args.data_file, (str, Path)), "Data file must be a string or a Path object. It is a {}".format(type(args.data_file))
-    assert isinstance(args.output_name, (str, Path)), "Output name must be a string or a Path object. It is a {}".format(type(args.output_name))
+    assert isinstance(args.inputs['data'], (str, Path)), "Input name must be a string or a Path object. It is a {}".format(type(args.inputs['file']))
+    assert isinstance(args.inputs['model'], (str, Path)), "Input name must be a string or a Path object. It is a {}".format(type(args.inputs['file']))
+    assert isinstance(args.inputs['data'], (str, Path)), "Data file must be a string or a Path object. It is a {}".format(type(args.inputs['data']))
+    assert isinstance(args.outputs['model'], (str, Path)), "Output name must be a string or a Path object. It is a {}".format(type(args.outputs['model']))
     assert isinstance(args.position, int), "Position must be an integer. It is a {}".format(type(args.position))
-    assert isinstance(args.input_folder, (str, Path)), "Input folder must be a string or a Path object. It is a {}".format(type(args.input_folder))
+    assert isinstance(args.inputs['folder'], (str, Path)), "Input folder must be a string or a Path object. It is a {}".format(type(args.inputs['folder']))
     preprocess(args)
 

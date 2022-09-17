@@ -14,7 +14,7 @@ class testArtModel(unittest.TestCase):
     def test_cli(self):
         with open(os.path.join(self.here, 'dvc.yaml')) as f:
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
-        command = dictionary['stages']['control']['cmd']
+        command = dictionary['stages']['art_model']['cmd']
         subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     def tearDown(self) -> None:

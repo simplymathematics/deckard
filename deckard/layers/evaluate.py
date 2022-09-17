@@ -8,17 +8,22 @@ from pandas import DataFrame
 logger = logging.getLogger(__name__)
 
 def evaluate(args) -> DataFrame:    
-    ground_files = [path for path in Path(args.input_folder).rglob('*' + args.ground_truth_file)]
-    predictions_files = [path for path in Path(args.input_folder).rglob('*' + args.predictions_file)]
-    scorer = Scorer(is_regressor = args.is_regressor)
+    if args.inputs['recursive'] == True:
+        ground_files = [path for path in Path(args.inputs['folder']).rglob('*' + args.inputs['ground_truth'])]
+        predictions_files = [path for path in Path(args.inputs['folder']).rglob('*' + args.inputs['predictions'])]
+    else:
+        ground_files = [Path(args.inputs['folder']) / args.inputs['ground_truth']]
+        predictions_files = [Path(args.inputs['folder']) / args.inputs['predictions']]    
+    is_regressor = True if args.inputs['classifier'] is False else args.inputs['classifier']
+    scorer = Scorer(is_regressor= is_regressor)
     big_dict = {}
     for gr, pr in tqdm(zip(ground_files, predictions_files), total = len(ground_files)):
         scores = scorer(gr, pr)
         parent = gr.parent    
         big_dict[parent] = scores
     df = DataFrame.from_dict(big_dict, orient = 'index')
-    Path(args.output_folder).mkdir(parents = True, exist_ok = True)
-    df.to_csv(Path(args.output_folder, args.output_name))
+    Path(args.outputs['folder']).mkdir(parents = True, exist_ok = True)
+    df.to_csv(Path(args.outputs['folder'], args.metrics['scores']))
 
     return df    
         

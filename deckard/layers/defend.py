@@ -1,4 +1,5 @@
 import logging, os
+from typing import Type
 from deckard.base import Experiment, Model, Data, Scorer, generate_experiment_list
 from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
 from random import shuffle
@@ -7,15 +8,26 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 def defend(args) -> None:
-    data = Data(args.data_file, train_size = 100)
+    data = Data(args.inputs['data'], train_size = 100)
+    data()
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
-    defence = generate_object_from_tuple(generate_tuple_from_yml(args.config))
-    model_file = Path(args.input_folder, args.input_model)
-    art_model = Model(model_file, model_type =args.model_type, clip_values = clip_values, defence = defence)
-    experiment = Experiment(data = data, model = art_model, filename = args.input_model,  is_fitted=True)
-    experiment(path = args.output_folder, filename = args.output_name)
+    model_file = Path(args.inputs['folder'], args.inputs['model'])
+    art_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, art = True)
+    try:
+        defence = generate_object_from_tuple(generate_tuple_from_yml(args.config))
+    except TypeError as e:
+        try:
+            defence = generate_object_from_tuple(generate_tuple_from_yml(args.config), clip_values)
+        except:
+            try:
+                defence = generate_object_from_tuple(generate_tuple_from_yml(args.config), art_model.model)
+            except:
+                raise e
+    defended_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, defence = defence, art = True)
+    experiment = Experiment(data = data, model = defended_model,  is_fitted=True)
+    experiment(path = args.outputs['folder'], filename = args.outputs['model'])
     return None
 
 if __name__ == '__main__':
@@ -37,9 +49,9 @@ if __name__ == '__main__':
     for k, v in vars(cli_args).items():
         if v is not None and k in params:
             setattr(args, k, v)
-    if not os.path.exists(args.output_folder):
-        logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
-        os.mkdir(args.output_folder)
-    ART_DATA_PATH = args.output_folder
+    if not os.path.exists(args.outputs['folder']):
+        logger.warning("Model path {} does not exist. Creating it.".format(args.outputs['folder']))
+        os.mkdir(args.outputs['folder'])
+    ART_DATA_PATH = args.outputs['folder']
     defend(args)
     

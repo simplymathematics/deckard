@@ -58,6 +58,8 @@ class AttackExperiment(Experiment):
         if not os.path.isdir(path):
             os.mkdir(path)
         self.save_attack_params(path = path)
+        self.save_predictions(path = path)
+        self.save_ground_truth(path = path)
         self._build_attack(**kwargs)
         self.save_attack_results(path = path)
         return None
@@ -142,15 +144,13 @@ class AttackExperiment(Experiment):
         if hasattr(self, "adv_samples"):
             self.save_attack_samples(path = path)
         if hasattr(self, 'time_dict'):
-            self.save_time_dict(path = path, filename = 'attack_time_dict.json')
-        if 'Defence' in self.params:
-            self.save_defence_params(path = path)
+            self.save_time_dict(path = path, filename = 'time_dict.json')
         if hasattr(self.model.model, 'cv_results_'):
             self.save_cv_scores(path = path)
             self.save_attack_samples(path = path)
         return None
     
-    def save_attack_params(self, filename:str = "attack_params.json", path:str = ".") -> None:
+    def save_attack_params(self, filename:str = "params.json", path:str = ".") -> None:
         """
         Saves attack params to specified file.
         :param filename: str, name of file to save attack params to.
@@ -166,7 +166,7 @@ class AttackExperiment(Experiment):
         assert os.path.exists(attack_file), "Attack file not saved."
         return None
     
-    def save_attack_samples(self, filename:str = "attack_examples.json", path:str = "."):
+    def save_attack_samples(self, filename:str = "examples.json", path:str = "."):
         """
         Saves adversarial examples to specified file.
         :param filename: str, name of file to save adversarial examples to.
@@ -180,7 +180,7 @@ class AttackExperiment(Experiment):
         assert os.path.exists(adv_file), "Adversarial example file not saved"
         return None
 
-    def save_attack_predictions(self, filename:str = "attack_predictions.json", path:str = ".") -> None:
+    def save_attack_predictions(self, filename:str = "predictions.json", path:str = ".") -> None:
         """
         Saves adversarial predictions to specified file.
         :param filename: str, name of file to save adversarial predictions to.

@@ -87,7 +87,8 @@ class Experiment(BaseHashable, DiskStorageMixin):
             os.mkdir(path)
         self.fit_model()
         # TODO: Fix params
-        params_file = self.save_params(path = path, prefix = prefix)
+        # params_file = self.save_params(path = path, prefix = prefix)
+        params_file = None
         preds_file = self.save_predictions(path = path, prefix = prefix)
         truth_File = self.save_ground_truth(path = path, prefix = prefix)
         model_name = str(hash(self.model)) if filename is None else filename

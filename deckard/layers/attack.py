@@ -13,15 +13,20 @@ from deckard.base.parse import (generate_object_from_tuple,
 logger = logging.getLogger(__name__)
 
 def attack(args) -> None:
-    data = Data(args.data_file, train_size = 100)
+    data = Data(Path(args.inputs['folder'],args.inputs['data']))
+    data()
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
-    model_file = Path(args.input_folder, args.input_model)
-    art_model = Model(model_file, model_type =args.model_type, clip_values = clip_values, art = True)
-    attack = generate_object_from_tuple(generate_tuple_from_yml(args.config), art_model.model)
-    experiment = AttackExperiment(data = data, model = art_model, filename = args.input_model,  is_fitted=True, attack = attack)
-    experiment(path = args.output_folder, filename = args.output_name)
+    model_file = Path(args.inputs['folder'], args.inputs['model'])
+    art_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, art = True)
+    art_model()
+    try:
+        attack = generate_object_from_tuple(generate_tuple_from_yml(args.config))
+    except:
+        attack = generate_object_from_tuple(generate_tuple_from_yml(args.config), art_model.model)
+    experiment = AttackExperiment(data = data, model = art_model, filename = args.inputs['model'],  is_fitted=True, attack = attack)
+    experiment(path = args.outputs['folder'], filename = args.outputs['model'])
     return None
 
 if __name__ == '__main__':
@@ -42,10 +47,10 @@ if __name__ == '__main__':
     for k, v in vars(cli_args).items():
         if v is not None and k in params:
             setattr(args, k, v)
-    if not os.path.exists(args.output_folder):
-        logger.warning("Model path {} does not exist. Creating it.".format(args.output_folder))
-        os.mkdir(args.output_folder)
-    ART_DATA_PATH = args.output_folder
+    if not os.path.exists(args.outputs['folder']):
+        logger.warning("Model path {} does not exist. Creating it.".format(args.outputs['folder']))
+        os.mkdir(args.outputs['folder'])
+    ART_DATA_PATH = args.outputs['folder']
     attack(args)
         
         
