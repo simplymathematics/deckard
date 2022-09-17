@@ -15,8 +15,7 @@ python3 -m pip install -e deckard/
 python3 -m pip install pyinstaller
 python3 -m pip install -u numba pip setuptools
 cd deckard && pyinstaller --onefile deckard.py -n deckard
-export alias deckard="$HOME/deckard/dist/deckard"
-deckard examples/iris
+./dist/deckard examples/iris
 ```
 
 Check that deckard works
