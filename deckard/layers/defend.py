@@ -1,7 +1,6 @@
 import logging, os
 from deckard.base import Experiment, Model, Data, Scorer, generate_experiment_list
 from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
-from deckard.base.utils import find_successes, remove_successes_from_queue
 from random import shuffle
 import numpy as np
 from pathlib import Path

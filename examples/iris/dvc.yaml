@@ -13,184 +13,84 @@ stages:
     # plots:
     #   - prepare.plots
   train:
-    cmd: python -m deckard.layers.train  ${params.prepare.config}
-    params:
-      - params.train.config
-    outs: 
-      - params.train.outputs
+    cmd:  python -m deckard.layers.sklearn_model --layer_name train
     deps:
-      - params.prepare.output.file
-      - params.prepare.output.folder
+    - data.pkl
+    params:
+      - train.config
+    outs: 
+      - ${train.outputs.folder}/:
+          cache: true
+    deps:
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
     # metrics:
     #   - train.scores
     # plots:
     #   - train.plots
-  # preprocess:
-  #   cmd: python -m deckard.layers.preprocess 0
-  #   params:
-  #     - preprocess.config
-  #   outs: 
-  #     - preprocess.outputs
-  #   deps:
-  #     - preprocess.inputs
-  #   metrics:
-  #     - preprocess.scores
-  #   plots:
-  #     - preprocess.plots
-  # featurize:
-  #   cmd: python -m deckard.layers.preprocess -n featurize 1
-  #   params:
-  #     - featurize.config
-  #   outs: 
-  #     - featurize.outputs
-  #   deps:
-  #     - featurize.inputs
-  #   metrics:
-  #     - featurize.scores
-  #   plots:
-  #     - featurize.plots
-  # visualise:
-  #   cmd: python -m deckard.layers.visualise 
-  #   params:
-  #     - visualise.config
-  #   outs: 
-  #     - visualise.outputs
-  #   deps:
-  #     - visualise.inputs
-  #   metrics:
-  #     - visualise.scores
-  #   plots:
-  #     - visualise.plots
-  # control:
-  #   cmd: python -m deckard.layers.control 
-  #   params:
-  #     - control.config
-  #   outs: 
-  #     - control.outputs
-  #   deps:
-  #     - control.inputs
-  #   metrics:
-  #     - control.scores
-  #   plots:
-  #     - control.plots
-  # defend:
-  #   cmd: python -m deckard.layers.defend 
-  #   params:
-  #     - defend.config
-  #   outs: 
-  #     - defend.outputs
-  #   deps:
-  #     - defend.inputs
-  #   metrics:
-  #     - defend.scores
-  #   plots:
-  #     - defend.plots
-  # attack:
-  #   cmd: python -m deckard.layers.attack 
-  #   params:
-  #     - attack.config
-  #   outs: 
-  #     - attack.outputs
-  #   deps:
-  #     - attack.inputs
-  #   metrics:
-  #     - attack.scores
-  #   plots:
-  #     - attack.plots
-  # evaluate:
-  #   cmd: python -m deckard.layers.evaluate 
-  #   params:
-  #     - evaluate.config
-  #   outs: 
-  #     - evaluate.outputs
-  #   deps:
-  #     - evaluate.inputs
-  #   metrics:
-  #     - evaluate.scores
-  #   plots:
-  #     - evaluate.plots
-###########################################################################
-  # OLD CONFIG:
-  # train:
-  #   cmd: python -m deckard.layers.sklearn_model train.cli
-  #   deps:
-  #   - train.data_file
-  #   - train.input_name
-  #   params:
-  #   - train.config
-  #   outs:
-  #   - train.output_name
-  #   - train.model_params_file
-  #   # metrics:
-  #   # - train.scores_file
-  # preprocess:
-  #   cmd: python -m deckard.layers.preprocess  --layer_name preprocess.layer_name --position preprocess.position
-  #   deps:
-  #   - train/
-  #   params:
-  #     - preprocess
-  #   outs:
-  #   - preprocess/:
-  #       cache: true
-  # featurize:
-  #   cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
-  #   deps:
-  #   - preprocess/
-  #   params:
-  #     - featurize
-  #   outs:
-  #   - featurize/:
-  #       cache: true
-  # visualise:
-  #   cmd: python -m deckard.layers.visualise --layer_name visualise
-  #   deps: 
-  #     - train/
-  #   params:
-  #     - visualise
-  #   outs:
-  #     - plots/:
-  #         cache: true
-  # control:
-  #   cmd:  python -m deckard.layers.art_model --layer_name control
-  #   deps:
-  #   - data.pkl
-  #   params:
-  #   - control
-  #   outs:
-  #   - control/:
-  #       cache: true
-  # defend:
-  #   cmd:  python -m deckard.layers.defend --layer_name defend
-  #   deps:
-  #   - data.pkl
-  #   - control/
-  #   params:
-  #   - defend
-  #   outs:
-  #   - defences/:
-  #       cache: true
-  # attack:
-  #   cmd:  python -m deckard.layers.attack --layer_name attack
-  #   deps:
-  #   - data.pkl
-  #   - defences/
-  #   params:
-  #   - attack
-  #   outs:
-  #   - attacks/:
-  #       cache: true
-  # evaluate:
-  #   cmd: python -m deckard.layers.evaluate --layer_name evaluate
-  #   deps: 
-  #     - featurize/
-  #     - control/
-  #     - preprocess/
-  #     - train/
-  #     - attacks/
-  #     - defences/
-  #   params:
-  #     - evaluate
-  #   outs:
-  #     - scores/
-
-
+  preprocess:
+    cmd: python -m deckard.layers.preprocess --layer_name preprocess
+    params:
+      - preprocess
+    outs:
+    - ${preprocess.outputs.folder}:
+        cache: true
+  featurize:
+    cmd: python  -m deckard.layers.preprocess --layer_name featurize --position 1
+    deps:
+    - preprocess/
+    params:
+      - featurize
+    outs:
+    - ${featurize.outputs.folder}:
+        cache: true
+  visualise:
+    cmd: python  -m deckard.layers.visualise --layer_name visualise
+    deps: 
+      - train/
+    params:
+      - visualise
+    outs:
+      - plots/:
+          cache: true
+  control:
+    cmd:  python  -m deckard.layers.art_model --layer_name control
+    deps:
+    - data.pkl
+    params:
+    - control
+    outs:
+    - control/:
+        cache: true
+  defend:
+    cmd:  python  -m deckard.layers.defend --layer_name defend
+    deps:
+    - data.pkl
+    - control/
+    params:
+    - defend
+    outs:
+    - defences/:
+        cache: true
+  attack:
+    cmd:  python  -m deckard.layers.attack --layer_name attack
+    deps:
+    - data.pkl
+    - defences/
+    params:
+    - attack
+    outs:
+    - attacks/:
+        cache: true
+  evaluate:
+    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
+    deps: 
+      - featurize/
+      - control/
+      - preprocess/
+      - train/
+      - attacks/
+      - defences/
+    params:
+      - evaluate
+    outs:
+      - scores/

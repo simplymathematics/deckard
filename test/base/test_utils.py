@@ -4,7 +4,6 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=ResourceWarning)
 import unittest, logging, tempfile
 from deckard.base import Data, Experiment, Model
-from deckard.base.utils import SUPPORTED_MODELS, find_successes, remove_successes_from_queue
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -29,23 +28,24 @@ class testUtils(unittest.TestCase):
         self.experiment.save_data(filename = 'data.pkl', path = self.path)
         self.list = [(self.experiment.filename, self.experiment.params), (self.experiment2.filename, self.experiment2.params)]
     
-    def test_find_successes(self):
-        self.experiment = Experiment(self.data, self.model)
-        self.experiment(self.path)
-        self.experiment.save_params(path = self.path)
-        self.experiment.save_model(filename = 'model.pickle', path = self.path)
-        successes, failures = find_successes(self.path, 'model_params.json')
-        self.assertIsInstance(successes, list)
-        self.assertEqual(len(failures), 0)
+    # TODO: Test layer utils, move layer utils
+    # def test_find_successes(self):
+    #     self.experiment = Experiment(self.data, self.model)
+    #     self.experiment(self.path)
+    #     self.experiment.save_params(path = self.path)
+    #     self.experiment.save_model(filename = 'model.pickle', path = self.path)
+    #     successes, failures = find_successes(self.path, 'model_params.json')
+    #     self.assertIsInstance(successes, list)
+    #     self.assertEqual(len(failures), 0)
     
-    def test_remove_successes_from_queue(self):
-        self.experiment = Experiment(self.data, self.model)
-        self.experiment(self.path)
-        self.experiment.save_params(path = self.path)
-        self.experiment.save_model(filename = 'model.pickle', path = self.path)
-        successes, failures = find_successes(self.path, 'model_params.json')
-        remove_successes_from_queue(successes, self.list)
-        self.assertEqual(len(self.list), 2)
+    # def test_remove_successes_from_queue(self):
+    #     self.experiment = Experiment(self.data, self.model)
+    #     self.experiment(self.path)
+    #     self.experiment.save_params(path = self.path)
+    #     self.experiment.save_model(filename = 'model.pickle', path = self.path)
+    #     successes, failures = find_successes(self.path, 'model_params.json')
+    #     remove_successes_from_queue(successes, self.list)
+    #     self.assertEqual(len(self.list), 2)
 
     def tearDown(self) -> None:
         import shutil
