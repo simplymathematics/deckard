@@ -44,7 +44,7 @@ if __name__ == '__main__':
     assert not (hasattr(args, "input_model") and hasattr(args, 'url')), "Must have either a config, model file, or url, but only one."
     if hasattr(args, "config"):
         model = parse_config(args.config)
-    elif hasattr(args, "input_model"):
+    elif "model" in args.inputs:
         model = args.inputs['model']
     elif hasattr(args, 'url'):
         model = args.url
