@@ -53,7 +53,7 @@ class AttackExperiment(Experiment):
         self.params = dict()
         self.params["Model"] = dict(model.params)
         self.params["Data"] = dict(data)
-        self.params["Attack"] = {"name": str(type(attack)), "params": attack.__dict__}
+        self.params["Attack"] = {"name": str(type(attack)).split("'")[1].split(".")[-1], "params": vars(attack)}
         self.attack = attack
         self.attack = attack
         self.hash = hash(self)
