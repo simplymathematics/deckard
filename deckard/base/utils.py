@@ -33,7 +33,7 @@
 #                 if 'scores.json' or 'adversarial_scores.json' in files:
 #                     if dict_name is not None:
 #                         with open(os.path.join(input_folder, filename)) as f:
-#                             model_params = json.load(f)[dict_name]                       
+#                             model_params = json.load(f)[dict_name]
 #                     else:
 #                         with open(os.path.join(input_folder, filename)) as f:
 #                             model_params = json.load(f)
@@ -47,7 +47,7 @@
 #                         model_params = model_params
 #                     successes.append((model_name, model_params))
 #                 else:
-#                     failures.append((model_name, model_params))           
+#                     failures.append((model_name, model_params))
 #         return successes, failures
 
 # def remove_successes_from_queue(successes, todos):
@@ -58,12 +58,10 @@
 #             queue_name = queue_name.split(".")[-1]
 #             i += 1
 #             if model_name.split("'")[1].split(".")[-1] == queue_name and queue_params.items() <= model_params.items():
-#                 completed_tasks.append(i)    
+#                 completed_tasks.append(i)
 #     todos = [i for j, i in enumerate(todos) if j not in completed_tasks]
 #     return todos
-    
 
 
 # SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 # SUPPORTED_MODELS = (PyTorchClassifier, ScikitlearnEstimator, KerasClassifier, TensorFlowClassifier)
-

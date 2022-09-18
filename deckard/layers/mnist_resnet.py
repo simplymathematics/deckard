@@ -178,5 +178,3 @@
 
 #     # assert main() == 0
 #     assert main(level = level, filename = filename, data = data) == 0
-
-    

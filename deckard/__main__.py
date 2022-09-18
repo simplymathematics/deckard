@@ -1,8 +1,8 @@
-
 import argparse, logging, subprocess
+
 logger = logging.getLogger(__name__)
 
-if '__name__' == '__main__':
+if "__name__" == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_add_argument("layer", help="Layer to run.")
 

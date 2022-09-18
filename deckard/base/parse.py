@@ -11,11 +11,14 @@ from typing import Union
 # specify the logger
 logger = logging.getLogger(__name__)
 
-def generate_tuple_list_from_yml(filename:str) -> list:
+
+def generate_tuple_list_from_yml(filename: str) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
-    assert isinstance(filename, (str, Path, dict)), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
+    assert isinstance(
+        filename, (str, Path, dict)
+    ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     assert os.path.isfile(filename), f"{filename} does not exist"
     full_list = list()
     LOADER = yaml.FullLoader
@@ -23,7 +26,7 @@ def generate_tuple_list_from_yml(filename:str) -> list:
     if not os.path.isfile(str(filename)):
         raise ValueError(str(filename) + " file does not exist")
     # read the yml file
-    with open(filename, 'r') as stream:
+    with open(filename, "r") as stream:
         try:
             yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
@@ -32,15 +35,15 @@ def generate_tuple_list_from_yml(filename:str) -> list:
         if not isinstance(entry, dict):
             raise ValueError("Error parsing yml file {}".format(filename))
         special_keys = {}
-        for key, value in entry['params'].items():
+        for key, value in entry["params"].items():
             if isinstance(value, (tuple, float, int, str)):
                 special_values = value
                 special_key = key
                 special_keys[special_key] = special_values
         for key in special_keys.keys():
-            entry['params'].pop(key)
-        grid = ParameterGrid(entry['params'])
-        name = entry['name']
+            entry["params"].pop(key)
+        grid = ParameterGrid(entry["params"])
+        name = entry["name"]
         for combination in grid:
             if "special_keys" in locals():
                 for key, value in special_keys.items():
@@ -48,15 +51,16 @@ def generate_tuple_list_from_yml(filename:str) -> list:
             full_list.append((name, combination))
     return full_list
 
-def generate_object_list_from_tuple(yml_tuples:list, *args) -> list:
+
+def generate_object_list_from_tuple(yml_tuples: list, *args) -> list:
     """
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    obj_list = list()    
+    obj_list = list()
     for entry in yml_tuples:
-        library_name = ".".join(entry[0].split('.')[:-1] )
-        class_name = entry[0].split('.')[-1]
+        library_name = ".".join(entry[0].split(".")[:-1])
+        class_name = entry[0].split(".")[-1]
         global dependency
         dependency = None
         dependency = importlib.import_module(library_name)
@@ -80,16 +84,17 @@ def generate_object_list_from_tuple(yml_tuples:list, *args) -> list:
     return obj_list
 
 
-
-def generate_tuple_from_yml(filename:Union[str, dict]) -> list:
+def generate_tuple_from_yml(filename: Union[str, dict]) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
-    assert isinstance(filename, (str, Path, dict)), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
+    assert isinstance(
+        filename, (str, Path, dict)
+    ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     if isinstance(filename, str):
         LOADER = yaml.FullLoader
         assert os.path.isfile(filename), f"{filename} does not exist"
-        with open(filename, 'r') as stream:
+        with open(filename, "r") as stream:
             try:
                 entry = yaml.load(stream, Loader=LOADER)
             except yaml.YAMLError as exc:
@@ -97,15 +102,16 @@ def generate_tuple_from_yml(filename:Union[str, dict]) -> list:
     if not os.path.isfile(str(filename)):
         assert isinstance(filename, dict), "filename must be a dict or a yml file"
         entry = filename
-    return (entry['name'], entry['params'])
+    return (entry["name"], entry["params"])
 
-def generate_object_from_tuple(obj_tuple:list, *args) -> list:
+
+def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     """
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    library_name = ".".join(obj_tuple[0].split('.')[:-1] )
-    class_name = obj_tuple[0].split('.')[-1]
+    library_name = ".".join(obj_tuple[0].split(".")[:-1])
+    class_name = obj_tuple[0].split(".")[-1]
     global dependency
     dependency = None
     dependency = importlib.import_module(library_name)
@@ -128,17 +134,23 @@ def generate_object_from_tuple(obj_tuple:list, *args) -> list:
     return object_instance
 
 
-
-
-
-def generate_experiment_list(model_list:Union[Model, list], data_list:Union[Data,list],  model_type = 'sklearn', **kwargs) -> list:
+def generate_experiment_list(
+    model_list: Union[Model, list],
+    data_list: Union[Data, list],
+    model_type="sklearn",
+    **kwargs,
+) -> list:
     """
     Generates experiment list from model list.
     :param model_list: list of models
     :param data_list: data object
     """
-    assert isinstance(model_list, (Model, list)), "model_list must be a Model or a list of Models"
-    assert isinstance(data_list, (Data, list)), "data must be a Data object or a list of Data objects"
+    assert isinstance(
+        model_list, (Model, list)
+    ), "model_list must be a Model or a list of Models"
+    assert isinstance(
+        data_list, (Data, list)
+    ), "data must be a Data object or a list of Data objects"
     if isinstance(model_list, Model):
         model_list = [model_list]
     if isinstance(data_list, Data):
@@ -147,12 +159,13 @@ def generate_experiment_list(model_list:Union[Model, list], data_list:Union[Data
     for data in data_list:
         for model in model_list:
             if not isinstance(model, Model):
-                model = Model(model, model_type = model_type, **kwargs)
-            experiment = Experiment(data =data, model = model)
+                model = Model(model, model_type=model_type, **kwargs)
+            experiment = Experiment(data=data, model=model)
             experiment_list.append(experiment)
-    return experiment_list    
+    return experiment_list
 
-def parse_data_from_yml(filename:str) -> dict:
+
+def parse_data_from_yml(filename: str) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
     # check if the file exists
@@ -160,7 +173,7 @@ def parse_data_from_yml(filename:str) -> dict:
     if not os.path.isfile(str(filename)):
         raise ValueError(str(filename) + " file does not exist")
     # read the yml file
-    with open(filename, 'r') as stream:
+    with open(filename, "r") as stream:
         try:
             data_file = yaml.load(stream, Loader=LOADER)[0]
             logger.info(data_file)
@@ -169,9 +182,11 @@ def parse_data_from_yml(filename:str) -> dict:
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
     if not isinstance(data_file, dict):
-        raise ValueError("Error parsing yml file {}. It must be a yaml dictionary.".format(filename))
-    params = data_file['params']
-    data_name = data_file['name']
+        raise ValueError(
+            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename)
+        )
+    params = data_file["params"]
+    data_name = data_file["name"]
     logger.info(f"Parsing data from {filename}")
     logger.info(f"Data name: {data_name}")
     logger.info(f"Data params: {params}")
@@ -182,7 +197,8 @@ def parse_data_from_yml(filename:str) -> dict:
     logger.info("{} successfully parsed.".format(filename))
     return data
 
-def parse_scorer_from_yml(filename:str) -> dict:
+
+def parse_scorer_from_yml(filename: str) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
     # check if the file exists
@@ -190,7 +206,7 @@ def parse_scorer_from_yml(filename:str) -> dict:
     if not os.path.isfile(str(filename)):
         raise ValueError(str(filename) + " file does not exist")
     # read the yml file
-    with open(filename, 'r') as stream:
+    with open(filename, "r") as stream:
         try:
             scorer_file = yaml.load(stream, Loader=LOADER)[0]
             logger.info(scorer_file)
@@ -199,13 +215,19 @@ def parse_scorer_from_yml(filename:str) -> dict:
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
     if not isinstance(scorer_file, dict):
-        raise ValueError("Error parsing yml file {}. It must be a yaml dictionary.".format(filename))
-    if 'scorer_function' in scorer_file:
-        params['scorer_function'] = scorer_file['scorer_function']
-    elif 'name' in scorer_file:
-        params['name'] = scorer_file['name']
+        raise ValueError(
+            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename)
+        )
+    if "scorer_function" in scorer_file:
+        params["scorer_function"] = scorer_file["scorer_function"]
+    elif "name" in scorer_file:
+        params["name"] = scorer_file["name"]
     else:
-        raise ValueError("Error parsing yml file {}. It must contain a scorer_function or a name.".format(filename))
+        raise ValueError(
+            "Error parsing yml file {}. It must contain a scorer_function or a name.".format(
+                filename
+            )
+        )
     logger.info(f"Parsing data from {filename}")
     for param, value in params.items():
         logger.info(param + ": " + str(value))

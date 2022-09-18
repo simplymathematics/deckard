@@ -1,6 +1,7 @@
 from deckard import base, layers
 import tempfile, logging, os, warnings
 from sklearn.exceptions import UndefinedMetricWarning
+
 # Semantic Version
 __version__ = "0.30"
 
@@ -18,9 +19,8 @@ LOGGING = {
     "handlers": {
         "default": {
             "class": "logging.FileHandler",
-            "filename":os.path.join(tempfile.gettempdir(), "deckard.log"),
+            "filename": os.path.join(tempfile.gettempdir(), "deckard.log"),
             "mode": "a",
-            
         },
         "test": {
             "class": "logging.StreamHandler",

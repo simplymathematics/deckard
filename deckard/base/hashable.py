@@ -1,6 +1,7 @@
-
 from hashlib import md5 as my_hash
 from numpy import ndarray
+
+
 class BaseHashable(object):
     def __eq__(self, other) -> bool:
         """
@@ -13,28 +14,28 @@ class BaseHashable(object):
         Returns the human-readable string representation of the dataset
         """
         return str(self.params)
-    
+
     def __str__(self) -> str:
         """
         Returns the reproducible representation of the data object.
         """
         dict_ = {**self.params}
         return f"deckard.base.hashable({dict_})"
-    
+
     def __iter__(self):
         """
         Iterates through the data object.
         """
         for key, value in self.params.items():
-            
+
             yield key, value
-    
+
     def __hash__(self) -> str:
         """
         Hashes the params as specified in the __init__ method.
         """
-        return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
-    
+        return int(my_hash(str(self.__repr__()).encode("utf-8")).hexdigest(), 32)
+
     def get_params(self, **kwargs):
         """
         Returns the parameters of the data object.
@@ -50,9 +51,9 @@ class BaseHashable(object):
                 result = vars(value)
             elif isinstance(value, dict):
                 result = value
-            elif hasattr(value, 'params'):
+            elif hasattr(value, "params"):
                 result = vars(value.params)
-            elif hasattr(value, '__dict__'):
+            elif hasattr(value, "__dict__"):
                 result = vars(value)
             elif isinstance(value, type(None)):
                 result = None
