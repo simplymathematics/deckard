@@ -352,7 +352,7 @@ class Model(BaseHashable):
                 pickle.dump(self.model, f)
         return os.path.join(path, filename)
 
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray = None) -> None:
+    def fit(self, X_train: np.ndarray, y_train: np.ndarray = None, **kwargs) -> None:
         """
         Fits model.
         """
@@ -366,7 +366,7 @@ class Model(BaseHashable):
             except ValueError as e:
                 if "y should be a 1d array" in str(e):
                     y_train = np.argmax(y_train, axis=1)
-                    self.model.fit(X_train, y_train)
+                    self.model.fit(X_train, y_train, **kwargs)
                 else:
                     raise e
             end = process_time()

@@ -1,40 +1,40 @@
 stages:
   prepare:
-    cmd: python -m deckard.layers.prepare.py
+    cmd: python -m deckard.layers.prepare
     params:
       - prepare
     outs: 
-      - data.pkl
+      - prepare/data.pickle
   control:
-    cmd:  python -m deckard.layers.art_model  control
+    cmd:  python -m deckard.layers.art_model  --layer_name art_model
     deps:
-    - data.pkl
+    - prepare/data.pickle
     params:
-    - control
+    - art_model
     outs:
-    - control/:
+    - art_model/:
         cache: true
   defend:
-    cmd:  python -m deckard.layers.defend  defend
+    cmd:  python -m deckard.layers.defend --layer_name defend
     deps:
-    - data.pkl
-    - control/control_model.pb
+    - prepare/data.pickle
+    - art_model/model
     - configs/defence_config.yaml
     params:
     - defend
     outs:
-    - defences/:
+    - defend/:
         cache: true
   attack:
-    cmd:  python -m deckard.layers.attack  attack
+    cmd:  python -m deckard.layers.attack --layer_name attack
     deps:
-    - data.pkl
-    - defences/defended_model
+    - prepare/data.pickle
+    - defend/model
     - configs/attack_config.yaml
     params:
     - attack
     outs:
-    - attacks/:
+    - attack/:
         cache: true
 
 

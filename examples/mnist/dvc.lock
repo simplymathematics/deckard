@@ -1,22 +1,34 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python ../../deckard/layers/prepare.py
+    cmd: python -m deckard.layers.prepare
     params:
       params.yaml:
         prepare:
-          name: mnist
-          params:
-            shuffle: true
-            stratify: true
-            random_state: 0
-            train_size: 0.01
-          data_file: data.pkl
-          output_folder: .
+          config:
+            name: mnist
+            params:
+              shuffle: true
+              stratify: true
+              random_state: 0
+              test_size: 2100
+              train_size: 0.001
+          outputs:
+            folder: prepare
+            file: data.pickle
+            predictions:
+            ground_truth:
+          scores:
+            file:
+            folder:
+            time_dict:
+          plots:
+            file:
+            folder:
     outs:
-    - path: data.pkl
-      md5: cdb226f18d6bd132ec336841d2747a62
-      size: 5050192
+    - path: prepare/data.pickle
+      md5: 0e7d043d25ff91336c6a970c684760ae
+      size: 13697693
   train:
     cmd: python ../../deckard/layers/art_model.py --model_path "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
       --model_name "model.h5" --model_type "tf1" --dataset "data/data.pkl" --output_folder
@@ -110,77 +122,115 @@ stages:
       md5: cdb226f18d6bd132ec336841d2747a62
       size: 5050192
   control:
-    cmd: python ../../deckard/layers/art_model.py  control
+    cmd: python -m deckard.layers.art_model  --layer_name art_model
     deps:
-    - path: data.pkl
-      md5: cdb226f18d6bd132ec336841d2747a62
-      size: 5050192
+    - path: prepare/data.pickle
+      md5: 0e7d043d25ff91336c6a970c684760ae
+      size: 13697693
     params:
       params.yaml:
-        control:
-          input_model: https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1
-          model_type: tf1
-          data_file: data.pkl
-          output_folder: control
-          output_name: control_model.pb
+        art_model:
+          inputs:
+            folder: .
+            data: prepare/data.pickle
+            type: tf1
+            classifier: true
+            is_fitted: true
+            url: https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1
+          outputs:
+            folder: art_model
+            model: model
+            params: params.json
+            ground_truth: ground_truth.json
+            predictions: predictions.json
+          metrics:
+            scores: scores.json
     outs:
-    - path: control/
-      md5: 7c565d0f443e73f43d2df58d014c16f4.dir
-      size: 32984302
-      nfiles: 7
+    - path: art_model/
+      md5: a3079b03166a29dd6ec293f04caa586b.dir
+      size: 35807316
+      nfiles: 10
   defend:
-    cmd: python ../../deckard/layers/defend.py  defend
+    cmd: python -m deckard.layers.defend --layer_name defend
     deps:
+    - path: art_model/model
+      md5: 2627843de50ab739e6afb8a92f6271fc.dir
+      size: 35386082
+      nfiles: 4
     - path: configs/defence_config.yaml
       md5: eec1f9116a02f622a0c15db66045a6c3
       size: 101
-    - path: control/control_model.pb
-      md5: e377e25822be887b27e61df78eee8ce5
-      size: 32962000
-    - path: data.pkl
-      md5: cdb226f18d6bd132ec336841d2747a62
-      size: 5050192
+    - path: prepare/data.pickle
+      md5: 0e7d043d25ff91336c6a970c684760ae
+      size: 13697693
     params:
       params.yaml:
         defend:
-          defence_config: configs/defence_config.yaml
-          input_model: control_model.pb
-          input_folder: control/
-          model_type: tf1
-          data_file: data.pkl
-          output_folder: defences/
-          output_name: defended_model
+          inputs:
+            folder: .
+            data: prepare/data.pickle
+            type: tf1
+            classifier: true
+            is_fitted: false
+            model: art_model/model
+          config:
+            name: art.defences.preprocessor.FeatureSqueezing
+            params:
+              bit_depth: 8
+          outputs:
+            folder: defend
+            model: model
+            params: params.json
+            ground_truth: ground_truth.json
+            predictions: predictions.json
+          metrics:
+            scores: defend_scores.json
     outs:
-    - path: defences/
-      md5: 772ab33b93fedb74aa9587bbaa682d1c.dir
-      size: 35550145
+    - path: defend/
+      md5: 2698e8c5b8e6fc5625d2af0266e46dfb.dir
+      size: 19118276
       nfiles: 10
   attack:
-    cmd: python ../../deckard/layers/attack.py  attack
+    cmd: python -m deckard.layers.attack --layer_name attack
     deps:
     - path: configs/attack_config.yaml
       md5: abf1157d152bec8de7a7c394c47ec11e
       size: 92
-    - path: data.pkl
-      md5: cdb226f18d6bd132ec336841d2747a62
-      size: 5050192
-    - path: defences/defended_model
-      md5: ddcf4227ef9ef84668a2e8ab6c43e0ad.dir
-      size: 35522209
+    - path: defend/model
+      md5: a88c3c4d825edfcbb8518c54a4dc9215.dir
+      size: 18696933
       nfiles: 4
+    - path: prepare/data.pickle
+      md5: 0e7d043d25ff91336c6a970c684760ae
+      size: 13697693
     params:
       params.yaml:
         attack:
-          attack_config: configs/attack_config.yaml
-          input_model: defended_model
-          input_folder: defences/
-          model_type: tf1
-          data_file: data.pkl
-          output_folder: attacks/
-          output_name: attacked_model
-          attack_size: 100
+          inputs:
+            folder: .
+            data: prepare/data.pickle
+            type: tf1
+            classifier: true
+            is_fitted: true
+            attack_size: 10
+            model: defend/model
+          config:
+            name: art.attacks.evasion.HopSkipJump
+            params:
+              max_iter: 5
+              max_eval: 100
+              init_eval: 100
+              init_size: 100
+          outputs:
+            folder: attack
+            model: model
+            params: params.json
+            ground_truth: ground_truth.json
+            predictions: predictions.json
+          metrics:
+            scores: scores.json
     outs:
-    - path: attacks/
-      md5: 1aca1d20316b87a3a7d29b402771c178.dir
-      size: 1379227
-      nfiles: 7
+    - path: attack/
+      md5: 889ed876766ae81cdbb10b905ab3c442.dir
+      size: 129343
+      nfiles: 8

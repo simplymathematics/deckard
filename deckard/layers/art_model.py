@@ -16,7 +16,7 @@ def art_model(args) -> Experiment:
         args.inputs["data"], args.inputs["folder"]
     )
     assert (
-        hasattr(args, "config") or "model" in args.inputs or "url" in args
+        hasattr(args, "config") or "model" in args.inputs or "url" in args.inputs
     ), "Must have either a config file or a model"
     assert not (
         hasattr(args, "config") and "model" in args.inputs
@@ -29,8 +29,8 @@ def art_model(args) -> Experiment:
     ), "Must have either a config, model file, or url, but only one."
     if "model" in args.inputs:
         model = args.inputs["model"]
-    elif hasattr(args, "url"):
-        model = args.url
+    elif "url" in args.inputs:
+        model = args.inputs["url"]
     elif hasattr(args, "config"):
         model = parse_config(args.config)
     assert isinstance(
@@ -47,9 +47,24 @@ def art_model(args) -> Experiment:
         args.inputs["data"], (str, Path)
     ), "Data file must be a string. It is type: {}".format(type(args.inputs["data"]))
     data = Data(Path(args.inputs["folder"], args.inputs["data"]))
-    model = Model(model, art=True)
+    if "url" in args.inputs:
+        model = Model(
+            args.outputs["model"],
+            art=True,
+            url=args.inputs["url"],
+            model_type=args.inputs["type"],
+            classifier=args.inputs["classifier"],
+        )
+    else:
+        model = Model(
+            art=True,
+            model=model,
+            model_type=args.inputs["type"],
+            classifier=args.inputs["classifier"],
+        )
     exp = Experiment(data=data, model=model)
-    exp(filename=args.outputs["model"], path=args.outputs["folder"])
+    
+    exp(filename=args.outputs["model"], path=args.outputs["folder"], nb_epochs=10, batch_size = 100)
     assert Path(
         args.outputs["folder"], args.outputs["model"]
     ).exists(), "Problem creating file: {}".format(

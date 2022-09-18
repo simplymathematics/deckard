@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 def attack(args) -> None:
     data = Data(Path(args.inputs["folder"], args.inputs["data"]))
     data()
+    if 'attack_size' in args.inputs:
+        data.X_test = data.X_test[:args.inputs['attack_size']]
+        data.y_test = data.y_test[:args.inputs['attack_size']]
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
