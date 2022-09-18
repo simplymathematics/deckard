@@ -23,7 +23,7 @@ def preprocess(args) -> Experiment:
     exp = Experiment(data=data, model=model)
     assert isinstance(exp, Experiment), "Problem initializing experiment"
     new = deepcopy(exp)
-    new.insert_sklearn_preprocessor(
+    new.model.insert_sklearn_preprocessor(
         preprocessor=preprocessor, position=args.position, name=args.layer_name
     )
     assert isinstance(new, Experiment), "Problem inserting preprocessor"
