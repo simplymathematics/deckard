@@ -32,6 +32,9 @@ supported_estimators = [
     TensorFlowV2Classifier,
 ]
 
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from deckard.base.hashable import BaseHashable
 
 
@@ -67,7 +70,7 @@ class Model(BaseHashable):
         if defence is not None:
             self.params["defence"] = {}
             self.params["defence"]["name"] = (
-                str(type(self.defence)).split(".")[-1].split("'")[0]
+                str(type(self.defence)).split("'")[0].split(".")[-1]
             )
             self.params["defence"]["params"] = dict(vars(self.defence))
             # print(self.params)
@@ -287,6 +290,43 @@ class Model(BaseHashable):
                 **kwargs
             )
         return model
+    
+    def insert_sklearn_preprocessor(
+        self, name: str, preprocessor: object, position: int
+    ):
+        """
+        Add a sklearn preprocessor to the experiment.
+        :param name: name of the preprocessor
+        :param preprocessor: preprocessor to add
+        :param position: position to add preprocessor
+
+        """
+        # If it's already a pipeline
+        if isinstance(self.model, Pipeline):
+            pipe = self.model
+        elif hasattr(self.model, "model") and isinstance(
+            self.model.model, Pipeline
+        ):
+            pipe = self.model.model
+        elif "art.estimators" in str(type(self.model)) and not isinstance(
+            self.model.model, Pipeline
+        ):
+            logger.warning("Model is already an ART classifier. If Defence is not None, it will be ignored. ART defences are meant to be applied to the final sklearn model.")
+            pipe = Pipeline([("model", self.model.model)])
+        elif isinstance(self.model, BaseEstimator) and not isinstance(
+            self.model, Pipeline
+        ):
+            pipe = Pipeline([("model", self.model)])
+        else:
+            raise ValueError(
+                "Cannot make model type {} into a pipeline".format(
+                    type(self.model)
+                )
+            )
+        new_model = deepcopy(pipe)
+        assert isinstance(new_model, Pipeline)
+        new_model.steps.insert(position, (name, preprocessor))
+        self.model = new_model
 
     def initialize_art_regressor(self, **kwargs) -> None:
         preprocessors = []
