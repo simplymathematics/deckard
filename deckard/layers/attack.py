@@ -19,7 +19,7 @@ def attack(args) -> None:
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
     model_file = Path(args.inputs['folder'], args.inputs['model'])
-    art_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, art = True)
+    art_model = Model(model_file, model_type =args.inputs['type'], art = True)
     art_model()
     try:
         attack = generate_object_from_tuple(generate_tuple_from_yml(args.config))

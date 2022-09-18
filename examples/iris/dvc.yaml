@@ -100,7 +100,7 @@ stages:
         - ${attack.outputs.folder}/${attack.outputs.ground_truth}
         - ${attack.outputs.folder}/${attack.outputs.predictions}
       deps:
-        - ${train.outputs.folder}/${train.outputs.model}
+        - ${defend.outputs.folder}/${defend.outputs.model}
         - ${prepare.outputs.folder}/${prepare.outputs.file}
       # metrics:
       #   - preprocess.scores

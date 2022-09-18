@@ -1,6 +1,6 @@
 
 from hashlib import md5 as my_hash
-
+from numpy import ndarray
 class BaseHashable(object):
     def __eq__(self, other) -> bool:
         """
@@ -35,34 +35,30 @@ class BaseHashable(object):
         """
         return int(my_hash(str(self.__repr__()).encode('utf-8')).hexdigest(), 32)
     
-    def get_params(self):
+    def get_params(self, **kwargs):
         """
         Returns the parameters of the data object.
         """
         results = {}
+        results.update(**kwargs)
         for key, value in self.params.items():
-            if isinstance(value, (int, float, str, list, dict, tuple)):
+            if hasattr(value, "get_params") and not isinstance(value, BaseHashable):
+                result = value.get_params()
+            if isinstance(value, (int, float, str, list, tuple)):
                 result = value
             elif isinstance(value, BaseHashable):
                 result = vars(value)
+            elif isinstance(value, dict):
+                result = value
             elif hasattr(value, 'params'):
                 result = vars(value.params)
-            elif hasattr(value, '__iter__'):
-                result = [vars(item) for item in value]
             elif hasattr(value, '__dict__'):
                 result = vars(value)
+            elif isinstance(value, type(None)):
+                result = None
+            elif isinstance(value, ndarray):
+                value = value.tolist()
             else:
                 result = hash(value)
             results[key] = result
             return results
-
-    def set_params(self, params:dict = None):
-        """
-        :param params: A dictionary of parameters to set.
-        Sets the parameters of the data object.
-        """
-        self.__init__(**params)
-        try:
-            self.__call__()
-        except Exception as e:
-            raise e

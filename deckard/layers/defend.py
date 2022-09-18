@@ -14,7 +14,13 @@ def defend(args) -> None:
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
     model_file = Path(args.inputs['folder'], args.inputs['model'])
-    art_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, art = True)
+    try:
+        art_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, art = True)
+    except TypeError as e:
+        if 'unexpected keyword argument' in str(e):
+            art_model = Model(model_file, model_type =args.inputs['type'], art = True)
+        else:
+            raise e
     try:
         defence = generate_object_from_tuple(generate_tuple_from_yml(args.config))
     except TypeError as e:
@@ -25,7 +31,13 @@ def defend(args) -> None:
                 defence = generate_object_from_tuple(generate_tuple_from_yml(args.config), art_model.model)
             except:
                 raise e
-    defended_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, defence = defence, art = True)
+    try:
+        defended_model = Model(model_file, model_type =args.inputs['type'], clip_values = clip_values, defence = defence, art = True)
+    except TypeError as e:
+        if 'unexpected keyword argument' in str(e):
+            defended_model = Model(model_file, model_type =args.inputs['type'], art = True, defence = defence)
+        else:
+            raise e
     experiment = Experiment(data = data, model = defended_model,  is_fitted=True)
     experiment(path = args.outputs['folder'], filename = args.outputs['model'])
     return None

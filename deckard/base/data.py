@@ -79,7 +79,17 @@ class Data(BaseHashable):
         assert hasattr(self, 'y_test'), "y_test is not defined. Something went wrong."
         assert hasattr(self, "clip_values"), "clip_values is not defined. Something went wrong."
         
-
+    def set_params(self, **kwargs):
+        """
+        :param params: A dictionary of parameters to set.
+        Sets the parameters of the data object.
+        """
+        self.__init__(**kwargs)
+        try:
+            self.__call__()
+        except Exception as e:
+            raise 
+    
     def _sample_data(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, y_test:np.ndarray) -> None:
         """
         :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, diabetes, and an arbitrary csv. 

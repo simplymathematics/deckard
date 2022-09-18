@@ -14,13 +14,13 @@ stages:
             train_size: 0.8
     outs:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
   train:
     cmd: python -m deckard.layers.sklearn_model --layer_name train
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     params:
       params.yaml:
@@ -30,22 +30,22 @@ stages:
             penalty: l2
     outs:
     - path: train/ground_truth.json
-      md5: ebd226610027480795b3ad51a79f3e20
-      size: 799
+      md5: 4e3ac1e5974ad292654fbf0aaae3d779
+      size: 781
     - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
+      md5: 0c8c061a384a7066654e2f77a536107b
       size: 828
     - path: train/predictions.json
-      md5: 251ee21d2e517e89dba1bbad9a1b2671
-      size: 207
+      md5: 05eff67a9e140dc8b71930f5ae7f2dfc
+      size: 241
   preprocess:
     cmd: python -m deckard.layers.preprocess --layer_name preprocess --position 0
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
+      md5: 0c8c061a384a7066654e2f77a536107b
       size: 828
     params:
       params.yaml:
@@ -56,22 +56,22 @@ stages:
             with_std: true
     outs:
     - path: preprocess/ground_truth.json
-      md5: ebd226610027480795b3ad51a79f3e20
-      size: 799
+      md5: 4e3ac1e5974ad292654fbf0aaae3d779
+      size: 781
     - path: preprocess/model.pickle
-      md5: 160193048504736e617cfa4ad798f713
+      md5: 63944c1a7a16b20d3071df0c87610454
       size: 1301
     - path: preprocess/predictions.json
-      md5: a97ee7826452f0bcf4013f7943a7bd2f
-      size: 207
+      md5: 5415951dfc438a504731a043f666c697
+      size: 241
   featurize:
     cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     - path: preprocess/model.pickle
-      md5: 160193048504736e617cfa4ad798f713
+      md5: 63944c1a7a16b20d3071df0c87610454
       size: 1301
     params:
       params.yaml:
@@ -81,22 +81,22 @@ stages:
             strategy: mean
     outs:
     - path: featurize/ground_truth.json
-      md5: ebd226610027480795b3ad51a79f3e20
-      size: 799
+      md5: 4e3ac1e5974ad292654fbf0aaae3d779
+      size: 781
     - path: featurize/model.pickle
-      md5: eef07d00031972bc232cbd36732bb002
+      md5: ea839209b05ab4e066fb3b5e202d7a2b
       size: 1572
     - path: featurize/predictions.json
-      md5: a97ee7826452f0bcf4013f7943a7bd2f
-      size: 207
+      md5: 5415951dfc438a504731a043f666c697
+      size: 241
   art_model:
     cmd: python -m deckard.layers.art_model --layer_name art_model
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
+      md5: 0c8c061a384a7066654e2f77a536107b
       size: 828
     params:
       params.yaml:
@@ -106,22 +106,22 @@ stages:
             penalty: l2
     outs:
     - path: art_model/ground_truth.json
-      md5: ebd226610027480795b3ad51a79f3e20
-      size: 799
+      md5: 4e3ac1e5974ad292654fbf0aaae3d779
+      size: 781
     - path: art_model/model.pickle
-      md5: 8b809213c25184de9cc70d84ae81b824
+      md5: ea839209b05ab4e066fb3b5e202d7a2b
       size: 1572
     - path: art_model/predictions.json
-      md5: e0daf5177600f9176c4698a99e290888
-      size: 1602
+      md5: 3e744e084c19133365f73f7236ef3bcc
+      size: 1582
   defend:
     cmd: python -m deckard.layers.defend --layer_name defend
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
+      md5: 0c8c061a384a7066654e2f77a536107b
       size: 828
     params:
       params.yaml:
@@ -131,23 +131,23 @@ stages:
             bit_depth: 8
     outs:
     - path: defend/ground_truth.json
-      md5: ebd226610027480795b3ad51a79f3e20
-      size: 799
+      md5: 4e3ac1e5974ad292654fbf0aaae3d779
+      size: 781
     - path: defend/model.pickle
-      md5: 3954e3bf70d5f1f1ca7676189f66e029
+      md5: 8a66b6cc9622f2d4f14ef50d65d015f3
       size: 1606
     - path: defend/predictions.json
-      md5: 71089d45a7b13979ad39d6e467ffb499
-      size: 1604
+      md5: 4bb3f309c2f613de1ef623e5609cad08
+      size: 1584
   attack:
     cmd: python -m deckard.layers.attack --layer_name attack
     deps:
+    - path: defend/model.pickle
+      md5: 8a66b6cc9622f2d4f14ef50d65d015f3
+      size: 1606
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
-    - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
-      size: 828
     params:
       params.yaml:
         attack.config:
@@ -156,19 +156,19 @@ stages:
             max_iter: 100
     outs:
     - path: attack/ground_truth.json
-      md5: 99914b932bd37a50b983c5e7c90ae93b
+      md5: d751713988987e9331980363e24189ce
       size: 2
     - path: attack/predictions.json
-      md5: 5e710aee700170563478f8f2e29f2374
-      size: 1599
+      md5: 53dd79bb508ff453a09b8a3cd42b8953
+      size: 1597
   visualise:
     cmd: python -m deckard.layers.visualise --layer_name visualise
     deps:
     - path: prepare/data.pickle
-      md5: 3c6457147be8914a82e926674e0e5e0d
+      md5: 1808c6de4de0009658733446f5ae9f31
       size: 4767
     - path: train/model.pickle
-      md5: c353c8f363a8e7de95ead460080ff22b
+      md5: 0c8c061a384a7066654e2f77a536107b
       size: 828
     params:
       params.yaml:
@@ -178,39 +178,39 @@ stages:
             strategy: mean
     outs:
     - path: ./ROC_AUC.pdf
-      md5: 6923565c7b36885ac0e76618dab1b67e
-      size: 15186
+      md5: 1d8bbf4e9fbec04d1c7c4b1ccc95ee21
+      size: 15163
   evaluate:
     cmd: python -m deckard.layers.evaluate --layer_name evaluate
     deps:
     - path: art_model
-      md5: f34dc01c4ed50bb8d4d6e159d0e7d317.dir
-      size: 3973
-      nfiles: 3
+      md5: 420aa04e7ad94124141f8a65216211f0.dir
+      size: 4461
+      nfiles: 7
     - path: attack
-      md5: 56ecfb87131c001d3ab55afc57cc6c01.dir
-      size: 4184
-      nfiles: 5
+      md5: 634d875e4d733ca2ad038c37558591b0.dir
+      size: 5669
+      nfiles: 10
     - path: defend
-      md5: 0a560549f7877f6b4ab67860a2a07b95.dir
-      size: 4009
-      nfiles: 3
+      md5: a508a7edbe8b246fd4ba6e9a4660f437.dir
+      size: 4673
+      nfiles: 7
     - path: featurize
-      md5: 95f9e444be8bc99f26540613e96837c0.dir
-      size: 2578
-      nfiles: 3
+      md5: 3381909d464637f003d180e459f6649f.dir
+      size: 3168
+      nfiles: 7
     - path: prepare
-      md5: 7e658d14211c15454ff499f299bb7ca7.dir
+      md5: 3e03de7c3b8508eeb718426bee49699b.dir
       size: 4767
       nfiles: 1
     - path: preprocess
-      md5: 29b0fdf2a2f61d946863f6e5fbc9f0d5.dir
-      size: 2307
-      nfiles: 3
+      md5: c92c6f2a2c0b049f1d12048564c58b95.dir
+      size: 2817
+      nfiles: 7
     - path: train
-      md5: 33358942f28f4492a9232ed2f577792b.dir
-      size: 2557
-      nfiles: 5
+      md5: 9525172fb1f317f1bf8306bfc61b611d.dir
+      size: 2355
+      nfiles: 7
     params:
       params.yaml:
         evaluate.config:
@@ -219,5 +219,5 @@ stages:
             strategy: mean
     outs:
     - path: evaluate/scores.json
-      md5: 374b433c94fdd54eb8b0b150d03611af
+      md5: 60af34acecc898c488a85143747b8537
       size: 324

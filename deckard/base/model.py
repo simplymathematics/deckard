@@ -6,14 +6,11 @@ from hashlib import md5 as my_hash
 from pathlib import Path
 import numpy as np
 
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator
 from art.estimators.classification import PyTorchClassifier, TensorFlowClassifier, KerasClassifier, TensorFlowV2Classifier
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators import ScikitlearnEstimator
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
-from sklearn.base import is_regressor
 
 from .data import Data
 from typing import Callable, Union
@@ -25,7 +22,7 @@ supported_estimators = [PyTorchClassifier, TensorFlowClassifier, KerasClassifier
 from deckard.base.hashable import BaseHashable
 class Model(BaseHashable):
     """Creates a model object that includes a dicitonary of passed parameters."""
-    def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", url = None, is_fitted:bool = False, classifier = True, art:bool = True, **kwargs):
+    def __init__(self, model:Union[str, object], model_type:str = 'sklearn',  defence: object = None, path = ".", is_fitted:bool = False, classifier = True, art:bool = True, url = None):
         """
         Initialize the model object.
         estimator: the estimator to use
@@ -34,28 +31,32 @@ class Model(BaseHashable):
         """
         self.model_type =  model_type
         self.path = path
-        self.url = url
         self.is_fitted = is_fitted
-        self.kwargs = kwargs
+        self.url = url
         self.classifier = classifier
         self.model = model
         self.art = art
-        self.defence = defence
+        self.defence = defence if defence is not None else None
         self.params = dict(vars(self))
-        del self.params['kwargs']
         if defence is not None:
-            self.params['defence'] = {'name' : defence, 'params' : {}}
+            self.params['defence'] = {}
+            self.params['defence']['name'] = str(type(self.defence)).split('.')[-1].split("'")[0]
+            self.params['defence']['params'] = dict(vars(self.defence))
+            # print(self.params)
+            # input("Inside defense init. Press Enter to continue...")
             for key in vars(defence):
                 if key != 'estimator' or 'classifier' or 'regressor':
                     self.params['defence']['params'][key] = getattr(defence, key)
             if  'preprocessor' in str(type(self.defence)):
-                self.params['defence']['params']['type'] = 'preprocessor'
+                self.params['defence']['params'].update({'type' : 'preprocessor'})
             elif 'postprocessor' in str(type(self.defence)):
-                self.params['defence']['params']['type'] = 'postprocessor'
+                self.params['defence']['params'].update({'type' : 'postprocessor'})
             elif 'trainer' in str(type(self.defence)):
-                self.params['defence']['params']['type'] = 'trainer'
+                self.params['defence']['params'].update({'type' : 'trainer'})
             elif 'transformer' in str(type(self.defence)):
-                self.params['defence']['params']['type'] = 'transformer'
+                self.params['defence']['params'].update({'type' : 'transformer'})
+        else:
+            self.params['defence'] = {}
         
         
         
@@ -69,7 +70,6 @@ class Model(BaseHashable):
         """
         assert params is not None, "Params must be specified"
         assert isinstance(params, dict), "Params must be a dictionary"
-        self.kwargs.update(params)
         for param, value in params.items():
             if hasattr(self, param):
                 # Attempts to set attribute on self first
@@ -82,6 +82,7 @@ class Model(BaseHashable):
                 self.model.model.set_params(**{param : value})
             else:
                 raise ValueError("Parameter {} not found in \n {} or \n {}".format(param, self.model.model.get_params(), self.model.__dict__.keys()))
+            self.params.update({param : value})
             # self.params.update({param : value})
 
 
@@ -120,8 +121,8 @@ class Model(BaseHashable):
             from tensorflow.keras.models import load_model as tf_load_model
             model = tf_load_model(filename)
         elif model_type == 'sklearn' or model_type == 'pipeline' or model_type == 'gridsearch' or model_type == 'pickle':
-            if self.path:
-                filename = os.path.join(self.path, filename)
+            if path:
+                filename = os.path.join(path, filename)
             with open(filename, 'rb') as f:
                 model = pickle.load(f)
         else:
@@ -129,15 +130,13 @@ class Model(BaseHashable):
         logger.info("Loaded model")
         return model
     
-    def __call__(self, filename:str = None, art:bool = None, **kwargs) -> None:
+    def __call__(self, art:bool = None) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
         """
         if art is None:
             art = self.art
-        if len(kwargs) > 0:
-            assert art == True, "art must be True if kwargs are specified"
         logger.debug("Loading model")
         if isinstance(self.model, (str, Path)):
             # load the model
@@ -148,9 +147,9 @@ class Model(BaseHashable):
             pass
         logger.info("Loaded model")
         if self.classifier == True and art == True:
-            self.model = self.initialize_art_classifier(**kwargs)
+            self.model = self.initialize_art_classifier()
         elif self.classifier == False and art == True:
-            self.model = self.initialize_art_regressor(**kwargs)
+            self.model = self.initialize_art_regressor()
         return self
 
     def initialize_art_classifier(self, clip_values:tuple = (0,255), **kwargs) -> None:
@@ -162,20 +161,18 @@ class Model(BaseHashable):
         trainers = []
         transformers = []
         # Find defence type
-        if  'preprocessor' in str(type(self.defence)):
-            preprocessors.append(self.defence)
-            self.params['defence']['params']['type'] = 'preprocessor'
-        elif 'postprocessor' in str(type(self.defence)):
-            postprocessors.append(self.defence)
-            self.params['defence']['params']['type'] = 'postprocessor'
-        elif 'trainer' in str(type(self.defence)):
-            trainers.append(self.defence)
-            self.params['defence']['params']['type'] = 'trainer'
-        elif 'transformer' in str(type(self.defence)):
-            transformers.append(self.defence)
-            self.params['defence']['params']['type'] = 'transformer'
-        elif self.defence is not None:
-            raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
+        if hasattr(self, 'defence'):
+            self.params['defence'].update({'type' : str(type(self.defence)).split('.')[-1].split("'")[0]})
+            if  'art' and 'preprocessor' in str(type(self.defence)):
+                preprocessors.append(self.defence)
+            elif 'art' and 'postprocessor' in str(type(self.defence)):
+                postprocessors.append(self.defence)
+            elif 'art' and 'trainer' in str(type(self.defence)):
+                trainers.append(self.defence)
+            elif 'art' and 'transformer' in str(type(self.defence)):
+                transformers.append(self.defence)
+            elif self.defence is not None:
+                raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
         else:
             pass
         # Iinitialize model by type
@@ -200,20 +197,18 @@ class Model(BaseHashable):
         trainers = []
         transformers = []
         # Find defence type
-        if  'preprocessor' in str(type(self.defence)):
-            preprocessors.append(self.defence)
-            self.params['defence']['params']['type'] = 'preprocessor'
-        elif 'postprocessor' in str(type(self.defence)):
-            postprocessors.append(self.defence)
-            self.params['defence']['params']['type'] = 'postprocessor'
-        elif 'trainer' in str(type(self.defence)):
-            trainers.append(self.defence)
-            self.params['defence']['params']['type'] = 'trainer'
-        elif 'transformer' in str(type(self.defence)):
-            transformers.append(self.defence)
-            self.params['defence']['params']['type'] = 'transformer'
-        elif self.defence is not None:
-            raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
+        if hasattr(self, 'defence'):
+            
+            if  'preprocessor' in str(type(self.defence)):
+                preprocessors.append(self.defence)
+            elif 'postprocessor' in str(type(self.defence)):
+                postprocessors.append(self.defence)
+            elif 'trainer' in str(type(self.defence)):
+                trainers.append(self.defence)
+            elif 'transformer' in str(type(self.defence)):
+                transformers.append(self.defence)
+            elif self.defence is not None:
+                raise ValueError("defence type {} not supported".format(self.params['defence']['type']))
         else:
             pass
         # Initialize model by type

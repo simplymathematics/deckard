@@ -61,9 +61,10 @@ class testData(unittest.TestCase):
     def test_set_params(self):
         data = Data('mnist', train_size = 100, random_state = 0, shuffle = True)
         self.assertEqual(data.params['dataset'], 'mnist')
-        data.set_params({'dataset': 'iris'})
+        data.set_params(dataset = 'iris')
         self.assertEqual(data.dataset, 'iris')
-        self.assertRaises(ValueError, data.set_params, {'dataset': 'poop'})
+        self.assertRaises(TypeError, data.set_params, asw3 = 'sas09d8fap0s98jf;a')
+        self.assertRaises(ValueError, data.set_params, dataset = 1)
         
     def test_sample_data(self):
         data = Data('mnist', random_state = 220)
@@ -93,8 +94,6 @@ class testData(unittest.TestCase):
         # TODO: fix this
         del data['dataset']
         del data2['dataset']
-        print(data)
-        print(data2)
         self.assertDictEqual(data, data2)
     
     def test_str(self):

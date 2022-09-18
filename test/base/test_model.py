@@ -136,7 +136,16 @@ class testModel(unittest.TestCase):
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
     
-   
+    def test_str(self):
+        data = Data('iris', train_size = .8)
+        data()
+        defence = FeatureSqueezing(bit_depth = 4, clip_values = (0, 1))
+        model = Model(KNeighborsClassifier(3), model_type = 'sklearn', defence = defence)
+        model()
+        self.assertIn('KNeighborsClassifier', str(model))
+        self.assertIn('FeatureSqueezing', str(model))
+        self.assertIn('n_neighbors=3', str(model))
+        self.assertIn('bit_depth', str(model))
     
     def tearDown(self):
         shutil.rmtree(self.path)
