@@ -44,7 +44,10 @@ class BaseHashable(object):
         results.update(**kwargs)
         for key, value in self.params.items():
             if hasattr(value, "get_params") and not isinstance(value, BaseHashable):
-                result = value.get_params()
+                try:
+                    result = value.get_params(deep = True)
+                except:
+                    result = value.get_params()
             if isinstance(value, (int, float, str, list, tuple)):
                 result = value
             elif isinstance(value, BaseHashable):
