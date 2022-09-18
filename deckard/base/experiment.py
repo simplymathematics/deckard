@@ -11,8 +11,7 @@ from pandas import DataFrame, Series
 # Math Stuff
 import numpy as np
 from pandas import Series
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, TransformerMixin
+
 
 
 from hashlib import md5 as my_hash
@@ -58,7 +57,6 @@ class Experiment(BaseHashable):
         self.params["Data"] = dict(self.data.params)
         self.hash = hash(self)
         self.params["Experiment"] = {
-            "name": self.hash,
             "verbose": self.verbose,
             "is_fitted": self.is_fitted,
             "id": hash(self),
@@ -84,6 +82,7 @@ class Experiment(BaseHashable):
         end = process_time()
         time_dict["predict"] = end - start
         self.time_dict = time_dict
+        self.params['if_fitted'] = True
         self.hash = hash(self)
 
     def __call__(self, path, filename: str = None, prefix=None, **kwargs) -> None:
@@ -108,45 +107,7 @@ class Experiment(BaseHashable):
         # TODO: Fix scoring
         return (params_file, preds_file, truth_File, model_file, time_file)
 
-    ##########################################################################################################
-
-    def insert_sklearn_preprocessor(
-        self, name: str, preprocessor: object, position: int
-    ):
-        """
-        Add a sklearn preprocessor to the experiment.
-        :param name: name of the preprocessor
-        :param preprocessor: preprocessor to add
-        :param position: position to add preprocessor
-
-        """
-        # If it's already a pipeline
-        if isinstance(self.model.model, Pipeline):
-            pipe = self.model.model
-        elif hasattr(self.model.model, "model") and isinstance(
-            self.model.model.model, Pipeline
-        ):
-            pipe = self.model.model.model
-        elif "art.estimators" in str(type(self.model.model)) and not isinstance(
-            self.model.model.model, Pipeline
-        ):
-            pipe = Pipeline([("model", self.model.model.model)])
-        elif isinstance(self.model.model, BaseEstimator) and not isinstance(
-            self.model.model, Pipeline
-        ):
-            pipe = Pipeline([("model", self.model.model)])
-        else:
-            raise ValueError(
-                "Cannot make model type {} into a pipeline".format(
-                    type(self.model.model)
-                )
-            )
-        new_model = deepcopy(pipe)
-        assert isinstance(new_model, Pipeline)
-        new_model.steps.insert(position, (name, preprocessor))
-        self.model.model = new_model
-
-    ############################################################################################################
+    
 
     def save_data(
         self, filename: str = "data.pkl", prefix=None, path: str = "."
