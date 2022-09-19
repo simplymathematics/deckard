@@ -1,43 +1,64 @@
 stages:
   prepare:
-    cmd: python -m deckard.layers.prepare.py
+    cmd: python -m deckard.layers.prepare
     params:
-      - prepare
+      - prepare.config
     outs: 
-      - data.pkl
-  control:
-    cmd:  python -m deckard.layers.art_model --layer_name control
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+    # deps:
+    #   - 
+    # metrics:
+    #   - prepare.scores
+    # plots:
+    #   - prepare.plots
+  art_model:
+    cmd:  python  -m deckard.layers.art_model --layer_name art_model
     deps:
-    - data.pkl
+    - ${prepare.outputs.folder}/${prepare.outputs.file}
     params:
-    - control
+    - art_model
     outs:
-    - control/:
+    - art_model/:
         cache: true
   defend:
-    cmd:  python -m deckard.layers.defend --layer_name defend
+    cmd:  python  -m deckard.layers.defend --layer_name defend
     deps:
-    - data.pkl
-    - control/control_model.pb
-    - configs/defence_config.yaml
+    - ${prepare.outputs.folder}/${prepare.outputs.file}
+    - art_model/
     params:
-    - defend
+    - defend.config
+    - defend.inputs
     outs:
-    - defences/:
+    - defend/:
         cache: true
   attack:
-    cmd:  python -m deckard.layers.attack --layer_name attack
+    cmd:  python  -m deckard.layers.attack --layer_name attack
     deps:
-    - data.pkl
-    - defences/defended_model
-    - configs/attack_config.yaml
+    - ${prepare.outputs.folder}/${prepare.outputs.file}
+    - defend
     params:
     - attack
     outs:
-    - attacks/:
+    - attack/:
         cache: true
-
-
-
-
-
+  # visualise:
+  #   cmd: python  -m deckard.layers.visualise --layer_name visualise
+  #   deps:
+  #     - ${prepare.outputs.folder}/${prepare.outputs.file} 
+  #     - art_model/
+  #   params:
+  #     - visualise
+  #   outs:
+  #     - plots/:
+  #         cache: true
+  evaluate:
+    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
+    deps: 
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+      - art_model/
+      - attack/
+      - defend/
+    params:
+      - evaluate
+    outs:
+      - evaluate/

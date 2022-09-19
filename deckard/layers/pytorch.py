@@ -21,7 +21,6 @@
 #                             transforms.ToTensor(),
 #                             transforms.Normalize((0.1307,), (0.3081,))
 #     ])))
-    
 
 
 # # define the model
@@ -43,13 +42,13 @@
 #         x = F.dropout(x, training=self.training)
 #         x = self.fc2(x)
 #         return F.log_softmax(x)
-    
+
 #     def predict(self, x):
 #         return self.forward(x)
-    
+
 #     def backward(self, x, y):
 #         return self.loss(x, y)
-    
+
 #     def loss(self, x, y):
 #         return F.nll_loss(self.forward(x), y)
 

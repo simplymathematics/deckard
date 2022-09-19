@@ -1,118 +1,183 @@
+vars:
+  data_file  : "data.pickle"
+  model_file : "model.pickle"
+  predictions_file : "predictions.json"
+  ground_truth_file : "ground_truth.json"
+  scores_file : "scores.json"
+  params_file : "params.json"
+  plot_file : "plot.pdf"
+  
+
 prepare:
-  name: 'iris'
-  params:
-    shuffle : True
-    stratify : True
-    random_state : 0
-    # test_size : .1
-    train_size : .8
-  data_file : "data.pkl"
-  output_folder : "."
+  config:
+    name: 'iris'
+    params:
+      shuffle : True
+      stratify : True
+      random_state : 0
+      test_size : 
+      train_size : .8
+  outputs:
+    folder : prepare
+    file : data.pickle
+    predictions : 
+    ground_truth : 
+  scores:
+    file: 
+    folder: 
+    time_dict: 
+  plots:
+    file:
+    folder:
 train:
-  input_folder : "."
-  input_name : "model.pickle"
-  output_folder : "train"
-  output_name : "model.pickle"
-  data_file : "data.pkl"
-  layer_name : train
+  inputs:
+    folder : prepare
+    data : data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : True
+    model: 
   config : 
     name: sklearn.linear_model.LogisticRegression
     params: 
       'penalty' : 'l2'
-  classifier : False
-  model_type : 'sklearn'
-  is_fitted : False
+  outputs:
+    folder : train
+    model : "model.pickle"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : params.scores_file
 preprocess:
-  input_folder : "train"
-  output_folder : "preprocess"
-  input_name : "model.pickle"
-  output_name : "model"
-  data_file : "data.pkl"
-  layer_name : preprocess
-  position : 0
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : True
+    position : 0
+    model: train/model.pickle
   config : 
     name: sklearn.preprocessing.StandardScaler
     params: 
       'with_mean' : True
       'with_std' : True
-  classifier : False
-  model_type : 'sklearn'
-  is_fitted : False
+  outputs:
+    folder : "preprocess"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : "scores.json"
 featurize:
-  input_folder : "preprocess"
-  output_folder : "featurize"
-  input_name : "model"
-  output_name : "model.pickle"
-  data_file : "data.pkl"
-  layer_name : featurize
-  position : 1
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : True
+    position : 1
+    model: preprocess/model.pickle
   config : 
-      name: sklearn.impute.SimpleImputer
-      params: 
-        'strategy' : 'mean'
-  classifier : False
-  model_type : 'sklearn'
-  is_fitted : False
-visualise:
-  input_folder : train/
-  data_file : "data.pkl"
-  data_folder : "."
-  model_folder : "train/"
-  model_file : "model.pickle"
-  defense_file : None
-  preprocessor_file : None
-  config: 
-    name:
-    params:
-  output_folder : plots
-  root_folder : "."
-  model_type : "sklearn"
-  art : False
-  plot_folder : "plots"
-control:
-  # input_model : "train/model.pickle"
-  # url : 
-  model_type : "sklearn" 
-  data_file : "data.pkl" 
-  output_folder : "control"
-  input_folder : "."
-  output_name : control_model.pickle
-  config:
-    name: sklearn.linear_model.LogisticRegression
+    name: sklearn.impute.SimpleImputer
     params: 
-      'penalty' : 'l2' 
+      'strategy' : 'mean'
+  outputs:
+    folder : featurize
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : "scores.json"
+art_model:
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : True
+    model: featurize/model.pickle
+  outputs:
+    folder : "art_model"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : "scores.json"
 defend:
-  input_model : "control_model.pickle" 
-  input_folder : "control" 
-  model_type : "sklearn" 
-  data_file : "data.pkl" 
-  output_folder : "defences" 
-  output_name : "defended_model"
-  config:
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : False
+    model: art_model/model.pickle
+  config : 
     name: art.defences.preprocessor.FeatureSqueezing
     params: 
-      bit_depth : 8
-      clip_values : [0, 255]
+      'bit_depth' : 8
+  outputs:
+    folder : "defend"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : "defend_scores.json"
 attack:
-  config: 
-    name: art.attacks.evasion.HopSkipJump
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    classifier : True
+    is_fitted : True
+    model: defend/model.pickle
+  config : 
+    name:  art.attacks.evasion.HopSkipJump
     params: 
       max_iter : 100
-  input_model : "defended_model.pickle" 
-  input_folder : "defences" 
-  model_type : "sklearn" 
-  data_file : "data.pkl" 
-  output_folder : "attacks" 
-  output_name : "attacked_model"
-  attack_size : 100
+  outputs:
+    folder : "attack"
+    model : "model.pickle"
+    params : "params.json"
+    ground_truth : "ground_truth.json"
+    predictions : "predictions.json"
+  metrics:
+    scores : "scores.json"
 evaluate:
-  input_folder : "."
-  ground_truth_file : "ground_truth.json"
-  predictions_file : "predictions.json"
-  layer_name : evaluate
+  inputs:
+    folder : train
+    ground_truth : "predictions.json"
+    predictions : 'ground_truth.json'
+    classifier : True
+    recursive : True
   config : 
-    name:
-    params:
-  output_folder: scores/
-  output_name : "scores.json"
-  is_regressor : True
+    name: sklearn.impute.SimpleImputer
+    params: 
+      'strategy' : 'mean'
+  outputs:
+    folder : "evaluate"
+    model : "model.pickle"
+    params : "params.json"
+  metrics:
+    scores : "scores.json"
+visualise:
+  inputs:
+    folder : "."
+    data : prepare/data.pickle
+    type : 'sklearn'
+    art : False
+    classifier : True
+    is_fitted : True
+    model: defend/model.pickle
+  config : 
+    name: sklearn.impute.SimpleImputer
+    params: 
+      'strategy' : 'mean'
+  outputs:
+    folder : "."
+  plots:
+    roc_auc: "ROC_AUC.pdf"

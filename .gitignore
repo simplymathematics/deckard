@@ -78,3 +78,5 @@ simplymathematics.blob.core.windows.net/
 
 *rwlock
 dist/*
+examples/*/configs/*/*.yaml
+examples/*/tmp/*

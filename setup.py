@@ -51,14 +51,16 @@ def get_version(rel_path):
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
     raise RuntimeError("Unable to find version string.")
+
+
 setup(
-    name='deckard',
+    name="deckard",
     version=get_version("deckard/__init__.py"),
     description="Toolbox for adversarial machine learning.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author='@simplymathematics',
-    author_email='hello@simplymathematics.xyz',
+    author="@simplymathematics",
+    author_email="hello@simplymathematics.xyz",
     url="https://github.com/simplymathematics/deckard",
     license="MIT",
     install_requires=install_requires,
@@ -70,13 +72,47 @@ setup(
         "lightgbm": ["lightgbm"],
         "mxnet": ["mxnet"],
         "tensorflow": ["tensorflow", "tensorflow_addons", "h5py"],
-        "tensorflow_image": ["tensorflow", "tensorflow_addons", "h5py", "Pillow", "ffmpeg-python", "opencv-python"],
-        "tensorflow_audio": ["tensorflow", "tensorflow_addons", "h5py", "pydub", "resampy", "librosa"],
+        "tensorflow_image": [
+            "tensorflow",
+            "tensorflow_addons",
+            "h5py",
+            "Pillow",
+            "ffmpeg-python",
+            "opencv-python",
+        ],
+        "tensorflow_audio": [
+            "tensorflow",
+            "tensorflow_addons",
+            "h5py",
+            "pydub",
+            "resampy",
+            "librosa",
+        ],
         "pytorch": ["torch", "torchvision"],
-        "pytorch_image": ["torch", "torchvision", "kornia", "Pillow", "ffmpeg-python", "opencv-python"],
-        "pytorch_audio": ["torch", "torchvision", "torchaudio", "pydub", "resampy", "librosa"],
+        "pytorch_image": [
+            "torch",
+            "torchvision",
+            "kornia",
+            "Pillow",
+            "ffmpeg-python",
+            "opencv-python",
+        ],
+        "pytorch_audio": [
+            "torch",
+            "torchvision",
+            "torchaudio",
+            "pydub",
+            "resampy",
+            "librosa",
+        ],
         "xgboost": ["xgboost"],
-        "lingvo_asr": ["tensorflow-gpu==2.1.0", "lingvo==0.6.4", "pydub", "resampy", "librosa"],
+        "lingvo_asr": [
+            "tensorflow-gpu==2.1.0",
+            "lingvo==0.6.4",
+            "pydub",
+            "resampy",
+            "librosa",
+        ],
         "all": [
             "mxnet",
             "catboost",
@@ -137,4 +173,3 @@ setup(
     packages=find_packages(),
     include_package_data=True,
 )
-

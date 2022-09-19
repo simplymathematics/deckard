@@ -2,84 +2,149 @@ stages:
   prepare:
     cmd: python -m deckard.layers.prepare
     params:
-      - prepare
+      - prepare.config
     outs: 
-      - data.pkl
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+    # deps:
+    #   - 
+    # metrics:
+    #   - prepare.scores
+    # plots:
+    #   - prepare.plots
   train:
-    cmd:  python -m deckard.layers.sklearn_model --layer_name train
-    deps:
-    - data.pkl
+    cmd: python -m deckard.layers.sklearn_model --layer_name train
     params:
-    - train
-    outs:
-    - train/:
-        cache: true
+      - train.config
+    outs: 
+      - ${train.outputs.folder}/${train.outputs.model}
+      # - ${train.outputs.folder}/${train.outputs.params}
+      - ${train.outputs.folder}/${train.outputs.ground_truth}
+      - ${train.outputs.folder}/${train.outputs.predictions}
+    deps:
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+  #   # metrics:
+  #   #   - train.scores
+  #   # plots:
+  #   #   - train.plots
   preprocess:
-    cmd: python  -m deckard.layers.preprocess --layer_name preprocess --position 0
-    deps:
-    - train/
+    cmd: python -m deckard.layers.preprocess --layer_name preprocess --position 0
     params:
-      - preprocess
-    outs:
-    - preprocess/:
-        cache: true
+      - preprocess.config
+    outs: 
+      - ${preprocess.outputs.folder}/${preprocess.outputs.model}
+      # - ${preprocess.outputs.folder}/${preprocess.outputs.params}
+      - ${preprocess.outputs.folder}/${preprocess.outputs.ground_truth}
+      - ${preprocess.outputs.folder}/${preprocess.outputs.predictions}
+    deps:
+      - ${train.outputs.folder}/${train.outputs.model}
+      - ${prepare.outputs.folder}/${prepare.outputs.file}
+    # metrics:
+    #   - preprocess.scores
+    # plots:
+    #   - preprocess.plots  
   featurize:
-    cmd: python  -m deckard.layers.preprocess --layer_name featurize --position 1
-    deps:
-    - preprocess/
-    params:
-      - featurize
-    outs:
-    - featurize/:
-        cache: true
-  visualise:
-    cmd: python  -m deckard.layers.visualise --layer_name visualise
-    deps: 
-      - train/
-    params:
-      - visualise
-    outs:
-      - plots/:
-          cache: true
-  control:
-    cmd:  python  -m deckard.layers.art_model --layer_name control
-    deps:
-    - data.pkl
-    params:
-    - control
-    outs:
-    - control/:
-        cache: true
+      cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+      params:
+        - featurize.config
+      outs: 
+        - ${featurize.outputs.folder}/${featurize.outputs.model}
+        # - ${featurize.outputs.folder}/${featurize.outputs.params}
+        - ${featurize.outputs.folder}/${featurize.outputs.ground_truth}
+        - ${featurize.outputs.folder}/${featurize.outputs.predictions}
+      deps:
+        - ${preprocess.outputs.folder}/${preprocess.outputs.model}
+        - ${prepare.outputs.folder}/${prepare.outputs.file}
+      # metrics:
+      #   - featurize.scores
+      # plots:
+      #   - featurize.plots  
+  art_model:
+      cmd: python -m deckard.layers.art_model --layer_name art_model
+      params:
+        - train.config
+      outs: 
+        - ${art_model.outputs.folder}/${art_model.outputs.model}
+        # - ${art_model.outputs.folder}/${art_model.outputs.params}
+        - ${art_model.outputs.folder}/${art_model.outputs.ground_truth}
+        - ${art_model.outputs.folder}/${art_model.outputs.predictions}
+      deps:
+        - ${featurize.outputs.folder}/${featurize.outputs.model}
+        - ${prepare.outputs.folder}/${prepare.outputs.file}
+      # metrics:
+      #   - art_model.scores
+      # plots:
+      #   - art_model.plots 
   defend:
-    cmd:  python  -m deckard.layers.defend --layer_name defend
-    deps:
-    - data.pkl
-    - control/
-    params:
-    - defend
-    outs:
-    - defences/:
-        cache: true
+      cmd: python -m deckard.layers.defend --layer_name defend
+      params:
+        - defend.config
+      outs: 
+        - ${defend.outputs.folder}/${defend.outputs.model}
+        # - ${defend.outputs.folder}/${defend.outputs.params}
+        - ${defend.outputs.folder}/${defend.outputs.ground_truth}
+        - ${defend.outputs.folder}/${defend.outputs.predictions}
+      deps:
+        - ${art_model.outputs.folder}/${art_model.outputs.model}
+        - ${prepare.outputs.folder}/${prepare.outputs.file}
+      # metrics:
+      #   - defend.scores
+      # plots:
+      #   - defend.plots  
   attack:
-    cmd:  python  -m deckard.layers.attack --layer_name attack
-    deps:
-    - data.pkl
-    - defences/
-    params:
-    - attack
-    outs:
-    - attacks/:
-        cache: true
+      cmd: python -m deckard.layers.attack --layer_name attack
+      params:
+        - attack.config
+      outs: 
+        # - ${attack.outputs.folder}/${attack.outputs.model}
+        # - ${attack.outputs.folder}/${attack.outputs.params}
+        - ${attack.outputs.folder}/${attack.outputs.ground_truth}
+        - ${attack.outputs.folder}/${attack.outputs.predictions}
+      deps:
+        - ${defend.outputs.folder}/${defend.outputs.model}
+        - ${prepare.outputs.folder}/${prepare.outputs.file}
+      # metrics:
+      #   - preprocess.scores
+      # plots:
+      #   - preprocess.plots  
+  visualise:
+      cmd: python -m deckard.layers.visualise --layer_name visualise
+      params:
+        - visualise.config
+      plots: 
+        - ${visualise.outputs.folder}/${visualise.plots.roc_auc}
+      deps:
+        - ${defend.outputs.folder}/${defend.outputs.model}
+        - ${prepare.outputs.folder}/${prepare.outputs.file}
+      # metrics:
+      #   - visualise.scores
   evaluate:
-    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
-    deps: 
-      - featurize/
-      - control/
-      - preprocess/
-      - train/
-      - attacks/
-      - defences/
-    params:
-      - evaluate
-    outs:
-      - scores/
+      cmd: python -m deckard.layers.evaluate --layer_name evaluate
+      params:
+        - evaluate.config
+      metrics: 
+        - ${evaluate.outputs.folder}/${evaluate.metrics.scores}
+      deps:
+        - ${train.outputs.folder}
+        - ${prepare.outputs.folder}
+        - ${preprocess.outputs.folder}
+        - ${featurize.outputs.folder}
+        - ${art_model.outputs.folder}
+        - ${defend.outputs.folder}
+        - ${attack.outputs.folder}
+      # plots:
+      #   - evaluate.plots  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

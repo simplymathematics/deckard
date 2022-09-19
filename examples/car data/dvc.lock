@@ -30,7 +30,7 @@ stages:
       md5: 3d178144652d069cb39870f31989aa3e
       size: 336302
   train:
-    cmd: python ../../deckard/layers/sklearn_model.py --layer_name train
+    cmd: python ../../deckard/layers/sklearn_model.py  train
     deps:
     - path: ../../deckard/base/experiment.py
       md5: 6739dd158523247d8791666577304f3f
@@ -66,7 +66,7 @@ stages:
       size: 1746353
       nfiles: 42
   preprocess:
-    cmd: python ../../deckard/layers/preprocess.py  --layer_name preprocess --position
+    cmd: python ../../deckard/layers/preprocess.py   preprocess --position
       0
     deps:
     - path: ../../deckard/layers/preprocess.py
@@ -99,7 +99,7 @@ stages:
       size: 10509798
       nfiles: 252
   featurize:
-    cmd: python ../../deckard/layers/preprocess.py --layer_name featurize --position
+    cmd: python ../../deckard/layers/preprocess.py  featurize --position
       1
     deps:
     - path: ../../deckard/layers/preprocess.py
@@ -132,7 +132,7 @@ stages:
       size: 382376016
       nfiles: 9072
   evaluate:
-    cmd: python ../../deckard/layers/evaluate.py --layer_name evaluate
+    cmd: python ../../deckard/layers/evaluate.py  evaluate
     deps:
     - path: featurize/
       md5: 90952601cecad8a04b32e21b377fa6fc.dir

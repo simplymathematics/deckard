@@ -4,29 +4,98 @@ import dvc.api
 from os import path, mkdir
 from typing import Union
 from pathlib import Path
-from deckard.layers.utils import make_output_folder, parse_config
+from deckard.base.parse   import make_output_folder, parse_config
+
 logger = logging.getLogger(__name__)
 
 
 def art_model(args) -> Experiment:
-    assert Path(args.input_folder, args.data_file).exists(), "Problem finding data file: {} in this working directory: {}".format(args.data_file, args.input_folder)
-    data = Data(Path(args.input_folder, args.data_file))
-    model = parse_config(args.config)
-    model = Model(model, art = True)
-    exp = Experiment(data = data, model = model, filename = args.output_folder)
-    exp(filename = args.output_name, path = args.output_folder)
-    assert Path(args.output_folder, args.output_name).exists(), "Problem creating file: {}".format(Path(args.output_folder, args.output_name))
+    assert Path(
+        args.inputs["folder"], args.inputs["data"]
+    ).exists(), "Problem finding data file: {} in this working directory: {}".format(
+        args.inputs["data"], args.inputs["folder"]
+    )
+    assert (
+        hasattr(args, "config") or "model" in args.inputs or "url" in args.inputs
+    ), "Must have either a config file or a model"
+    assert not (
+        hasattr(args, "config") and "model" in args.inputs
+    ), "Must have either a config, model file, or url, but only one."
+    assert not (
+        hasattr(args, "config") and "url" in args.inputs
+    ), "Must have either a config, model file, or url, but only one."
+    assert not (
+        "url" in args.inputs and "model" in args.inputs
+    ), "Must have either a config, model file, or url, but only one."
+    if "model" in args.inputs:
+        model = args.inputs["model"]
+    elif "url" in args.inputs:
+        model = args.inputs["url"]
+    elif hasattr(args, "config"):
+        model = parse_config(args.config)
+    assert isinstance(
+        model, object
+    ), "Problem parsing config file: {}. It is type: {}".format(
+        args.config, type(args.config)
+    )
+    assert isinstance(
+        args.outputs["model"], (str, Path)
+    ), "Output name must be a string. It is type: {}".format(
+        type(args.outputs["model"])
+    )
+    assert isinstance(
+        args.inputs["data"], (str, Path)
+    ), "Data file must be a string. It is type: {}".format(type(args.inputs["data"]))
+    data = Data(Path(args.inputs["folder"], args.inputs["data"]))
+    if "url" in args.inputs:
+        model = Model(
+            args.outputs["model"],
+            art=True,
+            url=args.inputs["url"],
+            model_type=args.inputs["type"],
+            classifier=args.inputs["classifier"],
+        )
+    else:
+        model = Model(
+            art=True,
+            model=model,
+            model_type=args.inputs["type"],
+            classifier=args.inputs["classifier"],
+        )
+    exp = Experiment(data=data, model=model)
+    
+    exp(model_file=args.outputs["model"], path=args.outputs["folder"])
+    assert Path(
+        args.outputs["folder"], args.outputs["model"]
+    ).exists(), "Problem creating file: {}".format(
+        Path(args.outputs["folder"], args.outputs["model"])
+    )
     logger.debug("Experiment hash: {}".format(hash(exp)))
     return exp
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run a model on a dataset')
-    parser.add_argument('--input_folder', '-i', type=str, default = ".", help='Path to the model')
-    parser.add_argument('--output_folder', '-p', type=str, help='Path to the output folder')
-    parser.add_argument('--output_name','-o', type=str, default=None, help='Name of the output file')
-    parser.add_argument('--data_file', '-d', type=str, default = "data.pkl", help='Path to the data file')
-    parser.add_argument('--layer_name','-l', type=str, required = True, help='Name of layer, e.g. "attack"')
-    parser.add_argument('--config','-c', type=str, default = None, help='Does Nothing')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run a model on a dataset")
+    parser.add_argument(
+        "--input_folder", "-i", type=str, default=".", help="Path to the model"
+    )
+    parser.add_argument(
+        "--output_folder", "-p", type=str, help="Path to the output folder"
+    )
+    parser.add_argument(
+        "--output_name", "-o", type=str, default=None, help="Name of the output file"
+    )
+    parser.add_argument(
+        "--data_file", "-d", type=str, default="data.pkl", help="Path to the data file"
+    )
+    parser.add_argument(
+        "--layer_name",
+        "-l",
+        type=str,
+        required=True,
+        help='Name of layer, e.g. "attack"',
+    )
+    parser.add_argument("--config", "-c", type=str, default=None, help="Does Nothing")
     args = parser.parse_args()
     # parse arguments
     cli_args = parser.parse_args()
@@ -36,19 +105,6 @@ if __name__ == '__main__':
     for k, v in vars(cli_args).items():
         if v is not None and k in params:
             setattr(args, k, v)
-    output = make_output_folder(args.output_folder)
+    output = make_output_folder(args.outputs["folder"])
     assert Path(output).exists(), "Problem finding output folder: {}".format(output)
-    assert hasattr(args, "config") or hasattr(args, "input_model") or hasattr(args, 'url'), "Must have either a config file or a model"
-    assert not (hasattr(args, "config") and hasattr(args, "input_model")), "Must have either a config, model file, or url, but only one."
-    assert not (hasattr(args, "config") and hasattr(args, 'url')), "Must have either a config, model file, or url, but only one."
-    assert not (hasattr(args, "input_model") and hasattr(args, 'url')), "Must have either a config, model file, or url, but only one."
-    if hasattr(args, "config"):
-        model = parse_config(args.config)
-    elif hasattr(args, "input_model"):
-        model = args.input_model
-    elif hasattr(args, 'url'):
-        model = args.url
-    assert isinstance(model, object), "Problem parsing config file: {}. It is type: {}".format(args.config, type(args.config))
-    assert isinstance(args.output_name, (str, Path)), "Output name must be a string. It is type: {}".format(type(args.output_name))
-    assert isinstance(args.data_file, (str, Path)), "Data file must be a string. It is type: {}".format(type(args.data_file))
     art_model(args)

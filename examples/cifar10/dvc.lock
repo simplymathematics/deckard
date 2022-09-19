@@ -117,7 +117,7 @@ stages:
       md5: 579d538bed94af5632af0689852e26f0
       size: 1233262191
   control:
-    cmd: python ../../deckard/layers/art_model.py --layer_name control
+    cmd: python ../../deckard/layers/art_model.py  control
     deps:
     - path: data.pkl
       md5: 1847d508895953ea4ced6c0f0fe0fa97

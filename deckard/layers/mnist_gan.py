@@ -289,7 +289,7 @@
 #     gan = build_gan(generator, discriminator)
 #     # train model
 #     (d_losses, g_losses) = train_gan(discriminator=discriminator, generator=generator, gan=gan, x_train = x_train, y_train = y_train, epochs = epochs, batch_size = batch_size, sample_interval = sample_interval, save_interval = save_interval, save_dir = save_dir, loss = loss, optimizer = optimizer)
-    
+
 #     assert os.path.exists(os.path.join(os.getcwd(), "generator_model_10.h5"))
 #     assert os.path.exists(os.path.join(os.getcwd(), "discriminator_model_10.h5"))
 #     assert isinstance(d_losses, list)
@@ -300,5 +300,3 @@
 #     assert isinstance(g_losses[0], float)
 #     assert isinstance(d_losses[-1], float)
 #     assert isinstance(g_losses[-1], float)
- 
-
