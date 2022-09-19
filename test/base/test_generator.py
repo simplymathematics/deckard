@@ -29,10 +29,10 @@ class testGenerator(unittest.TestCase):
     def test_init(self):
         gen = Generator(self.model_yml, self.path, "models")
         self.assertEqual(gen.path, self.path)
-        self.assertEqual(gen.config_file, self.model_yml)
+        self.assertEqual(gen.params_file, self.model_yml)
         self.assertEqual(gen.input, os.path.join(self.path, "configs", self.model_yml))
         self.assertEqual(gen.output, os.path.join(self.path, "models"))
-        self.assertEqual(gen.config, gen.set_config())
+        self.assertEqual(gen.params, gen.set_config())
         self.assertIsInstance(gen.list, list)
 
     def test_call(self):
@@ -56,7 +56,7 @@ class testGenerator(unittest.TestCase):
 
     def test_set_config(self):
         gen = Generator(self.model_yml, self.path, "models")
-        self.assertEqual(gen.set_config(), gen.config)
+        self.assertEqual(gen.set_config(), gen.params)
 
     def test_generate_tuple_list_from_yml(self):
         gen = Generator(self.model_yml, self.path, "models")

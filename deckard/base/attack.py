@@ -2,7 +2,7 @@ import os, logging
 from pandas import Series, DataFrame
 from time import process_time
 from json import dumps
-from hashlib import md5 as my_hash
+from .hashable import my_hash
 from .data import Data
 from .model import Model
 from .experiment import Experiment

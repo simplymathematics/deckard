@@ -11,9 +11,8 @@ from deckard.base import Data, Experiment
 from deckard.base.parse import (
     generate_object_list_from_tuple,
     generate_tuple_list_from_yml,
-    generate_experiment_list,
 )
-
+from deckard.layers.utils import generate_experiment_list
 
 class testParse(unittest.TestCase):
     def setUp(self):

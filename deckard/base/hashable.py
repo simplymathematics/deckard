@@ -1,7 +1,8 @@
-from hashlib import md5 as my_hash
+from hashlib import md5
 from numpy import ndarray
 
-
+def my_hash(obj):
+    return str(md5(str(obj).encode('utf-8')).hexdigest())
 class BaseHashable(object):
     def __eq__(self, other) -> bool:
         """
@@ -34,15 +35,14 @@ class BaseHashable(object):
         """
         Hashes the params as specified in the __init__ method.
         """
-        return int(my_hash(str(self.__repr__()).encode("utf-8")).hexdigest(), 32)
+        return int(my_hash(str(self.__repr__())), 32)
 
-    def get_params(self, **kwargs):
+    def get_params(self):
         """
         Returns the parameters of the data object.
         """
         results = {}
-        results.update(**kwargs)
-        for key, value in self.params.items():
+        for key, value in vars(self):
             if hasattr(value, "get_params") and not isinstance(value, BaseHashable):
                 try:
                     result = value.get_params(deep = True)

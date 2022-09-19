@@ -1,7 +1,7 @@
 # Standard Library:
-import logging, yaml, json, os, importlib, shutil
+import logging, yaml, json, os
 import pandas as pd
-from hashlib import md5 as my_hash
+from .hashable import BaseHashable, my_hash
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid
@@ -18,7 +18,6 @@ from art.defences.preprocessor import Preprocessor
 from art.defences.postprocessor import Postprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
-from art.utils import get_file
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (
@@ -30,7 +29,7 @@ SUPPORTED_MODELS = (
 logger = logging.getLogger(__name__)
 
 
-class Generator:
+class Generator(BaseHashable):
     def __init__(
         self,
         config_file: str,
@@ -49,16 +48,16 @@ class Generator:
         assert os.path.isdir(root_path), f"{root_path} is not a directory"
         os.chdir(root_path)
         self.path = root_path
-        self.config_path = config_path
-        self.config_file = os.path.join(config_path, config_file)
+        self.params_path = config_path
+        self.params_file = os.path.join(config_path, config_file)
         self.input = os.path.join(self.path, config_path, config_file)
         if not os.path.isfile(self.input):
             raise ValueError(str(self.input) + " file does not exist")
         self.output = os.path.join(self.path, result_path)
         if not os.path.isdir(self.output):
             os.mkdir(self.output)
-        self.config = self.set_config()
-        self.list = self.generate_tuple_list_from_yml(self.config[1], **kwargs)
+        self.params = self.set_config()
+        self.list = self.generate_tuple_list_from_yml(self.params[1], **kwargs)
 
     def __call__(self, filename: str):
         """
@@ -75,12 +74,6 @@ class Generator:
         else:
             raise ValueError(str(filename) + " file already exists")
         return paths
-
-    def __hash__(self):
-        return int(str(my_hash(str(self.list).encode("utf-8")).hexdigest()), 16)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
 
     def set_config(self) -> dict:
         """
@@ -162,7 +155,7 @@ class Generator:
         for entry in self.list:
             name = entry[0]  # drop this in lieu of hash below since this is
             params = entry[1]
-            path = str(my_hash(str(entry).encode("utf-8")).hexdigest())
+            path = my_hash(entry)
             path = os.path.join(self.output, path)
             if not os.path.isdir(path):
                 os.makedirs(path)
@@ -170,10 +163,10 @@ class Generator:
                 foo = os.path.join(path, "configs")
                 os.makedirs(foo)
                 assert os.path.isdir(foo), "Your error is here."
-                # shutil.copytree(os.path.join(self.path, self.config_path), foo)
+                # shutil.copytree(os.path.join(self.path, self.params_path), foo)
             self.generate_yml(
                 path=path,
-                filename=self.config_file.split(os.sep)[-1],
+                filename=self.params_file.split(os.sep)[-1],
                 name=name,
                 params=params,
             )

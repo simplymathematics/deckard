@@ -1,24 +1,24 @@
-import logging, os, json, pickle
-from time import process_time
-from urllib.parse import urlparse as is_url
+import json
+import logging
+import os
+import pickle
 from copy import deepcopy
-from hashlib import md5 as my_hash
 from pathlib import Path
-import numpy as np
+from time import process_time
+from typing import Callable, Union
 
-from art.estimators.classification import (
-    PyTorchClassifier,
-    TensorFlowClassifier,
-    KerasClassifier,
-    TensorFlowV2Classifier,
-)
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+import numpy as np
 from art.estimators import ScikitlearnEstimator
+from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
+                                           TensorFlowClassifier,
+                                           TensorFlowV2Classifier)
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 
 from .data import Data
-from typing import Callable, Union
+from .hashable import my_hash
+from .parse import generate_object_from_tuple, generate_tuple_from_yml
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,11 @@ supported_estimators = [
     TensorFlowV2Classifier,
 ]
 
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, TransformerMixin
-
 from deckard.base.hashable import BaseHashable
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
 
+# __all__ = ["Model"]
 
 class Model(BaseHashable):
     """Creates a model object that includes a dicitonary of passed parameters."""
@@ -45,8 +45,8 @@ class Model(BaseHashable):
         self,
         model: Union[str, object],
         model_type: str = "sklearn",
-        defence: object = None,
-        pipeline: object = None,
+        defence:dict = None,
+        pipeline:dict = None,
         path=".",
         is_fitted: bool = False,
         classifier=True,
@@ -67,17 +67,19 @@ class Model(BaseHashable):
         self.url = url
         self.classifier = classifier
         self.model = model
+        _ = dict(vars(self))
+        self.params = _
         self.art = art if art else False
         self.defence = defence if defence is not None else None
         self.pipeline = pipeline if pipeline is not None else None
         self.fit_params = fit_params if fit_params is not None else {}
         self.predict_params = predict_params if predict_params is not None else {}
-        self.params = dict(vars(self))
+        
         if defence is not None:
             self.art = True
             self.insert_art_defence(defence)
         if pipeline is not None:
-            self.insert_sklearn_preprocessor(**pipeline)
+            self.insert_sklearn_preprocessor(pipeline)
 
     def set_params(self, params: dict = None):
         """
@@ -291,7 +293,7 @@ class Model(BaseHashable):
         return model
     
     def insert_sklearn_preprocessor(
-        self, name: str, preprocessor: object, position: int
+        self, name: str, preprocessor:Union[str, Path, dict], position: int
     ):
         """
         Add a sklearn preprocessor to the experiment.
@@ -300,6 +302,14 @@ class Model(BaseHashable):
         :param position: position to add preprocessor
 
         """
+        if not isinstance(preprocessor, (str, Path, dict)):
+            raise ValueError("Preprocessor must be a string or a dictionary, not type {}".format(type(preprocessor)))
+        config_tuple = generate_tuple_from_yml(preprocessor)
+        if 'Pipeline' not in self.params:
+            self.params['Pipeline'] = {}
+        id_ = my_hash(config_tuple) if isinstance(preprocessor, dict) else Path(preprocessor).name.split('.')[0]
+        preprocessor = generate_object_from_tuple(config_tuple)
+        self.params['Pipeline'][name] = {'id':id_, "type": str(type(preprocessor)).split(".")[-1].split("'")[0], "params" : config_tuple[1], "position" : position}      
         # If it's already a pipeline
         if isinstance(self.model, Pipeline):
             pipe = self.model
@@ -325,30 +335,37 @@ class Model(BaseHashable):
         new_model = deepcopy(pipe)
         assert isinstance(new_model, Pipeline)
         new_model.steps.insert(position, (name, preprocessor))
-        self.params['Pipeline'] = new_model.get_params(deep = True)
         self.model = new_model
     
-    def insert_art_defence(self, defence: object):
+    def insert_art_defence(self, defence:Union[str, Path, dict]):
         """
         Add a defence to the experiment.
         :param defence: defence to add
         """
-        self.params["Defence"] = {}
-        self.params["Defence"]["name"] = (
-            str(type(self.defence)).split(".")[-1].split("'")[0]
-        )
-        self.params["Defence"]["params"] = dict(vars(self.defence))
-        for key in vars(defence):
-            if key != "estimator" or "classifier" or "regressor":
-                self.params["Defence"]["params"][key] = getattr(defence, key)
+        if not isinstance(defence, (str, Path, dict)):
+            raise ValueError("Defence must be a string, Path or dict")
+        defence_tuple = generate_tuple_from_yml(defence)
+        if 'Defence' not in self.params:
+            self.params['Defence'] = {}
+        id_ = my_hash(defence_tuple) if isinstance(defence, dict) else Path(defence).name.split('.')[0]
+        self.params['Defence'] = {}
+        self.params['Defence']['name'] = defence_tuple[0].split('.')[-1]
+        self.params['Defence']['params'] = defence_tuple[1]
+        self.params['Defence']['id'] = id_
+        self.defence = generate_object_from_tuple(defence_tuple)
+        self.params['Defence']['type'] = str(type(defence))
         if "preprocessor" in str(type(self.defence)):
-            self.params["Defence"]["params"].update({"type": "preprocessor"})
+            self.params["Defence"].update({"type": "preprocessor"})
         elif "postprocessor" in str(type(self.defence)):
-            self.params["Defence"]["params"].update({"type": "postprocessor"})
+            self.params["Defence"].update({"type": "postprocessor"})
         elif "trainer" in str(type(self.defence)):
-            self.params["Defence"]["params"].update({"type": "trainer"})
+            self.params["Defence"].update({"type": "trainer"})
         elif "transformer" in str(type(self.defence)):
-            self.params["Defence"]["params"].update({"type": "transformer"})
+            self.params["Defence"].update({"type": "transformer"})
+        else:
+            raise NotImplementedError(
+                "Defence type {} not supported".format(type(self.defence))
+            )
 
 
     def initialize_art_regressor(self, **kwargs) -> None:

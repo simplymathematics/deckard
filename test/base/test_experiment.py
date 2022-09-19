@@ -6,13 +6,14 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 import tempfile
 import unittest
-from deckard.base import Data, Model, Experiment
+from deckard.base import Data, Model, Experiment, experiment
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 from copy import deepcopy
 from collections.abc import Callable
 from art.attacks.evasion import BoundaryAttack
@@ -169,20 +170,73 @@ class testExperiment(unittest.TestCase):
     ####################################################################################################################
 
     def test_insert_sklearn_preprocessor(self):
-        preprocessor = SimpleImputer
-        preprocessor_params = {"strategy": "mean"}
-        preprocessor = SimpleImputer(**preprocessor_params)
+        config = {
+            "name" : "sklearn.preprocessing.StandardScaler",
+            "params" :{
+                "with_mean" : True,
+                "with_std" : True
+            }
+        }
+        config2 = {
+            "name" : "sklearn.impute.SimpleImputer",
+            "params" :{
+                "strategy" : "mean"
+            }
+        }
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
-        model()
-        experiment = Experiment(data=data, model=model)
-        experiment.model.insert_sklearn_preprocessor(
-            name="Preprocessor", preprocessor=preprocessor, position=0
+        model.insert_sklearn_preprocessor(
+            name = "Preprocessor", preprocessor=config, position=0
         )
-        experiment(path=self.path)
-        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
-        self.assertIsInstance(experiment.time_dict, dict)
+        model.insert_sklearn_preprocessor(
+            name="Featurizer", preprocessor=config2, position=1
+        )
+        model()
+        self.assertIn("Preprocessor", str(model.model.steps))
+        self.assertIn(str("with_mean"), str(model.model.steps[0][1].get_params()))
+        self.assertDictContainsSubset(config['params'], model.model.steps[0][1].get_params())
+        self.assertIn("Featurizer", str(model.model.steps))
+        self.assertIn(str("strategy"), str(model.model.steps[1][1].get_params()))
+        self.assertDictContainsSubset(config2['params'], model.model.steps[1][1].get_params())
+        self.assertIn(str(config['params']), str(model.params))
+        self.assertIn(str(config2['params']), str(model.params))
+        
+    def test_insert_art_defence(self):
+        config = {
+             "name" : "art.defences.preprocessor.FeatureSqueezing",
+             "params" : {
+                 "clip_values" : (0, 1), 
+                 "bit_depth" : 4
+             }
+        }
+        data = Data("iris", test_size=30)
+        estimator = DecisionTreeClassifier()
+        model = Model(estimator)
+        model.insert_art_defence(config)
+        self.assertIn("FeatureSqueezing", str(model.params['Defence']))
+        self.assertIn(str("clip_values"), str(model.params['Defence']))
+    
+    def test_experiment_param_printing(self):
+        config = {
+             "name" : "art.defences.preprocessor.FeatureSqueezing",
+             "params" : {
+                 "clip_values" : (0, 1), 
+                 "bit_depth" : 4
+             }
+        }
+        data = Data("iris", test_size=30)
+        estimator = DecisionTreeClassifier()
+        model = Model(estimator)
+        model.insert_art_defence(config)
+        self.assertIn("FeatureSqueezing", str(model.params['Defence']))
+        self.assertIn(str("clip_values"), str(model.params['Defence']))
+        exp = Experiment(data, model)
+        self.assertIn("Defence", str(exp))
+        self.assertIn("Experiment", str(exp))
+        self.assertIn("Model", str(exp))
+        self.assertIn("Data", str(exp))
+        
 
     def tearDown(self) -> None:
         from shutil import rmtree

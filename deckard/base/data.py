@@ -1,7 +1,7 @@
 import logging
 import os
 import pickle
-from hashlib import md5 as my_hash
+from .hashable import my_hash
 from pathlib import Path
 from types import NoneType
 import numpy as np
