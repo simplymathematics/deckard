@@ -64,7 +64,7 @@ def art_model(args) -> Experiment:
         )
     exp = Experiment(data=data, model=model)
     
-    exp(filename=args.outputs["model"], path=args.outputs["folder"], nb_epochs=10, batch_size = 100)
+    exp(model_file=args.outputs["model"], path=args.outputs["folder"])
     assert Path(
         args.outputs["folder"], args.outputs["model"]
     ).exists(), "Problem creating file: {}".format(

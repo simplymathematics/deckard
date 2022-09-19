@@ -32,7 +32,7 @@ def preprocess(args) -> Experiment:
     ), "Problem inserting preprocessor. Model is not a Pipeline. It is a {}".format(
         type(new.model)
     )
-    new(filename=args.outputs["model"], path=output_folder)
+    new(model_file=args.outputs["model"], path=output_folder)
     assert Path(
         output_folder, args.outputs["model"]
     ).exists(), "Problem creating file: {}".format(

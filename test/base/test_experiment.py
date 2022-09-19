@@ -111,15 +111,15 @@ class testExperiment(unittest.TestCase):
         experiment(path=self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIn("fit", experiment.time_dict)
-        self.assertIn("predict", experiment.time_dict)
+        self.assertIn("fit_time", experiment.time_dict)
+        self.assertIn("pred_time", experiment.time_dict)
         model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
         experiment(path=self.path)
         self.assertIsInstance(experiment.predictions, (list, np.ndarray))
         self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIn("fit", experiment.time_dict)
-        self.assertIn("predict", experiment.time_dict)
+        self.assertIn("fit_time", experiment.time_dict)
+        self.assertIn("pred_time", experiment.time_dict)
 
     def test_save_cv_scores(self):
         from sklearn.model_selection import GridSearchCV
@@ -175,8 +175,9 @@ class testExperiment(unittest.TestCase):
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
+        model()
         experiment = Experiment(data=data, model=model)
-        experiment.insert_sklearn_preprocessor(
+        experiment.model.insert_sklearn_preprocessor(
             name="Preprocessor", preprocessor=preprocessor, position=0
         )
         experiment(path=self.path)

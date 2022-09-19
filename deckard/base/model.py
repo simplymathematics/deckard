@@ -46,11 +46,14 @@ class Model(BaseHashable):
         model: Union[str, object],
         model_type: str = "sklearn",
         defence: object = None,
+        pipeline: object = None,
         path=".",
         is_fitted: bool = False,
         classifier=True,
         art: bool = True,
         url=None,
+        fit_params: dict = None,
+        predict_params: dict = None,
     ):
         """
         Initialize the model object.
@@ -64,30 +67,17 @@ class Model(BaseHashable):
         self.url = url
         self.classifier = classifier
         self.model = model
-        self.art = art
+        self.art = art if art else False
         self.defence = defence if defence is not None else None
+        self.pipeline = pipeline if pipeline is not None else None
+        self.fit_params = fit_params if fit_params is not None else {}
+        self.predict_params = predict_params if predict_params is not None else {}
         self.params = dict(vars(self))
         if defence is not None:
-            self.params["defence"] = {}
-            self.params["defence"]["name"] = (
-                str(type(self.defence)).split("'")[0].split(".")[-1]
-            )
-            self.params["defence"]["params"] = dict(vars(self.defence))
-            # print(self.params)
-            # input("Inside defense init. Press Enter to continue...")
-            for key in vars(defence):
-                if key != "estimator" or "classifier" or "regressor":
-                    self.params["defence"]["params"][key] = getattr(defence, key)
-            if "preprocessor" in str(type(self.defence)):
-                self.params["defence"]["params"].update({"type": "preprocessor"})
-            elif "postprocessor" in str(type(self.defence)):
-                self.params["defence"]["params"].update({"type": "postprocessor"})
-            elif "trainer" in str(type(self.defence)):
-                self.params["defence"]["params"].update({"type": "trainer"})
-            elif "transformer" in str(type(self.defence)):
-                self.params["defence"]["params"].update({"type": "transformer"})
-        else:
-            self.params["defence"] = {}
+            self.art = True
+            self.insert_art_defence(defence)
+        if pipeline is not None:
+            self.insert_sklearn_preprocessor(**pipeline)
 
     def set_params(self, params: dict = None):
         """
@@ -117,7 +107,6 @@ class Model(BaseHashable):
                     )
                 )
             self.params.update({param: value})
-            # self.params.update({param : value})
 
     def load_from_string(self, filename: str) -> None:
         """
@@ -177,13 +166,17 @@ class Model(BaseHashable):
         logger.info("Loaded model")
         return model
 
-    def __call__(self, art: bool = None) -> None:
+    def __call__(self, pipeline:dict = None, art:dict = None, fit = None, predict = None) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
         """
-        if art is None:
-            art = self.art
+        if art is not None:
+            if isinstance(art, dict):
+                art_kwargs = art
+                self.art = True
+            elif isinstance(art, bool):
+                art_kwargs = {}
         logger.debug("Loading model")
         if isinstance(self.model, (str, Path)):
             # load the model
@@ -193,12 +186,18 @@ class Model(BaseHashable):
             logger.info("Model already in memory.")
             pass
         logger.info("Loaded model")
+        if pipeline is not None:
+            self.insert_sklearn_preprocessor(**pipeline)
         if self.classifier == True and art == True:
-            self.model = self.initialize_art_classifier()
+            self.model = self.initialize_art_classifier(**art_kwargs)
         elif self.classifier == False and art == True:
-            self.model = self.initialize_art_regressor()
+            self.model = self.initialize_art_regressor(**art_kwargs)
+        if fit is not None:
+            setattr(self, "fit_params", fit)
+        if predict is not None:
+            setattr(self, "predict_params", predict)
         return self
-
+        
     def initialize_art_classifier(
         self, clip_values: tuple = (0, 255), **kwargs
     ) -> None:
@@ -209,23 +208,23 @@ class Model(BaseHashable):
         postprocessors = []
         trainers = []
         transformers = []
-        # Find defence type
-        if hasattr(self, "defence"):
-            self.params["defence"].update(
+        # Find defence types
+        if hasattr(self, "Defence"):
+            self.params["Defence"].update(
                 {"type": str(type(self.defence)).split(".")[-1].split("'")[0]}
             )
-            if "art" and "preprocessor" in str(type(self.defence)):
+            if "art" and "preprocessor" in self.params['Defence']['type'].lower():
                 preprocessors.append(self.defence)
-            elif "art" and "postprocessor" in str(type(self.defence)):
+            elif "art" and "postprocessor" in self.params['Defence']['type'].lower():
                 postprocessors.append(self.defence)
-            elif "art" and "trainer" in str(type(self.defence)):
+            elif "art" and "trainer" in self.params['Defence']['type'].lower():
                 trainers.append(self.defence)
-            elif "art" and "transformer" in str(type(self.defence)):
+            elif "art" and "transformer" in self.params['Defence']['type'].lower():
                 transformers.append(self.defence)
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["defence"]["type"]
+                        self.params["Defence"]["type"]
                     )
                 )
         else:
@@ -326,7 +325,31 @@ class Model(BaseHashable):
         new_model = deepcopy(pipe)
         assert isinstance(new_model, Pipeline)
         new_model.steps.insert(position, (name, preprocessor))
+        self.params['Pipeline'] = new_model.get_params(deep = True)
         self.model = new_model
+    
+    def insert_art_defence(self, defence: object):
+        """
+        Add a defence to the experiment.
+        :param defence: defence to add
+        """
+        self.params["Defence"] = {}
+        self.params["Defence"]["name"] = (
+            str(type(self.defence)).split(".")[-1].split("'")[0]
+        )
+        self.params["Defence"]["params"] = dict(vars(self.defence))
+        for key in vars(defence):
+            if key != "estimator" or "classifier" or "regressor":
+                self.params["Defence"]["params"][key] = getattr(defence, key)
+        if "preprocessor" in str(type(self.defence)):
+            self.params["Defence"]["params"].update({"type": "preprocessor"})
+        elif "postprocessor" in str(type(self.defence)):
+            self.params["Defence"]["params"].update({"type": "postprocessor"})
+        elif "trainer" in str(type(self.defence)):
+            self.params["Defence"]["params"].update({"type": "trainer"})
+        elif "transformer" in str(type(self.defence)):
+            self.params["Defence"]["params"].update({"type": "transformer"})
+
 
     def initialize_art_regressor(self, **kwargs) -> None:
         preprocessors = []
@@ -334,7 +357,7 @@ class Model(BaseHashable):
         trainers = []
         transformers = []
         # Find defence type
-        if hasattr(self, "defence"):
+        if hasattr(self, "Defence"):
 
             if "preprocessor" in str(type(self.defence)):
                 preprocessors.append(self.defence)
@@ -347,7 +370,7 @@ class Model(BaseHashable):
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["defence"]["type"]
+                        self.params["Defence"]["type"]
                     )
                 )
         else:
@@ -396,17 +419,21 @@ class Model(BaseHashable):
         """
         Fits model.
         """
+        if hasattr(self, 'fit_params'):
+            opts = self.fit_params
+        else:
+            opts = {}
         if self.is_fitted:
             logger.warning("Model is already fitted")
             self.time_dict = {"fit_time": np.nan}
         else:
             start = process_time()
             try:
-                self.model.fit(X_train, y_train)
+                self.model.fit(X_train, y_train, **opts)
             except ValueError as e:
                 if "y should be a 1d array" in str(e):
                     y_train = np.argmax(y_train, axis=1)
-                    self.model.fit(X_train, y_train, **kwargs)
+                    self.model.fit(X_train, y_train, **kwargs, **opts)
                 else:
                     raise e
             end = process_time()
@@ -414,9 +441,22 @@ class Model(BaseHashable):
             self.is_fitted = True
         return None
 
-    def predict(self, X_test: np.ndarray) -> np.ndarray:
-        start = process_time()
-        predictions = self.model.predict(X_test)
+    def predict(self, X_test: np.ndarray, pred_type:str = None) -> np.ndarray:
+        if hasattr(self, 'predict_params'):
+            opts = self.predict_params
+        else:
+            opts = {}
+        if pred_type == 'proba':
+            start = process_time()
+            predictions = self.model.predict_proba(X_test, **opts)
+        elif pred_type == 'log':
+            start = process_time()
+            predictions = self.model.predict_log_proba(X_test, **opts)
+        elif pred_type is None  or pred_type =='decision':
+            start = process_time()
+            predictions = self.model.predict(X_test, **opts)
+        else:
+            raise ValueError("pred_type {} not supported".format(pred_type))
         end = process_time()
         if not hasattr(self, "time_dict"):
             self.time_dict = {}

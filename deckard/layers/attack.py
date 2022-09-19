@@ -23,7 +23,7 @@ def attack(args) -> None:
     clip_values = (mini, maxi)
     model_file = Path(args.inputs["folder"], args.inputs["model"])
     art_model = Model(model_file, model_type=args.inputs["type"], art=True)
-    art_model()
+    art_model(art = True)
     try:
         attack = generate_object_from_tuple(generate_tuple_from_yml(args.config))
     except:
@@ -37,7 +37,7 @@ def attack(args) -> None:
         is_fitted=True,
         attack=attack,
     )
-    experiment(path=args.outputs["folder"], filename=args.outputs["model"])
+    experiment(path=args.outputs["folder"], model_file=args.outputs["model"])
     return None
 
 

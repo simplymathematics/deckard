@@ -2,7 +2,6 @@ import logging, os
 from typing import Type
 from deckard.base import Experiment, Model, Data, Scorer, generate_experiment_list
 from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
-from random import shuffle
 import numpy as np
 from pathlib import Path
 
@@ -58,8 +57,8 @@ def defend(args) -> None:
         else:
             raise e
     experiment = Experiment(data=data, model=defended_model, is_fitted=True)
-    experiment(path=args.outputs["folder"], filename=args.outputs["model"])
-    return None
+    filename = experiment(path=args.outputs["folder"], model_file=args.outputs["model"])
+    return filename
 
 
 if __name__ == "__main__":

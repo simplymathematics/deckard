@@ -121,10 +121,11 @@ class testModel(unittest.TestCase):
         model = Model(
             DecisionTreeClassifier(), model_type="sklearn", defence=fsq, path=self.path
         )
-        self.assertIn("FeatureSqueezing", str(model.defence))
-        self.assertEqual(model.params["defence"]["params"]["bit_depth"], 4)
-        self.assertEqual(model.params["defence"]["params"]["clip_values"], (0, 1))
-        self.assertEqual(model.params["defence"]["params"]["type"], "preprocessor")
+        model(art = True)
+        self.assertEqual("FeatureSqueezing", model.params["Defence"]['name'])
+        self.assertEqual(model.params["Defence"]["params"]["bit_depth"], 4)
+        self.assertEqual(model.params["Defence"]["params"]["clip_values"], (0, 1))
+        self.assertEqual(model.params["Defence"]["params"]["type"], "preprocessor")
 
     def test_initialize_art_classifier(self):
         defence = FeatureSqueezing(bit_depth=4, clip_values=(0, 1))
@@ -135,7 +136,7 @@ class testModel(unittest.TestCase):
             art=True,
             classifier=True,
         )
-        model()
+        model(art = True)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -151,7 +152,7 @@ class testModel(unittest.TestCase):
             art=True,
             classifier=False,
         )
-        model()
+        model(art = True)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -162,6 +163,7 @@ class testModel(unittest.TestCase):
         data = Data("iris", train_size=0.8)
         data()
         model = Model(KNeighborsClassifier(), model_type="sklearn")
+        model(art = True)
         model.fit(data.X_train, data.y_train)
         self.assertIsInstance(model.predict(data.X_test), np.ndarray)
 
@@ -176,6 +178,7 @@ class testModel(unittest.TestCase):
         model = Model(
             LinearRegression(), model_type="sklearn", defence=defence, classifier=False
         )
+        model(art = True)
         model.fit(data.X_train, data.y_train)
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))

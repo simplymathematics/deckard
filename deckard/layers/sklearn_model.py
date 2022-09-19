@@ -27,7 +27,7 @@ def sklearn_model(args) -> Experiment:
         data = Data(Path(args.inputs["folder"], args.inputs["data"]))
     model = Model(model, art=False)
     exp = Experiment(data=data, model=model)
-    exp(filename=args.outputs["model"], path=args.outputs["folder"])
+    exp(model_file=args.outputs["model"], path=args.outputs["folder"])
     assert Path(
         args.outputs["folder"], args.outputs["model"]
     ).exists(), "Problem creating file: {}".format(

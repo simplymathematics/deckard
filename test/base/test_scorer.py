@@ -34,7 +34,7 @@ class testScorer(unittest.TestCase):
         self.config = {"ACC": accuracy_score}
         self.cl_config = CLASSIFIER_SCORERS
         self.re_config = REGRESSOR_SCORERS
-        experiment(path=self.path, filename=self.model_name)
+        experiment(path=self.path, model_file=self.model_name)
 
     def test_scorer(self):
         scorer = Scorer(config=self.config)

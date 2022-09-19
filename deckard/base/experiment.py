@@ -3,7 +3,8 @@ import logging, os, pickle
 
 # Operating System
 from time import process_time
-import json
+import json, yaml
+from pathlib import Path
 from typing import Union
 from copy import deepcopy
 from pandas import DataFrame, Series
@@ -14,7 +15,6 @@ from pandas import Series
 
 
 
-from hashlib import md5 as my_hash
 from deckard.base.model import Model
 from deckard.base.data import Data
 from deckard.base.hashable import BaseHashable
@@ -36,7 +36,7 @@ class Experiment(BaseHashable):
     """
 
     def __init__(
-        self, data: Data, model: Model, verbose: int = 1, is_fitted: bool = False
+        self, data: Data, model: Model, verbose: int = 1, is_fitted: bool = False,
     ):
         """
         Creates an experiment object
@@ -64,46 +64,45 @@ class Experiment(BaseHashable):
             "data": hash(data),
         }
 
-    def run(self, **kwargs) -> None:
+    def fit(self) -> None:
         """
         Builds model.
         """
-        time_dict = {}
         self.model.is_fitted = self.is_fitted
         if not self.is_fitted:
-            start = process_time()
-            self.model.fit(self.data.X_train, self.data.y_train, **kwargs)
-            end = process_time()
-            time_dict["fit"] = end - start
+            self.model.fit(self.data.X_train, self.data.y_train)
         else:
-            time_dict["fit"] = np.nan
-        start = process_time()
+            logger.info("Model already fitted. Skipping fit.")
         self.predictions = self.model.predict(self.data.X_test)
-        end = process_time()
-        time_dict["predict"] = end - start
-        self.time_dict = time_dict
+        self.time_dict = self.model.time_dict
         self.params['if_fitted'] = True
         self.hash = hash(self)
 
-    def __call__(self, path, filename: str = None, prefix=None, **kwargs) -> None:
+    def __call__(self, path, model_file = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json") -> None:
         """
-        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. Returns self with added scores, predictions, and time_dict attributes.
+        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. 
+        Returns self with added scores, predictions, and time_dict attributes.
         """
-        self.data()
-        self.model()
+        if not hasattr(self.data, "X_train"):
+            logger.debug("Data not initialized. Initializing.")
+            self.data()
+        if isinstance(self.model.model, (Path, str)):
+            logger.debug("Model not initialized. Initializing.") 
+            self.model()
         self.ground_truth = self.data.y_test
         if not os.path.isdir(path):
             os.mkdir(path)
-        self.run(**kwargs)
+        self.fit()
         params_file = self.save_params(
             path=path,
             prefix=prefix,
         )
-        preds_file = self.save_predictions(path=path, prefix=prefix)
-        truth_File = self.save_ground_truth(path=path, prefix=prefix)
-        time_file = self.save_time_dict(path=path, prefix=prefix)
-        model_name = str(hash(self.model)) if filename is None else filename
-        model_file = self.save_model(filename=model_name, path=path)
+        preds_file = self.save_predictions(filename = predictions_file, path=path, prefix=prefix)
+        truth_File = self.save_ground_truth(filename = ground_truth_file, path=path, prefix=prefix)
+        time_file = self.save_time_dict(filename = time_dict_file, path=path, prefix=prefix)
+        model_file = os.path.join(path, model_file)
+        model_name = str(hash(self.model)) if model_file is None else model_file
+        model_file = self.save_model(filename=Path(model_name).name, path=path)
         # TODO: Fix scoring
         return (params_file, preds_file, truth_File, model_file, time_file)
 
@@ -148,7 +147,7 @@ class Experiment(BaseHashable):
                 filename = key.lower() + "_params" + filetype
             filename = os.path.join(path, filename)
             with open(filename, "w") as f:
-                json.dump(str(self.params[key]), f, indent=4)
+                yaml.dump(value, f, indent=4)
             filenames.append(os.path.join(path, filename))
             logger.info(
                 "Saving {} parameters to {}".format(key, os.path.join(path, filename))

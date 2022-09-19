@@ -28,7 +28,7 @@ class testAttackExperiment(unittest.TestCase):
         data()
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path, art=True)
-        model().fit(data.X_train, data.y_train)
+        model(art = True).fit(data.X_train, data.y_train)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
         experiment = AttackExperiment(data=data, model=model, attack=attack)
         experiment(filename=self.file, path=self.path)
@@ -40,7 +40,7 @@ class testAttackExperiment(unittest.TestCase):
         data()
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path)
-        model().fit(data.X_train, data.y_train)
+        model(art = True).fit(data.X_train, data.y_train)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
         experiment = AttackExperiment(data=data, model=model, attack=attack)
         experiment.save_params(path=self.path)
@@ -52,16 +52,15 @@ class testAttackExperiment(unittest.TestCase):
         ]:
             self.assertTrue(path.exists(path.join(self.path, file)))
 
-    def test_get_attack(self):
+    def test_attack_params(self):
         data = Data("iris", test_size=30)
         data()
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path)
-        model().fit(data.X_train, data.y_train)
+        model(art= True).fit(data.X_train, data.y_train)
         attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
         experiment = AttackExperiment(data=data, model=model, attack=attack)
-        self.assertIsInstance(experiment.get_attack(), object)
-        self.assertEqual(experiment.get_attack(), attack)
+        
 
     def test_run_attack(self):
         data = Data("iris", test_size=30)
