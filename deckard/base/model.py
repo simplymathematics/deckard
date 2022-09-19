@@ -36,7 +36,7 @@ from deckard.base.hashable import BaseHashable
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 
-# __all__ = ["Model"]
+__all__ = ["Model"]
 
 class Model(BaseHashable):
     """Creates a model object that includes a dicitonary of passed parameters."""
@@ -54,6 +54,7 @@ class Model(BaseHashable):
         url=None,
         fit_params: dict = None,
         predict_params: dict = None,
+        clip_values: tuple = None,
     ):
         """
         Initialize the model object.
@@ -65,10 +66,11 @@ class Model(BaseHashable):
         self.path = path
         self.is_fitted = is_fitted
         self.url = url
-        self.classifier = classifier
         self.model = model
+        self.clip_values = clip_values
         _ = dict(vars(self))
         self.params = _
+        self.classifier = classifier
         self.art = art if art else False
         self.defence = defence if defence is not None else None
         self.pipeline = pipeline if pipeline is not None else None
@@ -201,7 +203,7 @@ class Model(BaseHashable):
         return self
         
     def initialize_art_classifier(
-        self, clip_values: tuple = (0, 255), **kwargs
+        self, clip_values: tuple = None, **kwargs
     ) -> None:
         """
         Initialize the classifier.
@@ -211,6 +213,8 @@ class Model(BaseHashable):
         trainers = []
         transformers = []
         # Find defence types
+        if clip_values is None:
+            clip_values = self.clip_values
         if hasattr(self, "Defence"):
             self.params["Defence"].update(
                 {"type": str(type(self.defence)).split(".")[-1].split("'")[0]}
@@ -352,7 +356,17 @@ class Model(BaseHashable):
         self.params['Defence']['name'] = defence_tuple[0].split('.')[-1]
         self.params['Defence']['params'] = defence_tuple[1]
         self.params['Defence']['id'] = id_
-        self.defence = generate_object_from_tuple(defence_tuple)
+        try:
+            self.defence = generate_object_from_tuple(defence_tuple)
+        except TypeError as e:
+            if "clip_values" in str(e):
+                self.defence = generate_object_from_tuple(defence_tuple, self.clip_values)
+            elif "estimator" in str(e):
+                self.defence = generate_object_from_tuple(defence_tuple, self.model)
+            elif "classifier" in str(e):
+                self.defence = generate_object_from_tuple(defence_tuple, self.model)
+            else:
+                raise e
         self.params['Defence']['type'] = str(type(defence))
         if "preprocessor" in str(type(self.defence)):
             self.params["Defence"].update({"type": "preprocessor"})
@@ -422,15 +436,20 @@ class Model(BaseHashable):
         if hasattr(self, "model") and hasattr(self.model, "save"):
             if filename.endswith(".pickle"):
                 filename = filename[:-7]
+                flag = True
             try:
-                self.model.save(filename=filename, path=path)
+                self.model.save(filename, path)
             except:
-                ART_DATA_PATH = path
-                self.model.save(filename=filename)
+                os.mkdir(os.path.join(path, filename))
+                fullpath = os.path.join(path, filename)
+                self.model.save(fullpath)
+            if flag:
+                filename = filename + ".pickle"
         else:
             with open(os.path.join(path, filename), "wb") as f:
                 pickle.dump(self.model, f)
-        return os.path.join(path, filename)
+        print("Saved model to {}".format(os.path.join(path, filename)))
+        return filename
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray = None, **kwargs) -> None:
         """

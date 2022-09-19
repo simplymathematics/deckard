@@ -89,8 +89,8 @@ class testData(unittest.TestCase):
         with open(os.path.join(self.path, "test.json"), "w") as f:
             json.dump(str(data), f)
         data2 = Data(os.path.join(self.path, "test.json"))
-        data = dict(data)
-        data2 = dict(data2)
+        data = dict(data.params)
+        data2 = dict(data2.params)
         # TODO: fix this
         del data["dataset"]
         del data2["dataset"]
@@ -103,7 +103,7 @@ class testData(unittest.TestCase):
         data2 = Data(**params)
         data2()
         self.assertEqual(data, data2)
-        self.assertDictEqual(dict(data), dict(data2))
+        self.assertDictEqual(dict(data.params), dict(data2.params))
 
     def tearDown(self):
         shutil.rmtree(self.path)

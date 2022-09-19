@@ -147,23 +147,25 @@ class testExperiment(unittest.TestCase):
         data = Data("iris", test_size=30)
         model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
-        experiment.save_params(path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, "model_params.json")))
+        filenames = experiment.save_params(filename = "params.json", path=self.path)
+        for f in filenames:
+            filename = path.join(self.path, f)
+            self.assertTrue(path.exists(filename))
 
     def test_save_model(self):
         data = Data("iris", test_size=30)
         model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
-        experiment.save_model(filename="model", path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, "model")))
+        filename = experiment.save_model(filename="model", path=self.path)
+        self.assertTrue(path.exists(filename))
 
     def test_save_predictions(self):
         data = Data("iris", test_size=30)
         model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
         experiment(path=self.path)
-        experiment.save_predictions(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        filename = experiment.save_predictions(filename=self.file, path=self.path)
+        self.assertTrue(filename)
 
     ####################################################################################################################
     #                                                    DEFENSES                                                      #

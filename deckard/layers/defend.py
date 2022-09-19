@@ -1,9 +1,9 @@
-import logging, os
-from typing import Type
-from deckard.base import Experiment, Model, Data, Scorer, generate_experiment_list
-from deckard.base.parse import generate_tuple_from_yml, generate_object_from_tuple
-import numpy as np
+import logging
+import os
 from pathlib import Path
+
+import numpy as np
+from deckard.base import Data, Experiment, Model
 
 logger = logging.getLogger(__name__)
 
@@ -15,48 +15,9 @@ def defend(args) -> None:
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
     model_file = Path(args.inputs["folder"], args.inputs["model"])
-    try:
-        art_model = Model(
-            model_file,
-            model_type=args.inputs["type"],
-            clip_values=clip_values,
-            art=True,
-        )
-    except TypeError as e:
-        if "unexpected keyword argument" in str(e):
-            art_model = Model(model_file, model_type=args.inputs["type"], art=True)
-        else:
-            raise e
-    try:
-        defence = generate_object_from_tuple(generate_tuple_from_yml(args.config))
-    except TypeError as e:
-        try:
-            defence = generate_object_from_tuple(
-                generate_tuple_from_yml(args.config), clip_values
-            )
-        except:
-            try:
-                defence = generate_object_from_tuple(
-                    generate_tuple_from_yml(args.config), art_model.model
-                )
-            except:
-                raise e
-    try:
-        defended_model = Model(
-            model_file,
-            model_type=args.inputs["type"],
-            clip_values=clip_values,
-            defence=defence,
-            art=True,
-        )
-    except TypeError as e:
-        if "unexpected keyword argument" in str(e):
-            defended_model = Model(
-                model_file, model_type=args.inputs["type"], art=True, defence=defence
-            )
-        else:
-            raise e
-    experiment = Experiment(data=data, model=defended_model, is_fitted=True)
+    model = Model(model_file, art=True, clip_values=clip_values, defence = args.config, model_type = args.inputs['type'])
+    model(art = True)
+    experiment = Experiment(data=data, model=model, is_fitted=True)
     filename = experiment(path=args.outputs["folder"], model_file=args.outputs["model"])
     return filename
 
@@ -64,6 +25,7 @@ def defend(args) -> None:
 if __name__ == "__main__":
     # args
     import argparse
+
     import dvc.api
 
     parser = argparse.ArgumentParser(

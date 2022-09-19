@@ -68,7 +68,7 @@ stages:
         - ${art_model.outputs.folder}/${art_model.outputs.ground_truth}
         - ${art_model.outputs.folder}/${art_model.outputs.predictions}
       deps:
-        - ${train.outputs.folder}/${train.outputs.model}
+        - ${featurize.outputs.folder}/${featurize.outputs.model}
         - ${prepare.outputs.folder}/${prepare.outputs.file}
       # metrics:
       #   - art_model.scores
@@ -84,7 +84,7 @@ stages:
         - ${defend.outputs.folder}/${defend.outputs.ground_truth}
         - ${defend.outputs.folder}/${defend.outputs.predictions}
       deps:
-        - ${train.outputs.folder}/${train.outputs.model}
+        - ${art_model.outputs.folder}/${art_model.outputs.model}
         - ${prepare.outputs.folder}/${prepare.outputs.file}
       # metrics:
       #   - defend.scores
@@ -113,7 +113,7 @@ stages:
       plots: 
         - ${visualise.outputs.folder}/${visualise.plots.roc_auc}
       deps:
-        - ${train.outputs.folder}/${train.outputs.model}
+        - ${defend.outputs.folder}/${defend.outputs.model}
         - ${prepare.outputs.folder}/${prepare.outputs.file}
       # metrics:
       #   - visualise.scores

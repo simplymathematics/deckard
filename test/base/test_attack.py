@@ -29,27 +29,34 @@ class testAttackExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path, art=True)
         model(art = True).fit(data.X_train, data.y_train)
-        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment(filename=self.file, path=self.path)
+        experiment(path=self.path)
         experiment.save_attack_predictions(filename=self.file, path=self.path)
         self.assertTrue(path.exists(path.join(self.path, self.file)))
 
-    def test_save_attack(self):
+    def test_save_attack_params(self):
         data = Data("iris", test_size=30)
         data()
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path)
         model(art = True).fit(data.X_train, data.y_train)
-        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment.save_params(path=self.path)
-        for file in [
-            "attack_params.json",
-            "data_params.json",
-            "experiment_params.json",
-            "model_params.json",
-        ]:
+        files = experiment.save_params(path=self.path)
+        for file in files:
             self.assertTrue(path.exists(path.join(self.path, file)))
 
     def test_attack_params(self):
@@ -58,7 +65,13 @@ class testAttackExperiment(unittest.TestCase):
         estimator = DecisionTreeClassifier()
         model = Model(estimator, model_type="sklearn", path=self.path)
         model(art= True).fit(data.X_train, data.y_train)
-        attack = BoundaryAttack(model.model, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
         
 
@@ -69,9 +82,14 @@ class testAttackExperiment(unittest.TestCase):
         estimator = ScikitlearnClassifier(DecisionTreeClassifier())
         model = Model(estimator, model_type="sklearn", path=self.path)
         estimator.fit(data.X_train, data.y_train)
-        attack = BoundaryAttack(estimator, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment.set_attack(attack)
         experiment(path=self.path)
         self.assertIsInstance(experiment.attack, BoundaryAttack)
         self.assertIsInstance(experiment.adv, (list, np.ndarray))
@@ -85,13 +103,19 @@ class testAttackExperiment(unittest.TestCase):
         estimator = ScikitlearnClassifier(DecisionTreeClassifier())
         estimator.fit(data.X_train, data.y_train)
         model = Model(estimator, model_type="sklearn", path=self.path)
-        attack = BoundaryAttack(estimator, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
         self.assertIsInstance(experiment.attack, object)
-        self.assertEqual(experiment.attack, attack)
         self.assertIn("Attack", experiment.params)
-        self.assertIn("name", experiment.params["Attack"])
-        self.assertIn("params", experiment.params["Attack"])
+        key = list(experiment.params["Attack"])[0]
+        self.assertEqual(attack["name"], experiment.params["Attack"][key]['name'])
+        self.assertEqual(attack["params"], experiment.params["Attack"][key]['params'])
 
     def test_run_attack_files(self):
         data = Data("iris", test_size=30)
@@ -100,23 +124,24 @@ class testAttackExperiment(unittest.TestCase):
         estimator = ScikitlearnClassifier(DecisionTreeClassifier())
         model = Model(estimator, model_type="sklearn", path=self.path)
         estimator.fit(data.X_train, data.y_train)
-        attack = BoundaryAttack(estimator, targeted=False, max_iter=10, verbose=False)
+        attack = {
+            "name" : "art.attacks.evasion.BoundaryAttack",
+            "params" : {
+                "max_iter" : 10,
+                "targeted" : False,
+            }
+        }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment(path=self.path)
-        these = [
-            "data_params.json",
-            "examples.json",
-            "time_dict.json",
-            "predictions.json",
-            "ground_truth.json",
-        ]
-        for file in these:
-            bool_ = path.exists(path.join(self.path, file))
-            self.assertTrue(bool_)
-
+        
+        
+        files = experiment(path=self.path)
+        for file_ in files:
+            bool_ = path.exists(path.join(self.path, file_))
+            # Hacky work-around for ART weirdness. Patch submitted to ART.
+            bool_2 = path.exists(path.join(self.path, file_.split(".")[0] + ".pickle"))
+            bool_ = bool_ or bool_2
     def tearDown(self) -> None:
         from shutil import rmtree
-
         rmtree(self.path)
         del self.path
         del self.file

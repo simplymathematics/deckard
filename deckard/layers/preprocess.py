@@ -6,17 +6,15 @@ from pathlib import Path
 
 import dvc.api
 from deckard.base import Data, Experiment, Model
-from deckard.layers.utils import make_output_folder
+from deckard.base.parse   import make_output_folder
 from sklearn.pipeline import Pipeline
-from deckard.layers.utils import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)
 
 
 def preprocess(args) -> Experiment:
     data = Data(args.inputs["data"])
-    model_file = Path(args.inputs["folder"], args.inputs["model"])
-    preprocessor = parse_config(args.config)
+    model_file = Path(args.inputs["folder"]).joinpath(args.inputs["model"])
     assert model_file.exists(), "Problem finding model file: {}".format(model_file)
     model = Model(model_file, art=False, model_type=args.inputs["type"])
     model()
@@ -24,7 +22,7 @@ def preprocess(args) -> Experiment:
     assert isinstance(exp, Experiment), "Problem initializing experiment"
     new = deepcopy(exp)
     new.model.insert_sklearn_preprocessor(
-        preprocessor=preprocessor, position=args.position, name=args.layer_name
+        preprocessor=args.config, position=args.position, name=args.layer_name
     )
     assert isinstance(new, Experiment), "Problem inserting preprocessor"
     assert isinstance(
@@ -32,14 +30,14 @@ def preprocess(args) -> Experiment:
     ), "Problem inserting preprocessor. Model is not a Pipeline. It is a {}".format(
         type(new.model)
     )
-    new(model_file=args.outputs["model"], path=output_folder)
+    files = new(model_file=args.outputs["model"], path=output_folder)
     assert Path(
         output_folder, args.outputs["model"]
     ).exists(), "Problem creating file: {}".format(
         Path(output_folder, args.outputs["model"])
     )
     logger.debug("Preprocessing complete")
-    return new
+    return files
 
 
 if __name__ == "__main__":

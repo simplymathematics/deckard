@@ -5,8 +5,8 @@ prepare:
       shuffle : True
       stratify : True
       random_state : 0
-      test_size : 2100
-      train_size : .001
+      test_size : 200
+      train_size : 200
   outputs:
     folder : prepare
     file : data.pickle
@@ -42,7 +42,7 @@ defend:
     type : 'tf1'
     classifier : True
     is_fitted : False
-    model: art_model/model
+    model: art_model/model/
   config : 
     name: art.defences.preprocessor.FeatureSqueezing
     params: 

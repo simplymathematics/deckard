@@ -15,7 +15,7 @@ import numpy as np
 class testModel(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
-        self.file = "test_model"
+        self.file = "test_model.pickle"
         self.url = "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
 
     def test_model(self):
@@ -61,8 +61,6 @@ class testModel(unittest.TestCase):
         model1 = Model(model=LogisticRegression(), model_type="sklearn")
         self.assertEqual(model1.model_type, "sklearn")
         model1.set_params({"penalty": "l1"})
-        self.assertRaises(ValueError, model1.set_params, {"clip_values": (0, 1)})
-        self.assertIn("penalty='l1'", str(model1))
         self.assertRaises(ValueError, model1.set_params, {"potato": "potato"})
 
     def test_save_model(self):
@@ -70,7 +68,7 @@ class testModel(unittest.TestCase):
             LogisticRegression(), model_type="sklearn", path=self.path, classifier=False
         )
         filename = model1.save_model(path=self.path, filename=self.file)
-        self.assertTrue(os.path.exists(filename))
+        self.assertTrue(os.path.exists(os.path.join(self.path, filename)))
 
     def test_load(self):
         model = Model(

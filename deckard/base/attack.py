@@ -1,13 +1,17 @@
-import os, logging
-from pandas import Series, DataFrame
-from time import process_time
+import logging
+import os
 from json import dumps
-from .hashable import my_hash
+from pathlib import Path
+from time import process_time
+from typing import Callable, Type, Union
+
+from .parse import generate_tuple_from_yml, generate_object_from_tuple
+from pandas import DataFrame, Series
+
 from .data import Data
-from .model import Model
 from .experiment import Experiment
-from .hashable import BaseHashable
-from typing import Callable
+from .hashable import BaseHashable, my_hash
+from .model import Model
 
 ART_NUMPY_DTYPE = "float32"
 
@@ -19,15 +23,14 @@ class AttackExperiment(Experiment):
 
     def __init__(
         self,
-        data: Data,
+        data : Data,
         model: Model,
-        attack: Callable,
-        verbose: int = 1,
-        name: str = None,
+        attack:Union[str, Path, dict],
         is_fitted: bool = False,
-        filename: str = None,
-        model_type="sklearn",
-    ):
+        fit_params: dict = None,
+        predict_params: dict = None,
+         
+):
         """
         Creates an experiment object
         :param data: Data object
@@ -37,50 +40,47 @@ class AttackExperiment(Experiment):
         :param scorers: Dictionary of scorers
         :param name: Name of experiment
         """
-        self.model = model
-        self.model_type = model_type
-        self.data = data
-        self.name = (
-            self.data.dataset + "_" + str(hash(model)) + "_" + str(hash(attack))
-            if name is None
-            else name
+        assert isinstance(attack, (dict, str, Path)), "Attack must be a dictionary, str, or path. It is type {}".format(type(attack))
+        assert "name" and "params" in attack
+        super().__init__(
+            data=data,
+            model=model,
+            is_fitted=is_fitted,
+            fit_params=fit_params,
+            predict_params=predict_params,
         )
-        self.verbose = verbose
-        self.is_fitted = is_fitted
-        self.predictions = None
-        self.ground_truth = None
-        self.time_dict = None
-        self.params = dict()
-        self.params["Model"] = dict(model.params)
-        self.params["Data"] = dict(data)
-        self.params["Attack"] = {"name": str(type(attack)).split("'")[1].split(".")[-1], "params": vars(attack)}
+        config_tuple = generate_tuple_from_yml(attack)
+        if 'Attack' not in self.params:
+            self.params['Attack'] = {}
+        id_ = my_hash(config_tuple) if isinstance(attack, dict) else Path(attack).name.split('.')[0]
+        try:
+            attack = generate_object_from_tuple(config_tuple)
+        except TypeError as e:
+            if 'classifier' or 'estimator' in str(e):
+                attack = generate_object_from_tuple(config_tuple, self.model.model)
+        id_ = my_hash(config_tuple) 
+        self.params['Attack'][id_] = {"name": config_tuple[0], "params" : config_tuple[1]}
         self.attack = attack
-        self.attack = attack
-        self.hash = hash(self)
-        self.params["Experiment"] = {
-            "name": self.hash,
-            "verbose": self.verbose,
-            "is_fitted": self.is_fitted,
-            "id": self.hash,
-            "attack": hash(str(self.params["Attack"])),
-            "model": hash(model),
-            "data": hash(data),
-        }
+        
 
-    def __call__(self, path, prefix=None, **kwargs):
+    def __call__(self, path, model_file:Union[str,Path] = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json", params_file:Union[str, Path] = "params.json", attack_samples_file:Union[str,Path] = "attack_samples.json", attack_prefix = "attack", generate_params:dict = None, benign_prefix = None) -> list:
         """
         Runs attack.
         """
-        assert hasattr(self, "attack")
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        self.run_attack(**kwargs)
-        self.save_params(prefix=prefix, path=path)
-        self.save_time_dict(prefix=prefix, path=path)
-        self.save_predictions(prefix=prefix, path=path)
-        self.save_ground_truth(prefix=prefix, path=path)
-        self.save_attack_results(prefix=prefix, path=path)
-        return None
+        prefix = attack_prefix
+        files = super().__call__(path, model_file, benign_prefix, predictions_file, ground_truth_file, time_dict_file, params_file)
+        if generate_params is not None:
+            self.run_attack(**generate_params)
+        else:
+            self.run_attack()
+        assert hasattr(self, "adv"), "Attack does not have attribute adv. Something went wrong."
+        assert hasattr(self, "adv_samples"), "Attack does not have attribute adv_samples. Something went wrong."
+        assert hasattr(self, "time_dict"), "Attack does not have attribute time_dict. Something went wrong."
+        
+        pred_file = self.save_attack_predictions(prefix = prefix, path=path)
+        sampl_file = self.save_attack_samples(prefix = prefix, path=path)
+        files.extend([pred_file, sampl_file])
+        return files
 
     def run_attack(self, targeted: bool = False, **kwargs) -> None:
         """
@@ -113,33 +113,7 @@ class AttackExperiment(Experiment):
         self.time_dict.update({"adv_pred_time": end - start})
         return None
 
-    def set_attack(self, attack: object) -> None:
-        """
-        Adds an attack to an experiment
-        :param experiment: experiment to add attack to
-        :param attack: attack to add
-        """
-        attack_params = {}
-        for key, value in attack.__dict__.items():
-            if isinstance(value, int):
-                attack_params[key] = value
-            elif isinstance(value, float):
-                attack_params[key] = value
-            elif isinstance(value, str):
-                attack_params[key] = value
-            elif isinstance(value, list):
-                attack_params[key] = value
-            elif isinstance(value, dict):
-                attack_params[key] = str(value)
-            elif isinstance(value, tuple):
-                attack_params[key] = value
-            elif isinstance(value, type(None)):
-                attack_params[key] = None
-            else:
-                attack_params[key] = str(type(value))
-        assert isinstance(attack, object)
-        self.params["Attack"] = {"name": str(type(attack)), "params": attack_params}
-        return attack
+    
 
     def get_attack(self):
         """
@@ -148,26 +122,7 @@ class AttackExperiment(Experiment):
         """
         return self.attack
 
-    def save_attack_results(self, prefix=None, path: str = ".") -> None:
-        """
-        Saves all data to specified folder, using default filenames.
-        """
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        # if hasattr(self, "adv_scores"):
-        #     self.save_adv_scores(path = path)
-        if hasattr(self, "adv"):
-            self.save_attack_predictions(path=path)
-        if hasattr(self, "adv_samples"):
-            self.save_attack_samples(path=path)
-        if hasattr(self, "time_dict"):
-            self.save_time_dict(path=path, filename="time_dict.json")
-        if hasattr(self.model.model, "cv_results_"):
-            self.save_cv_scores(path=path)
-            self.save_attack_samples(path=path)
-        return None
-
-    def save_attack_samples(self, filename: str = "examples.json", path: str = "."):
+    def save_attack_samples(self, prefix = None, filename: str = "examples.json", path: str = "."):
         """
         Saves adversarial examples to specified file.
         :param filename: str, name of file to save adversarial examples to.
@@ -175,14 +130,16 @@ class AttackExperiment(Experiment):
         """
         assert os.path.isdir(path), "Path to experiment does not exist"
         assert hasattr(self, "adv_samples"), "No adversarial samples to save"
+        if prefix is not None:
+            filename = prefix + "_" + filename
         adv_file = os.path.join(path, filename)
         adv_results = DataFrame(self.adv_samples.reshape(self.adv_samples.shape[0], -1))
         adv_results.to_json(adv_file)
         assert os.path.exists(adv_file), "Adversarial example file not saved"
-        return None
+        return adv_file
 
     def save_attack_predictions(
-        self, filename: str = "predictions.json", path: str = "."
+        self, prefix = None, filename: str = "predictions.json", path: str = "."
     ) -> None:
         """
         Saves adversarial predictions to specified file.
@@ -190,8 +147,10 @@ class AttackExperiment(Experiment):
         :param path: str, path to folder to save adversarial predictions. If none specified, predictions are saved in current working directory. Must exist.
         """
         assert os.path.isdir(path), "Path to experiment does not exist"
+        if prefix is not None:
+            filename = prefix + "_" + filename
         adv_file = os.path.join(path, filename)
         adv_results = DataFrame(self.adv)
         adv_results.to_json(adv_file)
         assert os.path.exists(adv_file), "Adversarial example file not saved"
-        return None
+        return adv_file

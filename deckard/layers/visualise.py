@@ -11,7 +11,7 @@ from yellowbrick.exceptions import YellowbrickValueError
 logger = logging.getLogger(__name__)
 
 
-def visualise_classifier_experiment(
+def visualise_sklearn_classifier_experiment(
     args: argparse.Namespace, path: Union[str, Path] = Path("."), type: str = "ROC_AUC"
 ) -> None:
     """
@@ -51,7 +51,7 @@ def visualise_classifier_experiment(
     if type == "ROC_AUC":
         from yellowbrick.classifier import ROCAUC
 
-        func = ROCAUC(viz_mod.model, classes=classes)
+        func = ROCAUC(viz_mod.model, classes=classes, force_model = True)
         outpath = Path(args.outputs["folder"], "ROC_AUC.pdf")
         outpath = outpath.resolve()
         outpath.parent.mkdir(parents=True, exist_ok=True)
@@ -62,6 +62,7 @@ def visualise_classifier_experiment(
     func.show(outpath=outpath)
     logger.info("Saving visualisation to {}".format(outpath))
     return outpath.resolve()
+
 
 
 if __name__ == "__main__":
@@ -88,4 +89,4 @@ if __name__ == "__main__":
             setattr(args, k, v)
     logger.info(f"Running {cli_args.layer_name} with args: {args}")
     # assert Path(args.config).exists(), f"Config file {args.config} does not exist"
-    output = visualise_classifier_experiment(args, path=args.inputs["folder"])
+    output = visualise_sklearn_classifier_experiment(args, path=args.inputs["folder"])

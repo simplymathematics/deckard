@@ -2,7 +2,7 @@ from deckard.base.data import Data
 import logging, argparse
 from pathlib import Path
 import dvc.api
-from .utils import make_output_folder
+from deckard.base.parse  import make_output_folder
 
 logger = logging.getLogger(__name__)
 
