@@ -75,7 +75,7 @@ class Experiment(BaseHashable):
             logger.info("Model already fitted. Skipping fit.")
         self.predictions = self.model.predict(self.data.X_test)
         self.time_dict = self.model.time_dict
-        self.params['if_fitted'] = True
+        self.params["Experiment"]['if_fitted'] = True
         self.hash = hash(self)
 
     def __call__(self, path, model_file = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json") -> None:
