@@ -434,6 +434,7 @@ class Model(BaseHashable):
         else:
             filename = self.filename
         if hasattr(self, "model") and hasattr(self.model, "save"):
+            flag = False
             if filename.endswith(".pickle"):
                 filename = filename[:-7]
                 flag = True
@@ -443,7 +444,7 @@ class Model(BaseHashable):
                 os.mkdir(os.path.join(path, filename))
                 fullpath = os.path.join(path, filename)
                 self.model.save(fullpath)
-            if flag:
+            if flag == True:
                 filename = filename + ".pickle"
         else:
             with open(os.path.join(path, filename), "wb") as f:

@@ -38,8 +38,8 @@ class testAttackExperiment(unittest.TestCase):
         }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
         experiment(path=self.path)
-        experiment.save_attack_predictions(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        file = experiment.save_attack_predictions(filename=self.file, path=self.path)
+        self.assertTrue(path.exists(file))
 
     def test_save_attack_params(self):
         data = Data("iris", test_size=30)
