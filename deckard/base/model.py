@@ -68,20 +68,20 @@ class Model(BaseHashable):
         self.url = url
         self.model = model
         self.clip_values = clip_values
-        _ = dict(vars(self))
-        self.params = _
+        
         self.classifier = classifier
         self.art = art if art else False
         self.defence = defence if defence is not None else None
         self.pipeline = pipeline if pipeline is not None else None
         self.fit_params = fit_params if fit_params is not None else {}
         self.predict_params = predict_params if predict_params is not None else {}
-        
+        _ = dict(vars(self))
+        self.params = _
         if defence is not None:
             self.art = True
             self.insert_art_defence(defence)
         if pipeline is not None:
-            self.insert_sklearn_preprocessor(pipeline)
+           self.insert_sklearn_preprocessor(pipeline)
 
     def set_params(self, params: dict = None):
         """
@@ -313,7 +313,8 @@ class Model(BaseHashable):
             self.params['Pipeline'] = {}
         id_ = my_hash(config_tuple) if isinstance(preprocessor, dict) else Path(preprocessor).name.split('.')[0]
         preprocessor = generate_object_from_tuple(config_tuple)
-        self.params['Pipeline'][name] = {'id':id_, "type": str(type(preprocessor)).split(".")[-1].split("'")[0], "params" : config_tuple[1], "position" : position}      
+        # TODO: Fix pipeline params
+        # self.params['Pipeline'][name] = {'id':id_, "type": str(type(preprocessor)).split(".")[-1].split("'")[0], "params" : config_tuple[1], "position" : position}      
         # If it's already a pipeline
         if isinstance(self.model, Pipeline):
             pipe = self.model
@@ -466,7 +467,7 @@ class Model(BaseHashable):
         else:
             start = process_time()
             try:
-                self.model.fit(X_train, y_train, **opts)
+                self.model.fit(X_train, y_train, **kwargs, **opts)
             except ValueError as e:
                 if "y should be a 1d array" in str(e):
                     y_train = np.argmax(y_train, axis=1)
