@@ -1,0 +1,102 @@
+stages:
+  linear:
+    cmd: python  -m tikhonov.py --type linear
+    params:
+      - input_noise : 
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - output_ noise :
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - scale :
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - epochs : 
+        - 10000,
+      - learning_rate : 
+        - 1e-9, 
+        - 1e-6, 
+        - 1e-3,
+    outs:
+      - linear_predictions.json
+    metrics:
+      - linear_metrics.json
+    # plots:
+    #   - predictions.json
+    #     template : confusion
+    #     cache : True
+    #     template : confusion
+    #     x : actual
+    #     y : predictions
+  logistic:
+    cmd: python  -m tikhonov.py --type logistic
+    params:
+      - input_noise : 
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - output_ noise :
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - scale :
+        - 1e-6,
+        - 1e-5,
+        - 1e-4,
+        - 1e-3,
+        - 1e-2,
+        - 1e-1,
+        - 0,
+        - 1,
+        - 10,
+      - epochs : 
+        - 10000,
+      - learning_rate : 
+        - 1e-9, 
+        - 1e-6, 
+        - 1e-3,
+    outs:
+      - logistic_predictions.json
+    metrics:
+      - logistic_metrics.json
+      # plots:
+      #   - predictions.json
+      #     template : confusion
+      #     cache : True
+      #     template : confusion
+      #     x : actual
+      #     y : predictions
+

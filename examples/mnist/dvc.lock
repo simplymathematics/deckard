@@ -99,16 +99,16 @@ stages:
     cmd: python  -m deckard.layers.evaluate --layer_name evaluate
     deps:
     - path: art_model/
-      md5: b12e488264847c95be3e44437970a159.dir
-      size: 35426813
+      md5: 7a1261ee47f00c5e771bf40433c65f80.dir
+      size: 35426899
       nfiles: 10
     - path: attack/
-      md5: 8133a8a63546ca0e1e18f802b88c495c.dir
-      size: 25674242
+      md5: 5cb00a33ed0c32d30a03991af8d14cc1.dir
+      size: 25673542
       nfiles: 13
     - path: defend/
-      md5: 03b9dc32b8d05a0a82bde65be7c609f3.dir
-      size: 25599680
+      md5: 4722029587f70c936c3612bb65c86912.dir
+      size: 25599789
       nfiles: 10
     - path: prepare/data.pickle
       md5: 4e59a3b535717f8c94defed69fd9068e
@@ -177,8 +177,8 @@ stages:
     cmd: python  -m deckard.layers.defend --layer_name defend
     deps:
     - path: art_model/
-      md5: b12e488264847c95be3e44437970a159.dir
-      size: 35426813
+      md5: 7a1261ee47f00c5e771bf40433c65f80.dir
+      size: 35426899
       nfiles: 10
     - path: prepare/data.pickle
       md5: 4e59a3b535717f8c94defed69fd9068e
@@ -198,15 +198,15 @@ stages:
           model: art_model/model/
     outs:
     - path: defend/
-      md5: 03b9dc32b8d05a0a82bde65be7c609f3.dir
-      size: 25599680
+      md5: 4722029587f70c936c3612bb65c86912.dir
+      size: 25599789
       nfiles: 10
   attack:
     cmd: python  -m deckard.layers.attack --layer_name attack
     deps:
     - path: defend
-      md5: 03b9dc32b8d05a0a82bde65be7c609f3.dir
-      size: 25599680
+      md5: 4722029587f70c936c3612bb65c86912.dir
+      size: 25599789
       nfiles: 10
     - path: prepare/data.pickle
       md5: 4e59a3b535717f8c94defed69fd9068e
@@ -239,8 +239,8 @@ stages:
             scores: scores.json
     outs:
     - path: attack/
-      md5: 8133a8a63546ca0e1e18f802b88c495c.dir
-      size: 25674242
+      md5: 5cb00a33ed0c32d30a03991af8d14cc1.dir
+      size: 25673542
       nfiles: 13
   art_model:
     cmd: python  -m deckard.layers.art_model --layer_name art_model
@@ -268,6 +268,6 @@ stages:
             scores: scores.json
     outs:
     - path: art_model/
-      md5: b12e488264847c95be3e44437970a159.dir
-      size: 35426813
+      md5: 7a1261ee47f00c5e771bf40433c65f80.dir
+      size: 35426899
       nfiles: 10

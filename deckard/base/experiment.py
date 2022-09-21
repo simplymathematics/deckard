@@ -52,7 +52,7 @@ class Experiment(BaseHashable):
         self.is_fitted = is_fitted
         self.params = {}
         self.params["Model"] = model.params
-        self.params["Data"] = model.params
+        self.params["Data"] = data.params
         self.data = data
         self.model = model
         self.hash = hash(self)
@@ -82,7 +82,7 @@ class Experiment(BaseHashable):
         self.params["Experiment"]['if_fitted'] = True
         self.hash = hash(self)
 
-    def __call__(self, path, model_file:Union[str,Path] = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json", params_file:Union[str, Path] = "params.json") -> list:
+    def __call__(self, path, model_file:Union[str,Path] = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json", params_file:Union[str, Path] = "params.yaml") -> list:
         """
         Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. 
         Returns self with added scores, predictions, and time_dict attributes.
@@ -145,6 +145,8 @@ class Experiment(BaseHashable):
         filenames = []
         newname = Path(filename).name
         for key, value in self.params.items():
+            if key == "is_fitted":
+                continue
             filename = newname
             if prefix is not None:
                 filename = prefix + key.lower() +"_"+  newname
@@ -191,8 +193,12 @@ class Experiment(BaseHashable):
             filename = prefix + "_" + filename
         prediction_file = os.path.join(path, filename)
         results = self.predictions
-        results = DataFrame(results)
-        results.to_json(prediction_file, orient="records")
+        if isinstance(results, (DataFrame, Series)):
+            results = results.values
+        elif isinstance(results, np.ndarray):
+            results = results.tolist()
+        with open(prediction_file, "w") as f:
+            json.dump(results, f)
         assert os.path.exists(prediction_file), "Prediction file not saved"
         return prediction_file
 
@@ -209,8 +215,12 @@ class Experiment(BaseHashable):
             filename = prefix + "_" + filename
         prediction_file = os.path.join(path, filename)
         results = self.ground_truth
-        results = DataFrame(results)
-        results.to_json(prediction_file, orient="records")
+        if isinstance(results, (DataFrame, Series)):
+            results = results.values
+        elif isinstance(results, np.ndarray):
+            results = results.tolist()
+        with open(prediction_file, "w") as f:
+            json.dump(results, f)
         assert os.path.exists(prediction_file), "Prediction file not saved"
         return prediction_file
 
@@ -227,16 +237,13 @@ class Experiment(BaseHashable):
         if prefix is not None:
             filename = prefix + "_" + filename
         cv_file = os.path.join(path, filename)
-        try:
-            cv_results = Series(self.model.model.model.cv_results_, name=str(self.hash))
-        except:
-            cv_results = Series(self.model.model.cv_results_, name=str(self.hash))
-        cv_results.to_json(cv_file, orient="records")
+        with open(cv_file, "w") as f:
+            json.dump(self.cv_scores, f, indent=4)
         assert os.path.exists(cv_file), "CV results file not saved"
         return cv_file
         
     def save_time_dict(
-        self, filename: str = "time_dict.json", prefix=None, path: str = "."
+        self, filename: str = "time_dict.yaml", prefix=None, path: str = "."
     ):
         """
         Saves time dictionary to specified file.
@@ -248,7 +255,8 @@ class Experiment(BaseHashable):
         if prefix is not None:
             filename = prefix + "_" + filename
         time_file = os.path.join(path, filename)
-        time_results = Series(self.time_dict, name=str(self.hash))
-        time_results.to_json(time_file, orient="records")
+        time_yaml = {self.hash : self.time_dict}
+        with open(time_file, "w") as f:
+            json.dump(time_yaml, f, indent=4)
         assert os.path.exists(time_file), "Time dictionary file not saved"
         return time_file

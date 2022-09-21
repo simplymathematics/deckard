@@ -71,16 +71,9 @@ class BaseHashable(object):
             elif isinstance(value, ndarray):
                 result = value.tolist()
             elif isinstance(value, Pipeline):
-                this = value.get_params(deep = True)
-                # print(this)
-                # input("Press Enter to continue...")
-                new_results['name'] = value.steps[-1][0]
-            elif hasattr(value, "get_params") and not isinstance(value, Pipeline):
-                new_results["name" ] = str(type(value)).split("'")[1]
-                try:
-                    new_results["params"] = value.get_params(deep = True)
-                except:
-                    new_results["params"] = value.get_params()
+                result = my_hash(value.get_params(deep = True))
+            elif isinstance(value, BaseEstimator):
+                result = my_hash(value)
             else:
                 result = my_hash(value)
             results[key] = str(result)

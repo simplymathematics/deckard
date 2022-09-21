@@ -59,7 +59,7 @@ class AttackExperiment(Experiment):
             if 'classifier' or 'estimator' in str(e):
                 attack = generate_object_from_tuple(config_tuple, self.model.model)
         id_ = my_hash(config_tuple) 
-        self.params['Attack'][id_] = {"name": config_tuple[0], "params" : config_tuple[1]}
+        self.params['Attack'][id_] = dict({"name": config_tuple[0], "params" : config_tuple[1]})
         self.attack = attack
         
 
