@@ -4,7 +4,7 @@ import dvc.api
 from os import path, mkdir
 from typing import Union
 from pathlib import Path
-from deckard.base.parse   import make_output_folder, parse_config
+from deckard.base.parse import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)
 

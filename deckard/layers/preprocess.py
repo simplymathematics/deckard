@@ -6,7 +6,7 @@ from pathlib import Path
 
 import dvc.api
 from deckard.base import Data, Experiment, Model
-from deckard.base.parse   import make_output_folder
+from deckard.base.parse import make_output_folder
 from sklearn.pipeline import Pipeline
 
 logger = logging.getLogger(__name__)

@@ -140,6 +140,7 @@ def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     del dependency
     return object_instance
 
+
 def parse_scorer_from_yml(filename: str) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
@@ -177,6 +178,7 @@ def parse_scorer_from_yml(filename: str) -> dict:
     assert isinstance(data, Data)
     logger.info("{} successfully parsed.".format(filename))
     return data
+
 
 def make_output_folder(output_folder: Union[str, Path]) -> Path:
     if not Path(output_folder).exists():
@@ -233,46 +235,51 @@ def create_config_dict(config: Union[str, Path]) -> list:
 def make_dict_list_from_tuple_list(tuple_list):
     dict_list = []
     for tup in tuple_list:
-        dict_list.append({'name': tup[0], 'params': tup[1]})
+        dict_list.append({"name": tup[0], "params": tup[1]})
     return dict_list
+
 
 def dump_dict_list_to_yaml(dict_list, folder):
     fullpaths = []
     for entry in dict_list:
         filename = my_hash(entry)
         full_path = Path(folder, filename + ".yaml")
-        config_dict = {"inputs" : {"config" : entry}}
-        with open(full_path, 'w') as f:
+        config_dict = {"inputs": {"config": entry}}
+        with open(full_path, "w") as f:
             yaml.dump(config_dict, f)
         fullpaths.append(full_path.name)
     return fullpaths
 
-def dump_stage_to_yaml(input_file, output_folder, prefix = "big"):
+
+def dump_stage_to_yaml(input_file, output_folder, prefix="big"):
     tuple_list = generate_tuple_list_from_yml(input_file)
     dict_list = make_dict_list_from_tuple_list(tuple_list)
     full_paths = dump_dict_list_to_yaml(dict_list, output_folder)
     return full_paths
+
 
 def dump_all_stages_to_yaml(config):
     for key, value in config.items():
         input_file = value["input_file"]
         folder = value["folder"]
         _ = make_output_folder(value["folder"])
-        config[key]['files'] = dump_stage_to_yaml(input_file, folder)
+        config[key]["files"] = dump_stage_to_yaml(input_file, folder)
     return config
+
 
 def generate_random_config(config, dvc_params):
     new_params = deepcopy(dvc_params)
     name = ""
     for key, value in config.items():
-        rand_file = Path(value['folder'], str(choice(value['files'])))
+        rand_file = Path(value["folder"], str(choice(value["files"])))
         name += "_" + rand_file.name.split(".")[0]
-        with open(rand_file, 'r') as f:
+        with open(rand_file, "r") as f:
             new_params[key] = yaml.load(f, Loader=yaml.FullLoader)
     return new_params, name
+
 
 def count_possible_configs(config):
     count = 1
     for key, value in config.items():
-        count *= len(value['files'])
+        count *= len(value["files"])
     return count

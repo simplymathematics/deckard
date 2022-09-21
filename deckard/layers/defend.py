@@ -15,8 +15,14 @@ def defend(args) -> None:
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
     model_file = Path(args.inputs["folder"], args.inputs["model"])
-    model = Model(model_file, art=True, clip_values=clip_values, defence = args.config, model_type = args.inputs['type'])
-    model(art = True)
+    model = Model(
+        model_file,
+        art=True,
+        clip_values=clip_values,
+        defence=args.config,
+        model_type=args.inputs["type"],
+    )
+    model(art=True)
     experiment = Experiment(data=data, model=model, is_fitted=True)
     filename = experiment(path=args.outputs["folder"], model_file=args.outputs["model"])
     return filename

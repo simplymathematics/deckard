@@ -4,7 +4,7 @@ import dvc.api
 from os import path, mkdir
 from typing import Union
 from pathlib import Path
-from deckard.base.parse   import make_output_folder, parse_config
+from deckard.base.parse import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ def art_model(args) -> Experiment:
             classifier=args.inputs["classifier"],
         )
     exp = Experiment(data=data, model=model)
-    
+
     exp(model_file=args.outputs["model"], path=args.outputs["folder"])
     assert Path(
         args.outputs["folder"], args.outputs["model"]

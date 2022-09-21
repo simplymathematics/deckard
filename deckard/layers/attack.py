@@ -32,24 +32,25 @@ logger = logging.getLogger(__name__)
 def attack_layer(args) -> None:
     data = Data(Path(args.inputs["folder"], args.inputs["data"]))
     data()
-    if 'attack_size' in args.inputs:
-        data.X_test = data.X_test[:args.inputs['attack_size']]
-        data.y_test = data.y_test[:args.inputs['attack_size']]
+    if "attack_size" in args.inputs:
+        data.X_test = data.X_test[: args.inputs["attack_size"]]
+        data.y_test = data.y_test[: args.inputs["attack_size"]]
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
     clip_values = (mini, maxi)
     model_file = Path(args.inputs["folder"], args.inputs["model"])
     art_model = Model(model_file, model_type=args.inputs["type"], art=True)
-    art_model(art = True)
-    
+    art_model(art=True)
+
     experiment = AttackExperiment(
         data=data,
         model=art_model,
         attack=args.config,
-        is_fitted = args.inputs['is_fitted'] if "is_fitted" in args.inputs else False,
-        fit_params = args.inputs['fit_params'] if 'fit_params' in args.inputs else None,
-        predict_params=args.inputs['predict_params'] if 'predict_params' in args.inputs else None,
-        
+        is_fitted=args.inputs["is_fitted"] if "is_fitted" in args.inputs else False,
+        fit_params=args.inputs["fit_params"] if "fit_params" in args.inputs else None,
+        predict_params=args.inputs["predict_params"]
+        if "predict_params" in args.inputs
+        else None,
     )
     experiment(path=args.outputs["folder"], model_file=args.outputs["model"])
     return None

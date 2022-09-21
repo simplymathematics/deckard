@@ -51,7 +51,7 @@ def visualise_sklearn_classifier_experiment(
     if type == "ROC_AUC":
         from yellowbrick.classifier import ROCAUC
 
-        func = ROCAUC(viz_mod.model, classes=classes, force_model = True)
+        func = ROCAUC(viz_mod.model, classes=classes, force_model=True)
         outpath = Path(args.outputs["folder"], "ROC_AUC.pdf")
         outpath = outpath.resolve()
         outpath.parent.mkdir(parents=True, exist_ok=True)
@@ -62,7 +62,6 @@ def visualise_sklearn_classifier_experiment(
     func.show(outpath=outpath)
     logger.info("Saving visualisation to {}".format(outpath))
     return outpath.resolve()
-
 
 
 if __name__ == "__main__":

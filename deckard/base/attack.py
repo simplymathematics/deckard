@@ -23,14 +23,13 @@ class AttackExperiment(Experiment):
 
     def __init__(
         self,
-        data : Data,
+        data: Data,
         model: Model,
-        attack:Union[str, Path, dict],
+        attack: Union[str, Path, dict],
         is_fitted: bool = False,
         fit_params: dict = None,
         predict_params: dict = None,
-         
-):
+    ):
         """
         Creates an experiment object
         :param data: Data object
@@ -40,7 +39,11 @@ class AttackExperiment(Experiment):
         :param scorers: Dictionary of scorers
         :param name: Name of experiment
         """
-        assert isinstance(attack, (dict, str, Path)), "Attack must be a dictionary, str, or path. It is type {}".format(type(attack))
+        assert isinstance(
+            attack, (dict, str, Path)
+        ), "Attack must be a dictionary, str, or path. It is type {}".format(
+            type(attack)
+        )
         assert "name" and "params" in attack
         super().__init__(
             data=data,
@@ -50,35 +53,68 @@ class AttackExperiment(Experiment):
             predict_params=predict_params,
         )
         config_tuple = generate_tuple_from_yml(attack)
-        if 'Attack' not in self.params:
-            self.params['Attack'] = {}
-        id_ = my_hash(config_tuple) if isinstance(attack, dict) else Path(attack).name.split('.')[0]
+        if "Attack" not in self.params:
+            self.params["Attack"] = {}
+        id_ = (
+            my_hash(config_tuple)
+            if isinstance(attack, dict)
+            else Path(attack).name.split(".")[0]
+        )
         try:
             attack = generate_object_from_tuple(config_tuple)
         except TypeError as e:
-            if 'classifier' or 'estimator' in str(e):
+            if "classifier" or "estimator" in str(e):
                 attack = generate_object_from_tuple(config_tuple, self.model.model)
-        id_ = my_hash(config_tuple) 
-        self.params['Attack'][id_] = {"name": config_tuple[0], "params" : config_tuple[1]}
+        id_ = my_hash(config_tuple)
+        self.params["Attack"][id_] = {
+            "name": config_tuple[0],
+            "params": config_tuple[1],
+        }
         self.attack = attack
-        
 
-    def __call__(self, path, model_file:Union[str,Path] = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json", params_file:Union[str, Path] = "params.json", attack_samples_file:Union[str,Path] = "attack_samples.json", attack_prefix = "attack", generate_params:dict = None, benign_prefix = None) -> list:
+    def __call__(
+        self,
+        path,
+        model_file: Union[str, Path] = "model",
+        prefix=None,
+        predictions_file: Union[str, Path] = "predictions.json",
+        ground_truth_file: Union[str, Path] = "ground_truth.json",
+        time_dict_file: Union[str, Path] = "time_dict.json",
+        params_file: Union[str, Path] = "params.json",
+        attack_samples_file: Union[str, Path] = "attack_samples.json",
+        attack_prefix="attack",
+        generate_params: dict = None,
+        benign_prefix=None,
+    ) -> list:
         """
         Runs attack.
         """
         prefix = attack_prefix
-        files = super().__call__(path, model_file, benign_prefix, predictions_file, ground_truth_file, time_dict_file, params_file)
+        files = super().__call__(
+            path,
+            model_file,
+            benign_prefix,
+            predictions_file,
+            ground_truth_file,
+            time_dict_file,
+            params_file,
+        )
         if generate_params is not None:
             self.run_attack(**generate_params)
         else:
             self.run_attack()
-        assert hasattr(self, "adv"), "Attack does not have attribute adv. Something went wrong."
-        assert hasattr(self, "adv_samples"), "Attack does not have attribute adv_samples. Something went wrong."
-        assert hasattr(self, "time_dict"), "Attack does not have attribute time_dict. Something went wrong."
-        
-        pred_file = self.save_attack_predictions(prefix = prefix, path=path)
-        sampl_file = self.save_attack_samples(prefix = prefix, path=path)
+        assert hasattr(
+            self, "adv"
+        ), "Attack does not have attribute adv. Something went wrong."
+        assert hasattr(
+            self, "adv_samples"
+        ), "Attack does not have attribute adv_samples. Something went wrong."
+        assert hasattr(
+            self, "time_dict"
+        ), "Attack does not have attribute time_dict. Something went wrong."
+
+        pred_file = self.save_attack_predictions(prefix=prefix, path=path)
+        sampl_file = self.save_attack_samples(prefix=prefix, path=path)
         files.extend([pred_file, sampl_file])
         return files
 
@@ -113,8 +149,6 @@ class AttackExperiment(Experiment):
         self.time_dict.update({"adv_pred_time": end - start})
         return None
 
-    
-
     def get_attack(self):
         """
         Returns the attack from an experiment
@@ -122,7 +156,9 @@ class AttackExperiment(Experiment):
         """
         return self.attack
 
-    def save_attack_samples(self, prefix = None, filename: str = "examples.json", path: str = "."):
+    def save_attack_samples(
+        self, prefix=None, filename: str = "examples.json", path: str = "."
+    ):
         """
         Saves adversarial examples to specified file.
         :param filename: str, name of file to save adversarial examples to.
@@ -139,7 +175,7 @@ class AttackExperiment(Experiment):
         return adv_file
 
     def save_attack_predictions(
-        self, prefix = None, filename: str = "predictions.json", path: str = "."
+        self, prefix=None, filename: str = "predictions.json", path: str = "."
     ) -> None:
         """
         Saves adversarial predictions to specified file.

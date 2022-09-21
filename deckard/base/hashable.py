@@ -5,8 +5,11 @@ import pathlib
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
 
+
 def my_hash(obj):
-    return str(md5(str(obj).encode('utf-8')).hexdigest())
+    return str(md5(str(obj).encode("utf-8")).hexdigest())
+
+
 class BaseHashable(object):
     def __eq__(self, other) -> bool:
         """
@@ -54,7 +57,9 @@ class BaseHashable(object):
             # print("***************")
             # print(key, value, type(value))
             # print("***************")
-            if isinstance(value, (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath)):
+            if isinstance(
+                value, (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath)
+            ):
                 result = pathlib.Path(value).name
             elif isinstance(value, ndarray):
                 result = value.tolist()
@@ -71,14 +76,14 @@ class BaseHashable(object):
             elif isinstance(value, ndarray):
                 result = value.tolist()
             elif isinstance(value, Pipeline):
-                this = value.get_params(deep = True)
+                this = value.get_params(deep=True)
                 # print(this)
                 # input("Press Enter to continue...")
-                new_results['name'] = value.steps[-1][0]
+                new_results["name"] = value.steps[-1][0]
             elif hasattr(value, "get_params") and not isinstance(value, Pipeline):
-                new_results["name" ] = str(type(value)).split("'")[1]
+                new_results["name"] = str(type(value)).split("'")[1]
                 try:
-                    new_results["params"] = value.get_params(deep = True)
+                    new_results["params"] = value.get_params(deep=True)
                 except:
                     new_results["params"] = value.get_params()
             else:
