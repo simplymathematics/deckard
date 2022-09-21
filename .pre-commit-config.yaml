@@ -22,3 +22,4 @@ repos:
     -   id: check-toml
     -   id: detect-private-key
     -   id: end-of-file-fixer
+    -   id: check-yaml
