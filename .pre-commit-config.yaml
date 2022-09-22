@@ -23,6 +23,11 @@ repos:
     -   id: detect-private-key
     -   id: end-of-file-fixer
     -   id: check-yaml
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.1 # Possible releases: https://github.com/hadialqattan/pycln/releases
+    hooks:
+      - id: pycln
+        args: [--config=setup.py]
   - repo: https://github.com/pycqa/flake8
     rev: '5.0.4'  # pick a git hash / tag to point to
     hooks:
