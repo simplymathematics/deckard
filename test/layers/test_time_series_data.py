@@ -1,4 +1,4 @@
-import unittest, tempfile, os, shutil
+import unittest, tempfile, shutil
 from deckard.base import Data
 import numpy as np
 

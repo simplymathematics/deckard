@@ -1,6 +1,10 @@
-import warnings, tempfile, unittest, os, argparse, dvc.api, yaml, subprocess
-from pathlib import Path
-from tqdm import tqdm
+import os
+import subprocess
+import tempfile
+import unittest
+import warnings
+
+import yaml
 from sklearn.exceptions import UndefinedMetricWarning
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -12,12 +16,11 @@ from deckard.layers.preprocess import preprocess
 class testSklearnFeaturize(unittest.TestCase):
     def setUp(self):
         self.path = os.path.abspath(tempfile.mkdtemp())
-        ART_DATA_PATH = self.path
         self.file = "test_filename"
         self.here = os.path.dirname(os.path.abspath(__file__))
         os.chdir(os.path.join(self.here, "..", "..", "examples", "iris"))
         self.here = os.path.realpath(
-            os.path.join(self.here, "..", "..", "examples", "iris")
+            os.path.join(self.here, "..", "..", "examples", "iris"),
         )
 
     def test_cli(self):
@@ -25,7 +28,10 @@ class testSklearnFeaturize(unittest.TestCase):
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
         command = dictionary["stages"]["featurize"]["cmd"]
         subprocess.Popen(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         ).communicate()
 
     def tearDown(self) -> None:

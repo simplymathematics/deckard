@@ -1,28 +1,18 @@
-import logging, os, pickle
-
-
-# Operating System
-from time import process_time
-import json, yaml
+import logging
+import os
+import pickle
 from pathlib import Path
 from typing import Union
-from copy import deepcopy
-from pandas import DataFrame, Series
 
-# Math Stuff
-import numpy as np
-from pandas import Series
-
-
-
-from deckard.base.model import Model
-from deckard.base.data import Data
-from deckard.base.hashable import BaseHashable
-
+import yaml
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
+from deckard.base.data import Data
+from deckard.base.hashable import BaseHashable
+from deckard.base.model import Model
+from pandas import DataFrame, Series
 
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 
@@ -36,7 +26,13 @@ class Experiment(BaseHashable):
     """
 
     def __init__(
-        self, data: Data, model: Model, verbose: int = 1, is_fitted: bool = False, fit_params: dict = None, predict_params:dict = None,
+        self,
+        data: Data,
+        model: Model,
+        verbose: int = 1,
+        is_fitted: bool = False,
+        fit_params: dict = None,
+        predict_params: dict = None,
     ):
         """
         Creates an experiment object
@@ -47,7 +43,7 @@ class Experiment(BaseHashable):
         :param scorers: Dictionary of scorers
         :param name: Name of experiment
         """
-        
+
         self.verbose = verbose
         self.is_fitted = is_fitted
         self.params = {}
@@ -66,7 +62,6 @@ class Experiment(BaseHashable):
         self.time_dict = None
         self.predictions = None
         self.ground_truth = None
-        
 
     def fit(self) -> None:
         """
@@ -79,16 +74,26 @@ class Experiment(BaseHashable):
             logger.info("Model already fitted. Skipping fit.")
         self.predictions = self.model.predict(self.data.X_test)
         self.time_dict = self.model.time_dict
-        self.params["Experiment"]['if_fitted'] = True
+        self.params["Experiment"]["if_fitted"] = True
         self.hash = hash(self)
 
-    def __call__(self, path, model_file:Union[str,Path] = "model", prefix=None, predictions_file:Union[str,Path]="predictions.json", ground_truth_file:Union[str,Path]="ground_truth.json", time_dict_file:Union[str, Path] = "time_dict.json", params_file:Union[str, Path] = "params.json") -> list:
+    def __call__(
+        self,
+        path,
+        model_file: Union[str, Path] = "model",
+        prefix=None,
+        predictions_file: Union[str, Path] = "predictions.json",
+        ground_truth_file: Union[str, Path] = "ground_truth.json",
+        time_dict_file: Union[str, Path] = "time_dict.json",
+        params_file: Union[str, Path] = "params.json",
+    ) -> list:
         """
-        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results. 
+        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results.
         Returns self with added scores, predictions, and time_dict attributes.
         """
-        
-        files = self.save_params( filename = params_file, 
+
+        files = self.save_params(
+            filename=params_file,
             path=path,
             prefix=prefix,
         )
@@ -96,15 +101,27 @@ class Experiment(BaseHashable):
             logger.debug("Data not initialized. Initializing.")
             self.data()
         if isinstance(self.model.model, (Path, str)):
-            logger.debug("Model not initialized. Initializing.") 
+            logger.debug("Model not initialized. Initializing.")
             self.model()
         self.ground_truth = self.data.y_test
         if not os.path.isdir(path):
             os.mkdir(path)
         self.fit()
-        preds_file = self.save_predictions(filename = predictions_file, path=path, prefix=prefix)
-        truth_File = self.save_ground_truth(filename = ground_truth_file, path=path, prefix=prefix)
-        time_file = self.save_time_dict(filename = time_dict_file, path=path, prefix=prefix)
+        preds_file = self.save_predictions(
+            filename=predictions_file,
+            path=path,
+            prefix=prefix,
+        )
+        truth_File = self.save_ground_truth(
+            filename=ground_truth_file,
+            path=path,
+            prefix=prefix,
+        )
+        time_file = self.save_time_dict(
+            filename=time_dict_file,
+            path=path,
+            prefix=prefix,
+        )
         model_file = os.path.join(path, model_file)
         model_name = str(hash(self.model)) if model_file is None else model_file
         model_file = self.save_model(filename=Path(model_name).name, path=path)
@@ -112,10 +129,11 @@ class Experiment(BaseHashable):
         # TODO: Fix scoring
         return files
 
-    
-
     def save_data(
-        self, filename: str = "data.pkl", prefix=None, path: str = "."
+        self,
+        filename: str = "data.pkl",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves data to specified file.
@@ -132,7 +150,7 @@ class Experiment(BaseHashable):
         assert os.path.exists(os.path.join(path, filename)), "Data not saved."
         return None
 
-    def save_params(self, filename = "params.yaml", prefix=None, path: str = ".") -> None:
+    def save_params(self, filename="params.yaml", prefix=None, path: str = ".") -> None:
         """
         Saves data to specified file.
         :param data_params_file: str, name of file to save data parameters to.
@@ -147,9 +165,9 @@ class Experiment(BaseHashable):
         for key, value in self.params.items():
             filename = newname
             if prefix is not None:
-                filename = prefix + key.lower() +"_"+  newname
+                filename = prefix + key.lower() + "_" + newname
             else:
-                filename = key.lower() +"_"+ newname
+                filename = key.lower() + "_" + newname
             filename = os.path.join(path, filename)
             print("Saving params to {}".format(filename))
             with open(filename, "w") as f:
@@ -179,7 +197,10 @@ class Experiment(BaseHashable):
         return os.path.join(path, filename)
 
     def save_predictions(
-        self, filename: str = "predictions.json", prefix=None, path: str = "."
+        self,
+        filename: str = "predictions.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves predictions to specified file.
@@ -197,7 +218,10 @@ class Experiment(BaseHashable):
         return prediction_file
 
     def save_ground_truth(
-        self, filename: str = "ground_truth.json", prefix=None, path: str = "."
+        self,
+        filename: str = "ground_truth.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves ground_truth to specified file.
@@ -215,7 +239,10 @@ class Experiment(BaseHashable):
         return prediction_file
 
     def save_cv_scores(
-        self, filename: str = "cv_scores.json", prefix=None, path: str = "."
+        self,
+        filename: str = "cv_scores.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves crossvalidation scores to specified file.
@@ -227,16 +254,16 @@ class Experiment(BaseHashable):
         if prefix is not None:
             filename = prefix + "_" + filename
         cv_file = os.path.join(path, filename)
-        try:
-            cv_results = Series(self.model.model.model.cv_results_, name=str(self.hash))
-        except:
-            cv_results = Series(self.model.model.cv_results_, name=str(self.hash))
+        cv_results = Series(self.model.model.cv_results_, name=str(self.hash))
         cv_results.to_json(cv_file, orient="records")
         assert os.path.exists(cv_file), "CV results file not saved"
         return cv_file
-        
+
     def save_time_dict(
-        self, filename: str = "time_dict.json", prefix=None, path: str = "."
+        self,
+        filename: str = "time_dict.json",
+        prefix=None,
+        path: str = ".",
     ):
         """
         Saves time dictionary to specified file.

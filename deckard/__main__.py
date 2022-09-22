@@ -1,4 +1,6 @@
-import argparse, logging, subprocess
+import argparse
+import logging
+import subprocess
 
 logger = logging.getLogger(__name__)
 

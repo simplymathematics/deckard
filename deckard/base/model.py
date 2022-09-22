@@ -1,23 +1,26 @@
-import json
 import logging
 import os
 import pickle
 from copy import deepcopy
 from pathlib import Path
 from time import process_time
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 from art.estimators import ScikitlearnEstimator
-from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
-                                           TensorFlowClassifier,
-                                           TensorFlowV2Classifier)
+from art.estimators.classification import (
+    KerasClassifier,
+    PyTorchClassifier,
+    TensorFlowClassifier,
+    TensorFlowV2Classifier,
+)
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
+from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
 
-from .data import Data
-from .hashable import my_hash
+from .hashable import BaseHashable, my_hash
 from .parse import generate_object_from_tuple, generate_tuple_from_yml
 
 logger = logging.getLogger(__name__)
@@ -32,11 +35,8 @@ supported_estimators = [
     TensorFlowV2Classifier,
 ]
 
-from deckard.base.hashable import BaseHashable
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
-
 __all__ = ["Model"]
+
 
 class Model(BaseHashable):
     """Creates a model object that includes a dicitonary of passed parameters."""
@@ -45,8 +45,8 @@ class Model(BaseHashable):
         self,
         model: Union[str, object],
         model_type: str = "sklearn",
-        defence:dict = None,
-        pipeline:dict = None,
+        defence: dict = None,
+        pipeline: dict = None,
         path=".",
         is_fitted: bool = False,
         classifier=True,
@@ -76,7 +76,7 @@ class Model(BaseHashable):
         self.pipeline = pipeline if pipeline is not None else None
         self.fit_params = fit_params if fit_params is not None else {}
         self.predict_params = predict_params if predict_params is not None else {}
-        
+
         if defence is not None:
             self.art = True
             self.insert_art_defence(defence)
@@ -107,8 +107,10 @@ class Model(BaseHashable):
             else:
                 raise ValueError(
                     "Parameter {} not found in \n {} or \n {}".format(
-                        param, self.model.model.get_params(), self.model.__dict__.keys()
-                    )
+                        param,
+                        self.model.model.get_params(),
+                        self.model.__dict__.keys(),
+                    ),
                 )
             self.params.update({param: value})
 
@@ -126,11 +128,14 @@ class Model(BaseHashable):
         assert model_type is not None, "model_type must be specified"
         assert filename is not None, "filename must be specified"
         assert path is not None or url is not None, "path or url must be specified"
-        output_dir = os.path.dirname(path)
         if url is not None:
             # download model
             model_path = get_file(
-                filename=filename, extract=False, path=path, url=url, verbose=True
+                filename=filename,
+                extract=False,
+                path=path,
+                url=url,
+                verbose=True,
             )
             logging.info("Downloaded model from {} to {}".format(url, model_path))
         filename = os.path.join(path, filename)
@@ -170,7 +175,13 @@ class Model(BaseHashable):
         logger.info("Loaded model")
         return model
 
-    def __call__(self, pipeline:dict = None, art:dict = None, fit = None, predict = None) -> None:
+    def __call__(
+        self,
+        pipeline: dict = None,
+        art: dict = None,
+        fit=None,
+        predict=None,
+    ) -> None:
         """
         Load a model from a pickle file.
         filename: the pickle file to load the model from
@@ -188,23 +199,20 @@ class Model(BaseHashable):
             self.params["model"] = self.model
         else:
             logger.info("Model already in memory.")
-            pass
         logger.info("Loaded model")
         if pipeline is not None:
             self.insert_sklearn_preprocessor(**pipeline)
-        if self.classifier == True and art == True:
+        if self.classifier is True and art is True:
             self.model = self.initialize_art_classifier(**art_kwargs)
-        elif self.classifier == False and art == True:
+        elif self.classifier is False and art is True:
             self.model = self.initialize_art_regressor(**art_kwargs)
         if fit is not None:
             setattr(self, "fit_params", fit)
         if predict is not None:
             setattr(self, "predict_params", predict)
         return self
-        
-    def initialize_art_classifier(
-        self, clip_values: tuple = None, **kwargs
-    ) -> None:
+
+    def initialize_art_classifier(self, clip_values: tuple = None, **kwargs) -> None:
         """
         Initialize the classifier.
         """
@@ -217,21 +225,21 @@ class Model(BaseHashable):
             clip_values = self.clip_values
         if hasattr(self, "Defence"):
             self.params["Defence"].update(
-                {"type": str(type(self.defence)).split(".")[-1].split("'")[0]}
+                {"type": str(type(self.defence)).split(".")[-1].split("'")[0]},
             )
-            if "art" and "preprocessor" in self.params['Defence']['type'].lower():
+            if "art" and "preprocessor" in self.params["Defence"]["type"].lower():
                 preprocessors.append(self.defence)
-            elif "art" and "postprocessor" in self.params['Defence']['type'].lower():
+            elif "art" and "postprocessor" in self.params["Defence"]["type"].lower():
                 postprocessors.append(self.defence)
-            elif "art" and "trainer" in self.params['Defence']['type'].lower():
+            elif "art" and "trainer" in self.params["Defence"]["type"].lower():
                 trainers.append(self.defence)
-            elif "art" and "transformer" in self.params['Defence']['type'].lower():
+            elif "art" and "transformer" in self.params["Defence"]["type"].lower():
                 transformers.append(self.defence)
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["Defence"]["type"]
-                    )
+                        self.params["Defence"]["type"],
+                    ),
                 )
         else:
             pass
@@ -295,9 +303,12 @@ class Model(BaseHashable):
                 **kwargs
             )
         return model
-    
+
     def insert_sklearn_preprocessor(
-        self, name: str, preprocessor:Union[str, Path, dict], position: int
+        self,
+        name: str,
+        preprocessor: Union[str, Path, dict],
+        position: int,
     ):
         """
         Add a sklearn preprocessor to the experiment.
@@ -307,41 +318,54 @@ class Model(BaseHashable):
 
         """
         if not isinstance(preprocessor, (str, Path, dict)):
-            raise ValueError("Preprocessor must be a string or a dictionary, not type {}".format(type(preprocessor)))
+            raise ValueError(
+                "Preprocessor must be a string or a dictionary, not type {}".format(
+                    type(preprocessor),
+                ),
+            )
         config_tuple = generate_tuple_from_yml(preprocessor)
-        if 'Pipeline' not in self.params:
-            self.params['Pipeline'] = {}
-        id_ = my_hash(config_tuple) if isinstance(preprocessor, dict) else Path(preprocessor).name.split('.')[0]
+        if "Pipeline" not in self.params:
+            self.params["Pipeline"] = {}
+        id_ = (
+            my_hash(config_tuple)
+            if isinstance(preprocessor, dict)
+            else Path(preprocessor).name.split(".")[0]
+        )
         preprocessor = generate_object_from_tuple(config_tuple)
-        self.params['Pipeline'][name] = {'id':id_, "type": str(type(preprocessor)).split(".")[-1].split("'")[0], "params" : config_tuple[1], "position" : position}      
+        self.params["Pipeline"][name] = {
+            "id": id_,
+            "type": str(type(preprocessor)).split(".")[-1].split("'")[0],
+            "params": config_tuple[1],
+            "position": position,
+        }
         # If it's already a pipeline
         if isinstance(self.model, Pipeline):
             pipe = self.model
-        elif hasattr(self.model, "model") and isinstance(
-            self.model.model, Pipeline
-        ):
+        elif hasattr(self.model, "model") and isinstance(self.model.model, Pipeline):
             pipe = self.model.model
         elif "art.estimators" in str(type(self.model)) and not isinstance(
-            self.model.model, Pipeline
+            self.model.model,
+            Pipeline,
         ):
-            logger.warning("Model is already an ART classifier. If Defence is not None, it will be ignored. ART defences are meant to be applied to the final sklearn model.")
+            logger.warning(
+                "Model is already an ART classifier. If Defence is not None, it will be ignored. ART defences are meant to be applied to the final sklearn model.",
+            )
             pipe = Pipeline([("model", self.model.model)])
         elif isinstance(self.model, BaseEstimator) and not isinstance(
-            self.model, Pipeline
+            self.model,
+            Pipeline,
         ):
             pipe = Pipeline([("model", self.model)])
         else:
             raise ValueError(
-                "Cannot make model type {} into a pipeline".format(
-                    type(self.model)
-                )
+                "Cannot make model type {} into a pipeline".format(type(self.model)),
             )
         new_model = deepcopy(pipe)
         assert isinstance(new_model, Pipeline)
         new_model.steps.insert(position, (name, preprocessor))
         self.model = new_model
-    
-    def insert_art_defence(self, defence:Union[str, Path, dict]):
+
+    def insert_art_defence(self, defence: Union[str, Path, dict]):
         """
         Add a defence to the experiment.
         :param defence: defence to add
@@ -349,25 +373,32 @@ class Model(BaseHashable):
         if not isinstance(defence, (str, Path, dict)):
             raise ValueError("Defence must be a string, Path or dict")
         defence_tuple = generate_tuple_from_yml(defence)
-        if 'Defence' not in self.params:
-            self.params['Defence'] = {}
-        id_ = my_hash(defence_tuple) if isinstance(defence, dict) else Path(defence).name.split('.')[0]
-        self.params['Defence'] = {}
-        self.params['Defence']['name'] = defence_tuple[0].split('.')[-1]
-        self.params['Defence']['params'] = defence_tuple[1]
-        self.params['Defence']['id'] = id_
+        if "Defence" not in self.params:
+            self.params["Defence"] = {}
+        id_ = (
+            my_hash(defence_tuple)
+            if isinstance(defence, dict)
+            else Path(defence).name.split(".")[0]
+        )
+        self.params["Defence"] = {}
+        self.params["Defence"]["name"] = defence_tuple[0].split(".")[-1]
+        self.params["Defence"]["params"] = defence_tuple[1]
+        self.params["Defence"]["id"] = id_
         try:
             self.defence = generate_object_from_tuple(defence_tuple)
         except TypeError as e:
             if "clip_values" in str(e):
-                self.defence = generate_object_from_tuple(defence_tuple, self.clip_values)
+                self.defence = generate_object_from_tuple(
+                    defence_tuple,
+                    self.clip_values,
+                )
             elif "estimator" in str(e):
                 self.defence = generate_object_from_tuple(defence_tuple, self.model)
             elif "classifier" in str(e):
                 self.defence = generate_object_from_tuple(defence_tuple, self.model)
             else:
                 raise e
-        self.params['Defence']['type'] = str(type(defence))
+        self.params["Defence"]["type"] = str(type(defence))
         if "preprocessor" in str(type(self.defence)):
             self.params["Defence"].update({"type": "preprocessor"})
         elif "postprocessor" in str(type(self.defence)):
@@ -378,9 +409,8 @@ class Model(BaseHashable):
             self.params["Defence"].update({"type": "transformer"})
         else:
             raise NotImplementedError(
-                "Defence type {} not supported".format(type(self.defence))
+                "Defence type {} not supported".format(type(self.defence)),
             )
-
 
     def initialize_art_regressor(self, **kwargs) -> None:
         preprocessors = []
@@ -401,8 +431,8 @@ class Model(BaseHashable):
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["Defence"]["type"]
-                    )
+                        self.params["Defence"]["type"],
+                    ),
                 )
         else:
             pass
@@ -440,11 +470,11 @@ class Model(BaseHashable):
                 flag = True
             try:
                 self.model.save(filename, path)
-            except:
+            except:  # noqa e722
                 os.mkdir(os.path.join(path, filename))
                 fullpath = os.path.join(path, filename)
                 self.model.save(fullpath)
-            if flag == True:
+            if flag is True:
                 filename = filename + ".pickle"
         else:
             with open(os.path.join(path, filename), "wb") as f:
@@ -456,7 +486,7 @@ class Model(BaseHashable):
         """
         Fits model.
         """
-        if hasattr(self, 'fit_params'):
+        if hasattr(self, "fit_params"):
             opts = self.fit_params
         else:
             opts = {}
@@ -478,18 +508,18 @@ class Model(BaseHashable):
             self.is_fitted = True
         return None
 
-    def predict(self, X_test: np.ndarray, pred_type:str = None) -> np.ndarray:
-        if hasattr(self, 'predict_params'):
+    def predict(self, X_test: np.ndarray, pred_type: str = None) -> np.ndarray:
+        if hasattr(self, "predict_params"):
             opts = self.predict_params
         else:
             opts = {}
-        if pred_type == 'proba':
+        if pred_type == "proba":
             start = process_time()
             predictions = self.model.predict_proba(X_test, **opts)
-        elif pred_type == 'log':
+        elif pred_type == "log":
             start = process_time()
             predictions = self.model.predict_log_proba(X_test, **opts)
-        elif pred_type is None  or pred_type =='decision':
+        elif pred_type is None or pred_type == "decision":
             start = process_time()
             predictions = self.model.predict(X_test, **opts)
         else:

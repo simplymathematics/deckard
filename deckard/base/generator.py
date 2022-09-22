@@ -1,23 +1,27 @@
 # Standard Library:
-import logging, yaml, json, os
+import json
+import logging
+import os
+
 import pandas as pd
-from .hashable import BaseHashable, my_hash
+import yaml
+from art.defences.postprocessor import Postprocessor
+from art.defences.preprocessor import Preprocessor
+from art.defences.trainer import Trainer
+from art.defences.transformer import Transformer
+from art.estimators import ScikitlearnEstimator
+
+# Adversarial Robustness Toolbox
+from art.estimators.classification import (
+    KerasClassifier,
+    PyTorchClassifier,
+    TensorFlowClassifier,
+)
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid
 
-# Adversarial Robustness Toolbox
-from art.estimators.classification import (
-    PyTorchClassifier,
-    KerasClassifier,
-    TensorFlowClassifier,
-    SklearnClassifier,
-)
-from art.estimators import ScikitlearnEstimator
-from art.defences.preprocessor import Preprocessor
-from art.defences.postprocessor import Postprocessor
-from art.defences.trainer import Trainer
-from art.defences.transformer import Transformer
+from .hashable import BaseHashable, my_hash
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (
@@ -65,7 +69,7 @@ class Generator(BaseHashable):
         :param filename: the name of the json file
         """
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert os.path.isdir(self.output), f"{self.output} is not a directory"
         # check if the file exists
@@ -90,10 +94,10 @@ class Generator(BaseHashable):
         Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
         """
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert os.path.isfile(filename), f"{filename} does not exist"
-        full_list = list()
+        full_list = []
         LOADER = yaml.FullLoader
         # check if the file exists
         if not os.path.isfile(str(filename)):
@@ -103,6 +107,7 @@ class Generator(BaseHashable):
             with open(filename, "r") as stream:
                 yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
+            logger.error(exc)
             raise ValueError("Error parsing yml file {}".format(filename))
         # check that featurizers is a list
         for entry in yml_list:
@@ -123,7 +128,7 @@ class Generator(BaseHashable):
         """
         assert isinstance(path, str), "path {} must be a string.".format(path)
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert isinstance(params, dict), "Params {} must be a dict.".format(params)
         assert os.path.isdir(path), f"{path} is not a directory"

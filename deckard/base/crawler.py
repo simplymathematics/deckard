@@ -1,10 +1,8 @@
-import numpy as np
+import json
+import logging
+import os
+
 import pandas as pd
-import os, logging, json, yaml
-from .experiment import Experiment
-from .data import Data
-from .model import Model
-from .scorer import Scorer
 
 crawler_config = {
     "filenames": [
@@ -79,7 +77,6 @@ class Crawler:
             path = self.path
         data = {}
         status = {}
-        i = 0
         for root, dirs, files in os.walk(path):
             root = os.path.join(path, root)
             for directory in dirs:
@@ -88,7 +85,7 @@ class Crawler:
                     for f in os.listdir(os.path.join(root, directory))
                 ):
                     data[directory], status[directory] = self.crawl_folder(
-                        os.path.join(root, directory)
+                        os.path.join(root, directory),
                     )
                     data[directory]["parent"] = root.split(os.sep)[-1]
                     status[directory]["parent"] = root.split(os.sep)[-1]
@@ -100,11 +97,11 @@ class Crawler:
             df1 = pd.DataFrame.from_dict(df1, orient="index")
         if isinstance(df2, dict):
             df2 = pd.DataFrame.from_dict(df2, orient="index")
-        keep = crawler_config["structured"]
-        drop = list(set(crawler_config["filenames"]) - set(keep))
+        # keep = crawler_config["structured"]
+        # drop = list(set(crawler_config["filenames"]) - set(keep))
         df1 = df1.dropna(how="all", axis=1)
         df2 = df2.dropna(how="all", axis=1)
-        different = set(df2.columns) - set(df1.columns)
+        # different = set(df2.columns) - set(df1.columns)
         same = list(set(df2.columns).intersection(set(df1.columns)))
         if "parent" in same:
             same.remove("parent")
@@ -130,10 +127,12 @@ class Crawler:
             data, status = self.crawl_layer(os.path.join(path, layer + os.sep))
             if layer == "control":
                 big_df = pd.DataFrame.from_dict(data, orient="index").dropna(
-                    how="all", axis=1
+                    how="all",
+                    axis=1,
                 )
                 big_st = pd.DataFrame.from_dict(status, orient="index").dropna(
-                    how="all", axis=1
+                    how="all",
+                    axis=1,
                 )
             else:
                 big_df = self.merge_dataframes(big_df, data)
