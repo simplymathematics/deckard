@@ -1,26 +1,27 @@
-import os, logging, argparse
+import argparse
+import logging
 from pathlib import Path
-from tqdm import tqdm
+
 import dvc.api
-from typing import Union
 from deckard.base import Scorer
 from pandas import DataFrame
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
 def evaluate(args) -> DataFrame:
-    if args.inputs["recursive"] == True:
+    if args.inputs["recursive"] is True:
         ground_files = [
             path
             for path in Path(args.inputs["folder"]).rglob(
-                "*" + args.inputs["ground_truth"]
+                "*" + args.inputs["ground_truth"],
             )
         ]
         predictions_files = [
             path
             for path in Path(args.inputs["folder"]).rglob(
-                "*" + args.inputs["predictions"]
+                "*" + args.inputs["predictions"],
             )
         ]
     else:
@@ -46,7 +47,11 @@ if __name__ == "__main__":
     # command line arguments
     parser = argparse.ArgumentParser(description="Run a preprocessor on a dataset")
     parser.add_argument(
-        "--input_folder", "-i", type=str, default=".", help="Path to the model"
+        "--input_folder",
+        "-i",
+        type=str,
+        default=".",
+        help="Path to the model",
     )
     parser.add_argument(
         "--ground_truth_file",
@@ -70,13 +75,25 @@ if __name__ == "__main__":
         help='Name of layer, e.g. "attack"',
     )
     parser.add_argument(
-        "--output_folder", "-o", type=str, default=".", help="Path to the model"
+        "--output_folder",
+        "-o",
+        type=str,
+        default=".",
+        help="Path to the model",
     )
     parser.add_argument(
-        "--output_file", "-f", type=str, default="scores.csv", help="Path to the model"
+        "--output_file",
+        "-f",
+        type=str,
+        default="scores.csv",
+        help="Path to the model",
     )
     parser.add_argument(
-        "--config", "-c", type=str, default=None, help="Path to the attack config file"
+        "--config",
+        "-c",
+        type=str,
+        default=None,
+        help="Path to the attack config file",
     )
     args = parser.parse_args()
     # parse arguments

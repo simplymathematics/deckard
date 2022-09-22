@@ -2,11 +2,12 @@ from hashlib import md5
 from numpy import ndarray
 from typing import Callable
 import pathlib
-from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator
+
 
 def my_hash(obj):
-    return str(md5(str(obj).encode('utf-8')).hexdigest())
+    return str(md5(str(obj).encode("utf-8")).hexdigest())
+
+
 class BaseHashable(object):
     def __eq__(self, other) -> bool:
         """
@@ -45,19 +46,15 @@ class BaseHashable(object):
         """
         Returns the parameters of the data object.
         """
-        new_results = {}
         results = dict(self.params)
         for key, value in results.items():
-            # if hasattr(value, "get_params") and not isinstance(value, BaseHashable):
-            #     result = value.get_params()
-            # input("Press Enter to continue...")
-            # print("***************")
-            # print(key, value, type(value))
-            # print("***************")
-            if isinstance(value, (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath)):
+            if isinstance(
+                value,
+                (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath),
+            ):
                 result = pathlib.Path(value).name
             elif isinstance(value, ndarray):
-                result = value.tolist()
+                result = my_hash(value.tolist())
             elif isinstance(value, (int, float, str, list, tuple)):
                 result = value
             elif isinstance(value, Callable):
@@ -68,14 +65,7 @@ class BaseHashable(object):
                 result = value
             elif isinstance(value, type(None)):
                 result = None
-            elif isinstance(value, ndarray):
-                result = value.tolist()
-            elif isinstance(value, Pipeline):
-                result = my_hash(value.get_params(deep = True))
-            elif isinstance(value, BaseEstimator):
-                result = my_hash(value)
             else:
                 result = my_hash(value)
             results[key] = str(result)
-        results.update(new_results)
         return results

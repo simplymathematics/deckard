@@ -1,34 +1,25 @@
-from multiprocessing.sharedctypes import Value
+import json
+import logging
+import os
+from pathlib import Path
+from typing import Callable, Union
+
 import numpy as np
 import pandas as pd
-import os, logging, json, yaml
-from typing import Union, Callable
-from pathlib import Path
-from pandas import Series
-from sklearn.preprocessing import LabelBinarizer
+import yaml
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    mean_absolute_error,
-    mean_squared_error,
-    r2_score,
-    mean_absolute_percentage_error,
     explained_variance_score,
-)
-from sklearn.metrics import (
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score,
     f1_score,
-    roc_curve,
-    balanced_accuracy_score,
-    accuracy_score,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_squared_error,
     precision_score,
+    r2_score,
     recall_score,
     roc_auc_score,
 )
+from sklearn.preprocessing import LabelBinarizer
 
 # Default scorers
 REGRESSOR_SCORERS = {
@@ -115,7 +106,7 @@ class Scorer:
                 # logger.warning(e)
                 if "Target is multilabel-indicator but average='binary'" in str(e):
                     logger.warning(
-                        "Average binary not supported for multilabel-indicator. Using micro."
+                        "Average binary not supported for multilabel-indicator. Using micro.",
                     )
                     scores[name] = scorer(ground_truth, predictions, average="weighted")
                 if "multilabel-indicator" and "not supported" in str(e):
@@ -152,7 +143,9 @@ class Scorer:
         return str(self)
 
     def set_scorers(
-        self, scorers: Union[Callable, list], names: Union[str, list]
+        self,
+        scorers: Union[Callable, list],
+        names: Union[str, list],
     ) -> None:
         """
         Sets the scorer for an experiment
@@ -165,14 +158,18 @@ class Scorer:
             assert isinstance(name, str), "Names must be a string"
         if isinstance(scorers, list) or isinstance(names, list):
             assert len(scorers) == len(
-                names
+                names,
             ), "If a list of scorers is provided, the list of names must be the same length."
         self.scorers = scorers if isinstance(scorers, list) else [scorers]
         self.names = names if isinstance(names, list) else [names]
         return None
 
     def save_score(
-        self, results, filename: str = "scores.json", prefix=None, path: str = "."
+        self,
+        results,
+        filename: str = "scores.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves scores to specified file.
@@ -188,7 +185,11 @@ class Scorer:
         return results
 
     def save_list_score(
-        self, results, filename: str = "scores.json", prefix=None, path: str = "."
+        self,
+        results,
+        filename: str = "scores.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves scores to specified file.
@@ -203,7 +204,9 @@ class Scorer:
             score_file = os.path.join(path, filename)
         try:
             results = pd.DataFrame(
-                results.values(), names=score_file, index=results.keys()
+                results.values(),
+                names=score_file,
+                index=results.keys(),
             )
         except TypeError as e:
             if "unexpected keyword argument 'name'" in str(e):
@@ -236,7 +239,10 @@ class Scorer:
             if isinstance(score, (list, tuple)):
                 filename = name + filetype
                 result = self.save_list_score(
-                    {name: score}, filename=filename, prefix=prefix, path=path
+                    {name: score},
+                    filename=filename,
+                    prefix=prefix,
+                    path=path,
                 )
                 results[name] = result
             else:
@@ -248,7 +254,10 @@ class Scorer:
             }
 
         final_result = self.save_score(
-            dict_, filename="scores" + filetype, prefix=prefix, path=path
+            dict_,
+            filename="scores" + filetype,
+            prefix=prefix,
+            path=path,
         )
         self.scores = results.update(final_result)
         return self
@@ -263,7 +272,7 @@ class Scorer:
     ):
         """Score the predictions from the file and updates best score."""
         logger.info(
-            "Reading from {} and {}.".format(ground_truth_file, predictions_file)
+            "Reading from {} and {}.".format(ground_truth_file, predictions_file),
         )
         test = self.read_data_from_json(predictions_file)
 

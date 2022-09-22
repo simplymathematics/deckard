@@ -27,7 +27,7 @@ echo "export PATH=\"/home/pi/miniconda3/bin:$PATH\"" > ~/.bashrc
 wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
 sudo /bin/bash Miniconda3-latest-Linux-armv7l.sh
 sudo apt-get install libopenblas-dev python-numpy python-scipy python-pandas python-h5py \
-                     python3-sklearn python3-sklearn-lib python3-sklearn-doc 
+                     python3-sklearn python3-sklearn-lib python3-sklearn-doc
 
 
 # sudo apt instal llvm-9

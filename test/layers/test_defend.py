@@ -1,4 +1,4 @@
-import warnings, tempfile, unittest, os, argparse, dvc.api, yaml, subprocess
+import warnings, tempfile, unittest, os, dvc.api, yaml, subprocess
 from sklearn.exceptions import UndefinedMetricWarning
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -14,7 +14,7 @@ class testArtDefend(unittest.TestCase):
         self.here = os.path.dirname(os.path.abspath(__file__))
         os.chdir(os.path.join(self.here, "..", "..", "examples", "iris"))
         self.here = os.path.realpath(
-            os.path.join(self.here, "..", "..", "examples", "iris")
+            os.path.join(self.here, "..", "..", "examples", "iris"),
         )
 
     def test_cli(self):
@@ -22,7 +22,10 @@ class testArtDefend(unittest.TestCase):
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
         command = dictionary["stages"]["defend"]["cmd"]
         subprocess.run(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
     def tearDown(self) -> None:

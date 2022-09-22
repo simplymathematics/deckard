@@ -1,14 +1,14 @@
 stages:
   prepare:
-    cmd: 
-      - python ../../deckard/layers/prepare 
-    deps: 
+    cmd:
+      - python ../../deckard/layers/prepare
+    deps:
       - configs/prepare.yaml
       - ../../deckard/base/data.py
       - parsed/gps.txt
     params:
       - prepare
-    outs: 
+    outs:
       - data.pkl
   train:
     cmd: python -m deckard.layers.sklearn_model  train
@@ -47,7 +47,7 @@ stages:
         cache: true
   evaluate:
     cmd: python -m deckard.layers.evaluate  evaluate
-    deps: 
+    deps:
       - featurize/
     params:
       - evaluate

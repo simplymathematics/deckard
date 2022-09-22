@@ -1,7 +1,12 @@
+import logging
+import os
+import tempfile
+import warnings
 
-from . import base, layers
-import tempfile, logging, os, warnings
 from sklearn.exceptions import UndefinedMetricWarning
+
+from deckard import base  # noqa: F401
+from deckard import layers  # noqa: F401
 
 # Semantic Version
 __version__ = "0.30"
@@ -15,7 +20,7 @@ LOGGING = {
         "std": {
             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
             "datefmt": "%Y-%m-%d %H:%M",
-        }
+        },
     },
     "handlers": {
         "default": {

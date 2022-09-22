@@ -1,13 +1,18 @@
-import logging, yaml, importlib, os
-from pathlib import Path
-from sklearn.model_selection import ParameterGrid
-from .data import Data
-from .scorer import Scorer
-from typing import Union
-from tqdm import tqdm
+import importlib
+import logging
+import os
 from copy import deepcopy
+from pathlib import Path
 from random import choice
+from typing import Union
+
+import yaml
+from sklearn.model_selection import ParameterGrid
+from tqdm import tqdm
+
+from .data import Data
 from .hashable import my_hash
+from .scorer import Scorer
 
 # specify the logger
 logger = logging.getLogger(__name__)
@@ -19,15 +24,18 @@ logger = logging.getLogger(__name__)
 #     "generate_object_from_tuple",
 #     "make_output_folder",
 # ]
+
+
 def generate_tuple_list_from_yml(filename: str) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
     assert isinstance(
-        filename, (str, Path, dict)
+        filename,
+        (str, Path, dict),
     ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     assert os.path.isfile(filename), f"{filename} does not exist"
-    full_list = list()
+    full_list = []
     LOADER = yaml.FullLoader
     # check if the file exists
     if not os.path.isfile(str(filename)):
@@ -37,10 +45,12 @@ def generate_tuple_list_from_yml(filename: str) -> list:
         try:
             yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
+            logger.warning("Exception: {}".format(exc))
             raise ValueError("Error parsing yml file {}".format(filename))
     for entry in yml_list:
         if not isinstance(entry, dict):
             raise ValueError("Error parsing yml file {}".format(filename))
+        # Popping single parameters, tuples, etc, before the grid search
         special_keys = {}
         for key, value in entry["params"].items():
             if isinstance(value, (tuple, float, int, str)):
@@ -49,6 +59,7 @@ def generate_tuple_list_from_yml(filename: str) -> list:
                 special_keys[special_key] = special_values
         for key in special_keys.keys():
             entry["params"].pop(key)
+        # Generate the grid search
         grid = ParameterGrid(entry["params"])
         name = entry["name"]
         for combination in grid:
@@ -64,30 +75,11 @@ def generate_object_list_from_tuple(yml_tuples: list, *args) -> list:
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    obj_list = list()
+    obj_list = []
     for entry in yml_tuples:
-        library_name = ".".join(entry[0].split(".")[:-1])
-        class_name = entry[0].split(".")[-1]
-        global dependency
-        dependency = None
-        dependency = importlib.import_module(library_name)
-        global object_instance
-        object_instance = None
-        global params
-        params = entry[1]
-        exec("from {} import {}".format(library_name, class_name), globals())
-        if len(args) == 1:
-            global positional_arg
-            positional_arg = args[0]
-            exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
-            del positional_arg
-        elif len(args) == 0:
-            exec(f"object_instance = {class_name}(**params)", globals())
-        else:
-            raise ValueError("Too many positional arguments")
-        obj_list.append(object_instance)
-        del params
-        del dependency
+        obj_ = generate_object_from_tuple(entry, *args)
+        obj_list.append(obj_)
+    assert len(obj_list) == len(yml_tuples), "Error instantiating objects"
     return obj_list
 
 
@@ -96,7 +88,8 @@ def generate_tuple_from_yml(filename: Union[str, dict]) -> list:
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
     assert isinstance(
-        filename, (str, Path, dict)
+        filename,
+        (str, Path, dict),
     ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     if isinstance(filename, str):
         LOADER = yaml.FullLoader
@@ -105,6 +98,7 @@ def generate_tuple_from_yml(filename: Union[str, dict]) -> list:
             try:
                 entry = yaml.load(stream, Loader=LOADER)
             except yaml.YAMLError as exc:
+                logger.warning("Exception: {}".format(exc))
                 raise ValueError("Error parsing yml file {}".format(filename))
     if not os.path.isfile(str(filename)):
         assert isinstance(filename, dict), "filename must be a dict or a yml file"
@@ -122,29 +116,30 @@ def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     global dependency
     dependency = None
     dependency = importlib.import_module(library_name)
-    global object_instance
-    object_instance = None
+    global deckard_object
+    deckard_object = None
     global params
     params = obj_tuple[1]
     exec("from {} import {}".format(library_name, class_name), globals())
     if len(args) == 1:
         global positional_arg
         positional_arg = args[0]
-        exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
+        exec(f"deckard_object = {class_name}(positional_arg, **{params})", globals())
         del positional_arg
     elif len(args) == 0:
-        exec(f"object_instance = {class_name}(**params)", globals())
+        exec(f"deckard_object = {class_name}(**params)", globals())
     else:
         raise ValueError("Too many positional arguments")
     del params
     del dependency
-    return object_instance
+    return deckard_object
+
 
 def parse_scorer_from_yml(filename: str) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
     # check if the file exists
-    params = dict()
+    params = {}
     if not os.path.isfile(str(filename)):
         raise ValueError(str(filename) + " file does not exist")
     # read the yml file
@@ -154,11 +149,12 @@ def parse_scorer_from_yml(filename: str) -> dict:
             logger.info(scorer_file)
             logger.info(type(scorer_file))
         except yaml.YAMLError as exc:
+            logger.error("Exception: {}".format(exc))
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
     if not isinstance(scorer_file, dict):
         raise ValueError(
-            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename)
+            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename),
         )
     if "scorer_function" in scorer_file:
         params["scorer_function"] = scorer_file["scorer_function"]
@@ -167,8 +163,8 @@ def parse_scorer_from_yml(filename: str) -> dict:
     else:
         raise ValueError(
             "Error parsing yml file {}. It must contain a scorer_function or a name.".format(
-                filename
-            )
+                filename,
+            ),
         )
     logger.info(f"Parsing data from {filename}")
     for param, value in params.items():
@@ -178,13 +174,14 @@ def parse_scorer_from_yml(filename: str) -> dict:
     logger.info("{} successfully parsed.".format(filename))
     return data
 
+
 def make_output_folder(output_folder: Union[str, Path]) -> Path:
     if not Path(output_folder).exists():
         Path(output_folder).mkdir(parents=True, exist_ok=True)
     global ART_DATA_PATH
     ART_DATA_PATH = output_folder
     assert Path(output_folder).exists(), "Problem creating output folder: {}".format(
-        output_folder
+        output_folder,
     )
     return Path(output_folder).resolve()
 
@@ -200,7 +197,7 @@ def reproduce_directory_tree(
     for folder in tqdm(new_folders, desc="Creating Directories"):
         Path(folder).mkdir(parents=True, exist_ok=True)
         assert os.path.isdir(folder.resolve()), "Problem creating folder: {}".format(
-            folder
+            folder,
         )
     return old_files, new_folders
 
@@ -208,11 +205,12 @@ def reproduce_directory_tree(
 def parse_config(config: Union[dict, str, Path], **kwargs) -> object:
     tuple_ = generate_tuple_from_yml(config)
     assert isinstance(
-        tuple_, tuple
+        tuple_,
+        tuple,
     ), "Problem generating tuple from config file: {}".format(config)
     obj_ = generate_object_from_tuple(tuple_)
     assert isinstance(obj_, object), "Problem generating object from tuple: {}".format(
-        tuple_
+        tuple_,
     )
     return obj_
 
@@ -233,46 +231,51 @@ def create_config_dict(config: Union[str, Path]) -> list:
 def make_dict_list_from_tuple_list(tuple_list):
     dict_list = []
     for tup in tuple_list:
-        dict_list.append({'name': tup[0], 'params': tup[1]})
+        dict_list.append({"name": tup[0], "params": tup[1]})
     return dict_list
+
 
 def dump_dict_list_to_yaml(dict_list, folder):
     fullpaths = []
     for entry in dict_list:
         filename = my_hash(entry)
         full_path = Path(folder, filename + ".yaml")
-        config_dict = {"inputs" : {"config" : entry}}
-        with open(full_path, 'w') as f:
+        config_dict = {"inputs": {"config": entry}}
+        with open(full_path, "w") as f:
             yaml.dump(config_dict, f)
         fullpaths.append(full_path.name)
     return fullpaths
 
-def dump_stage_to_yaml(input_file, output_folder, prefix = "big"):
+
+def dump_stage_to_yaml(input_file, output_folder, prefix="big"):
     tuple_list = generate_tuple_list_from_yml(input_file)
     dict_list = make_dict_list_from_tuple_list(tuple_list)
     full_paths = dump_dict_list_to_yaml(dict_list, output_folder)
     return full_paths
+
 
 def dump_all_stages_to_yaml(config):
     for key, value in config.items():
         input_file = value["input_file"]
         folder = value["folder"]
         _ = make_output_folder(value["folder"])
-        config[key]['files'] = dump_stage_to_yaml(input_file, folder)
+        config[key]["files"] = dump_stage_to_yaml(input_file, folder)
     return config
+
 
 def generate_random_config(config, dvc_params):
     new_params = deepcopy(dvc_params)
     name = ""
     for key, value in config.items():
-        rand_file = Path(value['folder'], str(choice(value['files'])))
+        rand_file = Path(value["folder"], str(choice(value["files"])))
         name += "_" + rand_file.name.split(".")[0]
-        with open(rand_file, 'r') as f:
+        with open(rand_file, "r") as f:
             new_params[key] = yaml.load(f, Loader=yaml.FullLoader)
     return new_params, name
+
 
 def count_possible_configs(config):
     count = 1
     for key, value in config.items():
-        count *= len(value['files'])
+        count *= len(value["files"])
     return count

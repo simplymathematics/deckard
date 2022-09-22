@@ -36,6 +36,8 @@ deckard.egg-info/*
 *variables.index
 *variables.data*
 *model
+*.tsv
+
 
 # windows stuff
 *.exe
@@ -78,6 +80,19 @@ dist/*
 
 ## Experiment stuff
 examples/**/*.yaml
-examples/*/tmp/*
+examples/*/*/*.yaml
+examples/tikho/Tikhonov Training Loss/scalars/f1.tsv
+
+#Always include dvc.yaml files
+!dvc.yaml
+
+*attack.yaml
+*defend.yaml
+*evaluate.yaml
+*train.yaml
+*cotrol.yaml
+*predict.yaml
+*visualise.yaml
+*evaluate.yaml
 !**/*dvc.yaml
 examples/**/*/report.hml

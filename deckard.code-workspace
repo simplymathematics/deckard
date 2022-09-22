@@ -10,10 +10,8 @@
 	"settings": {
 		"python.testing.pytestEnabled": true,
     	"python.testing.pytestPath": "${workspaceFolder}/deckard/test/",
-		"python.envFile": "${workspaceFolder}/.env",	
+		"python.envFile": "${workspaceFolder}/.env",
 		"yaml.schemas": {
-			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json": 
-				"file:///home/cmeyers/deckard/examples/mnist/configs/main_config.yml"
-		}
+			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json":		}
 	}
 }
