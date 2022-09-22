@@ -74,13 +74,14 @@ class Data(BaseHashable):
         if isinstance(self.dataset, str) and not Path(self.path, self.dataset).exists():
             if self.dataset.endswith(".csv") or self.dataset.endswith(".txt"):
                 (X_train, y_train), (X_test, y_test) = self._parse_csv(
-                    self.dataset, self.target
+                    self.dataset,
+                    self.target,
                 )
             elif self.dataset in SUPPORTED_DATASETS:
                 (X_train, y_train), (X_test, y_test), _, _ = load_dataset(self.dataset)
             else:
                 raise ValueError(
-                    "String dataset must be a csv file or a supported dataset."
+                    "String dataset must be a csv file or a supported dataset.",
                 )
             (
                 self.X_train,
@@ -103,14 +104,15 @@ class Data(BaseHashable):
                 setattr(self, key, value)
         else:
             raise ValueError(
-                f"Dataset must be a csv file, a string, or a pickled Data object. Strings must be a supported dataset: {SUPPORTED_DATASETS}"
+                f"Dataset must be a csv file, a string, or a pickled Data object. Strings must be a supported dataset: {SUPPORTED_DATASETS}",
             )
         assert hasattr(self, "X_train"), "X_train is not defined. Something went wrong."
         assert hasattr(self, "X_test"), "X_test is not defined. Something went wrong."
         assert hasattr(self, "y_train"), "y_train is not defined. Something went wrong."
         assert hasattr(self, "y_test"), "y_test is not defined. Something went wrong."
         assert hasattr(
-            self, "clip_values"
+            self,
+            "clip_values",
         ), "clip_values is not defined. Something went wrong."
 
     def set_params(self, **kwargs):
@@ -144,10 +146,11 @@ class Data(BaseHashable):
         # sets stratify to None if stratify is False
         stratify = big_y if self.stratify == True else None
         assert len(big_X) == len(
-            big_y
+            big_y,
         ), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
         assert big_X.shape[0] == big_y.shape[0], "X has {} rows. y has {} rows.".format(
-            big_X.shape[0], big_y.shape[0]
+            big_X.shape[0],
+            big_y.shape[0],
         )
         if self.train_size == 1:
             pass
@@ -162,7 +165,8 @@ class Data(BaseHashable):
             )
         if hasattr(self, "test_size"):
             assert isinstance(self.test_size, int) or isinstance(
-                self.test_size, NoneType
+                self.test_size,
+                NoneType,
             ), "test_size must be an integer"
             if self.test_size is not None and self.test_size <= len(X_test):
                 stratify = y_test if self.stratify == True else None
@@ -179,13 +183,14 @@ class Data(BaseHashable):
                 assert (
                     len(X_test) == self.test_size
                 ), "X_test has {} rows. test_size is {}".format(
-                    len(X_test), self.test_size
+                    len(X_test),
+                    self.test_size,
                 )
             else:
                 logger.warning(
                     "test_size is greater than the number of test samples. Setting test_size to {}".format(
-                        len(X_test)
-                    )
+                        len(X_test),
+                    ),
                 )
                 pass
         else:
@@ -200,7 +205,7 @@ class Data(BaseHashable):
         Chooses the dataset to use. Returns self.
         """
         assert dataset.endswith(".csv") or dataset.endswith(
-            ".txt"
+            ".txt",
         ), "Dataset must be a .csv  or .txt file"
         df = pd.read_csv(dataset)
         df = df.dropna(axis=0, how="any")
@@ -248,7 +253,8 @@ class Data(BaseHashable):
         with open(data_file, "rb") as f:
             data = pickle.load(f)
         assert isinstance(
-            self, Data
+            self,
+            Data,
         ), "Data is not an instance of Data. It is type: {}".format(type(self))
         logger.info("Loaded model")
         return data

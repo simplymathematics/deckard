@@ -1,7 +1,7 @@
-prepare: 
+prepare:
   name: parsed/lat.csv
   params:
-    shuffle : True 
+    shuffle : True
     stratify : None
     random_state : 0
     train_size : .8

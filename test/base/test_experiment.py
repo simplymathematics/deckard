@@ -1,4 +1,5 @@
 import warnings
+
 from sklearn.exceptions import UndefinedMetricWarning
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -6,22 +7,22 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 import tempfile
 import unittest
-from deckard.base import Data, Model, Experiment, experiment
-import numpy as np
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
-from copy import deepcopy
 from collections.abc import Callable
+from copy import deepcopy
+from os import path
+
+import numpy as np
 from art.attacks.evasion import BoundaryAttack
+from art.defences.postprocessor import HighConfidence
 from art.defences.preprocessor import FeatureSqueezing
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from art.defences.preprocessor import FeatureSqueezing
-from art.defences.postprocessor import HighConfidence
-from os import path, listdir
+from deckard.base import Data, Experiment, Model, experiment
+from sklearn.cluster import KMeans
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import accuracy_score
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 
 
 class testExperiment(unittest.TestCase):
@@ -128,7 +129,10 @@ class testExperiment(unittest.TestCase):
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         grid = GridSearchCV(
-            estimator, {"max_depth": [1, 2, 3, 4, 5]}, cv=3, return_train_score=True
+            estimator,
+            {"max_depth": [1, 2, 3, 4, 5]},
+            cv=3,
+            return_train_score=True,
         )
         model = Model(grid, model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
@@ -147,7 +151,7 @@ class testExperiment(unittest.TestCase):
         data = Data("iris", test_size=30)
         model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
         experiment = Experiment(data=data, model=model)
-        filenames = experiment.save_params(filename = "params.json", path=self.path)
+        filenames = experiment.save_params(filename="params.json", path=self.path)
         for f in filenames:
             filename = path.join(self.path, f)
             self.assertTrue(path.exists(filename))
@@ -173,72 +177,70 @@ class testExperiment(unittest.TestCase):
 
     def test_insert_sklearn_preprocessor(self):
         config = {
-            "name" : "sklearn.preprocessing.StandardScaler",
-            "params" :{
-                "with_mean" : True,
-                "with_std" : True
-            }
+            "name": "sklearn.preprocessing.StandardScaler",
+            "params": {"with_mean": True, "with_std": True},
         }
         config2 = {
-            "name" : "sklearn.impute.SimpleImputer",
-            "params" :{
-                "strategy" : "mean"
-            }
+            "name": "sklearn.impute.SimpleImputer",
+            "params": {"strategy": "mean"},
         }
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
         model.insert_sklearn_preprocessor(
-            name = "Preprocessor", preprocessor=config, position=0
+            name="Preprocessor",
+            preprocessor=config,
+            position=0,
         )
         model.insert_sklearn_preprocessor(
-            name="Featurizer", preprocessor=config2, position=1
+            name="Featurizer",
+            preprocessor=config2,
+            position=1,
         )
         model()
         self.assertIn("Preprocessor", str(model.model.steps))
         self.assertIn(str("with_mean"), str(model.model.steps[0][1].get_params()))
-        self.assertDictContainsSubset(config['params'], model.model.steps[0][1].get_params())
+        self.assertDictContainsSubset(
+            config["params"],
+            model.model.steps[0][1].get_params(),
+        )
         self.assertIn("Featurizer", str(model.model.steps))
         self.assertIn(str("strategy"), str(model.model.steps[1][1].get_params()))
-        self.assertDictContainsSubset(config2['params'], model.model.steps[1][1].get_params())
-        self.assertIn(str(config['params']), str(model.params))
-        self.assertIn(str(config2['params']), str(model.params))
-        
+        self.assertDictContainsSubset(
+            config2["params"],
+            model.model.steps[1][1].get_params(),
+        )
+        self.assertIn(str(config["params"]), str(model.params))
+        self.assertIn(str(config2["params"]), str(model.params))
+
     def test_insert_art_defence(self):
         config = {
-             "name" : "art.defences.preprocessor.FeatureSqueezing",
-             "params" : {
-                 "clip_values" : (0, 1), 
-                 "bit_depth" : 4
-             }
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"clip_values": (0, 1), "bit_depth": 4},
         }
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
         model.insert_art_defence(config)
-        self.assertIn("FeatureSqueezing", str(model.params['Defence']))
-        self.assertIn(str("clip_values"), str(model.params['Defence']))
-    
+        self.assertIn("FeatureSqueezing", str(model.params["Defence"]))
+        self.assertIn(str("clip_values"), str(model.params["Defence"]))
+
     def test_experiment_param_printing(self):
         config = {
-             "name" : "art.defences.preprocessor.FeatureSqueezing",
-             "params" : {
-                 "clip_values" : (0, 1), 
-                 "bit_depth" : 4
-             }
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"clip_values": (0, 1), "bit_depth": 4},
         }
         data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
         model.insert_art_defence(config)
-        self.assertIn("FeatureSqueezing", str(model.params['Defence']))
-        self.assertIn(str("clip_values"), str(model.params['Defence']))
+        self.assertIn("FeatureSqueezing", str(model.params["Defence"]))
+        self.assertIn(str("clip_values"), str(model.params["Defence"]))
         exp = Experiment(data, model)
         self.assertIn("Defence", str(exp))
         self.assertIn("Experiment", str(exp))
         self.assertIn("Model", str(exp))
         self.assertIn("Data", str(exp))
-        
 
     def tearDown(self) -> None:
         from shutil import rmtree

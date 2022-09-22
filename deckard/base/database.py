@@ -84,11 +84,14 @@ if __name__ == "__main__":
     import logging
 
     parser = argparse.ArgumentParser(
-        description="Add results from pipeline to database."
+        description="Add results from pipeline to database.",
     )
     parser.add_argument("-d", "--database", help="Database name", required=True)
     parser.add_argument(
-        "-f", "--folder", help="Folder containing results", required=True
+        "-f",
+        "--folder",
+        help="Folder containing results",
+        required=True,
     )
     parser.add_argument("-v", "--verbosity", help="Verbose output", default="DEBUG")
     args = parser.parse_args()
@@ -110,7 +113,9 @@ if __name__ == "__main__":
                         identifier = file.split(".")[0].split("\\")[-2]
                         collection_names.append(collection_name)
                         logger.info(
-                            "Adding results from %s to %s", file, collection_name
+                            "Adding results from %s to %s",
+                            file,
+                            collection_name,
                         )
                         from pandas import read_json
 
@@ -143,6 +148,8 @@ if __name__ == "__main__":
         # log working directory
         logger.info("Working directory: %s", os.getcwd())
         logger.info(
-            "Dumping results from %s to %s", collection_name, collection_name + ".csv"
+            "Dumping results from %s to %s",
+            collection_name,
+            collection_name + ".csv",
         )
         dump_database_to_file(db, collection_name, collection_name + ".csv")

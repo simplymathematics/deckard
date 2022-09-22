@@ -2,11 +2,9 @@ import logging, os, pickle
 
 
 # Operating System
-from time import process_time
-import json, yaml
+import yaml
 from pathlib import Path
 from typing import Union
-from copy import deepcopy
 from pandas import DataFrame, Series
 
 # Math Stuff
@@ -117,13 +115,19 @@ class Experiment(BaseHashable):
             os.mkdir(path)
         self.fit()
         preds_file = self.save_predictions(
-            filename=predictions_file, path=path, prefix=prefix
+            filename=predictions_file,
+            path=path,
+            prefix=prefix,
         )
         truth_File = self.save_ground_truth(
-            filename=ground_truth_file, path=path, prefix=prefix
+            filename=ground_truth_file,
+            path=path,
+            prefix=prefix,
         )
         time_file = self.save_time_dict(
-            filename=time_dict_file, path=path, prefix=prefix
+            filename=time_dict_file,
+            path=path,
+            prefix=prefix,
         )
         model_file = os.path.join(path, model_file)
         model_name = str(hash(self.model)) if model_file is None else model_file
@@ -133,7 +137,10 @@ class Experiment(BaseHashable):
         return files
 
     def save_data(
-        self, filename: str = "data.pkl", prefix=None, path: str = "."
+        self,
+        filename: str = "data.pkl",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves data to specified file.
@@ -197,7 +204,10 @@ class Experiment(BaseHashable):
         return os.path.join(path, filename)
 
     def save_predictions(
-        self, filename: str = "predictions.json", prefix=None, path: str = "."
+        self,
+        filename: str = "predictions.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves predictions to specified file.
@@ -215,7 +225,10 @@ class Experiment(BaseHashable):
         return prediction_file
 
     def save_ground_truth(
-        self, filename: str = "ground_truth.json", prefix=None, path: str = "."
+        self,
+        filename: str = "ground_truth.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves ground_truth to specified file.
@@ -233,7 +246,10 @@ class Experiment(BaseHashable):
         return prediction_file
 
     def save_cv_scores(
-        self, filename: str = "cv_scores.json", prefix=None, path: str = "."
+        self,
+        filename: str = "cv_scores.json",
+        prefix=None,
+        path: str = ".",
     ) -> None:
         """
         Saves crossvalidation scores to specified file.
@@ -254,7 +270,10 @@ class Experiment(BaseHashable):
         return cv_file
 
     def save_time_dict(
-        self, filename: str = "time_dict.json", prefix=None, path: str = "."
+        self,
+        filename: str = "time_dict.json",
+        prefix=None,
+        path: str = ".",
     ):
         """
         Saves time dictionary to specified file.

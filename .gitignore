@@ -86,3 +86,12 @@ examples/tikho/Tikhonov Training Loss/scalars/f1.tsv
 
 #Always include dvc.yaml files
 !dvc.yaml
+
+*attack.yaml
+*defend.yaml
+*evaluate.yaml
+*train.yaml
+*cotrol.yaml
+*predict.yaml
+*visualise.yaml
+*evaluate.yaml

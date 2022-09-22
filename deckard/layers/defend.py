@@ -35,7 +35,7 @@ if __name__ == "__main__":
     import dvc.api
 
     parser = argparse.ArgumentParser(
-        description="Prepare model and dataset as an experiment object. Then runs the experiment."
+        description="Prepare model and dataset as an experiment object. Then runs the experiment.",
     )
     parser.add_argument(
         "--layer_name",
@@ -45,13 +45,25 @@ if __name__ == "__main__":
         help='Name of layer, e.g. "attack"',
     )
     parser.add_argument(
-        "--input_model", "-m", type=str, default=None, help="Name of the model"
+        "--input_model",
+        "-m",
+        type=str,
+        default=None,
+        help="Name of the model",
     )
     parser.add_argument(
-        "--input_folder", "-i", type=str, default=None, help="Path to the model"
+        "--input_folder",
+        "-i",
+        type=str,
+        default=None,
+        help="Path to the model",
     )
     parser.add_argument(
-        "--model_type", "-t", type=str, default=None, help="Type of the model"
+        "--model_type",
+        "-t",
+        type=str,
+        default=None,
+        help="Type of the model",
     )
     parser.add_argument(
         "--output_folder",
@@ -61,13 +73,25 @@ if __name__ == "__main__":
         help="Path to the output folder",
     )
     parser.add_argument(
-        "--output_name", "-o", type=str, default=None, help="Name of the output file"
+        "--output_name",
+        "-o",
+        type=str,
+        default=None,
+        help="Name of the output file",
     )
     parser.add_argument(
-        "--data_file", "-d", type=str, default=None, help="Path to the data file"
+        "--data_file",
+        "-d",
+        type=str,
+        default=None,
+        help="Path to the data file",
     )
     parser.add_argument(
-        "--config", "-c", type=str, default=None, help="Path to the attack config file"
+        "--config",
+        "-c",
+        type=str,
+        default=None,
+        help="Path to the attack config file",
     )
     cli_args = parser.parse_args()
     params = dvc.api.params_show()[cli_args.layer_name]
@@ -77,7 +101,7 @@ if __name__ == "__main__":
             setattr(args, k, v)
     if not os.path.exists(args.outputs["folder"]):
         logger.warning(
-            "Model path {} does not exist. Creating it.".format(args.outputs["folder"])
+            "Model path {} does not exist. Creating it.".format(args.outputs["folder"]),
         )
         os.mkdir(args.outputs["folder"])
     ART_DATA_PATH = args.outputs["folder"]

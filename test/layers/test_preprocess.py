@@ -1,5 +1,4 @@
-import warnings, tempfile, unittest, os, argparse, dvc.api, yaml, subprocess
-from pathlib import Path
+import warnings, tempfile, unittest, os, dvc.api, yaml, subprocess
 from tqdm import tqdm
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -16,7 +15,7 @@ class testSklearnPreprocess(unittest.TestCase):
         self.here = os.path.dirname(os.path.abspath(__file__))
         os.chdir(os.path.join(self.here, "..", "..", "examples", "iris"))
         self.here = os.path.realpath(
-            os.path.join(self.here, "..", "..", "examples", "iris")
+            os.path.join(self.here, "..", "..", "examples", "iris"),
         )
 
     def test_cli(self):
@@ -24,7 +23,10 @@ class testSklearnPreprocess(unittest.TestCase):
             dictionary = yaml.load(f, Loader=yaml.FullLoader)
         command = dictionary["stages"]["preprocess"]["cmd"]
         subprocess.run(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
     def tearDown(self) -> None:

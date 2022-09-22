@@ -79,7 +79,6 @@ class Crawler:
             path = self.path
         data = {}
         status = {}
-        i = 0
         for root, dirs, files in os.walk(path):
             root = os.path.join(path, root)
             for directory in dirs:
@@ -88,7 +87,7 @@ class Crawler:
                     for f in os.listdir(os.path.join(root, directory))
                 ):
                     data[directory], status[directory] = self.crawl_folder(
-                        os.path.join(root, directory)
+                        os.path.join(root, directory),
                     )
                     data[directory]["parent"] = root.split(os.sep)[-1]
                     status[directory]["parent"] = root.split(os.sep)[-1]
@@ -130,10 +129,12 @@ class Crawler:
             data, status = self.crawl_layer(os.path.join(path, layer + os.sep))
             if layer == "control":
                 big_df = pd.DataFrame.from_dict(data, orient="index").dropna(
-                    how="all", axis=1
+                    how="all",
+                    axis=1,
                 )
                 big_st = pd.DataFrame.from_dict(status, orient="index").dropna(
-                    how="all", axis=1
+                    how="all",
+                    axis=1,
                 )
             else:
                 big_df = self.merge_dataframes(big_df, data)

@@ -1,7 +1,7 @@
 import deckard, argparse, sys
 from pathlib import Path
 import subprocess, logging
-from os import chdir, getcwd, listdir
+from os import chdir, getcwd
 
 import dvc.api
 
@@ -20,10 +20,17 @@ if __name__ == "__main__":
         default=".",
     )
     parser.add_argument(
-        "-v", "--verbose", help="verbosity level", action="store_true", default="DEBUG"
+        "-v",
+        "--verbose",
+        help="verbosity level",
+        action="store_true",
+        default="DEBUG",
     )
     parser.add_argument(
-        "-p", "--pipeline", help="Path to the pipeline to be used", default="dvc.yaml"
+        "-p",
+        "--pipeline",
+        help="Path to the pipeline to be used",
+        default="dvc.yaml",
     )
     parser.add_argument(
         "-c",
@@ -44,7 +51,8 @@ if __name__ == "__main__":
     assert path.exists(), f"Path {path} does not exist"
     assert path.is_dir(), f"Path {path} is not a directory"
     assert Path(
-        args.path, args.pipeline
+        args.path,
+        args.pipeline,
     ).exists(), f"Pipeline {args.pipeline} does not exist in {path}"
     chdir(Path(args.path).resolve())
     print(f"Changed directory to {path.resolve()}")

@@ -65,7 +65,7 @@ class Generator(BaseHashable):
         :param filename: the name of the json file
         """
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert os.path.isdir(self.output), f"{self.output} is not a directory"
         # check if the file exists
@@ -90,10 +90,10 @@ class Generator(BaseHashable):
         Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
         """
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert os.path.isfile(filename), f"{filename} does not exist"
-        full_list = list()
+        full_list = []
         LOADER = yaml.FullLoader
         # check if the file exists
         if not os.path.isfile(str(filename)):
@@ -123,7 +123,7 @@ class Generator(BaseHashable):
         """
         assert isinstance(path, str), "path {} must be a string.".format(path)
         assert isinstance(filename, str), "Filename {} must be a string.".format(
-            filename
+            filename,
         )
         assert isinstance(params, dict), "Params {} must be a dict.".format(params)
         assert os.path.isdir(path), f"{path} is not a directory"

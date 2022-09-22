@@ -1,4 +1,5 @@
-from . import base, layers
+import base  # noqa: F401
+import layers  # noqa: F401
 import tempfile, logging, os, warnings
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -14,7 +15,7 @@ LOGGING = {
         "std": {
             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
             "datefmt": "%Y-%m-%d %H:%M",
-        }
+        },
     },
     "handlers": {
         "default": {

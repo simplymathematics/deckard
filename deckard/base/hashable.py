@@ -58,7 +58,8 @@ class BaseHashable(object):
             # print(key, value, type(value))
             # print("***************")
             if isinstance(
-                value, (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath)
+                value,
+                (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath),
             ):
                 result = pathlib.Path(value).name
             elif isinstance(value, ndarray):
@@ -73,8 +74,6 @@ class BaseHashable(object):
                 result = value
             elif isinstance(value, type(None)):
                 result = None
-            elif isinstance(value, ndarray):
-                result = value.tolist()
             elif isinstance(value, Pipeline):
                 this = value.get_params(deep=True)
                 # print(this)

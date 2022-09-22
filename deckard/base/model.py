@@ -1,11 +1,10 @@
-import json
 import logging
 import os
 import pickle
 from copy import deepcopy
 from pathlib import Path
 from time import process_time
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 from art.estimators import ScikitlearnEstimator
@@ -111,8 +110,10 @@ class Model(BaseHashable):
             else:
                 raise ValueError(
                     "Parameter {} not found in \n {} or \n {}".format(
-                        param, self.model.model.get_params(), self.model.__dict__.keys()
-                    )
+                        param,
+                        self.model.model.get_params(),
+                        self.model.__dict__.keys(),
+                    ),
                 )
             self.params.update({param: value})
 
@@ -134,7 +135,11 @@ class Model(BaseHashable):
         if url is not None:
             # download model
             model_path = get_file(
-                filename=filename, extract=False, path=path, url=url, verbose=True
+                filename=filename,
+                extract=False,
+                path=path,
+                url=url,
+                verbose=True,
             )
             logging.info("Downloaded model from {} to {}".format(url, model_path))
         filename = os.path.join(path, filename)
@@ -175,7 +180,11 @@ class Model(BaseHashable):
         return model
 
     def __call__(
-        self, pipeline: dict = None, art: dict = None, fit=None, predict=None
+        self,
+        pipeline: dict = None,
+        art: dict = None,
+        fit=None,
+        predict=None,
     ) -> None:
         """
         Load a model from a pickle file.
@@ -194,7 +203,6 @@ class Model(BaseHashable):
             self.params["model"] = self.model
         else:
             logger.info("Model already in memory.")
-            pass
         logger.info("Loaded model")
         if pipeline is not None:
             self.insert_sklearn_preprocessor(**pipeline)
@@ -221,7 +229,7 @@ class Model(BaseHashable):
             clip_values = self.clip_values
         if hasattr(self, "Defence"):
             self.params["Defence"].update(
-                {"type": str(type(self.defence)).split(".")[-1].split("'")[0]}
+                {"type": str(type(self.defence)).split(".")[-1].split("'")[0]},
             )
             if "art" and "preprocessor" in self.params["Defence"]["type"].lower():
                 preprocessors.append(self.defence)
@@ -234,8 +242,8 @@ class Model(BaseHashable):
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["Defence"]["type"]
-                    )
+                        self.params["Defence"]["type"],
+                    ),
                 )
         else:
             pass
@@ -301,7 +309,10 @@ class Model(BaseHashable):
         return model
 
     def insert_sklearn_preprocessor(
-        self, name: str, preprocessor: Union[str, Path, dict], position: int
+        self,
+        name: str,
+        preprocessor: Union[str, Path, dict],
+        position: int,
     ):
         """
         Add a sklearn preprocessor to the experiment.
@@ -313,8 +324,8 @@ class Model(BaseHashable):
         if not isinstance(preprocessor, (str, Path, dict)):
             raise ValueError(
                 "Preprocessor must be a string or a dictionary, not type {}".format(
-                    type(preprocessor)
-                )
+                    type(preprocessor),
+                ),
             )
         config_tuple = generate_tuple_from_yml(preprocessor)
         if "Pipeline" not in self.params:
@@ -337,19 +348,21 @@ class Model(BaseHashable):
         elif hasattr(self.model, "model") and isinstance(self.model.model, Pipeline):
             pipe = self.model.model
         elif "art.estimators" in str(type(self.model)) and not isinstance(
-            self.model.model, Pipeline
+            self.model.model,
+            Pipeline,
         ):
             logger.warning(
-                "Model is already an ART classifier. If Defence is not None, it will be ignored. ART defences are meant to be applied to the final sklearn model."
+                "Model is already an ART classifier. If Defence is not None, it will be ignored. ART defences are meant to be applied to the final sklearn model.",
             )
             pipe = Pipeline([("model", self.model.model)])
         elif isinstance(self.model, BaseEstimator) and not isinstance(
-            self.model, Pipeline
+            self.model,
+            Pipeline,
         ):
             pipe = Pipeline([("model", self.model)])
         else:
             raise ValueError(
-                "Cannot make model type {} into a pipeline".format(type(self.model))
+                "Cannot make model type {} into a pipeline".format(type(self.model)),
             )
         new_model = deepcopy(pipe)
         assert isinstance(new_model, Pipeline)
@@ -380,7 +393,8 @@ class Model(BaseHashable):
         except TypeError as e:
             if "clip_values" in str(e):
                 self.defence = generate_object_from_tuple(
-                    defence_tuple, self.clip_values
+                    defence_tuple,
+                    self.clip_values,
                 )
             elif "estimator" in str(e):
                 self.defence = generate_object_from_tuple(defence_tuple, self.model)
@@ -399,7 +413,7 @@ class Model(BaseHashable):
             self.params["Defence"].update({"type": "transformer"})
         else:
             raise NotImplementedError(
-                "Defence type {} not supported".format(type(self.defence))
+                "Defence type {} not supported".format(type(self.defence)),
             )
 
     def initialize_art_regressor(self, **kwargs) -> None:
@@ -421,8 +435,8 @@ class Model(BaseHashable):
             elif self.defence is not None:
                 raise ValueError(
                     "defence type {} not supported".format(
-                        self.params["Defence"]["type"]
-                    )
+                        self.params["Defence"]["type"],
+                    ),
                 )
         else:
             pass

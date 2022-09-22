@@ -1,18 +1,20 @@
 import argparse
-import json
 import logging
 from pathlib import Path
 from typing import Callable, Union
 import dvc.api
 import numpy as np
 from deckard.base import Data, Model
-from yellowbrick.exceptions import YellowbrickValueError
+
+# from yellowbrick.exceptions import YellowbrickValueError
 
 logger = logging.getLogger(__name__)
 
 
 def visualise_sklearn_classifier_experiment(
-    args: argparse.Namespace, path: Union[str, Path] = Path("."), type: str = "ROC_AUC"
+    args: argparse.Namespace,
+    path: Union[str, Path] = Path("."),
+    type: str = "ROC_AUC",
 ) -> None:
     """
     Visualise the results of a single experiment.
@@ -40,13 +42,14 @@ def visualise_sklearn_classifier_experiment(
         y_train = [np.argmax(y) for y in data.y_train]
         y_test = [np.argmax(y) for y in data.y_test]
         classes = list(set(y_train))
-    if hasattr(args, "art") and args.art == True:
+    if hasattr(args, "art") and args.art is True:
         logger.info("Using ART model")
         viz_mod = model.model
     else:
         viz_mod = model
     assert isinstance(
-        viz_mod, (Callable, Model)
+        viz_mod,
+        (Callable, Model),
     ), "model must be a callable object. It is type {}".format(type(viz_mod))
     if type == "ROC_AUC":
         from yellowbrick.classifier import ROCAUC
@@ -76,7 +79,11 @@ if __name__ == "__main__":
         help='Name of layer, e.g. "attack"',
     )
     parser.add_argument(
-        "--config", "-c", type=str, default=None, help="Path to the attack config file"
+        "--config",
+        "-c",
+        type=str,
+        default=None,
+        help="Path to the attack config file",
     )
     args = parser.parse_args()
     # parse arguments

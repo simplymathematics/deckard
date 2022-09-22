@@ -1,9 +1,8 @@
 import logging
 import os
-from json import dumps
 from pathlib import Path
 from time import process_time
-from typing import Callable, Type, Union
+from typing import Union
 
 from .parse import generate_tuple_from_yml, generate_object_from_tuple
 from pandas import DataFrame, Series
@@ -40,9 +39,10 @@ class AttackExperiment(Experiment):
         :param name: Name of experiment
         """
         assert isinstance(
-            attack, (dict, str, Path)
+            attack,
+            (dict, str, Path),
         ), "Attack must be a dictionary, str, or path. It is type {}".format(
-            type(attack)
+            type(attack),
         )
         assert "name" and "params" in attack
         super().__init__(
@@ -104,13 +104,16 @@ class AttackExperiment(Experiment):
         else:
             self.run_attack()
         assert hasattr(
-            self, "adv"
+            self,
+            "adv",
         ), "Attack does not have attribute adv. Something went wrong."
         assert hasattr(
-            self, "adv_samples"
+            self,
+            "adv_samples",
         ), "Attack does not have attribute adv_samples. Something went wrong."
         assert hasattr(
-            self, "time_dict"
+            self,
+            "time_dict",
         ), "Attack does not have attribute time_dict. Something went wrong."
 
         pred_file = self.save_attack_predictions(prefix=prefix, path=path)
@@ -123,7 +126,7 @@ class AttackExperiment(Experiment):
         Runs the attack on the model
         """
         if not hasattr(self, "time_dict") or self.time_dict is None:
-            self.time_dict = dict()
+            self.time_dict = {}
         assert hasattr(self, "attack"), "Attack not set"
         start = process_time()
         if "AdversarialPatch" in str(type(self.attack)):
@@ -131,7 +134,8 @@ class AttackExperiment(Experiment):
                 self.data.X_test, self.data.y_test, **kwargs
             )
             adv_samples = self.attack.apply_patch(
-                self.data.X_test, scale=self.attack._attack.scale_max
+                self.data.X_test,
+                scale=self.attack._attack.scale_max,
             )
         elif targeted == False:
             adv_samples = self.attack.generate(self.data.X_test, **kwargs)
@@ -157,7 +161,10 @@ class AttackExperiment(Experiment):
         return self.attack
 
     def save_attack_samples(
-        self, prefix=None, filename: str = "examples.json", path: str = "."
+        self,
+        prefix=None,
+        filename: str = "examples.json",
+        path: str = ".",
     ):
         """
         Saves adversarial examples to specified file.
@@ -175,7 +182,10 @@ class AttackExperiment(Experiment):
         return adv_file
 
     def save_attack_predictions(
-        self, prefix=None, filename: str = "predictions.json", path: str = "."
+        self,
+        prefix=None,
+        filename: str = "predictions.json",
+        path: str = ".",
     ) -> None:
         """
         Saves adversarial predictions to specified file.

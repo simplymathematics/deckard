@@ -2,7 +2,6 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from typing import Union
 
 import dvc.api
 import numpy as np
@@ -60,7 +59,7 @@ if __name__ == "__main__":
     # args
 
     parser = argparse.ArgumentParser(
-        description="Prepare model and dataset as an experiment object. Then runs the experiment."
+        description="Prepare model and dataset as an experiment object. Then runs the experiment.",
     )
     parser.add_argument(
         "--layer_name",
@@ -77,7 +76,7 @@ if __name__ == "__main__":
             setattr(args, k, v)
     if not os.path.exists(args.outputs["folder"]):
         logger.warning(
-            "Model path {} does not exist. Creating it.".format(args.outputs["folder"])
+            "Model path {} does not exist. Creating it.".format(args.outputs["folder"]),
         )
         os.mkdir(args.outputs["folder"])
     ART_DATA_PATH = args.outputs["folder"]

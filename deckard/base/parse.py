@@ -24,10 +24,11 @@ def generate_tuple_list_from_yml(filename: str) -> list:
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
     assert isinstance(
-        filename, (str, Path, dict)
+        filename,
+        (str, Path, dict),
     ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     assert os.path.isfile(filename), f"{filename} does not exist"
-    full_list = list()
+    full_list = []
     LOADER = yaml.FullLoader
     # check if the file exists
     if not os.path.isfile(str(filename)):
@@ -37,10 +38,12 @@ def generate_tuple_list_from_yml(filename: str) -> list:
         try:
             yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
+            logger.warning("Exception: {}".format(exc))
             raise ValueError("Error parsing yml file {}".format(filename))
     for entry in yml_list:
         if not isinstance(entry, dict):
             raise ValueError("Error parsing yml file {}".format(filename))
+        # Popping single parameters, tuples, etc, before the grid search
         special_keys = {}
         for key, value in entry["params"].items():
             if isinstance(value, (tuple, float, int, str)):
@@ -49,6 +52,7 @@ def generate_tuple_list_from_yml(filename: str) -> list:
                 special_keys[special_key] = special_values
         for key in special_keys.keys():
             entry["params"].pop(key)
+        # Generate the grid search
         grid = ParameterGrid(entry["params"])
         name = entry["name"]
         for combination in grid:
@@ -64,30 +68,11 @@ def generate_object_list_from_tuple(yml_tuples: list, *args) -> list:
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    obj_list = list()
+    obj_list = []
     for entry in yml_tuples:
-        library_name = ".".join(entry[0].split(".")[:-1])
-        class_name = entry[0].split(".")[-1]
-        global dependency
-        dependency = None
-        dependency = importlib.import_module(library_name)
-        global object_instance
-        object_instance = None
-        global params
-        params = entry[1]
-        exec("from {} import {}".format(library_name, class_name), globals())
-        if len(args) == 1:
-            global positional_arg
-            positional_arg = args[0]
-            exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
-            del positional_arg
-        elif len(args) == 0:
-            exec(f"object_instance = {class_name}(**params)", globals())
-        else:
-            raise ValueError("Too many positional arguments")
-        obj_list.append(object_instance)
-        del params
-        del dependency
+        obj_ = generate_object_from_tuple(entry, *args)
+        obj_list.append(obj_)
+    assert len(obj_list) == len(yml_tuples), "Error instantiating objects"
     return obj_list
 
 
@@ -96,7 +81,8 @@ def generate_tuple_from_yml(filename: Union[str, dict]) -> list:
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
     """
     assert isinstance(
-        filename, (str, Path, dict)
+        filename,
+        (str, Path, dict),
     ), "filename must be a string, Path, or dict. It is a {}".format(type(filename))
     if isinstance(filename, str):
         LOADER = yaml.FullLoader
@@ -105,6 +91,7 @@ def generate_tuple_from_yml(filename: Union[str, dict]) -> list:
             try:
                 entry = yaml.load(stream, Loader=LOADER)
             except yaml.YAMLError as exc:
+                logger.warning("Exception: {}".format(exc))
                 raise ValueError("Error parsing yml file {}".format(filename))
     if not os.path.isfile(str(filename)):
         assert isinstance(filename, dict), "filename must be a dict or a yml file"
@@ -117,35 +104,30 @@ def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    library_name = ".".join(obj_tuple[0].split(".")[:-1])
-    class_name = obj_tuple[0].split(".")[-1]
-    global dependency
-    dependency = None
-    dependency = importlib.import_module(library_name)
-    global object_instance
-    object_instance = None
-    global params
-    params = obj_tuple[1]
-    exec("from {} import {}".format(library_name, class_name), globals())
+    entry = obj_tuple
+    library_name = ".".join(entry[0].split(".")[:-1])
+    class_name = entry[0].split(".")[-1]
+    importlib.import_module(library_name)
+    deckard_object = None
+    nonlocal deckard_object
+    deckard_object = None
+    params = entry[1]
+    exec(f"from {library_name} import {class_name}", globals())
     if len(args) == 1:
-        global positional_arg
-        positional_arg = args[0]
-        exec(f"object_instance = {class_name}(positional_arg, **params)", globals())
+        exec(f"deckard_object = {class_name}(positional_arg, **{params})", globals())
         del positional_arg
     elif len(args) == 0:
-        exec(f"object_instance = {class_name}(**params)", globals())
+        exec(f"deckard_object = {class_name}(**{params})", globals())
     else:
         raise ValueError("Too many positional arguments")
-    del params
-    del dependency
-    return object_instance
+    return deckard_object
 
 
 def parse_scorer_from_yml(filename: str) -> dict:
     assert isinstance(filename, str)
     LOADER = yaml.FullLoader
     # check if the file exists
-    params = dict()
+    params = {}
     if not os.path.isfile(str(filename)):
         raise ValueError(str(filename) + " file does not exist")
     # read the yml file
@@ -159,7 +141,7 @@ def parse_scorer_from_yml(filename: str) -> dict:
     # check that datas is a list
     if not isinstance(scorer_file, dict):
         raise ValueError(
-            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename)
+            "Error parsing yml file {}. It must be a yaml dictionary.".format(filename),
         )
     if "scorer_function" in scorer_file:
         params["scorer_function"] = scorer_file["scorer_function"]
@@ -168,8 +150,8 @@ def parse_scorer_from_yml(filename: str) -> dict:
     else:
         raise ValueError(
             "Error parsing yml file {}. It must contain a scorer_function or a name.".format(
-                filename
-            )
+                filename,
+            ),
         )
     logger.info(f"Parsing data from {filename}")
     for param, value in params.items():
@@ -186,7 +168,7 @@ def make_output_folder(output_folder: Union[str, Path]) -> Path:
     global ART_DATA_PATH
     ART_DATA_PATH = output_folder
     assert Path(output_folder).exists(), "Problem creating output folder: {}".format(
-        output_folder
+        output_folder,
     )
     return Path(output_folder).resolve()
 
@@ -202,7 +184,7 @@ def reproduce_directory_tree(
     for folder in tqdm(new_folders, desc="Creating Directories"):
         Path(folder).mkdir(parents=True, exist_ok=True)
         assert os.path.isdir(folder.resolve()), "Problem creating folder: {}".format(
-            folder
+            folder,
         )
     return old_files, new_folders
 
@@ -210,11 +192,12 @@ def reproduce_directory_tree(
 def parse_config(config: Union[dict, str, Path], **kwargs) -> object:
     tuple_ = generate_tuple_from_yml(config)
     assert isinstance(
-        tuple_, tuple
+        tuple_,
+        tuple,
     ), "Problem generating tuple from config file: {}".format(config)
     obj_ = generate_object_from_tuple(tuple_)
     assert isinstance(obj_, object), "Problem generating object from tuple: {}".format(
-        tuple_
+        tuple_,
     )
     return obj_
 
