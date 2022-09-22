@@ -111,22 +111,27 @@ def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     Imports and initializes objects from yml file. Returns a list of instantiated objects.
     :param yml_list: list of yml entries
     """
-    entry = obj_tuple
-    library_name = ".".join(entry[0].split(".")[:-1])
-    class_name = entry[0].split(".")[-1]
-    importlib.import_module(library_name)
+    library_name = ".".join(obj_tuple[0].split(".")[:-1])
+    class_name = obj_tuple[0].split(".")[-1]
+    global dependency
+    dependency = None
+    dependency = importlib.import_module(library_name)
+    global deckard_object
     deckard_object = None
-    nonlocal deckard_object
-    deckard_object = None
-    params = entry[1]
-    exec(f"from {library_name} import {class_name}", globals())
+    global params
+    params = obj_tuple[1]
+    exec("from {} import {}".format(library_name, class_name), globals())
     if len(args) == 1:
+        global positional_arg
+        positional_arg = args[0]
         exec(f"deckard_object = {class_name}(positional_arg, **{params})", globals())
         del positional_arg
     elif len(args) == 0:
-        exec(f"deckard_object = {class_name}(**{params})", globals())
+        exec(f"deckard_object = {class_name}(**params)", globals())
     else:
         raise ValueError("Too many positional arguments")
+    del params
+    del dependency
     return deckard_object
 
 

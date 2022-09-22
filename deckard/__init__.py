@@ -5,8 +5,8 @@ import warnings
 
 from sklearn.exceptions import UndefinedMetricWarning
 
-import base  # noqa: F401
-import layers  # noqa: F401
+from deckard import base  # noqa: F401
+from deckard import layers  # noqa: F401
 
 # Semantic Version
 __version__ = "0.30"
