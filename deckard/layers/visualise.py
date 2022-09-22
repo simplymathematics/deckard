@@ -38,7 +38,7 @@ def visualise_sklearn_classifier_experiment(
         classes = list(set(data.y_train))
         y_train = data.y_train
         y_test = data.y_test
-    except:
+    except:  # noqa: E722
         y_train = [np.argmax(y) for y in data.y_train]
         y_test = [np.argmax(y) for y in data.y_test]
         classes = list(set(y_train))

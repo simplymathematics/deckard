@@ -16,7 +16,7 @@ from art.attacks.evasion import BoundaryAttack
 from art.defences.postprocessor import HighConfidence
 from art.defences.preprocessor import FeatureSqueezing
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from deckard.base import Data, Experiment, Model, experiment
+from deckard.base import Data, Experiment, Model
 from sklearn.cluster import KMeans
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score

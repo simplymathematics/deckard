@@ -1,25 +1,18 @@
-import logging, os, pickle
-
-
-# Operating System
-import yaml
+import logging
+import os
+import pickle
 from pathlib import Path
 from typing import Union
-from pandas import DataFrame, Series
 
-# Math Stuff
-import numpy as np
-from pandas import Series
-
-
-from deckard.base.model import Model
-from deckard.base.data import Data
-from deckard.base.hashable import BaseHashable
-
+import yaml
 from art.defences.postprocessor import Postprocessor
 from art.defences.preprocessor import Preprocessor
 from art.defences.trainer import Trainer
 from art.defences.transformer import Transformer
+from deckard.base.data import Data
+from deckard.base.hashable import BaseHashable
+from deckard.base.model import Model
+from pandas import DataFrame, Series
 
 DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
 
@@ -261,10 +254,7 @@ class Experiment(BaseHashable):
         if prefix is not None:
             filename = prefix + "_" + filename
         cv_file = os.path.join(path, filename)
-        try:
-            cv_results = Series(self.model.model.model.cv_results_, name=str(self.hash))
-        except:
-            cv_results = Series(self.model.model.cv_results_, name=str(self.hash))
+        cv_results = Series(self.model.model.cv_results_, name=str(self.hash))
         cv_results.to_json(cv_file, orient="records")
         assert os.path.exists(cv_file), "CV results file not saved"
         return cv_file

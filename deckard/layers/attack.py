@@ -6,7 +6,6 @@ from pathlib import Path
 import dvc.api
 import numpy as np
 from deckard.base import AttackExperiment, Data, Model
-from deckard.base.parse import generate_object_from_tuple, generate_tuple_from_yml
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ def attack_layer(args) -> None:
         data.y_test = data.y_test[: args.inputs["attack_size"]]
     mini = np.amin(data.X_train)
     maxi = np.amax(data.X_train)
-    clip_values = (mini, maxi)
+    _ = (mini, maxi)
     model_file = Path(args.inputs["folder"], args.inputs["model"])
     art_model = Model(model_file, model_type=args.inputs["type"], art=True)
     art_model(art=True)

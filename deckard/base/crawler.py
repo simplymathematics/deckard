@@ -1,10 +1,8 @@
-import numpy as np
+import json
+import logging
+import os
+
 import pandas as pd
-import os, logging, json, yaml
-from .experiment import Experiment
-from .data import Data
-from .model import Model
-from .scorer import Scorer
 
 crawler_config = {
     "filenames": [
@@ -99,11 +97,11 @@ class Crawler:
             df1 = pd.DataFrame.from_dict(df1, orient="index")
         if isinstance(df2, dict):
             df2 = pd.DataFrame.from_dict(df2, orient="index")
-        keep = crawler_config["structured"]
-        drop = list(set(crawler_config["filenames"]) - set(keep))
+        # keep = crawler_config["structured"]
+        # drop = list(set(crawler_config["filenames"]) - set(keep))
         df1 = df1.dropna(how="all", axis=1)
         df2 = df2.dropna(how="all", axis=1)
-        different = set(df2.columns) - set(df1.columns)
+        # different = set(df2.columns) - set(df1.columns)
         same = list(set(df2.columns).intersection(set(df1.columns)))
         if "parent" in same:
             same.remove("parent")

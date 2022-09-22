@@ -1,23 +1,27 @@
 # Standard Library:
-import logging, yaml, json, os
+import json
+import logging
+import os
+
 import pandas as pd
-from .hashable import BaseHashable, my_hash
+import yaml
+from art.defences.postprocessor import Postprocessor
+from art.defences.preprocessor import Preprocessor
+from art.defences.trainer import Trainer
+from art.defences.transformer import Transformer
+from art.estimators import ScikitlearnEstimator
+
+# Adversarial Robustness Toolbox
+from art.estimators.classification import (
+    KerasClassifier,
+    PyTorchClassifier,
+    TensorFlowClassifier,
+)
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid
 
-# Adversarial Robustness Toolbox
-from art.estimators.classification import (
-    PyTorchClassifier,
-    KerasClassifier,
-    TensorFlowClassifier,
-    SklearnClassifier,
-)
-from art.estimators import ScikitlearnEstimator
-from art.defences.preprocessor import Preprocessor
-from art.defences.postprocessor import Postprocessor
-from art.defences.trainer import Trainer
-from art.defences.transformer import Transformer
+from .hashable import BaseHashable, my_hash
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 SUPPORTED_MODELS = (
@@ -103,6 +107,7 @@ class Generator(BaseHashable):
             with open(filename, "r") as stream:
                 yml_list = yaml.load(stream, Loader=LOADER)
         except yaml.YAMLError as exc:
+            logger.error(exc)
             raise ValueError("Error parsing yml file {}".format(filename))
         # check that featurizers is a list
         for entry in yml_list:

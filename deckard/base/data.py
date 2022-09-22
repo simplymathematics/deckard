@@ -1,21 +1,22 @@
 import logging
 import os
 import pickle
-from .hashable import my_hash
 from pathlib import Path
 from types import NoneType
+from typing import Union
+
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit, train_test_split
 
 # mnist dataset from
 from art.utils import load_dataset
+from deckard.base.hashable import BaseHashable
+from sklearn.model_selection import TimeSeriesSplit, train_test_split
 
 logger = logging.getLogger(__name__)
-from typing import Union
+
 
 SUPPORTED_DATASETS = ["mnist", "iris", "cifar10"]
-from deckard.base.hashable import BaseHashable
 
 
 class Data(BaseHashable):
@@ -69,7 +70,7 @@ class Data(BaseHashable):
         self.params = tmp
 
     def __call__(self) -> None:
-        if self.path is None or self.path == False:
+        if self.path is None or self.path is False:
             self.path = "."
         if isinstance(self.dataset, str) and not Path(self.path, self.dataset).exists():
             if self.dataset.endswith(".csv") or self.dataset.endswith(".txt"):
@@ -124,7 +125,7 @@ class Data(BaseHashable):
         try:
             self.__call__()
         except Exception as e:
-            raise
+            raise e
 
     def _sample_data(
         self,
@@ -144,7 +145,7 @@ class Data(BaseHashable):
         big_X = np.vstack((X_train, X_test))
         big_y = np.vstack((y_train, y_test))
         # sets stratify to None if stratify is False
-        stratify = big_y if self.stratify == True else None
+        stratify = big_y if self.stratify is True else None
         assert len(big_X) == len(
             big_y,
         ), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
@@ -169,7 +170,7 @@ class Data(BaseHashable):
                 NoneType,
             ), "test_size must be an integer"
             if self.test_size is not None and self.test_size <= len(X_test):
-                stratify = y_test if self.stratify == True else None
+                stratify = y_test if self.stratify is True else None
                 _, X_test, _, y_test = train_test_split(
                     X_test,
                     y_test,
@@ -215,8 +216,8 @@ class Data(BaseHashable):
             self.target = target
         y = df[self.target]
         X = df.drop(self.target, axis=1)
-        if self.time_series == False:
-            stratify = y if self.stratify == True else None
+        if self.time_series is False:
+            stratify = y if self.stratify is True else None
             X_train, X_test, y_train, y_test = train_test_split(
                 X,
                 y,

@@ -3,7 +3,6 @@ from numpy import ndarray
 from typing import Callable
 import pathlib
 from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator
 
 
 def my_hash(obj):
@@ -51,12 +50,6 @@ class BaseHashable(object):
         new_results = {}
         results = dict(self.params)
         for key, value in results.items():
-            # if hasattr(value, "get_params") and not isinstance(value, BaseHashable):
-            #     result = value.get_params()
-            # input("Press Enter to continue...")
-            # print("***************")
-            # print(key, value, type(value))
-            # print("***************")
             if isinstance(
                 value,
                 (pathlib.Path, pathlib.WindowsPath, pathlib.PosixPath),
@@ -75,7 +68,7 @@ class BaseHashable(object):
             elif isinstance(value, type(None)):
                 result = None
             elif isinstance(value, Pipeline):
-                this = value.get_params(deep=True)
+                # this = value.get_params(deep=True)
                 # print(this)
                 # input("Press Enter to continue...")
                 new_results["name"] = value.steps[-1][0]
@@ -83,7 +76,7 @@ class BaseHashable(object):
                 new_results["name"] = str(type(value)).split("'")[1]
                 try:
                     new_results["params"] = value.get_params(deep=True)
-                except:
+                except:  # noqa: E722
                     new_results["params"] = value.get_params()
             else:
                 result = my_hash(value)

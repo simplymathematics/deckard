@@ -1,7 +1,9 @@
-import logging, argparse
-from deckard.base import Data, Model, Experiment
-import dvc.api
+import argparse
+import logging
 from pathlib import Path
+
+import dvc.api
+from deckard.base import Data, Experiment, Model
 from deckard.base.parse import make_output_folder, parse_config
 
 logger = logging.getLogger(__name__)

@@ -1,13 +1,18 @@
-import logging, yaml, importlib, os
-from pathlib import Path
-from sklearn.model_selection import ParameterGrid
-from .data import Data
-from .scorer import Scorer
-from typing import Union
-from tqdm import tqdm
+import importlib
+import logging
+import os
 from copy import deepcopy
+from pathlib import Path
 from random import choice
+from typing import Union
+
+import yaml
+from sklearn.model_selection import ParameterGrid
+from tqdm import tqdm
+
+from .data import Data
 from .hashable import my_hash
+from .scorer import Scorer
 
 # specify the logger
 logger = logging.getLogger(__name__)
@@ -19,6 +24,8 @@ logger = logging.getLogger(__name__)
 #     "generate_object_from_tuple",
 #     "make_output_folder",
 # ]
+
+
 def generate_tuple_list_from_yml(filename: str) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
@@ -137,6 +144,7 @@ def parse_scorer_from_yml(filename: str) -> dict:
             logger.info(scorer_file)
             logger.info(type(scorer_file))
         except yaml.YAMLError as exc:
+            logger.error("Exception: {}".format(exc))
             raise ValueError("Error parsing yml file {}".format(filename))
     # check that datas is a list
     if not isinstance(scorer_file, dict):

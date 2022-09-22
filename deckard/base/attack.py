@@ -5,11 +5,11 @@ from time import process_time
 from typing import Union
 
 from .parse import generate_tuple_from_yml, generate_object_from_tuple
-from pandas import DataFrame, Series
+from pandas import DataFrame
 
 from .data import Data
 from .experiment import Experiment
-from .hashable import BaseHashable, my_hash
+from .hashable import my_hash
 from .model import Model
 
 ART_NUMPY_DTYPE = "float32"
@@ -137,7 +137,7 @@ class AttackExperiment(Experiment):
                 self.data.X_test,
                 scale=self.attack._attack.scale_max,
             )
-        elif targeted == False:
+        elif targeted is False:
             adv_samples = self.attack.generate(self.data.X_test, **kwargs)
         else:
             adv_samples = self.attack.generate(

@@ -1,7 +1,11 @@
-import os, logging, argparse, glob, yaml
+import argparse
+import logging
+import os
+
 from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
+
 
 # create database
 def create_database(db_name):
@@ -80,8 +84,6 @@ def get_subset_from_db(db: str, collection: str, query: dict, n: int) -> list:
 
 if __name__ == "__main__":
     # arg parser
-    import argparse
-    import logging
 
     parser = argparse.ArgumentParser(
         description="Add results from pipeline to database.",
@@ -128,7 +130,7 @@ if __name__ == "__main__":
                                 collection=collection_name,
                                 results={identifier: json_data},
                             )
-                        except:
+                        except:  # noqa: E722
                             append_result_to_database(
                                 db=db,
                                 collection=collection_name,

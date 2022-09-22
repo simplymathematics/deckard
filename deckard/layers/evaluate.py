@@ -1,9 +1,11 @@
-import logging, argparse
+import argparse
+import logging
 from pathlib import Path
-from tqdm import tqdm
+
 import dvc.api
 from deckard.base import Scorer
 from pandas import DataFrame
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

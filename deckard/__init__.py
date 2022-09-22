@@ -1,7 +1,12 @@
+import logging
+import os
+import tempfile
+import warnings
+
+from sklearn.exceptions import UndefinedMetricWarning
+
 import base  # noqa: F401
 import layers  # noqa: F401
-import tempfile, logging, os, warnings
-from sklearn.exceptions import UndefinedMetricWarning
 
 # Semantic Version
 __version__ = "0.30"

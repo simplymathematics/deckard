@@ -17,9 +17,10 @@ from art.estimators.classification import (
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
+from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
 
-from .data import Data
-from .hashable import my_hash
+from .hashable import BaseHashable, my_hash
 from .parse import generate_object_from_tuple, generate_tuple_from_yml
 
 logger = logging.getLogger(__name__)
@@ -33,10 +34,6 @@ supported_estimators = [
     ScikitlearnEstimator,
     TensorFlowV2Classifier,
 ]
-
-from deckard.base.hashable import BaseHashable
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
 
 __all__ = ["Model"]
 
@@ -131,7 +128,6 @@ class Model(BaseHashable):
         assert model_type is not None, "model_type must be specified"
         assert filename is not None, "filename must be specified"
         assert path is not None or url is not None, "path or url must be specified"
-        output_dir = os.path.dirname(path)
         if url is not None:
             # download model
             model_path = get_file(
@@ -206,9 +202,9 @@ class Model(BaseHashable):
         logger.info("Loaded model")
         if pipeline is not None:
             self.insert_sklearn_preprocessor(**pipeline)
-        if self.classifier == True and art == True:
+        if self.classifier is True and art is True:
             self.model = self.initialize_art_classifier(**art_kwargs)
-        elif self.classifier == False and art == True:
+        elif self.classifier is False and art is True:
             self.model = self.initialize_art_regressor(**art_kwargs)
         if fit is not None:
             setattr(self, "fit_params", fit)
@@ -474,11 +470,11 @@ class Model(BaseHashable):
                 flag = True
             try:
                 self.model.save(filename, path)
-            except:
+            except:  # noqa e722
                 os.mkdir(os.path.join(path, filename))
                 fullpath = os.path.join(path, filename)
                 self.model.save(fullpath)
-            if flag == True:
+            if flag is True:
                 filename = filename + ".pickle"
         else:
             with open(os.path.join(path, filename), "wb") as f:
