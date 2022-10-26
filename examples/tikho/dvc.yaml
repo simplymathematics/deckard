@@ -1,102 +1,22 @@
 stages:
-  linear:
-    cmd: python  -m tikhonov.py --type linear
-    params:
-      - input_noise : 
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - output_ noise :
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - scale :
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - epochs : 
-        - 10000,
-      - learning_rate : 
-        - 1e-9, 
-        - 1e-6, 
-        - 1e-3,
+  data:
+    cmd: python make_data.py
     outs:
-      - linear_predictions.json
-    metrics:
-      - linear_metrics.json
-    # plots:
-    #   - predictions.json
-    #     template : confusion
-    #     cache : True
-    #     template : confusion
-    #     x : actual
-    #     y : predictions
-  logistic:
-    cmd: python  -m tikhonov.py --type logistic
-    params:
-      - input_noise : 
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - output_ noise :
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - scale :
-        - 1e-6,
-        - 1e-5,
-        - 1e-4,
-        - 1e-3,
-        - 1e-2,
-        - 1e-1,
-        - 0,
-        - 1,
-        - 10,
-      - epochs : 
-        - 10000,
-      - learning_rate : 
-        - 1e-9, 
-        - 1e-6, 
-        - 1e-3,
+    - data/data.npz
+    - data/ground_truth.csv
+    plots:
+    - reports/balance.png
+    - reports/radviz.png
+    - reports/correlation.png
+  model:
+    cmd: python tikhonov.py
     outs:
-      - logistic_predictions.json
+    - model/model.pickle
+    - predictions.csv
+    deps:
+    - data/data.npz
     metrics:
-      - logistic_metrics.json
-      # plots:
-      #   - predictions.json
-      #     template : confusion
-      #     cache : True
-      #     template : confusion
-      #     x : actual
-      #     y : predictions
-
+    - scores.csv
+    plots:
+    - reports/classification.png
+    - reports/confusion.png
