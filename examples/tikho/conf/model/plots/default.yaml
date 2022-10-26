@@ -1,0 +1,3 @@
+- path: reports
+- classification : classification
+- confusion : confusion.png
