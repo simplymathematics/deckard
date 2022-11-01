@@ -33,7 +33,8 @@ if __name__ == '__main__':
     run_time = [Path(report_path, "scalars"), Path(report_path, "report.html")]
     new_run_time = [path / run.name for run in run_time]
     print("Moving run time results to new location")
-    
+    for run, new_run in zip(run_time, new_run_time):
+        copy(run, new_run)
     print(f"Moving params file from {filename} to {path}")
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
