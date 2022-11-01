@@ -32,14 +32,17 @@ if __name__ == '__main__':
         rmtree(new_path)
     new_path.mkdir(exist_ok=True, parents=True)
     real_time_report = Path(report_path, "report.html")
-    copy(real_time_report, Path(new_path, "report.html"))
+    try:
+        copy(real_time_report, Path(new_path, "report.html"))
+    except:
+        try:
+            print(listdir(real_time_report.parent))
+        except:
+            print(listdir(real_time_report.parent.parent))
     new_results = [new_path / result.name for result in results]
     print("Moving results to new location")
     for result, new_result in zip(results, new_results):
-        try:
-            assert result.exists()
-        except:
-            print(listdir(result.parent))
+        assert result.exists()
         new_result.parent.mkdir(exist_ok=True, parents=True)
         print(f"Moving {result} to {new_result}")
         copy(result, new_result)
