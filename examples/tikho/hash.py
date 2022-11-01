@@ -53,12 +53,12 @@ if __name__ == '__main__':
     run_time = [Path(report_path, "scalars"), ]
     new_run_time = [path / run.name for run in run_time]
     print(f"Moving params file from {filename.resolve()} to {new_path.resolve()}")
-    print("Path tree")
+    print(f"Old Path tree: {path}")
     print(subprocess.run("tree", cwd=path.resolve()))
-    print("New Path tree")
+    print(f"New Path tree : {new_path}")
     print(subprocess.run("tree", cwd=new_path.resolve()))
     rename(filename, new_path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert Path(path / "index.html").exists(), "Plots were not rendered"
-    assert Path(path / filename).exists(), "Params was not saved"
+    assert Path(new_path / "index.html").exists(), "Plots were not rendered"
+    assert Path(new_path / filename).exists(), "Params was not saved"
