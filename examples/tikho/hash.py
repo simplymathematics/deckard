@@ -29,11 +29,15 @@ if __name__ == '__main__':
     new_results = [path / result.name for result in results]
     print("Moving results to new location")
     for result, new_result in zip(results, new_results):
+        new_result.parent.mkdir(exist_ok=True, parents=True)
+        print(f"Moving {result} to {new_result}")
         copy(result, new_result)
     run_time = [Path(report_path, "scalars"), Path(report_path, "report.html")]
     new_run_time = [path / run.name for run in run_time]
     print("Moving run time results to new location")
     for run, new_run in zip(run_time, new_run_time):
+        new_run.parent.mkdir(exist_ok=True, parents=True)
+        print(f"Moving {run} to {new_run}")
         copy(run, new_run)
     print(f"Moving params file from {filename} to {path}")
     rename(filename, path / filename)
