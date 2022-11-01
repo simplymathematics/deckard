@@ -35,8 +35,5 @@ if __name__ == '__main__':
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # delete report_path
-    rmdir(report_path)
     assert Path(path / "index.html").exists(), "Plots were not rendered"
     assert Path(path / filename).exists(), "Params was not saved"
-    assert not report_path.exists(), "Report path was not deleted"
