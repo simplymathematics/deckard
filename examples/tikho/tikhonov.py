@@ -112,8 +112,7 @@ if __name__ == "__main__":
         params[k] = _
         del _
     plots = params.pop("plots")
-    model = Path(plots['path'], params['files'].pop("model"))
-    model.parent.mkdir(parents=True, exist_ok=True)
+   
     epochs = params['params'].pop("epochs")
     learning_rate = float(params['params'].pop("learning_rate"))
     log_every_n = params['params'].pop("log_every_n")
@@ -151,6 +150,7 @@ if __name__ == "__main__":
         })
     files = params.pop("files")
     metrics = params.pop("metrics")
+    Path(files['path']).mkdir(parents=True, exist_ok=True)
     df.to_csv(Path(files['path'], files['predictions']), index=False)
     acc = accuracy_score(ground_truth, predictions)
     prec = precision_score(ground_truth, predictions)
@@ -166,6 +166,10 @@ if __name__ == "__main__":
         viz = visualizer(yb_clf, X_train = X_train, y_train = y_train, classes=[int(y) for y in np.unique(y_test)])
         viz.show(outpath=Path(path, name))
         i += 1
+    model = Path(files['path'], files.pop("model"))
+    model.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Saving model to {model.resolve()}")
+    input("Press any key to continue")
     with open(model, "wb") as f:
         pickle.dump(clf, f)
     f"Unused Params: {params}"
