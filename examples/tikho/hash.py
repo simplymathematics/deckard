@@ -2,7 +2,7 @@ import hashlib
 import subprocess
 from pathlib import Path
 import dvc.api
-from os import rename, getcwd
+from os import rename, listdir
 from shutil import copy2 as copy
 from shutil import rmtree
 EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
@@ -23,19 +23,23 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path = Path(root_path, path , unique_id)
+    new_path = Path(root_path, path , unique_id)
     print("*"*80)
-    print(path)
+    print(new_path)
     print("*"*80)
-    if path.exists():
+    if new_path.exists():
         print("Already exists. Removing old files")
-        rmtree(path)
-    path.mkdir(exist_ok=True, parents=True)
-    results.append(Path(report_path, "report.html"))
-    new_results = [path / result.name for result in results]
-    
+        rmtree(new_path)
+    new_path.mkdir(exist_ok=True, parents=True)
+    real_time_report = Path(report_path, "report.html")
+    copy(real_time_report, Path(new_path, "report.html"))
+    new_results = [new_path / result.name for result in results]
     print("Moving results to new location")
     for result, new_result in zip(results, new_results):
+        try:
+            assert result.exists()
+        except:
+            print(listdir(result.parent))
         new_result.parent.mkdir(exist_ok=True, parents=True)
         print(f"Moving {result} to {new_result}")
         copy(result, new_result)
