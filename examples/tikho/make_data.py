@@ -9,7 +9,7 @@ from dvc.api import params_show
 from sklearn.datasets import make_classification, make_regression
 from yellowbrick.features import RadViz, Rank1D, Rank2D
 from yellowbrick.target import ClassBalance, FeatureCorrelation
-
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     
