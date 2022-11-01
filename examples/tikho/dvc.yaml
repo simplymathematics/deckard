@@ -33,6 +33,6 @@ stages:
     - data/ground_truth.csv
     - model/predictions.csv
     outs:
-    - experiments/b297785ca13d08ae4c02dde812037679/index.html
+    - experiments/
   
       

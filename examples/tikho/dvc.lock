@@ -27,25 +27,25 @@ stages:
             filetype: .png
     outs:
     - path: data/data.npz
-      md5: 0fae9f8b2df191b4a97d80342952cf2d
+      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
       size: 673002
     - path: data/ground_truth.csv
-      md5: cf353bcae1080e35c38e59cfe5481626
+      md5: b5bb14b4e520e15cacb720b31acdc726
       size: 6000
     - path: report/balance.png
-      md5: 4e29359228903eaf67a9ae4b9227e88b
-      size: 15461
+      md5: 1f769a3619575122120c13618a231170
+      size: 15519
     - path: report/correlation.png
-      md5: d018834e37f7bcd3f5de937e88ef483a
-      size: 15633
+      md5: c04907f066fe9214c70ba3065e590bb6
+      size: 15288
     - path: report/radviz.png
-      md5: 639007177e32610b089c97b7f6f15c80
-      size: 26851
+      md5: bd4051b37cce01ce194e9e9ef9ff21ab
+      size: 28239
   model:
     cmd: python tikhonov.py
     deps:
     - path: data/data.npz
-      md5: 0fae9f8b2df191b4a97d80342952cf2d
+      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
       size: 673002
     params:
       params.yaml:
@@ -70,17 +70,17 @@ stages:
             log_every_n: 10
     outs:
     - path: model/model.pickle
-      md5: 0ea7cfc8b471488d0d5f3acfbd8c228a
+      md5: 72c9dc060af39d0df6c1e2864f982297
       size: 80406
     - path: model/predictions.csv
-      md5: 42cb27001c2eafaf119eb570d95c9fac
-      size: 106553
+      md5: 64ea90e37d3c1aa699f3fc311673fd38
+      size: 106306
     - path: model/scores.csv
-      md5: 8f3d3992c093bc101d521e8be16918dc
-      size: 56
+      md5: 4ba5129968bdfa0bad103692a787d754
+      size: 58
     - path: report/classification.png
       md5: 7eff75c4a9861aff1a6b79291ce2408e
       size: 21567
     - path: report/confusion.png
-      md5: 461bfee3ec17b09696c2956a63ca19e8
-      size: 16591
+      md5: ae4a3398aa83261f5242ed661f7afad2
+      size: 16514
