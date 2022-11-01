@@ -5,13 +5,13 @@ import dvc.api
 from os import rename, getcwd
 from shutil import copy2 as copy
 from shutil import rmtree
-
+EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
     path = Path(params["hash"]["out"])
     report_path = Path(params["hash"]["in"])
     filename = params["hash"]["file"]
-    root_path = getcwd()
+    root_path = Path(EXPERIMENT_PATH)
     print(params)
     with open(filename, "rb") as f:
         file_hash = hashlib.md5()
