@@ -19,7 +19,7 @@ stages:
             ground_truth: ground_truth.csv
             path: data
           plots:
-            path: reports
+            path: report
             rank: rank
             balance: balance
             radviz: radviz
@@ -27,25 +27,25 @@ stages:
             filetype: .png
     outs:
     - path: data/data.npz
-      md5: 56045b3d89788bfb0b4fc6df53ae9201
+      md5: 0fae9f8b2df191b4a97d80342952cf2d
       size: 673002
     - path: data/ground_truth.csv
-      md5: c045be8e17a67a697655c7055944a96a
+      md5: cf353bcae1080e35c38e59cfe5481626
       size: 6000
-    - path: reports/balance.png
-      md5: 8c8ab6a9e7607f58ec7b7cd4b5210211
-      size: 15483
-    - path: reports/correlation.png
-      md5: 5da85e6c8b1c025b1a3ae869da86bc67
-      size: 15827
-    - path: reports/radviz.png
-      md5: ae63b4796ad2fa1c606277ac0cedc104
-      size: 27014
+    - path: report/balance.png
+      md5: 4e29359228903eaf67a9ae4b9227e88b
+      size: 15461
+    - path: report/correlation.png
+      md5: d018834e37f7bcd3f5de937e88ef483a
+      size: 15633
+    - path: report/radviz.png
+      md5: 639007177e32610b089c97b7f6f15c80
+      size: 26851
   model:
     cmd: python tikhonov.py
     deps:
     - path: data/data.npz
-      md5: 56045b3d89788bfb0b4fc6df53ae9201
+      md5: 0fae9f8b2df191b4a97d80342952cf2d
       size: 673002
     params:
       params.yaml:
@@ -58,29 +58,29 @@ stages:
           metrics:
             scores: scores.csv
           plots:
-            path: reports
+            path: report
             classification: classification
             confusion: confusion.png
           params:
             name: TikhonovClassifier
             mtype: linear
             epochs: 1000
-            learning_rate: 10000000000.0
+            learning_rate: 1e-10
             scale: 0
             log_every_n: 10
     outs:
     - path: model/model.pickle
-      md5: 338241169a4ea98f73ecee39f9f86a31
+      md5: 0ea7cfc8b471488d0d5f3acfbd8c228a
       size: 80406
     - path: model/predictions.csv
-      md5: 6267c7aff9fd2c2627ef0fecdd013341
-      size: 112016
+      md5: 42cb27001c2eafaf119eb570d95c9fac
+      size: 106553
     - path: model/scores.csv
-      md5: 0ea83a76aef6ed6807dc6dd33ed3aab2
-      size: 57
-    - path: reports/classification.png
-      md5: 527fa8e172fdea07e17cfe1c4abcefd3
-      size: 22058
-    - path: reports/confusion.png
-      md5: ff873a778ce6e11c2842fe0cf549f0a8
-      size: 16487
+      md5: 8f3d3992c093bc101d521e8be16918dc
+      size: 56
+    - path: report/classification.png
+      md5: 7eff75c4a9861aff1a6b79291ce2408e
+      size: 21567
+    - path: report/confusion.png
+      md5: 461bfee3ec17b09696c2956a63ca19e8
+      size: 16591

@@ -4,12 +4,10 @@ from pathlib import Path
 import dvc.api
 
 if __name__ == '__main__':
-    filename = "params.yaml"
-    path = Path("experiments")
-    report_path = Path("reports")
     params = dvc.api.params_show()
-    
-    
+    path = Path(params["hash"]["out"])
+    report_path = Path(params["hash"]["in"])
+    filename = params["hash"]["file"]
     print(params)
     input("Press Enter to continue...")
     with open(filename, "rb") as f:
@@ -28,5 +26,12 @@ if __name__ == '__main__':
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
+    with open("dvc.yaml", "r") as f:
+        dvc_yaml = f.read()
+    
+    dvc_yaml = dvc_yaml.replace(r"$hash$", unique_id)
+    
+    with open("dvc.yaml", "w") as f:
+        f.write(dvc_yaml)
     
     

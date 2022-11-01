@@ -32,6 +32,7 @@ stages:
     - model/model.pickle
     - data/ground_truth.csv
     - model/predictions.csv
-
+    outs:
+    - experiments/$hash$/index.html
   
       
