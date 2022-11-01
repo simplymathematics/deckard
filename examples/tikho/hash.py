@@ -9,7 +9,6 @@ if __name__ == '__main__':
     report_path = Path(params["hash"]["in"])
     filename = params["hash"]["file"]
     print(params)
-    input("Press Enter to continue...")
     with open(filename, "rb") as f:
         file_hash = hashlib.md5()
         while chunk := f.read(8192):
