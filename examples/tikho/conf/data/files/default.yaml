@@ -1,6 +1,6 @@
     
-- file : data.npz
-- ground_truth : ground_truth.csv
-- path : data
+ file : data.npz
+ ground_truth : ground_truth.csv
+ path : data
 
       

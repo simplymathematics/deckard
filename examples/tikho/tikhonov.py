@@ -157,7 +157,7 @@ if __name__ == "__main__":
     rec = recall_score(ground_truth, predictions)
     f1 = f1_score(ground_truth, predictions)
     ser = Series({"accuracy": acc, "precision": prec, "recall": rec, "f1": f1})
-    ser.to_csv(Path(files['path'], metrics['scores']), index=False)
+    ser.to_json(Path(files['path'], metrics['scores']), header = False)
     yb_clf = classifier(clf)
     path = plots.pop("path")
     i = 0
