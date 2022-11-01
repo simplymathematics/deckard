@@ -106,6 +106,9 @@ class TikhonovClassifier:
 if __name__ == "__main__":
     params = params_show()['model']
     plots = params.pop("plots")
+    files = params.pop("files")
+    metrics = params.pop("metrics")
+    Path(files['path']).mkdir(parents=True, exist_ok=True)
     epochs = params['params'].pop("epochs")
     learning_rate = float(params['params'].pop("learning_rate"))
     log_every_n = params['params'].pop("log_every_n")
@@ -141,9 +144,7 @@ if __name__ == "__main__":
         "probabilities" : proba, 
         "ground_truth": ground_truth
         })
-    files = params.pop("files")
-    metrics = params.pop("metrics")
-    Path(files['path']).mkdir(parents=True, exist_ok=True)
+    
     df.to_csv(Path(files['path'], files['predictions']), index=False)
     acc = accuracy_score(ground_truth, predictions)
     prec = precision_score(ground_truth, predictions)
