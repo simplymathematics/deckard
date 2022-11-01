@@ -49,12 +49,15 @@ if __name__ == '__main__':
         assert result.exists()
         new_result.parent.mkdir(exist_ok=True, parents=True)
         print(f"Moving {result} to {new_result}")
-        copy(result, new_result)
+        copy(result, new_result.resolve())
     run_time = [Path(report_path, "scalars"), ]
     new_run_time = [path / run.name for run in run_time]
-    print(f"Moving params file from {filename.resolve()} to {path.resolve()}")
+    print(f"Moving params file from {filename.resolve()} to {new_path.resolve()}")
+    print("Path tree")
     print(subprocess.run("tree", cwd=path.resolve()))
-    rename(filename, path / filename)
+    print("New Path tree")
+    print(subprocess.run("tree", cwd=new_path.resolve()))
+    rename(filename, new_path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert Path(path / "index.html").exists(), "Plots were not rendered"
