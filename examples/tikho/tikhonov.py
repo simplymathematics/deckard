@@ -168,8 +168,6 @@ if __name__ == "__main__":
         i += 1
     model = Path(files['path'], files.pop("model"))
     model.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Saving model to {model.resolve()}")
-    input("Press any key to continue")
     with open(model, "wb") as f:
         pickle.dump(clf, f)
     f"Unused Params: {params}"
