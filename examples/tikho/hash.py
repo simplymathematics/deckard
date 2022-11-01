@@ -22,7 +22,10 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path = path / unique_id
+    path = path / unique_id.resolve()
+    print("*"*80)
+    print(path)
+    print("*"*80)
     if path.exists():
         print("Already exists. Removing old files")
         rmtree(path)
@@ -37,7 +40,8 @@ if __name__ == '__main__':
         copy(result, new_result)
     run_time = [Path(report_path, "scalars"), ]
     new_run_time = [path / run.name for run in run_time]
-    print(f"Moving params file from {filename} to {path}")
+    print(f"Moving params file from {filename.resolve()} to {path.resolve()}")
+    print(subprocess.run("tree", cwd=path.resolve()))
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
