@@ -24,5 +24,12 @@ stages:
     - reports/confusion.png
     params:
     - model
+  cache:
+    cmd: python hash.py
+    deps:
+    - reports/
+    - data/
+    - model/
+
   
       

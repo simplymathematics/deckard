@@ -3,7 +3,7 @@ import argparse
 import pickle
 from pathlib import Path
 from time import process_time
-
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from dvclive import Live
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     epochs = params['params'].pop("epochs")
     learning_rate = float(params['params'].pop("learning_rate"))
     log_every_n = params['params'].pop("log_every_n")
-    data = params['files'].pop("data")
+    data = files.pop("data")
     _ = params['params'].pop("name")
     data = np.load(data)
     X_train = data["X_train"]
