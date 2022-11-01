@@ -26,12 +26,8 @@ if __name__ == '__main__':
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-    with open("dvc.yaml", "r") as f:
-        dvc_yaml = f.read()
-    
+    dvc_yaml = dvc.api.params_show("hash")
     dvc_yaml = dvc_yaml.replace(r"$hash$", unique_id)
     
-    with open("dvc.yaml", "w") as f:
-        f.write(dvc_yaml)
     
     
