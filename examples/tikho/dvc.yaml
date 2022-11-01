@@ -33,6 +33,11 @@ stages:
     - data/ground_truth.csv
     - model/predictions.csv
     outs:
-    - experiments/
+    - experiments/:
+        cache: true
+        persist : true
+        desc : Final report folder for website.
+
+
   
       
