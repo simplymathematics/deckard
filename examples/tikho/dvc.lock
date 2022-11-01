@@ -27,25 +27,25 @@ stages:
             filetype: .png
     outs:
     - path: data/data.npz
-      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
+      md5: b526c7bf89a7a366cc31cf36ab4299d6
       size: 673002
     - path: data/ground_truth.csv
-      md5: b5bb14b4e520e15cacb720b31acdc726
+      md5: 2fc35da7b86231c05beb654c902c900f
       size: 6000
     - path: report/balance.png
-      md5: 1f769a3619575122120c13618a231170
-      size: 15519
+      md5: d74749b87dffd7b7b73f3e95cebf13aa
+      size: 15481
     - path: report/correlation.png
-      md5: c04907f066fe9214c70ba3065e590bb6
-      size: 15288
+      md5: 2e5ed6fbacb84182dc4a80707bb048c3
+      size: 15333
     - path: report/radviz.png
-      md5: bd4051b37cce01ce194e9e9ef9ff21ab
-      size: 28239
+      md5: aed0bab3c4b2e84f4356919840de8384
+      size: 26656
   model:
     cmd: python tikhonov.py
     deps:
     - path: data/data.npz
-      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
+      md5: b526c7bf89a7a366cc31cf36ab4299d6
       size: 673002
     params:
       params.yaml:
@@ -70,41 +70,41 @@ stages:
             log_every_n: 10
     outs:
     - path: model/model.pickle
-      md5: 72c9dc060af39d0df6c1e2864f982297
+      md5: 79c221ae7c36bb67c405976cecc35380
       size: 80406
     - path: model/predictions.csv
-      md5: 64ea90e37d3c1aa699f3fc311673fd38
-      size: 106306
+      md5: ea86049c0dd872d29a3e2be87b21bc78
+      size: 106570
     - path: model/scores.csv
-      md5: 4ba5129968bdfa0bad103692a787d754
+      md5: d4765dfcfd95b5b26a57e95c50a861d1
       size: 58
     - path: report/classification.png
-      md5: 7eff75c4a9861aff1a6b79291ce2408e
-      size: 21567
+      md5: 1c7b89aee9bbf209b3eeae167cfb4269
+      size: 21253
     - path: report/confusion.png
-      md5: ae4a3398aa83261f5242ed661f7afad2
-      size: 16514
+      md5: 9f52674131a6b11eb7cbc28bf7ad5c3e
+      size: 16477
   cache:
     cmd: python hash.py
     deps:
     - path: data/data.npz
-      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
+      md5: b526c7bf89a7a366cc31cf36ab4299d6
       size: 673002
     - path: data/ground_truth.csv
-      md5: b5bb14b4e520e15cacb720b31acdc726
+      md5: 2fc35da7b86231c05beb654c902c900f
       size: 6000
     - path: model/model.pickle
-      md5: 72c9dc060af39d0df6c1e2864f982297
+      md5: 79c221ae7c36bb67c405976cecc35380
       size: 80406
     - path: model/predictions.csv
-      md5: 64ea90e37d3c1aa699f3fc311673fd38
-      size: 106306
+      md5: ea86049c0dd872d29a3e2be87b21bc78
+      size: 106570
     - path: report/
-      md5: 5d5593a9c3119948714538fdaa980909.dir
-      size: 223235
-      nfiles: 12
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
     outs:
     - path: experiments/
-      md5: debea261ae43a7304b78eff4ac3eec20.dir
-      size: 100870
-      nfiles: 7
+      md5: 59b34a3ada5b578f5b577c6997087fc6.dir
+      size: 319888
+      nfiles: 20
