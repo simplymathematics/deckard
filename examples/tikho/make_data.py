@@ -22,8 +22,8 @@ if __name__ == '__main__':
         
         dict_ = {}
         class_params = params.pop("classification")
-        for entry in class_params:
-            dict_.update(entry)
+        for key, value in class_params.items():
+            dict_.update({key: value})
         X_train, y_train = make_classification(**dict_)
     elif "regression" in list(params):
         X_train, y_train = make_regression(*params["regression"])
