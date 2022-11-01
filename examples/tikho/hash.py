@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path = path / unique_id
     path.mkdir(exist_ok=True, parents=True)
+    path = path / unique_id
     print(f"Moving folder from {report_path} to {path}")
     rename(report_path, path)
     print(f"Moving file from {filename} to {path}")
