@@ -1,0 +1,86 @@
+schema: '2.0'
+stages:
+  data:
+    cmd: python make_data.py
+    params:
+      params.yaml:
+        data:
+          add_noise:
+            X_train: 0.0
+            X_test: 0.0
+          classification:
+            n_samples: 10000
+            n_classes: 2
+            n_features: 5
+            n_informative: 4
+            n_redundant: 1
+          files:
+            file: data.npz
+            ground_truth: ground_truth.csv
+            path: data
+          plots:
+            path: reports
+            rank: rank
+            balance: balance
+            radviz: radviz
+            correlation: correlation
+            filetype: .png
+    outs:
+    - path: data/data.npz
+      md5: 725b5bdd56cee98fee0491b54b071f33
+      size: 673002
+    - path: data/ground_truth.csv
+      md5: 769698325a5cabebf5119941f2214539
+      size: 6000
+    - path: reports/balance.png
+      md5: 03b5a042d82a3d888155ff9daf4d5514
+      size: 12447
+    - path: reports/correlation.png
+      md5: c6c9d66c13f61a38e73dbe904afc26a6
+      size: 15468
+    - path: reports/radviz.png
+      md5: 57ca887200b4513e09998789624be569
+      size: 27247
+  model:
+    cmd: python tikhonov.py
+    deps:
+    - path: data/data.npz
+      md5: 725b5bdd56cee98fee0491b54b071f33
+      size: 673002
+    params:
+      params.yaml:
+        model:
+          files:
+            model: model.pickle
+            data: data/data.npz
+            predictions: predictions.csv
+            path: model
+          metrics:
+            scores: scores.csv
+          plots:
+            path: reports
+            classification: classification
+            confusion: confusion.png
+          params:
+            name: TikhonovClassifier
+            mtype: linear
+            epochs: 1000
+            learning_rate: 10000000000.0
+            scale: 0
+            log_every_n: 10
+    outs:
+    - path: model/model.pickle
+      md5: ac80deabfcc646b360d2c7032c60418d
+      size: 80406
+    - path: model/predictions.csv
+      md5: a64354e4e6d7d9c55f5b3bd1523685da
+      size: 111584
+    - path: model/scores.csv
+      md5: e48ef1e61cdfcad21c68feaf816226d8
+      size: 83
+    - path: reports/classification.png
+      md5: ab8cc75ed68776f1966d994f3ccba4d3
+      size: 21124
+    - path: reports/confusion.png
+      md5: 2e1705475fd37588ba5ef523c6213f2f
+      size: 25272

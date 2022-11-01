@@ -42,15 +42,7 @@ if __name__ == '__main__':
             X_test += noise_function(*params["add_noise"]["X_test"])
         params.pop("add_noise")
     file_params = params.pop("files")
-    _ = {}
-    for key, value in file_params.items():
-        _.update({key : value})
-    file_params = _
-    _ = {}
     plots = params.pop("plots")
-    for plot in plots:
-        _.update(plot)
-    plots = _
     assert params == {}, f"Unrecognized parameters {params}"
     params = file_params 
     assert "path" in params, "Path to save data is not specified"

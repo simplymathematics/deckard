@@ -105,14 +105,7 @@ class TikhonovClassifier:
 
 if __name__ == "__main__":
     params = params_show()['model']
-    for k, v in params.items():
-        _ = {}
-        for entry in v:
-            _.update(entry)       
-        params[k] = _
-        del _
     plots = params.pop("plots")
-   
     epochs = params['params'].pop("epochs")
     learning_rate = float(params['params'].pop("learning_rate"))
     log_every_n = params['params'].pop("log_every_n")
@@ -157,7 +150,7 @@ if __name__ == "__main__":
     rec = recall_score(ground_truth, predictions)
     f1 = f1_score(ground_truth, predictions)
     ser = Series({"accuracy": acc, "precision": prec, "recall": rec, "f1": f1})
-    ser.to_json(Path(files['path'], metrics['scores']), header = False)
+    ser.to_json(Path(files['path'], metrics['scores']))
     yb_clf = classifier(clf)
     path = plots.pop("path")
     i = 0
