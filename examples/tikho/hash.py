@@ -11,6 +11,7 @@ if __name__ == '__main__':
     path = Path(params["hash"]["out"])
     report_path = Path(params["hash"]["in"])
     filename = params["hash"]["file"]
+    root_path = filename.parent
     print(params)
     with open(filename, "rb") as f:
         file_hash = hashlib.md5()
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path = Path(path , unique_id).resolve()
+    path = Path(root_path, path , unique_id).resolve()
     print("*"*80)
     print(path)
     print("*"*80)
