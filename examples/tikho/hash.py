@@ -23,18 +23,18 @@ if __name__ == '__main__':
     print(unique_id)
     path.mkdir(exist_ok=True, parents=True)
     path = path / unique_id
+    if path.exists():
+        print("Already exists. Removing old files")
+        rmtree(path)
     new_results = [path / result.name for result in results]
     print("Moving results to new location")
     for result, new_result in zip(results, new_results):
         copy(result, new_result)
-    print(f"Moving folder from {report_path} to {path}")
-    for file_ in report_path.iterdir():
-        try:
-            rename(file_, path / file_.name)
-        except OSError:
-            rmtree(path / file_.name)
-            rename(file_, path / file_.name)
-    print(f"Moving file from {filename} to {path}")
+    run_time = [Path(report_path, "scalars"), Path(report_path, "report.html")]
+    new_run_time = [path / run.name for run in run_time]
+    print("Moving run time results to new location")
+    
+    print(f"Moving params file from {filename} to {path}")
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
