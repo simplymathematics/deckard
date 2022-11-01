@@ -84,3 +84,27 @@ stages:
     - path: report/confusion.png
       md5: ae4a3398aa83261f5242ed661f7afad2
       size: 16514
+  cache:
+    cmd: python hash.py
+    deps:
+    - path: data/data.npz
+      md5: a9cb1dfe4ed0e8553f73f8ca74f7a5b6
+      size: 673002
+    - path: data/ground_truth.csv
+      md5: b5bb14b4e520e15cacb720b31acdc726
+      size: 6000
+    - path: model/model.pickle
+      md5: 72c9dc060af39d0df6c1e2864f982297
+      size: 80406
+    - path: model/predictions.csv
+      md5: 64ea90e37d3c1aa699f3fc311673fd38
+      size: 106306
+    - path: report/
+      md5: 5d5593a9c3119948714538fdaa980909.dir
+      size: 223235
+      nfiles: 12
+    outs:
+    - path: experiments/
+      md5: debea261ae43a7304b78eff4ac3eec20.dir
+      size: 100870
+      nfiles: 7

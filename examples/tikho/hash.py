@@ -19,7 +19,7 @@ if __name__ == '__main__':
     path = path / unique_id
     path.mkdir(exist_ok=True, parents=True)
     print(f"Moving folder from {report_path} to {path}")
-    subprocess.run(["mv", f"{report_path}/*", f"{path}/*"])
+    subprocess.run(["mv", f"{report_path}/*", f"{path}"])
     print(f"Moving file from {filename} to {path}")
     subprocess.run(["cp", "-v", filename, path ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(f"Rendering plots in {path}/index.html")

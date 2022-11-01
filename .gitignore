@@ -15,12 +15,6 @@
 *.log
 *.txt
 
-# dvc nonsense
-*/.dvc/cache/
-*/.dvc/cache/*
-examples/*/.dvc/cache/*
-
-
 
 # egg stuff
 deckard.egg-info/*
