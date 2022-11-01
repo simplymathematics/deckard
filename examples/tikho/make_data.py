@@ -19,22 +19,17 @@ if __name__ == '__main__':
     else:
         sample_size = .8
     if "classification" in list(params):
-        
-        dict_ = {}
         class_params = params.pop("classification")
-        for key, value in class_params.items():
-            dict_.update({key: value})
-        X_train, y_train = make_classification(**dict_)
+        X_train, y_train = make_classification(**class_params)
     elif "regression" in list(params):
-        X_train, y_train = make_regression(*params["regression"])
-        params.pop("regression")
+        regression_params = params.pop("regression")
+        X_train, y_train = make_regression(**regression_params)
     else:
         raise NotImplementedError("Only classification is implemented")
     length = int(X_train.shape[0]/2)
     X_test, y_test = X_train[:int(length * sample_size)], y_train[:int(length * sample_size)]
     classes = set(y_train)
     features = X_train.shape[1]
-    
     if "add_noise" in list(params):
         noise_function = np.random.normal
         if "X_train" in params["add_noise"]:
@@ -48,8 +43,8 @@ if __name__ == '__main__':
         params.pop("add_noise")
     file_params = params.pop("files")
     _ = {}
-    for file in file_params:
-        _.update(file)
+    for key, value in file_params.items():
+        _.update({key : value})
     file_params = _
     _ = {}
     plots = params.pop("plots")
