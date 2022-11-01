@@ -24,7 +24,6 @@ if __name__ == '__main__':
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     real_time_report = Path(report_path, "report.html")
     plot_report = Path(path, "index.html")
-    
     results = [ground_truth, predictions, scores, real_time_report, plot_report]
     for result in results:
         try:
@@ -34,16 +33,13 @@ if __name__ == '__main__':
             print(listdir(result.parent))
             print("~"*80)
     unique_id = file_hash.hexdigest()
-    new_path = Path(str(root_path), str(path) , str(unique_id)).resolve()
+    new_path = Path(str(root_path), params["hash"]["out"] , str(unique_id)).resolve()
     print("*"*80)
     print(new_path)
     print("*"*80)
-    
     if new_path.exists():
         print("Already exists. Removing old files")
         rmtree(new_path)
     new_path.mkdir(exist_ok=True, parents=True)
-    
-    subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert Path(new_path / "index.html").exists(), "Plots were not rendered"
     assert Path(new_path / filename).exists(), "Params was not saved"
