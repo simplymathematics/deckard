@@ -28,8 +28,10 @@ stages:
     cmd: python hash.py
     deps:
     - reports/
-    - data/
-    - model/
+    - data/data.npz
+    - model/model.pickle
+    - data/ground_truth.csv
+    - model/predictions.csv
 
   
       
