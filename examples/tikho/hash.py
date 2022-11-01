@@ -4,7 +4,7 @@ from pathlib import Path
 import dvc.api
 from os import rename, rmdir
 from shutil import copy2 as copy
-
+from shutil import rmtree
 if __name__ == '__main__':
     params = dvc.api.params_show()
     path = Path(params["hash"]["out"])
@@ -29,7 +29,11 @@ if __name__ == '__main__':
         copy(result, new_result)
     print(f"Moving folder from {report_path} to {path}")
     for file_ in report_path.iterdir():
-        rename(file_, path / file_.name)
+        try:
+            rename(file_, path / file_.name)
+        except OSError:
+            rmtree(path / file_.name)
+            rename(file_, path / file_.name)
     print(f"Moving file from {filename} to {path}")
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
