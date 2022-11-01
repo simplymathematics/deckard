@@ -1,7 +1,7 @@
 import hashlib
 import subprocess
 from pathlib import Path
-
+import dvc.api
 
 if __name__ == '__main__':
     filename = "params.yaml"
