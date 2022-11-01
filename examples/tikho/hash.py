@@ -23,7 +23,7 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    new_path = Path(root_path, path , unique_id)
+    new_path = Path(str(root_path), str(path) , str(unique_id)).resolve()
     print("*"*80)
     print(new_path)
     print("*"*80)
@@ -49,14 +49,12 @@ if __name__ == '__main__':
         assert result.exists()
         new_result.parent.mkdir(exist_ok=True, parents=True)
         print(f"Moving {result} to {new_result}")
-        copy(result, new_result.resolve())
-    run_time = [Path(report_path, "scalars"), ]
-    new_run_time = [path / run.name for run in run_time]
-    print(f"Moving params file from {filename.resolve()} to {new_path.resolve()}")
+        copy(result, new_result)
+    print(f"Moving params file from {filename} to {new_path}")
     print(f"Old Path tree: {path}")
-    print(subprocess.run("tree", cwd=path.resolve()))
+    print(subprocess.run("tree", cwd=path))
     print(f"New Path tree : {new_path}")
-    print(subprocess.run("tree", cwd=new_path.resolve()))
+    print(subprocess.run("tree", cwd=new_path))
     rename(filename, new_path / filename)
     print(f"Rendering plots in {path}/index.html")
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
