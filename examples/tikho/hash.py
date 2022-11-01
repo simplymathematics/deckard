@@ -3,15 +3,7 @@ import subprocess
 from pathlib import Path
 import dvc.api
 from os import rename, rmdir
-
-
-
-html_template = """<!DOCTYPE html>
-
-
-
-"""
-
+from shutil import copy2 as copy
 
 if __name__ == '__main__':
     params = dvc.api.params_show()
@@ -26,10 +18,15 @@ if __name__ == '__main__':
     ground_truth = Path(params['data']['files']['path'] , params["data"]["files"]["ground_truth"])
     predictions = Path(params['model']['files']['path'] , params["model"]["files"]["predictions"])
     scores = Path(params['model']['files']['path'] , params["model"]["metrics"]["scores"])
+    results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
     path.mkdir(exist_ok=True, parents=True)
     path = path / unique_id
+    new_results = [path / result.name for result in results]
+    print("Moving results to new location")
+    for result, new_result in zip(results, new_results):
+        copy(result, new_result)
     print(f"Moving folder from {report_path} to {path}")
     for file_ in report_path.iterdir():
         rename(file_, path / file_.name)
