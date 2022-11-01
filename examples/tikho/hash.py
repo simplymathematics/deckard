@@ -22,7 +22,7 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path = path / unique_id.resolve()
+    path = Path(path , unique_id).resolve()
     print("*"*80)
     print(path)
     print("*"*80)
