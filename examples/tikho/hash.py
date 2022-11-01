@@ -21,11 +21,11 @@ if __name__ == '__main__':
     results = [ground_truth, predictions, scores]
     unique_id = file_hash.hexdigest()
     print(unique_id)
-    path.mkdir(exist_ok=True, parents=True)
     path = path / unique_id
     if path.exists():
         print("Already exists. Removing old files")
         rmtree(path)
+    path.mkdir(exist_ok=True, parents=True)
     new_results = [path / result.name for result in results]
     print("Moving results to new location")
     for result, new_result in zip(results, new_results):
