@@ -2,7 +2,7 @@ import hashlib
 import subprocess
 from pathlib import Path
 import dvc.api
-from os import rename
+from os import rename, getcwd
 from shutil import copy2 as copy
 from shutil import rmtree
 
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     path = Path(params["hash"]["out"])
     report_path = Path(params["hash"]["in"])
     filename = params["hash"]["file"]
-    root_path = filename.parent
+    root_path = getcwd()
     print(params)
     with open(filename, "rb") as f:
         file_hash = hashlib.md5()
