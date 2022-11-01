@@ -64,26 +64,31 @@ if __name__ == '__main__':
             visualizer.fit(X_train, y_train)
             visualizer.show(Path(plots['path'],plots["radviz"]))
             plots.pop("radviz")
+            plt.gcf().clear()
         if "rank1d" in plots:
             visualizer = Rank1D(algorithm = "shapiro")
             visualizer.fit(X_train, y_train)
             visualizer.show(Path(plots['path'],plots["rank1d"]))
             plots.pop("rank1d")
+            plt.gcf().clear()
         if "rank2d" in plots:
             visualizer = Rank2D(algorithm = "pearson")
             visualizer.fit(X_train, y_train)
             visualizer.show(Path(plots['path'],plots["rank2d"]))
             plots.pop("rank2d")
+            plt.gcf().clear()
         if "balance" in plots:
             visualizer = ClassBalance(labels = classes)
             visualizer.fit(y_train)
             visualizer.show(Path(plots['path'],plots["balance"]))
             plots.pop("balance")
+            plt.gcf().clear()
         if "correlation" in plots:
             visualizer = FeatureCorrelation(labels = list(range(features)))
             visualizer.fit(X_train, y_train)
             visualizer.show(Path(plots['path'],plots["correlation"]))
             plots.pop("correlation")
+            plt.gcf().clear()
     params.pop("path")
     assert params == {}, f"Unrecognized parameters {params}"
         

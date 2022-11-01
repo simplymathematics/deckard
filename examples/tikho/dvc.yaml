@@ -24,4 +24,5 @@ stages:
     - reports/confusion.png
     params:
     - model
+  
       

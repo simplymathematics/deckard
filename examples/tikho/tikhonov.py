@@ -158,6 +158,7 @@ if __name__ == "__main__":
         name = list(plots.values())[i]
         viz = visualizer(yb_clf, X_train = X_train, y_train = y_train, classes=[int(y) for y in np.unique(y_test)])
         viz.show(outpath=Path(path, name))
+        plt.gcf().clear()
         i += 1
     model = Path(files['path'], files.pop("model"))
     model.parent.mkdir(parents=True, exist_ok=True)
