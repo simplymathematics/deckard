@@ -20,43 +20,30 @@ if __name__ == '__main__':
     ground_truth = Path(params['data']['files']['path'] , params["data"]["files"]["ground_truth"])
     predictions = Path(params['model']['files']['path'] , params["model"]["files"]["predictions"])
     scores = Path(params['model']['files']['path'] , params["model"]["metrics"]["scores"])
-    results = [ground_truth, predictions, scores]
+    print("Rendering report")
+    subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    real_time_report = Path(report_path, "report.html")
+    plot_report = Path(path, "index.html")
+    
+    results = [ground_truth, predictions, scores, real_time_report, plot_report]
+    for result in results:
+        try:
+            assert result.exists(), f"{result} does not exist"
+        except:
+            print("~"*80)
+            print(listdir(result.parent))
+            print("~"*80)
     unique_id = file_hash.hexdigest()
-    print(unique_id)
     new_path = Path(str(root_path), str(path) , str(unique_id)).resolve()
     print("*"*80)
     print(new_path)
     print("*"*80)
+    
     if new_path.exists():
         print("Already exists. Removing old files")
         rmtree(new_path)
     new_path.mkdir(exist_ok=True, parents=True)
-    real_time_report = Path(report_path, "report.html")
-    try:
-        copy(real_time_report, Path(new_path, "report.html"))
-    except:
-        try:
-            print("!1"*80)
-            print(listdir(real_time_report.parent))
-            print("!1"*80)
-            print(listdir(real_time_report.parent.parent))
-        except:
-            print("!2"*80)
-            print(listdir(real_time_report.parent.parent))
-    new_results = [new_path / result.name for result in results]
-    print("Moving results to new location")
-    for result, new_result in zip(results, new_results):
-        assert result.exists()
-        new_result.parent.mkdir(exist_ok=True, parents=True)
-        print(f"Moving {result} to {new_result}")
-        copy(result, new_result)
-    print(f"Moving params file from {filename} to {new_path}")
-    print(f"Old Path tree: {path}")
-    print(subprocess.run("tree", cwd=path))
-    print(f"New Path tree : {new_path}")
-    print(subprocess.run("tree", cwd=new_path))
-    rename(filename, new_path / filename)
-    print(f"Rendering plots in {path}/index.html")
+    
     subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert Path(new_path / "index.html").exists(), "Plots were not rendered"
     assert Path(new_path / filename).exists(), "Params was not saved"
