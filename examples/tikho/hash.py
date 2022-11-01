@@ -10,7 +10,7 @@ if __name__ == '__main__':
     params = dvc.api.params_show()
     path = Path(params["hash"]["out"])
     report_path = Path(params["hash"]["in"])
-    filename = params["hash"]["file"]
+    filename = Path(params["hash"]["file"])
     root_path = Path(EXPERIMENT_PATH)
     print(params)
     with open(filename, "rb") as f:
@@ -36,8 +36,12 @@ if __name__ == '__main__':
         copy(real_time_report, Path(new_path, "report.html"))
     except:
         try:
+            print("!1"*80)
             print(listdir(real_time_report.parent))
+            print("!1"*80)
+            print(listdir(real_time_report.parent.parent))
         except:
+            print("!2"*80)
             print(listdir(real_time_report.parent.parent))
     new_results = [new_path / result.name for result in results]
     print("Moving results to new location")
