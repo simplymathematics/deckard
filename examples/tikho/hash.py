@@ -19,7 +19,8 @@ if __name__ == '__main__':
     path.mkdir(exist_ok=True, parents=True)
     path = path / unique_id
     print(f"Moving folder from {report_path} to {path}")
-    rename(report_path, path)
+    for file_ in report_path.iterdir():
+        rename(file_, path / file_.name)
     print(f"Moving file from {filename} to {path}")
     rename(filename, path / filename)
     print(f"Rendering plots in {path}/index.html")
