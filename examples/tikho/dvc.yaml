@@ -5,9 +5,9 @@ stages:
     - data/data.npz
     - data/ground_truth.csv
     plots:
-    - reports/balance.png
-    - reports/radviz.png
-    - reports/correlation.png
+    - report/balance.png
+    - report/radviz.png
+    - report/correlation.png
     params:
     - data
   model:
@@ -20,14 +20,14 @@ stages:
     metrics:
     - model/scores.csv
     plots:
-    - reports/classification.png
-    - reports/confusion.png
+    - report/classification.png
+    - report/confusion.png
     params:
     - model
   cache:
     cmd: python hash.py
     deps:
-    - reports/
+    - report/
     - data/data.npz
     - model/model.pickle
     - data/ground_truth.csv
