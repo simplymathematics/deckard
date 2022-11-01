@@ -105,6 +105,6 @@ stages:
       nfiles: 0
     outs:
     - path: experiments/
-      md5: 59b34a3ada5b578f5b577c6997087fc6.dir
-      size: 319888
+      md5: a55934671231f0cab5d9af63351788e4.dir
+      size: 320134
       nfiles: 20

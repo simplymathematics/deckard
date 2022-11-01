@@ -23,7 +23,9 @@ if __name__ == '__main__':
         file_hash = hashlib.md5()
         while chunk := f.read(8192):
             file_hash.update(chunk)
-
+    ground_truth = Path(params['data']['files']['path'] , params["data"]["files"]["ground_truth"])
+    predictions = Path(params['model']['files']['path'] , params["model"]["files"]["predictions"])
+    scores = Path(params['model']['files']['path'] , params["model"]["metrics"]["scores"])
     unique_id = file_hash.hexdigest()
     print(unique_id)
     path.mkdir(exist_ok=True, parents=True)
