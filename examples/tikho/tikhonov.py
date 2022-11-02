@@ -62,13 +62,13 @@ class TikhonovClassifier:
         gradL_b = np.mean(y_hat - y)
         return (gradL_w, gradL_b)
 
-    def fit(self, X_train, y_train, learning_rate=1e-6, epochs=1000):
+    def fit(self, X_train, y_train, learning_rate=1e-6):
         self.weights = np.ones((X_train.shape[1])) * 1e-8
         self.bias = 0
-        for i in range(epochs):
-            L_w, L_b = self.gradient(X_train, y_train)
-            self.weights -= L_w * learning_rate
-            self.bias -= L_b * learning_rate
+        # for i in range(epochs):
+        L_w, L_b = self.gradient(X_train, y_train)
+        self.weights -= L_w * learning_rate
+        self.bias -= L_b * learning_rate
         return self
 
     def predict(self, x):
@@ -105,20 +105,20 @@ if __name__ == "__main__":
     clf = TikhonovClassifier(**params['params'])
     params.pop("params")
     logger = Live(path = Path(plots['path']), report = "html")
-    n_chunks = int(epochs/log_every_n)
-    for i in tqdm(range(n_chunks)):
+    
+    for i in tqdm(range(epochs)):
         start = process_time()
-        clf = clf.fit(X_train, y_train, epochs = log_every_n, learning_rate = learning_rate)
-        logger.log("time", process_time() - start)
-        train_score = clf.score(X_train, y_train)
-        test_score = clf.score(X_test, y_test)
-        logger.log("train_score", train_score)
-        logger.log("loss", clf.loss(X_train, y_train))
-        logger.log("weights", np.mean(clf.weights))
-        logger.log("bias", np.mean(clf.bias))
-        
-        logger.log("epoch", i * log_every_n)
-        logger.next_step() 
+        clf = clf.fit(X_train, y_train, epochs =1, learning_rate = learning_rate)
+        if i % log_every_n == 0:
+            logger.log("time", process_time() - start)
+            train_score = clf.score(X_train, y_train)
+            test_score = clf.score(X_test, y_test)
+            logger.log("train_score", train_score)
+            logger.log("loss", clf.loss(X_train, y_train))
+            logger.log("weights", np.mean(clf.weights))
+            logger.log("bias", np.mean(clf.bias))
+            logger.log("epoch", i * log_every_n)
+            logger.next_step() 
     predictions = clf.predict(X_test)
     proba = clf.predict_proba(X_test)
     ground_truth = y_test
