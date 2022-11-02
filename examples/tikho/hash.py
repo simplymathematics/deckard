@@ -2,14 +2,16 @@ import hashlib
 import subprocess
 from pathlib import Path
 import dvc.api
-from os import listdir
 from shutil import copy2 as copy
 EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
     report_path = Path(params["hash"]["in"])
     filename = Path(params["hash"]["file"])
-    root_path = Path(EXPERIMENT_PATH)
+    if EXPERIMENT_PATH != Path.cwd():
+        root_path = Path(EXPERIMENT_PATH)
+    else:
+        root_path = Path.cwd()
     print(params)
     with open(filename, "rb") as f:
         file_hash = hashlib.md5()
@@ -24,15 +26,9 @@ if __name__ == '__main__':
     for result in results:
         _ = new_path/result.name
         print(f"Moving {result} to {_}")
-        try:
-            assert result.exists(), f"{result} does not exist"
-            copy(result, _)
-            assert _.exists(), f"{_} could not be copied"
-        except:
-            print("~"*80)
-            print(f"Could not find {result}")
-            print(listdir(result.parent))
-            print("~"*80)
+        assert result.exists(), f"{result} does not exist"
+        copy(result, _)
+        assert _.exists(), f"{_} could not be copied"
     print("Rendering report")
     subprocess.run(["dvc", "plots", "show", "-o", new_path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     plot_report = Path(report_path, "index.html")
