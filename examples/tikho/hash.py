@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 import dvc.api
 from shutil import copy2 as copy
+import json
 EXPERIMENT_PATH = "/Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     predictions = Path(params['model']['files']['path'] , params["model"]["files"]["predictions"])
     scores = Path(params['model']['files']['path'] , params["model"]["metrics"]["scores"])
     real_time_report = Path(report_path, "report.html")
-    results = [ground_truth, predictions, scores, real_time_report,Path("params.yaml")]
+    results = [ground_truth, predictions, scores, real_time_report,]
     new_path = root_path/params["hash"]["out"]/str(file_hash.hexdigest())
     new_path.mkdir(parents=True, exist_ok=True)
     for result in results:
@@ -30,6 +31,8 @@ if __name__ == '__main__':
         assert result.exists(), f"{result} does not exist"
         copy(result, _)
         assert _.exists(), f"{_} could not be copied"
+    with open(new_path/"params.json", "w") as f:
+        json.dump(params, f, indent=4)
     print("Rendering report")
     subprocess.run(["dvc", "plots", "show", "-o", new_path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     plot_report = Path(report_path, "index.html")

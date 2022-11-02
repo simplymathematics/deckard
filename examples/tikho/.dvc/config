@@ -2,3 +2,5 @@
     enabled = true
 [plots]
     html_template = template.html
+[core]
+    autostage = true
