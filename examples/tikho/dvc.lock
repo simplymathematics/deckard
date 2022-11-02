@@ -27,25 +27,25 @@ stages:
             filetype: .png
     outs:
     - path: data/data.npz
-      md5: 5b1361a0d51b08d87a6b1438c3ca6e53
+      md5: b6b346265bd3599661e3858db1095cc8
       size: 673002
     - path: data/ground_truth.csv
-      md5: 93dc4af61dca7e9bf855a0a172f93e48
+      md5: ac38b31623b7c8bd0d347b03da5fa70c
       size: 6000
     - path: report/balance.png
       md5: f7da9280c24f0e8897f0db876f91b4d2
       size: 15478
     - path: report/correlation.png
-      md5: 42a3759bcdbcf9f1afa2fc765929d1df
-      size: 15217
+      md5: 61a3e15c9e5566295c2d0f1df5651102
+      size: 15501
     - path: report/radviz.png
-      md5: 9c63d5403414cd379488e64d7758caba
-      size: 27590
+      md5: a43d5321e6d666f06d2fcc4c4bff1ba7
+      size: 25215
   model:
     cmd: python tikhonov.py
     deps:
     - path: data/data.npz
-      md5: 5b1361a0d51b08d87a6b1438c3ca6e53
+      md5: b6b346265bd3599661e3858db1095cc8
       size: 673002
     params:
       params.yaml:
@@ -65,49 +65,49 @@ stages:
             name: TikhonovClassifier
             mtype: linear
             epochs: 1000
-            learning_rate: 1e-10
+            learning_rate: 1e-08
             scale: 0
             log_every_n: 10
     outs:
     - path: model/model.pickle
-      md5: f806336bc21ef3b15e5bf9d2c73e831c
-      size: 80406
+      md5: 4ae64c91a821e2fa2f2871391b2d8a10
+      size: 80396
     - path: model/predictions.csv
-      md5: b83ae6569019a44962ede639fc290c39
-      size: 105214
+      md5: f81211eb90cc6df9e060486131a40300
+      size: 93380
     - path: model/scores.csv
-      md5: 64e4258cdda10432a97fc3fe966ada5a
-      size: 57
+      md5: 1c817dc363dee556f9dc64c3051a83de
+      size: 85
     - path: report/classification.png
-      md5: 7eff75c4a9861aff1a6b79291ce2408e
-      size: 21567
+      md5: 3d8fd731008ed5ba59de9e861df51074
+      size: 24213
     - path: report/confusion.png
-      md5: 461bfee3ec17b09696c2956a63ca19e8
-      size: 16591
+      md5: 146668559b09fe0d178a8876af51b751
+      size: 17469
     - path: report/report.html
-      md5: 04ac241faa1764fbf060f434bc71d70e
-      size: 105558
+      md5: ee79d7340094a5e1e42ae84ac4d86837
+      size: 105486
   cache:
     cmd: python hash.py
     deps:
     - path: data/data.npz
-      md5: 5b1361a0d51b08d87a6b1438c3ca6e53
+      md5: b6b346265bd3599661e3858db1095cc8
       size: 673002
     - path: data/ground_truth.csv
-      md5: 93dc4af61dca7e9bf855a0a172f93e48
+      md5: ac38b31623b7c8bd0d347b03da5fa70c
       size: 6000
     - path: model/model.pickle
-      md5: f806336bc21ef3b15e5bf9d2c73e831c
-      size: 80406
+      md5: 4ae64c91a821e2fa2f2871391b2d8a10
+      size: 80396
     - path: model/predictions.csv
-      md5: b83ae6569019a44962ede639fc290c39
-      size: 105214
+      md5: f81211eb90cc6df9e060486131a40300
+      size: 93380
     - path: report/
-      md5: 52b590864e246b65cb3b440fc3361330.dir
-      size: 222435
+      md5: 26d0fed2b9fa5b4a6f15ee3a81397fdb.dir
+      size: 223722
       nfiles: 13
     outs:
     - path: experiments/
-      md5: 08955fe1aa83a5caa747e52b4b14db3b.dir
-      size: 317261
-      nfiles: 11
+      md5: 7b0983392974b550e6788c4058953f87.dir
+      size: 627542
+      nfiles: 22
