@@ -15,6 +15,7 @@ stages:
     outs:
     - model/model.pickle
     - model/predictions.csv
+    - report/report.html
     deps:
     - data/data.npz
     metrics:

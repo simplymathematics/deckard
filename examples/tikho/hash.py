@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 import dvc.api
 from shutil import copy2 as copy
-EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
+EXPERIMENT_PATH = "/Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
     report_path = Path(params["hash"]["in"])
