@@ -108,7 +108,7 @@ if __name__ == "__main__":
     
     for i in tqdm(range(epochs)):
         start = process_time()
-        clf = clf.fit(X_train, y_train, epochs =1, learning_rate = learning_rate)
+        clf = clf.fit(X_train, y_train, learning_rate = learning_rate)
         if i % log_every_n == 0:
             logger.log("time", process_time() - start)
             train_score = clf.score(X_train, y_train)
