@@ -63,16 +63,13 @@ class TikhonovClassifier:
         return (gradL_w, gradL_b)
 
     def fit(self, X_train, y_train, learning_rate=1e-6, epochs=1000):
-        start = process_time()
-        self.weights = np.ones((X_train.shape[1])) * 1e-18
+        self.weights = np.ones((X_train.shape[1])) * 1e-8
         self.bias = 0
         for i in range(epochs):
             L_w, L_b = self.gradient(X_train, y_train)
             self.weights -= L_w * learning_rate
             self.bias -= L_b * learning_rate
-        self.weights = self.weights
-        self.bias = self.bias
-        return self.weights, self.bias
+        return self
 
     def predict(self, x):
         # print(x.shape, self.weights.shape, self.bias.shape)
@@ -88,22 +85,6 @@ class TikhonovClassifier:
         x_dot_weights = x @ self.weights.T
         y_test = [1 if p > 0.5 else 0 for p in x_dot_weights]
         return np.mean(y == y_test)
-
-
-# def parse_params():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--path", type=str, default = "conf/")
-#     parser.add_argument("--file", type=str, default = "model.yaml")
-#     parser.add_argument("--key", type=str, default = "model")
-#     args = parser.parse_args()
-#     config_path = Path(args.path) / args.file
-#     assert config_path.exists(), f"Config file {config_path} does not exist"
-#     with open(config_path) as f:
-#         params = yaml.load(f, Loader=yaml.FullLoader)[args.key]
-#     return params
-
-
-
 
 if __name__ == "__main__":
     params = params_show()['model']
@@ -127,7 +108,7 @@ if __name__ == "__main__":
     n_chunks = int(epochs/log_every_n)
     for i in tqdm(range(n_chunks)):
         start = process_time()
-        clf.fit(X_train, y_train, epochs = log_every_n, learning_rate = learning_rate)
+        clf = clf.fit(X_train, y_train, epochs = log_every_n, learning_rate = learning_rate)
         logger.log("time", process_time() - start)
         train_score = clf.score(X_train, y_train)
         test_score = clf.score(X_test, y_test)
