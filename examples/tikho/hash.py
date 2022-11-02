@@ -35,5 +35,5 @@ if __name__ == '__main__':
             print(f"Could not find {result}")
             print(listdir(result.parent))
             print("~"*80)
-    assert Path(new_path / "index.html").exists(), "Plots were not rendered"
-    assert Path(new_path / filename).exists(), "Params was not saved"
+    assert Path(new_path.parent / "index.html").exists(), "Plots were not rendered"
+    assert Path(new_path.parent / filename).exists(), "Params was not saved"
