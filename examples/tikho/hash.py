@@ -22,7 +22,7 @@ if __name__ == '__main__':
     subprocess.run(["dvc", "plots", "show", "-o", report_path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     real_time_report = Path(report_path, "report.html")
     plot_report = Path(report_path, "index.html")
-    results = [ground_truth, predictions, scores, real_time_report, plot_report]
+    results = [ground_truth, predictions, scores, real_time_report, plot_report, "params.yaml"]
     for result in results:
         try:
             assert result.exists(), f"{result} does not exist"
