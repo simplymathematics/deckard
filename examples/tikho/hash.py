@@ -7,7 +7,6 @@ from shutil import rmtree, move
 EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
-    path = Path(params["hash"]["out"])
     report_path = Path(params["hash"]["in"])
     filename = Path(params["hash"]["file"])
     root_path = Path(EXPERIMENT_PATH)
@@ -20,27 +19,21 @@ if __name__ == '__main__':
     predictions = Path(params['model']['files']['path'] , params["model"]["files"]["predictions"])
     scores = Path(params['model']['files']['path'] , params["model"]["metrics"]["scores"])
     print("Rendering report")
-    subprocess.run(["dvc", "plots", "show", "-o", path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run(["dvc", "plots", "show", "-o", report_path, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     real_time_report = Path(report_path, "report.html")
-    plot_report = Path(path, "index.html")
+    plot_report = Path(report_path, "index.html")
     results = [ground_truth, predictions, scores, real_time_report, plot_report]
     for result in results:
         try:
             assert result.exists(), f"{result} does not exist"
+            new_path = root_path/params["hash"]["out"]/str(file_hash.hexdigest())/result.name
+            print(f"Moving {result} to {new_path}")
+            move(result, new_path)
+            assert new_path.exists(), f"{new_path} does not exist"
         except:
             print("~"*80)
             print(f"Could not find {result}")
             print(listdir(result.parent))
             print("~"*80)
-    unique_id = file_hash.hexdigest()
-    new_path = Path(str(root_path), params["hash"]["out"] , str(unique_id)).resolve()
-    print("*"*80)
-    print(new_path)
-    print("*"*80)
-    if new_path.exists():
-        print("Already exists. Removing old files")
-        rmtree(new_path)
-    new_path.mkdir(exist_ok=True, parents=True)
-    move(path, new_path)
     assert Path(new_path / "index.html").exists(), "Plots were not rendered"
     assert Path(new_path / filename).exists(), "Params was not saved"
