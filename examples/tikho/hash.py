@@ -2,9 +2,8 @@ import hashlib
 import subprocess
 from pathlib import Path
 import dvc.api
-from os import rename, listdir
-from shutil import copy2 as copy
-from shutil import rmtree
+from os import listdir
+from shutil import rmtree, move
 EXPERIMENT_PATH = "Home/staff/cmeyers/deckard/examples/tikho"
 if __name__ == '__main__':
     params = dvc.api.params_show()
@@ -41,5 +40,6 @@ if __name__ == '__main__':
         print("Already exists. Removing old files")
         rmtree(new_path)
     new_path.mkdir(exist_ok=True, parents=True)
+    move(path, new_path)
     assert Path(new_path / "index.html").exists(), "Plots were not rendered"
     assert Path(new_path / filename).exists(), "Params was not saved"
