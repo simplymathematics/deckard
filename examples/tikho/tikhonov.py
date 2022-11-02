@@ -15,10 +15,9 @@ from yellowbrick.contrib.wrapper import classifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 class TikhonovClassifier:
-    def __init__(self,  mtype:str = "linear", scale:float = 0.0):
-        self.weights = None
-        self.bias = None
-        self.losses = None
+    def __init__(self,  mtype:str = "linear", scale:float = 0.0, weights:np.ndarray = None, bias:float = 0.0):
+        self.weights = np.ones((X_train.shape[1])) * 1e-8 if weights is None else weights
+        self.bias = bias
         self.type = mtype
         self.scale = scale
 
@@ -63,8 +62,6 @@ class TikhonovClassifier:
         return (gradL_w, gradL_b)
 
     def fit(self, X_train, y_train, learning_rate=1e-6):
-        self.weights = np.ones((X_train.shape[1])) * 1e-8
-        self.bias = 0
         # for i in range(epochs):
         L_w, L_b = self.gradient(X_train, y_train)
         self.weights -= L_w * learning_rate
