@@ -36,5 +36,5 @@ if __name__ == '__main__':
     print("Rendering report")
     subprocess.run(["dvc", "plots", "show", "-o", new_path.parent, "--html-template", "template.html"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     plot_report = Path(report_path, "index.html")
-    assert Path(new_path.parent / "index.html").exists(), "Plots were not rendered"
-    assert Path(new_path.parent / filename).exists(), "Params was not saved"
+    assert Path(new_path.parent / "index.html").exists(), f"Plots were not rendered: {new_path.parent / 'index.html'}"
+    assert Path(new_path.parent / filename).exists(), f"Params was not saved: {new_path.parent / filename}"
