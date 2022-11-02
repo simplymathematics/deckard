@@ -70,6 +70,8 @@ class TikhonovClassifier:
             L_w, L_b = self.gradient(X_train, y_train)
             self.weights -= L_w * learning_rate
             self.bias -= L_b * learning_rate
+        self.weights = self.weights
+        self.bias = self.bias
         return self.weights, self.bias
 
     def predict(self, x):
