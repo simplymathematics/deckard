@@ -23,6 +23,7 @@ if __name__ == '__main__':
     real_time_report = Path(report_path, "report.html")
     results = [ground_truth, predictions, scores, real_time_report,Path("params.yaml")]
     new_path = root_path/params["hash"]["out"]/str(file_hash.hexdigest())
+    new_path.mkdir(parents=True, exist_ok=True)
     for result in results:
         _ = new_path/result.name
         print(f"Moving {result} to {_}")
