@@ -29,6 +29,7 @@ if __name__ == '__main__':
             assert result.exists(), f"{result} does not exist"
         except:
             print("~"*80)
+            print(f"Could not find {result}")
             print(listdir(result.parent))
             print("~"*80)
     unique_id = file_hash.hexdigest()
