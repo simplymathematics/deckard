@@ -12,14 +12,15 @@ from deckard.base.parse import (
     generate_object_list_from_tuple,
     generate_tuple_list_from_yml,
 )
-from deckard.layers.utils  import generate_experiment_list
+from deckard.layers.utils import generate_experiment_list
+
 
 class testParse(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
         self.file = "test_filename"
         config_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "configs"
+            os.path.dirname(os.path.realpath(__file__)), "configs",
         )
         self.configs = [x for x in os.listdir(config_file) if x.endswith(".yml")]
         self.yml_lists = []

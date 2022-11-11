@@ -16,7 +16,7 @@ class testGenerator(unittest.TestCase):
         self.filename = "test"
         self.path = tempfile.mkdtemp()
         config_folder = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "configs"
+            os.path.dirname(os.path.realpath(__file__)), "configs",
         )
         self.config_folder = config_folder
         self.model_yml = os.path.join(self.config_folder, "model.yml")
@@ -70,10 +70,10 @@ class testGenerator(unittest.TestCase):
         name = gen.list[0][0]
         params = gen.list[0][1]
         gen.generate_json(
-            path=self.path, filename=self.filename, name=name, params=params
+            path=self.path, filename=self.filename, name=name, params=params,
         )
         self.assertTrue(
-            os.path.exists(os.path.join(self.path, self.filename + ".json"))
+            os.path.exists(os.path.join(self.path, self.filename + ".json")),
         )
 
     def test_generate_yml(self):
@@ -81,7 +81,7 @@ class testGenerator(unittest.TestCase):
         name = gen.list[0][0]
         params = gen.list[0][1]
         gen.generate_yml(
-            path=self.path, filename=self.filename, name=name, params=params
+            path=self.path, filename=self.filename, name=name, params=params,
         )
         self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
 
@@ -97,7 +97,7 @@ class testGenerator(unittest.TestCase):
         for folder in folders:
             self.assertTrue(os.path.exists(os.path.join(self.path, "models", folder)))
             self.assertTrue(
-                os.path.exists(os.path.join(self.path, "models", folder, "configs"))
+                os.path.exists(os.path.join(self.path, "models", folder, "configs")),
             )
 
     def test_generate_experiment_list(self):

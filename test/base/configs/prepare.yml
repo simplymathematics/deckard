@@ -5,4 +5,3 @@
     # test_size : .1
     train_size : .9
     stratify: True
-    

@@ -2,5 +2,3 @@
  data : data/data.npz
  predictions : predictions.csv
  path : model
-
-      

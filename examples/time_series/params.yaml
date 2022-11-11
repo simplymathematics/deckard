@@ -1,7 +1,7 @@
-prepare: 
+prepare:
   name: original.csv
   params:
-    shuffle : True 
+    shuffle : True
     stratify : False
     random_state : 0
     train_size : .8

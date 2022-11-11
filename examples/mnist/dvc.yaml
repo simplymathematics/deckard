@@ -3,10 +3,10 @@ stages:
     cmd: python -m deckard.layers.prepare
     params:
       - prepare.config
-    outs: 
+    outs:
       - ${prepare.outputs.folder}/${prepare.outputs.file}
     # deps:
-    #   - 
+    #   -
     # metrics:
     #   - prepare.scores
     # plots:
@@ -44,7 +44,7 @@ stages:
   # visualise:
   #   cmd: python  -m deckard.layers.visualise --layer_name visualise
   #   deps:
-  #     - ${prepare.outputs.folder}/${prepare.outputs.file} 
+  #     - ${prepare.outputs.folder}/${prepare.outputs.file}
   #     - art_model/
   #   params:
   #     - visualise
@@ -53,7 +53,7 @@ stages:
   #         cache: true
   evaluate:
     cmd: python  -m deckard.layers.evaluate --layer_name evaluate
-    deps: 
+    deps:
       - ${prepare.outputs.folder}/${prepare.outputs.file}
       - art_model/
       - attack/

@@ -7,7 +7,7 @@ repos:
         # supported by your project here, or alternatively use
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
-        language_version: python3.10
+        language_version: python3.9
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v2.2.3
     hooks:
@@ -34,6 +34,5 @@ repos:
     -   id: flake8
         exclude: __init__.py
         args: [--ignore=E501 W503]
-  - name: render-md-mermaid
-    uses: nielsvaneck/render-md-mermaid@v2
-
+  # - name: render-md-mermaid
+  #   uses: nielsvaneck/render-md-mermaid@v2

@@ -31,14 +31,14 @@ stages:
       - model.params
       - model.plots
     build_queue :
-      cmd: 
+      cmd:
       - dvc exp run --set-param data.add_noise.X_train=.001,.01,.1,1,10,100 --queue
       - dvc exp run --set-param model.params.scale=.001,.01,.1,1,10,100 --queue
       - dvc exp run --set-param model.params.scale=.001,.01,.1,1,10,100 --queue
       - dvc exp run --set-param model.params.scale=.001,.01,.1,10,100 --set-param
         data.add_noise.X_test=.001,.01,.1,1,10,100 --queue
       - dvc exp run --set-param model.params.learning_rate=1e-11,1e-10,1e-9 model.params.scale=.001,.01,.1,10,100
-      - dvc 
+      - dvc
       deps:
       - data/data.npz
       - model/model.pickle
@@ -55,5 +55,3 @@ stages:
       deps:
       - data/data.npz
       - model/model.pickle
-      
-  

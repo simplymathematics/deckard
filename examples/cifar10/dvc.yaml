@@ -3,7 +3,7 @@ stages:
     cmd: python -m deckard.layers.prepare.py
     params:
       - prepare
-    outs: 
+    outs:
       - data.pkl
   control:
     cmd:  python -m deckard.layers.art_model  control
@@ -36,8 +36,3 @@ stages:
     outs:
     - attacks/:
         cache: true
-
-
-
-
-

@@ -5,4 +5,3 @@
 - name : art.defences.postprocessor.HighConfidence
   params:
     cutoff : [.25, .1, .05, .01]
-  

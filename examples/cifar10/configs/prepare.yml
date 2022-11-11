@@ -1,8 +1,6 @@
 - name: 'cifar10'
   params:
-    shuffle : True 
+    shuffle : True
     stratify : True
     random_state : 0
     train_size : 50000
-
-    

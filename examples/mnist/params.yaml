@@ -10,12 +10,12 @@ prepare:
   outputs:
     folder : prepare
     file : data.pickle
-    predictions : 
-    ground_truth : 
+    predictions :
+    ground_truth :
   scores:
-    file: 
-    folder: 
-    time_dict: 
+    file:
+    folder:
+    time_dict:
   plots:
     file:
     folder:
@@ -43,9 +43,9 @@ defend:
     classifier : True
     is_fitted : False
     model: art_model/model/
-  config : 
+  config :
     name: art.defences.preprocessor.FeatureSqueezing
-    params: 
+    params:
       'bit_depth' : 8
   outputs:
     folder : "defend"
@@ -64,9 +64,9 @@ attack:
     is_fitted : True
     attack_size : 10
     model: defend/model
-  config : 
+  config :
     name:  art.attacks.evasion.HopSkipJump
-    params: 
+    params:
       max_iter : 5
       max_eval : 100
       init_eval : 100
@@ -86,9 +86,9 @@ evaluate:
     predictions : 'ground_truth.json'
     classifier : True
     recursive : True
-  config : 
+  config :
     name: sklearn.impute.SimpleImputer
-    params: 
+    params:
       'strategy' : 'mean'
   outputs:
     folder : "evaluate"
@@ -105,9 +105,9 @@ visualise:
     classifier : True
     is_fitted : True
     model: defend/model
-  config : 
+  config :
     name: sklearn.impute.SimpleImputer
-    params: 
+    params:
       'strategy' : 'mean'
   outputs:
     folder : "."

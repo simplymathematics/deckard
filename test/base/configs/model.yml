@@ -4,7 +4,7 @@
     criterion : ['gini', 'entropy']
     max_features : ['auto', 'sqrt', 'log2']
     class_weight : ['balanced', 'balanced_subsample']
-   
+
 - name: sklearn.svm.SVC
   params:
     'kernel' : ['rbf']
@@ -34,12 +34,12 @@
     multi_class : ['ovr']
 
 # - name: sktime.classification.interval_based.TimeSeriesForestClassifier
-#   params: 
+#   params:
 #     n_estimators : [100, 200, 300]
-#     min_interval : [3, 5, 10]    
+#     min_interval : [3, 5, 10]
 
 # TODO: catch this value error
 # - name: sklearn.cluster.KMeans
-#   params: 
+#   params:
 #     'n_clusters' : [3]
 #     'init' : ['k-means++', 'random']

@@ -6,7 +6,7 @@ vars:
   scores_file : "scores.json"
   params_file : "params.json"
   plot_file : "plot.pdf"
-  
+
 
 prepare:
   config:
@@ -15,17 +15,17 @@ prepare:
       shuffle : True
       stratify : True
       random_state : 0
-      test_size : 
+      test_size :
       train_size : .8
   outputs:
     folder : prepare
     file : data.pickle
-    predictions : 
-    ground_truth : 
+    predictions :
+    ground_truth :
   scores:
-    file: 
-    folder: 
-    time_dict: 
+    file:
+    folder:
+    time_dict:
   plots:
     file:
     folder:
@@ -36,10 +36,10 @@ train:
     type : 'sklearn'
     classifier : True
     is_fitted : True
-    model: 
-  config : 
+    model:
+  config :
     name: sklearn.linear_model.LogisticRegression
-    params: 
+    params:
       'penalty' : 'l2'
   outputs:
     folder : train
@@ -57,9 +57,9 @@ preprocess:
     is_fitted : True
     position : 0
     model: train/model.pickle
-  config : 
+  config :
     name: sklearn.preprocessing.StandardScaler
-    params: 
+    params:
       'with_mean' : True
       'with_std' : True
   outputs:
@@ -79,9 +79,9 @@ featurize:
     is_fitted : True
     position : 1
     model: preprocess/model.pickle
-  config : 
+  config :
     name: sklearn.impute.SimpleImputer
-    params: 
+    params:
       'strategy' : 'mean'
   outputs:
     folder : featurize
@@ -115,9 +115,9 @@ defend:
     classifier : True
     is_fitted : False
     model: art_model/model.pickle
-  config : 
+  config :
     name: art.defences.preprocessor.FeatureSqueezing
-    params: 
+    params:
       'bit_depth' : 8
   outputs:
     folder : "defend"
@@ -135,9 +135,9 @@ attack:
     classifier : True
     is_fitted : True
     model: defend/model.pickle
-  config : 
+  config :
     name:  art.attacks.evasion.HopSkipJump
-    params: 
+    params:
       max_iter : 100
   outputs:
     folder : "attack"
@@ -154,9 +154,9 @@ evaluate:
     predictions : 'ground_truth.json'
     classifier : True
     recursive : True
-  config : 
+  config :
     name: sklearn.impute.SimpleImputer
-    params: 
+    params:
       'strategy' : 'mean'
   outputs:
     folder : "evaluate"
@@ -173,9 +173,9 @@ visualise:
     classifier : True
     is_fitted : True
     model: defend/model.pickle
-  config : 
+  config :
     name: sklearn.impute.SimpleImputer
-    params: 
+    params:
       'strategy' : 'mean'
   outputs:
     folder : "."

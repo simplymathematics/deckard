@@ -2,48 +2,38 @@ stages:
   data:
     cmd: python make_data.py
     outs:
-    - data/data.npz
-    - data/ground_truth.csv
+    - ${files.data_file}
     plots:
-    - report/balance.png
-    - report/radviz.png
-    - report/correlation.png
+    - ${files.path}/balance.png
+    - ${files.path}/radviz.png
+    - ${files.path}/correlation.png
     params:
     - data
-    deps:
-    - params.yaml
   model:
-    cmd: python tikhonov.py
+    cmd: python experiment.py
     outs:
-    - model/model.pickle
-    - model/predictions.csv
-    - report/report.html
+    - ${files.model_file}
+    - ${files.path}/${files.predictions_file}
+    - ${files.path}/${files.ground_truth_file}
+    - ${files.path}/report.html
     deps:
-    - data/data.npz
-    - params.yaml
+    - ${files.data_file}
     metrics:
-    - model/scores.csv
+    - ${files.path}/scores.json
     plots:
-    - report/classification.png
-    - report/confusion.png
+    - ${files.path}/classification.png
+    - ${files.path}/confusion.png
     params:
     - model
-  cache:
-    cmd: python hash.py
-    deps:
-    - report/
-    - data/data.npz
-    - model/model.pickle
-    - data/ground_truth.csv
-    - model/predictions.csv
-    outs:
-    - experiments/:
-        cache: true
-        persist: true
-        desc: Final report folder for website.
-  parse:
-    cmd: python parse.py
-    deps:
-    - conf/config.yaml
-    outs:
-    - params.yaml
+  # cache:
+  #   cmd: python hash.py
+  #   deps:
+  #   - ${files.data_file}
+  #   - ${files.model_file}
+  #   - ${files.path}/${files.ground_truth_file}
+  #   - ${files.path}/${files.predictions_file}
+  #   outs:
+  #   - experiments/:
+  #       cache: true
+  #       persist: true
+  #       desc: Final report folder for website.

@@ -65,7 +65,7 @@ class testModel(unittest.TestCase):
 
     def test_save_model(self):
         model1 = Model(
-            LogisticRegression(), model_type="sklearn", path=self.path, classifier=False
+            LogisticRegression(), model_type="sklearn", path=self.path, classifier=False,
         )
         filename = model1.save_model(path=self.path, filename=self.file)
         self.assertTrue(os.path.exists(os.path.join(self.path, filename)))
@@ -92,8 +92,8 @@ class testModel(unittest.TestCase):
 
     def test_load_with_defence(self):
         config = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
             DecisionTreeClassifier(),
@@ -109,7 +109,7 @@ class testModel(unittest.TestCase):
             model=file,
             model_type="sklearn",
             classifier=True,
-            defence = config,
+            defence=config,
             art=True,
         )
         self.assertEqual(model(), model2())
@@ -117,22 +117,22 @@ class testModel(unittest.TestCase):
     def test_set_defence_params(self):
 
         fsq = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
-            DecisionTreeClassifier(), model_type="sklearn", defence=fsq, path=self.path
+            DecisionTreeClassifier(), model_type="sklearn", defence=fsq, path=self.path,
         )
-        model(art = True)
-        self.assertEqual("FeatureSqueezing", model.params["Defence"]['name'])
+        model(art=True)
+        self.assertEqual("FeatureSqueezing", model.params["Defence"]["name"])
         self.assertEqual(model.params["Defence"]["params"]["bit_depth"], 4)
         self.assertEqual(model.params["Defence"]["params"]["clip_values"], (0, 1))
         self.assertEqual(model.params["Defence"]["type"], "preprocessor")
 
     def test_initialize_art_classifier(self):
         defence = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
             DecisionTreeClassifier(),
@@ -141,7 +141,7 @@ class testModel(unittest.TestCase):
             art=True,
             classifier=True,
         )
-        model(art = True)
+        model(art=True)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -150,8 +150,8 @@ class testModel(unittest.TestCase):
 
     def test_initialize_art_regressor(self):
         defence = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
             LinearRegression(),
@@ -160,7 +160,7 @@ class testModel(unittest.TestCase):
             art=True,
             classifier=False,
         )
-        model(art = True)
+        model(art=True)
         self.assertIsInstance(model.model, object)
         self.assertIsInstance(model.model_type, str)
         self.assertIsInstance(model.params, dict)
@@ -171,7 +171,7 @@ class testModel(unittest.TestCase):
         data = Data("iris", train_size=0.8)
         data()
         model = Model(KNeighborsClassifier(), model_type="sklearn")
-        model(art = True)
+        model(art=True)
         model.fit(data.X_train, data.y_train)
         self.assertIsInstance(model.predict(data.X_test), np.ndarray)
 
@@ -183,13 +183,13 @@ class testModel(unittest.TestCase):
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
         defence = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
-            LinearRegression(), model_type="sklearn", defence=defence, classifier=False
+            LinearRegression(), model_type="sklearn", defence=defence, classifier=False,
         )
-        model(art = True)
+        model(art=True)
         model.fit(data.X_train, data.y_train)
         predictions = model.predict(data.X_test)
         self.assertIsInstance(predictions, (list, np.ndarray))
@@ -198,8 +198,8 @@ class testModel(unittest.TestCase):
         data = Data("iris", train_size=0.8)
         data()
         defence = {
-            "name" : "art.defences.preprocessor.FeatureSqueezing",
-            "params" : {"bit_depth" : 4, "clip_values" :(0, 1)}
+            "name": "art.defences.preprocessor.FeatureSqueezing",
+            "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(KNeighborsClassifier(3), model_type="sklearn", defence=defence)
         model()
