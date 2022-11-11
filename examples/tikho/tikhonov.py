@@ -13,11 +13,11 @@ from tqdm import tqdm
 from yellowbrick.classifier import classification_report, confusion_matrix
 from yellowbrick.contrib.wrapper import classifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-
+from data import Data
+from model import Model
 class TikhonovClassifier:
-    def __init__(self,  mtype:str = "linear", scale:float = 0.0, weights:np.ndarray = None, bias:float = 0.0):
-        self.weights = np.ones((X_train.shape[1])) * 1e-8 if weights is None else weights
-        self.bias = bias
+    def __init__(self,  mtype:str = "linear", scale:float = 0.0):
+        
         self.type = mtype
         self.scale = scale
 
@@ -61,11 +61,13 @@ class TikhonovClassifier:
         gradL_b = np.mean(y_hat - y)
         return (gradL_w, gradL_b)
 
-    def fit(self, X_train, y_train, learning_rate=1e-6):
-        # for i in range(epochs):
-        L_w, L_b = self.gradient(X_train, y_train)
-        self.weights -= L_w * learning_rate
-        self.bias -= L_b * learning_rate
+    def fit(self, X_train, y_train, learning_rate=1e-6, epochs = 1000):
+        self.weights = np.ones((X_train.shape[1])) * 1e-8 if not hasattr(self, "weights") else self.weights
+        self.bias = 0.0 if not hasattr(self, "bias") else self.bias
+        for i in range(epochs):
+            L_w, L_b = self.gradient(X_train, y_train)
+            self.weights -= L_w * learning_rate
+            self.bias -= L_b * learning_rate
         return self
 
     def predict(self, x):
@@ -84,40 +86,51 @@ class TikhonovClassifier:
         return np.mean(y == y_test)
 
 if __name__ == "__main__":
-    params = params_show()['model']
-    plots = params.pop("plots")
-    files = params.pop("files")
-    metrics = params.pop("metrics")
-    Path(files['path']).mkdir(parents=True, exist_ok=True)
-    epochs = params['params'].pop("epochs")
-    learning_rate = float(params['params'].pop("learning_rate"))
-    log_every_n = params['params'].pop("log_every_n")
-    data = files.pop("data")
-    _ = params['params'].pop("name")
-    data = np.load(data)
-    X_train = data["X_train"]
-    y_train = data["y_train"]
-    X_test = data["X_test"]
-    y_test = data["y_test"]
-    clf = TikhonovClassifier(**params['params'])
-    params.pop("params")
+    params = params_show()
+    if "plots" in params:
+        plots = params.pop('plots')
+    if "scorers" in params:
+        metrics = params.pop('scorers')
+    if "files" in params:
+        files = params.pop('files')
+    if "model" in params:
+        model = params.pop('model')
+        yaml.add_constructor('!Model:', Model)
+        model = yaml.load("!Model:\n" + str(model), Loader=yaml.FullLoader)
+    else:
+        raise ValueError("No model specified in params.yaml")
+    if "data" in params:
+        data = params.pop("data")
+        yaml.add_constructor('!Data:', Data)
+        data = yaml.load("!Data:\n" + str(data), Loader=yaml.FullLoader)
+        data = data.load()
+        X_train = data.X_train
+        y_train = data.y_train
+        X_test = data.X_test
+        y_test = data.y_test
+    else:
+        raise ValueError("No data specified in params.yaml")
+    
+    learning_rate = params.pop("learning_rate")
+    log_interval = params.pop("log_interval")
+    epochs = int(round(params.pop("epochs")/log_interval))
     logger = Live(path = Path(plots['path']), report = "html")
     
     for i in tqdm(range(epochs)):
         start = process_time()
-        clf = clf.fit(X_train, y_train, learning_rate = learning_rate)
-        if i % log_every_n == 0:
+        model = model.fit(X_train, y_train, learning_rate = learning_rate)
+        if i % log_interval == 0:
             logger.log("time", process_time() - start)
-            train_score = clf.score(X_train, y_train)
-            test_score = clf.score(X_test, y_test)
+            train_score = model.score(X_train, y_train)
+            test_score = model.score(X_test, y_test)
             logger.log("train_score", train_score)
-            logger.log("loss", clf.loss(X_train, y_train))
-            logger.log("weights", np.mean(clf.weights))
-            logger.log("bias", np.mean(clf.bias))
-            logger.log("epoch", i * log_every_n)
+            logger.log("loss", model.loss(X_train, y_train))
+            logger.log("weights", np.mean(model.weights))
+            logger.log("bias", np.mean(model.bias))
+            logger.log("epoch", i * log_interval)
             logger.next_step() 
-    predictions = clf.predict(X_test)
-    proba = clf.predict_proba(X_test)
+    predictions = model.predict(X_test)
+    proba = model.predict_proba(X_test)
     ground_truth = y_test
     df = DataFrame({
         "predictions": predictions, 
@@ -132,17 +145,17 @@ if __name__ == "__main__":
     f1 = f1_score(ground_truth, predictions)
     ser = Series({"accuracy": acc, "precision": prec, "recall": rec, "f1": f1})
     ser.to_json(Path(files['path'], metrics['scores']))
-    yb_clf = classifier(clf)
+    yb_model = classifier(model)
     path = plots.pop("path")
     i = 0
     for visualizer in [classification_report, confusion_matrix]:
         name = list(plots.values())[i]
-        viz = visualizer(yb_clf, X_train = X_train, y_train = y_train, classes=[int(y) for y in np.unique(y_test)])
+        viz = visualizer(yb_model, X_train = X_train, y_train = y_train, classes=[int(y) for y in np.unique(y_test)])
         viz.show(outpath=Path(path, name))
         plt.gcf().clear()
         i += 1
     model = Path(files['path'], files.pop("model"))
     model.parent.mkdir(parents=True, exist_ok=True)
     with open(model, "wb") as f:
-        pickle.dump(clf, f)
+        pickle.dump(model, f)
     f"Unused Params: {params}"

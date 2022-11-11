@@ -10,6 +10,8 @@ stages:
     - report/correlation.png
     params:
     - data
+    deps:
+    - params.yaml
   model:
     cmd: python tikhonov.py
     outs:
@@ -18,6 +20,7 @@ stages:
     - report/report.html
     deps:
     - data/data.npz
+    - params.yaml
     metrics:
     - model/scores.csv
     plots:
@@ -36,9 +39,11 @@ stages:
     outs:
     - experiments/:
         cache: true
-        persist : true
-        desc : Final report folder for website.
-
-
-  
-      
+        persist: true
+        desc: Final report folder for website.
+  parse:
+    cmd: python parse.py
+    deps:
+    - conf/config.yaml
+    outs:
+    - params.yaml

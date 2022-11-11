@@ -34,3 +34,6 @@ repos:
     -   id: flake8
         exclude: __init__.py
         args: [--ignore=E501 W503]
+  - name: render-md-mermaid
+    uses: nielsvaneck/render-md-mermaid@v2
+
