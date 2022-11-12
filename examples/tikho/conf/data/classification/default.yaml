@@ -1,5 +1,0 @@
- n_samples : 10000
- n_classes : 2
- n_features : 5
- n_informative : 4
- n_redundant : 1

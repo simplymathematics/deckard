@@ -1,7 +1,0 @@
-
- name : TikhonovClassifier
- mtype: linear
- epochs: 1000
- learning_rate: 1e-8
- scale: 0
- log_every_n : 10

@@ -18,7 +18,7 @@ from sklearn.datasets import (
     make_sparse_coded_signal,
 )
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
-from yellowbrick.features import RadViz, Rank1D, Rank2D
+from yellowbrick.features import RadViz, Rank1D, Rank2D, PCA, Manifold, ParallelCoordinates
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 
 generated = {
@@ -253,11 +253,11 @@ class Data(
             pickle.dump(data, f)
         return Path(filename).resolve()
 
-    def visualize(self, data: Namespace, files: dict, plots: dict):
+    def visualize(self, data: Namespace, files: dict, plots: dict, classes:list = None, features:list = None):
         y_train = data.y_train
         X_train = data.X_train
-        classes = set(y_train)
-        features = X_train.shape[1]
+        classes = set(y_train) if classes is None else classes
+        features = X_train.shape[1] if features is None else features
         paths = []
         if len(plots.keys()) > 0:
             assert (
@@ -298,6 +298,25 @@ class Data(
                 visualizer.show(Path(files["path"], plots["correlation"]))
                 paths.append(Path(files["path"], plots["correlation"]))
                 plots.pop("correlation")
+                plt.gcf().clear()
+            if "pca" in plots:
+                visualizer = PCA()
+                visualizer.fit_transform(X_train, y_train)
+                visualizer.show(Path(files["path"], plots["pca"]))
+                paths.append(Path(files["path"], plots["pca"]))
+                plots.pop("pca")
+                plt.gcf().clear()
+            if "manifold" in plots:
+                visualizer = Manifold(manifold="tsne")
+                visualizer.fit_transform(X_train, y_train)
+                visualizer.show(Path(files["path"], plots["manifold"]))
+                paths.append(Path(files["path"], plots["manifold"]))
+            if "parallel" in plots:
+                visualizer = ParallelCoordinates(classes = classes, features = list(range(features)))
+                visualizer.fit(X_train, y_train)
+                visualizer.show(Path(files["path"], plots["parallel"]))
+                paths.append(Path(files["path"], plots["parallel"]))
+                plots.pop("parallel")
                 plt.gcf().clear()
         return paths
 

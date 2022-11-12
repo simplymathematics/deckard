@@ -2,6 +2,10 @@ schema: '2.0'
 stages:
   data:
     cmd: python make_data.py
+    deps:
+    - path: params.yaml
+      md5: dd11bcd55dec8ab506d0d39a2e79cf33
+      size: 1245
     params:
       params.yaml:
         data:
@@ -11,7 +15,7 @@ stages:
             random_state: 42
             train_size: 8000
             stratify: true
-            train_noise: 1
+            train_noise: 0
             time_series: true
           generated:
             n_samples: 10000
@@ -22,23 +26,26 @@ stages:
             class_sep: 10
     outs:
     - path: data/data.pickle
-      md5: b4210f31f5cbe0c7f0fabca988759ecc
+      md5: ef5409836aeec61c935c802ca35d8352
       size: 480380
-    - path: tmp/balance.png
-      md5: d67040725affacb34f67141d6c536dab
-      size: 18296
-    - path: tmp/correlation.png
-      md5: e464800994b784e363532965ee8079bf
-      size: 16416
-    - path: tmp/radviz.png
-      md5: 4c015ea2539d8cfa921945566cd5ac38
-      size: 26487
+    - path: reports/balance.png
+      md5: 827de171e3ac99562b4c8e87ef09b95a
+      size: 18308
+    - path: reports/correlation.png
+      md5: 2fa7d7da97ccaeb7005976b9584aa5fb
+      size: 15882
+    - path: reports/radviz.png
+      md5: 76e0bc08eaed08f6c2ce1d35d18eac04
+      size: 25245
   model:
     cmd: python experiment.py
     deps:
     - path: data/data.pickle
-      md5: 239c4a917f2f8a904ebaae39fe854c7a
+      md5: 4c44fb047f622e899b400e3332c97ef2
       size: 480380
+    - path: params.yaml
+      md5: dd11bcd55dec8ab506d0d39a2e79cf33
+      size: 1245
     params:
       params.yaml:
         model:
@@ -47,50 +54,41 @@ stages:
             mtype: linear
     outs:
     - path: model/model.pickle
-      md5: 6a85a67974db41180a23625cf5430cd9
+      md5: 0d386065dcc704ba7b184d876d6479ae
       size: 53730
-    - path: tmp/classification.png
-      md5: 6c52d4f002533b0dc176b4349002da29
-      size: 23726
-    - path: tmp/confusion.png
-      md5: c3de05d7b3a27d4a83e3094bcc05f863
-      size: 17182
-    - path: tmp/ground_truth.json
-      md5: 0b42d4454e8840a263b9a25dedd269f1
+    - path: reports/classification.png
+      md5: 10324a4312998964cd046b7bea9f786e
+      size: 21143
+    - path: reports/confusion.png
+      md5: 929b0897f5aff7d87117b4ed36bcb88e
+      size: 16854
+    - path: reports/ground_truth.json
+      md5: 025b6afb2f5ce8cae8dc26fd03dac027
       size: 28888
-    - path: tmp/predictions.json
-      md5: 32068d9b8c9284c42928cd2434c35c35
+    - path: reports/predictions.json
+      md5: d267b39c857ac30637ea152e8b5d374f
       size: 28894
-    - path: tmp/report.html
-      md5: fff3cfb7e31598f30330635381b765cb
-      size: 110473
-    - path: tmp/scores.json
-      md5: 2caea2fa1685475c07044985d82310ef
+    - path: reports/report.html
+      md5: 4d2698b2338d2deaecccb1c72fe6612c
+      size: 35665
+    - path: reports/scores.json
+      md5: 85ca37b9eb9ec340a6910ff1ce4c8249
       size: 147
   cache:
-    cmd: python hash.py
+    cmd: python cache.py
     deps:
-    - path: data/data.npz
-      md5: b6b346265bd3599661e3858db1095cc8
-      size: 673002
-    - path: data/ground_truth.csv
-      md5: ac38b31623b7c8bd0d347b03da5fa70c
-      size: 6000
+    - path: data/data.pickle
+      md5: 4c44fb047f622e899b400e3332c97ef2
+      size: 480380
     - path: model/model.pickle
-      md5: 4ae64c91a821e2fa2f2871391b2d8a10
-      size: 80396
-    - path: model/predictions.csv
-      md5: f81211eb90cc6df9e060486131a40300
-      size: 93380
-    - path: report/
-      md5: 26d0fed2b9fa5b4a6f15ee3a81397fdb.dir
-      size: 223722
-      nfiles: 13
-    outs:
-    - path: experiments/
-      md5: 7b0983392974b550e6788c4058953f87.dir
-      size: 627542
-      nfiles: 22
+      md5: 0d386065dcc704ba7b184d876d6479ae
+      size: 53730
+    - path: reports/ground_truth.json
+      md5: 025b6afb2f5ce8cae8dc26fd03dac027
+      size: 28888
+    - path: reports/predictions.json
+      md5: d267b39c857ac30637ea152e8b5d374f
+      size: 28894
   parse:
     cmd: python parse.py
     deps:

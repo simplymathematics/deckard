@@ -4,3 +4,6 @@
     html_template = template.html
 [core]
     autostage = true
+    remote = myremote
+['remote "myremote"']
+    url = /Home/staff/cmeyers/.tikho

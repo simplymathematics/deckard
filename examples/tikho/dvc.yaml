@@ -9,6 +9,8 @@ stages:
     - ${files.path}/correlation.png
     params:
     - data
+    deps:
+    - params.yaml
   model:
     cmd: python experiment.py
     outs:
@@ -18,6 +20,7 @@ stages:
     - ${files.path}/report.html
     deps:
     - ${files.data_file}
+    - params.yaml
     metrics:
     - ${files.path}/scores.json
     plots:
@@ -25,15 +28,10 @@ stages:
     - ${files.path}/confusion.png
     params:
     - model
-  # cache:
-  #   cmd: python hash.py
-  #   deps:
-  #   - ${files.data_file}
-  #   - ${files.model_file}
-  #   - ${files.path}/${files.ground_truth_file}
-  #   - ${files.path}/${files.predictions_file}
-  #   outs:
-  #   - experiments/:
-  #       cache: true
-  #       persist: true
-  #       desc: Final report folder for website.
+  cache:
+    cmd: python cache.py
+    deps:
+    - ${files.data_file}
+    - ${files.model_file}
+    - ${files.path}/${files.ground_truth_file}
+    - ${files.path}/${files.predictions_file}

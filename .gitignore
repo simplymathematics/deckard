@@ -90,3 +90,4 @@ examples/tikho/Tikhonov Training Loss/scalars/f1.tsv
 *evaluate.yaml
 !**/*dvc.yaml
 examples/**/*/report.hml
+examples/.tikho/

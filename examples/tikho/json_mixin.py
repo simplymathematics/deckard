@@ -143,6 +143,7 @@ class JSONMixin:
         if data_file is not None:
             files.append(self.save_data(data, data_file))
         if model is not None:
+            Path(model_file).parent.mkdir(parents=True, exist_ok=True)
             if hasattr(model, "save"):
                 files.append(self.save_model(model, model_file))
             else:

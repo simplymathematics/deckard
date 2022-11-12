@@ -8,52 +8,26 @@ import yaml
 from dvc.api import params_show
 from dvclive import Live
 from tqdm import tqdm
-from yellowbrick.classifier import classification_report, confusion_matrix
+from yellowbrick.classifier import (classification_report, confusion_matrix, roc_auc, )
 from yellowbrick.contrib.wrapper import classifier
-from yellowbrick.features import (
-    PCA,
-    Manifold,
-    ParallelCoordinates,
-    RadViz,
-    Rank1D,
-    Rank2D,
-)
-from yellowbrick.target import (
-    BalancedBinningReference,
-    ClassBalance,
-    # FeatureCorrelation,
-)
-
+from yellowbrick.exceptions import ModelError
 from data import Data
 from json_mixin import JSONMixin
 from model import Model
-
-target_visualizers = {
-    "bins": BalancedBinningReference,
-    "class_balance": ClassBalance,
-    # "correlation" : FeatureCorrelation,
-}
-
-feature_visualizers = {
-    "radviz": RadViz,
-    "pca": PCA,
-    "manifold": Manifold,
-    "rank1d": Rank1D,
-    "rank2d": Rank2D,
-    "parallel": ParallelCoordinates,
-}
+from hashlib import md5
 
 classification_visualizers = {
     "confusion": confusion_matrix,
     "classification": classification_report,
+    "roc_auc": roc_auc
 }
 
 
 class Experiment(
     collections.namedtuple(
         typename="Experiment",
-        field_names="data, model, is_fitted, scorers, plots, files, fit",
-        defaults=({}, {}, {}, {}),
+        field_names="data, model, scorers, plots, files, fit, predict",
+        defaults=({}, {}, {}, {}, {}, {}),
     ),
     JSONMixin,
 ):
@@ -91,22 +65,28 @@ class Experiment(
         result = process_time() - start
         return predictions, result / len(data.X_test)
 
-    def load(config: str) -> tuple:
+    def load(self) -> tuple:
         """
         Loads data, model from the config file.
         :param config: str, path to config file.
         :returns: tuple(dict, object), (data, model).
         """
+        
         yaml.add_constructor("!Data:", Data)
-        yaml.add_constructor("!Model:", Model)
-        data_document = """!Data:\n""" + str(dict(experiment.data))
-        model_document = """!Model:\n""" + str(dict(experiment.model))
+        data_document = """!Data:\n""" + str(dict(self.data))
         data = yaml.load(data_document, Loader=yaml.Loader)
         data = data.load()
-        model = yaml.load(model_document, Loader=yaml.Loader)
-        model = model.load()
-        return data, model
+        input("Press Enter to continue...")
+        if self.model is not None:
+            yaml.add_constructor("!Model:", Model)
+            model_document = """!Model:\n""" + str(dict(self.model))
+            model = yaml.load(model_document, Loader=yaml.Loader)
+            model = model.load()
+            return data, model
+        
 
+
+yaml.add_constructor("!Experiment:", Experiment)
 
 if "__main__" == __name__:
     import argparse
@@ -119,11 +99,12 @@ if "__main__" == __name__:
     epochs = params["fit"]["epochs"]
     log_interval = params["fit"]["log_interval"]
     learning_rate = params["fit"]["learning_rate"]
-    yaml.add_constructor("!Experiment:", Experiment)
+    
     experiment = yaml.load("!Experiment:\n" + str(params), Loader=yaml.Loader)
     data, model = Experiment.load(experiment)
     logger = Live(path=Path(files["path"]), report="html")
     logger.log_params(params)
+    epochs = int(round(epochs//log_interval))
     for i in tqdm(range(epochs)):
         start = process_time()
         model = model.fit(
@@ -167,13 +148,20 @@ if "__main__" == __name__:
     path = files.pop("path")
     for name in classification_visualizers.keys():
         visualizer = classification_visualizers[name]
-        viz = visualizer(
-            yb_model,
-            X_train=data.X_train,
-            y_train=data.y_train,
-            classes=[int(y) for y in np.unique(data.y_train)],
-        )
+        if len(set(data.y_train)) > 2:
+            viz = visualizer(
+                yb_model,
+                X_train=data.X_train,
+                y_train=data.y_train,
+                classes=[int(y) for y in np.unique(data.y_train)],
+            )
+        elif len(set(data.y_train)) == 2:
+            viz = visualizer(
+                yb_model,
+                X_train=data.X_train,
+                y_train=data.y_train,
+                binary = True
+            )
         viz.show(outpath=Path(path, name))
-        # logger.log_image(name, Path(path, name))
+        assert Path(path, str(name)+".png").is_file(), f"File {name} does not exist."
         plt.gcf().clear()
-        i += 1
