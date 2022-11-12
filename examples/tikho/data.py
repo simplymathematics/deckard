@@ -38,14 +38,13 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, params, generated",
-        defaults=(None,),
+        field_names="params, generated",
+        defaults=({},),
     ),
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    # def __init__(self):
 
     def load(self):
         """
@@ -53,33 +52,33 @@ class Data(
         :return: Namespace object with X_train, X_test, y_train, y_test
         """
         # If the data is among the sklearn "real" datasets
-        if self.name in real:
-            big_X, big_y = real[self.name](return_X_y=True)
+        if self.params['name'] in real:
+            big_X, big_y = real[self.params['name']](return_X_y=True)
         # If the data is among the sklearn "generated" datasets
-        elif self.name in generated:
+        elif self.params['name'] in generated:
             assert self.generated is not None, ValueError(
                 "generated datasets require the generated parameter",
             )
             kwargs = self.generated
-            big_X, big_y = generated[self.name](**kwargs)
+            big_X, big_y = generated[self.params['name']](**kwargs)
         # If the data is a csv file
         elif (
-            isinstance(self.name, Path)
-            and self.name.exists()
-            and str(self.name).endswith(".csv")
+            isinstance(self.params['name'], Path)
+            and self.params['name'].exists()
+            and str(self.params['name']).endswith(".csv")
         ):
             assert "target" in self.params, "target column must be specified"
-            df = pd.read_csv(self.name)
+            df = pd.read_csv(self.params['name'])
             big_X = df.drop(self.params["target"], axis=1)
             big_y = df[self.params["target"]]
         # If the data is a json
         elif (
-            isinstance(self.name, Path)
-            and self.name.exists()
-            and str(self.name).endswith(".json")
+            isinstance(self.params['name'], Path)
+            and self.params['name'].exists()
+            and str(self.params['name']).endswith(".json")
         ):
             assert "target" in self.params, "target column must be specified"
-            data = pd.read_json(self.name)
+            data = pd.read_json(self.params['name'])
             if "X_train" in data:
                 assert (
                     hasattr(data, "y_train")
@@ -106,11 +105,11 @@ class Data(
                 big_y = data.y
         # If the data is a numpy npz file
         elif (
-            isinstance(self.name, Path)
-            and self.name.exists()
-            and str(self.name).endswith(".npz")
+            isinstance(self.params['name'], Path)
+            and self.params['name'].exists()
+            and str(self.params['name']).endswith(".npz")
         ):
-            data = np.load(self.name)
+            data = np.load(self.params['name'])
             if "X_train" in data:
                 assert (
                     hasattr(data, "y_train")
@@ -137,11 +136,11 @@ class Data(
                 big_y = data.y
         # If the data is a pickle file
         elif (
-            isinstance(self.name, Path)
-            and self.name.exists()
-            and str(self.name).endswith(".pkl")
+            isinstance(self.params['name'], Path)
+            and self.params['name'].exists()
+            and str(self.params['name']).endswith(".pkl")
         ):
-            with open(self.name, "rb") as f:
+            with open(self.params['name'], "rb") as f:
                 data = pickle.load(f)
             if "X_train" in data:
                 assert (
@@ -169,7 +168,7 @@ class Data(
                 big_y = data.y
         # Otherwise, raise an error
         else:
-            raise ValueError(f"Unknown dataset: {self.name}")
+            raise ValueError(f"Unknown dataset: {self.params['name']}")
 
         ########################################################
         # Optional params
