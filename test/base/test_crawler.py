@@ -1,4 +1,7 @@
-import warnings, os, unittest
+import os
+import unittest
+import warnings
+
 from deckard.base.crawler import Crawler
 from pandas import DataFrame
 from sklearn.exceptions import UndefinedMetricWarning
@@ -35,7 +38,9 @@ crawler_config = {
     ],
     "db": {},
     "root_folder": os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "..", "data",
+        os.path.dirname(os.path.realpath(__file__)),
+        "..",
+        "data",
     ),
     "layers": ["control", "defences", "attacks"],
     "exclude": [],

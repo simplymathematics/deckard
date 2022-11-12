@@ -1,4 +1,10 @@
-import warnings, tempfile, unittest, os, dvc.api, yaml, subprocess
+import os
+import subprocess
+import tempfile
+import unittest
+import warnings
+
+import yaml
 from sklearn.exceptions import UndefinedMetricWarning
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -9,7 +15,6 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 class testArtModel(unittest.TestCase):
     def setUp(self):
         self.path = os.path.abspath(tempfile.mkdtemp())
-        ART_DATA_PATH = self.path
         self.file = "test_filename"
         self.here = os.path.dirname(os.path.abspath(__file__))
         os.chdir(os.path.join(self.here, "..", "..", "examples", "iris"))

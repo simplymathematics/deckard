@@ -1,12 +1,16 @@
-import deckard, argparse, sys
-from pathlib import Path
-import subprocess, logging
-from os import chdir, getcwd
-
-import dvc.api
+import argparse
+import logging
+import subprocess
+import sys
 
 # Suppress user warning
 import warnings
+from os import chdir, getcwd
+from pathlib import Path
+
+# import dvc.api
+
+import deckard  # noqa: F401
 
 warnings.filterwarnings("ignore")
 

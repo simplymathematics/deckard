@@ -1,9 +1,12 @@
-import unittest, tempfile, shutil
+import shutil
+import tempfile
+import unittest
+
 from deckard.base import Data
-import numpy as np
 
 data = "../../examples/time_series/US-CAL-CISO 2020.csv"
-# TODO other self.datas
+
+
 class testTimeSeriesData(unittest.TestCase):
     def setUp(self):
         self.path = tempfile.mkdtemp()
@@ -14,6 +17,7 @@ class testTimeSeriesData(unittest.TestCase):
         Validates data object.
         """
         data = Data(self.data)
+        self.assertEqual(data.X_train.shape[0], data.y_train.shape[0])
 
     def test_data_hash(self):
         data1 = Data(self.data, time_series=True)

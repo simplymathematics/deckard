@@ -1,23 +1,19 @@
+import logging
+import os
 import shutil
-import warnings, logging, unittest, os
-from deckard.base import Scorer, Data, Model, Experiment
-from sklearn.tree import DecisionTreeClassifier
+import unittest
+import warnings
 from tempfile import mkdtemp
-from deckard.base.scorer import REGRESSOR_SCORERS, CLASSIFIER_SCORERS
+
+from deckard.base import Data, Experiment, Model, Scorer
+from deckard.base.scorer import CLASSIFIER_SCORERS, REGRESSOR_SCORERS
+from sklearn.metrics import (
+    accuracy_score,
+)  # f1_score,; roc_curve,; balanced_accuracy_score,; precision_score,; recall_score,; make_scorer,
+from sklearn.tree import DecisionTreeClassifier
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-from sklearn.metrics import (
-    f1_score,
-    roc_curve,
-    balanced_accuracy_score,
-    accuracy_score,
-    precision_score,
-    recall_score,
-    make_scorer,
-)
-
-
 logger = logging.getLogger(__name__)
 
 

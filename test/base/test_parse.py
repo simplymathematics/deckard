@@ -1,18 +1,19 @@
-import warnings
-
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-import unittest
 import os
 import tempfile
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV
+import unittest
+import warnings
+
 from deckard.base import Data, Experiment
 from deckard.base.parse import (
     generate_object_list_from_tuple,
     generate_tuple_list_from_yml,
 )
 from deckard.layers.utils import generate_experiment_list
+from sklearn.model_selection import GridSearchCV
+from sklearn.tree import DecisionTreeClassifier
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 class testParse(unittest.TestCase):
@@ -20,7 +21,8 @@ class testParse(unittest.TestCase):
         self.path = tempfile.mkdtemp()
         self.file = "test_filename"
         config_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "configs",
+            os.path.dirname(os.path.realpath(__file__)),
+            "configs",
         )
         self.configs = [x for x in os.listdir(config_file) if x.endswith(".yml")]
         self.yml_lists = []

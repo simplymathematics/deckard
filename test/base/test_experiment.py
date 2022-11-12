@@ -1,35 +1,33 @@
-import warnings
-
-from sklearn.exceptions import UndefinedMetricWarning
-
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 import tempfile
 import unittest
-from collections.abc import Callable
+import warnings
+from collections.abc import Callable  # noqa F401
 from copy import deepcopy
 from os import path
 
 import numpy as np
-from art.attacks.evasion import BoundaryAttack
-from art.defences.postprocessor import HighConfidence
-from art.defences.preprocessor import FeatureSqueezing
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.attacks.evasion import BoundaryAttack  # noqa F401
+from art.defences.postprocessor import HighConfidence  # noqa F401
+from art.defences.preprocessor import FeatureSqueezing  # noqa F401
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier  # noqa F401
 from deckard.base import Data, Experiment, Model
-from sklearn.cluster import KMeans
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans  # noqa F401
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.impute import SimpleImputer  # noqa F401
+from sklearn.metrics import accuracy_score  # noqa F401
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor  # noqa F401
+from sklearn.preprocessing import StandardScaler  # noqa F401
 from sklearn.tree import DecisionTreeClassifier
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
 class testExperiment(unittest.TestCase):
     def setUp(self):
 
         self.path = path.abspath(tempfile.mkdtemp())
-        ART_DATA_PATH = self.path
         self.file = "test_filename"
         self.here = path.dirname(path.abspath(__file__))
 
@@ -184,7 +182,6 @@ class testExperiment(unittest.TestCase):
             "name": "sklearn.impute.SimpleImputer",
             "params": {"strategy": "mean"},
         }
-        data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
         model.insert_sklearn_preprocessor(
@@ -218,7 +215,7 @@ class testExperiment(unittest.TestCase):
             "name": "art.defences.preprocessor.FeatureSqueezing",
             "params": {"clip_values": (0, 1), "bit_depth": 4},
         }
-        data = Data("iris", test_size=30)
+        # data = Data("iris", test_size=30)
         estimator = DecisionTreeClassifier()
         model = Model(estimator)
         model.insert_art_defence(config)

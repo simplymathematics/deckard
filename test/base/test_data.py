@@ -1,10 +1,16 @@
-import unittest, tempfile, os, shutil
-from deckard.base import Data
+import json
+import os
+import shutil
+import tempfile
+import unittest
+
 import numpy as np
-import json, yaml
+from deckard.base import Data
 
 datasets = ["mnist", "cifar10", "iris"]
 # TODO other datasets
+
+
 class testData(unittest.TestCase):
     def setUp(self):
         self.filename = "test_data.pkl"

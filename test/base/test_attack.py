@@ -1,25 +1,23 @@
+import tempfile
+import unittest
 import warnings
+from os import path
+
+import numpy as np
+from art.attacks.evasion import BoundaryAttack
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from deckard.base import AttackExperiment, Data, Model
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.tree import DecisionTreeClassifier
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-import tempfile
-import unittest
-from deckard.base import Data, Model, AttackExperiment
-import numpy as np
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import LabelBinarizer
-from art.attacks.evasion import BoundaryAttack
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from os import path
 
 
 class testAttackExperiment(unittest.TestCase):
     def setUp(self):
-
         self.path = tempfile.mkdtemp()
-        ART_DATA_PATH = self.path
         self.file = "test_filename"
         self.here = path.dirname(path.abspath(__file__))
 
@@ -73,6 +71,7 @@ class testAttackExperiment(unittest.TestCase):
             },
         }
         experiment = AttackExperiment(data=data, model=model, attack=attack)
+        self.assertTrue("Attack" in experiment.params)
 
     def test_run_attack(self):
         data = Data("iris", test_size=30)

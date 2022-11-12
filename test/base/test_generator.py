@@ -1,22 +1,25 @@
 import warnings
 
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
+
 from deckard.base.generator import Generator
 from pandas import DataFrame
 
-
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO other datasets
+
+
 class testGenerator(unittest.TestCase):
     def setUp(self):
         self.filename = "test"
         self.path = tempfile.mkdtemp()
         config_folder = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "configs",
+            os.path.dirname(os.path.realpath(__file__)),
+            "configs",
         )
         self.config_folder = config_folder
         self.model_yml = os.path.join(self.config_folder, "model.yml")
@@ -70,7 +73,10 @@ class testGenerator(unittest.TestCase):
         name = gen.list[0][0]
         params = gen.list[0][1]
         gen.generate_json(
-            path=self.path, filename=self.filename, name=name, params=params,
+            path=self.path,
+            filename=self.filename,
+            name=name,
+            params=params,
         )
         self.assertTrue(
             os.path.exists(os.path.join(self.path, self.filename + ".json")),
@@ -81,7 +87,10 @@ class testGenerator(unittest.TestCase):
         name = gen.list[0][0]
         params = gen.list[0][1]
         gen.generate_yml(
-            path=self.path, filename=self.filename, name=name, params=params,
+            path=self.path,
+            filename=self.filename,
+            name=name,
+            params=params,
         )
         self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
 

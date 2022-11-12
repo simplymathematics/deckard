@@ -10,7 +10,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-from deckard.layers.preprocess import preprocess
+# from deckard.layers.preprocess import preprocess
 
 
 class testSklearnFeaturize(unittest.TestCase):

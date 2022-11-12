@@ -1,25 +1,23 @@
+import logging
+import tempfile
+import unittest
 import warnings
+from pathlib import Path
+
+# from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
+#                                            TensorFlowClassifier)
+# from art.estimators.classification.scikitlearn import (
+#     ScikitlearnRandomForestClassifier, SklearnClassifier)
+from deckard.base import Data, Experiment, Model
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+
+logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=ResourceWarning)
-import unittest, logging, tempfile
-from deckard.base import Data, Experiment, Model
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from art.estimators.classification import (
-    PyTorchClassifier,
-    KerasClassifier,
-    TensorFlowClassifier,
-)
-from art.estimators.classification.scikitlearn import (
-    SklearnClassifier,
-    ScikitlearnRandomForestClassifier,
-)
-from pathlib import Path
-
-logger = logging.getLogger(__name__)
 
 
 class testUtils(unittest.TestCase):

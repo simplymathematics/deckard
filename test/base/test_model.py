@@ -1,15 +1,19 @@
-import unittest, tempfile, shutil, os
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
-from sklearn.cluster import KMeans
-from deckard.base import Model, Data
+import os
+import shutil
+import tempfile
+import unittest
 from copy import deepcopy
-from art.defences.preprocessor import FeatureSqueezing
-from art.defences.postprocessor import GaussianNoise
+
+import numpy as np
+from art.defences.postprocessor import GaussianNoise  # noqa F401
+from art.defences.preprocessor import FeatureSqueezing  # noqa F401
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
-import numpy as np
+from deckard.base import Data, Model
+from sklearn.cluster import KMeans  # noqa F401
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor  # noqa F401
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor  # noqa F401
 
 
 class testModel(unittest.TestCase):
@@ -65,7 +69,10 @@ class testModel(unittest.TestCase):
 
     def test_save_model(self):
         model1 = Model(
-            LogisticRegression(), model_type="sklearn", path=self.path, classifier=False,
+            LogisticRegression(),
+            model_type="sklearn",
+            path=self.path,
+            classifier=False,
         )
         filename = model1.save_model(path=self.path, filename=self.file)
         self.assertTrue(os.path.exists(os.path.join(self.path, filename)))
@@ -121,7 +128,10 @@ class testModel(unittest.TestCase):
             "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
-            DecisionTreeClassifier(), model_type="sklearn", defence=fsq, path=self.path,
+            DecisionTreeClassifier(),
+            model_type="sklearn",
+            defence=fsq,
+            path=self.path,
         )
         model(art=True)
         self.assertEqual("FeatureSqueezing", model.params["Defence"]["name"])
@@ -187,7 +197,10 @@ class testModel(unittest.TestCase):
             "params": {"bit_depth": 4, "clip_values": (0, 1)},
         }
         model = Model(
-            LinearRegression(), model_type="sklearn", defence=defence, classifier=False,
+            LinearRegression(),
+            model_type="sklearn",
+            defence=defence,
+            classifier=False,
         )
         model(art=True)
         model.fit(data.X_train, data.y_train)
