@@ -17,7 +17,7 @@ from sklearn.model_selection import TimeSeriesSplit, train_test_split
 
 
 from utils import factory
-
+from typing import Tuple, List
 logger = logging.getLogger(__name__)
 
 
@@ -39,7 +39,7 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline,
+        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline",
         defaults=({},{},{},{},[],),
     ), BaseHashable,
 ):
@@ -62,9 +62,9 @@ class Data(
         else:
             name = params.pop("name")
         if name in real or name in generate:
-            big_X, big_y = self.sklearn_load(name)
+            big_X, big_y = self.sklearn_load()
         elif isinstance(name, Path) and name.exists() and not str(name).endswith(".pkl") and not str(name).endswith(".pickle"):
-            big_X, big_y = self.read(name)
+            big_X, big_y = self.read()
         # If the data is a pickle file
         elif (
             isinstance(name, Path)
@@ -101,14 +101,16 @@ class Data(
         else:
             raise ValueError(f"Unknown dataset: {name}")
         samples = params.pop("sample", {})
-        X_train, X_test, y_train, y_test = self.sample(big_X, big_y, **samples)
-        X_train, X_test, y_train, y_test = self.add_noise(X_train, X_test, y_train, y_test, **params)
+        X_train, X_test, y_train, y_test = self.sampler(X = big_X, y = big_y)
+        add_noise = params.pop("add_noise", {})
+        X_train, X_test, y_train, y_test = self.add_noise_to_data(X_train, X_test, y_train, y_test)
         ns = Namespace(
             X_train=X_train,
             X_test=X_test,
             y_train=y_train,
             y_test=y_test,
         )
+        ns = self.run_sklearn_pipeline(ns)
         return ns
     
     def sklearn_load(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -127,7 +129,7 @@ class Data(
                 "generate datasets requires a dictionary of parameters named 'generate' in params.yaml",
             )
             big_X, big_y = generate[name](**self.generate)
-        return 
+        return (big_X, big_y)
     
     def read(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -166,11 +168,11 @@ class Data(
             big_y = data.y
             big_X = data.X
         else:
-            raise ValueError(f"Unknown datatype: {name.split(".")[-1]}")
+            raise ValueError(f"Unknown datatype: {name.split('.S')[-1]}")
         
         return big_X, big_y
     
-    def add_noise(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def add_noise_to_data(self, X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Adds noise to the data according to the parameters specified in params.yaml
         :param X_train (np.ndarray): Training data
@@ -185,7 +187,9 @@ class Data(
         ###########################################################
         add_noise = self.add_noise
         train_noise = add_noise.pop("train_noise", 0)
-        test_noise = ass_noise.pop("test_noise", 0)
+        test_noise = add_noise.pop("test_noise", 0)
+        y_train_noise = add_noise.pop("y_train_noise", 0)
+        y_test_noise = add_noise.pop("y_test_noise", 0)
         gap = add_noise.pop("gap", 0)
         # additive noise
         if train_noise != 0:
@@ -208,30 +212,31 @@ class Data(
                 raise TypeError(f"y_test_noise must be int or float, not {type(y_test_noise)}")
         return X_train, X_test, y_train, y_test        
 
-    def transform(self, data:Namespace, transform:dict = None) -> Namespace:
+    def sklearn_transform(self, data:Namespace, transform:dict = None, name:str = "") -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
         :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
         :param transform (dict): Dictionary of parameters for the transformation
         :return: Namespace containing X_train, X_test, y_train, y_test
-        """"
+        """
+        new_data = deepcopy(data)
         if transform is None:
             transform = self.transform
         X_train = transform.pop("X_train", False)
         X_test = transform.pop("X_test", False)
         y_train = transform.pop("y_train", False)
         y_test = transform.pop("y_test", False)
-        assert "name" in transform
-        transformer = factory(transform.pop("name"), **transform)
+        transformer = factory(name, **transform)
         if X_train is True:
-            data.X_train = transformer.fit_transform(data.X_train, data.y_train)
+            new_data.X_train = transformer.fit_transform(data.X_train, data.y_train)
         if X_test is True:
-            data.X_test = transformer.fit(data.X_train, data.y_train).transform(data.X_test, data.y_test)
+            new_data.X_test  = transformer.fit(data.X_train, data.y_train).transform(data.X_test, data.y_test)
         if y_train is True:
-            data.y_train = transformer.fit(data.X_train, data.y_train).transform(data.y_train)
+            new_data.y_train = transformer.fit(data.X_train, data.y_train).transform(data.y_train)
         if y_test is True:
-            data.y_test = transformer.fit(data.X_train, data.y_train).transform(data.y_test)
-        return data
+            new_data.y_test = transformer.fit(data.X_train, data.y_train).transform(data.y_test)
+        del data
+        return new_data
             
     def run_sklearn_pipeline(self, data):
         """
@@ -243,10 +248,10 @@ class Data(
         pipeline = self.sklearn_pipeline
         for layer in pipeline:
             transform = self.transform[layer]
-            data = self.transform(data, transform)
+            data = self.sklearn_transform(data, transform, name = layer)
         return data
         
-    def sample(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def sampler(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Samples the data using train_test_split
         :param X (np.ndarray): data
@@ -254,57 +259,55 @@ class Data(
         :param self.sample: Dictionary of parameters for train_test_split
         :return Tuple of X_train, X_test, y_train, y_test
         """
-        samples = self.sample
+        samples = dict(self.sample)
         ########################################################
         # Sample params
         ########################################################
-        
         time_series = samples.pop("time_series", False)
         if "stratify" in samples and samples["stratify"] is True:
             samples.pop("stratify")
-            stratify = big_y
+            stratify = y
         else:
             stratify =False
+        gap = samples.pop("gap", 0)
+        time_series = samples.pop("time_series", False)
         ###########################################################
         # Sampling
         ###########################################################
         # regular test/train split
-        if "test_size" in samples or "train_size" in samples:
-            if time_series is False:
-                X_train, X_test, y_train, y_test = train_test_split(
-                    big_X, big_y, stratify, **samples
-                )
-            # timeseries split
-            elif time_series is True:
-                assert (
-                    "test_size" or "train_size" in samples
-                ), "if time series, test_size must be specified"
-                max_train_size = (
-                    samples.pop("train_size")
-                    if "train_size" in samples
-                    else int(round(len(big_X) * 0.8))
-                )
-                assert isinstance(gap, int), "gap must be an integer"
-                test_size = (
-                    samples.pop("test_size")
-                    if "test_size" in samples
-                    # 
-                    else int(round(len(big_X) / 2 + gap))
-                )
-                splitter = TimeSeriesSplit(
-                    n_splits=2,
-                    max_train_size=max_train_size,
-                    test_size=test_size,
-                    gap=gap,
-                )
-                initial = 0
-                assert initial < len(big_X), ValueError(
-                    "random_state is used to select the index of the of a subset of time series data and must be less than the length of said data + test_size",
-                )
-                for tr_idx, te_idx in splitter.split(big_X):
-                    X_train, X_test = big_X[tr_idx], big_X[te_idx]
-                    y_train, y_test = big_y[tr_idx], big_y[te_idx]
-        return X_train, X_test, y_train, y_test
+        if time_series is False:
+            X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = stratify, **samples)
+        # timeseries split
+        elif time_series is True:
+            assert (
+                "test_size" or "train_size" in samples
+            ), "if time series, test_size must be specified"
+            max_train_size = (
+                samples.pop("train_size")
+                if "train_size" in samples
+                else int(round(len(X) * 0.8))
+            )
+            assert isinstance(gap, int), "gap must be an integer"
+            test_size = (
+                samples.pop("test_size")
+                if "test_size" in samples
+                # 
+                else int(round(len(X) / 2 + gap))
+            )
+            splitter = TimeSeriesSplit(
+                n_splits=2,
+                max_train_size=max_train_size,
+                test_size=test_size,
+                gap=gap,
+            )
+            initial = 0
+            assert initial < len(X), ValueError(
+                "random_state is used to select the index of the of a subset of time series data and must be less than the length of said data + test_size",
+            )
+            for tr_idx, te_idx in splitter.split(X[random_state:-1]):
+                X_train, X_test = X[tr_idx], X[te_idx]
+                y_train, y_test = y[tr_idx], y[te_idx]
+        return (X_train, X_test, y_train, y_test)
 
     
     
@@ -330,17 +333,27 @@ if "__main__" == __name__:
             random_state : 42
             train_size : 800
             stratify : True
+        add_noise:
             train_noise : 1
             time_series : True
-        name: iris
+        name: classification
         files:
             data_path : data
             data_filetype : pickle
         generate:
             n_samples: 1000
             n_features: 2
-            centers: 2
-        
+            n_informative: 2
+            n_redundant : 0
+            n_classes: 2
+        sklearn_pipeline:
+            - sklearn.preprocessing.StandardScaler
+        transform:
+            sklearn.preprocessing.StandardScaler:
+                with_mean : true
+                with_std : true
+                X_train : true
+                X_test : true
     """
     yaml.add_constructor("!Data:", Data)
     data_document_tag = """!Data:""" + data_document

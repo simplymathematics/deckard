@@ -9,7 +9,8 @@ export SETUPTOOLS_USE_DISTUTILS=stdlib
 ######################################
 python3 -m venv env
 source env/bin/activate
-git clone --recurse-submodules -j8 https://github.com/simplymathematics/deckard.git
+git clone --recurse-submodules -j8 https://github.com/simplymathematics/deckard.git 
+# git submodule update --init --recursive # To just update the submodules
 python3 -m pip install deckard/adversarial-robustness-toolbox/
 python3 -m pip install -e deckard/
 python3 -m pip install pyinstaller
