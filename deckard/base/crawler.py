@@ -44,7 +44,6 @@ class Crawler:
         self.path = os.path.realpath(self.config["root_folder"])
         self.result_file = self.config["results"]
         self.status_file = self.config["status"]
-        self.structured = self.config["structured"]
         self.filetype = self.config["filetype"]
         self.layers = self.config["layers"]
         self.data = None
@@ -148,6 +147,9 @@ class Crawler:
             data.to_json(filename, orient="index", indent=4)
         elif filetype == "db":
             raise NotImplementedError("Saving to database not implemented")
+        
+        
+    
 
     def __call__(self, path=None):
         if path is None:

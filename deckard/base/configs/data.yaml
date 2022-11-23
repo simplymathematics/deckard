@@ -1,0 +1,59 @@
+- name: data.Data
+    params : 
+        generated:
+            n_classes: 2
+            n_features: 5
+            n_informative: 4
+            n_redundant: 1
+            n_samples: 10000
+        params:
+            name: classification
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+            train_noise: [0, 1e-3, 1e-2, 1e-1, 1, 10, 100]
+            train_size: 8000
+        files:
+            data_filetype : pickle
+            data_path : data
+# - name: data.Data
+#   params:
+#     generated:
+#         n_classes: 2
+#         n_features: 5
+#         n_informative: 4
+#         n_redundant: 1
+#         n_samples: 10000
+#     params:
+#         name: classification
+#         random_state: 42
+#         shuffle: true
+#         stratify: true
+#         time_series: true
+#         train_noise : 0
+#         test_noise: [0, 1e-3, 1e-2, 1e-1, 1, 10, 100]
+#         train_size: 8000
+#     files:
+#         data_filetype : pickle
+#         data_path : data
+# - name: data.Data
+#   params:
+#     generated:
+#         n_classes: 2
+#         n_features: 100
+#         n_informative: [10, 20, 30, 50, 90]
+#         n_redundant: 1
+#         n_samples: 10000
+#     params:
+#         name: classification
+#         random_state: 42
+#         shuffle: true
+#         stratify: true
+#         time_series: true
+#         test_noise: 0
+#         train_noise : 0
+#         train_size: 8000
+#     files:
+#         data_filetype : pickle
+#         data_path : data

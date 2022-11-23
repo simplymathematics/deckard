@@ -22,7 +22,6 @@ from validators import url as is_url
 from hashable import BaseHashable, my_hash
 from copy import deepcopy
 
-
 logger = logging.getLogger(__name__)
 supported_estimators = (
     PyTorchClassifier,
@@ -39,6 +38,35 @@ supported_estimators = (
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+
+classification_visualizers = {
+    "confusion": confusion_matrix,
+    "classification": classification_report,
+    "roc_auc": roc_auc
+}
+
+regression_visualizers = { 
+    "error" : prediction_error,
+    "residuals" : residuals_plot,
+    "alphas" : alphas
+}
+
+clustering_visualizers = {
+    "silhouette" : silhouette_visualizer,
+    "elbow" : kelbow_visualizer,
+    "intercluster" : intercluster_distance   
+}
+# elbow requires k
+model_selection_visualizers = {
+    "validation" : validation_curve,
+    "learning" : learning_curve,
+    "cross_validation" : cross_validation,
+    "feature_importances" : feature_importances,
+    "recursive" : rfecv,
+    "dropping_curve" : dropping_curve
+}
+# cross_, recursive, validation needs cv
+# dropping, feats do not need score
 
 filetypes = {
     "pkl" : "sklearn",
@@ -241,6 +269,8 @@ class Model(
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return Path(filename).resolve()
+
+
 
 if "__main__" == __name__:
     model_document = """

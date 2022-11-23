@@ -14,9 +14,7 @@ from sklearn.datasets import (load_boston, load_diabetes, load_iris, load_wine,
                               make_blobs, make_classification, make_moons,
                               make_sparse_coded_signal)
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
-from yellowbrick.features import (PCA, Manifold, ParallelCoordinates, RadViz,
-                                  Rank1D, Rank2D)
-from yellowbrick.target import ClassBalance, FeatureCorrelation
+
 
 from utils import factory
 
@@ -41,8 +39,8 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline, art_pipeline",
-        defaults=({},{},{},{},[],[],),
+        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline,
+        defaults=({},{},{},{},[],),
     ), BaseHashable,
 ):
     def __new__(cls, loader, node):
@@ -210,8 +208,44 @@ class Data(
                 raise TypeError(f"y_test_noise must be int or float, not {type(y_test_noise)}")
         return X_train, X_test, y_train, y_test        
 
-    
-    
+    def transform(self, data:Namespace, transform:dict = None) -> Namespace:
+        """
+        Transofrms the data according to the parameters specified in params.yaml
+        :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
+        :param transform (dict): Dictionary of parameters for the transformation
+        :return: Namespace containing X_train, X_test, y_train, y_test
+        """"
+        if transform is None:
+            transform = self.transform
+        X_train = transform.pop("X_train", False)
+        X_test = transform.pop("X_test", False)
+        y_train = transform.pop("y_train", False)
+        y_test = transform.pop("y_test", False)
+        assert "name" in transform
+        transformer = factory(transform.pop("name"), **transform)
+        if X_train is True:
+            data.X_train = transformer.fit_transform(data.X_train, data.y_train)
+        if X_test is True:
+            data.X_test = transformer.fit(data.X_train, data.y_train).transform(data.X_test, data.y_test)
+        if y_train is True:
+            data.y_train = transformer.fit(data.X_train, data.y_train).transform(data.y_train)
+        if y_test is True:
+            data.y_test = transformer.fit(data.X_train, data.y_train).transform(data.y_test)
+        return data
+            
+    def run_sklearn_pipeline(self, data):
+        """
+        Runs the sklearn pipeline specified in params.yaml
+        :param data (Namespace): Data to be transformed
+        :param self.sklearn_pipeline: list of sklearn transformers
+        :param self.transform: dictionary of transformers to apply to the data
+        """
+        pipeline = self.sklearn_pipeline
+        for layer in pipeline:
+            transform = self.transform[layer]
+            data = self.transform(data, transform)
+        return data
+        
     def sample(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Samples the data using train_test_split
@@ -272,6 +306,8 @@ class Data(
                     y_train, y_test = big_y[tr_idx], big_y[te_idx]
         return X_train, X_test, y_train, y_test
 
+    
+    
     def save(self, data: Namespace) -> Path:
         """
         Saves the data to a pickle file at self.files.data_path/hash/self.files.data_name
@@ -285,82 +321,6 @@ class Data(
         with open(filename, "wb") as f:
             pickle.dump(data, f)
         return Path(filename).resolve()
-
-    def visualize(self, data: Namespace, files: dict, plots: dict, classes:list = None, features:list = None) -> List[Path]:
-        """
-        Visualizes the data using yellowbrick. Supports 'radviz', 'rank1d', 'rank2d', 'balance', 'correlation', 'pca', 'manifold', 'parallel'. 
-        :param data (Namespace): Namespace containing the data
-        :param files (dict): Dictionary containing the file paths. Must include a 'path' key.
-        :param plots (dict): Dictionary containing the plot parameters. Key must be a supported yellowbrick visualizer and its value must be a dictionary of parameters.
-        :param classes (list): List of classes to for plot labels. Otherwise `set(data.y_train)` will be used.
-        :param features (list): List of features to for plot labels. Otherwise `data.X_train.columns` will be used.
-        :return List of paths to the saved plots
-        """
-        y_train = data.y_train
-        X_train = data.X_train
-        classes = set(y_train) if classes is None else classes
-        features = list(range(X_train.shape[1])) if features is None else features
-        paths = []
-        if len(plots.keys()) > 0:
-            assert (
-                "path" in files
-            ), "Path to save plots is not specified in the files entry in params.yaml"
-            Path(files["path"]).mkdir(parents=True, exist_ok=True)
-            if "radviz" in plots:
-                visualizer = RadViz(classes=classes)
-                visualizer.fit(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["radviz"]))
-                paths.append(Path(files["path"], plots["radviz"]))
-                plots.pop("radviz")
-                plt.gcf().clear()
-            if "rank1d" in plots:
-                visualizer = Rank1D(algorithm="shapiro")
-                visualizer.fit(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["rank1d"]))
-                paths.append(Path(files["path"], plots["rank1d"]))
-                plots.pop("rank1d")
-                plt.gcf().clear()
-            if "rank2d" in plots:
-                visualizer = Rank2D(algorithm="pearson")
-                visualizer.fit(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["rank2d"]))
-                paths.append(Path(files["path"], plots["rank2d"]))
-                plots.pop("rank2d")
-                plt.gcf().clear()
-            if "balance" in plots:
-                visualizer = ClassBalance(labels=classes)
-                visualizer.fit(y_train)
-                visualizer.show(Path(files["path"], plots["balance"]))
-                paths.append(Path(files["path"], plots["balance"]))
-                plots.pop("balance")
-                plt.gcf().clear()
-            if "correlation" in plots:
-                visualizer = FeatureCorrelation(labels=list(range(features)))
-                visualizer.fit(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["correlation"]))
-                paths.append(Path(files["path"], plots["correlation"]))
-                plots.pop("correlation")
-                plt.gcf().clear()
-            if "pca" in plots:
-                visualizer = PCA()
-                visualizer.fit_transform(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["pca"]))
-                paths.append(Path(files["path"], plots["pca"]))
-                plots.pop("pca")
-                plt.gcf().clear()
-            if "manifold" in plots:
-                visualizer = Manifold(manifold="tsne")
-                visualizer.fit_transform(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["manifold"]))
-                paths.append(Path(files["path"], plots["manifold"]))
-            if "parallel" in plots:
-                visualizer = ParallelCoordinates(classes = classes, features = features)
-                visualizer.fit(X_train, y_train)
-                visualizer.show(Path(files["path"], plots["parallel"]))
-                paths.append(Path(files["path"], plots["parallel"]))
-                plots.pop("parallel")
-                plt.gcf().clear()
-        return paths
 
 
 if "__main__" == __name__:

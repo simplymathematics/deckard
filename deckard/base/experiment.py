@@ -13,16 +13,18 @@ from model import Model
 import pandas as pd
 import pickle
 from utils import factory
+from visualise import  Yellowbrick_Visualiser
 from typing import Union
 from hashable import BaseHashable, my_hash
 import logging 
+
 
 logger = logging.getLogger(__name__)
 class Experiment(
     collections.namedtuple(
         typename="Experiment",
-        field_names="data, model, scorers, plots, files, fit, predict",
-        defaults=({}, {}, {}, {}, {}, {}),
+        field_names="data, model, scorers, plots, files",
+        defaults=({}, {}, {}, {}, {}),
         rename = True
     ),
     BaseHashable,
@@ -69,23 +71,30 @@ class Experiment(
         :returns: tuple(dict, object), (data, model).
         """
         params = deepcopy(self._asdict())
-        yaml.add_constructor("!Data", Data)
-        data_document = """!Data\n""" + str(dict(self.data))
-        data = yaml.load(data_document, Loader=yaml.Loader)
-        # params.pop("data")
-        if self.model is not {}:
+        if params.data is not {}:
+            yaml.add_constructor("!Data", Data)
+            data_document = """!Data\n""" + str(dict(params.data))
+            data = yaml.load(data_document, Loader=yaml.Loader)
+            params.pop("data")
+        else:
+            raise ValueError("Data not specified in config file")
+        if params.model is not {}:
             yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(self.model))
+            model_document = """!Model\n""" + str(dict(params.model))
             model = yaml.load(model_document, Loader=yaml.Loader)
-            # params.pop("model")
-        return (data, model, params)
+            params.pop("model")
+        else:
+            model = {}
+        if params.plots is not {}:
+            yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
+            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params.plots))
+            vis = yaml.load(plots_document, Loader=yaml.Loader)
+            params.pop("plots")
+        else:
+            vis = None
+        return (data, model, files, vis)
         
         
-
-
-
-
-
     def score(self, ground_truth: np.ndarray, predictions: np.ndarray) -> dict:
         """Scores predictions according to self.scorers.
         :param ground_truth: np.ndarray, ground truth.
@@ -117,12 +126,32 @@ class Experiment(
             pickle.dump(data, f)
         return Path(filename).resolve()
 
-    def save_params(self, filename: str, params: dict) -> Path:
+    def save_params(self, filename: str) -> Path:
         """Saves parameters to specified file.
         :param filename: str, name of file to save parameters to.
         :returns: Path, path to saved parameters.
         """
-        path = Path(filename).parent
+        params = deepcopy(self._asdict())
+        files = params.pop("files", None)
+        if files is not None:
+            path = files.pop("path", ".")
+            path = Path(path).resolve()
+            for x in files:
+                x = Path(path, my_hash(self), files[x])
+                files[x] = str(x)
+        data_files = params["data"].pop("files", {})
+        data_path = data_files.pop("data_path", "")
+        data_filetype = data_files.pop("data_filetype", "")
+        data_file = Path(data_path, my_hash(self.data) + "." + data_filetype)
+        model_files = params["model"].pop("files", {})
+        model_path = params["model"].pop("path", "")
+        model_filetype = params["model"].pop("model_filetype", "")
+        model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
+        files['data'] = str(data_file)
+        files['model'] = str(model_file)
+        params['files'] = files
+        params["scorer"] = list(params.pop("scorers").keys())[0]
+        params.pop("plots", None)
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(params).to_json(filename)
         return Path(filename).resolve()
@@ -207,7 +236,6 @@ class Experiment(
         data: dict = None,
         ground_truth: np.ndarray = None,
         model: object = None,
-        params: dict = None,
         params_file: str = None,
         score_dict: dict = None,
         time_dict: dict = None,
@@ -249,7 +277,7 @@ class Experiment(
                 params is not None
             ), "params must be specified if params_file is specified"
             params_file = Path(path, params_file)
-            files.append(self.save_params(params_file, params))
+            files.append(self.save_params(params_file))
         if ground_truth is not None:
             ground_truth_file = Path(path, ground_truth_file)
             assert (
@@ -280,7 +308,7 @@ class Experiment(
         Runs experiment and saves results according to config file.
         """
         logger.info("Parsing Config File")
-        data, model, params = self.load()
+        data, model, files, vis  = self.load()
         files = params["files"]
         path = Path(params['files']['path'], str(my_hash(self._asdict())))
         if path.exists():
@@ -306,12 +334,13 @@ class Experiment(
             "model": fitted_model,
             "predictions": predictions,
             "time_dict": {"fit_time": fit_time, "predict_time": predict_time},
-            "params": params,
             "ground_truth": ground_truth,
             "score_dict": score_dict,
         }
         logger.info("Saving Results")
         outs = self.save(**results, **files)
+        if vis is not None:
+            plot_dict = vis.visualise()
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs
