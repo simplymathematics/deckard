@@ -18,6 +18,8 @@ from yellowbrick.features import (PCA, Manifold, ParallelCoordinates, RadViz,
                                   Rank1D, Rank2D)
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 
+from utils import factory
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,8 +41,8 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, sample, files, generate, real, transform, sklearn_pipeline, art_pipeline",
-        defaults=({},{},{},[],[],),
+        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline, art_pipeline",
+        defaults=({},{},{},{},[],[],),
     ), BaseHashable,
 ):
     def __new__(cls, loader, node):
@@ -170,21 +172,23 @@ class Data(
         
         return big_X, big_y
     
-    def add_noise(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray):
+    def add_noise(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Adds noise to the data according to the parameters specified in params.yaml
         :param X_train (np.ndarray): Training data
         :param X_test (np.ndarray): Testing data
         :param y_train (np.ndarray): Training labels
         :param y_test (np.ndarray): Testing labels
-        :param self.params.train_noise : Noise to add to the training data
-        :param self.params.test_noise : Noise to add to the testing data
-        :param self.params.y_train_noise : Noise to add to the training labels 
-        :param self.params.y_test_noise : Noise to add to the testing labels
+        :param self.add_noise : Noise to add to the training data
+        :return: Tuple of X_train, X_test, y_train, y_test
         """
         ###########################################################
         # Adding Noise
         ###########################################################
+        add_noise = self.add_noise
+        train_noise = add_noise.pop("train_noise", 0)
+        test_noise = ass_noise.pop("test_noise", 0)
+        gap = add_noise.pop("gap", 0)
         # additive noise
         if train_noise != 0:
             X_train += np.random.normal(0, train_noise, X_train.shape)
@@ -208,17 +212,21 @@ class Data(
 
     
     
-    def sample(self, X:np.ndarray, y:np.ndarray, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        samples = kwargs
+    def sample(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Samples the data using train_test_split
+        :param X (np.ndarray): data
+        :param y (np.ndarray): labels
+        :param self.sample: Dictionary of parameters for train_test_split
+        :return Tuple of X_train, X_test, y_train, y_test
+        """
+        samples = self.sample
         ########################################################
         # Sample params
         ########################################################
-        train_noise = samples.pop("train_noise", 0)
-        test_noise = samples.pop("test_noise", 0)
-        test_noise = 0
-        gap = samples.pop("gap", 0)
+        
         time_series = samples.pop("time_series", False)
-        if "stratify" in params and params["stratify"] is True:
+        if "stratify" in samples and samples["stratify"] is True:
             samples.pop("stratify")
             stratify = big_y
         else:
@@ -265,6 +273,13 @@ class Data(
         return X_train, X_test, y_train, y_test
 
     def save(self, data: Namespace) -> Path:
+        """
+        Saves the data to a pickle file at self.files.data_path/hash/self.files.data_name
+        :param data (Namespace): Namespace containing the data
+        :param self.files.data_path : Path to save the data
+        :param self.files.data_name : Name of the data
+        :return Path to the saved data
+        """
         filename = Path(self.files['data_path'],  my_hash(self._asdict()) + "." + self.files['data_filetype'])
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
@@ -272,10 +287,19 @@ class Data(
         return Path(filename).resolve()
 
     def visualize(self, data: Namespace, files: dict, plots: dict, classes:list = None, features:list = None) -> List[Path]:
+        """
+        Visualizes the data using yellowbrick. Supports 'radviz', 'rank1d', 'rank2d', 'balance', 'correlation', 'pca', 'manifold', 'parallel'. 
+        :param data (Namespace): Namespace containing the data
+        :param files (dict): Dictionary containing the file paths. Must include a 'path' key.
+        :param plots (dict): Dictionary containing the plot parameters. Key must be a supported yellowbrick visualizer and its value must be a dictionary of parameters.
+        :param classes (list): List of classes to for plot labels. Otherwise `set(data.y_train)` will be used.
+        :param features (list): List of features to for plot labels. Otherwise `data.X_train.columns` will be used.
+        :return List of paths to the saved plots
+        """
         y_train = data.y_train
         X_train = data.X_train
         classes = set(y_train) if classes is None else classes
-        features = X_train.shape[1] if features is None else features
+        features = list(range(X_train.shape[1])) if features is None else features
         paths = []
         if len(plots.keys()) > 0:
             assert (
@@ -330,7 +354,7 @@ class Data(
                 visualizer.show(Path(files["path"], plots["manifold"]))
                 paths.append(Path(files["path"], plots["manifold"]))
             if "parallel" in plots:
-                visualizer = ParallelCoordinates(classes = classes, features = list(range(features)))
+                visualizer = ParallelCoordinates(classes = classes, features = features)
                 visualizer.fit(X_train, y_train)
                 visualizer.show(Path(files["path"], plots["parallel"]))
                 paths.append(Path(files["path"], plots["parallel"]))
