@@ -1,0 +1,8 @@
+vars:
+  queue: queue
+stages:
+  cmd: python experiment.py
+  deps:
+  - configs/
+  outs:
+  - ${queue}

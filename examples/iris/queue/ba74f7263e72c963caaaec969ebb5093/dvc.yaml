@@ -1,0 +1,95 @@
+stages:
+  art_model:
+    cmd: python -m deckard.layers.art_model --layer_name art_model
+    deps:
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - art_model/d35569dfe4ff0f58356b2ecc48b9ce11/model.pickle
+    - art_model/d35569dfe4ff0f58356b2ecc48b9ce11/ground_truth.json
+    - art_model/d35569dfe4ff0f58356b2ecc48b9ce11/predictions.json
+    params:
+    - art_model/d35569dfe4ff0f58356b2ecc48b9ce11.yaml:art_model_params
+  attack:
+    cmd: python -m deckard.layers.attack --layer_name attack
+    deps:
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - attack/9fbcd6851628dba651ef393c82449b51/params.json
+    - attack/9fbcd6851628dba651ef393c82449b51/ground_truth.json
+    - attack/9fbcd6851628dba651ef393c82449b51/predictions.json
+    params:
+    - attack/9fbcd6851628dba651ef393c82449b51.yaml:attack_params
+  defend:
+    cmd: python -m deckard.layers.defend --layer_name defend
+    deps:
+    - art_model/d35569dfe4ff0f58356b2ecc48b9ce11/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c/model.pickle
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c/ground_truth.json
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c/predictions.json
+    params:
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c.yaml:defend_params
+  evaluate:
+    cmd: python -m deckard.layers.evaluate --layer_name evaluate
+    deps:
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11
+    - preprocess/e5bac6c478bdc517228c4380ff491972
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc
+    - defend/13fe1a16b8f576bc1107a9023db4cc8c
+    - attack/9fbcd6851628dba651ef393c82449b51
+    metrics:
+    - evaluate/d35569dfe4ff0f58356b2ecc48b9ce11/scores.json
+    params:
+    - evaluate/d35569dfe4ff0f58356b2ecc48b9ce11.yaml:evaluate_params
+  featurize:
+    cmd: python -m deckard.layers.preprocess --layer_name featurize --position 1
+    deps:
+    - preprocess/e5bac6c478bdc517228c4380ff491972/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc/model.pickle
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc/ground_truth.json
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc/predictions.json
+    params:
+    - featurize/7419c5d7a9949464e06ef8a6e05d06bc.yaml:featurize_params
+  prepare:
+    cmd: python -m deckard.layers.prepare
+    outs:
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    params:
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89.yaml:prepare_params
+  preprocess:
+    cmd: python -m deckard.layers.preprocess --layer_name preprocess --position 0
+    deps:
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - preprocess/e5bac6c478bdc517228c4380ff491972/model.pickle
+    - preprocess/e5bac6c478bdc517228c4380ff491972/params.json
+    - preprocess/e5bac6c478bdc517228c4380ff491972/ground_truth.json
+    - preprocess/e5bac6c478bdc517228c4380ff491972/predictions.json
+    params:
+    - preprocess/e5bac6c478bdc517228c4380ff491972.yaml:preprocess_params
+  train:
+    cmd: python -m deckard.layers.sklearn_model --layer_name train
+    deps:
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    outs:
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11/model.pickle
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11/ground_truth.json
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11/predictions.json
+    params:
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11.yaml:train_params
+  visualise:
+    cmd: python -m deckard.layers.visualise --layer_name visualise
+    deps:
+    - train/d35569dfe4ff0f58356b2ecc48b9ce11/model.pickle
+    - prepare/00f2039cb1eab87fcd13ea497aeb0d89/data.pickle
+    params:
+    - visualise/d35569dfe4ff0f58356b2ecc48b9ce11.yaml:visualise_params
+    plots:
+    - visualise/d35569dfe4ff0f58356b2ecc48b9ce11/roc_auc.pdf

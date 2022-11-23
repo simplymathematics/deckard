@@ -24,7 +24,7 @@ classification_visualizers = {
 
 
 class Experiment(
-    collections.namedtuple(
+    collections.ChainMap(
         typename="Experiment",
         field_names="data, model, scorers, plots, files, fit, predict",
         defaults=({}, {}, {}, {}, {}, {}),
@@ -82,7 +82,7 @@ class Experiment(
             model_document = """!Model:\n""" + str(dict(self.model))
             model = yaml.load(model_document, Loader=yaml.Loader)
             model = model.load()
-            return data, model
+        return data, model
         
 
 
@@ -102,66 +102,66 @@ if "__main__" == __name__:
     
     experiment = yaml.load("!Experiment:\n" + str(params), Loader=yaml.Loader)
     data, model = Experiment.load(experiment)
-    logger = Live(path=Path(files["path"]), report="html")
-    logger.log_params(params)
-    epochs = int(round(epochs//log_interval))
-    for i in tqdm(range(epochs)):
-        start = process_time()
-        model = model.fit(
-            data.X_train,
-            data.y_train,
-            learning_rate=learning_rate,
-            epochs=1,
-        )
-        if i % log_interval == 0:
-            fit_time = process_time() - start
-            logger.log("time", fit_time)
-            train_score = model.score(data.X_train, data.y_train)
-            test_score = model.score(data.X_test, data.y_test)
-            logger.log("train_score", train_score)
-            logger.log("loss", model.loss(data.X_train, data.y_train))
-            logger.log("weights", np.mean(model.weights))
-            logger.log("bias", np.mean(model.bias))
-            logger.log("epoch", i * log_interval)
-            logger.next_step()
+    # logger = Live(path=Path(files["path"]), report="html")
+    # logger.log_params(params)
+    # epochs = int(round(epochs//log_interval))
+    # for i in tqdm(range(epochs)):
+    #     start = process_time()
+    #     model = model.fit(
+    #         data.X_train,
+    #         data.y_train,
+    #         learning_rate=learning_rate,
+    #         epochs=1,
+    #     )
+    #     if i % log_interval == 0:
+    #         fit_time = process_time() - start
+    #         logger.log("time", fit_time)
+    #         train_score = model.score(data.X_train, data.y_train)
+    #         test_score = model.score(data.X_test, data.y_test)
+    #         logger.log("train_score", train_score)
+    #         logger.log("loss", model.loss(data.X_train, data.y_train))
+    #         logger.log("weights", np.mean(model.weights))
+    #         logger.log("bias", np.mean(model.bias))
+    #         logger.log("epoch", i * log_interval)
+    #         logger.next_step()
 
-    predictions = model.predict(data.X_test)
-    proba = model.predict_proba(data.X_test)
-    predictions, predict_time = experiment.predict(data, model)
-    ground_truth = data.y_test
-    time_dict = {"fit_time": fit_time, "predict_time": predict_time}
-    score_dict = experiment.score(data, predictions)
-    output_files = experiment.save(
-        **experiment.files,
-        data=data,
-        model=model,
-        ground_truth=ground_truth,
-        predictions=predictions,
-        time_dict=time_dict,
-        score_dict=score_dict,
-        params=params,
-    )
-    for file in output_files:
-        assert file.exists(), f"File {file} does not exist."
-    plots = params.pop("plots")
-    yb_model = classifier(model)
-    path = files.pop("path")
-    for name in classification_visualizers.keys():
-        visualizer = classification_visualizers[name]
-        if len(set(data.y_train)) > 2:
-            viz = visualizer(
-                yb_model,
-                X_train=data.X_train,
-                y_train=data.y_train,
-                classes=[int(y) for y in np.unique(data.y_train)],
-            )
-        elif len(set(data.y_train)) == 2:
-            viz = visualizer(
-                yb_model,
-                X_train=data.X_train,
-                y_train=data.y_train,
-                binary = True
-            )
-        viz.show(outpath=Path(path, name))
-        assert Path(path, str(name)+".png").is_file(), f"File {name} does not exist."
-        plt.gcf().clear()
+    # predictions = model.predict(data.X_test)
+    # proba = model.predict_proba(data.X_test)
+    # predictions, predict_time = experiment.predict(data, model)
+    # ground_truth = data.y_test
+    # time_dict = {"fit_time": fit_time, "predict_time": predict_time}
+    # score_dict = experiment.score(data, predictions)
+    # output_files = experiment.save(
+    #     **experiment.files,
+    #     data=data,
+    #     model=model,
+    #     ground_truth=ground_truth,
+    #     predictions=predictions,
+    #     time_dict=time_dict,
+    #     score_dict=score_dict,
+    #     params=params,
+    # )
+    # for file in output_files:
+    #     assert file.exists(), f"File {file} does not exist."
+    # plots = params.pop("plots")
+    # yb_model = classifier(model)
+    # path = files.pop("path")
+    # for name in classification_visualizers.keys():
+    #     visualizer = classification_visualizers[name]
+    #     if len(set(data.y_train)) > 2:
+    #         viz = visualizer(
+    #             yb_model,
+    #             X_train=data.X_train,
+    #             y_train=data.y_train,
+    #             classes=[int(y) for y in np.unique(data.y_train)],
+    #         )
+    #     elif len(set(data.y_train)) == 2:
+    #         viz = visualizer(
+    #             yb_model,
+    #             X_train=data.X_train,
+    #             y_train=data.y_train,
+    #             binary = True
+    #         )
+    #     viz.show(outpath=Path(path, name))
+    #     assert Path(path, str(name)+".png").is_file(), f"File {name} does not exist."
+    #     plt.gcf().clear()

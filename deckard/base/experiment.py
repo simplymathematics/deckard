@@ -1,294 +1,390 @@
-import json
-import logging
-import os
-import pickle
+import collections
 from pathlib import Path
-from typing import Union
-
+from time import process_time
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from art.defences.postprocessor import Postprocessor
-from art.defences.preprocessor import Preprocessor
-from art.defences.trainer import Trainer
-from art.defences.transformer import Transformer
-from deckard.base.data import Data
-from deckard.base.hashable import BaseHashable
-from deckard.base.model import Model
-from pandas import DataFrame, Series
-
-DEFENCE_TYPES = [Preprocessor, Trainer, Transformer, Postprocessor]
+# from dvc.api import params_show
+# from dvclive import Live
+# from tqdm import tqdm
+from copy import deepcopy
+from data import Data
+from model import Model
+import pandas as pd
+import pickle
+from utils import factory
+from typing import Union
+from hashable import BaseHashable, my_hash
+import logging 
 
 logger = logging.getLogger(__name__)
+class Experiment(
+    collections.namedtuple(
+        typename="Experiment",
+        field_names="data, model, scorers, plots, files, fit, predict",
+        defaults=({}, {}, {}, {}, {}, {}),
+        rename = True
+    ),
+    BaseHashable,
+):
+    def __new__(cls, loader, node):
+        return super().__new__(cls, **loader.construct_mapping(node))
+
+    def fit(self, data: dict, model: object) -> tuple:
+        """
+        Fits model to data.
+        :param data: dict, data to fit model to.
+        :param model: object, model to fit.
+        :returns: tuple, (model, data, fit_time).
+        """
+        if isinstance(data, Data):
+            loaded_data = data.load()
+        if isinstance(model, Model):
+            loaded_model = model.load()
+        start = process_time()
+        result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train)
+        result = process_time() - start
+        return loaded_model, loaded_data, result / len(loaded_data.X_train)
+
+    def predict(self, data: dict, model: object) -> tuple:
+        """
+        Predicts data with model.
+        :param data: dict, data to predict.
+        :param model: object, model to predict with.
+        :returns: tuple, (predictions, predict_time).
+        """
+        start = process_time()
+        if isinstance(data, Data):
+            data = data.load()
+        if isinstance(model, Model):
+            model = model.load()
+        predictions = model.predict(data.X_test)
+        result = process_time() - start
+        return predictions, result / len(data.X_test)
+
+    def load(self) -> tuple:
+        """
+        Loads data, model from the config file.
+        :param config: str, path to config file.
+        :returns: tuple(dict, object), (data, model).
+        """
+        params = deepcopy(self._asdict())
+        yaml.add_constructor("!Data", Data)
+        data_document = """!Data\n""" + str(dict(self.data))
+        data = yaml.load(data_document, Loader=yaml.Loader)
+        # params.pop("data")
+        if self.model is not {}:
+            yaml.add_constructor("!Model", Model)
+            model_document = """!Model\n""" + str(dict(self.model))
+            model = yaml.load(model_document, Loader=yaml.Loader)
+            # params.pop("model")
+        return (data, model, params)
+        
+        
 
 
-# Create experiment object
-class Experiment(BaseHashable):
-    """
-    Creates an experiment object
-    """
 
-    def __init__(
-        self,
-        data: Data,
-        model: Model,
-        verbose: int = 1,
-        is_fitted: bool = False,
-        fit_params: dict = None,
-        predict_params: dict = None,
-    ):
-        """
-        Creates an experiment object
-        :param data: Data object
-        :param model: Model object
-        :param params: Dictionary of other parameters you want to add to this object. Obviously everything in self.__dict__.keys() should be treated as a reserved keyword, however.
-        :param verbose: Verbosity level
-        :param scorers: Dictionary of scorers
-        :param name: Name of experiment
-        """
 
-        self.verbose = verbose
-        self.is_fitted = is_fitted
-        self.params = {}
-        self.params["Model"] = model.params
-        self.params["Data"] = data.params
-        self.data = data
-        self.model = model
-        self.hash = hash(self)
-        self.params["Experiment"] = {
-            "verbose": self.verbose,
-            "is_fitted": self.is_fitted,
-            "id": hash(self),
-            "model": hash(model),
-            "data": hash(data),
-        }
-        self.time_dict = None
-        self.predictions = None
-        self.ground_truth = None
 
-    def fit(self) -> None:
+    def score(self, ground_truth: np.ndarray, predictions: np.ndarray) -> dict:
+        """Scores predictions according to self.scorers.
+        :param ground_truth: np.ndarray, ground truth.
+        :param predictions: np.ndarray, predictions to score.
+        :returns: dict, dictionary of scores.
         """
-        Builds model.
-        """
-        self.model.is_fitted = self.is_fitted
-        if not self.is_fitted:
-            self.model.fit(self.data.X_train, self.data.y_train)
-        else:
-            logger.info("Model already fitted. Skipping fit.")
-        self.predictions = self.model.predict(self.data.X_test)
-        self.time_dict = self.model.time_dict
-        self.params["Experiment"]["if_fitted"] = True
-        self.hash = hash(self)
+        score_dict = {}
+        scorers = deepcopy(self.scorers)
+        for scorer in self.scorers:
+            class_name = scorers[scorer].pop("name")
+            params = scorers[scorer]
+            params.update({"y_true": ground_truth, "y_pred": predictions})
+            score = factory(class_name, **params)
+            score_dict[scorer] = score
+        return score_dict
 
-    def __call__(
-        self,
-        path,
-        model_file: Union[str, Path] = "model",
-        prefix=None,
-        predictions_file: Union[str, Path] = "predictions.json",
-        ground_truth_file: Union[str, Path] = "ground_truth.json",
-        time_dict_file: Union[str, Path] = "time_dict.json",
-        params_file: Union[str, Path] = "params.json",
-    ) -> list:
+    def save_data(self, data: dict) -> Path:
+        """Saves data to specified file.
+        :data data: dict, data to save.
+        :returns: Path, path to saved data.
         """
-        Sets metric scorer. Builds model. Runs evaluation. Updates scores dictionary with results.
-        Returns self with added scores, predictions, and time_dict attributes.
-        """
-
-        files = self.save_params(
-            filename=params_file,
-            path=path,
-            prefix=prefix,
-        )
-        if not hasattr(self.data, "X_train"):
-            logger.debug("Data not initialized. Initializing.")
-            self.data()
-        if isinstance(self.model.model, (Path, str)):
-            logger.debug("Model not initialized. Initializing.")
-            self.model()
-        self.ground_truth = self.data.y_test
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        self.fit()
-        preds_file = self.save_predictions(
-            filename=predictions_file,
-            path=path,
-            prefix=prefix,
-        )
-        truth_File = self.save_ground_truth(
-            filename=ground_truth_file,
-            path=path,
-            prefix=prefix,
-        )
-        time_file = self.save_time_dict(
-            filename=time_dict_file,
-            path=path,
-            prefix=prefix,
-        )
-        model_file = os.path.join(path, model_file)
-        model_name = str(hash(self.model)) if model_file is None else model_file
-        model_file = self.save_model(filename=Path(model_name).name, path=path)
-        files.extend([preds_file, truth_File, time_file, model_file])
-        # TODO: Fix scoring
-        return files
-
-    def save_data(
-        self,
-        filename: str = "data.pkl",
-        prefix=None,
-        path: str = ".",
-    ) -> None:
-        """
-        Saves data to specified file.
-        :param filename: str, name of file to save data to.
-        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
-        """
-        assert path is not None, "Path to save data must be specified."
-        if prefix is not None:
-            filename = os.path.join(path, prefix + "_" + filename)
-        else:
-            filename = os.path.join(path, filename)
+        assert "files" in self.data, "Data must have files attribute"
+        assert "data_path" in self.data['files'], "Data must have data_path attribute"
+        assert "data_filetype" in self.data['files'], "Data must have data_filetype attribute"
+        filename = Path(self.data['files']['data_path'], my_hash(self.data) + "." + self.data['files']['data_filetype'])
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
-            pickle.dump(self.data, f)
-        assert os.path.exists(os.path.join(path, filename)), "Data not saved."
-        return None
+            pickle.dump(data, f)
+        return Path(filename).resolve()
 
-    def save_params(self, filename="params.yaml", prefix=None, path: str = ".") -> None:
+    def save_params(self, filename: str, params: dict) -> Path:
+        """Saves parameters to specified file.
+        :param filename: str, name of file to save parameters to.
+        :returns: Path, path to saved parameters.
         """
-        Saves data to specified file.
-        :param data_params_file: str, name of file to save data parameters to.
-        :param model_params_file: str, name of file to save model parameters to.
-        :param path: str, path to folder to save data to. If none specified, data is saved in current working directory. Must exist.
-        """
-        assert path is not None, "Path to save data must be specified."
-        if not os.path.isdir(path) and not os.path.exists(path):
-            os.mkdir(path)
-        filenames = []
-        newname = Path(filename).name
-        for key, value in self.params.items():
-            if key == "is_fitted":
-                continue
-            filename = newname
-            if prefix is not None:
-                filename = prefix + key.lower() + "_" + newname
-            else:
-                filename = key.lower() + "_" + newname
-            filename = os.path.join(path, filename)
-            print("Saving params to {}".format(filename))
-            with open(filename, "w") as f:
-                yaml.dump(value, f, indent=4)
-            ###################################
-            # Enable for debugging:           #
-            ###################################
-            # with open(filename, "r") as f:  #
-            #     print(f.read())             #
-            ###################################
-            filenames.append(os.path.join(path, filename))
-        return filenames
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(params).to_json(filename)
+        return Path(filename).resolve()
 
-    def save_model(self, filename: str = "model", prefix=None, path: str = ".") -> str:
+    def save_model(self, model: object) -> Path:
+        """Saves model to specified file.
+        :model model: object, model to save.
+        :returns: Path, path to saved model.
         """
-        Saves model to specified file (or subfolder).
-        :param filename: str, name of file to save model to.
-        :param path: str, path to folder to save model. If none specified, model is saved in current working directory. Must exist.
-        :return: str, path to saved model.
-        """
-        if prefix is not None:
-            filename = prefix + "_" + filename
-        assert os.path.isdir(path), "Path {} to experiment does not exist".format(path)
-        logger.info("Saving model to {}".format(os.path.join(path, filename)))
-        filename = Path(filename).name
-        self.model.save_model(filename=filename, path=path)
-        return os.path.join(path, filename)
+        assert "files" in self.model, "Model must have files attribute"
+        assert "model_path" in self.model['files'], "Model must have model_path attribute"
+        assert "model_filetype" in self.model['files'], "Model must have model_filetype attribute"
+        filename = Path(self.model['files']['model_path'],  my_hash(self.model) + "." + self.model['files']['model_filetype'])
+        path = Path(filename).parent
+        file = Path(filename).name
+        path.mkdir(parents=True, exist_ok=True)
+        if hasattr(model, "save"):
+            if file.endswith(".pickle"):
+                model.save(Path(filename).stem, path=path)
+            model.save(filename=file, path=path)
+        else:
+            with open(filename, "wb") as f:
+                pickle.dump(model, f)
+        return Path(filename).resolve()
 
     def save_predictions(
         self,
+        predictions: np.ndarray,
         filename: str = "predictions.json",
-        prefix=None,
-        path: str = ".",
-    ) -> None:
-        """
-        Saves predictions to specified file.
+    ) -> Path:
+        """Saves predictions to specified file.
         :param filename: str, name of file to save predictions to.
-        :param path: str, path to folder to save predictions. If none specified, predictions are saved in current working directory. Must exist.
+        :param predictions: np.ndarray, predictions to save.
+        :returns: Path, path to saved predictions.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        if prefix is not None:
-            filename = prefix + "_" + filename
-        prediction_file = os.path.join(path, filename)
-        results = self.predictions
-        if isinstance(results, (DataFrame, Series)):
-            results = results.values
-        elif isinstance(results, np.ndarray):
-            results = results.tolist()
-        with open(prediction_file, "w") as f:
-            json.dump(results, f)
-        assert os.path.exists(prediction_file), "Prediction file not saved"
-        return prediction_file
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(predictions).to_json(filename)
+        return Path(filename).resolve()
 
     def save_ground_truth(
         self,
+        ground_truth: np.ndarray,
         filename: str = "ground_truth.json",
-        prefix=None,
-        path: str = ".",
-    ) -> None:
+    ) -> Path:
         """
-        Saves ground_truth to specified file.
-        :param filename: str, name of file to save ground_truth to.
-        :param path: str, path to folder to save ground_truth. If none specified, ground_truth are saved in current working directory. Must exist.
+        :param filename: str, name of file to save predictions to.
+        :param ground_truth: np.ndarray, ground truth to save.
+        :returns: Path, path to saved ground truth.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        if prefix is not None:
-            filename = prefix + "_" + filename
-        prediction_file = os.path.join(path, filename)
-        results = self.ground_truth
-        if isinstance(results, (DataFrame, Series)):
-            results = results.values
-        elif isinstance(results, np.ndarray):
-            results = results.tolist()
-        with open(prediction_file, "w") as f:
-            json.dump(results, f)
-        assert os.path.exists(prediction_file), "Prediction file not saved"
-        return prediction_file
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(ground_truth).to_json(filename)
+        return Path(filename).resolve()
 
-    def save_cv_scores(
-        self,
-        filename: str = "cv_scores.json",
-        prefix=None,
-        path: str = ".",
-    ) -> None:
+    def save_time_dict(self, time_dict: dict, filename: str = "time_dict.json") -> Path:
         """
-        Saves crossvalidation scores to specified file.
-        :param filename: str, name of file to save crossvalidation scores to.
-        :param path: str, path to folder to save crossvalidation scores. If none specified, scores are saved in current working directory. Must exist.
+        :param filename: str, name of file to save predictions to.
+        :param time_dict: dict, time dictionary to save.
+        :returns: Path, path to saved time dictionary.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        assert filename is not None, "Filename must be specified"
-        if prefix is not None:
-            filename = prefix + "_" + filename
-        cv_file = os.path.join(path, filename)
-        with open(cv_file, "w") as f:
-            json.dump(self.cv_scores, f, indent=4)
-        assert os.path.exists(cv_file), "CV results file not saved"
-        return cv_file
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(time_dict).to_json(filename)
+        return Path(filename).resolve()
 
-    def save_time_dict(
+    def save_scores(self, scores: dict, filename: str = "scores.json") -> Path:
+        """
+        :param filename: str, name of file to save predictions to.
+        :param scores: dict, scores to save.
+        :returns: Path, path to saved scores.
+        """
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(scores).to_json(
+            filename,
+        )
+        return Path(filename).resolve()
+
+    def save(
         self,
-        filename: str = "time_dict.yaml",
-        prefix=None,
-        path: str = ".",
-    ):
+        data: dict = None,
+        ground_truth: np.ndarray = None,
+        model: object = None,
+        params: dict = None,
+        params_file: str = None,
+        score_dict: dict = None,
+        time_dict: dict = None,
+        predictions: np.ndarray = None,
+        time_dict_file: str = None,
+        predictions_file: str = None,
+        ground_truth_file: str = None,
+        score_dict_file: str = None,
+        path: Path = None,
+    ) -> Path:
         """
-        Saves time dictionary to specified file.
-        :param filename: str, name of file to save time dictionary to.
-        :param path: str, path to folder to save time dictionary. If none specified, time dictionary is saved in current working directory. Must exist.
+        Saves data, model, parameters, predictions, scores, and time dictionary.
+        :param data: dict, data to save.
+        :param ground_truth: np.ndarray, ground truth to save.
+        :param model: object, model to save.
+        :param params: dict, parameters to save.
+        :param params_file: str, name of file to save parameters to.
+        :param score_dict: dict, scores to save.
+        :param time_dict: dict, time dictionary to save.
+        :param predictions: np.ndarray, predictions to save.
+        :param time_dict_file: str, name of file to save time dictionary to.
+        :param predictions_file: str, name of file to save predictions to.
+        :param ground_truth_file: str, name of file to save ground truth to.
+        :param score_dict_file: str, name of file to save scores to.
+        :param path: Path, path to save files to. Defaults to current directory.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        assert hasattr(self, "time_dict"), "No time dictionary to save"
-        if prefix is not None:
-            filename = prefix + "_" + filename
-        time_file = os.path.join(path, filename)
-        time_yaml = {self.hash: self.time_dict}
-        with open(time_file, "w") as f:
-            json.dump(time_yaml, f, indent=4)
-        assert os.path.exists(time_file), "Time dictionary file not saved"
-        return time_file
+        files = []
+        path = Path(path, str(my_hash(self._asdict())))
+        path.mkdir(parents=True, exist_ok=True)
+        if score_dict_file is not None:
+            score_dict_file = path / score_dict_file
+            files.append(self.save_scores(score_dict, filename=score_dict_file))
+        if "files"  in self.data:
+            files.append(self.save_data(data))
+        if "files" in self.model:
+            files.append(self.save_model(model))
+        if params_file is not None:
+            assert (
+                params is not None
+            ), "params must be specified if params_file is specified"
+            params_file = Path(path, params_file)
+            files.append(self.save_params(params_file, params))
+        if ground_truth is not None:
+            ground_truth_file = Path(path, ground_truth_file)
+            assert (
+                ground_truth_file is not None
+            ), "Ground truth must be passed to function call if specified in config file."
+            files.append(
+                self.save_ground_truth(ground_truth, filename=ground_truth_file),
+            )
+        if predictions is not None:
+            predictions_file = Path(path, predictions_file)
+            assert (
+                predictions_file is not None
+            ), "Predictions must be passed to function call if specified in config file."
+            files.append(self.save_predictions(predictions, filename=predictions_file))
+        if time_dict is not None:
+            assert (
+                time_dict_file is not None
+            ), "Time dictionary must be passed to function call if specified in config file."
+            time_dict_file = Path(path, time_dict_file)
+            assert (
+                time_dict_file is not None
+            ), "Time dictionary must be passed to function call if specified in config file."
+            files.append(self.save_time_dict(time_dict, filename=time_dict_file))
+        return files
+    
+    def run(self, is_fitted = False):
+        """
+        Runs experiment and saves results according to config file.
+        """
+        logger.info("Parsing Config File")
+        data, model, params = self.load()
+        files = params["files"]
+        path = Path(params['files']['path'], str(my_hash(self._asdict())))
+        if path.exists():
+            logger.warning(f"Path {path} already exists. Will overwrite any files specified in the config.")
+        else:
+            path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Saving to {path}")
+        assert isinstance(data, Data)
+        assert isinstance(model, Model)
+        if is_fitted is False:
+            logger.info("Fitting Model")
+            fitted_model, loaded_data, fit_time = self.fit(data, model)
+        else:
+            logger.info("Model already fitted")
+            fitted_model = model.load()
+            loaded_data = data.load()
+        logger.info("Scoring Model")
+        predictions, predict_time = self.predict(loaded_data, fitted_model)
+        ground_truth = loaded_data.y_test
+        score_dict = self.score(predictions = predictions, ground_truth = ground_truth)
+        results = {
+            "data": loaded_data,
+            "model": fitted_model,
+            "predictions": predictions,
+            "time_dict": {"fit_time": fit_time, "predict_time": predict_time},
+            "params": params,
+            "ground_truth": ground_truth,
+            "score_dict": score_dict,
+        }
+        logger.info("Saving Results")
+        outs = self.save(**results, **files)
+        for file in outs:
+            assert file.exists(), f"File {file} does not exist."
+        return outs
+    
+if "__main__" == __name__:    
+    
+    config = """
+    data:
+        name: classification
+        generate:
+            n_classes: 2
+            n_features: 5
+            n_informative: 4
+            n_redundant: 1
+            n_samples: 10000
+        sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+            train_noise: 0
+            train_size: 8000
+        files:
+            data_filetype : pickle
+            data_path : data
+    
+    model:
+        name: sklearn.ensemble.RandomForestClassifier
+        params:     
+            n_estimators: 100
+            max_depth: 5
+        files:
+            model_path : models
+            model_filetype : pickle
+    plots:
+        balance: balance
+        classification: classification
+        confusion: confusion
+        correlation: correlation
+        radviz: radviz
+        rank: rank
+    scorers:
+        accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+        f1-macro:
+            average: macro
+            name: sklearn.metrics.f1_score
+        f1-micro:
+            average: micro
+            name: sklearn.metrics.f1_score
+        f1-weighted:
+            average: weighted
+            name: sklearn.metrics.f1_score
+        precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+        recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+    files:
+        ground_truth_file: ground_truth.json
+        predictions_file: predictions.json
+        time_dict_file: time_dict.json
+        params_file: params.json
+        score_dict_file: scores.json
+        path: reports
+        
+    """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    yaml.add_constructor("!Experiment:", Experiment)
+    experiment = yaml.load("!Experiment:\n" + str(config), Loader=yaml.Loader)
+    experiment.run()
+       
+    
