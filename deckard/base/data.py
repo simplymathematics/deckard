@@ -221,20 +221,36 @@ class Data(
         """
         new_data = deepcopy(data)
         if transform is None:
-            transform = self.transform
-        X_train = transform.pop("X_train", False)
-        X_test = transform.pop("X_test", False)
-        y_train = transform.pop("y_train", False)
-        y_test = transform.pop("y_test", False)
+            transform = dict(self.transform)
+        X_train_bool = transform.pop("X_train", False)
+        X_test_bool = transform.pop("X_test", False)
+        y_train_bool = transform.pop("y_train", False)
+        y_test_bool = transform.pop("y_test", False)
         transformer = factory(name, **transform)
-        if X_train is True:
-            new_data.X_train = transformer.fit_transform(data.X_train, data.y_train)
-        if X_test is True:
-            new_data.X_test  = transformer.fit(data.X_train, data.y_train).transform(data.X_test, data.y_test)
-        if y_train is True:
-            new_data.y_train = transformer.fit(data.X_train, data.y_train).transform(data.y_train)
-        if y_test is True:
-            new_data.y_test = transformer.fit(data.X_train, data.y_train).transform(data.y_test)
+        X_train = deepcopy(data.X_train)
+        y_train = deepcopy(data.y_train)
+        X_test = deepcopy(data.X_test)
+        y_test = deepcopy(data.y_test)
+        assert isinstance(X_train, np.ndarray)
+        assert isinstance(X_test, np.ndarray)
+        assert isinstance(y_train, np.ndarray)
+        assert isinstance(y_test, np.ndarray)
+        if X_train_bool or X_test_bool is True:
+            transformer.fit(X_train, y_train)
+            if X_train_bool is True:
+                new_X_train = transformer.transform(X_train, copy = True)
+                new_data.X_train = new_X_train 
+            if X_test_bool is True:
+                new_X_test  = transformer.transform(X_test, copy = True)
+                new_data.X_test  = new_X_test
+        if y_train_bool or y_test_bool is True:
+            transformer.fit(y_train)
+            if y_train_bool is True:
+                new_y_train = transformer.transform(y_train, copy = True)
+                new_data.y_train = new_y_train
+            if y_test_bool is True:
+                new_y_test = transformer.transform(y_test, copy = True)
+                new_data.y_test  = new_y_test
         del data
         return new_data
             
@@ -247,8 +263,9 @@ class Data(
         """
         pipeline = self.sklearn_pipeline
         for layer in pipeline:
+            new_data = deepcopy(data)
             transform = self.transform[layer]
-            data = self.sklearn_transform(data, transform, name = layer)
+            data = self.sklearn_transform(new_data, transform, name = layer)
         return data
         
     def sampler(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
