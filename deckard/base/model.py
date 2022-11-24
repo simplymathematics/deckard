@@ -39,34 +39,34 @@ supported_estimators = (
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-classification_visualizers = {
-    "confusion": confusion_matrix,
-    "classification": classification_report,
-    "roc_auc": roc_auc
-}
+# classification_visualizers = {
+#     "confusion": confusion_matrix,
+#     "classification": classification_report,
+#     "roc_auc": roc_auc
+# }
 
-regression_visualizers = { 
-    "error" : prediction_error,
-    "residuals" : residuals_plot,
-    "alphas" : alphas
-}
+# regression_visualizers = { 
+#     "error" : prediction_error,
+#     "residuals" : residuals_plot,
+#     "alphas" : alphas
+# }
 
-clustering_visualizers = {
-    "silhouette" : silhouette_visualizer,
-    "elbow" : kelbow_visualizer,
-    "intercluster" : intercluster_distance   
-}
-# elbow requires k
-model_selection_visualizers = {
-    "validation" : validation_curve,
-    "learning" : learning_curve,
-    "cross_validation" : cross_validation,
-    "feature_importances" : feature_importances,
-    "recursive" : rfecv,
-    "dropping_curve" : dropping_curve
-}
-# cross_, recursive, validation needs cv
-# dropping, feats do not need score
+# clustering_visualizers = {
+#     "silhouette" : silhouette_visualizer,
+#     "elbow" : kelbow_visualizer,
+#     "intercluster" : intercluster_distance   
+# }
+# # elbow requires k
+# model_selection_visualizers = {
+#     "validation" : validation_curve,
+#     "learning" : learning_curve,
+#     "cross_validation" : cross_validation,
+#     "feature_importances" : feature_importances,
+#     "recursive" : rfecv,
+#     "dropping_curve" : dropping_curve
+# }
+# # cross_, recursive, validation needs cv
+# # dropping, feats do not need score
 
 filetypes = {
     "pkl" : "sklearn",
@@ -83,8 +83,8 @@ filetypes = {
 class Model(
     collections.namedtuple(
         typename="model",
-        field_names="init, files, fit, predict, transform, sklearn_pipeline, art_pipeline, url, library",
-        defaults=({}, {}, {}, {}, [], [], "", ""),
+        field_names="init, files, fit, predict, sklearn_pipeline, art_pipeline, url, library",
+        defaults=({}, {}, {}, [], [], "", ""),
     ),BaseHashable,
 ):
     def __new__(cls, loader, node):
@@ -285,6 +285,35 @@ if "__main__" == __name__:
             learning_rate: 1.0e-08
             log_interval: 10
 
+    """
+
+    data_document = """
+        sample:
+            shuffle : True
+            random_state : 42
+            train_size : 800
+            stratify : True
+        add_noise:
+            train_noise : 1
+            time_series : True
+        name: classification
+        files:
+            data_path : data
+            data_filetype : pickle
+        generate:
+            n_samples: 1000
+            n_features: 2
+            n_informative: 2
+            n_redundant : 0
+            n_classes: 2
+        sklearn_pipeline:
+            - sklearn.preprocessing.StandardScaler
+        transform:
+            sklearn.preprocessing.StandardScaler:
+                with_mean : true
+                with_std : true
+                X_train : true
+                X_test : true
     """
     yaml.add_constructor("!Model:", Model)
     model_document_tag = """!Model:""" + model_document

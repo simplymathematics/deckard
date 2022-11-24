@@ -71,27 +71,30 @@ class Experiment(
         :returns: tuple(dict, object), (data, model).
         """
         params = deepcopy(self._asdict())
-        if params.data is not {}:
+        if params['data'] is not {}:
             yaml.add_constructor("!Data", Data)
-            data_document = """!Data\n""" + str(dict(params.data))
+            data_document = """!Data\n""" + str(dict(params['data']))
             data = yaml.load(data_document, Loader=yaml.Loader)
-            params.pop("data")
+            
         else:
             raise ValueError("Data not specified in config file")
-        if params.model is not {}:
+        if params['model'] is not {}:
             yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(params.model))
+            model_document = """!Model\n""" + str(dict(params['model']))
             model = yaml.load(model_document, Loader=yaml.Loader)
-            params.pop("model")
+            
         else:
             model = {}
-        if params.plots is not {}:
+        if params['plots'] is not {}:
             yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
-            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params.plots))
+            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
             vis = yaml.load(plots_document, Loader=yaml.Loader)
-            params.pop("plots")
         else:
             vis = None
+        params.pop("data", None)
+        params.pop("model", None)
+        params.pop("plots", None)
+        files = params.pop("files", None)
         return (data, model, files, vis)
         
         
@@ -133,12 +136,14 @@ class Experiment(
         """
         params = deepcopy(self._asdict())
         files = params.pop("files", None)
+        new_files = {}
         if files is not None:
             path = files.pop("path", ".")
             path = Path(path).resolve()
             for x in files:
-                x = Path(path, my_hash(self), files[x])
-                files[x] = str(x)
+                x = Path(path, my_hash(self._asdict()), files[x])
+                new_files[x] = str(x)
+        files = new_files
         data_files = params["data"].pop("files", {})
         data_path = data_files.pop("data_path", "")
         data_filetype = data_files.pop("data_filetype", "")
@@ -273,9 +278,6 @@ class Experiment(
         if "files" in self.model:
             files.append(self.save_model(model))
         if params_file is not None:
-            assert (
-                params is not None
-            ), "params must be specified if params_file is specified"
             params_file = Path(path, params_file)
             files.append(self.save_params(params_file))
         if ground_truth is not None:
@@ -309,7 +311,7 @@ class Experiment(
         """
         logger.info("Parsing Config File")
         data, model, files, vis  = self.load()
-        files = params["files"]
+        params = deepcopy(self._asdict())
         path = Path(params['files']['path'], str(my_hash(self._asdict())))
         if path.exists():
             logger.warning(f"Path {path} already exists. Will overwrite any files specified in the config.")
@@ -348,33 +350,44 @@ class Experiment(
 if "__main__" == __name__:    
     
     config = """
-    data:
-        name: classification
-        generate:
-            n_classes: 2
-            n_features: 5
-            n_informative: 4
-            n_redundant: 1
-            n_samples: 10000
-        sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-            train_noise: 0
-            train_size: 8000
-        files:
-            data_filetype : pickle
-            data_path : data
-    
     model:
-        name: sklearn.ensemble.RandomForestClassifier
-        params:     
-            n_estimators: 100
-            max_depth: 5
+        init:
+            loss: "hinge"
+            name: sklearn.linear_model.SGDClassifier
         files:
-            model_path : models
+            model_path : model
             model_filetype : pickle
+        fit:
+            epochs: 1000
+            learning_rate: 1.0e-08
+            log_interval: 10
+    data:
+        sample:
+            shuffle : True
+            random_state : 42
+            train_size : 800
+            stratify : True
+        add_noise:
+            train_noise : 1
+            time_series : True
+        name: classification
+        files:
+            data_path : data
+            data_filetype : pickle
+        generate:
+            n_samples: 1000
+            n_features: 2
+            n_informative: 2
+            n_redundant : 0
+            n_classes: 2
+        sklearn_pipeline:
+            - sklearn.preprocessing.StandardScaler
+        transform:
+            sklearn.preprocessing.StandardScaler:
+                with_mean : true
+                with_std : true
+                X_train : true
+                X_test : true
     plots:
         balance: balance
         classification: classification

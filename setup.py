@@ -21,6 +21,7 @@ install_requires = [
     "PyYAML",
     "pytest",
     "tensorflow",
+    "validators",
     "yellowbrick",
 ]
 

@@ -17,7 +17,14 @@ from yellowbrick.classifier import (classification_report, confusion_matrix, roc
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer, wrap
 from sklearn.model_selection import StratifiedKFold
 from argparse import Namespace
-
+import collections
+from hashable import BaseHashable, my_hash
+from copy import deepcopy
+import yaml
+from utils import factory
+from data import Data
+from model import Model
+import logging
 
 
 classification_visualisers = {
@@ -33,8 +40,8 @@ regression_visualisers = {
 }
 
 clustering_visualisers = {
-    "silhouette" : silhouette_visualiser,
-    "elbow" : kelbow_visualiser,
+    "silhouette" : silhouette_visualizer,
+    "elbow" : kelbow_visualizer,
     "intercluster" : intercluster_distance   
 }
 # elbow requires k
@@ -58,25 +65,26 @@ data_visualisers = {
 }
 
 supported_visualisers = [data_visualisers.keys()]
-supported_visualiser.extend(
-    classification_visualisers.keys(),
-    model_selection_visualisers.keys(),
-    clustering_visualisers.keys(),
-    regression_visualisers.keys(),
-    classfication_vliasers.keys(),
-)
+supported_visualisers.extend(classification_visualisers.keys())
+supported_visualisers.extend(model_selection_visualisers.keys())
+supported_visualisers.extend(clustering_visualisers.keys())
+supported_visualisers.extend(regression_visualisers.keys())
+supported_visualisers.extend(classification_visualisers.keys())
 
 supported_visualisers_dict = {
     "data" : data_visualisers,
     "model" : model_selection_visualisers,
-    classification_visualisers, 
-    clustering_visualisers,
-    regression_visualisers,
+    "classification" : classification_visualisers, 
+    "clustering" : clustering_visualisers,
+    "regression" : regression_visualisers,
 }
+
+logger = logging.getLogger(__name__)
+
 class Yellowbrick_Visualiser(
     collections.namedtuple(
         typename="YellowBrick_Visualiser",
-        field_names="data, model, plots, files, scorers"
+        field_names="data, model, plots, files, scorers",
         defaults=({}),
     ), BaseHashable,
 ):
@@ -84,16 +92,51 @@ class Yellowbrick_Visualiser(
         """ Generates a new Data object from a YAML node """
         return super().__new__(cls, **loader.construct_mapping(node))
     
-    def visualise_data( self) -> list:
+    def load(self) -> tuple:
+        """
+        Loads data, model from the config file.
+        :param config: str, path to config file.
+        :returns: tuple(dict, object), (data, model).
+        """
+        params = deepcopy(self._asdict())
+        if params['data'] is not {}:
+            yaml.add_constructor("!Data", Data)
+            data_document = """!Data\n""" + str(dict(params['data']))
+            data = yaml.load(data_document, Loader=yaml.Loader)
+            
+        else:
+            raise ValueError("Data not specified in config file")
+        if params['model'] is not {}:
+            yaml.add_constructor("!Model", Model)
+            model_document = """!Model\n""" + str(dict(params['model']))
+            model = yaml.load(model_document, Loader=yaml.Loader)
+            
+        else:
+            model = {}
+        if params['plots'] is not {}:
+            yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
+            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
+            vis = yaml.load(plots_document, Loader=yaml.Loader)
+        else:
+            vis = None
+        params.pop("data", None)
+        params.pop("model", None)
+        params.pop("plots", None)
+        files = params.pop("files", None)
+        return (data, model, files, vis)
+
+
+    def visualise_data( self, data:Namespace) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
-        :param self.data: dict of data to be used for visualisation
+        :param data: dict of data to be used for visualisation
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        plots = self.plots
-        data = self.data.load()
+        plots = dict(self.plots)
+        files = dict(self.files)
+        path = files["path"]
         paths = []
         y_train = data.y_train
         X_train = data.X_train
@@ -166,8 +209,10 @@ class Yellowbrick_Visualiser(
                 plots.pop("parallel")
                 plt.gcf().clear()
         return paths
+    
 
-    def visualise_classification(self) -> list:
+
+    def visualise_classification(self, data:Namespace, model:object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -176,10 +221,10 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        plots = self.plots
-        data = self.data.load()
-        model = self.model.load()
         paths = []
+        plots = dict(self.plots)
+        files = dict(self.files)
+        path = files["path"]
         yb_model = classifier(model)        
         for name in classification_visualisers.keys():
             if name in plots.keys():
@@ -192,12 +237,20 @@ class Yellowbrick_Visualiser(
                         classes=[int(y) for y in np.unique(data.y_train)],
                     )
                 elif len(set(data.y_train)) == 2:
-                    viz = visualiser(
+                    try:
+                        viz = visualiser(
                         yb_model,
                         X_train=data.X_train,
                         y_train=data.y_train,
                         binary = True
                     )
+                    except TypeError as e:
+                        logger.warning(f"Failed due to error {e}. Trying without binary")
+                        viz = visualiser(
+                            yb_model,
+                            X_train = data.X_train,
+                            y_train = data.y_train,
+                        )
                 else:
                     viz = visualiser(
                         yb_model,
@@ -211,7 +264,7 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise_regression(self) -> list:
+    def visualise_regression(self, data:Namespace, model:object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -220,10 +273,10 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        plots = self.plots
-        data = self.data.load()
-        model = self.model.load()
         paths = []
+        plots = dict(self.plots)
+        files = dict(self.files)
+        path = files["path"]
         yb_model = regressor(model)        
         for name in regression_visualisers.keys():
             if name in plots.keys():
@@ -253,7 +306,7 @@ class Yellowbrick_Visualiser(
         return paths
 
     
-    def visualise_clustering(self) -> list:
+    def visualise_clustering(self, data:Namespace, model:object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -262,9 +315,9 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        plots = self.plots
-        data = self.data.load()
-        model = self.model.load()
+        plots = dict(self.plots)
+        files =files = dict(self.files)
+        path = files["path"]
         paths = []
         yb_model = clusterer(model)
         for name in clustering_visualisers.keys():
@@ -284,42 +337,41 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
     
-    def visualise_model_selection(self) -> list:
+    def visualise_model_selection(self, data:Namespace, model:object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
         :param self.data: dict of data to be used for visualisation
         :param self.model: model object
-        :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        plots = self.plots
-        data = self.data.load()
-        model = self.model.load()
+        plots = dict(self.plots)
+        files = dict(self.files)
         paths = []
         scorer = list(self.scorers.keys())[0] if self.scorers is not {} else None
-        assert params is {}, f"Unknown parameters for model selection visualiser: {params}"
-        cv = plots.pop("cv", {})
+        cv = plots.pop("cv", None)
+        print(cv)
+        input("Press Enter to continue...")
         if scorer is None:
-            if all(isinstance(item, int), for item in list(set(data.y_train))):
+            if all([isinstance(item, int) for item in list(set(data.y_train))]):
                 scorer = 'f1_weighted'
             else:
                 scorer = 'mse'
-        if cv is {}:
+        if cv is None:
             cv = {
-                "name" : "sklearn.model_selection.stratifiedKFold"
+                "name" : "sklearn.model_selection.StratifiedKFold",
                 "n_splits" : 5
             }    
         assert "name" in cv, f"Cross validation method must be specified. Your config is {cv}."
         cv = factory(cv.pop("name"), )
         for name in model_selection_visualisers.keys():
-            if name plots.keys():
+            if name in plots.keys():
                 visualiser = model_selection_visualiser[key]
                 params = plots[name] if isinstance(plots[name], dict) else {}
                 if "cross" or "recursive" or "validation" in name:
                     if "validation" in name:
                         assert "param_name" in params, "Validation curve visualiser requires param_name parameter."
-                        assert "params_range" in params "Validation curve visualiser requires params_range parameter."
+                        assert "params_range" in params, "Validation curve visualiser requires params_range parameter."
                     viz = visualiser(
                         yb_model,
                         X = data.X_train,
@@ -350,59 +402,59 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
         
-        def visualise(self)->list:
-            """
-            Visualise classification results according to the configuration file.
-            :param self.plots: dict of plots to be generated
-            :param self.data: dict of data to be used for visualisation
-            :param self.model: model object
-            :param self.files.path: path to save the plots
-            :return: list of paths to the generated plots
-            """
-            plots = self.plots
-            data = self.data.load()
-            model = self.model.load()
-            paths = []
-            data_plots = self.visualise_data()
-            model_plots = self.visualise_model_selection()
-            cla_plots = self.visualise_classification()
-            reg_plots = self.visualise_regression()
-            clu_plots = self.visualise_clustering()
-            paths.extend(data_plots)
-            paths.extend(model_plots)
-            paths.extend(reg_plots)
-            paths.extend(cla_plots)
-            paths.extend(clu_plots)
-            for path in paths:
-                assert Path(path).is_file(), f"File {path} does not exist."
-            return {"data": data_plots, "model": model_plots, "classification": cla_plots, "regression": reg_plots, "clustering": clu_plots}
-            
-        def render(self, plot_dict, template = "template.html", templating_string ="{{data_plots}}", output_html="index.html") -> Path:
-            """
-            Renders a list of paths to plots into a HTML file.
-            :param plot_dict: dict of paths to plots
-            :param template: path to template file
-            :param templating_string: string to be replaced by the plots
-            :return: path to the generated HTML file
-            """
-            new_plot_dict = {}
-            template_file = Path(template)
-            with template_file.open("r") as f:
-                template = f.read()
-            for key in plot_dict():
-                new_key = f"<h2> {key.capitalize()} Plots </h2>"
-                assert isinstance(plot_dict[key], list), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
-                for plot_file in plot_dict[key]:
-                    assert Path(plot_file).exists(), f"Unable to render. {plot_file} does not exist."
-                    new_value = f"<img src {plot_file} alt {key} />"
-                    new_plot_dict[new_key] = new_value
-            template = template.replace(templating_string, str(new_plot_dict["data"]))
-            assert "path" in self.files, f"Path to save the HTML file must be specified. Your config is {self.files}."
-            output_file = Path(self.files["path"], my_hash(self), output_html)
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            with output_file.open("w") as f:
-                f.write(template)
-            return template_file.resolve()
+    def visualise(self)->list:
+        """
+        Visualise classification results according to the configuration file.
+        :param self.plots: dict of plots to be generated
+        :param self.data: dict of data to be used for visualisation
+        :param self.model: model object
+        :param self.files.path: path to save the plots
+        :return: list of paths to the generated plots
+        """
+        data, model, files, vis = self.load()
+        data = data.load()
+        model = model.load()
+        paths = []
+        data_plots = self.visualise_data(data)
+        model_plots = self.visualise_model_selection(data, model)
+        cla_plots = self.visualise_classification(data, model)
+        reg_plots = self.visualise_regression(data, model)
+        clu_plots = self.visualise_clustering(data, model)
+        paths.extend(data_plots)
+        paths.extend(model_plots)
+        paths.extend(reg_plots)
+        paths.extend(cla_plots)
+        paths.extend(clu_plots)
+        for path in paths:
+            assert Path(path).is_file() or Path(str(path) + ".png").is_file(), f"File {path} does not exist."
+        return {"data": data_plots, "model": model_plots, "classification": cla_plots, "regression": reg_plots, "clustering": clu_plots}
+        
+    def render(self, plot_dict, template = "template.html", templating_string ="{{data_plots}}", output_html="index.html") -> Path:
+        """
+        Renders a list of paths to plots into a HTML file.
+        :param plot_dict: dict of paths to plots
+        :param template: path to template file
+        :param templating_string: string to be replaced by the plots
+        :return: path to the generated HTML file
+        """
+        new_plot_dict = {}
+        template_file = Path(template)
+        with template_file.open("r") as f:
+            template = f.read()
+        for key in plot_dict():
+            new_key = f"<h2> {key.capitalize()} Plots </h2>"
+            assert isinstance(plot_dict[key], list), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
+            for plot_file in plot_dict[key]:
+                assert Path(plot_file).exists(), f"Unable to render. {plot_file} does not exist."
+                new_value = f"<img src {plot_file} alt {key} />"
+                new_plot_dict[new_key] = new_value
+        template = template.replace(templating_string, str(new_plot_dict["data"]))
+        assert "path" in self.files, f"Path to save the HTML file must be specified. Your config is {self.files}."
+        output_file = Path(self.files["path"], my_hash(self), output_html)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with output_file.open("w") as f:
+            f.write(template)
+        return template_file.resolve()
         
 
             
