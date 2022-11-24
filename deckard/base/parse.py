@@ -121,8 +121,6 @@ def generate_object_from_tuple(obj_tuple: list, *args) -> list:
     global params
     params = obj_tuple[1]
     exec("from {} import {}".format(library_name, class_name), globals())
-    print(args)
-    input("Inside generate_object_from_tuple")
     if len(args) == 1:
         global positional_arg
         positional_arg = args[0]

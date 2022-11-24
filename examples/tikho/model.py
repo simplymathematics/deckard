@@ -225,7 +225,6 @@ class Model(
         else:
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
-        print("Saved model to {}".format(filename))
         return filename
 
 

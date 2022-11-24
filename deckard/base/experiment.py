@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class Experiment(
     collections.namedtuple(
         typename="Experiment",
-        field_names="data, model, scorers, plots, files",
+        field_names="data, model, attack, scorers, plots, files",
         defaults=({}, {}, {}, {}, {}),
         rename=True,
     ),
@@ -40,16 +40,23 @@ class Experiment(
         :param model: object, model to fit.
         :returns: tuple, (model, data, fit_time).
         """
+        fit_params = deepcopy(self.model['fit']) if "fit" in self.model else {}
+        if self.attack is not {}:
+            art_bool = True
+        else:
+            art_bool = False
         if isinstance(data, Data):
             loaded_data = data.load()
         if isinstance(model, Model):
-            loaded_model = model.load()
+            loaded_model = model.load(art_bool)
         start = process_time()
         try:
-            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train)
-        except:
-
-            result = loaded_model.fit()
+            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+        except np.AxisError as e:
+            logger.warning(f"AxisError: {e}. Trying to binarize labels.")
+            loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
+            loaded_data.y_test = LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
+            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         result = process_time() - start
         return loaded_model, loaded_data, result / len(loaded_data.X_train)
 
@@ -73,7 +80,7 @@ class Experiment(
         """
         Loads data, model from the config file.
         :param config: str, path to config file.
-        :returns: tuple(dict, object), (data, model).
+        :returns: tuple(dict, dict, dict, dict, YellowbrickVisualizer), (data, model, attack, files, vis).
         """
         params = deepcopy(self._asdict())
         if params["data"] is not {}:
@@ -97,15 +104,19 @@ class Experiment(
             vis = yaml.load(plots_document, Loader=yaml.Loader)
         else:
             vis = None
-        # print("Inside load")
-        # print("Self hash: ", my_hash(params))
-        # print("Vis hash: ", my_hash(vis._asdict()))
-        # input("Press enter to continue")
+        if params['attack'] is not {}:
+            from attack import Attack
+            yaml.add_constructor("!Attack", Attack)
+            attack_document = """!Attack\n""" + str(dict(params["attack"]))
+            attack = yaml.load(attack_document, Loader=yaml.Loader)
+        else:
+            attack = {}
         params.pop("data", None)
         params.pop("model", None)
         params.pop("plots", None)
+        params.pop("attack", None)
         files = params.pop("files", None)
-        return (data, model, files, vis)
+        return (data, model, attack, files, vis)
 
     def score(self, ground_truth: np.ndarray, predictions: np.ndarray) -> dict:
         """Scores predictions according to self.scorers.
@@ -216,7 +227,14 @@ class Experiment(
         """
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
-        pd.Series(predictions).to_json(filename)
+        try:
+            pd.Series(predictions).to_json(filename)
+        except ValueError as e:
+            if "1-d" in str(e):
+                predictions = np.argmax(predictions, axis=1)
+                pd.Series(predictions).to_json(filename)
+            else:
+                raise
         return Path(filename).resolve()
 
     def save_ground_truth(
@@ -231,7 +249,14 @@ class Experiment(
         """
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
-        pd.Series(ground_truth).to_json(filename)
+        try:
+            pd.Series(ground_truth).to_json(filename)
+        except ValueError as e:
+            if "1-d" in str(e):
+                ground_truth = np.argmax(ground_truth, axis=1)
+                pd.Series(ground_truth).to_json(filename)
+            else:
+                raise
         return Path(filename).resolve()
 
     def save_time_dict(self, time_dict: dict, filename: str = "time_dict.json") -> Path:
@@ -334,7 +359,7 @@ class Experiment(
         logger.info("Parsing Config File")
         
     
-        data, model, files, vis = self.load()
+        data, model, attack, files, vis = self.load()
         params = deepcopy(self._asdict())
         path = Path(params["files"]["path"], str(my_hash(self._asdict())))
         if path.exists():
@@ -369,15 +394,14 @@ class Experiment(
         outs = self.save(**results, **files)
         if vis is not None:
             from visualise import Yellowbrick_Visualiser
-            pass
-            plot_dict = vis.visualise(path=path)
-            templating_string = params["plots"].pop(
-                "templating_string",
-                "{{plot_divs}}",
-            )
-            output_html = params["plots"].pop("output_html", "report.html")
-            template = params["plots"].pop("template", "template.html")
-            output_html = Path(path, output_html)
+            vis.visualise(path=path)
+            # templating_string = params["plots"].pop(
+            #     "templating_string",
+            #     r"{plot_divs}",
+            # )
+            # output_html = params["plots"].pop("output_html", "report.html")
+            # template = params["plots"].pop("template", "template.html")
+            # output_html = Path(path, output_html)
             # outs.append(
             #     vis.render(
             #         plot_dict=plot_dict,
@@ -388,6 +412,17 @@ class Experiment(
             # )
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
+        
+        if attack is not {}:
+            loaded_attack, generate, files = attack.load(fitted_model)
+            adv_pred, adv_samples, time_dict = attack.run_attack(loaded_data, fitted_model, loaded_attack, **generate)
+            files = deepcopy(attack._asdict()["files"])
+            files = {k: Path(path, v) for k, v in files.items()}
+            sample_file = attack.save_attack_samples(samples = adv_samples, filename = files["adv_samples"])
+            pred_file = attack.save_attack_predictions(adv_pred, files["adv_predictions"])
+            time_file = attack.save_attack_time(time_dict, files["adv_time_dict"])
+            param_file = attack.save_attack_params(files["attack_params"])
+            outs.extend([sample_file, pred_file, time_file, param_file])
         return outs
 
 
@@ -401,10 +436,10 @@ if "__main__" == __name__:
         files:
             model_path : model
             model_filetype : pickle
-        fit:
-            epochs: 1000
-            learning_rate: 1.0e-08
-            log_interval: 10
+        # fit:
+        #     epochs: 1000
+        #     learning_rate: 1.0e-08
+        #     log_interval: 10
     data:
         sample:
             shuffle : True
@@ -423,7 +458,8 @@ if "__main__" == __name__:
             n_features: 2
             n_informative: 2
             n_redundant : 0
-            n_classes: 2
+            n_classes: 3
+            n_clusters_per_class: 1
         sklearn_pipeline:
             - sklearn.preprocessing.StandardScaler
         transform:
@@ -432,6 +468,17 @@ if "__main__" == __name__:
                 with_std : true
                 X_train : true
                 X_test : true
+    attack:
+        init:
+            name: art.attacks.evasion.HopSkipJump
+            max_iter : 10
+            init_eval : 10
+            init_size : 10
+        files:
+            adv_samples: adv_samples.json
+            adv_predictions : adv_predictions.json
+            adv_time_dict : adv_time_dict.json
+            attack_params : attack_params.json
     plots:
         balance: balance
         classification: classification

@@ -27,9 +27,9 @@ from yellowbrick.model_selection import (
     dropping_curve,
 )
 from yellowbrick.classifier import (
-    classification_report,
     confusion_matrix,
-    roc_auc,
+    classification_report,
+    roc_auc
 )
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
@@ -102,8 +102,8 @@ logger = logging.getLogger(__name__)
 class Yellowbrick_Visualiser(
     collections.namedtuple(
         typename="YellowBrick_Visualiser",
-        field_names="data, model, plots, files, scorers",
-        defaults=(),
+        field_names="data, model, plots, files, scorers, attack,",
+        defaults=({},),
     ),
     BaseHashable,
 ):
@@ -200,6 +200,7 @@ class Yellowbrick_Visualiser(
         data: Namespace,
         model: object,
         path: str,
+        samples : np.ndarray = None,
     ) -> list:
         """
         Visualise classification results according to the configuration file.
@@ -212,22 +213,29 @@ class Yellowbrick_Visualiser(
         paths = []
         plots = deepcopy(self.plots)
         yb_model = classifier(model)
+        if samples is not None:
+            data.y_test = samples
         for name in classification_visualisers:
             if name in plots:
                 visualiser = classification_visualisers[name]
+                if len(data.y_train.shape) > 1:
+                    data.y_train = np.argmax(data.y_train, axis=1)
+                if len(data.y_test.shape) > 1:
+                    data.y_test = np.argmax(data.y_test, axis=1)
                 if len(set(data.y_train)) > 2:
                     viz = visualiser(
                         yb_model,
                         X_train=data.X_train,
                         y_train=data.y_train,
                         classes=[int(y) for y in np.unique(data.y_train)],
-                    )
+                    );
                 elif len(set(data.y_train)) == 2:
                     try:
                         viz = visualiser(
                             yb_model,
                             X_train=data.X_train,
                             y_train=data.y_train,
+                            classes = [int(y) for y in np.unique(data.y_train)],
                             binary=True,
                         )
                     except TypeError as e:
@@ -238,6 +246,7 @@ class Yellowbrick_Visualiser(
                             yb_model,
                             X_train=data.X_train,
                             y_train=data.y_train,
+                            classes = [int(y) for y in np.unique(data.y_train)],
                         )
                 else:
                     viz = visualiser(
@@ -246,7 +255,9 @@ class Yellowbrick_Visualiser(
                         y_train=data.y_train,
                         classes=[0],
                     )
-                viz.show(outpath=Path(path, plots[name]))
+                    viz.fit(data.X_train, data.y_train)
+                    viz.score(data.X_test, data.y_test)
+                _ = viz.show(outpath=Path(path, plots[name]))
                 assert Path(
                     path,
                     str(plots[name]) + str(plots.pop("filetype", ".png")),
@@ -446,16 +457,21 @@ class Yellowbrick_Visualiser(
         """
         yaml.add_constructor("!Experiment:", Experiment)
         experiment = yaml.load("!Experiment:\n" + str(self._asdict()), Loader=yaml.Loader)
-        data, model, files, vis = experiment.load()
+        data, model, attack, files, vis = experiment.load()
         data = data.load()
         model = model.load()
         paths = []
         path.mkdir(parents=True, exist_ok=True)
         data_plots = self.visualise_data(data, path)
-        model_plots = self.visualise_model_selection(data, model, path)
-        cla_plots = self.visualise_classification(data, model, path)
-        reg_plots = self.visualise_regression(data, model, path)
-        clu_plots = self.visualise_clustering(data, model, path)
+        if "art" in str(type(model)):
+            logger.warning("Model is an ART classifier, visualising the underlying model.")
+            tmp_model = model.model
+        else:
+            tmp_model = model
+        model_plots = self.visualise_model_selection(data, tmp_model, path)
+        cla_plots = self.visualise_classification(data, tmp_model, path)
+        reg_plots = self.visualise_regression(data, tmp_model, path)
+        clu_plots = self.visualise_clustering(data, tmp_model, path)
         paths.extend(data_plots)
         paths.extend(model_plots)
         paths.extend(reg_plots)

@@ -1,20 +1,25 @@
 import collections
 import logging
-import os
 from pathlib import Path
 from time import process_time
 from typing import Union
+import json
+import numpy as np 
+import yaml
+from copy import deepcopy 
+
 
 from data import Data
 from experiment import Experiment
 from hashable import BaseHashable, my_hash
 from model import Model
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from utils import factory
 from parse import generate_object_from_tuple
-import numpy as np 
-import yaml
-from copy import deepcopy 
+
+
+
+
 
 ART_NUMPY_DTYPE = "float32"
 
@@ -33,80 +38,7 @@ class Attack(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    # def __init__(
-    #     self,
-    #     data: Data,
-    #     model: Model,
-    #     attack: Union[str, Path, dict],
-    #     is_fitted: bool = False,
-    #     fit_params: dict = None,
-    #     predict_params: dict = None,
-    # ):
-    #     """
-    #     Creates an experiment object
-    #     :param data: Data object
-    #     :param model: Model object
-    #     :param params: Dictionary of other parameters you want to add to this object. Obviously everything in self.__dict__.keys() should be treated as a reserved keyword, however.
-    #     :param verbose: Verbosity level
-    #     :param scorers: Dictionary of scorers
-    #     :param name: Name of experiment
-    #     """
-    #     assert isinstance(
-    #         attack,
-    #         (dict, str, Path),
-    #     ), "Attack must be a dictionary, str, or path. It is type {}".format(
-    #         type(attack),
-    #     )
-    #     assert "name" and "params" in attack
-    #     super().__init__(
-    #         data=data,
-    #         model=model,
-    #         is_fitted=is_fitted,
-    #         fit_params=fit_params,
-    #         predict_params=predict_params,
-    #     )
-    #     config_tuple = generate_tuple_from_yml(attack)
-    #     if "Attack" not in self.params:
-    #         self.params["Attack"] = {}
-    #     id_ = (
-    #         my_hash(config_tuple)
-    #         if isinstance(attack, dict)
-    #         else Path(attack).name.split(".")[0]
-    #     )
-    #     try:
-    #         attack = generate_object_from_tuple(config_tuple)
-    #     except TypeError as e:
-    #         if "classifier" or "estimator" in str(e):
-    #             attack = generate_object_from_tuple(config_tuple, self.model.model)
-    #     id_ = my_hash(config_tuple)
-    #     self.params["Attack"][id_] = {
-    #         "name": config_tuple[0],
-    #         "params": config_tuple[1],
-    #     }
-    #     self.attack = attack
 
-    # def run(
-    #     self,
-    #     predictions_file: Union[str, Path] = "predictions.json",
-    #     time_dict_file: Union[str, Path] = "time_dict.json",
-    #     attack_samples_file: Union[str, Path] = "attack_samples.json",
-    #     generate_params: dict = {},
-    # ) -> list:
-    #     """
-    #     Runs attack.
-    #     """
-    #     data, model, attack, files, vis = self.load()
-    #     path = Path(self.files['path'], my_hash(self._asdict()))
-    #     adv_pred, adv_samples, time_dict = self.run_attack(data, model, attack, **generate_params)
-    #     predictions = Path(path, predictions_file)
-    #     samples = Path(path, attack_samples_file)
-    #     times = Path(path, time_dict_file)
-    #     pred_file = self.save_attack_predictions(predictions = adv_pred, filename = predictions)
-    #     sampl_file = self.save_attack_samples(samples = adv_samples, filename = samples)
-    #     time_file = self.save_time_dict(time_dict = time_dict, filename = times)
-    #     files.extend([pred_file, sampl_file, time_file])
-    #     
-    #     return files
 
     def load(self, model) -> tuple:
         """
@@ -138,7 +70,6 @@ class Attack(
         Runs the attack on the model
         """
         time_dict = {}
-        assert hasattr(self, "attack"), "Attack not set"
         start = process_time()
         if targeted is False:
             adv_samples = attack.generate(data.X_test, **kwargs)
@@ -151,12 +82,33 @@ class Attack(
         start = process_time()
         adv_pred = model.model.predict(adv_samples)
         end = process_time()
-        adv = adv
         adv_samples = adv_samples
         time_dict.update({"adv_pred_time": end - start})
         return adv_pred, adv_samples, time_dict
 
-
+    def save_attack_time(
+        self, time_dict: dict, filename: Union[str, Path] = "time_dict.json"
+    )-> Path:
+        """
+        Saves the time dictionary to a json file.
+        """
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        Series(time_dict).to_json(filename)
+        assert Path(filename).exists(), f"File {filename} not saved."
+        return filename
+    
+    def save_attack_params(self, filename:Union[str, Path] = "attack_params.json")-> Path:
+        """
+        Saves the attack parameters to a json file.
+        """
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        with open(filename, "w") as f:
+            json.dump(self._asdict(), f)
+        assert Path(filename).exists(), f"File {filename} not saved."
+        return filename
+                
     def save_attack_samples(
         self,
         samples: np.ndarray, 
@@ -167,9 +119,11 @@ class Attack(
         :param filename: str, name of file to save adversarial examples to.
         :param path: str, path to folder to save adversarial examples. If none specified, examples are saved in current working directory. Must exist.
         """
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
         adv_results = DataFrame(samples.reshape(samples.shape[0], -1))
         adv_results.to_json(filename)
-        assert os.path.exists(filename), "Adversarial example file not saved"
+        assert Path(filename).exists(), "Adversarial example file not saved"
         return filename
 
     def save_attack_predictions(
@@ -182,9 +136,11 @@ class Attack(
         :param filename: str, name of file to save adversarial predictions to.
         :param path: str, path to folder to save adversarial predictions. If none specified, predictions are saved in current working directory. Must exist.
         """
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
         adv_results = DataFrame(predictions)
         adv_results.to_json(filename)
-        assert os.path.exists(filename), "Adversarial example file not saved"
+        assert Path(filename).exists(), "Adversarial example file not saved"
         return filename
 
 if "__main__" == __name__:
@@ -192,8 +148,8 @@ if "__main__" == __name__:
     config = """
     init:
         name: art.attacks.evasion.HopSkipJump
-        max_iter : 1000
-        init_eval : 1000
+        max_iter : 10
+        init_eval : 10
         init_size : 10
     files:
         adv_samples: adv_samples.json
@@ -202,16 +158,27 @@ if "__main__" == __name__:
         attack_params : attack_params.json
 
     """
-    from visualise import Yellowbrick_Visualiser
+    from tempfile import mkdtemp
+    from art.estimators.classification.scikitlearn import ScikitlearnClassifier
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Attack:", Attack)
     attack = yaml.load("!Attack:\n" + str(config), Loader=yaml.Loader)
-    with open("/workspaces/deckard/deckard/base/model/2db00e44d0b930b24d549ef1307f177a.pickle", "rb") as f:
+    with open("model/2db00e44d0b930b24d549ef1307f177a.pickle", "rb") as f:
         model = pickle.load(f)
-    with open("/workspaces/deckard/deckard/base/data/fdf009456bdd8bc7a3db8c2785157ef3 copy.pickle", "rb") as f:
+    with open("data/fdf009456bdd8bc7a3db8c2785157ef3.pickle", "rb") as f:
         data = pickle.load(f)
-    from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+    path = mkdtemp(suffix=None, prefix=None, dir=None)
     model = ScikitlearnClassifier(model)
     loaded_attack, generate, files = attack.load(model)
     adv_pred, adv_samples, time_dict = attack.run_attack(data, model, loaded_attack, **generate)
+    files = deepcopy(attack._asdict()["files"])
+    files = {k: Path(path, v) for k, v in files.items()}
+    sample_file = attack.save_attack_samples(samples = adv_samples, filename = files["adv_samples"])
+    pred_file = attack.save_attack_predictions(adv_pred, files["adv_predictions"])
+    time_file = attack.save_attack_time(time_dict, files["adv_time_dict"])
+    param_file = attack.save_attack_params(files["attack_params"])
+    outs = [sample_file, pred_file, time_file, param_file]
+    for out in outs:
+        assert Path(out).exists(), f"File {out} not saved."
+    

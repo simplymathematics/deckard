@@ -96,43 +96,8 @@ class Model(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
         )
-        print(filename)
-        input("inside model load")
         params = deepcopy(self.init)
-        library = filetypes[self.files["model_filetype"]]
-        if filename.exists():
-            model = filename
-            if library == "sklearn":
-                with open(model, "rb") as f:
-                    model = pickle.load(f)
-            elif library == "torch":
-                from torch import load
-
-                model = load(model)
-            elif library == "tensorflow":
-                from tensorflow import keras
-
-                model = keras.models.load_model(model)
-            elif library == "tensorflow2":
-                from tensorflow import keras
-
-                model = keras.models.load_model(model)
-            elif library == "keras":
-                from tensorflow import keras
-
-                model = keras.models.load_model(model)
-            elif library == "tfv1":
-                import tensorflow.compat.v1 as tfv1
-
-                tfv1.disable_eager_execution()
-                from tensorflow.keras.models import load_model as tf_load_model
-
-                model = tf_load_model(model)
-            else:
-                raise ValueError(
-                    f"library must be one of 'sklearn', 'torch', 'tensorflow', 'tensorflow2', 'keras'. It is {library}",
-                )
-        elif is_url(self.url):
+        if is_url(self.url):
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
