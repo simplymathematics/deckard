@@ -87,9 +87,11 @@ class Experiment(
         else:
             model = {}
         if params["plots"] is not {}:
-            yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
-            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
+            yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
+            plots_document = "!Yellowbrick_Visualiser:\n" + str(self._asdict())
             vis = yaml.load(plots_document, Loader=yaml.Loader)
+            d1 = str(vis._asdict())
+            d2 = str(self._asdict())
         else:
             vis = None
         params.pop("data", None)
@@ -357,7 +359,13 @@ class Experiment(
         logger.info("Saving Results")
         outs = self.save(**results, **files)
         if vis is not None:
-            plot_dict = vis.visualise()  # noqa F841
+            pass
+            plot_dict = vis.visualise(path = path) 
+            templating_string=params['plots'].pop("templating_string", "{{plot_divs}}")
+            output_html=params['plots'].pop("output_html", "report.html")
+            template=params['plots'].pop("template", "template.html")
+            output_html = Path(path, output_html)
+            outs.append(vis.render(plot_dict = plot_dict, templating_string = templating_string, output_html = output_html, template = template))
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs
@@ -443,4 +451,7 @@ if "__main__" == __name__:
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Experiment:", Experiment)
     experiment = yaml.load("!Experiment:\n" + str(config), Loader=yaml.Loader)
+    # experiment.run()
+    visualizer = yaml.add_constructor("!Visualizer:", Yellowbrick_Visualiser)
+    visualizer = yaml.load("!Visualizer:\n" + str(config), Loader=yaml.Loader)
     experiment.run()
