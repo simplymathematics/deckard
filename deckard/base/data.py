@@ -5,7 +5,6 @@ from argparse import Namespace
 from copy import deepcopy
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
@@ -127,7 +126,10 @@ class Data(
         if samples is not {} and "X_test" not in locals():
             X_train, X_test, y_train, y_test = self.sampler(X=big_X, y=big_y)
         X_train, X_test, y_train, y_test = self.add_noise_to_data(
-            X_train, X_test, y_train, y_test,
+            X_train,
+            X_test,
+            y_train,
+            y_test,
         )
         add_noise = params.pop("add_noise", {})
         ns = Namespace(
@@ -164,6 +166,7 @@ class Data(
         :return Tuple of X, y
         """
         name = self.name
+        params = deepcopy(self._asdict())
         # If the data is a csv file
         if str(name).endswith(".csv"):
             assert "target" in params, "target column must be specified"
@@ -214,7 +217,6 @@ class Data(
         test_noise = add_noise.pop("test_noise", 0)
         y_train_noise = add_noise.pop("y_train_noise", 0)
         y_test_noise = add_noise.pop("y_test_noise", 0)
-        gap = add_noise.pop("gap", 0)
         # additive noise
         if train_noise != 0:
             X_train += np.random.normal(0, train_noise, X_train.shape)
@@ -241,7 +243,10 @@ class Data(
         return X_train, X_test, y_train, y_test
 
     def sklearn_transform(
-        self, data: Namespace, transform: dict = None, name: str = "",
+        self,
+        data: Namespace,
+        transform: dict = None,
+        name: str = "",
     ) -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
@@ -299,7 +304,9 @@ class Data(
         return data
 
     def sampler(
-        self, X: np.ndarray, y: np.ndarray,
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Samples the data using train_test_split
@@ -320,6 +327,7 @@ class Data(
             stratify = False
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
+        random_state = samples.pop("random_state", 0)
         ###########################################################
         # Sampling
         ###########################################################

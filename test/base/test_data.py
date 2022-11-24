@@ -75,7 +75,8 @@ class testData(unittest.TestCase):
     def test_save_data(self):
         data = self.data
         data.save(
-            filename=os.path.join(self.path, self.filename), data=self.data.load(),
+            filename=os.path.join(self.path, self.filename),
+            data=self.data.load(),
         )
         self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
 

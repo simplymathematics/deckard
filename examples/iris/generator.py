@@ -133,7 +133,9 @@ class Generator(BaseHashable):
         return full_list
 
     def parse_prototype(
-        self, filename: Union[str, Path], vars_dict: dict = None,
+        self,
+        filename: Union[str, Path],
+        vars_dict: dict = None,
     ) -> dict:
         with open(filename, "r") as f:
             pipeline = yaml.load(f, Loader=yaml.FullLoader)["stages"]
@@ -204,10 +206,12 @@ class Generator(BaseHashable):
         queue["params"] = param_files
         if sort_by is not None:
             pd.DataFrame(queue).sort_values(by=sort_by).to_csv(
-                Path(self.output, path, self.queue_file), index=False,
+                Path(self.output, path, self.queue_file),
+                index=False,
             )
             pd.DataFrame(queue).sort_values(by=sort_by).to_csv(
-                Path(self.output, path, self.main_file), index=False,
+                Path(self.output, path, self.main_file),
+                index=False,
             )
         else:
             pd.DataFrame(queue).to_csv(Path(self.output, self.queue_file), index=False)

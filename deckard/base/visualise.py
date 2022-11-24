@@ -294,12 +294,14 @@ class Yellowbrick_Visualiser(
                     )
                 viz.show(outpath=Path(path, plots[name]))
                 assert Path(
-                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                    path,
+                    str(plots[name]) + str(plots.pop("filetype", ".png")),
                 ).is_file(), f"File {name} does not exist."
                 paths.append(
                     str(
                         Path(
-                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                            path,
+                            str(plots[name]) + str(plots.pop("filetype", ".png")),
                         ),
                     ),
                 )
@@ -342,12 +344,14 @@ class Yellowbrick_Visualiser(
                     )
                 viz.show(outpath=Path(path, plots[name]))
                 assert Path(
-                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                    path,
+                    str(plots[name]) + str(plots.pop("filetype", ".png")),
                 ).is_file(), f"File {name} does not exist."
                 paths.append(
                     str(
                         Path(
-                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                            path,
+                            str(plots[name]) + str(plots.pop("filetype", ".png")),
                         ),
                     ),
                 )
@@ -379,12 +383,14 @@ class Yellowbrick_Visualiser(
                 viz = visualiser(yb_model, X_train=data.X_train, **params)
                 viz.show(outpath=Path(path, plots[name]))
                 assert Path(
-                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                    path,
+                    str(plots[name]) + str(plots.pop("filetype", ".png")),
                 ).is_file(), f"File {name} does not exist."
                 paths.append(
                     str(
                         Path(
-                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                            path,
+                            str(plots[name]) + str(plots.pop("filetype", ".png")),
                         ),
                     ),
                 )
@@ -451,12 +457,14 @@ class Yellowbrick_Visualiser(
                     raise ValueError("Unknown model selection visualiser.")
                 viz.show(outpath=Path(path, plots[name]))
                 assert Path(
-                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                    path,
+                    str(plots[name]) + str(plots.pop("filetype", ".png")),
                 ).is_file(), f"File {name} does not exist."
                 paths.append(
                     str(
                         Path(
-                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                            path,
+                            str(plots[name]) + str(plots.pop("filetype", ".png")),
                         ),
                     ),
                 )
@@ -519,7 +527,8 @@ class Yellowbrick_Visualiser(
         for key in plot_dict():
             new_key = f"<h2> {key.capitalize()} Plots </h2>"
             assert isinstance(
-                plot_dict[key], list,
+                plot_dict[key],
+                list,
             ), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
             for plot_file in plot_dict[key]:
                 assert Path(

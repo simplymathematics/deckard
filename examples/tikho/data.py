@@ -325,7 +325,8 @@ class Data(
                 paths.append(Path(files["path"], plots["manifold"]))
             if "parallel" in plots:
                 visualizer = ParallelCoordinates(
-                    classes=classes, features=list(range(features)),
+                    classes=classes,
+                    features=list(range(features)),
                 )
                 visualizer.fit(X_train, y_train)
                 visualizer.show(Path(files["path"], plots["parallel"]))

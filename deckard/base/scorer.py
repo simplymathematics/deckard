@@ -3,79 +3,13 @@ import logging
 import os
 from pathlib import Path
 from hashable import BaseHashable, my_hash
-import numpy as np
 import pandas as pd
 import yaml
-from sklearn.metrics import (
-    accuracy_score,
-    explained_variance_score,
-    f1_score,
-    mean_absolute_error,
-    mean_absolute_percentage_error,
-    mean_squared_error,
-    precision_score,
-    r2_score,
-    recall_score,
-    roc_auc_score,
-)
 from sklearn.preprocessing import LabelBinarizer
 import collections
 from utils import factory
 
-# Default scorers
-# REGRESSOR_SCORERS = {
-#     "MAPE": mean_absolute_percentage_error,
-#     "MSE": mean_squared_error,
-#     "MAE": mean_absolute_error,
-#     "R2": r2_score,
-#     "EXVAR": explained_variance_score,
-# }
-# CLASSIFIER_SCORERS = {
-#     "F1": f1_score,
-#     "ACC": accuracy_score,
-#     "PREC": precision_score,
-#     "REC": recall_score,
-#     "AUC": roc_auc_score,
-# }
-
-
 logger = logging.getLogger(__name__)
-
-
-# class Scorer:
-#     def __init__(self, config: dict = None, is_regressor: bool = None):
-#         """
-#         Initialize the scorer.
-#         :param config: dict, configuration for the scorer.
-#         :param is_regressor: bool, whether the scorer is a regressor or not.
-#         :param score_function: Function that takes predictions and ground truth and returns a score.
-#         """
-#         assert (
-#             config or is_regressor is not None
-#         ), "Must specify either config or is_regressor."
-#         if config is None:
-#             assert (
-#                 is_regressor is not None
-#             ), "If no config is provided, is_regressor must be specified."
-#             if is_regressor:
-#                 scorers = list(REGRESSOR_SCORERS.values())
-#                 names = list(REGRESSOR_SCORERS.keys())
-#             else:
-#                 scorers = list(CLASSIFIER_SCORERS.values())
-#                 names = list(CLASSIFIER_SCORERS.keys())
-#         elif isinstance(config, dict):
-#             scorers = config.values()
-#             names = config.keys()
-#         elif isinstance(str, Path):
-#             with open(config, "r") as f:
-#                 config_ = yaml.load(f, Loader=yaml.FullLoader)
-#             scorers = config_.values()
-#             names = config_.keys()
-#         self.scorers = scorers
-#         self.names = names
-#         self.scores = {}
-#         logger.info("Scorer {} initialized.".format(self.names))
-
 
 class Scorer(
     collections.namedtuple(
