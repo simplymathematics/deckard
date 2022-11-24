@@ -4,7 +4,8 @@ For Developers:
 ######################################
 # Ubuntu 22.04, 20.04
 sudo apt update
-sudo apt install python3-venv python3-pip python3-dev python3-setuptools python3-distutils
+sudo apt install python3-venv python3-pip python3-dev python3-setuptools
+sudo apt install msttcorefonts -qqpython3-distutils #fonts (optional)
 export SETUPTOOLS_USE_DISTUTILS=stdlib
 ######################################
 python3 -m venv env

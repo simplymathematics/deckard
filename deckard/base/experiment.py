@@ -139,18 +139,19 @@ class Experiment(
         new_files = {}
         if files is not None:
             path = files.pop("path", ".")
-            path = Path(path).resolve()
+            path = Path(path)
             for x in files:
                 x = Path(path, my_hash(self._asdict()), files[x])
-                new_files[x] = str(x)
+                new_files[x] = x.relative_to(path.parent).as_posix()
+                
         files = new_files
         data_files = params["data"].pop("files", {})
         data_path = data_files.pop("data_path", "")
         data_filetype = data_files.pop("data_filetype", "")
         data_file = Path(data_path, my_hash(self.data) + "." + data_filetype)
         model_files = params["model"].pop("files", {})
-        model_path = params["model"].pop("path", "")
-        model_filetype = params["model"].pop("model_filetype", "")
+        model_path = model_files.pop("path", "")
+        model_filetype = model_files.pop("model_filetype", "")
         model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
         files['data'] = str(data_file)
         files['model'] = str(model_file)

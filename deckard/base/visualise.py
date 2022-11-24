@@ -350,8 +350,6 @@ class Yellowbrick_Visualiser(
         paths = []
         scorer = list(self.scorers.keys())[0] if self.scorers is not {} else None
         cv = plots.pop("cv", None)
-        print(cv)
-        input("Press Enter to continue...")
         if scorer is None:
             if all([isinstance(item, int) for item in list(set(data.y_train))]):
                 scorer = 'f1_weighted'
@@ -450,7 +448,7 @@ class Yellowbrick_Visualiser(
                 new_plot_dict[new_key] = new_value
         template = template.replace(templating_string, str(new_plot_dict["data"]))
         assert "path" in self.files, f"Path to save the HTML file must be specified. Your config is {self.files}."
-        output_file = Path(self.files["path"], my_hash(self), output_html)
+        output_file = Path(self.files["path"], my_hash(self._asdict()), output_html)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open("w") as f:
             f.write(template)

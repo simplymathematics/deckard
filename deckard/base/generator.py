@@ -176,8 +176,8 @@ def parse_entry(self, entry:dict) -> list:
         """
         full_list = []
         special_keys = {}
-        print(entry)
-        input("Press Enter to continue...")
+        # print(entry)
+        # input("Press Enter to continue...")
         for key, value in entry.items():
             if isinstance(value, (tuple, float, int, str)):
                 special_keys[key] = value

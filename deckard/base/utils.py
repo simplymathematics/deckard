@@ -77,8 +77,5 @@ def factory(module_class_string, super_cls: type = None, **kwargs):
     try:
         obj = cls(**kwargs)
     except Exception as e:
-        print(cls)
-        print(type(obj))
-        input(f"Error: {e}")
         raise e
     return obj

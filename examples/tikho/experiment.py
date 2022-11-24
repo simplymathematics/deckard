@@ -76,7 +76,6 @@ class Experiment(
         data_document = """!Data:\n""" + str(dict(self.data))
         data = yaml.load(data_document, Loader=yaml.Loader)
         data = data.load()
-        input("Press Enter to continue...")
         if self.model is not None:
             yaml.add_constructor("!Model:", Model)
             model_document = """!Model:\n""" + str(dict(self.model))

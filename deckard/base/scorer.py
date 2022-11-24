@@ -3,7 +3,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Callable, Union
-
+from hashable import BaseHashable, my_hash
 import numpy as np
 import pandas as pd
 import yaml
@@ -20,65 +20,72 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.preprocessing import LabelBinarizer
+import collections
+from utils import factory
 
 # Default scorers
-REGRESSOR_SCORERS = {
-    "MAPE": mean_absolute_percentage_error,
-    "MSE": mean_squared_error,
-    "MAE": mean_absolute_error,
-    "R2": r2_score,
-    "EXVAR": explained_variance_score,
-}
-CLASSIFIER_SCORERS = {
-    "F1": f1_score,
-    "ACC": accuracy_score,
-    "PREC": precision_score,
-    "REC": recall_score,
-    "AUC": roc_auc_score,
-}
+# REGRESSOR_SCORERS = {
+#     "MAPE": mean_absolute_percentage_error,
+#     "MSE": mean_squared_error,
+#     "MAE": mean_absolute_error,
+#     "R2": r2_score,
+#     "EXVAR": explained_variance_score,
+# }
+# CLASSIFIER_SCORERS = {
+#     "F1": f1_score,
+#     "ACC": accuracy_score,
+#     "PREC": precision_score,
+#     "REC": recall_score,
+#     "AUC": roc_auc_score,
+# }
 
 
 logger = logging.getLogger(__name__)
 
 
-class Scorer:
-    def __init__(self, config: dict = None, is_regressor: bool = None):
-        """
-        Initialize the scorer.
-        :param config: dict, configuration for the scorer.
-        :param is_regressor: bool, whether the scorer is a regressor or not.
-        :param score_function: Function that takes predictions and ground truth and returns a score.
-        """
-        assert (
-            config or is_regressor is not None
-        ), "Must specify either config or is_regressor."
-        if config is None:
-            assert (
-                is_regressor is not None
-            ), "If no config is provided, is_regressor must be specified."
-            if is_regressor:
-                scorers = list(REGRESSOR_SCORERS.values())
-                names = list(REGRESSOR_SCORERS.keys())
-            else:
-                scorers = list(CLASSIFIER_SCORERS.values())
-                names = list(CLASSIFIER_SCORERS.keys())
-        elif isinstance(config, dict):
-            scorers = config.values()
-            names = config.keys()
-        elif isinstance(str, Path):
-            with open(config, "r") as f:
-                config_ = yaml.load(f, Loader=yaml.FullLoader)
-            scorers = config_.values()
-            names = config_.keys()
-        self.scorers = scorers
-        self.names = names
-        self.scores = {}
-        logger.info("Scorer {} initialized.".format(self.names))
+# class Scorer:
+#     def __init__(self, config: dict = None, is_regressor: bool = None):
+#         """
+#         Initialize the scorer.
+#         :param config: dict, configuration for the scorer.
+#         :param is_regressor: bool, whether the scorer is a regressor or not.
+#         :param score_function: Function that takes predictions and ground truth and returns a score.
+#         """
+#         assert (
+#             config or is_regressor is not None
+#         ), "Must specify either config or is_regressor."
+#         if config is None:
+#             assert (
+#                 is_regressor is not None
+#             ), "If no config is provided, is_regressor must be specified."
+#             if is_regressor:
+#                 scorers = list(REGRESSOR_SCORERS.values())
+#                 names = list(REGRESSOR_SCORERS.keys())
+#             else:
+#                 scorers = list(CLASSIFIER_SCORERS.values())
+#                 names = list(CLASSIFIER_SCORERS.keys())
+#         elif isinstance(config, dict):
+#             scorers = config.values()
+#             names = config.keys()
+#         elif isinstance(str, Path):
+#             with open(config, "r") as f:
+#                 config_ = yaml.load(f, Loader=yaml.FullLoader)
+#             scorers = config_.values()
+#             names = config_.keys()
+#         self.scorers = scorers
+#         self.names = names
+#         self.scores = {}
+#         logger.info("Scorer {} initialized.".format(self.names))
+
+class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model, scorers, plots, files", defaults=({}, {}, {}, {}, {}), rename = True), BaseHashable):
+    def __new__(cls, loader, node):
+        return super().__new__(cls, **loader.construct_mapping(node))
+
 
     def read_data_from_json(self, json_file: str):
         """Read data from json file."""
         assert os.path.isfile(json_file), "File {} does not exist.".format(json_file)
-        data = pd.read_json(json_file)
+        data = pd.read_json(json_file, typ = "series")
         return data
 
     def read_score_from_json(self, name: str, score_file: str):
@@ -87,9 +94,6 @@ class Scorer:
         with open(score_file, "r") as f:
             score_dict = json.load(f)
         logger.info("Score read from score file {}.".format(score_file))
-        assert (
-            name in score_dict
-        ), "Scorer name, {}, not found in json file: {}.".format(self.names, score_file)
         return score_dict[name]
 
     def score(self, ground_truth: pd.DataFrame, predictions: pd.DataFrame) -> None:
@@ -99,40 +103,19 @@ class Scorer:
         scores = {}
         # if predictions.shape != ground_truth.shape:
         #     raise ValueError("Predictions and ground truth must have the same shape.")
-        for name, scorer in zip(self.names, self.scorers):
-            try:
-                scores[name] = scorer(ground_truth, predictions)
-            except ValueError as e:
-                # logger.warning(e)
-                if "Target is multilabel-indicator but average='binary'" in str(e):
-                    logger.warning(
-                        "Average binary not supported for multilabel-indicator. Using micro.",
-                    )
-                    scores[name] = scorer(ground_truth, predictions, average="weighted")
-                if "multilabel-indicator" and "not supported" in str(e):
-                    pred = np.argmax(pd.DataFrame(predictions).reset_index(), axis=1)
-                    test = np.argmax(pd.DataFrame(ground_truth).reset_index(), axis=1)
-                    scores[name] = scorer(test, pred)
-                if "can't hand a  mix of multiclass and continuous" in str(e):
-                    gr = LabelBinarizer().fit_transform(ground_truth)
-                    pr = LabelBinarizer().fit_transform(predictions)
-                    pr = np.argmax(pr, axis=1)
-                    gr = np.argmax(gr, axis=1)
-                    scores[name] = scorer(gr, pr, average="weighted")
-                else:
-                    # TODO: fix scoring for multilabel, currently only works for binary
-                    scores[name] = "Error"
-                    continue
-            finally:
-                assert name in scores, "Scorer {} not found in scores.".format(name)
-
-        self.scores = pd.Series(scores).T
-        return self.scores
+        names = self.scorers.keys()
+        scorers = [self.scorers[name] for name in names]
+        for name, scorer in zip(names, scorers):
+            score = factory(scorer.pop("name"), **scorer, y_pred = predictions, y_true = ground_truth)
+            scores[name] = score
+        scores = pd.Series(scores).T
+        return scores
 
     def get_name(self):
         """Return the names of the scorer."""
-        logger.info("Returning names {}.".format(self.names))
-        return self.names
+        names = self.scorers.keys()
+        logger.info("Returning names {}.".format(names))
+        return names
 
     def get_scorers(self):
         """
@@ -142,42 +125,18 @@ class Scorer:
         """
         return str(self)
 
-    def set_scorers(
-        self,
-        scorers: Union[Callable, list],
-        names: Union[str, list],
-    ) -> None:
-        """
-        Sets the scorer for an experiment
-        :param experiment: experiment to set scorer for
-        :param scorer: scorer to set
-        """
-        for scorer in scorers:
-            assert isinstance(scorer, Callable), "Scorer must be callable"
-        for name in names:
-            assert isinstance(name, str), "Names must be a string"
-        if isinstance(scorers, list) or isinstance(names, list):
-            assert len(scorers) == len(
-                names,
-            ), "If a list of scorers is provided, the list of names must be the same length."
-        self.scorers = scorers if isinstance(scorers, list) else [scorers]
-        self.names = names if isinstance(names, list) else [names]
-        return None
 
     def save_score(
         self,
         results,
         filename: str = "scores.json",
-        prefix=None,
-        path: str = ".",
     ) -> None:
         """
         Saves scores to specified file.
         :param filename: str, names of file to save scores to.
         :param path: str, path to folder to save scores. If none specified, scores are saved in current working directory. Must exist.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        score_file = os.path.join(path, filename)
+        score_file = filename
         if not isinstance(results, pd.Series):
             results = pd.Series(results.values(), name=filename, index=results.keys())
         results.to_json(score_file)
@@ -185,23 +144,14 @@ class Scorer:
         return results
 
     def save_list_score(
-        self,
-        results,
         filename: str = "scores.json",
-        prefix=None,
-        path: str = ".",
     ) -> None:
         """
         Saves scores to specified file.
         :param filename: str, names of file to save scores to.
         :param path: str, path to folder to save scores. If none specified, scores are saved in current working directory. Must exist.
         """
-        assert os.path.isdir(path), "Path to experiment does not exist"
-        filetype = filename.split(".")[-1]
-        if prefix is not None:
-            score_file = os.path.join(path, prefix + "_" + filename)
-        else:
-            score_file = os.path.join(path, filename)
+        score_file = filename
         try:
             results = pd.DataFrame(
                 results.values(),
@@ -222,7 +172,7 @@ class Scorer:
         assert os.path.exists(score_file), "Score file not saved"
         return results
 
-    def save_results(self, prefix=None, path: str = ".", filetype=".json") -> None:
+    def save_results(self, scores:dict, filename:str, path: str = ".") -> None:
         """
         Saves all data to specified folder, using default filenames.
         """
@@ -234,15 +184,14 @@ class Scorer:
         save_names = []
         save_scores = []
         results = {}
-        for name, score in zip(self.names, self.scores):
+        names = self.scorers.keys()
+        for name, score in zip(names, scores):
             results[name] = score
             if isinstance(score, (list, tuple)):
-                filename = name + filetype
+                filename = name
                 result = self.save_list_score(
                     {name: score},
                     filename=filename,
-                    prefix=prefix,
-                    path=path,
                 )
                 results[name] = result
             else:
@@ -255,34 +204,117 @@ class Scorer:
 
         final_result = self.save_score(
             dict_,
-            filename="scores" + filetype,
-            prefix=prefix,
-            path=path,
+            filename=filename,
         )
-        self.scores = results.update(final_result)
-        return self
+        scores = results.update(final_result)
+        return Path(path, filename)
 
     def __call__(
         self,
-        ground_truth_file: str,
-        predictions_file: str,
-        path: str = ".",
-        prefix: str = None,
-        filetype=".json",
     ):
         """Score the predictions from the file and updates best score."""
-        logger.info(
-            "Reading from {} and {}.".format(ground_truth_file, predictions_file),
-        )
+        path = self.files['path'] if "path" in self.files else "."
+        path = Path(path, my_hash(self._asdict()))
+        ground_truth = self.files.pop("ground_truth_file", None)
+        predictions = self.files.pop("predictions_file", None)
+        score_dict = self.files.pop("score_dict_file", None)
+        
+        predictions_file = Path(path, predictions)
+        ground_truth_file = Path(path, ground_truth)
+        scores_file = Path(path, score_dict)
         test = self.read_data_from_json(predictions_file)
-
         true = self.read_data_from_json(ground_truth_file)
-        self.scores = self.score(true, test)
-        self.save_results(prefix=prefix, path=path, filetype=filetype)
-        return self
+        scores = self.score(true, test)
+        path = self.save_results(scores= scores, path=path, filename = scores_file)
+        return path.resolve()
 
     def __str__(self):
         string = "Scorer with scorers: "
-        for scorer, score in zip(self.names, self.scorers):
+        names = self.scorers.keys()
+        scorers = [scorers[name]['name'] for name in names]
+        for scorer, score in zip(names, scorers):
             string += "{}: {}".format(scorer, score)
         return string
+
+if __name__ == '__main__':
+    config = """
+    model:
+        init:
+            loss: "hinge"
+            name: sklearn.linear_model.SGDClassifier
+        files:
+            model_path : model
+            model_filetype : pickle
+        fit:
+            epochs: 1000
+            learning_rate: 1.0e-08
+            log_interval: 10
+    data:
+        sample:
+            shuffle : True
+            random_state : 42
+            train_size : 800
+            stratify : True
+        add_noise:
+            train_noise : 1
+            time_series : True
+        name: classification
+        files:
+            data_path : data
+            data_filetype : pickle
+        generate:
+            n_samples: 1000
+            n_features: 2
+            n_informative: 2
+            n_redundant : 0
+            n_classes: 2
+        sklearn_pipeline:
+            - sklearn.preprocessing.StandardScaler
+        transform:
+            sklearn.preprocessing.StandardScaler:
+                with_mean : true
+                with_std : true
+                X_train : true
+                X_test : true
+    plots:
+        balance: balance
+        classification: classification
+        confusion: confusion
+        correlation: correlation
+        radviz: radviz
+        rank: rank
+    scorers:
+        accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+        f1-macro:
+            average: macro
+            name: sklearn.metrics.f1_score
+        f1-micro:
+            average: micro
+            name: sklearn.metrics.f1_score
+        f1-weighted:
+            average: weighted
+            name: sklearn.metrics.f1_score
+        precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+        recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+    files:
+        ground_truth_file: ground_truth.json
+        predictions_file: predictions.json
+        time_dict_file: time_dict.json
+        params_file: params.json
+        score_dict_file: scores.json
+        path: reports
+        
+    """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    yaml.add_constructor("!Scorer:", Scorer)
+    scorer = yaml.load("!Scorer:\n" + str(config), Loader=yaml.Loader)
+    result_path = scorer()
+    print(result_path)
+
