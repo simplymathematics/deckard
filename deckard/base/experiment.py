@@ -13,7 +13,7 @@ from model import Model
 import pandas as pd
 import pickle
 from utils import factory
-from visualise import Yellowbrick_Visualiser
+
 from hashable import BaseHashable, my_hash
 import logging
 
@@ -87,11 +87,16 @@ class Experiment(
         else:
             model = {}
         if params["plots"] is not {}:
+            from visualise import Yellowbrick_Visualiser
             yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
-            plots_document = "!Yellowbrick_Visualiser:\n" + str(self._asdict())
+            plots_document = "!Yellowbrick_Visualiser:\n" + str(params)
             vis = yaml.load(plots_document, Loader=yaml.Loader)
         else:
             vis = None
+        # print("Inside load")
+        # print("Self hash: ", my_hash(params))
+        # print("Vis hash: ", my_hash(vis._asdict()))
+        # input("Press enter to continue")
         params.pop("data", None)
         params.pop("model", None)
         params.pop("plots", None)
@@ -323,6 +328,8 @@ class Experiment(
         Runs experiment and saves results according to config file.
         """
         logger.info("Parsing Config File")
+        
+    
         data, model, files, vis = self.load()
         params = deepcopy(self._asdict())
         path = Path(params["files"]["path"], str(my_hash(self._asdict())))
@@ -357,6 +364,7 @@ class Experiment(
         logger.info("Saving Results")
         outs = self.save(**results, **files)
         if vis is not None:
+            from visualise import Yellowbrick_Visualiser
             pass
             plot_dict = vis.visualise(path=path)
             templating_string = params["plots"].pop(
@@ -366,14 +374,14 @@ class Experiment(
             output_html = params["plots"].pop("output_html", "report.html")
             template = params["plots"].pop("template", "template.html")
             output_html = Path(path, output_html)
-            outs.append(
-                vis.render(
-                    plot_dict=plot_dict,
-                    templating_string=templating_string,
-                    output_html=output_html,
-                    template=template,
-                ),
-            )
+            # outs.append(
+            #     vis.render(
+            #         plot_dict=plot_dict,
+            #         templating_string=templating_string,
+            #         output_html=output_html,
+            #         template=template,
+            #     ),
+            # )
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs
@@ -455,11 +463,18 @@ if "__main__" == __name__:
         path: reports
 
     """
+    from visualise import Yellowbrick_Visualiser
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Experiment:", Experiment)
     experiment = yaml.load("!Experiment:\n" + str(config), Loader=yaml.Loader)
-    # experiment.run()
-    visualizer = yaml.add_constructor("!Visualizer:", Yellowbrick_Visualiser)
+    yaml.add_constructor("!Visualizer:", Yellowbrick_Visualiser)
     visualizer = yaml.load("!Visualizer:\n" + str(config), Loader=yaml.Loader)
+    # print("Before: ")
+    # print(my_hash(experiment._asdict()))
+    # print(my_hash(visualizer._asdict()))
+    
     experiment.run()
+    # print("After: ")
+    # print(my_hash(experiment._asdict()))
+    # print(my_hash(visualizer._asdict()))

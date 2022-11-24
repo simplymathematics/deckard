@@ -34,12 +34,13 @@ from yellowbrick.classifier import (
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
 import collections
-from hashable import BaseHashable  # , my_hash
+from hashable import BaseHashable, my_hash
 from copy import deepcopy
 import yaml
 from utils import factory
 from data import Data
 from model import Model
+from experiment import Experiment
 import logging
 from sklearn.base import is_regressor, is_classifier
 
@@ -110,38 +111,6 @@ class Yellowbrick_Visualiser(
         """Generates a new Data object from a YAML node"""
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self) -> tuple:
-        """
-        Loads data, model from the config file.
-        :param config: str, path to config file.
-        :returns: tuple(dict, object), (data, model).
-        """
-        params = deepcopy(self._asdict())
-        if params["data"] is not {}:
-            yaml.add_constructor("!Data", Data)
-            data_document = """!Data\n""" + str(dict(params["data"]))
-            data = yaml.load(data_document, Loader=yaml.Loader)
-
-        else:
-            raise ValueError("Data not specified in config file")
-        if params["model"] is not {}:
-            yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(params["model"]))
-            model = yaml.load(model_document, Loader=yaml.Loader)
-
-        else:
-            model = {}
-        if params["plots"] is not {}:
-            yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
-            plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
-            vis = yaml.load(plots_document, Loader=yaml.Loader)
-        else:
-            vis = None
-        params.pop("data", None)
-        params.pop("model", None)
-        params.pop("plots", None)
-        files = params.pop("files", None)
-        return (data, model, files, vis)
 
     def visualise_data(self, data: Namespace, path: str) -> list:
         """
@@ -475,7 +444,9 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        data, model, files, vis = self.load()
+        yaml.add_constructor("!Experiment:", Experiment)
+        experiment = yaml.load("!Experiment:\n" + str(self._asdict()), Loader=yaml.Loader)
+        data, model, files, vis = experiment.load()
         data = data.load()
         model = model.load()
         paths = []
@@ -502,42 +473,44 @@ class Yellowbrick_Visualiser(
             "clustering": clu_plots,
         }
 
-    def render(
-        self,
-        plot_dict,
-        template="template.html",
-        templating_string="{{data_plots}}",
-        output_html="index.html",
-    ) -> Path:
-        """
-        Renders a list of paths to plots into a HTML file.
-        :param plot_dict: dict of paths to plots
-        :param template: path to template file
-        :param templating_string: string to be replaced by the plots
-        :return: path to the generated HTML file
-        """
-        new_plot_dict = {}
-        template_file = Path(template)
-        path = Path(output_html).parent
-        path.mkdir(parents=True, exist_ok=True)
-        with template_file.open("r") as f:
-            template = f.read()
-        for key in plot_dict.keys():
-            new_key = f"<h2> {key.capitalize()} Plots </h2>"
-            assert isinstance(
-                plot_dict[key],
-                list,
-            ), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
-            for plot_file in plot_dict[key]:
-                if not Path(plot_file).is_file():
-                    plot_file = Path(str(plot_file) + ".png")
-                assert Path(plot_file).is_file(), f"File {plot_file} does not exist."
-                new_value = f"<img src {plot_file} alt {key} />"
-                new_plot_dict[new_key] = new_value
-        template = template.replace(templating_string, str(new_plot_dict))
-        assert (
-            "path" in self.files
-        ), f"Path to save the HTML file must be specified. Your config is {self.files}."
-        with output_html.open("w") as f:
-            f.write(template)
-        return template_file.resolve()
+    # def render(
+    #     self,
+    #     plot_dict,
+    #     template="template.html",
+    #     templating_string=r"$plot_divs$",
+    #     output_html="index.html",
+    # ) -> Path:
+    #     """
+    #     Renders a list of paths to plots into a HTML file.
+    #     :param plot_dict: dict of paths to plots
+    #     :param template: path to template file
+    #     :param templating_string: string to be replaced by the plots
+    #     :return: path to the generated HTML file
+    #     """
+    #     new_plot_dict = {}
+    #     template_file = Path(template)
+    #     path = Path(output_html).parent
+    #     path.mkdir(parents=True, exist_ok=True)
+    #     with template_file.open("r") as f:
+    #         template = f.read()
+    #     for key in plot_dict.keys():
+    #         new_key = f"<h2> {key.capitalize()} Plots </h2>"
+    #         assert isinstance(
+    #             plot_dict[key],
+    #             list,
+    #         ), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
+    #         for plot_file in plot_dict[key]:
+    #             if not Path(plot_file).is_file():
+    #                 plot_file = Path(str(plot_file) + ".png")
+    #             assert Path(plot_file).is_file(), f"File {plot_file} does not exist."
+    #             new_value = f"<img src {plot_file} alt {key} />"
+    #             new_plot_dict[new_key] = new_value
+    #     template = template.replace(templating_string, str(new_plot_dict))
+    #     print(template)
+    #     input("Press any key to continue...")
+    #     assert (
+    #         "path" in self.files
+    #     ), f"Path to save the HTML file must be specified. Your config is {self.files}."
+    #     with output_html.open("w") as f:
+    #         f.write(template)
+    #     return template_file.resolve()
