@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 class Scorer(
     collections.namedtuple(
         typename="Scorer",
-        field_names="data, model, scorers, plots, files",
-        defaults=({}, {}, {}, {}, {}),
+        field_names="data, scorers, files, attack, model,  plots",
+        defaults=({}, {}, {}, {}),
         rename=True,
     ),
     BaseHashable,
@@ -182,80 +182,7 @@ class Scorer(
 
 
 if __name__ == "__main__":
-    config = """
-    model:
-        init:
-            loss: "hinge"
-            name: sklearn.linear_model.SGDClassifier
-        files:
-            model_path : model
-            model_filetype : pickle
-        fit:
-            epochs: 1000
-            learning_rate: 1.0e-08
-            log_interval: 10
-    data:
-        sample:
-            shuffle : True
-            random_state : 42
-            train_size : 800
-            stratify : True
-        add_noise:
-            train_noise : 1
-            time_series : True
-        name: classification
-        files:
-            data_path : data
-            data_filetype : pickle
-        generate:
-            n_samples: 1000
-            n_features: 2
-            n_informative: 2
-            n_redundant : 0
-            n_classes: 2
-        sklearn_pipeline:
-            - sklearn.preprocessing.StandardScaler
-        transform:
-            sklearn.preprocessing.StandardScaler:
-                with_mean : true
-                with_std : true
-                X_train : true
-                X_test : true
-    plots:
-        balance: balance
-        classification: classification
-        confusion: confusion
-        correlation: correlation
-        radviz: radviz
-        rank: rank
-    scorers:
-        accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-        f1-macro:
-            average: macro
-            name: sklearn.metrics.f1_score
-        f1-micro:
-            average: micro
-            name: sklearn.metrics.f1_score
-        f1-weighted:
-            average: weighted
-            name: sklearn.metrics.f1_score
-        precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-        recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    files:
-        ground_truth_file: ground_truth.json
-        predictions_file: predictions.json
-        time_dict_file: time_dict.json
-        params_file: params.json
-        score_dict_file: scores.json
-        path: reports
-
-    """
+    from experiment import config
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Scorer:", Scorer)

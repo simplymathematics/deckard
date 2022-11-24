@@ -17,6 +17,7 @@ from utils import factory
 from hashable import BaseHashable, my_hash
 import logging
 from sklearn.preprocessing import LabelBinarizer
+from argparse import Namespace
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class Experiment(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def fit(self, data: dict, model: object) -> tuple:
+    def fit(self, data: Namespace, model: object) -> tuple:
         """
         Fits model to data.
         :param data: dict, data to fit model to.
@@ -51,14 +52,17 @@ class Experiment(
             loaded_model = model.load(art_bool)
         start = process_time()
         try:
-            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+            loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         except np.AxisError as e:
-            logger.warning(f"AxisError: {e}. Trying to binarize labels.")
             loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
             loaded_data.y_test = LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
-            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+            try:
+                loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+            except ValueError as e:
+                if "number of classes" in str(e):
+                    loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         result = process_time() - start
-        return loaded_model, loaded_data, result / len(loaded_data.X_train)
+        return  loaded_data, loaded_model, result / len(loaded_data.X_train)
 
     def predict(self, data: dict, model: object) -> tuple:
         """
@@ -371,13 +375,7 @@ class Experiment(
         logger.info(f"Saving to {path}")
         assert isinstance(data, Data)
         assert isinstance(model, Model)
-        if is_fitted is False:
-            logger.info("Fitting Model")
-            fitted_model, loaded_data, fit_time = self.fit(data, model)
-        else:
-            logger.info("Model already fitted")
-            fitted_model = model.load()
-            loaded_data = data.load()
+        loaded_data, fitted_model, fit_time = self.fit(data, model)
         logger.info("Scoring Model")
         predictions, predict_time = self.predict(loaded_data, fitted_model)
         ground_truth = loaded_data.y_test
@@ -393,8 +391,11 @@ class Experiment(
         logger.info("Saving Results")
         outs = self.save(**results, **files)
         if vis is not None:
-            from visualise import Yellowbrick_Visualiser
-            vis.visualise(path=path)
+            plot_dict = vis.visualise(data = loaded_data, model = fitted_model, path=path)
+            plot_paths = []
+            for key in plot_dict:
+                plot_paths.extend(plot_dict[key])
+            outs.extend(plot_paths)
             # templating_string = params["plots"].pop(
             #     "templating_string",
             #     r"{plot_divs}",
@@ -411,6 +412,12 @@ class Experiment(
             #     ),
             # )
         for file in outs:
+            if isinstance(file, str):
+                file = Path(file)
+            elif isinstance(file, Path):
+                pass
+            else:
+                raise ValueError(f"File {file} is not a string or Path object.")
             assert file.exists(), f"File {file} does not exist."
         
         if attack is not {}:
@@ -418,17 +425,20 @@ class Experiment(
             adv_pred, adv_samples, time_dict = attack.run_attack(loaded_data, fitted_model, loaded_attack, **generate)
             files = deepcopy(attack._asdict()["files"])
             files = {k: Path(path, v) for k, v in files.items()}
-            sample_file = attack.save_attack_samples(samples = adv_samples, filename = files["adv_samples"])
-            pred_file = attack.save_attack_predictions(adv_pred, files["adv_predictions"])
-            time_file = attack.save_attack_time(time_dict, files["adv_time_dict"])
+            sample_file = attack.save_attack_samples(samples = deepcopy(adv_samples), filename = files["adv_samples"])
+            pred_file = attack.save_attack_predictions(deepcopy(adv_pred), files["adv_predictions"])
+            time_file = attack.save_attack_time(deepcopy(time_dict), files["adv_time_dict"])
             param_file = attack.save_attack_params(files["attack_params"])
             outs.extend([sample_file, pred_file, time_file, param_file])
+            if vis is not None:
+                plot_dict = vis.visualise(data = loaded_data, model = fitted_model, path=path, samples = adv_samples, preds = adv_pred, prefix = "adv_")
+                plot_paths = []
+                for key in plot_dict:
+                    plot_paths.extend(plot_dict[key])
+                outs.extend(plot_paths)
         return outs
 
-
-if "__main__" == __name__:
-
-    config = """
+config = """
     model:
         init:
             loss: "hinge"
@@ -514,6 +524,10 @@ if "__main__" == __name__:
         path: reports
 
     """
+
+if "__main__" == __name__:
+
+    
     from visualise import Yellowbrick_Visualiser
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
