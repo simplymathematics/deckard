@@ -73,9 +73,9 @@ class Data(
         ):
             with open(name, "rb") as f:
                 data = pickle.load(f)
-            if "X_train" in data:
+            if "X_test" in data:
                 assert (
-                    hasattr(data, "y_train")
+                    hasattr(data, "X_train")
                     and hasattr(data, "X_test")
                     and hasattr(data, "y_test")
                 ), ValueError(
@@ -101,9 +101,10 @@ class Data(
         else:
             raise ValueError(f"Unknown dataset: {name}")
         samples = params.pop("sample", {})
-        X_train, X_test, y_train, y_test = self.sampler(X = big_X, y = big_y)
-        add_noise = params.pop("add_noise", {})
+        if samples is not {} and "X_test" not in locals():
+            X_train, X_test, y_train, y_test = self.sampler(X = big_X, y = big_y)
         X_train, X_test, y_train, y_test = self.add_noise_to_data(X_train, X_test, y_train, y_test)
+        add_noise = params.pop("add_noise", {})
         ns = Namespace(
             X_train=X_train,
             X_test=X_test,
@@ -229,8 +230,8 @@ class Data(
         transformer = factory(name, **transform)
         X_train = deepcopy(data.X_train)
         y_train = deepcopy(data.y_train)
-        X_test = deepcopy(data.X_test)
-        y_test = deepcopy(data.y_test)
+        X_test = deepcopy(data.X_test) if hasattr(data, "X_test") else None
+        y_test = deepcopy(data.y_test) if hasattr(data, "y_test") else None
         assert isinstance(X_train, np.ndarray)
         assert isinstance(X_test, np.ndarray)
         assert isinstance(y_train, np.ndarray)
