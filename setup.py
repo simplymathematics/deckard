@@ -18,6 +18,7 @@ install_requires = [
     "wheel",
     "dvc",
     "pandas",
+    "pre-commit",
     "PyYAML",
     "pytest",
     "tensorflow",
