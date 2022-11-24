@@ -1,59 +1,27 @@
-- name: data.Data
-    params :
-        generated:
-            n_classes: 2
-            n_features: 5
-            n_informative: 4
-            n_redundant: 1
-            n_samples: 10000
-        params:
-            name: classification
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-            train_noise: [0, 1e-3, 1e-2, 1e-1, 1, 10, 100]
-            train_size: 8000
-        files:
-            data_filetype : pickle
-            data_path : data
-# - name: data.Data
-#   params:
-#     generated:
-#         n_classes: 2
-#         n_features: 5
-#         n_informative: 4
-#         n_redundant: 1
-#         n_samples: 10000
-#     params:
-#         name: classification
-#         random_state: 42
-#         shuffle: true
-#         stratify: true
-#         time_series: true
-#         train_noise : 0
-#         test_noise: [0, 1e-3, 1e-2, 1e-1, 1, 10, 100]
-#         train_size: 8000
-#     files:
-#         data_filetype : pickle
-#         data_path : data
-# - name: data.Data
-#   params:
-#     generated:
-#         n_classes: 2
-#         n_features: 100
-#         n_informative: [10, 20, 30, 50, 90]
-#         n_redundant: 1
-#         n_samples: 10000
-#     params:
-#         name: classification
-#         random_state: 42
-#         shuffle: true
-#         stratify: true
-#         time_series: true
-#         test_noise: 0
-#         train_noise : 0
-#         train_size: 8000
-#     files:
-#         data_filetype : pickle
-#         data_path : data
+data:
+    sample:
+        shuffle : True
+        random_state : 42
+        train_size : 800
+        stratify : True
+    add_noise:
+        train_noise : 1
+        time_series : True
+    name: classification
+    files:
+        data_path : data
+        data_filetype : pickle
+    generate:
+        n_samples: 1000
+        n_features: 2
+        n_informative: 2
+        n_redundant : 0
+        n_classes: 2
+    sklearn_pipeline:
+        - sklearn.preprocessing.StandardScaler
+    transform:
+        sklearn.preprocessing.StandardScaler:
+            with_mean : true
+            with_std : true
+            X_train : true
+            X_test : true

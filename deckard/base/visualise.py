@@ -1,10 +1,3 @@
-from yellowbrick.classifier import (
-    classification_report,
-    confusion_matrix,
-    roc_auc,
-)
-from yellowbrick.contrib.wrapper import classifier
-
 # from yellowbrick.exceptions import ModelError
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,15 +13,6 @@ from yellowbrick.features import (
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 from yellowbrick.regressor import prediction_error, residuals_plot
 from yellowbrick.regressor.alphas import alphas
-from yellowbrick.features import (
-    PCA,
-    Manifold,
-    ParallelCoordinates,
-    RadViz,
-    Rank1D,
-    Rank2D,
-)
-from yellowbrick.target import ClassBalance, FeatureCorrelation
 from yellowbrick.cluster import (
     kelbow_visualizer,
     silhouette_visualizer,
@@ -47,8 +31,7 @@ from yellowbrick.classifier import (
     confusion_matrix,
     roc_auc,
 )
-from yellowbrick.contrib.wrapper import classifier, regressor, clusterer, wrap
-from sklearn.model_selection import StratifiedKFold
+from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
 import collections
 from hashable import BaseHashable, my_hash
@@ -58,7 +41,7 @@ from utils import factory
 from data import Data
 from model import Model
 import logging
-
+from sklearn.base import is_regressor, is_classifier
 
 classification_visualisers = {
     "confusion": confusion_matrix,
@@ -170,7 +153,6 @@ class Yellowbrick_Visualiser(
         """
         plots = dict(self.plots)
         files = dict(self.files)
-        path = files["path"]
         paths = []
         y_train = data.y_train
         X_train = data.X_train
@@ -406,8 +388,8 @@ class Yellowbrick_Visualiser(
         :return: list of paths to the generated plots
         """
         plots = dict(self.plots)
-        files = dict(self.files)
         paths = []
+        path = self.files["path"]
         scorer = list(self.scorers.keys())[0] if self.scorers is not {} else None
         cv = plots.pop("cv", None)
         if scorer is None:
@@ -423,9 +405,15 @@ class Yellowbrick_Visualiser(
         cv = factory(
             cv.pop("name"),
         )
+        if is_regressor(model):
+            yb_model = regressor(model)
+        elif is_classifier(model):
+            yb_model = classifier(model)
+        else:
+            yb_model = clusterer(model)
         for name in model_selection_visualisers.keys():
             if name in plots.keys():
-                visualiser = model_selection_visualiser[key]
+                visualiser = model_selection_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
                 if "cross" or "recursive" or "validation" in name:
                     if "validation" in name:
@@ -446,12 +434,16 @@ class Yellowbrick_Visualiser(
                 elif "dropping" or "feature_importances" in name:
                     viz = visualiser(
                         yb_model,
-                        X=X_train,
-                        y=y_train,
+                        X=data.X_train,
+                        y=data.y_train,
                     )
                 elif "learning" in name:
                     viz = visualiser(
-                        yb_model, X=X_train, y=y_train, scoring=scorer, **params
+                        yb_model,
+                        X=data.X_train,
+                        y=data.y_train,
+                        scoring=scorer,
+                        **params,
                     )
                 else:
                     raise ValueError("Unknown model selection visualiser.")

@@ -5,11 +5,11 @@ from pathlib import Path
 from hashable import BaseHashable, my_hash
 import pandas as pd
 import yaml
-from sklearn.preprocessing import LabelBinarizer
 import collections
 from utils import factory
 
 logger = logging.getLogger(__name__)
+
 
 class Scorer(
     collections.namedtuple(
@@ -86,6 +86,7 @@ class Scorer(
         return results
 
     def save_list_score(
+        results: dict,
         filename: str = "scores.json",
     ) -> None:
         """
@@ -94,6 +95,7 @@ class Scorer(
         :param path: str, path to folder to save scores. If none specified, scores are saved in current working directory. Must exist.
         """
         score_file = filename
+        filetype = filename.split(".")[-1]
         try:
             results = pd.DataFrame(
                 results.values(),
@@ -173,7 +175,7 @@ class Scorer(
     def __str__(self):
         string = "Scorer with scorers: "
         names = self.scorers.keys()
-        scorers = [scorers[name]["name"] for name in names]
+        scorers = [self.scorers[name]["name"] for name in names]
         for scorer, score in zip(names, scorers):
             string += "{}: {}".format(scorer, score)
         return string

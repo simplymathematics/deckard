@@ -1,7 +1,6 @@
 import collections
 from pathlib import Path
 from time import process_time
-import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
@@ -358,7 +357,7 @@ class Experiment(
         logger.info("Saving Results")
         outs = self.save(**results, **files)
         if vis is not None:
-            plot_dict = vis.visualise()
+            plot_dict = vis.visualise()  # noqa F841
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs

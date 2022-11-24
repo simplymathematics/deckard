@@ -1,5 +1,4 @@
 from hashlib import md5
-from numpy import ndarray
 
 
 def my_hash(obj: dict):

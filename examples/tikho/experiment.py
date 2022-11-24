@@ -1,22 +1,17 @@
 import collections
 from time import process_time
 
-import matplotlib.pyplot as plt
-import numpy as np
 import yaml
 from dvc.api import params_show
-from dvclive import Live
-from tqdm import tqdm
 from yellowbrick.classifier import (
     classification_report,
     confusion_matrix,
     roc_auc,
 )
-from yellowbrick.contrib.wrapper import classifier
-from yellowbrick.exceptions import ModelError
 from data import Data
-from json_mixin import JSONMixin
 from model import Model
+
+from hashable import BaseHashable
 
 classification_visualizers = {
     "confusion": confusion_matrix,
@@ -26,12 +21,12 @@ classification_visualizers = {
 
 
 class Experiment(
-    collections.ChainMap(
+    collections.namedtuple(
         typename="Experiment",
         field_names="data, model, scorers, plots, files, fit, predict",
         defaults=({}, {}, {}, {}, {}, {}),
     ),
-    JSONMixin,
+    BaseHashable,
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
