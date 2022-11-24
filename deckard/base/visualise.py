@@ -34,7 +34,7 @@ from yellowbrick.classifier import (
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
 import collections
-from hashable import BaseHashable, my_hash
+from hashable import BaseHashable  # , my_hash
 from copy import deepcopy
 import yaml
 from utils import factory
@@ -143,7 +143,7 @@ class Yellowbrick_Visualiser(
         files = params.pop("files", None)
         return (data, model, files, vis)
 
-    def visualise_data(self, data: Namespace, path:str) -> list:
+    def visualise_data(self, data: Namespace, path: str) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -173,60 +173,65 @@ class Yellowbrick_Visualiser(
             if "radviz" in plots:
                 visualiser = RadViz(classes=classes)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path,  plots["radviz"]))
-                paths.append(Path(path,  plots["radviz"]))
+                visualiser.show(Path(path, plots["radviz"]))
+                paths.append(Path(path, plots["radviz"]))
                 plots.pop("radviz")
                 plt.gcf().clear()
             if "rank1d" in plots:
                 visualiser = Rank1D(algorithm="shapiro")
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path,  plots["rank1d"]))
-                paths.append(Path(path,  plots["rank1d"]))
+                visualiser.show(Path(path, plots["rank1d"]))
+                paths.append(Path(path, plots["rank1d"]))
                 plots.pop("rank1d")
                 plt.gcf().clear()
             if "rank2d" in plots:
                 visualiser = Rank2D(algorithm="pearson")
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path,  plots["rank2d"]))
-                paths.append(Path(path,  plots["rank2d"]))
+                visualiser.show(Path(path, plots["rank2d"]))
+                paths.append(Path(path, plots["rank2d"]))
                 plots.pop("rank2d")
                 plt.gcf().clear()
             if "balance" in plots:
                 visualiser = ClassBalance(labels=classes)
                 visualiser.fit(y_train)
-                visualiser.show(Path(path,  plots["balance"]))
-                paths.append(Path(path,  plots["balance"]))
+                visualiser.show(Path(path, plots["balance"]))
+                paths.append(Path(path, plots["balance"]))
                 plots.pop("balance")
                 plt.gcf().clear()
             if "correlation" in plots:
                 visualiser = FeatureCorrelation(labels=features)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path,  plots["correlation"]))
-                paths.append(Path(path,  plots["correlation"]))
+                visualiser.show(Path(path, plots["correlation"]))
+                paths.append(Path(path, plots["correlation"]))
                 plots.pop("correlation")
                 plt.gcf().clear()
             if "pca" in plots:
                 visualiser = PCA()
                 visualiser.fit_transform(X_train, y_train)
-                visualiser.show(Path(path,  plots["pca"]))
-                paths.append(Path(path,  plots["pca"]))
+                visualiser.show(Path(path, plots["pca"]))
+                paths.append(Path(path, plots["pca"]))
                 plots.pop("pca")
                 plt.gcf().clear()
             if "manifold" in plots:
                 visualiser = Manifold(manifold="tsne")
                 visualiser.fit_transform(X_train, y_train)
-                visualiser.show(Path(path,  plots["manifold"]))
-                paths.append(Path(path,  plots["manifold"]))
+                visualiser.show(Path(path, plots["manifold"]))
+                paths.append(Path(path, plots["manifold"]))
             if "parallel" in plots:
                 visualiser = ParallelCoordinates(classes=classes, features=features)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path,  plots["parallel"]))
-                paths.append(Path(path,  plots["parallel"]))
+                visualiser.show(Path(path, plots["parallel"]))
+                paths.append(Path(path, plots["parallel"]))
                 plots.pop("parallel")
                 plt.gcf().clear()
         return paths
 
-    def visualise_classification(self, data: Namespace, model: object, path:str) -> list:
+    def visualise_classification(
+        self,
+        data: Namespace,
+        model: object,
+        path: str,
+    ) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -237,7 +242,6 @@ class Yellowbrick_Visualiser(
         """
         paths = []
         plots = deepcopy(self.plots)
-        files = deepcopy(self.files)
         yb_model = classifier(model)
         for name in classification_visualisers.keys():
             if name in plots.keys():
@@ -289,7 +293,7 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise_regression(self, data: Namespace, model: object, path:str) -> list:
+    def visualise_regression(self, data: Namespace, model: object, path: str) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -300,7 +304,6 @@ class Yellowbrick_Visualiser(
         """
         paths = []
         plots = deepcopy(self.plots)
-        files = deepcopy(self.files)
         yb_model = regressor(model)
         for name in regression_visualisers.keys():
             if name in plots.keys():
@@ -338,7 +341,7 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise_clustering(self, data: Namespace, model: object, path:str) -> list:
+    def visualise_clustering(self, data: Namespace, model: object, path: str) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -348,7 +351,6 @@ class Yellowbrick_Visualiser(
         :return: list of paths to the generated plots
         """
         plots = deepcopy(self.plots)
-        files = files = deepcopy(self.files)
         paths = []
         yb_model = clusterer(model)
         for name in clustering_visualisers.keys():
@@ -376,7 +378,12 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise_model_selection(self, data: Namespace, model: object, path:str) -> list:
+    def visualise_model_selection(
+        self,
+        data: Namespace,
+        model: object,
+        path: str,
+    ) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -459,7 +466,7 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise(self, path:str) -> list:
+    def visualise(self, path: str) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated

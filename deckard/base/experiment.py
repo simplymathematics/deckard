@@ -90,8 +90,6 @@ class Experiment(
             yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
             plots_document = "!Yellowbrick_Visualiser:\n" + str(self._asdict())
             vis = yaml.load(plots_document, Loader=yaml.Loader)
-            d1 = str(vis._asdict())
-            d2 = str(self._asdict())
         else:
             vis = None
         params.pop("data", None)
@@ -360,12 +358,22 @@ class Experiment(
         outs = self.save(**results, **files)
         if vis is not None:
             pass
-            plot_dict = vis.visualise(path = path) 
-            templating_string=params['plots'].pop("templating_string", "{{plot_divs}}")
-            output_html=params['plots'].pop("output_html", "report.html")
-            template=params['plots'].pop("template", "template.html")
+            plot_dict = vis.visualise(path=path)
+            templating_string = params["plots"].pop(
+                "templating_string",
+                "{{plot_divs}}",
+            )
+            output_html = params["plots"].pop("output_html", "report.html")
+            template = params["plots"].pop("template", "template.html")
             output_html = Path(path, output_html)
-            outs.append(vis.render(plot_dict = plot_dict, templating_string = templating_string, output_html = output_html, template = template))
+            outs.append(
+                vis.render(
+                    plot_dict=plot_dict,
+                    templating_string=templating_string,
+                    output_html=output_html,
+                    template=template,
+                ),
+            )
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs

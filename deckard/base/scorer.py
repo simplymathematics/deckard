@@ -261,4 +261,3 @@ if __name__ == "__main__":
     yaml.add_constructor("!Scorer:", Scorer)
     scorer = yaml.load("!Scorer:\n" + str(config), Loader=yaml.Loader)
     result_path = scorer()
-    
