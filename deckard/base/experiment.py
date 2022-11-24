@@ -16,7 +16,7 @@ from utils import factory
 
 from hashable import BaseHashable, my_hash
 import logging
-
+from sklearn.preprocessing import LabelBinarizer
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,11 @@ class Experiment(
         if isinstance(model, Model):
             loaded_model = model.load()
         start = process_time()
-        result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train)
+        try:
+            result = loaded_model.fit(loaded_data.X_train, loaded_data.y_train)
+        except:
+
+            result = loaded_model.fit()
         result = process_time() - start
         return loaded_model, loaded_data, result / len(loaded_data.X_train)
 

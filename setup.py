@@ -21,7 +21,7 @@ install_requires = [
     "pre-commit",
     "PyYAML",
     "pytest",
-    "tensorflow",
+    # "tensorflow",
     "validators",
     "yellowbrick",
 ]

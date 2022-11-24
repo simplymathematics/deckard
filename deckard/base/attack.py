@@ -11,6 +11,7 @@ from hashable import BaseHashable, my_hash
 from model import Model
 from pandas import DataFrame
 from utils import factory
+from parse import generate_object_from_tuple
 import numpy as np 
 import yaml
 from copy import deepcopy 
@@ -23,8 +24,8 @@ logger = logging.getLogger(__name__)
 class Attack(
     collections.namedtuple(
         typename="Attack",
-        field_names="data, model, attack, scorers, plots, files",
-        defaults=( {}, {}, {}),
+        field_names="init, generate, files ",
+        defaults=({},{}, {}),
         rename=True,
     ),
     BaseHashable,
@@ -95,8 +96,6 @@ class Attack(
     #     Runs attack.
     #     """
     #     data, model, attack, files, vis = self.load()
-    #     data = data.load()
-    #     model = model.load()
     #     path = Path(self.files['path'], my_hash(self._asdict()))
     #     adv_pred, adv_samples, time_dict = self.run_attack(data, model, attack, **generate_params)
     #     predictions = Path(path, predictions_file)
@@ -105,69 +104,33 @@ class Attack(
     #     pred_file = self.save_attack_predictions(predictions = adv_pred, filename = predictions)
     #     sampl_file = self.save_attack_samples(samples = adv_samples, filename = samples)
     #     time_file = self.save_time_dict(time_dict = time_dict, filename = times)
-    #     files.extend([pred_file, sampl_file])
-    #     if vis is not None:
-    #         from visualise import Yellowbrick_Visualiser
-    #         plot_dict = vis.visualise(path=path)
-    #         templating_string = params["plots"].pop(
-    #             "templating_string",
-    #             "{{plot_divs}}",
-    #         )
-    #         output_html = params["plots"].pop("output_html", "report.html")
-    #         template = params["plots"].pop("template", "template.html")
-    #         output_html = Path(path, output_html)
-    #         # outs.append(
-    #         #     vis.render(
-    #         #         plot_dict=plot_dict,
-    #         #         templating_string=templating_string,
-    #         #         output_html=output_html,
-    #         #         template=template,
-    #         #     ),
-    #         # )
-    #     for file in outs:
-    #         assert file.exists(), f"File {file} does not exist."
-    #     return outs
+    #     files.extend([pred_file, sampl_file, time_file])
+    #     
     #     return files
 
-    def load(self) -> tuple:
+    def load(self, model) -> tuple:
         """
         Loads data, model from the config file.
         :param config: str, path to config file.
         :returns: tuple(dict, object), (data, model).
         """
         params = deepcopy(self._asdict())
-        if params["data"] is not {}:
-            yaml.add_constructor("!Data", Data)
-            data_document = """!Data\n""" + str(dict(params["data"]))
-            data = yaml.load(data_document, Loader=yaml.Loader)
-        else:
-            raise ValueError("Data not specified in config file")
-        if params["model"] is not {}:
-            yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(params["model"]))
-            model = yaml.load(model_document, Loader=yaml.Loader)
-        else:
-            raise ValueError("Model not specified in config file")
-        data = data.load()
-        model = model.load(art = True)
-        if params["attack"] is not {}:
-            name = params['attack']['init'].pop("name")
-            params = params['attack']['init']
+
+        if params["init"] is not {}:
+            name = params['init'].pop("name")
+            params = params['init']
             try:
-                params.update({"classifier" : model})
-                attack = factory(name, **params)
+                attack = generate_object_from_tuple((name, params), model)
             except ValueError as e:
-                params.update({"estimator" : model})
-                attack = factory(name, **params)
+                attack = generate_object_from_tuple((name, params))
             except Exception as e:
+                raise e
         else:
             raise ValueError("Attack not specified correctly in config file.")
-        params.pop("data", None)
-        params.pop("model", None)
-        params.pop("plots", None)
+        generate = params.pop("generate", {})
         params.pop("attack", None)
         files = params.pop("files", None)
-        return (data, model, attack, files)
+        return attack, generate, files
 
 
     def run_attack(self, data, model, attack, targeted: bool = False, **kwargs) -> None:
@@ -177,15 +140,7 @@ class Attack(
         time_dict = {}
         assert hasattr(self, "attack"), "Attack not set"
         start = process_time()
-        if "AdversarialPatch" in str(type(self.attack)):
-            patches, masks = self.attack.generate(
-                data.X_test,data.y_test, **kwargs
-            )
-            adv_samples = attack.apply_patch(
-                data.X_test,
-                scale=attack._attack.scale_max,
-            )
-        elif targeted is False:
+        if targeted is False:
             adv_samples = attack.generate(data.X_test, **kwargs)
         else:
             adv_samples = attack.generate(
@@ -194,7 +149,7 @@ class Attack(
         end = process_time()
         time_dict.update({"adv_fit_time:": end - start})
         start = process_time()
-        adv = model.model.predict(adv_samples)
+        adv_pred = model.model.predict(adv_samples)
         end = process_time()
         adv = adv
         adv_samples = adv_samples
@@ -233,91 +188,30 @@ class Attack(
         return filename
 
 if "__main__" == __name__:
-
+    import pickle
     config = """
-    model:
-        init:
-            n_estimators : 100
-            name: sklearn.ensemble.RandomForestClassifier
-        files:
-            model_path : model
-            model_filetype : pickle
-        fit:
-            epochs: 1000
-            learning_rate: 1.0e-08
-            log_interval: 10
-    data:
-        sample:
-            shuffle : True
-            random_state : 42
-            train_size : 800
-            stratify : True
-        add_noise:
-            train_noise : 1
-            time_series : True
-        name: classification
-        files:
-            data_path : data
-            data_filetype : pickle
-        generate:
-            n_samples: 1000
-            n_features: 2
-            n_informative: 2
-            n_redundant : 0
-            n_classes: 2
-        sklearn_pipeline:
-            - sklearn.preprocessing.StandardScaler
-        transform:
-            sklearn.preprocessing.StandardScaler:
-                with_mean : true
-                with_std : true
-                X_train : true
-                X_test : true
-    attack:
-        init:
-            name: art.attacks.evasion.HopSkipJump
-            max_iter : 1000
-            init_eval : 1000
-            init_size : 10
-            
-    plots:
-        balance: balance
-        classification: classification
-        confusion: confusion
-        correlation: correlation
-        radviz: radviz
-        rank: rank
-    scorers:
-        accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-        f1-macro:
-            average: macro
-            name: sklearn.metrics.f1_score
-        f1-micro:
-            average: micro
-            name: sklearn.metrics.f1_score
-        f1-weighted:
-            average: weighted
-            name: sklearn.metrics.f1_score
-        precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-        recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
+    init:
+        name: art.attacks.evasion.HopSkipJump
+        max_iter : 1000
+        init_eval : 1000
+        init_size : 10
     files:
-        ground_truth_file: ground_truth.json
-        predictions_file: predictions.json
-        time_dict_file: time_dict.json
-        params_file: params.json
-        score_dict_file: scores.json
-        path: reports
+        adv_samples: adv_samples.json
+        adv_predictions : adv_predictions.json
+        adv_time_dict : adv_time_dict.json
+        attack_params : attack_params.json
 
     """
     from visualise import Yellowbrick_Visualiser
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Attack:", Attack)
-    experiment = yaml.load("!Attack:\n" + str(config), Loader=yaml.Loader)
-    data, model, attack, files = experiment.load()
+    attack = yaml.load("!Attack:\n" + str(config), Loader=yaml.Loader)
+    with open("/workspaces/deckard/deckard/base/model/2db00e44d0b930b24d549ef1307f177a.pickle", "rb") as f:
+        model = pickle.load(f)
+    with open("/workspaces/deckard/deckard/base/data/fdf009456bdd8bc7a3db8c2785157ef3 copy.pickle", "rb") as f:
+        data = pickle.load(f)
+    from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+    model = ScikitlearnClassifier(model)
+    loaded_attack, generate, files = attack.load(model)
+    adv_pred, adv_samples, time_dict = attack.run_attack(data, model, loaded_attack, **generate)

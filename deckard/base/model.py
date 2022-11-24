@@ -96,6 +96,8 @@ class Model(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
         )
+        print(filename)
+        input("inside model load")
         params = deepcopy(self.init)
         library = filetypes[self.files["model_filetype"]]
         if filename.exists():

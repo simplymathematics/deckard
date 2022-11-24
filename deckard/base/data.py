@@ -45,8 +45,9 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline",
+        field_names="name,  files, sample, generate, real, add_noise, transform, sklearn_pipeline",
         defaults=(
+            {},
             {},
             {},
             {},
@@ -89,8 +90,8 @@ class Data(
             big_X, big_y = self.read()
         # If the data is a pickle file
         elif (
-            isinstance(name, Path)
-            and name.exists()
+            isinstance(name, (Path, str))
+            and Path(name).exists()
             and (str(name).endswith(".pkl") or str(name).endswith(".pickle"))
         ):
             with open(name, "rb") as f:
