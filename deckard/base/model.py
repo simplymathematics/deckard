@@ -91,7 +91,7 @@ class Model(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self):
+    def load(self, art = False):
         filename = Path(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
@@ -157,34 +157,36 @@ class Model(
                 object_ = factory(name, **params)
                 i += 1
         # Build art pipeline
-        if len(self.art_pipeline) > 0:
+        if len(self.art_pipeline) > 0 or art is True:
             art = self.art_pipeline
-            preprocessor_defences = (
-                [
-                    load_from_tup(
-                        (
-                            art["preprocessor_defence"]["name"],
-                            art["preprocessor_defence"]["params"],
+            if "preprocessor_defence" in art:
+                preprocessor_defences = (
+                    [
+                        load_from_tup(
+                            (
+                                art["preprocessor_defence"]["name"],
+                                art["preprocessor_defence"]["params"],
+                            ),
                         ),
-                    ),
-                ]
-                if "preprocessor_defence" in art
-                else None
-            )
-            postprocessor_defences = (
-                [
-                    load_from_tup(
-                        (
-                            art["postprocessor_defence"]["name"],
-                            art["postprocessor_defence"]["params"],
+                    ]
+                )
+            else:
+                preprocessor_defences = None
+            if "postprocessor_defence" in art:
+                postprocessor_defences = (
+                    [
+                        load_from_tup(
+                            (
+                                art["postprocessor_defence"]["name"],
+                                art["postprocessor_defence"]["params"],
+                            ),
                         ),
-                    ),
-                ]
-                if "postprocessor_defence" in art
-                else None
-            )
+                    ]
+                )
+            else:
+                postprocessor_defences = None
             if library == "sklearn":
-                if is_regressor is False:
+                if is_regressor(model) is False:
                     model = ScikitlearnClassifier(
                         model,
                         postprocessing_defences=postprocessor_defences,
@@ -231,25 +233,23 @@ class Model(
                     preprocessing_defences=preprocessor_defences,
                     output="logits",
                 )
-            model = (
-                load_from_tup(
-                    (
-                        art["transformer_defence"]["name"],
-                        art["transformer_defence"]["params"],
-                    ),
-                    model,
-                )()
-                if "transformer_defence" in art
-                else model
-            )
-            model = (
-                load_from_tup(
-                    (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
-                    model,
-                )()
-                if "trainer_defence" in art
-                else model
-            )
+            if "transformer_defnce" in art:
+                model = (
+                    load_from_tup(
+                        (
+                            art["transformer_defence"]["name"],
+                            art["transformer_defence"]["params"],
+                        ),
+                        model,
+                    )()
+                )
+            if "trainer_defence" in art:
+                model = (
+                    load_from_tup(
+                        (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
+                        model,
+                    )()
+                )
         return model
 
     def save(self, model):

@@ -212,8 +212,8 @@ class Yellowbrick_Visualiser(
         paths = []
         plots = deepcopy(self.plots)
         yb_model = classifier(model)
-        for name in classification_visualisers.keys():
-            if name in plots.keys():
+        for name in classification_visualisers:
+            if name in plots:
                 visualiser = classification_visualisers[name]
                 if len(set(data.y_train)) > 2:
                     viz = visualiser(
