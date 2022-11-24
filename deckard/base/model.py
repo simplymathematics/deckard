@@ -17,9 +17,9 @@ from art.utils import get_file
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, is_regressor
 
-from utils import factory, load_from_tup
+from .utils import factory, load_from_tup
 from validators import url as is_url
-from hashable import BaseHashable, my_hash
+from .hashable import BaseHashable, my_hash
 from copy import deepcopy
 
 logger = logging.getLogger(__name__)

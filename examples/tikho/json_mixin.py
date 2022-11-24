@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from utils import factory
+from .utils import factory
 
 
 class JSONMixin:

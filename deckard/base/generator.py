@@ -20,7 +20,7 @@
 
 # # Scikit-learn:
 # from sklearn.model_selection import ParameterGrid
-# from hashable import BaseHashable, my_hash
+# from .hashable import BaseHashable, my_hash
 
 # SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
 # SUPPORTED_MODELS = (

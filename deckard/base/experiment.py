@@ -3,22 +3,19 @@ from pathlib import Path
 from time import process_time
 import numpy as np
 import yaml
-
+import pickle
+import logging
+from copy import deepcopy
+import pandas as pd
+from sklearn.preprocessing import LabelBinarizer
+from argparse import Namespace
 # from dvc.api import params_show
 # from dvclive import Live
 # from tqdm import tqdm
-from copy import deepcopy
-from data import Data
-from model import Model
-import pandas as pd
-import pickle
-from utils import factory
-
-from hashable import BaseHashable, my_hash
-import logging
-from sklearn.preprocessing import LabelBinarizer
-from argparse import Namespace
-
+from .utils import factory
+from .data import Data
+from .model import Model
+from .hashable import BaseHashable, my_hash
 logger = logging.getLogger(__name__)
 
 

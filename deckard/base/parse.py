@@ -10,9 +10,9 @@ import yaml
 from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm
 
-from data import Data
-from hashable import my_hash
-from scorer import Scorer
+from .data import Data
+from .hashable import my_hash
+from .scorer import Scorer
 
 # specify the logger
 logger = logging.getLogger(__name__)

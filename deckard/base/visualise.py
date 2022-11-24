@@ -32,10 +32,10 @@ from yellowbrick.classifier import (
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
 import collections
-from hashable import BaseHashable, my_hash
+from .hashable import BaseHashable, my_hash
 from copy import deepcopy
 import yaml
-from utils import factory
+from .utils import factory
 from data import Data
 from model import Model
 from experiment import Experiment

@@ -1,6 +1,7 @@
 import collections
 import logging
 import pickle
+from typing import Tuple
 from argparse import Namespace
 from copy import deepcopy
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
-from hashable import BaseHashable, my_hash
+
 from sklearn.datasets import (
     load_boston,
     load_diabetes,
@@ -20,10 +21,9 @@ from sklearn.datasets import (
     make_sparse_coded_signal,
 )
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
+from .utils import factory
+from .hashable import BaseHashable, my_hash
 
-
-from utils import factory
-from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -385,48 +385,3 @@ class Data(
         with open(filename, "wb") as f:
             pickle.dump(data, f)
         return Path(filename).resolve()
-
-
-if "__main__" == __name__:
-    data_document = """
-        sample:
-            shuffle : True
-            random_state : 42
-            train_size : 800
-            stratify : True
-        add_noise:
-            train_noise : 1
-            time_series : True
-        name: classification
-        files:
-            data_path : data
-            data_filetype : pickle
-        generate:
-            n_samples: 1000
-            n_features: 2
-            n_informative: 2
-            n_redundant : 0
-            n_classes: 2
-        sklearn_pipeline:
-            - sklearn.preprocessing.StandardScaler
-        transform:
-            sklearn.preprocessing.StandardScaler:
-                with_mean : true
-                with_std : true
-                X_train : true
-                X_test : true
-    """
-    yaml.add_constructor("!Data:", Data)
-    data_document_tag = """!Data:""" + data_document
-    # Test that data yaml loads correctly
-    data = yaml.load(data_document_tag, Loader=yaml.Loader)
-    data_ = data.load()
-    file1 = data.save(data_)
-    data2 = yaml.load(data_document_tag, Loader=yaml.Loader)
-    data2_ = data2.load()
-    file2 = data2.save(data2_)
-    assert "X_train" in data_
-    assert file1 == file2
-    assert data_.X_train.shape == data2_.X_train.shape
-    assert data_.X_test.shape == data2_.X_test.shape
-    assert data_.y_train.shape == data2_.y_train.shape

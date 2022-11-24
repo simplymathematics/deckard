@@ -2,11 +2,11 @@ import json
 import logging
 import os
 from pathlib import Path
-from hashable import BaseHashable, my_hash
+from .hashable import BaseHashable, my_hash
 import pandas as pd
 import yaml
 import collections
-from utils import factory
+from .utils import factory
 
 logger = logging.getLogger(__name__)
 

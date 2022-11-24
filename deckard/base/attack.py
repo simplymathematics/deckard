@@ -7,15 +7,14 @@ import json
 import numpy as np 
 import yaml
 from copy import deepcopy 
-
-
-from data import Data
-from experiment import Experiment
-from hashable import BaseHashable, my_hash
-from model import Model
 from pandas import DataFrame, Series
-from utils import factory
-from parse import generate_object_from_tuple
+
+from .data import Data
+from .experiment import Experiment
+from .hashable import BaseHashable, my_hash
+from .model import Model
+from .utils import factory
+from .parse import generate_object_from_tuple
 
 
 

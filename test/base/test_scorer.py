@@ -6,7 +6,6 @@ import warnings
 from tempfile import mkdtemp
 
 from deckard.base import Data, Experiment, Model, Scorer
-from deckard.base.scorer import CLASSIFIER_SCORERS, REGRESSOR_SCORERS
 from sklearn.metrics import (
     accuracy_score,
 )  # f1_score,; roc_curve,; balanced_accuracy_score,; precision_score,; recall_score,; make_scorer,
@@ -28,8 +27,6 @@ class testScorer(unittest.TestCase):
         self.ground_truth_file = os.path.join(self.path, "ground_truth.json")
         self.scores_file = os.path.join(self.path, "scores.json")
         self.config = {"ACC": accuracy_score}
-        self.cl_config = CLASSIFIER_SCORERS
-        self.re_config = REGRESSOR_SCORERS
         experiment(path=self.path, model_file=self.model_name)
 
     def test_scorer(self):
