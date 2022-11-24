@@ -20,7 +20,6 @@ from art.estimators.classification import (
 
 # Scikit-learn:
 from sklearn.model_selection import ParameterGrid
-from pathlib import Path
 from hashable import BaseHashable, my_hash
 
 SUPPORTED_DEFENSES = (Postprocessor, Preprocessor, Transformer, Trainer)
@@ -88,6 +87,7 @@ class Generator(BaseHashable):
         file = self.input
         config = (name, file)
         return config
+
     def generate_json(self, path: str, filename: str, name: str, params: dict):
         """
         Generates a json file for a given experiment.
@@ -170,29 +170,31 @@ class Generator(BaseHashable):
         assert len(df) == len(paths), "Error generating experiment list"
         return df
 
-def parse_entry(self, entry:dict) -> list:
-        """
-        Parses a yml file and returns a dictionary.
-        """
-        full_list = []
-        special_keys = {}
-        # print(entry)
-        # input("Press Enter to continue...")
-        for key, value in entry.items():
-            if isinstance(value, (tuple, float, int, str)):
-                special_keys[key] = value
-                entry.pop(key)       
-        grid = ParameterGrid(entry)
-        
-        for combination in grid:
-            if "special_keys" in locals():
-                for key, value in special_keys.items():
-                    combination[key] = value
-            name = combination.pop("name")
-            hash_ = my_hash({"name": name, "params": combination})
-            full_list.append((hash_, name, combination))
-        return full_list
-    
+
+def parse_entry(self, entry: dict) -> list:
+    """
+    Parses a yml file and returns a dictionary.
+    """
+    full_list = []
+    special_keys = {}
+    # print(entry)
+    # input("Press Enter to continue...")
+    for key, value in entry.items():
+        if isinstance(value, (tuple, float, int, str)):
+            special_keys[key] = value
+            entry.pop(key)
+    grid = ParameterGrid(entry)
+
+    for combination in grid:
+        if "special_keys" in locals():
+            for key, value in special_keys.items():
+                combination[key] = value
+        name = combination.pop("name")
+        hash_ = my_hash({"name": name, "params": combination})
+        full_list.append((hash_, name, combination))
+    return full_list
+
+
 def generate_tuple_list_from_yml(filename: str) -> list:
     """
     Parses a yml file, generates a an exhaustive list of parameter combinations for each entry in the list, and returns a single list of tuples.
@@ -217,15 +219,11 @@ def generate_tuple_list_from_yml(filename: str) -> list:
     for entry in yml_list:
         if not isinstance(entry, dict):
             raise ValueError("Error parsing yml file {}".format(filename))
-        
+
         full_list.extend(parse_entry(config))
     return full_list
 
-    
-    
-    
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     full_list = generate_tuple_list_from_yml("configs/data.yaml")
     print(full_list)
-

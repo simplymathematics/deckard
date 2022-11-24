@@ -62,4 +62,3 @@ if __name__ == "__main__":
     assert Path(
         new_path / "index.html",
     ).exists(), f"Plots were not rendered: {new_path / 'index.html'}"
-    

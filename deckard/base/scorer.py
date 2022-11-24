@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Union
 from hashable import BaseHashable, my_hash
 import numpy as np
 import pandas as pd
@@ -77,15 +76,23 @@ logger = logging.getLogger(__name__)
 #         self.scores = {}
 #         logger.info("Scorer {} initialized.".format(self.names))
 
-class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model, scorers, plots, files", defaults=({}, {}, {}, {}, {}), rename = True), BaseHashable):
+
+class Scorer(
+    collections.namedtuple(
+        typename="Scorer",
+        field_names="data, model, scorers, plots, files",
+        defaults=({}, {}, {}, {}, {}),
+        rename=True,
+    ),
+    BaseHashable,
+):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
-
 
     def read_data_from_json(self, json_file: str):
         """Read data from json file."""
         assert os.path.isfile(json_file), "File {} does not exist.".format(json_file)
-        data = pd.read_json(json_file, typ = "series")
+        data = pd.read_json(json_file, typ="series")
         return data
 
     def read_score_from_json(self, name: str, score_file: str):
@@ -106,7 +113,9 @@ class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model
         names = self.scorers.keys()
         scorers = [self.scorers[name] for name in names]
         for name, scorer in zip(names, scorers):
-            score = factory(scorer.pop("name"), **scorer, y_pred = predictions, y_true = ground_truth)
+            score = factory(
+                scorer.pop("name"), **scorer, y_pred=predictions, y_true=ground_truth
+            )
             scores[name] = score
         scores = pd.Series(scores).T
         return scores
@@ -124,7 +133,6 @@ class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model
         :param scorer: scorer to set
         """
         return str(self)
-
 
     def save_score(
         self,
@@ -172,7 +180,7 @@ class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model
         assert os.path.exists(score_file), "Score file not saved"
         return results
 
-    def save_results(self, scores:dict, filename:str, path: str = ".") -> None:
+    def save_results(self, scores: dict, filename: str, path: str = ".") -> None:
         """
         Saves all data to specified folder, using default filenames.
         """
@@ -213,30 +221,31 @@ class Scorer(collections.namedtuple( typename="Scorer", field_names="data, model
         self,
     ):
         """Score the predictions from the file and updates best score."""
-        path = self.files['path'] if "path" in self.files else "."
+        path = self.files["path"] if "path" in self.files else "."
         path = Path(path, my_hash(self._asdict()))
         ground_truth = self.files.pop("ground_truth_file", None)
         predictions = self.files.pop("predictions_file", None)
         score_dict = self.files.pop("score_dict_file", None)
-        
+
         predictions_file = Path(path, predictions)
         ground_truth_file = Path(path, ground_truth)
         scores_file = Path(path, score_dict)
         test = self.read_data_from_json(predictions_file)
         true = self.read_data_from_json(ground_truth_file)
         scores = self.score(true, test)
-        path = self.save_results(scores= scores, path=path, filename = scores_file)
+        path = self.save_results(scores=scores, path=path, filename=scores_file)
         return path.resolve()
 
     def __str__(self):
         string = "Scorer with scorers: "
         names = self.scorers.keys()
-        scorers = [scorers[name]['name'] for name in names]
+        scorers = [scorers[name]["name"] for name in names]
         for scorer, score in zip(names, scorers):
             string += "{}: {}".format(scorer, score)
         return string
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     config = """
     model:
         init:
@@ -309,7 +318,7 @@ if __name__ == '__main__':
         params_file: params.json
         score_dict_file: scores.json
         path: reports
-        
+
     """
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -317,4 +326,3 @@ if __name__ == '__main__':
     scorer = yaml.load("!Scorer:\n" + str(config), Loader=yaml.Loader)
     result_path = scorer()
     print(result_path)
-

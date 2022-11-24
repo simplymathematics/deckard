@@ -18,7 +18,14 @@ from sklearn.datasets import (
     make_sparse_coded_signal,
 )
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
-from yellowbrick.features import RadViz, Rank1D, Rank2D, PCA, Manifold, ParallelCoordinates
+from yellowbrick.features import (
+    RadViz,
+    Rank1D,
+    Rank2D,
+    PCA,
+    Manifold,
+    ParallelCoordinates,
+)
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 
 generated = {
@@ -45,40 +52,39 @@ class Data(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-
     def load(self):
         """
         Load data from sklearn.datasets, sklearn.datasets.make_*, csv, json, npz, or pickle as specified in params.yaml
         :return: Namespace object with X_train, X_test, y_train, y_test
         """
         # If the data is among the sklearn "real" datasets
-        if self.params['name'] in real:
-            big_X, big_y = real[self.params['name']](return_X_y=True)
+        if self.params["name"] in real:
+            big_X, big_y = real[self.params["name"]](return_X_y=True)
         # If the data is among the sklearn "generated" datasets
-        elif self.params['name'] in generated:
+        elif self.params["name"] in generated:
             assert self.generated is not None, ValueError(
                 "generated datasets require the generated parameter",
             )
             kwargs = self.generated
-            big_X, big_y = generated[self.params['name']](**kwargs)
+            big_X, big_y = generated[self.params["name"]](**kwargs)
         # If the data is a csv file
         elif (
-            isinstance(self.params['name'], Path)
-            and self.params['name'].exists()
-            and str(self.params['name']).endswith(".csv")
+            isinstance(self.params["name"], Path)
+            and self.params["name"].exists()
+            and str(self.params["name"]).endswith(".csv")
         ):
             assert "target" in self.params, "target column must be specified"
-            df = pd.read_csv(self.params['name'])
+            df = pd.read_csv(self.params["name"])
             big_X = df.drop(self.params["target"], axis=1)
             big_y = df[self.params["target"]]
         # If the data is a json
         elif (
-            isinstance(self.params['name'], Path)
-            and self.params['name'].exists()
-            and str(self.params['name']).endswith(".json")
+            isinstance(self.params["name"], Path)
+            and self.params["name"].exists()
+            and str(self.params["name"]).endswith(".json")
         ):
             assert "target" in self.params, "target column must be specified"
-            data = pd.read_json(self.params['name'])
+            data = pd.read_json(self.params["name"])
             if "X_train" in data:
                 assert (
                     hasattr(data, "y_train")
@@ -105,11 +111,11 @@ class Data(
                 big_y = data.y
         # If the data is a numpy npz file
         elif (
-            isinstance(self.params['name'], Path)
-            and self.params['name'].exists()
-            and str(self.params['name']).endswith(".npz")
+            isinstance(self.params["name"], Path)
+            and self.params["name"].exists()
+            and str(self.params["name"]).endswith(".npz")
         ):
-            data = np.load(self.params['name'])
+            data = np.load(self.params["name"])
             if "X_train" in data:
                 assert (
                     hasattr(data, "y_train")
@@ -136,11 +142,11 @@ class Data(
                 big_y = data.y
         # If the data is a pickle file
         elif (
-            isinstance(self.params['name'], Path)
-            and self.params['name'].exists()
-            and str(self.params['name']).endswith(".pkl")
+            isinstance(self.params["name"], Path)
+            and self.params["name"].exists()
+            and str(self.params["name"]).endswith(".pkl")
         ):
-            with open(self.params['name'], "rb") as f:
+            with open(self.params["name"], "rb") as f:
                 data = pickle.load(f)
             if "X_train" in data:
                 assert (
@@ -252,7 +258,14 @@ class Data(
             pickle.dump(data, f)
         return Path(filename).resolve()
 
-    def visualize(self, data: Namespace, files: dict, plots: dict, classes:list = None, features:list = None):
+    def visualize(
+        self,
+        data: Namespace,
+        files: dict,
+        plots: dict,
+        classes: list = None,
+        features: list = None,
+    ):
         y_train = data.y_train
         X_train = data.X_train
         classes = set(y_train) if classes is None else classes
@@ -311,7 +324,9 @@ class Data(
                 visualizer.show(Path(files["path"], plots["manifold"]))
                 paths.append(Path(files["path"], plots["manifold"]))
             if "parallel" in plots:
-                visualizer = ParallelCoordinates(classes = classes, features = list(range(features)))
+                visualizer = ParallelCoordinates(
+                    classes=classes, features=list(range(features)),
+                )
                 visualizer.fit(X_train, y_train)
                 visualizer.show(Path(files["path"], plots["parallel"]))
                 paths.append(Path(files["path"], plots["parallel"]))

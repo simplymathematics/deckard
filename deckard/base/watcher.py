@@ -12,8 +12,8 @@ class WatcherConfig(
     ),
     BaseHashable,
 ):
-    
-    
+
+
 class JSONHandler(watchdog.events.PatternMatchingEventHandler):
     def __init__(self, regex, filename, recursive = True, **kwargs):
         # Set the patterns for PatternMatchingEventHandler
@@ -104,7 +104,7 @@ class JSONHandler(watchdog.events.PatternMatchingEventHandler):
         big['ground_truth'] = big['ground_truth'].apply(lambda x: f'<a href="{x}">Ground Truth</a>')
         big['params'] = big['params'].apply(lambda x: f'<a href="{x}">Params</a>')
         big['live'] = big['live'].apply(lambda x: f'<a href="{x}">Live Report</a>')
-        
+
         big.index = big['link']
         del big['link']
         return big
@@ -114,7 +114,7 @@ class JSONHandler(watchdog.events.PatternMatchingEventHandler):
     def transform_json(directory = "experiments", met_file = "**/metrics.json", html_file = "**/report.html", pred_file = "**/predictions.json", param_file = "**/params.json"):
         # progress = calculate_progress(TOTAL, QUEUE)
         df = merge_all_results(directory, met_file, html_file, pred_file, param_file)
-        
+
         print(f"Index updated at {Path(directory, 'index.html')}")
         # print(f'{progress["achieved"]*100:.2f} percent of experiments completed!'.format(progress["achieved"] * 100))
         return df

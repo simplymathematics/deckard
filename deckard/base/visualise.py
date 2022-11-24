@@ -1,19 +1,52 @@
-from yellowbrick.classifier import (classification_report, confusion_matrix, roc_auc, )
+from yellowbrick.classifier import (
+    classification_report,
+    confusion_matrix,
+    roc_auc,
+)
 from yellowbrick.contrib.wrapper import classifier
+
 # from yellowbrick.exceptions import ModelError
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from yellowbrick.features import RadViz, Rank1D, Rank2D, PCA, Manifold, ParallelCoordinates
+from yellowbrick.features import (
+    RadViz,
+    Rank1D,
+    Rank2D,
+    PCA,
+    Manifold,
+    ParallelCoordinates,
+)
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 from yellowbrick.regressor import prediction_error, residuals_plot
 from yellowbrick.regressor.alphas import alphas
-from yellowbrick.features import (PCA, Manifold, ParallelCoordinates, RadViz,
-                                  Rank1D, Rank2D)
+from yellowbrick.features import (
+    PCA,
+    Manifold,
+    ParallelCoordinates,
+    RadViz,
+    Rank1D,
+    Rank2D,
+)
 from yellowbrick.target import ClassBalance, FeatureCorrelation
-from yellowbrick.cluster import kelbow_visualizer, silhouette_visualizer, intercluster_distance
-from yellowbrick.model_selection import learning_curve, validation_curve, cross_validation, feature_importances, rfecv, dropping_curve
-from yellowbrick.classifier import (classification_report, confusion_matrix, roc_auc, )
+from yellowbrick.cluster import (
+    kelbow_visualizer,
+    silhouette_visualizer,
+    intercluster_distance,
+)
+from yellowbrick.model_selection import (
+    learning_curve,
+    validation_curve,
+    cross_validation,
+    feature_importances,
+    rfecv,
+    dropping_curve,
+)
+from yellowbrick.classifier import (
+    classification_report,
+    confusion_matrix,
+    roc_auc,
+)
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer, wrap
 from sklearn.model_selection import StratifiedKFold
 from argparse import Namespace
@@ -30,38 +63,38 @@ import logging
 classification_visualisers = {
     "confusion": confusion_matrix,
     "classification": classification_report,
-    "roc_auc": roc_auc
+    "roc_auc": roc_auc,
 }
 
-regression_visualisers = { 
-    "error" : prediction_error,
-    "residuals" : residuals_plot,
-    "alphas" : alphas
+regression_visualisers = {
+    "error": prediction_error,
+    "residuals": residuals_plot,
+    "alphas": alphas,
 }
 
 clustering_visualisers = {
-    "silhouette" : silhouette_visualizer,
-    "elbow" : kelbow_visualizer,
-    "intercluster" : intercluster_distance   
+    "silhouette": silhouette_visualizer,
+    "elbow": kelbow_visualizer,
+    "intercluster": intercluster_distance,
 }
 # elbow requires k
 model_selection_visualisers = {
-    "validation" : validation_curve,
-    "learning" : learning_curve,
-    "cross_validation" : cross_validation,
-    "feature_importances" : feature_importances,
-    "recursive" : rfecv,
-    "dropping_curve" : dropping_curve
+    "validation": validation_curve,
+    "learning": learning_curve,
+    "cross_validation": cross_validation,
+    "feature_importances": feature_importances,
+    "recursive": rfecv,
+    "dropping_curve": dropping_curve,
 }
 
 data_visualisers = {
-    "rank1d" : Rank1D,
-    "rank2d" : Rank2D,
-    "parallel" : ParallelCoordinates,
-    "radviz" : RadViz,
-    "manifold" : Manifold,
-    "balance" : ClassBalance,
-    "correlation" : FeatureCorrelation,
+    "rank1d": Rank1D,
+    "rank2d": Rank2D,
+    "parallel": ParallelCoordinates,
+    "radviz": RadViz,
+    "manifold": Manifold,
+    "balance": ClassBalance,
+    "correlation": FeatureCorrelation,
 }
 
 supported_visualisers = [data_visualisers.keys()]
@@ -72,26 +105,28 @@ supported_visualisers.extend(regression_visualisers.keys())
 supported_visualisers.extend(classification_visualisers.keys())
 
 supported_visualisers_dict = {
-    "data" : data_visualisers,
-    "model" : model_selection_visualisers,
-    "classification" : classification_visualisers, 
-    "clustering" : clustering_visualisers,
-    "regression" : regression_visualisers,
+    "data": data_visualisers,
+    "model": model_selection_visualisers,
+    "classification": classification_visualisers,
+    "clustering": clustering_visualisers,
+    "regression": regression_visualisers,
 }
 
 logger = logging.getLogger(__name__)
+
 
 class Yellowbrick_Visualiser(
     collections.namedtuple(
         typename="YellowBrick_Visualiser",
         field_names="data, model, plots, files, scorers",
         defaults=({}),
-    ), BaseHashable,
+    ),
+    BaseHashable,
 ):
     def __new__(cls, loader, node):
-        """ Generates a new Data object from a YAML node """
+        """Generates a new Data object from a YAML node"""
         return super().__new__(cls, **loader.construct_mapping(node))
-    
+
     def load(self) -> tuple:
         """
         Loads data, model from the config file.
@@ -99,21 +134,21 @@ class Yellowbrick_Visualiser(
         :returns: tuple(dict, object), (data, model).
         """
         params = deepcopy(self._asdict())
-        if params['data'] is not {}:
+        if params["data"] is not {}:
             yaml.add_constructor("!Data", Data)
-            data_document = """!Data\n""" + str(dict(params['data']))
+            data_document = """!Data\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
-            
+
         else:
             raise ValueError("Data not specified in config file")
-        if params['model'] is not {}:
+        if params["model"] is not {}:
             yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(params['model']))
+            model_document = """!Model\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
-            
+
         else:
             model = {}
-        if params['plots'] is not {}:
+        if params["plots"] is not {}:
             yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
             plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
             vis = yaml.load(plots_document, Loader=yaml.Loader)
@@ -125,8 +160,7 @@ class Yellowbrick_Visualiser(
         files = params.pop("files", None)
         return (data, model, files, vis)
 
-
-    def visualise_data( self, data:Namespace) -> list:
+    def visualise_data(self, data: Namespace) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -202,17 +236,15 @@ class Yellowbrick_Visualiser(
                 visualiser.show(Path(files["path"], plots["manifold"]))
                 paths.append(Path(files["path"], plots["manifold"]))
             if "parallel" in plots:
-                visualiser = ParallelCoordinates(classes = classes, features = features)
+                visualiser = ParallelCoordinates(classes=classes, features=features)
                 visualiser.fit(X_train, y_train)
                 visualiser.show(Path(files["path"], plots["parallel"]))
                 paths.append(Path(files["path"], plots["parallel"]))
                 plots.pop("parallel")
                 plt.gcf().clear()
         return paths
-    
 
-
-    def visualise_classification(self, data:Namespace, model:object) -> list:
+    def visualise_classification(self, data: Namespace, model: object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -225,7 +257,7 @@ class Yellowbrick_Visualiser(
         plots = dict(self.plots)
         files = dict(self.files)
         path = files["path"]
-        yb_model = classifier(model)        
+        yb_model = classifier(model)
         for name in classification_visualisers.keys():
             if name in plots.keys():
                 visualiser = classification_visualisers[name]
@@ -239,17 +271,19 @@ class Yellowbrick_Visualiser(
                 elif len(set(data.y_train)) == 2:
                     try:
                         viz = visualiser(
-                        yb_model,
-                        X_train=data.X_train,
-                        y_train=data.y_train,
-                        binary = True
-                    )
+                            yb_model,
+                            X_train=data.X_train,
+                            y_train=data.y_train,
+                            binary=True,
+                        )
                     except TypeError as e:
-                        logger.warning(f"Failed due to error {e}. Trying without binary")
+                        logger.warning(
+                            f"Failed due to error {e}. Trying without binary",
+                        )
                         viz = visualiser(
                             yb_model,
-                            X_train = data.X_train,
-                            y_train = data.y_train,
+                            X_train=data.X_train,
+                            y_train=data.y_train,
                         )
                 else:
                     viz = visualiser(
@@ -259,12 +293,20 @@ class Yellowbrick_Visualiser(
                         classes=[0],
                     )
                 viz.show(outpath=Path(path, plots[name]))
-                assert Path(path, str(plots[name])+str(plots.pop("filetype", ".png"))).is_file(), f"File {name} does not exist."
-                paths.append(str(Path(path, str(plots[name])+str(plots.pop("filetype", ".png")))))
+                assert Path(
+                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                ).is_file(), f"File {name} does not exist."
+                paths.append(
+                    str(
+                        Path(
+                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                        ),
+                    ),
+                )
                 plt.gcf().clear()
         return paths
 
-    def visualise_regression(self, data:Namespace, model:object) -> list:
+    def visualise_regression(self, data: Namespace, model: object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -277,36 +319,42 @@ class Yellowbrick_Visualiser(
         plots = dict(self.plots)
         files = dict(self.files)
         path = files["path"]
-        yb_model = regressor(model)        
+        yb_model = regressor(model)
         for name in regression_visualisers.keys():
             if name in plots.keys():
                 visualiser = regression_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
                 try:
                     viz = visualiser(
-                            yb_model,
-                            X_train=data.X_train,
-                            y_train=data.y_train,
-                            X_test=data.X_test,
-                            y_test=data.y_test,
-                            **params    
-                        )
-                except TypeError as e:
-                    logger.warning(f"Visualiser {name} failed with error {e}. Trying without test data.")
-                    viz = visualiser(
                         yb_model,
-                        X_train = data.X_train,
-                        y_train = data.y_train,
-                        **params
+                        X_train=data.X_train,
+                        y_train=data.y_train,
+                        X_test=data.X_test,
+                        y_test=data.y_test,
+                        **params,
+                    )
+                except TypeError as e:
+                    logger.warning(
+                        f"Visualiser {name} failed with error {e}. Trying without test data.",
+                    )
+                    viz = visualiser(
+                        yb_model, X_train=data.X_train, y_train=data.y_train, **params
                     )
                 viz.show(outpath=Path(path, plots[name]))
-                assert Path(path, str(plots[name])+str(plots.pop("filetype", ".png"))).is_file(), f"File {name} does not exist."
-                paths.append(str(Path(path, str(plots[name])+str(plots.pop("filetype", ".png")))))
+                assert Path(
+                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                ).is_file(), f"File {name} does not exist."
+                paths.append(
+                    str(
+                        Path(
+                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                        ),
+                    ),
+                )
                 plt.gcf().clear()
         return paths
 
-    
-    def visualise_clustering(self, data:Namespace, model:object) -> list:
+    def visualise_clustering(self, data: Namespace, model: object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -316,7 +364,7 @@ class Yellowbrick_Visualiser(
         :return: list of paths to the generated plots
         """
         plots = dict(self.plots)
-        files =files = dict(self.files)
+        files = files = dict(self.files)
         path = files["path"]
         paths = []
         yb_model = clusterer(model)
@@ -324,20 +372,26 @@ class Yellowbrick_Visualiser(
             if name in plots.keys():
                 visualiser = regression_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
-                if  name == "elbow":
-                    assert "k" in params, f"Elbow visualiser requires k parameter, specify by making k a parameter of the dictionary named {name} in the config file."
-                viz = visualiser(
-                        yb_model,
-                        X_train=data.X_train,
-                        **params    
-                    )
+                if name == "elbow":
+                    assert (
+                        "k" in params
+                    ), f"Elbow visualiser requires k parameter, specify by making k a parameter of the dictionary named {name} in the config file."
+                viz = visualiser(yb_model, X_train=data.X_train, **params)
                 viz.show(outpath=Path(path, plots[name]))
-                assert Path(path, str(plots[name])+str(plots.pop("filetype", ".png"))).is_file(), f"File {name} does not exist."
-                paths.append(str(Path(path, str(plots[name])+str(plots.pop("filetype", ".png")))))
+                assert Path(
+                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                ).is_file(), f"File {name} does not exist."
+                paths.append(
+                    str(
+                        Path(
+                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                        ),
+                    ),
+                )
                 plt.gcf().clear()
         return paths
-    
-    def visualise_model_selection(self, data:Namespace, model:object) -> list:
+
+    def visualise_model_selection(self, data: Namespace, model: object) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -352,55 +406,64 @@ class Yellowbrick_Visualiser(
         cv = plots.pop("cv", None)
         if scorer is None:
             if all([isinstance(item, int) for item in list(set(data.y_train))]):
-                scorer = 'f1_weighted'
+                scorer = "f1_weighted"
             else:
-                scorer = 'mse'
+                scorer = "mse"
         if cv is None:
-            cv = {
-                "name" : "sklearn.model_selection.StratifiedKFold",
-                "n_splits" : 5
-            }    
-        assert "name" in cv, f"Cross validation method must be specified. Your config is {cv}."
-        cv = factory(cv.pop("name"), )
+            cv = {"name": "sklearn.model_selection.StratifiedKFold", "n_splits": 5}
+        assert (
+            "name" in cv
+        ), f"Cross validation method must be specified. Your config is {cv}."
+        cv = factory(
+            cv.pop("name"),
+        )
         for name in model_selection_visualisers.keys():
             if name in plots.keys():
                 visualiser = model_selection_visualiser[key]
                 params = plots[name] if isinstance(plots[name], dict) else {}
                 if "cross" or "recursive" or "validation" in name:
                     if "validation" in name:
-                        assert "param_name" in params, "Validation curve visualiser requires param_name parameter."
-                        assert "params_range" in params, "Validation curve visualiser requires params_range parameter."
+                        assert (
+                            "param_name" in params
+                        ), "Validation curve visualiser requires param_name parameter."
+                        assert (
+                            "params_range" in params
+                        ), "Validation curve visualiser requires params_range parameter."
                     viz = visualiser(
                         yb_model,
-                        X = data.X_train,
-                        y = data.y_train,
-                        cv = cv,
-                        scoring = scorer,
-                        **params
+                        X=data.X_train,
+                        y=data.y_train,
+                        cv=cv,
+                        scoring=scorer,
+                        **params,
                     )
                 elif "dropping" or "feature_importances" in name:
                     viz = visualiser(
                         yb_model,
-                        X = X_train,
-                        y = y_train,   
+                        X=X_train,
+                        y=y_train,
                     )
                 elif "learning" in name:
                     viz = visualiser(
-                        yb_model,
-                        X = X_train,
-                        y = y_train,
-                        scoring = scorer,
-                        **params
+                        yb_model, X=X_train, y=y_train, scoring=scorer, **params
                     )
                 else:
                     raise ValueError("Unknown model selection visualiser.")
                 viz.show(outpath=Path(path, plots[name]))
-                assert Path(path, str(plots[name])+str(plots.pop("filetype", ".png"))).is_file(), f"File {name} does not exist."
-                paths.append(str(Path(path, str(plots[name])+str(plots.pop("filetype", ".png")))))
+                assert Path(
+                    path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                ).is_file(), f"File {name} does not exist."
+                paths.append(
+                    str(
+                        Path(
+                            path, str(plots[name]) + str(plots.pop("filetype", ".png")),
+                        ),
+                    ),
+                )
                 plt.gcf().clear()
         return paths
-        
-    def visualise(self)->list:
+
+    def visualise(self) -> list:
         """
         Visualise classification results according to the configuration file.
         :param self.plots: dict of plots to be generated
@@ -424,10 +487,24 @@ class Yellowbrick_Visualiser(
         paths.extend(cla_plots)
         paths.extend(clu_plots)
         for path in paths:
-            assert Path(path).is_file() or Path(str(path) + ".png").is_file(), f"File {path} does not exist."
-        return {"data": data_plots, "model": model_plots, "classification": cla_plots, "regression": reg_plots, "clustering": clu_plots}
-        
-    def render(self, plot_dict, template = "template.html", templating_string ="{{data_plots}}", output_html="index.html") -> Path:
+            assert (
+                Path(path).is_file() or Path(str(path) + ".png").is_file()
+            ), f"File {path} does not exist."
+        return {
+            "data": data_plots,
+            "model": model_plots,
+            "classification": cla_plots,
+            "regression": reg_plots,
+            "clustering": clu_plots,
+        }
+
+    def render(
+        self,
+        plot_dict,
+        template="template.html",
+        templating_string="{{data_plots}}",
+        output_html="index.html",
+    ) -> Path:
         """
         Renders a list of paths to plots into a HTML file.
         :param plot_dict: dict of paths to plots
@@ -441,18 +518,21 @@ class Yellowbrick_Visualiser(
             template = f.read()
         for key in plot_dict():
             new_key = f"<h2> {key.capitalize()} Plots </h2>"
-            assert isinstance(plot_dict[key], list), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
+            assert isinstance(
+                plot_dict[key], list,
+            ), f"Plot dictionary must be a list of paths to plots. Your config is {plot_dict}."
             for plot_file in plot_dict[key]:
-                assert Path(plot_file).exists(), f"Unable to render. {plot_file} does not exist."
+                assert Path(
+                    plot_file,
+                ).exists(), f"Unable to render. {plot_file} does not exist."
                 new_value = f"<img src {plot_file} alt {key} />"
                 new_plot_dict[new_key] = new_value
         template = template.replace(templating_string, str(new_plot_dict["data"]))
-        assert "path" in self.files, f"Path to save the HTML file must be specified. Your config is {self.files}."
+        assert (
+            "path" in self.files
+        ), f"Path to save the HTML file must be specified. Your config is {self.files}."
         output_file = Path(self.files["path"], my_hash(self._asdict()), output_html)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open("w") as f:
             f.write(template)
         return template_file.resolve()
-        
-
-            

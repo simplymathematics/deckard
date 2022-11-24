@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import tempfile
@@ -30,7 +29,6 @@ class testData(unittest.TestCase):
         # Test that data yaml loads correctly
         self.data = yaml.load(self.data_document, Loader=yaml.Loader)
 
-
     def test_hash(self):
         data1 = yaml.load(self.data_document, Loader=yaml.Loader)
         data2 = yaml.load(self.data_document, Loader=yaml.Loader)
@@ -59,7 +57,6 @@ class testData(unittest.TestCase):
         self.assertIsInstance(data.y_test, np.ndarray)
         self.assertEqual(data.X_train.shape[0], data.y_train.shape[0])
 
-
     def test_sample_data(self):
         document = """
         !Data:
@@ -75,10 +72,11 @@ class testData(unittest.TestCase):
         data2 = yaml.load(document, Loader=yaml.Loader)
         self.assertNotEqual(self.data, data2)
 
-
     def test_save_data(self):
         data = self.data
-        data.save(filename=os.path.join(self.path, self.filename), data = self.data.load())
+        data.save(
+            filename=os.path.join(self.path, self.filename), data=self.data.load(),
+        )
         self.assertTrue(os.path.exists(os.path.join(self.path, self.filename)))
 
     def tearDown(self):

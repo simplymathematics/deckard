@@ -1,9 +1,8 @@
 from hashlib import md5
 from numpy import ndarray
-from typing import Callable
 
 
-def my_hash(obj:dict):
+def my_hash(obj: dict):
     new = {}
     sorted_keys = list(obj.keys())
     sorted_keys.sort()

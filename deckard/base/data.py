@@ -10,16 +10,23 @@ import numpy as np
 import pandas as pd
 import yaml
 from hashable import BaseHashable, my_hash
-from sklearn.datasets import (load_boston, load_diabetes, load_iris, load_wine,
-                              make_blobs, make_classification, make_moons,
-                              make_sparse_coded_signal)
+from sklearn.datasets import (
+    load_boston,
+    load_diabetes,
+    load_iris,
+    load_wine,
+    make_blobs,
+    make_classification,
+    make_moons,
+    make_sparse_coded_signal,
+)
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
 
 
 from utils import factory
-from typing import Tuple, List
-logger = logging.getLogger(__name__)
+from typing import Tuple
 
+logger = logging.getLogger(__name__)
 
 
 generate = {
@@ -40,21 +47,32 @@ class Data(
     collections.namedtuple(
         typename="Data",
         field_names="name, sample, files, generate, real, add_noise, transform, sklearn_pipeline",
-        defaults=({},{},{},{},[],),
-    ), BaseHashable,
+        defaults=(
+            {},
+            {},
+            {},
+            {},
+            [],
+        ),
+    ),
+    BaseHashable,
 ):
     def __new__(cls, loader, node):
-        """ Generates a new Data object from a YAML node """
+        """Generates a new Data object from a YAML node"""
         return super().__new__(cls, **loader.construct_mapping(node))
-
 
     def load(self):
         """
         Load data from sklearn.datasets, sklearn.datasets.make_*, csv, json, npz, or pickle as specified in params.yaml
         :return: Namespace object with X_train, X_test, y_train, y_test
         """
-        assert "name" in self._asdict(), "Name of the dataset is not specified in params.yaml"
-        filename = Path(self.files['data_path'],  my_hash(self._asdict()) + "." + self.files['data_filetype'])
+        assert (
+            "name" in self._asdict()
+        ), "Name of the dataset is not specified in params.yaml"
+        filename = Path(
+            self.files["data_path"],
+            my_hash(self._asdict()) + "." + self.files["data_filetype"],
+        )
         params = deepcopy(self._asdict())
         if filename.exists():
             logger.info(f"Loading data from {filename}")
@@ -63,7 +81,12 @@ class Data(
             name = params.pop("name")
         if name in real or name in generate:
             big_X, big_y = self.sklearn_load()
-        elif isinstance(name, Path) and name.exists() and not str(name).endswith(".pkl") and not str(name).endswith(".pickle"):
+        elif (
+            isinstance(name, Path)
+            and name.exists()
+            and not str(name).endswith(".pkl")
+            and not str(name).endswith(".pickle")
+        ):
             big_X, big_y = self.read()
         # If the data is a pickle file
         elif (
@@ -102,8 +125,10 @@ class Data(
             raise ValueError(f"Unknown dataset: {name}")
         samples = params.pop("sample", {})
         if samples is not {} and "X_test" not in locals():
-            X_train, X_test, y_train, y_test = self.sampler(X = big_X, y = big_y)
-        X_train, X_test, y_train, y_test = self.add_noise_to_data(X_train, X_test, y_train, y_test)
+            X_train, X_test, y_train, y_test = self.sampler(X=big_X, y=big_y)
+        X_train, X_test, y_train, y_test = self.add_noise_to_data(
+            X_train, X_test, y_train, y_test,
+        )
         add_noise = params.pop("add_noise", {})
         ns = Namespace(
             X_train=X_train,
@@ -113,10 +138,10 @@ class Data(
         )
         ns = self.run_sklearn_pipeline(ns)
         return ns
-    
+
     def sklearn_load(self) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Load  data from sklearn.datasets.make_* or sklearn.datasets.load_*, according to the name specified in params.yaml and the entry in the generate or real dictionary. 
+        Load  data from sklearn.datasets.make_* or sklearn.datasets.load_*, according to the name specified in params.yaml and the entry in the generate or real dictionary.
         :param self.name: Name of the dataset to load
         :return: Tuple of X, y
         """
@@ -131,7 +156,7 @@ class Data(
             )
             big_X, big_y = generate[name](**self.generate)
         return (big_X, big_y)
-    
+
     def read(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Read data from csv, json, npz, or pickle as specified in params.yaml
@@ -140,17 +165,13 @@ class Data(
         """
         name = self.name
         # If the data is a csv file
-        if (
-            str(name).endswith(".csv")
-        ):
+        if str(name).endswith(".csv"):
             assert "target" in params, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
         # If the data is a json
-        elif (
-            str(name).endswith(".json")
-        ):
+        elif str(name).endswith(".json"):
             assert "target" in params, "target column must be specified"
             data = pd.read_json(name)
             assert hasattr(data, "X") and hasattr(data, "y"), ValueError(
@@ -159,21 +180,23 @@ class Data(
             big_X = data.X
             big_y = data.y
         # If the data is a numpy npz file
-        elif (
-            isinstance(name, Path)
-            and name.exists()
-            and str(name).endswith(".npz")
-        ):
+        elif isinstance(name, Path) and name.exists() and str(name).endswith(".npz"):
             data = np.load(name)
-            assert (hasattr(data, "y"))
+            assert hasattr(data, "y")
             big_y = data.y
             big_X = data.X
         else:
             raise ValueError(f"Unknown datatype: {name.split('.S')[-1]}")
-        
+
         return big_X, big_y
-    
-    def add_noise_to_data(self, X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+
+    def add_noise_to_data(
+        self,
+        X_train: np.ndarray,
+        X_test: np.ndarray,
+        y_train: np.ndarray,
+        y_test: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Adds noise to the data according to the parameters specified in params.yaml
         :param X_train (np.ndarray): Training data
@@ -203,17 +226,23 @@ class Data(
             elif isinstance(y_train_noise, float):
                 y_train += np.random.normal(0, y_train_noise, y_train.shape)
             else:
-                raise TypeError(f"y_train_noise must be int or float, not {type(y_train_noise)}")
-        if y_test_noise !=0:
+                raise TypeError(
+                    f"y_train_noise must be int or float, not {type(y_train_noise)}",
+                )
+        if y_test_noise != 0:
             if isinstance(y_test_noise, int):
                 y_test += np.random.randint(0, y_test_noise, y_test.shape)
             elif isinstance(y_test_noise, float):
                 y_test += np.random.normal(0, y_test_noise, y_test.shape)
             else:
-                raise TypeError(f"y_test_noise must be int or float, not {type(y_test_noise)}")
-        return X_train, X_test, y_train, y_test        
+                raise TypeError(
+                    f"y_test_noise must be int or float, not {type(y_test_noise)}",
+                )
+        return X_train, X_test, y_train, y_test
 
-    def sklearn_transform(self, data:Namespace, transform:dict = None, name:str = "") -> Namespace:
+    def sklearn_transform(
+        self, data: Namespace, transform: dict = None, name: str = "",
+    ) -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
         :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
@@ -239,22 +268,22 @@ class Data(
         if X_train_bool or X_test_bool is True:
             transformer.fit(X_train, y_train)
             if X_train_bool is True:
-                new_X_train = transformer.transform(X_train, copy = True)
-                new_data.X_train = new_X_train 
+                new_X_train = transformer.transform(X_train, copy=True)
+                new_data.X_train = new_X_train
             if X_test_bool is True:
-                new_X_test  = transformer.transform(X_test, copy = True)
-                new_data.X_test  = new_X_test
+                new_X_test = transformer.transform(X_test, copy=True)
+                new_data.X_test = new_X_test
         if y_train_bool or y_test_bool is True:
             transformer.fit(y_train)
             if y_train_bool is True:
-                new_y_train = transformer.transform(y_train, copy = True)
+                new_y_train = transformer.transform(y_train, copy=True)
                 new_data.y_train = new_y_train
             if y_test_bool is True:
-                new_y_test = transformer.transform(y_test, copy = True)
-                new_data.y_test  = new_y_test
+                new_y_test = transformer.transform(y_test, copy=True)
+                new_data.y_test = new_y_test
         del data
         return new_data
-            
+
     def run_sklearn_pipeline(self, data):
         """
         Runs the sklearn pipeline specified in params.yaml
@@ -266,10 +295,12 @@ class Data(
         for layer in pipeline:
             new_data = deepcopy(data)
             transform = self.transform[layer]
-            data = self.sklearn_transform(new_data, transform, name = layer)
+            data = self.sklearn_transform(new_data, transform, name=layer)
         return data
-        
-    def sampler(self, X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+
+    def sampler(
+        self, X: np.ndarray, y: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Samples the data using train_test_split
         :param X (np.ndarray): data
@@ -286,7 +317,7 @@ class Data(
             samples.pop("stratify")
             stratify = y
         else:
-            stratify =False
+            stratify = False
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
         ###########################################################
@@ -294,7 +325,9 @@ class Data(
         ###########################################################
         # regular test/train split
         if time_series is False:
-            X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = stratify, **samples)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, stratify=stratify, **samples
+            )
         # timeseries split
         elif time_series is True:
             assert (
@@ -309,7 +342,7 @@ class Data(
             test_size = (
                 samples.pop("test_size")
                 if "test_size" in samples
-                # 
+                #
                 else int(round(len(X) / 2 + gap))
             )
             splitter = TimeSeriesSplit(
@@ -327,8 +360,6 @@ class Data(
                 y_train, y_test = y[tr_idx], y[te_idx]
         return (X_train, X_test, y_train, y_test)
 
-    
-    
     def save(self, data: Namespace) -> Path:
         """
         Saves the data to a pickle file at self.files.data_path/hash/self.files.data_name
@@ -337,7 +368,10 @@ class Data(
         :param self.files.data_name : Name of the data
         :return Path to the saved data
         """
-        filename = Path(self.files['data_path'],  my_hash(self._asdict()) + "." + self.files['data_filetype'])
+        filename = Path(
+            self.files["data_path"],
+            my_hash(self._asdict()) + "." + self.files["data_filetype"],
+        )
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
             pickle.dump(data, f)

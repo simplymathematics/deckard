@@ -4,6 +4,7 @@ from time import process_time
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
+
 # from dvc.api import params_show
 # from dvclive import Live
 # from tqdm import tqdm
@@ -13,19 +14,20 @@ from model import Model
 import pandas as pd
 import pickle
 from utils import factory
-from visualise import  Yellowbrick_Visualiser
-from typing import Union
+from visualise import Yellowbrick_Visualiser
 from hashable import BaseHashable, my_hash
-import logging 
+import logging
 
 
 logger = logging.getLogger(__name__)
+
+
 class Experiment(
     collections.namedtuple(
         typename="Experiment",
         field_names="data, model, scorers, plots, files",
         defaults=({}, {}, {}, {}, {}),
-        rename = True
+        rename=True,
     ),
     BaseHashable,
 ):
@@ -71,21 +73,21 @@ class Experiment(
         :returns: tuple(dict, object), (data, model).
         """
         params = deepcopy(self._asdict())
-        if params['data'] is not {}:
+        if params["data"] is not {}:
             yaml.add_constructor("!Data", Data)
-            data_document = """!Data\n""" + str(dict(params['data']))
+            data_document = """!Data\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
-            
+
         else:
             raise ValueError("Data not specified in config file")
-        if params['model'] is not {}:
+        if params["model"] is not {}:
             yaml.add_constructor("!Model", Model)
-            model_document = """!Model\n""" + str(dict(params['model']))
+            model_document = """!Model\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
-            
+
         else:
             model = {}
-        if params['plots'] is not {}:
+        if params["plots"] is not {}:
             yaml.add_constructor("!Yellowbrick_Visualiser", Yellowbrick_Visualiser)
             plots_document = """!Yellowbrick_Visualiser\n""" + str(dict(params))
             vis = yaml.load(plots_document, Loader=yaml.Loader)
@@ -96,8 +98,7 @@ class Experiment(
         params.pop("plots", None)
         files = params.pop("files", None)
         return (data, model, files, vis)
-        
-        
+
     def score(self, ground_truth: np.ndarray, predictions: np.ndarray) -> dict:
         """Scores predictions according to self.scorers.
         :param ground_truth: np.ndarray, ground truth.
@@ -120,9 +121,14 @@ class Experiment(
         :returns: Path, path to saved data.
         """
         assert "files" in self.data, "Data must have files attribute"
-        assert "data_path" in self.data['files'], "Data must have data_path attribute"
-        assert "data_filetype" in self.data['files'], "Data must have data_filetype attribute"
-        filename = Path(self.data['files']['data_path'], my_hash(self.data) + "." + self.data['files']['data_filetype'])
+        assert "data_path" in self.data["files"], "Data must have data_path attribute"
+        assert (
+            "data_filetype" in self.data["files"]
+        ), "Data must have data_filetype attribute"
+        filename = Path(
+            self.data["files"]["data_path"],
+            my_hash(self.data) + "." + self.data["files"]["data_filetype"],
+        )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
@@ -143,7 +149,7 @@ class Experiment(
             for x in files:
                 x = Path(path, my_hash(self._asdict()), files[x])
                 new_files[x] = x.relative_to(path.parent).as_posix()
-                
+
         files = new_files
         data_files = params["data"].pop("files", {})
         data_path = data_files.pop("data_path", "")
@@ -153,9 +159,9 @@ class Experiment(
         model_path = model_files.pop("path", "")
         model_filetype = model_files.pop("model_filetype", "")
         model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
-        files['data'] = str(data_file)
-        files['model'] = str(model_file)
-        params['files'] = files
+        files["data"] = str(data_file)
+        files["model"] = str(model_file)
+        params["files"] = files
         params["scorer"] = list(params.pop("scorers").keys())[0]
         params.pop("plots", None)
         path.mkdir(parents=True, exist_ok=True)
@@ -168,9 +174,16 @@ class Experiment(
         :returns: Path, path to saved model.
         """
         assert "files" in self.model, "Model must have files attribute"
-        assert "model_path" in self.model['files'], "Model must have model_path attribute"
-        assert "model_filetype" in self.model['files'], "Model must have model_filetype attribute"
-        filename = Path(self.model['files']['model_path'],  my_hash(self.model) + "." + self.model['files']['model_filetype'])
+        assert (
+            "model_path" in self.model["files"]
+        ), "Model must have model_path attribute"
+        assert (
+            "model_filetype" in self.model["files"]
+        ), "Model must have model_filetype attribute"
+        filename = Path(
+            self.model["files"]["model_path"],
+            my_hash(self.model) + "." + self.model["files"]["model_filetype"],
+        )
         path = Path(filename).parent
         file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
@@ -274,7 +287,7 @@ class Experiment(
         if score_dict_file is not None:
             score_dict_file = path / score_dict_file
             files.append(self.save_scores(score_dict, filename=score_dict_file))
-        if "files"  in self.data:
+        if "files" in self.data:
             files.append(self.save_data(data))
         if "files" in self.model:
             files.append(self.save_model(model))
@@ -305,17 +318,19 @@ class Experiment(
             ), "Time dictionary must be passed to function call if specified in config file."
             files.append(self.save_time_dict(time_dict, filename=time_dict_file))
         return files
-    
-    def run(self, is_fitted = False):
+
+    def run(self, is_fitted=False):
         """
         Runs experiment and saves results according to config file.
         """
         logger.info("Parsing Config File")
-        data, model, files, vis  = self.load()
+        data, model, files, vis = self.load()
         params = deepcopy(self._asdict())
-        path = Path(params['files']['path'], str(my_hash(self._asdict())))
+        path = Path(params["files"]["path"], str(my_hash(self._asdict())))
         if path.exists():
-            logger.warning(f"Path {path} already exists. Will overwrite any files specified in the config.")
+            logger.warning(
+                f"Path {path} already exists. Will overwrite any files specified in the config.",
+            )
         else:
             path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Saving to {path}")
@@ -331,7 +346,7 @@ class Experiment(
         logger.info("Scoring Model")
         predictions, predict_time = self.predict(loaded_data, fitted_model)
         ground_truth = loaded_data.y_test
-        score_dict = self.score(predictions = predictions, ground_truth = ground_truth)
+        score_dict = self.score(predictions=predictions, ground_truth=ground_truth)
         results = {
             "data": loaded_data,
             "model": fitted_model,
@@ -347,9 +362,10 @@ class Experiment(
         for file in outs:
             assert file.exists(), f"File {file} does not exist."
         return outs
-    
-if "__main__" == __name__:    
-    
+
+
+if "__main__" == __name__:
+
     config = """
     model:
         init:
@@ -422,12 +438,10 @@ if "__main__" == __name__:
         params_file: params.json
         score_dict_file: scores.json
         path: reports
-        
+
     """
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     yaml.add_constructor("!Experiment:", Experiment)
     experiment = yaml.load("!Experiment:\n" + str(config), Loader=yaml.Loader)
     experiment.run()
-       
-    

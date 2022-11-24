@@ -1,5 +1,4 @@
 import collections
-from pathlib import Path
 from time import process_time
 
 import matplotlib.pyplot as plt
@@ -8,18 +7,21 @@ import yaml
 from dvc.api import params_show
 from dvclive import Live
 from tqdm import tqdm
-from yellowbrick.classifier import (classification_report, confusion_matrix, roc_auc, )
+from yellowbrick.classifier import (
+    classification_report,
+    confusion_matrix,
+    roc_auc,
+)
 from yellowbrick.contrib.wrapper import classifier
 from yellowbrick.exceptions import ModelError
 from data import Data
 from json_mixin import JSONMixin
 from model import Model
-from hashlib import md5
 
 classification_visualizers = {
     "confusion": confusion_matrix,
     "classification": classification_report,
-    "roc_auc": roc_auc
+    "roc_auc": roc_auc,
 }
 
 
@@ -71,7 +73,7 @@ class Experiment(
         :param config: str, path to config file.
         :returns: tuple(dict, object), (data, model).
         """
-        
+
         yaml.add_constructor("!Data:", Data)
         data_document = """!Data:\n""" + str(dict(self.data))
         data = yaml.load(data_document, Loader=yaml.Loader)
@@ -82,7 +84,6 @@ class Experiment(
             model = yaml.load(model_document, Loader=yaml.Loader)
             model = model.load()
         return data, model
-        
 
 
 yaml.add_constructor("!Experiment:", Experiment)
@@ -98,7 +99,7 @@ if "__main__" == __name__:
     epochs = params["fit"]["epochs"]
     log_interval = params["fit"]["log_interval"]
     learning_rate = params["fit"]["learning_rate"]
-    
+
     experiment = yaml.load("!Experiment:\n" + str(params), Loader=yaml.Loader)
     data, model = Experiment.load(experiment)
     # logger = Live(path=Path(files["path"]), report="html")

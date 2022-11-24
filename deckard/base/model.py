@@ -45,7 +45,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #     "roc_auc": roc_auc
 # }
 
-# regression_visualizers = { 
+# regression_visualizers = {
 #     "error" : prediction_error,
 #     "residuals" : residuals_plot,
 #     "alphas" : alphas
@@ -54,7 +54,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # clustering_visualizers = {
 #     "silhouette" : silhouette_visualizer,
 #     "elbow" : kelbow_visualizer,
-#     "intercluster" : intercluster_distance   
+#     "intercluster" : intercluster_distance
 # }
 # # elbow requires k
 # model_selection_visualizers = {
@@ -69,14 +69,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # # dropping, feats do not need score
 
 filetypes = {
-    "pkl" : "sklearn",
-    "h5" : "keras",
-    "pt" : "pytorch",
-    "pth" : "pytorch",
-    "pb" : "tensorflow",
-    "pbtxt" : "tensorflow",
-    "tflite" : "tf-lite",
-    "pickle" : "sklearn",
+    "pkl": "sklearn",
+    "h5": "keras",
+    "pt": "pytorch",
+    "pth": "pytorch",
+    "pb": "tensorflow",
+    "pbtxt": "tensorflow",
+    "tflite": "tf-lite",
+    "pickle": "sklearn",
 }
 
 
@@ -85,15 +85,19 @@ class Model(
         typename="model",
         field_names="init, files, fit, predict, sklearn_pipeline, art_pipeline, url, library",
         defaults=({}, {}, {}, [], [], "", ""),
-    ),BaseHashable,
+    ),
+    BaseHashable,
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
     def load(self):
-        filename = Path(self.files['model_path'],  my_hash(self._asdict()) + "." + self.files['model_filetype'])
+        filename = Path(
+            self.files["model_path"],
+            my_hash(self._asdict()) + "." + self.files["model_filetype"],
+        )
         params = deepcopy(self.init)
-        library = filetypes[self.files['model_filetype']]
+        library = filetypes[self.files["model_filetype"]]
         if filename.exists():
             model = filename
             if library == "sklearn":
@@ -130,11 +134,11 @@ class Model(
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
-        elif isinstance(params['name'], str):
-            library = params['name'].split(".")[0]
+        elif isinstance(params["name"], str):
+            library = params["name"].split(".")[0]
             if params is None:
                 params = {}
-            model = factory(params.pop('name'), **params)
+            model = factory(params.pop("name"), **params)
         else:
             raise ValueError(f"Unknown model: {params['name']}")
 
@@ -249,7 +253,10 @@ class Model(
         return model
 
     def save(self, model):
-        filename = Path(self.files['model_path'],  my_hash(self._asdict()) + "." + self.files['model_filetype'])
+        filename = Path(
+            self.files["model_path"],
+            my_hash(self._asdict()) + "." + self.files["model_filetype"],
+        )
         filename.parent.mkdir(parents=True, exist_ok=True)
         if hasattr(self, "model") and hasattr(model, "save"):
             flag = False
@@ -269,7 +276,6 @@ class Model(
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return Path(filename).resolve()
-
 
 
 if "__main__" == __name__:
@@ -325,8 +331,14 @@ if "__main__" == __name__:
     model2 = yaml.load(model_document_tag, Loader=yaml.Loader)
     model2_ = model2.load()
     ret2 = model2.save(model2_)
-    filename1 = Path(model.files['model_path'],  my_hash(model._asdict()) + "." + model.files['model_filetype'])
-    filename2 = Path(model2.files['model_path'],  my_hash(model2._asdict()) + "." + model2.files['model_filetype'])
+    filename1 = Path(
+        model.files["model_path"],
+        my_hash(model._asdict()) + "." + model.files["model_filetype"],
+    )
+    filename2 = Path(
+        model2.files["model_path"],
+        my_hash(model2._asdict()) + "." + model2.files["model_filetype"],
+    )
     assert filename1 == filename2, f"{filename1} != {filename2}"
     assert ret1 == ret2, f"{ret1} != {ret2}"
     assert filename1.resolve() == ret1.resolve(), f"{filename1} != {ret1}"
