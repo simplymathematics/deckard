@@ -3,101 +3,77 @@ import os
 import shutil
 import unittest
 import warnings
-from tempfile import mkdtemp
+import yaml
+import json
+from pathlib import Path
+import numpy as np
+from pandas import DataFrame, Series
+from deckard.base import Scorer
+from deckard.base.experiment import config
 
-from deckard.base import Data, Experiment, Model, Scorer
-from sklearn.metrics import (
-    accuracy_score,
-)  # f1_score,; roc_curve,; balanced_accuracy_score,; precision_score,; recall_score,; make_scorer,
-from sklearn.tree import DecisionTreeClassifier
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 logger = logging.getLogger(__name__)
 
-
+yaml.add_constructor("!Scorer", Scorer)
 class testScorer(unittest.TestCase):
     def setUp(self):
-        data = Data("iris")
-        model = Model(DecisionTreeClassifier())
-        experiment = Experiment(data, model)
-        self.path = mkdtemp()
-        self.model_name = "test_model"
-        self.predictions_file = os.path.join(self.path, "predictions.json")
-        self.ground_truth_file = os.path.join(self.path, "ground_truth.json")
-        self.scores_file = os.path.join(self.path, "scores.json")
-        self.config = {"ACC": accuracy_score}
-        experiment(path=self.path, model_file=self.model_name)
+        
+        self.path = "reports"
+        self.config = config
+        self.scorer = yaml.load("!Scorer" + str(config), Loader=yaml.FullLoader)
+        self.scores_file = Path(self.path) / "scores.json"
+        self.pred_file = Path(self.path) / "predictions.json"
+        self.ground_file = Path(self.path) / "ground_truth.json"
+        self.scores_file = Path(self.path) / "scores.json"
+        score_dict = {"ACC": 0.5, "F1": 0.5}
+        Path(self.path).mkdir(parents=True, exist_ok=True)
+        with open(self.scores_file, "w") as f:
+            json.dump(score_dict, f)
+        assert self.scores_file.exists()
+        preds = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+        with open(self.pred_file, "w") as f:
+            json.dump(preds, f)
+        assert self.pred_file.exists()
+        with open(self.ground_file, "w") as f:
+            json.dump(preds, f)
+        assert self.ground_file.exists()
+        with open(self.scores_file, "w") as f:
+            json.dump(score_dict, f)
+        assert self.scores_file.exists()
+        
 
     def test_scorer(self):
-        scorer = Scorer(config=self.config)
-        scorer(
-            ground_truth_file=self.ground_truth_file,
-            predictions_file=self.predictions_file,
-            path=self.path,
-        )
-        self.assertEqual(scorer.names, self.config.keys())
-        self.assertEqual(type(scorer.scorers), type(self.config.values()))
-        self.assertIsInstance(scorer, Scorer)
+        self.assertIsInstance(self.scorer, Scorer)
 
     def test_read_score_from_json(self):
-        scorer = Scorer(config=self.config)
-        scorer(
-            ground_truth_file=self.ground_truth_file,
-            predictions_file=self.predictions_file,
-            path=self.path,
-        )
+        scorer = self.scorer
         score = scorer.read_score_from_json(score_file=self.scores_file, name="ACC")
         self.assertIsInstance(score, float)
 
     def test_read_data_from_json(self):
-        scorer = Scorer(config=self.config)
-        predictions = scorer.read_data_from_json(self.predictions_file)
-        ground_truth = scorer.read_data_from_json(self.ground_truth_file)
-        self.assertEqual(predictions.shape, ground_truth.shape)
-        self.assertEqual(predictions.shape[0], ground_truth.shape[0])
-        self.assertEqual(predictions.shape[1], ground_truth.shape[1])
+        scorer = self.scorer
+        predictions = scorer.read_data_from_json(self.pred_file)
+        self.assertTrue(isinstance(predictions, Series))
 
     def test_score(self):
-        scorer = Scorer(config=self.config)
-        predictions = scorer.read_data_from_json(self.predictions_file)
-        ground_truth = scorer.read_data_from_json(self.ground_truth_file)
+        scorer = self.scorer
+        predictions = scorer.read_data_from_json(self.pred_file)
+        ground_truth = scorer.read_data_from_json(self.pred_file)
         score = scorer.score(ground_truth, predictions)
-        self.assertIsInstance(scorer, Scorer)
-        self.assertIsInstance(score[0], float)
-
-    def test_call(self):
-        logger.debug(self.ground_truth_file, self.predictions_file)
-        logger.debug(os.path.dirname(os.path.realpath(__file__)))
-        scorer = Scorer(config=self.config)
-        scorer = scorer(self.ground_truth_file, self.predictions_file, self.path)
-        self.assertIsInstance(scorer, Scorer)
+        self.assertIsInstance(score, Series)
 
     def test_save_results(self):
-        scorer = Scorer(config=self.config)
-        scorer = scorer(self.ground_truth_file, self.predictions_file, self.path)
-        files = os.listdir(self.path)
-        self.assertIn("scores.json", files)
+        scorer = self.scorer
+        scores = {"ACC": 0.5, "F1": 0.5}
+        filename = self.scores_file
+        path = self.path
+        full_path = scorer.save_results(scores, Path(filename))
+        self.assertTrue(full_path.exists())
+        
 
-    def test_default_classifier_config(self):
-        scorer = Scorer(config=self.cl_config)
-        self.assertEqual(scorer.names, self.cl_config.keys())
-        self.assertEqual(type(scorer.scorers), type(self.cl_config.values()))
-        scorer(
-            ground_truth_file=self.ground_truth_file,
-            predictions_file=self.predictions_file,
-            path=self.path,
-        )
 
-    def test_default_regressor_config(self):
-        scorer = Scorer(config=self.re_config)
-        self.assertEqual(scorer.names, self.re_config.keys())
-        self.assertEqual(type(scorer.scorers), type(self.re_config.values()))
-        scorer(
-            ground_truth_file=self.ground_truth_file,
-            predictions_file=self.predictions_file,
-            path=self.path,
-        )
 
     def tearDown(self):
         if os.path.isfile("scores.json"):

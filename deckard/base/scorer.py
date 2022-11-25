@@ -31,7 +31,6 @@ class Scorer(
 
     def read_score_from_json(self, name: str, score_file: str):
         """Read score from score file."""
-        assert hasattr(self, "names"), "Scorer must be initialized with a name."
         with open(score_file, "r") as f:
             score_dict = json.load(f)
         logger.info("Score read from score file {}.".format(score_file))
@@ -53,20 +52,6 @@ class Scorer(
             scores[name] = score
         scores = pd.Series(scores).T
         return scores
-
-    def get_name(self):
-        """Return the names of the scorer."""
-        names = self.scorers.keys()
-        logger.info("Returning names {}.".format(names))
-        return names
-
-    def get_scorers(self):
-        """
-        Sets the scorer for an experiment
-        :param experiment: experiment to set scorer for
-        :param scorer: scorer to set
-        """
-        return str(self)
 
     def save_score(
         self,
@@ -116,15 +101,10 @@ class Scorer(
         assert os.path.exists(score_file), "Score file not saved"
         return results
 
-    def save_results(self, scores: dict, filename: str, path: str = ".") -> None:
+    def save_results(self, scores: dict, filename: str,) -> None:
         """
         Saves all data to specified folder, using default filenames.
         """
-        if not os.path.isdir(path):
-            try:
-                os.mkdir(path)
-            except FileExistsError:
-                logger.warning("Path {} already exists. Overwriting".format(path))
         save_names = []
         save_scores = []
         results = {}
@@ -151,7 +131,7 @@ class Scorer(
             filename=filename,
         )
         scores = results.update(final_result)
-        return Path(path, filename)
+        return Path(filename).resolve()
 
     def __call__(
         self,
@@ -159,6 +139,9 @@ class Scorer(
         """Score the predictions from the file and updates best score."""
         path = self.files["path"] if "path" in self.files else "."
         path = Path(path, my_hash(self._asdict()))
+        path.mkdir(parents=True, exist_ok=True)
+        print(path)
+        input("Press enter to continue")
         ground_truth = self.files.pop("ground_truth_file", None)
         predictions = self.files.pop("predictions_file", None)
         score_dict = self.files.pop("score_dict_file", None)
