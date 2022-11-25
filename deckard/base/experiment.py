@@ -59,7 +59,7 @@ class Experiment(
                 if "number of classes" in str(e):
                     loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         result = process_time() - start
-        return  loaded_data, loaded_model, result / len(loaded_data.X_train)
+        return  (loaded_data, loaded_model, result / len(loaded_data.X_train))
 
     def predict(self, data: dict, model: object) -> tuple:
         """
@@ -99,14 +99,14 @@ class Experiment(
         else:
             model = {}
         if params["plots"] is not {}:
-            from visualise import Yellowbrick_Visualiser
+            from deckard.base.visualise import Yellowbrick_Visualiser
             yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
             plots_document = "!Yellowbrick_Visualiser:\n" + str(params)
             vis = yaml.load(plots_document, Loader=yaml.Loader)
         else:
             vis = None
         if params['attack'] is not {}:
-            from attack import Attack
+            from deckard.base.attack import Attack
             yaml.add_constructor("!Attack", Attack)
             attack_document = """!Attack\n""" + str(dict(params["attack"]))
             attack = yaml.load(attack_document, Loader=yaml.Loader)
@@ -155,7 +155,7 @@ class Experiment(
             pickle.dump(data, f)
         return Path(filename).resolve()
 
-    def save_params(self, filename: str) -> Path:
+    def save_params(self, filename: str = "params.json") -> Path:
         """Saves parameters to specified file.
         :param filename: str, name of file to save parameters to.
         :returns: Path, path to saved parameters.
@@ -226,7 +226,13 @@ class Experiment(
         :param predictions: np.ndarray, predictions to save.
         :returns: Path, path to saved predictions.
         """
+        filename = Path(
+            self.files["path"],
+            my_hash(self._asdict()),
+            self.files['predictions_file'],
+        )
         path = Path(filename).parent
+        file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
         try:
             pd.Series(predictions).to_json(filename)
@@ -248,7 +254,13 @@ class Experiment(
         :param ground_truth: np.ndarray, ground truth to save.
         :returns: Path, path to saved ground truth.
         """
+        filename = Path(
+            self.files["path"],
+            my_hash(self._asdict()),
+            self.files['ground_truth_file'],
+        )
         path = Path(filename).parent
+        file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
         try:
             pd.Series(ground_truth).to_json(filename)
@@ -266,7 +278,13 @@ class Experiment(
         :param time_dict: dict, time dictionary to save.
         :returns: Path, path to saved time dictionary.
         """
+        filename = Path(
+            self.files["path"],
+            my_hash(self._asdict()),
+            self.files['time_dict_file'],
+        )
         path = Path(filename).parent
+        file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(time_dict).to_json(filename)
         return Path(filename).resolve()
@@ -277,7 +295,13 @@ class Experiment(
         :param scores: dict, scores to save.
         :returns: Path, path to saved scores.
         """
+        filename = Path(
+            self.files["path"],
+            my_hash(self._asdict()),
+            self.files['score_dict_file'],
+        )
         path = Path(filename).parent
+        file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(scores).to_json(
             filename,

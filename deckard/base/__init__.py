@@ -11,3 +11,4 @@ from .parse import (
 )
 # from .generator import Generator
 from .hashable import BaseHashable
+from .visualise import Yellowbrick_Visualiser

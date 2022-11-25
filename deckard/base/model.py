@@ -38,36 +38,6 @@ supported_estimators = (
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-
-# classification_visualizers = {
-#     "confusion": confusion_matrix,
-#     "classification": classification_report,
-#     "roc_auc": roc_auc
-# }
-
-# regression_visualizers = {
-#     "error" : prediction_error,
-#     "residuals" : residuals_plot,
-#     "alphas" : alphas
-# }
-
-# clustering_visualizers = {
-#     "silhouette" : silhouette_visualizer,
-#     "elbow" : kelbow_visualizer,
-#     "intercluster" : intercluster_distance
-# }
-# # elbow requires k
-# model_selection_visualizers = {
-#     "validation" : validation_curve,
-#     "learning" : learning_curve,
-#     "cross_validation" : cross_validation,
-#     "feature_importances" : feature_importances,
-#     "recursive" : rfecv,
-#     "dropping_curve" : dropping_curve
-# }
-# # cross_, recursive, validation needs cv
-# # dropping, feats do not need score
-
 filetypes = {
     "pkl": "sklearn",
     "h5": "keras",

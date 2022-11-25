@@ -1,4 +1,7 @@
-# from yellowbrick.exceptions import ModelError
+import yaml
+import logging
+from copy import deepcopy
+from sklearn.base import is_regressor, is_classifier
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -32,15 +35,14 @@ from yellowbrick.classifier import (
 from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
 from argparse import Namespace
 import collections
-from .hashable import BaseHashable, my_hash
-from copy import deepcopy
-import yaml
+
+
 from .utils import factory
-from data import Data
-from model import Model
-from experiment import Experiment
-import logging
-from sklearn.base import is_regressor, is_classifier
+from .data import Data
+from .model import Model
+from .experiment import Experiment
+from .hashable import BaseHashable, my_hash
+
 
 classification_visualisers = {
     "confusion": ConfusionMatrix,
