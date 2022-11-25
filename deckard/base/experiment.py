@@ -545,22 +545,3 @@ config = """
         path: reports
 
     """
-
-if "__main__" == __name__:
-
-    
-    from visualise import Yellowbrick_Visualiser
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    yaml.add_constructor("!Experiment:", Experiment)
-    experiment = yaml.load("!Experiment:\n" + str(config), Loader=yaml.Loader)
-    yaml.add_constructor("!Visualizer:", Yellowbrick_Visualiser)
-    visualizer = yaml.load("!Visualizer:\n" + str(config), Loader=yaml.Loader)
-    # print("Before: ")
-    # print(my_hash(experiment._asdict()))
-    # print(my_hash(visualizer._asdict()))
-    
-    experiment.run()
-    # print("After: ")
-    # print(my_hash(experiment._asdict()))
-    # print(my_hash(visualizer._asdict()))

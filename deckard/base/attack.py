@@ -2,7 +2,7 @@ import collections
 import logging
 from pathlib import Path
 from time import process_time
-from typing import Union
+from typing import Union, Callable
 import json
 import numpy as np 
 import yaml
@@ -70,6 +70,8 @@ class Attack(
         """
         time_dict = {}
         start = process_time()
+        if not isinstance(attack.generate, Callable):
+            attack, _, _ = attack.load(model)
         if targeted is False:
             adv_samples = attack.generate(data.X_test, **kwargs)
         else:
@@ -92,43 +94,62 @@ class Attack(
         Saves the time dictionary to a json file.
         """
         path = Path(filename).parent
-        path.mkdir(parents=True, exist_ok=True)
+        file = Path(filename).name
+        filename = Path(
+            path,
+            my_hash(self._asdict()),
+            file,
+        )
+        filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
-        return filename
+        return Path(filename).resolve()
     
-    def save_attack_params(self, filename:Union[str, Path] = "attack_params.json")-> Path:
+    def save_attack_params(self, filename:Union[str, Path])-> Path:
         """
         Saves the attack parameters to a json file.
         """
         path = Path(filename).parent
-        path.mkdir(parents=True, exist_ok=True)
+        file = Path(filename).name
+        filename = Path(
+            path,
+            my_hash(self._asdict()),
+            file,
+        )
+        filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
         assert Path(filename).exists(), f"File {filename} not saved."
-        return filename
+        return Path(filename).resolve()
                 
     def save_attack_samples(
         self,
         samples: np.ndarray, 
-        filename: str = "examples.json",
+        filename: str,
     ) -> Path:
         """
         Saves adversarial examples to specified file.
         :param filename: str, name of file to save adversarial examples to.
         :param path: str, path to folder to save adversarial examples. If none specified, examples are saved in current working directory. Must exist.
         """
+       
         path = Path(filename).parent
-        path.mkdir(parents=True, exist_ok=True)
+        file = Path(filename).name
+        filename = Path(
+            path,
+            my_hash(self._asdict()),
+            file,
+        )
+        filename.parent.mkdir(parents=True, exist_ok=True)
         adv_results = DataFrame(samples.reshape(samples.shape[0], -1))
         adv_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
-        return filename
+        return Path(filename).resolve()
 
     def save_attack_predictions(
         self,
         predictions: np.ndarray,
-        filename: str = "predictions.json",
+        filename: str,
     ) -> Path:
         """
         Saves adversarial predictions to specified file.
@@ -136,48 +157,14 @@ class Attack(
         :param path: str, path to folder to save adversarial predictions. If none specified, predictions are saved in current working directory. Must exist.
         """
         path = Path(filename).parent
-        path.mkdir(parents=True, exist_ok=True)
+        file = Path(filename).name
+        filename = Path(
+            path,
+            my_hash(self._asdict()),
+            file,
+        )
+        filename.parent.mkdir(parents=True, exist_ok=True)
         adv_results = DataFrame(predictions)
         adv_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
-        return filename
-
-if "__main__" == __name__:
-    import pickle
-    config = """
-    init:
-        name: art.attacks.evasion.HopSkipJump
-        max_iter : 10
-        init_eval : 10
-        init_size : 10
-    files:
-        adv_samples: adv_samples.json
-        adv_predictions : adv_predictions.json
-        adv_time_dict : adv_time_dict.json
-        attack_params : attack_params.json
-
-    """
-    from tempfile import mkdtemp
-    from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    yaml.add_constructor("!Attack:", Attack)
-    attack = yaml.load("!Attack:\n" + str(config), Loader=yaml.Loader)
-    with open("model/2db00e44d0b930b24d549ef1307f177a.pickle", "rb") as f:
-        model = pickle.load(f)
-    with open("data/fdf009456bdd8bc7a3db8c2785157ef3.pickle", "rb") as f:
-        data = pickle.load(f)
-    path = mkdtemp(suffix=None, prefix=None, dir=None)
-    model = ScikitlearnClassifier(model)
-    loaded_attack, generate, files = attack.load(model)
-    adv_pred, adv_samples, time_dict = attack.run_attack(data, model, loaded_attack, **generate)
-    files = deepcopy(attack._asdict()["files"])
-    files = {k: Path(path, v) for k, v in files.items()}
-    sample_file = attack.save_attack_samples(samples = adv_samples, filename = files["adv_samples"])
-    pred_file = attack.save_attack_predictions(adv_pred, files["adv_predictions"])
-    time_file = attack.save_attack_time(time_dict, files["adv_time_dict"])
-    param_file = attack.save_attack_params(files["attack_params"])
-    outs = [sample_file, pred_file, time_file, param_file]
-    for out in outs:
-        assert Path(out).exists(), f"File {out} not saved."
-    
+        return Path(filename).resolve()

@@ -1,15 +1,15 @@
 import tempfile
 import unittest
 import warnings
-from os import path
+import yaml
+from pathlib import Path
 
 import numpy as np
-from art.attacks.evasion import BoundaryAttack
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from deckard.base import AttackExperiment, Data, Model
+from deckard.base import Attack, Data, Model, Experiment, Yellowbrick_Visualiser
+from deckard.base.hashable import my_hash
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.preprocessing import LabelBinarizer
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
@@ -17,130 +17,135 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 class testAttackExperiment(unittest.TestCase):
     def setUp(self):
-        self.path = tempfile.mkdtemp()
+
+        self.path = "reports"
+        self.filename = Path(self.path, "tmp.json")
+        self.config = """
+        !Experiment:
+            model:
+                init:
+                    loss: "hinge"
+                    name: sklearn.linear_model.SGDClassifier
+                files:
+                    model_path : reports
+                    model_filetype : pickle
+                # fit:
+                #     epochs: 1000
+                #     learning_rate: 1.0e-08
+                #     log_interval: 10
+            data:
+                sample:
+                    shuffle : True
+                    random_state : 42
+                    train_size : 800
+                    stratify : True
+                add_noise:
+                    train_noise : 1
+                    time_series : True
+                name: classification
+                files:
+                    data_path : reports
+                    data_filetype : pickle
+                generate:
+                    n_samples: 1000
+                    n_features: 2
+                    n_informative: 2
+                    n_redundant : 0
+                    n_classes: 3
+                    n_clusters_per_class: 1
+                sklearn_pipeline:
+                    - sklearn.preprocessing.StandardScaler
+                transform:
+                    sklearn.preprocessing.StandardScaler:
+                        with_mean : true
+                        with_std : true
+                        X_train : true
+                        X_test : true
+            attack:
+                init:
+                    name: art.attacks.evasion.HopSkipJump
+                    max_iter : 10
+                    init_eval : 10
+                    init_size : 10
+                files:
+                    adv_samples: adv_samples.json
+                    adv_predictions : adv_predictions.json
+                    adv_time_dict : adv_time_dict.json
+                    attack_params : attack_params.json
+            plots:
+                balance: balance
+                classification: classification
+                confusion: confusion
+                correlation: correlation
+                radviz: radviz
+                rank: rank
+            scorers:
+                accuracy:
+                    name: sklearn.metrics.accuracy_score
+                    normalize: true
+                f1-macro:
+                    average: macro
+                    name: sklearn.metrics.f1_score
+                f1-micro:
+                    average: micro
+                    name: sklearn.metrics.f1_score
+                f1-weighted:
+                    average: weighted
+                    name: sklearn.metrics.f1_score
+                precision:
+                    average: weighted
+                    name: sklearn.metrics.precision_score
+                recall:
+                    average: weighted
+                    name: sklearn.metrics.recall_score
+            files:
+                ground_truth_file: ground_truth.json
+                predictions_file: predictions.json
+                time_dict_file: time_dict.json
+                params_file: params.json
+                score_dict_file: scores.json
+                path: reports
+            """
         self.file = "test_filename"
-        self.here = path.dirname(path.abspath(__file__))
+        self.here = Path(__file__).parent
+        self.exp = yaml.load(self.config, Loader=yaml.FullLoader)
+        self.data, model, self.attack, _, _ = self.exp.load()
+        self.model = model.load(art = True)
+        self.data = self.data.load()
+        self.data.y_train = LabelBinarizer().fit_transform(self.data.y_train)
+        self.model.fit(self.data.X_train, self.data.y_train)
 
     def test_save_attack_predictions(self):
-        data = Data("iris", test_size=30)
-        data()
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type="sklearn", path=self.path, art=True)
-        model(art=True).fit(data.X_train, data.y_train)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment(path=self.path)
-        file = experiment.save_attack_predictions(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(file))
+        preds = self.data.y_test
+        path = self.attack.save_attack_predictions(preds, self.filename)
+        self.assertTrue(path.exists())
 
     def test_save_attack_params(self):
-        data = Data("iris", test_size=30)
-        data()
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type="sklearn", path=self.path)
-        model(art=True).fit(data.X_train, data.y_train)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-        files = experiment.save_params(path=self.path)
-        for file in files:
-            self.assertTrue(path.exists(path.join(self.path, file)))
+        params = self.attack._asdict()
+        path = self.attack.save_attack_params(self.filename)
+        self.assertTrue(path.exists())
 
-    def test_attack_params(self):
-        data = Data("iris", test_size=30)
-        data()
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator, model_type="sklearn", path=self.path)
-        model(art=True).fit(data.X_train, data.y_train)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-        self.assertTrue("Attack" in experiment.params)
+    def test_save_attack_time(self):
+        time = {"time": 1}
+        path = self.attack.save_attack_time(time, self.filename)
+        self.assertTrue(path.exists())
 
+    def test_load(self):
+        self.assertTrue(isinstance(self.attack, Attack))
+    
     def test_run_attack(self):
-        data = Data("iris", test_size=30)
-        data()
-        model = DecisionTreeClassifier()
-        estimator = ScikitlearnClassifier(DecisionTreeClassifier())
-        model = Model(estimator, model_type="sklearn", path=self.path)
-        estimator.fit(data.X_train, data.y_train)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-        experiment(path=self.path)
-        self.assertIsInstance(experiment.attack, BoundaryAttack)
-        self.assertIsInstance(experiment.adv, (list, np.ndarray))
-        self.assertTrue("adv_fit_time" in str(experiment.time_dict))
-        self.assertTrue("adv_pred_time" in str(experiment.time_dict))
-
-    def test_set_attack(self):
-        data = Data("iris", test_size=30)
-        data()
-        model = DecisionTreeClassifier()
-        estimator = ScikitlearnClassifier(DecisionTreeClassifier())
-        estimator.fit(data.X_train, data.y_train)
-        model = Model(estimator, model_type="sklearn", path=self.path)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-        self.assertIsInstance(experiment.attack, object)
-        self.assertIn("Attack", experiment.params)
-        key = list(experiment.params["Attack"])[0]
-        self.assertEqual(attack["name"], experiment.params["Attack"][key]["name"])
-        self.assertEqual(attack["params"], experiment.params["Attack"][key]["params"])
-
-    def test_run_attack_files(self):
-        data = Data("iris", test_size=30)
-        data()
-        model = DecisionTreeClassifier()
-        estimator = ScikitlearnClassifier(DecisionTreeClassifier())
-        model = Model(estimator, model_type="sklearn", path=self.path)
-        estimator.fit(data.X_train, data.y_train)
-        attack = {
-            "name": "art.attacks.evasion.BoundaryAttack",
-            "params": {
-                "max_iter": 10,
-                "targeted": False,
-            },
-        }
-        experiment = AttackExperiment(data=data, model=model, attack=attack)
-
-        files = experiment(path=self.path)
-        for file_ in files:
-            bool_ = path.exists(path.join(self.path, file_))
-            # Hacky work-around for ART weirdness. Patch submitted to ART.
-            bool_2 = path.exists(path.join(self.path, file_.split(".")[0] + ".pickle"))
-            bool_ = bool_ or bool_2
+        preds, samples, time_dict = self.attack.run_attack(self.data, self.model, self.attack)
+        self.assertIsInstance(preds, np.ndarray)
+        self.assertIsInstance(samples, np.ndarray)
+        self.assertIsInstance(time_dict, dict)
 
     def tearDown(self) -> None:
         from shutil import rmtree
-
-        rmtree(self.path)
+        if Path(self.path).exists():
+            rmtree(self.path)
+        if Path("model").exists():
+            rmtree("model")
+        if Path("data").exists():
+            rmtree("data")
         del self.path
         del self.file
