@@ -81,7 +81,16 @@ class testBaseHashable(unittest.TestCase):
         filename = self.hashable.save_yaml()
         test_filename = Path(self.path) / my_hash(self) + "." + self.filetype
         self.assertEqual(filename, test_filename)
-        
+    
+    def test_set_param(self):
+        new = self.hashable.set_param("files.path", "foo")
+        self.assertEqual(new.files['path'], "foo")
+    
+    def test_set_params(self):
+        dict_ = {"filetype" : "bar", "path" : "foo", }
+        self.assertEqual(self.hashable.set_params(files = dict_).to_dict(), {"files" : dict_})
+
+    
     def tearDown(self):
         import shutil
         if Path(self.path).exists():
