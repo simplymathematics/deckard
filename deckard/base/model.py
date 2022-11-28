@@ -58,6 +58,8 @@ class Model(
     ),
     BaseHashable,
 ):
+    def __new__(cls, loader, node):
+        return super().__new__(cls, **loader.construct_mapping(node))
 
     def load(self, art = False):
         filename = Path(
@@ -211,69 +213,3 @@ class Model(
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return Path(filename).resolve()
-
-
-if "__main__" == __name__:
-    model_document = """
-        init:
-            loss: "log_loss"
-            name: sklearn.linear_model.SGDClassifier
-        files:
-            model_path : model
-            model_filetype : pickle
-        fit:
-            epochs: 1000
-            learning_rate: 1.0e-08
-            log_interval: 10
-
-    """
-
-    data_document = """
-        sample:
-            shuffle : True
-            random_state : 42
-            train_size : 800
-            stratify : True
-        add_noise:
-            train_noise : 1
-            time_series : True
-        name: classification
-        files:
-            data_path : data
-            data_filetype : pickle
-        generate:
-            n_samples: 1000
-            n_features: 2
-            n_informative: 2
-            n_redundant : 0
-            n_classes: 2
-        sklearn_pipeline:
-            - sklearn.preprocessing.StandardScaler
-        transform:
-            sklearn.preprocessing.StandardScaler:
-                with_mean : true
-                with_std : true
-                X_train : true
-                X_test : true
-    """
-    yaml.add_constructor("!Model:", Model)
-    model_document_tag = """!Model:""" + model_document
-    # Test that model yaml loads correctly
-    model = yaml.load(model_document_tag, Loader=yaml.Loader)
-    pre1 = str(model)
-    model_ = model.load()
-    ret1 = model.save(model_)
-    model2 = yaml.load(model_document_tag, Loader=yaml.Loader)
-    model2_ = model2.load()
-    ret2 = model2.save(model2_)
-    filename1 = Path(
-        model.files["model_path"],
-        my_hash(model._asdict()) + "." + model.files["model_filetype"],
-    )
-    filename2 = Path(
-        model2.files["model_path"],
-        my_hash(model2._asdict()) + "." + model2.files["model_filetype"],
-    )
-    assert filename1 == filename2, f"{filename1} != {filename2}"
-    assert ret1 == ret2, f"{ret1} != {ret2}"
-    assert filename1.resolve() == ret1.resolve(), f"{filename1} != {ret1}"

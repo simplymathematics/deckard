@@ -41,8 +41,7 @@ class testData(unittest.TestCase):
                 n_classes: 3
                 n_clusters_per_class: 1
             sklearn_pipeline:
-                steps:
-                    sklearn.preprocessing.StandardScaler:
+                sklearn.preprocessing.StandardScaler:
                         with_mean : true
                         with_std : true
                         X_train : true

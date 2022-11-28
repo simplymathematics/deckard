@@ -14,7 +14,6 @@ from .experiment import Experiment
 from .hashable import BaseHashable, my_hash
 from .model import Model
 from .utils import factory
-from .parse import generate_object_from_tuple
 
 
 
@@ -51,9 +50,9 @@ class Attack(
             name = params['init'].pop("name")
             params = params['init']
             try:
-                attack = generate_object_from_tuple((name, params), model)
+                attack = factory(name, args = [model], **params)    
             except ValueError as e:
-                attack = generate_object_from_tuple((name, params))
+                attack = factory(name, **params)
             except Exception as e:
                 raise e
         else:

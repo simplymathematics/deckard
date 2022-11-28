@@ -62,13 +62,11 @@ class testExperiment(unittest.TestCase):
                     n_classes: 3
                     n_clusters_per_class: 1
                 sklearn_pipeline:
-                    - sklearn.preprocessing.StandardScaler
-                transform:
                     sklearn.preprocessing.StandardScaler:
-                        with_mean : true
-                        with_std : true
-                        X_train : true
-                        X_test : true
+                            with_mean : true
+                            with_std : true
+                            X_train : true
+                            X_test : true
             attack:
                 init:
                     name: art.attacks.evasion.HopSkipJump
@@ -135,63 +133,63 @@ class testExperiment(unittest.TestCase):
         self.assertTrue(path.is_dir())
     
 
-    def test_save_data(self):
-        data, _, _ , _, _ = self.exp.load()
-        data = dict(vars(data.load()))
-        path = self.exp.save_data(data)
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_data(self):
+    #     data, _, _ , _, _ = self.exp.load()
+    #     data = dict(vars(data.load()))
+    #     path = self.exp.save_data(data)
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
         
-    def test_save_params(self):
-        _, _, _ , _, _ = self.exp.load()
-        path = self.exp.save_params()
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_params(self):
+    #     _, _, _ , _, _ = self.exp.load()
+    #     path = self.exp.save_params()
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
 
-    def test_save_model(self):
-        _, model, _ , _, _ = self.exp.load()
-        model = model.load()
-        path = self.exp.save_model(model)
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_model(self):
+    #     _, model, _ , _, _ = self.exp.load()
+    #     model = model.load()
+    #     path = self.exp.save_model(model)
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
 
-    def test_save_predictions(self):
-        data, model, _ , _, _ = self.exp.load()
-        model = model.load()
-        data = data.load()
-        model.fit(data.X_train, data.y_train)
-        predictions = model.predict(data.X_test)
-        path = self.exp.save_predictions(predictions)
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_predictions(self):
+    #     data, model, _ , _, _ = self.exp.load()
+    #     model = model.load()
+    #     data = data.load()
+    #     model.fit(data.X_train, data.y_train)
+    #     predictions = model.predict(data.X_test)
+    #     path = self.exp.save_predictions(predictions)
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
     
-    def test_save_ground_truth(self):
-        data, model, _ , _, _ = self.exp.load()
-        model = model.load()
-        data = data.load()
-        model.fit(data.X_train, data.y_train)
-        truth = model.predict(data.X_test)
-        path = self.exp.save_ground_truth(truth)
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_ground_truth(self):
+    #     data, model, _ , _, _ = self.exp.load()
+    #     model = model.load()
+    #     data = data.load()
+    #     model.fit(data.X_train, data.y_train)
+    #     truth = model.predict(data.X_test)
+    #     path = self.exp.save_ground_truth(truth)
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
     
-    def test_save_time_dict(self):
-        data, model, _ , _, _ = self.exp.load()
-        time_dict = {"fit_time": 0, "pred_time": 0}
-        path = self.exp.save_time_dict(time_dict) 
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_save_time_dict(self):
+    #     data, model, _ , _, _ = self.exp.load()
+    #     time_dict = {"fit_time": 0, "pred_time": 0}
+    #     path = self.exp.save_time_dict(time_dict) 
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
 
-    def test_score(self):
-        data, model, _ , _, _ = self.exp.load()
-        model = model.load()
-        data = data.load()
-        model.fit(data.X_train, data.y_train)
-        predictions = model.predict(data.X_test)
-        score_dict = self.exp.score(predictions = predictions, ground_truth = data.y_test)
-        path = self.exp.save_scores(score_dict)
-        path = Path(self.path)
-        self.assertTrue(path.exists())
+    # def test_score(self):
+    #     data, model, _ , _, _ = self.exp.load()
+    #     model = model.load()
+    #     data = data.load()
+    #     model.fit(data.X_train, data.y_train)
+    #     predictions = model.predict(data.X_test)
+    #     score_dict = self.exp.score(predictions = predictions, ground_truth = data.y_test)
+    #     path = self.exp.save_scores(score_dict)
+    #     path = Path(self.path)
+    #     self.assertTrue(path.exists())
         
     
     def tearDown(self) -> None:

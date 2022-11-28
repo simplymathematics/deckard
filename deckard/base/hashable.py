@@ -1,12 +1,14 @@
 import json
 import yaml
 from hashlib import md5
-from typing import  Union,  Any, NamedTuple
+from typing import  Union,  Any, NamedTuple, List
 import collections
 import logging
 from pathlib import Path
 import tempfile
-
+from time import time
+from sklearn.model_selection import ParameterGrid
+from pandas import DataFrame, Series, read_csv
 def to_dict(obj: Union[dict, collections.OrderedDict]) -> dict:
     new = {}
     if hasattr(obj, "_asdict"):
@@ -31,19 +33,13 @@ my_hash = lambda obj: md5(str(to_dict(obj)).encode("utf-8")).hexdigest()
 
 logger = logging.getLogger(__name__)
 
-class BaseHashable(collections.namedtuple(
-    typename="BaseHashable", 
-    field_names = "files",
-    defaults = ({},)
-)):
+class BaseHashable():
+    def __new__(cls, loader, node, *args, **kwds):
+        return super().__new__(cls, **loader.construct_mapping(node))
     
     def __hash__(self):
         return int(my_hash(self), 32)
-    
-    def __new__(cls, loader, node):
-        return super().__new__(cls, **loader.construct_mapping(node))
 
-    
     
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.to_dict()})"
@@ -78,22 +74,19 @@ class BaseHashable(collections.namedtuple(
    
 
                      
-    def load(self):
-        """Loads the object from the files specified in the files attribute
+    # def load(self):
+    #     """Loads the object from the files specified in the files attribute
 
-        Raises:
-            NotImplementedError: Needs to be implemented in the child class
-        """
-        raise NotImplementedError(f"No load method defined for {self.__class__.__name__}")
+    #     Raises:
+    #         NotImplementedError: Needs to be implemented in the child class
+    #     """
+    #     raise NotImplementedError(f"No load method defined for {self.__class__.__name__}")
     
-    def save_yaml(self):
-        files = dict(self.files)
-        path_key = [key for key in files.keys() if "path" in key][0]
-        filetype_key = [key for key in files.keys() if "file" in key][0]
-        path = files.pop(path_key, "params")
+    def save_yaml(self, path: Union[str, Path], filetype: str = "yaml"):
+        if filetype.startswith("."):
+            filetype = filetype[1:]
         Path(path).mkdir(parents=True, exist_ok=True)
-        filetype = files.pop(filetype_key, ".yaml")
-        filename = Path(path) / my_hash(self) + "." + filetype
+        filename = Path(path) / Path(my_hash(self) + "." + filetype)
         with filename.open("w") as f:
             f.write(self.to_yaml())
         logger.info(f"Saved {self.__class__.__name__} to {filename}")
@@ -123,18 +116,8 @@ class BaseHashable(collections.namedtuple(
             yaml.dump(params, f)
         new = from_yaml(self, filename)
         return new
-    
-    def set_params(self, **kwargs):
-        """Sets multiple parameters in the object
-        :param kwargs: the key-value pairs to set
-        """
-        logger.debug(f"Setting {kwargs}")
-        params = self.to_dict()
-        for key, value in kwargs.items():
-            self = self.set_param(key, value)
-        return self
 
-def from_yaml(hashable:BaseHashable, filename: Union[str, Path]) -> Any:
+def from_yaml(hashable:BaseHashable, filename: Union[str, Path], key = None) -> Any:
     """Converts a yaml file to an object
     :param filename: path to the yaml file
     :return: object representation of the yaml file"""
@@ -148,5 +131,79 @@ def from_yaml(hashable:BaseHashable, filename: Union[str, Path]) -> Any:
             except SyntaxError:
                 result = f"!{hashable.__class__.__name__}\n" + result
         result = yaml.load(result, Loader=yaml.FullLoader)
+    if key is not None:
+        result = result[key]
     assert isinstance(result, hashable.__class__), f"Loaded object is not of type {hashable.__class__.__name__}. It is {type(result)}"
     return result
+
+def from_dict(hashable:BaseHashable, config: dict) -> Any:
+    """Converts a dictionary to an object
+    :param params: dictionary to convert
+    :return: object representation of the dictionary"""
+    logger.debug(f"Loading {hashable.__class__.__name__}")
+    yaml.add_constructor(f"!{hashable.__class__.__name__}\n", hashable.__class__)
+    result = yaml.load(f"!{hashable.__class__.__name__}\n" + yaml.dump(config), Loader=yaml.FullLoader)
+    assert isinstance(result, hashable.__class__), f"Loaded object is not of type {hashable.__class__.__name__}. It is {type(result)}"
+    return result
+
+def generate_line_search(hashable, param_name, param_list):
+    """Generates a list of experiments with a line search
+    :param param_name: the name of the parameter to search
+    :param start: the start value of the parameter
+    :param stop: the stop value of the parameter
+    :param num: the number of values to search
+    :param log: whether to use a logarithmic scale
+    :return: a list of experiments
+    """
+    params = hashable.to_dict()
+    new_param_list = []
+    for entry in param_list:
+        new_param_list.append(hashable.set_param(param_name, entry))
+    return new_param_list
+
+def generate_grid_search(hashable, param_dict):
+    """Generates a list of experiments with a grid search
+    :param param_dict: a dictionary of parameters to search
+    :return: a list of experiments
+    """
+    params = hashable.to_dict()
+    new_param_list = []
+    for entry in ParameterGrid(param_dict):
+        for key in entry:
+            exp = hashable.set_param(key, entry[key])
+        new_param_list.append(exp)
+    return new_param_list
+
+def generate_queue(hashable, param_dict, path: Union[str, Path] = "queue", filename = "queue.csv") -> Path:
+    """Generates a queue of experiments in specified path using a grid search
+    :hashable: the hashable object to generate the queue for
+    :param param_dict: a dictionary of parameters to search
+    :param path: the path to save the queue to
+    :return: the path to the queue
+    """
+    Path(path).mkdir(parents=True, exist_ok=True)
+    exp_list = generate_grid_search(hashable, param_dict)
+    files = []
+    hashes = []
+    df = DataFrame()
+    for exp in exp_list:
+        files.append(exp.save_yaml(path = path))
+        hashes.append(my_hash(exp))
+        ser = Series({"hash": hashes[-1], "file": files[-1], "status": "queued", "time": time(), "params": exp.to_dict()})
+        df = df.append(ser, ignore_index=True)
+    if Path(path, filename).exists():
+        old_df = read_csv(Path(path) / Path(filename))
+        df = old_df.append(df, ignore_index=True)
+    df = df.drop_duplicates(subset="hash")
+    df.to_csv(Path(path) / Path(filename))
+    return Path(path) / Path(filename)
+
+def sort_queue(path: Union[str, Path] = "queue", filename = "queue.csv", by=["status", "time"]) -> Path:
+    """Sorts the queue by status
+    :param path: the path to save the queue to
+    :return: the path to the queue
+    """
+    df = read_csv(Path(path) / Path(filename))
+    df = df.sort_values(by=by)
+    df.to_csv(Path(path) / Path(filename))
+    return Path(path) / Path(filename)

@@ -140,8 +140,6 @@ class Scorer(
         path = self.files["path"] if "path" in self.files else "."
         path = Path(path, my_hash(self._asdict()))
         path.mkdir(parents=True, exist_ok=True)
-        print(path)
-        input("Press enter to continue")
         ground_truth = self.files.pop("ground_truth_file", None)
         predictions = self.files.pop("predictions_file", None)
         score_dict = self.files.pop("score_dict_file", None)

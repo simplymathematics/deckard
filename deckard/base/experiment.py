@@ -15,7 +15,7 @@ from argparse import Namespace
 from .utils import factory
 from .data import Data
 from .model import Model
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable, my_hash, from_dict
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +28,8 @@ class Experiment(
     ),
     BaseHashable,
 ):
+    def __new__(cls, loader, node):
+        return super().__new__(cls, **loader.construct_mapping(node))
     
     def fit(self, data: Namespace, model: object) -> tuple:
         """
@@ -86,7 +88,6 @@ class Experiment(
             yaml.add_constructor("!Data", Data)
             data_document = """!Data\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
-
         else:
             raise ValueError("Data not specified in config file")
         if params["model"] is not {}:

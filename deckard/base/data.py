@@ -300,7 +300,7 @@ class Data(
         pipeline = self.sklearn_pipeline
         for layer in pipeline:
             new_data = deepcopy(data)
-            transform = self.transform[layer]
+            transform = self.sklearn_pipeline[layer]
             data = self.sklearn_transform(new_data, transform, name=layer)
         return data
 

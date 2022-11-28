@@ -55,7 +55,7 @@ def load_from_tup(obj_tuple: tuple, *args) -> object:
     return result
 
 
-def factory(module_class_string, super_cls: type = None, *args, **kwargs) -> object:
+def factory(module_class_string, super_cls: type = None, **kwargs) -> object:
     """
     :param module_class_string: full name of the class to create an object of
     :param super_cls: expected super class for validity, None if bypass
@@ -76,6 +76,7 @@ def factory(module_class_string, super_cls: type = None, *args, **kwargs) -> obj
             super_cls.__name__,
         )
     logger.debug("initialising {} with params {}".format(class_name, kwargs))
+    args = kwargs.pop("args", [])
     try:
         obj = cls(*args, **kwargs)
     except Exception as e:

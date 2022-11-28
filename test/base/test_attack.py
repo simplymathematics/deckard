@@ -51,14 +51,6 @@ class testAttackExperiment(unittest.TestCase):
                     n_redundant : 0
                     n_classes: 3
                     n_clusters_per_class: 1
-                sklearn_pipeline:
-                    - sklearn.preprocessing.StandardScaler
-                transform:
-                    sklearn.preprocessing.StandardScaler:
-                        with_mean : true
-                        with_std : true
-                        X_train : true
-                        X_test : true
             attack:
                 init:
                     name: art.attacks.evasion.HopSkipJump
