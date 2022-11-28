@@ -21,15 +21,15 @@ class testData(unittest.TestCase):
         yaml.add_constructor("!Data:", Data)
         self.data_document = """
         !Data:
+            name: classification
             sample:
                 shuffle : True
                 random_state : 42
                 train_size : 800
                 stratify : True
+                time_series : True
             add_noise:
                 train_noise : 1
-                time_series : True
-            name: classification
             files:
                 data_path : tmp
                 data_filetype : pickle
@@ -41,13 +41,12 @@ class testData(unittest.TestCase):
                 n_classes: 3
                 n_clusters_per_class: 1
             sklearn_pipeline:
-                - sklearn.preprocessing.StandardScaler
-            transform:
-                sklearn.preprocessing.StandardScaler:
-                    with_mean : true
-                    with_std : true
-                    X_train : true
-                    X_test : true
+                steps:
+                    sklearn.preprocessing.StandardScaler:
+                        with_mean : true
+                        with_std : true
+                        X_train : true
+                        X_test : true
         """
         # Test that data yaml loads correctly
         self.data = yaml.load(self.data_document, Loader=yaml.Loader)

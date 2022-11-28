@@ -58,8 +58,6 @@ class Model(
     ),
     BaseHashable,
 ):
-    def __new__(cls, loader, node):
-        return super().__new__(cls, **loader.construct_mapping(node))
 
     def load(self, art = False):
         filename = Path(
@@ -170,7 +168,7 @@ class Model(
                     preprocessing_defences=preprocessor_defences,
                     output="logits",
                 )
-            if "transformer_defnce" in art:
+            if "transformer_defence" in art:
                 model = (
                     load_from_tup(
                         (

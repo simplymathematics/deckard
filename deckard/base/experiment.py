@@ -28,9 +28,7 @@ class Experiment(
     ),
     BaseHashable,
 ):
-    def __new__(cls, loader, node):
-        return super().__new__(cls, **loader.construct_mapping(node))
-
+    
     def fit(self, data: Namespace, model: object) -> tuple:
         """
         Fits model to data.
@@ -286,6 +284,9 @@ class Experiment(
         path = Path(filename).parent
         file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
+        if filename.exists():
+            old_dict = pd.from_json(filename)
+            time_dict = old_dict.update(time_dict)
         pd.Series(time_dict).to_json(filename)
         return Path(filename).resolve()
 
@@ -396,7 +397,11 @@ class Experiment(
         logger.info(f"Saving to {path}")
         assert isinstance(data, Data)
         assert isinstance(model, Model)
-        loaded_data, fitted_model, fit_time = self.fit(data, model)
+        if is_fitted is False:
+            loaded_data, fitted_model, fit_time = self.fit(data, model)
+        else:
+            loaded_data = data.load()
+            loaded_model = model.load()
         logger.info("Scoring Model")
         predictions, predict_time = self.predict(loaded_data, fitted_model)
         ground_truth = loaded_data.y_test
