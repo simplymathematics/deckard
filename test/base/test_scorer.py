@@ -61,7 +61,7 @@ class testScorer(unittest.TestCase):
         scorer = self.scorer
         predictions = scorer.read_data_from_json(self.pred_file)
         ground_truth = scorer.read_data_from_json(self.pred_file)
-        score = scorer.score(ground_truth, predictions)
+        score = scorer.score_from_memory(ground_truth, predictions)
         self.assertIsInstance(score, Series)
 
     def test_save_results(self):
@@ -69,8 +69,8 @@ class testScorer(unittest.TestCase):
         scores = {"ACC": 0.5, "F1": 0.5}
         filename = self.scores_file
         path = self.path
-        full_path = scorer.save_results(scores, Path(filename))
-        self.assertTrue(full_path.exists())
+        full_path = scorer.save(scores)
+        self.assertTrue(Path(full_path).exists())
         
 
 

@@ -271,8 +271,7 @@ class Data(
     def sklearn_transform(
         self,
         data: Namespace,
-        name : str,
-        transform : object,
+        transform : dict,
     ) -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
@@ -285,7 +284,8 @@ class Data(
         X_test_bool = transform.pop("X_test", False)
         y_train_bool = transform.pop("y_train", False)
         y_test_bool = transform.pop("y_test", False)
-        transformer = factory(name, **transform)
+        object_name = transform.pop("name")
+        transformer = factory(object_name, **transform)
         X_train = deepcopy(data.X_train)
         y_train = deepcopy(data.y_train)
         X_test = deepcopy(data.X_test) if hasattr(data, "X_test") else None
@@ -324,7 +324,7 @@ class Data(
         for layer in pipeline:
             new_data = deepcopy(data)
             transform = self.sklearn_pipeline[layer]
-            data = self.sklearn_transform(data = new_data, transform = transform, name=layer)
+            data = self.sklearn_transform(data = new_data, transform = transform)
         return data
 
     def sampler(
@@ -414,3 +414,29 @@ class Data(
         with open(filename, "wb") as f:
             pickle.dump(data, f)
         return Path(filename).resolve()
+
+config = """
+    sample:
+        shuffle : True
+        random_state : 42
+        train_size : 800
+        stratify : True
+    add_noise:
+        train_noise : 1
+    name: classification
+    files:
+        data_path : data
+        data_filetype : pickle
+    generate:
+        n_samples: 1000
+        n_features: 2
+        n_informative: 2
+        n_redundant : 0
+        n_classes: 3
+        n_clusters_per_class: 1
+    sklearn_pipeline:
+        scaling :
+            name : sklearn.preprocessing.StandardScaler
+            with_mean : true
+            with_std : true
+"""

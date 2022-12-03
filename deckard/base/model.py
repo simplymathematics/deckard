@@ -87,11 +87,11 @@ class Model(
                 model = Pipeline(steps=[("model", model)])
             i = 0
             for entry in self.sklearn_pipeline:
-                name = entry
-                params = self.sklearn_pipeline[entry]
-                object_ = factory(name, **params)
+                config = deepcopy(self.sklearn_pipeline[entry])
+                name = config.pop("name")
+                object_ = factory(name, **config)
                 model.steps.insert(i, (name, object_))
-                object_ = factory(name, **params)
+                object_ = factory(name, **config)
                 i += 1
         # Build art pipeline
         if len(self.art_pipeline) > 0 or art is True:
@@ -223,3 +223,26 @@ class Model(
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return Path(filename).resolve()
+
+
+config = """
+    init:
+        loss: "hinge"
+        name: sklearn.linear_model.SGDClassifier
+    files:
+        model_path : model
+        model_filetype : pickle
+    # fit:
+    #     epochs: 1000
+    #     learning_rate: 1.0e-08
+    #     log_interval: 10
+    art_pipeline:
+        preprocessor:
+            name: art.defences.preprocessor.FeatureSqueezing
+            bit_depth: 32
+    sklearn_pipeline:
+        feature_selection:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean : true
+            with_std : true
+"""

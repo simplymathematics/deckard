@@ -14,7 +14,11 @@ from art.estimators.classification.scikitlearn import ScikitlearnClassifier  # n
 
 from sklearn.cluster import KMeans  # noqa F401
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.preprocessing import LabelBinarizer
 from deckard.base import Data, Experiment, Model, Yellowbrick_Visualiser
+from deckard.base.experiment import config as exp_config
+from deckard.base.model import config as model_config
+from deckard.base.data import config as data_config
 from deckard.base.hashable import my_hash
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -25,171 +29,100 @@ yaml.add_constructor("!Model:", Model)
 yaml.add_constructor("!Experiment:", Experiment)
 yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
 class testExperiment(unittest.TestCase):
-    def setUp(self):
+    def setUp(self, exp_config = exp_config, data_config=data_config, model_config=model_config) -> None:
 
         self.path = "reports"
-        self.config = """
-        !Experiment:
-            model:
-                init:
-                    loss: "hinge"
-                    name: sklearn.linear_model.SGDClassifier
-                files:
-                    model_path : reports
-                    model_filetype : pickle
-                # fit:
-                #     epochs: 1000
-                #     learning_rate: 1.0e-08
-                #     log_interval: 10
-            data:
-                sample:
-                    shuffle : True
-                    random_state : 42
-                    train_size : 800
-                    stratify : True
-                add_noise:
-                    train_noise : 1
-                    time_series : True
-                name: classification
-                files:
-                    data_path : reports
-                    data_filetype : pickle
-                generate:
-                    n_samples: 1000
-                    n_features: 2
-                    n_informative: 2
-                    n_redundant : 0
-                    n_classes: 3
-                    n_clusters_per_class: 1
-                sklearn_pipeline:
-                    sklearn.preprocessing.StandardScaler:
-                            with_mean : true
-                            with_std : true
-                            X_train : true
-                            X_test : true
-            attack:
-                init:
-                    name: art.attacks.evasion.HopSkipJump
-                    max_iter : 10
-                    init_eval : 10
-                    init_size : 10
-                files:
-                    adv_samples: adv_samples.json
-                    adv_predictions : adv_predictions.json
-                    adv_time_dict : adv_time_dict.json
-                    attack_params : attack_params.json
-            plots:
-                balance: balance
-                classification: classification
-                confusion: confusion
-                correlation: correlation
-                radviz: radviz
-                rank: rank
-            scorers:
-                accuracy:
-                    name: sklearn.metrics.accuracy_score
-                    normalize: true
-                f1-macro:
-                    average: macro
-                    name: sklearn.metrics.f1_score
-                f1-micro:
-                    average: micro
-                    name: sklearn.metrics.f1_score
-                f1-weighted:
-                    average: weighted
-                    name: sklearn.metrics.f1_score
-                precision:
-                    average: weighted
-                    name: sklearn.metrics.precision_score
-                recall:
-                    average: weighted
-                    name: sklearn.metrics.recall_score
-            files:
-                ground_truth_file: ground_truth.json
-                predictions_file: predictions.json
-                time_dict_file: time_dict.json
-                params_file: params.json
-                score_dict_file: scores.json
-                path: reports
-            """
+        self.config = exp_config
         self.file = "test_filename"
         self.here = Path(__file__).parent
-        self.exp = yaml.load(self.config, Loader=yaml.FullLoader)
-
+        exp_config = "!Experiment:" + exp_config
+        data_config = "!Data:" + data_config
+        model_config = "!Model:" + model_config
+        self.exp = yaml.load(exp_config, Loader=yaml.FullLoader)    
+        self.data = yaml.load(data_config, Loader=yaml.FullLoader)
+        self.model = yaml.load(model_config, Loader=yaml.FullLoader)
+        
+    def test_data(self):
+        self.assertIsInstance(self.data, Data)
+    
+    def test_model(self):
+        self.assertIsInstance(self.model, Model)
+        
     def test_experiment(self):
         self.assertIsInstance(self.exp, Experiment)
 
     def test_hash(self):
-        exp = yaml.load(self.config, Loader=yaml.FullLoader)
+        exp_config = "!Experiment:" + self.config
+        exp = yaml.load(exp_config, Loader=yaml.FullLoader)
         self.assertEqual(my_hash(exp._asdict()), my_hash(self.exp._asdict()))
     
 
     def test_run(self):
-        files = self.exp.files
-        files = Namespace(**files)
-        self.exp.run()
+        _ = self.exp.run(fit = True, predict = True, score = True, visualise = True)
+        self.assertTrue(Path(self.path).exists())
+    
+
+    def test_save_data(self):
+        data, _, _ , = self.exp.load()
+        data_dict = dict(vars(data.load()))
+        path = data.save(data_dict)
+        self.assertTrue(path.exists())
+        
+    def test_save_params(self):
+        _, _, _ , = self.exp.load()
+        path = self.exp.save_params()
         path = Path(self.path)
         self.assertTrue(path.exists())
-        self.assertTrue(path.is_dir())
+
+    def test_save_model(self):
+        _, model, _ ,  = self.exp.load()
+        model = model.load()
+        path = self.model.save(model)
+        self.assertTrue(path.exists())
+
+    def test_save_predictions(self):
+        data, model, _ ,  = self.exp.load()
+        model = model.load()
+        data = data.load()
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        predictions = model.predict(data.X_test)
+        path = self.exp.save_predictions(predictions)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
     
-
-    # def test_save_data(self):
-    #     data, _, _ , _, _ = self.exp.load()
-    #     data = dict(vars(data.load()))
-    #     path = self.exp.save_data(data)
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
-        
-    # def test_save_params(self):
-    #     _, _, _ , _, _ = self.exp.load()
-    #     path = self.exp.save_params()
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
-
-    # def test_save_model(self):
-    #     _, model, _ , _, _ = self.exp.load()
-    #     model = model.load()
-    #     path = self.exp.save_model(model)
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
-
-    # def test_save_predictions(self):
-    #     data, model, _ , _, _ = self.exp.load()
-    #     model = model.load()
-    #     data = data.load()
-    #     model.fit(data.X_train, data.y_train)
-    #     predictions = model.predict(data.X_test)
-    #     path = self.exp.save_predictions(predictions)
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
+    def test_save_ground_truth(self):
+        data, model, _ ,  = self.exp.load()
+        model = model.load()
+        data = data.load()
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        truth = model.predict(data.X_test)
+        path = self.exp.save_ground_truth(truth)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
     
-    # def test_save_ground_truth(self):
-    #     data, model, _ , _, _ = self.exp.load()
-    #     model = model.load()
-    #     data = data.load()
-    #     model.fit(data.X_train, data.y_train)
-    #     truth = model.predict(data.X_test)
-    #     path = self.exp.save_ground_truth(truth)
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
-    
-    # def test_save_time_dict(self):
-    #     data, model, _ , _, _ = self.exp.load()
-    #     time_dict = {"fit_time": 0, "pred_time": 0}
-    #     path = self.exp.save_time_dict(time_dict) 
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
+    def test_save_time_dict(self):
+        data, model, _ ,= self.exp.load()
+        time_dict = {"fit_time": 0, "pred_time": 0}
+        path = self.exp.save_time_dict(time_dict) 
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
-    # def test_score(self):
-    #     data, model, _ , _, _ = self.exp.load()
-    #     model = model.load()
-    #     data = data.load()
-    #     model.fit(data.X_train, data.y_train)
-    #     predictions = model.predict(data.X_test)
-    #     score_dict = self.exp.score(predictions = predictions, ground_truth = data.y_test)
-    #     path = self.exp.save_scores(score_dict)
-    #     path = Path(self.path)
-    #     self.assertTrue(path.exists())
+    def test_score(self):
+        data, model, _ ,  = self.exp.load()
+        model = model.load()
+        data = data.load()
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        predictions = model.predict(data.X_test)
+        score_dict = self.exp.score(predictions = predictions, ground_truth = data.y_test)
+        path = self.exp.save_scores(score_dict)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
         
     
     def tearDown(self) -> None:

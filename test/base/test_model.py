@@ -29,6 +29,11 @@ class testModel(unittest.TestCase):
                 epochs: 1000
                 learning_rate: 1.0e-08
                 log_interval: 10
+            sklearn_pipeline:
+                feature_selection:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean : true
+                    with_std : true
             """
         self.model2 = """
         !Model:
@@ -42,6 +47,11 @@ class testModel(unittest.TestCase):
                 epochs: 1000
                 learning_rate: 1.0e-08
                 log_interval: 10
+            sklearn_pipeline:
+                feature_selection:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean : true
+                    with_std : true
             """
         self.data1 = """
         !Data:
@@ -52,7 +62,6 @@ class testModel(unittest.TestCase):
                 stratify : True
             add_noise:
                 train_noise : 1
-                time_series : True
             name: classification
             files:
                 data_path : data
@@ -63,14 +72,6 @@ class testModel(unittest.TestCase):
                 n_informative: 2
                 n_redundant : 0
                 n_classes: 2
-            sklearn_pipeline:
-                - sklearn.preprocessing.StandardScaler
-            transform:
-                sklearn.preprocessing.StandardScaler:
-                    with_mean : true
-                    with_std : true
-                    X_train : true
-                    X_test : true
         """
         self.url = "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
         
@@ -106,6 +107,7 @@ class testModel(unittest.TestCase):
         new = model1.load()
         filename = model1.save(new)
         self.assertTrue(Path(self.path, my_hash(model1._asdict()) + ".pickle").exists())
+        self.assertTrue(Path(filename).exists())
 
     def test_load(self):
         self.assertEqual(self.loaded_model1, self.loaded_model3)

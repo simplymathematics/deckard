@@ -62,7 +62,11 @@ def factory(module_class_string, super_cls: type = None, **kwargs) -> object:
     :param kwargs: parameters to pass
     :return:
     """
-    module_name, class_name = module_class_string.rsplit(".", 1)
+    try:
+        module_name, class_name = module_class_string.rsplit(".", 1)
+    except:
+        logger.warning(f"Invalid module_class_string: {module_class_string}")
+        raise e
     module = import_module(module_name)
     assert hasattr(module, class_name), "class {} is not in {}".format(
         class_name,

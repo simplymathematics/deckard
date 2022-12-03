@@ -6,7 +6,7 @@ import yaml
 import numpy as np
 from copy import deepcopy
 from pathlib import Path
-from deckard.base import Data
+from deckard.base.data import Data, config
 from deckard.base.hashable import my_hash
 
 names = ["mnist", "cifar10", "iris"]
@@ -14,40 +14,9 @@ names = ["mnist", "cifar10", "iris"]
 
 
 class testData(unittest.TestCase):
-    def setUp(self):
-        self.filename = "test_data.pkl"
-        self.path = "tmp"
-        Path(self.path).mkdir(parents=True, exist_ok=True)
+    def setUp(self, config = config):
         yaml.add_constructor("!Data:", Data)
-        self.data_document = """
-        !Data:
-            name: classification
-            sample:
-                shuffle : True
-                random_state : 42
-                train_size : 800
-                stratify : True
-                time_series : True
-            add_noise:
-                train_noise : 1
-            files:
-                data_path : tmp
-                data_filetype : pickle
-            generate:
-                n_samples: 1000
-                n_features: 2
-                n_informative: 2
-                n_redundant : 0
-                n_classes: 3
-                n_clusters_per_class: 1
-            sklearn_pipeline:
-                sklearn.preprocessing.StandardScaler:
-                        with_mean : true
-                        with_std : true
-                        X_train : true
-                        X_test : true
-        """
-        # Test that data yaml loads correctly
+        self.data_document = "!Data:\n" + config
         self.data = yaml.load(self.data_document, Loader=yaml.Loader)
 
     def test_hash(self):
@@ -85,8 +54,10 @@ class testData(unittest.TestCase):
 
     def test_save_data(self):
         data = self.data
-        data.save(data=self.data.load())
-        self.assertTrue(os.path.exists(os.path.join(self.path, my_hash(data._asdict()) + "." + "pickle")))
+        out = data.save(data=self.data.load())
+        self.assertTrue(Path(out).exists())
 
     def tearDown(self):
-        shutil.rmtree(self.path)
+        if Path(self.data.files["data_path"]).exists():
+            shutil.rmtree(Path(self.data.files["data_path"]))
+        
