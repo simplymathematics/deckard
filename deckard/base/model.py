@@ -1,26 +1,28 @@
 import collections
 import logging
 import pickle
-from pathlib import Path
 import warnings
-import yaml
+from argparse import Namespace
+from copy import deepcopy
+from pathlib import Path
+from time import process_time
+import numpy as np
+from typing import Callable
 from art.estimators import ScikitlearnEstimator
-from art.estimators.classification import (
-    KerasClassifier,
-    PyTorchClassifier,
-    TensorFlowClassifier,
-    TensorFlowV2Classifier,
-)
+from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
+                                           TensorFlowClassifier,
+                                           TensorFlowV2Classifier)
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
-from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, is_regressor
-
-from .utils import factory, load_from_tup
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelBinarizer
 from validators import url as is_url
+
+from .data import Data
 from .hashable import BaseHashable, my_hash
-from copy import deepcopy
+from .utils import factory, load_from_tup
 
 logger = logging.getLogger(__name__)
 supported_estimators = (
@@ -85,10 +87,8 @@ class Model(
                 model = Pipeline(steps=[("model", model)])
             i = 0
             for entry in self.sklearn_pipeline:
-                _ = list(entry.keys())[0]
-                _ = entry[_]
-                name = _["name"]
-                params = _["params"]
+                name = entry
+                params = self.sklearn_pipeline[entry]
                 object_ = factory(name, **params)
                 model.steps.insert(i, (name, object_))
                 object_ = factory(name, **params)
@@ -189,6 +189,11 @@ class Model(
                 )
         return model
 
+    
+    
+    
+    
+    
     def save(self, model):
         filename = Path(
             self.files["model_path"],
@@ -199,7 +204,12 @@ class Model(
             flag = False
             # Hacky workaround for art sklearn saving due to a bug in art.
             if filename.endswith(".pickle"):
+                old = filename[-7:]
                 filename = filename[:-7]
+                flag = True
+            elif filename.endswith(".pkl"):
+                old = filename[-4:]
+                filename = filename[:-4]
                 flag = True
             ##############################################################
             # Using art to save models
@@ -207,7 +217,7 @@ class Model(
             ##############################################################
             # Hacky workaround for art sklearn saving due to a bug in art.
             if flag is True:
-                filename = filename + ".pickle"
+                filename = filename + old
             ##############################################################
         else:
             with open(filename, "wb") as f:
