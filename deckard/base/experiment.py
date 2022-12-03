@@ -46,14 +46,14 @@ class Experiment(
         :returns: tuple(dict, dict, dict, dict, YellowbrickVisualizer), (data, model, attack, files, vis).
         """
         params = deepcopy(self._asdict())
-        if params["data"] is not {}:
+        if len(params["data"]) > 0:
             yaml.add_constructor("!Data:", Data)
             data_document = """!Data:\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
             assert isinstance(data, Data), "Data initialization failed. Check config file."
         else:
             raise ValueError("Data not specified in config file")
-        if params["model"] is not {}:
+        if len(params["model"]) > 0:
             yaml.add_constructor("!Model:", Model)
             model_document = """!Model:\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
@@ -113,7 +113,7 @@ class Experiment(
         files["data"] = str(data_file)
         files["model"] = str(model_file)
         params["files"] = files
-        params["scorer"] = list(params.pop("scorers").keys())[0]
+        params["scorer"] = list(params.pop("scorers", {}).keys())[0] if len(params["scorers"]) > 0 else None
         params.pop("plots", None)
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(params).to_json(filename)
@@ -327,7 +327,7 @@ class Experiment(
             files.update({"scores" : self.save_scores(score_dict)})
         return files
 
-    def run(self, fit=True, predict=True, score=True, visualise=True, art = False, mtype = "classifier") -> dict:
+    def run(self, fit=True, predict=True, score=True, visualise=True, art = False, attack = True, mtype = "classifier") -> dict:
         """
         Runs experiment and saves results according to config file.
         """
@@ -346,23 +346,26 @@ class Experiment(
             path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Saving to {path}")
         assert isinstance(data, Data)
-        assert isinstance(model, Model)
+        assert isinstance(model, (Model, dict))
         #######################################################################
         # Fit model, if applicable
-        logger.info("Fitting model")
         if fit is True:
+            logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model)
             time_dict.update({"fit_time": fit_time})
-        else:
+        elif isinstance(model, Model):
             loaded_data = data.load()
             fitted_model = model.load(art=art)
             time_dict = {}
-        ground_truth = loaded_data.y_test
-        results = {"data": loaded_data, "model": fitted_model, "ground_truth": ground_truth}
-        results["time_dict"] = time_dict
+            ground_truth = loaded_data.y_test
+            results = {"data": loaded_data, "model": fitted_model, "ground_truth": ground_truth}
+            results["time_dict"] = time_dict
+        elif isinstance(model, dict):
+            loaded_data = data.load()
+            results = {"data": loaded_data,"ground_truth": loaded_data.y_test}
         #######################################################################
-        logger.info("Predicting")
         if predict is True:
+            logger.info("Predicting")
             predictions, predict_time = self.predict(loaded_data, fitted_model)
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
@@ -383,11 +386,11 @@ class Experiment(
             outs.update({"plots": plots})
             logger.info("Visualising")
         #######################################################################
-        # results = {k : v for k, v in results.items() if k in files.keys()}
-        # results.update({"data" : loaded_data})
-        # results.update({"model" : fitted_model})
-        # print(results.keys())
-        # input("Before Save inside exp.run")
+        if attack is True and len(self.attack) > 0:
+            attack = "!Attack:\n" + str(self._asdict())
+            yaml.add_constructor("!Attack:", Attack)
+            attack = yaml.load(attack, Loader=yaml.FullLoader)
+            attack_results = attack.run(data = loaded_data, model = fitted_model, art = True)
         saved_files = self.save(**results)
         outs.update(saved_files)
         return outs
