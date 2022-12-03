@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import yaml
 
 from sklearn.datasets import (
     load_boston,
@@ -150,13 +149,13 @@ class Data(
         filetype = Path(self.name).suffix
         params = deepcopy(self._asdict())
         # If the data is a csv file
-        if filetype is "csv":
+        if filetype == "csv":
             assert "target" in params, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
         # If the data is a json
-        elif filetype is "json":
+        elif filetype == "json":
             assert "target" in params, "target column must be specified"
             data = pd.read_json(name)
             if "X" in data:
@@ -172,7 +171,7 @@ class Data(
                     "JSON file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
                 )
         # If the data is a numpy npz file
-        elif filetype is "npz":
+        elif filetype == "npz":
             data = np.load(name)
             if "X" in data:
                 big_X = data["X"]
@@ -186,7 +185,7 @@ class Data(
                 raise ValueError(
                     "Numpy npz file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
                 )
-        elif filetype is "pickle" or filetype is "pkl":
+        elif filetype == "pickle" or filetype == "pkl":
             with open(name, "rb") as f:
                 data = pickle.load(f)
             if "X" in data:
