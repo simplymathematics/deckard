@@ -9,7 +9,7 @@ import tempfile
 from time import time
 from sklearn.model_selection import ParameterGrid
 from pandas import DataFrame, Series, read_csv
-def to_dict(obj: Union[dict, collections.OrderedDict]) -> dict:
+def to_dict(obj: Union[dict, collections.OrderedDict, NamedTuple]) -> dict:
     new = {}
     if hasattr(obj, "_asdict"):
         obj = obj._asdict()
@@ -140,10 +140,10 @@ def from_dict(hashable:BaseHashable, config: dict) -> Any:
     """Converts a dictionary to an object
     :param params: dictionary to convert
     :return: object representation of the dictionary"""
-    logger.debug(f"Loading {hashable.__class__.__name__}")
-    yaml.add_constructor(f"!{hashable.__class__.__name__}\n", hashable.__class__)
-    result = yaml.load(f"!{hashable.__class__.__name__}\n" + yaml.dump(config), Loader=yaml.FullLoader)
-    assert isinstance(result, hashable.__class__), f"Loaded object is not of type {hashable.__class__.__name__}. It is {type(result)}"
+    name = hashable.__class__.__name__
+    logger.debug(f"Loading {name}")
+    yaml.add_constructor(f"!{name}\n", hashable)
+    result = yaml.load(f"!{name}\n" + yaml.dump(config), Loader=yaml.FullLoader)
     return result
 
 def generate_line_search(hashable, param_name, param_list):
