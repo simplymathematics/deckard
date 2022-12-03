@@ -76,70 +76,45 @@ class Data(
         params = deepcopy(self._asdict())
         if filename.exists():
             logger.info(f"Loading data from {filename}")
-            name = filename
+            ns = self.read()
         else:
             name = params.pop("name")
-        if name in real or name in generate:
-            big_X, big_y = self.sklearn_load()
-        elif (
-            isinstance(name, Path)
-            and name.exists()
-            and not str(name).endswith(".pkl")
-            and not str(name).endswith(".pickle")
-        ):
-            big_X, big_y = self.read()
-        # If the data is a pickle file
-        elif (
-            isinstance(name, (Path, str))
-            and Path(name).exists()
-            and (str(name).endswith(".pkl") or str(name).endswith(".pickle"))
-        ):
-            with open(name, "rb") as f:
-                data = pickle.load(f)
-            if "X_test" in data:
-                assert (
-                    hasattr(data, "X_train")
-                    and hasattr(data, "X_test")
-                    and hasattr(data, "y_test")
-                ), ValueError(
-                    "X_train, y_train, X_test, and y_test must all be present in the pickle file",
-                )
-                X_train = data.X_train
-                y_train = data.y_train
-                X_test = data.X_test
-                y_test = data.y_test
-                return Namespace(
-                    X_train=X_train,
-                    y_train=y_train,
-                    X_test=X_test,
-                    y_test=y_test,
-                )
+            if isinstance(name, list):
+                assert len(name) == 1, "Only one dataset can be loaded at a time. See documentation for setting up multiple experiments."
+                name = name.pop(0)
+            if name in real or name in generate:
+                ns = self.sklearn_load()
+            elif Path(name).exists():
+                ns = self.read()
+            # Otherwise, raise an error
             else:
-                assert hasattr(data, "X") and hasattr(data, "y"), ValueError(
-                    "data must have X and y attributes",
-                )
-                big_X = data.X
-                big_y = data.y
-        # Otherwise, raise an error
+                raise ValueError(f"Unknown dataset: {name}")
+            ns = self.modify(ns)
+        return ns
+
+    def modify(self, data:Namespace) -> Namespace:
+        """
+        Modify the data according to the parameters in the configuration file.
+        Args:
+            data (Namespace): Namespace containing the data. Either "X" and "y" or "X_train", "X_test", "y_train", "y_test". If "X" and "y" are present, they are split into train and test sets.
+            self.sklearn_pipeline (OrderedDict): OrderedDict of sklearn transformers to apply to the data
+            self.generate (dict): Dictionary of parameters to pass to sklearn.datasets.make_*
+            self.sample (dict): Dictionary of parameters to pass to sklearn.model_selection.train_test_split
+            self.add_noise (dict): Dictionaries of parameters to pass to sklearn.datasets.make_sparse_coded_signal
+            self.transform (dict): Dictionary of transformers to apply to the data 
+        Returns:
+            Namespace: Namespace containing the data. Either "X" and "y" or "X_train", "X_test", "y_train", "y_test"
+        """
+        params = deepcopy(self._asdict())
+        if "sample" in params and "X_test" not in data:
+            ns = self.sampler(data)
         else:
-            raise ValueError(f"Unknown dataset: {name}")
-        samples = params.pop("sample", {})
-        if samples is not {} and "X_test" not in locals():
-            X_train, X_test, y_train, y_test = self.sampler(X=big_X, y=big_y)
-        X_train, X_test, y_train, y_test = self.add_noise_to_data(
-            X_train,
-            X_test,
-            y_train,
-            y_test,
-        )
-        add_noise = params.pop("add_noise", {})
-        ns = Namespace(
-            X_train=X_train,
-            X_test=X_test,
-            y_train=y_train,
-            y_test=y_test,
-        )
+            assert "X_test" in data, "X_test is not in data"
+            assert "y_test" in data, "y_test is not in data"
+            assert "X_train" in data, "X_train is not in data"
+            assert "y_train" in data, "y_train is not in data"
         ns = self.run_sklearn_pipeline(ns)
+        ns = self.add_noise_to_data(ns)
         return ns
 
     def sklearn_load(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -149,6 +124,8 @@ class Data(
         :return: Tuple of X, y
         """
         name = self.name
+        if isinstance(name, list):
+            name = name[0]
         # If the data is among the sklearn "real" datasets
         if name in real:
             big_X, big_y = real[name](return_X_y=True, **self.real)
@@ -158,7 +135,10 @@ class Data(
                 "generate datasets requires a dictionary of parameters named 'generate' in params.yaml",
             )
             big_X, big_y = generate[name](**self.generate)
-        return (big_X, big_y)
+        else:
+            raise ValueError(f"Unknown dataset: {name}")
+        ns = Namespace(X=big_X, y=big_y)
+        return ns
 
     def read(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -167,57 +147,102 @@ class Data(
         :return Tuple of X, y
         """
         name = self.name
+        filetype = Path(self.name).suffix
         params = deepcopy(self._asdict())
         # If the data is a csv file
-        if str(name).endswith(".csv"):
+        if filetype is "csv":
             assert "target" in params, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
         # If the data is a json
-        elif str(name).endswith(".json"):
+        elif filetype is "json":
             assert "target" in params, "target column must be specified"
             data = pd.read_json(name)
-            assert hasattr(data, "X") and hasattr(data, "y"), ValueError(
-                "data must have X and y attributes",
-            )
-            big_X = data.X
-            big_y = data.y
+            if "X" in data:
+                big_X = data.X
+                big_y = data.y
+            elif "X_train" in data:
+                X_train = data.X_train
+                y_train = data.y_train
+                X_test = data.X_test
+                y_test = data.y_test
+            else:
+                raise ValueError(
+                    "JSON file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
+                )
         # If the data is a numpy npz file
-        elif isinstance(name, Path) and name.exists() and str(name).endswith(".npz"):
+        elif filetype is "npz":
             data = np.load(name)
-            assert hasattr(data, "y")
-            big_y = data.y
-            big_X = data.X
+            if "X" in data:
+                big_X = data["X"]
+                big_y = data["y"]
+            elif "X_train" in data:
+                X_train = data["X_train"]
+                y_train = data["y_train"]
+                X_test = data["X_test"]
+                y_test = data["y_test"]
+            else:
+                raise ValueError(
+                    "Numpy npz file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
+                )
+        elif filetype is "pickle" or filetype is "pkl":
+            with open(name, "rb") as f:
+                data = pickle.load(f)
+            if "X" in data:
+                big_X = data["X"]
+                big_y = data["y"]
+            elif "X_train" in data:
+                X_train = data["X_train"]
+                X_test = data["X_test"]
+                y_train = data["y_train"]
+                y_test = data["y_test"]
+            else:
+                raise ValueError("Pickle file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.")
         else:
-            raise ValueError(f"Unknown datatype: {name.split('.S')[-1]}")
-
-        return big_X, big_y
-
+            raise ValueError(f"Unknown datatype: {filetype}")
+        if "X" in locals():
+            assert "y" in locals(), f"y must be specified in {name}"
+            ns = Namespace(X=big_X, y=big_y)
+        elif "X_train" in locals():
+            assert "y_train" in locals(), f"y_train must be specified in {name}"
+            assert "X_test" in locals(), f"X_test must be specified in {name}"
+            assert "y_test" in locals(), f"y_test must be specified in {name}"
+            ns = Namespace(
+                X_train=X_train,
+                X_test=X_test,
+                y_train=y_train,
+                y_test=y_test,
+            )
+        else:
+            raise ValueError(f"""Data not found in correct format. Check {name}. Should be a pickle file or a csv, json, npz, or txt file. It is type {Path(name).suffix}.""")
+        return ns
+        
+        
     def add_noise_to_data(
         self,
-        X_train: np.ndarray,
-        X_test: np.ndarray,
-        y_train: np.ndarray,
-        y_test: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        data : Namespace,
+    ) -> Namespace:
         """
         Adds noise to the data according to the parameters specified in params.yaml
-        :param X_train (np.ndarray): Training data
-        :param X_test (np.ndarray): Testing data
-        :param y_train (np.ndarray): Training labels
-        :param y_test (np.ndarray): Testing labels
-        :param self.add_noise : Noise to add to the training data
-        :return: Tuple of X_train, X_test, y_train, y_test
+        :param add_noise.train_noise (bool): Whether to add noise to the training data
+        :param add_noise.test_noise (bool): Whether to add noise to the test data
+        :param add_noise.y_train_noise (float, int): Amount of noise to add to the training labels
+        :param add_noise.y_test_noise (float, int): Amount of noise to add to the test labels
         """
         ###########################################################
         # Adding Noise
         ###########################################################
-        add_noise = self.add_noise
+        data = vars(data)
+        add_noise = deepcopy(dict(self.add_noise))
         train_noise = add_noise.pop("train_noise", 0)
         test_noise = add_noise.pop("test_noise", 0)
         y_train_noise = add_noise.pop("y_train_noise", 0)
         y_test_noise = add_noise.pop("y_test_noise", 0)
+        X_train = data.pop("X_train", None)
+        y_train = data.pop("y_train", None)
+        X_test = data.pop("X_test", None)
+        y_test = data.pop("y_test", None)
         # additive noise
         if train_noise != 0:
             X_train += np.random.normal(0, train_noise, X_train.shape)
@@ -241,23 +266,22 @@ class Data(
                 raise TypeError(
                     f"y_test_noise must be int or float, not {type(y_test_noise)}",
                 )
-        return X_train, X_test, y_train, y_test
+        ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        return ns
 
     def sklearn_transform(
         self,
         data: Namespace,
-        transform: dict = None,
-        name: str = "",
+        name : str,
+        transform : object,
     ) -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
         :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
-        :param transform (dict): Dictionary of parameters for the transformation
+        :param name (str): Name of the transformation
         :return: Namespace containing X_train, X_test, y_train, y_test
         """
         new_data = deepcopy(data)
-        if transform is None:
-            transform = dict(self.transform)
         X_train_bool = transform.pop("X_train", False)
         X_test_bool = transform.pop("X_test", False)
         y_train_bool = transform.pop("y_train", False)
@@ -290,7 +314,7 @@ class Data(
         del data
         return new_data
 
-    def run_sklearn_pipeline(self, data):
+    def run_sklearn_pipeline(self, data) -> Namespace:
         """
         Runs the sklearn pipeline specified in params.yaml
         :param data (Namespace): Data to be transformed
@@ -301,22 +325,24 @@ class Data(
         for layer in pipeline:
             new_data = deepcopy(data)
             transform = self.sklearn_pipeline[layer]
-            data = self.sklearn_transform(new_data, transform, name=layer)
+            data = self.sklearn_transform(data = new_data, transform = transform, name=layer)
         return data
 
     def sampler(
         self,
-        X: np.ndarray,
-        y: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        data:Namespace,
+    ) -> Namespace:
         """
         Samples the data using train_test_split
-        :param X (np.ndarray): data
-        :param y (np.ndarray): labels
+        :param data.X (np.ndarray): data
+        :param data.y (np.ndarray): labels
         :param self.sample: Dictionary of parameters for train_test_split
         :return Tuple of X_train, X_test, y_train, y_test
         """
-        samples = dict(self.sample)
+        samples = deepcopy(dict(self.sample))
+        data = vars(data)
+        y = data.pop("y", None)
+        X = data.pop("X", None)
         ########################################################
         # Sample params
         ########################################################
@@ -325,7 +351,7 @@ class Data(
             samples.pop("stratify")
             stratify = y
         else:
-            stratify = False
+            stratify = None
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
         random_state = samples.pop("random_state", 0)
@@ -367,7 +393,11 @@ class Data(
             for tr_idx, te_idx in splitter.split(X[random_state:-1]):
                 X_train, X_test = X[tr_idx], X[te_idx]
                 y_train, y_test = y[tr_idx], y[te_idx]
-        return (X_train, X_test, y_train, y_test)
+        else:
+            raise ValueError(f"time_series must be True or False, not {time_series}")
+        ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        return ns
+
 
     def save(self, data: Namespace) -> Path:
         """
