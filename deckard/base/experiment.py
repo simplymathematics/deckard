@@ -474,12 +474,6 @@ config = """
             max_iter : 10
             init_eval : 10
             init_size : 10
-        files:
-            adv_samples: adv_samples.json
-            adv_predictions : adv_predictions.json
-            adv_time_dict : adv_time_dict.json
-            attack_params : attack_params.json
-            attack_path : attack
     plots:
         balance: balance
         classification: classification
@@ -513,4 +507,9 @@ config = """
         params_file: params.json
         score_dict_file: scores.json
         path: reports
+        attack_samples_file: adv_samples.json
+        attack_predictions_file : adv_predictions.json
+        attack_time_dict_file : adv_time_dict.json
+        attack_params_file : attack_params.json
+        attack_path : attack
     """
