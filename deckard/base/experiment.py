@@ -430,6 +430,7 @@ config = """
         init:
             loss: "hinge"
             name: sklearn.linear_model.SGDClassifier
+            alpha: 0.0001
         files:
             model_path : model
             model_filetype : pickle
