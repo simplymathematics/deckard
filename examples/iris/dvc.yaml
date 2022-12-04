@@ -6,79 +6,76 @@ stages:
     # outs:
     #  - params.yaml
   generate_data:
-    cmd: python -m deckard.layers.train generate_data --layer data
+    cmd: python -m deckard.layers.runner generate_data --layer data
     params:
       - data
       - files
     outs:
       - generate_data/${data.files.data_path}
-  # train:
-  #   cmd: python -m deckard.layers.train
-  #   params:
-  #     - data
-  #     - model.files
-  #     - model.init
-  #     - files
-  #     - plots
-  #     - scorers
-  #   deps:
-  #     - generate_data/${data.files.data_path}
-  #   outs:
-  #     - train/${model.files.model_path}
-  #     - train/${data.files.data_path}
-  #     - ${files.path}/train
-  # pipeline:
-  #   cmd: python -m deckard.layers.train pipeline
-  #   params:
-  #     - data
-  #     - model.files
-  #     - model.init
-  #     - model.sklearn_pipeline
-  #     - files
-  #     - plots
-  #     - scorers
-  #   deps:
-  #     - train/${model.files.model_path}
-  #     - train/${data.files.data_path}
-  #   outs:
-  #     - ${files.path}/pipeline
-  #     - pipeline/${model.files.model_path}
-  #     - pipeline/${data.files.data_path}
-  # defend:
-  #   cmd: python -m deckard.layers.train defend
-  #   params:
-  #     - data
-  #     - model.files
-  #     - model.init
-  #     - model.sklearn_pipeline
-  #     - model.art_pipeline
-  #     - files
-  #     - plots
-  #     - scorers
-  #   deps:
-  #     - pipeline/${model.files.model_path}
-  #     - pipeline/${data.files.data_path}
-  #   outs:
-  #     - ${files.path}/defend
-  #     - defend/${model.files.model_path}
-  #     - defend/${data.files.data_path}
-  # attack:
-  #   cmd: python -m deckard.layers.train attack
-  #   params:
-  #     - data
-  #     - model.files
-  #     - model.init
-  #     - model.sklearn_pipeline
-  #     - model.art_pipeline
-  #     - attack
-  #     - files
-  #     - plots
-  #     - scorers
-  #   deps:
-  #     - defend/${model.files.model_path}
-  #     - defend/${data.files.data_path}
-  #   outs:
-  #     - ${files.path}/attack
+  train:
+    cmd: python -m deckard.layers.runner
+    params:
+      - data
+      - model.files
+      - model.init
+      - files
+      - plots
+      - scorers
+    deps:
+      - generate_data/${data.files.data_path}
+    outs:
+      - train/${model.files.model_path}
+      - train/${data.files.data_path}
+      - ${files.path}/train
+  pipeline:
+    cmd: python -m deckard.layers.runner pipeline
+    params:
+      - data
+      - model.files
+      - model.init
+      - files
+      - plots
+      - scorers
+    deps:
+      - train/${model.files.model_path}
+      - train/${data.files.data_path}
+    outs:
+      - ${files.path}/pipeline
+      - pipeline/${model.files.model_path}
+      - pipeline/${data.files.data_path}
+  defend:
+    cmd: python -m deckard.layers.runner defend
+    params:
+      - data
+      - model.files
+      - model.init
+      - model.art_pipeline
+      - files
+      - plots
+      - scorers
+    deps:
+      - pipeline/${model.files.model_path}
+      - pipeline/${data.files.data_path}
+    outs:
+      - ${files.path}/defend
+      - defend/${model.files.model_path}
+      - defend/${data.files.data_path}
+  attack:
+    cmd: python -m deckard.layers.runner attack
+    params:
+      - data
+      - model.files
+      - model.init
+      - model.art_pipeline
+      - attack
+      - files
+      - plots
+      - scorers
+    deps:
+      - defend/${model.files.model_path}
+      - defend/${data.files.data_path}
+    outs:
+      - ${files.path}/attack
 
   # visualise:
   #     cmd: python -m deckard.layers.visualise --layer_name visualise

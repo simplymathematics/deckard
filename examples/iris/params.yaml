@@ -9,6 +9,11 @@ data:
     n_redundant: 1
     n_samples: 10000
     n_clusters_per_class : 1
+  sklearn_pipeline:
+    scaling:
+      name : sklearn.preprocessing.StandardScaler
+      with_mean : true
+      with_std : true
   name:
   - classification
   sample:
@@ -37,13 +42,9 @@ model:
     loss: log
     name: sklearn.linear_model.SGDClassifier
   sklearn_pipeline:
-    scaling:
-      name : sklearn.preprocessing.StandardScaler
-      with_mean : true
-      with_std : true
     feature_selection:
-      name: sklearn.feature_selection.SelectKBest
-      k : 50
+      name : sklearn.feature_selection.SelectKBest
+      k: 3
   art_pipeline:
     preprocessor_defence:
       name: art.defences.preprocessor.FeatureSqueezing
@@ -76,4 +77,3 @@ attack:
     max_iter : 10
     init_eval : 10
     init_size : 10
-

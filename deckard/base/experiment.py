@@ -353,12 +353,12 @@ class Experiment(
             logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model)
             time_dict.update({"fit_time": fit_time})
+            results = {"data": loaded_data, "model": fitted_model, "time_dict": {"fit_time": fit_time}, "ground_truth": loaded_data.y_test}
         elif isinstance(model, Model):
             loaded_data = data.load()
             fitted_model = model.load(art=art)
             time_dict = {}
-            ground_truth = loaded_data.y_test
-            results = {"data": loaded_data, "model": fitted_model, "ground_truth": ground_truth}
+            results = {"data": loaded_data, "model": fitted_model, "ground_truth": loaded_data.y_test}
             results["time_dict"] = time_dict
         elif isinstance(model, dict):
             loaded_data = data.load()
@@ -373,7 +373,7 @@ class Experiment(
         #######################################################################
         if score is True:
             logger.info("Scoring")
-            score_dict = self.score(ground_truth, predictions)
+            score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
         #######################################################################
         if visualise is True:

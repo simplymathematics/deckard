@@ -3,7 +3,7 @@ stages:
   print:
     cmd: cat params.yaml
   generate_data:
-    cmd: python -m deckard.layers.train generate_data --layer data
+    cmd: python -m deckard.layers.runner generate_data --layer data
     params:
       params.yaml:
         data:
@@ -17,6 +17,11 @@ stages:
             n_redundant: 1
             n_samples: 10000
             n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
           name:
           - classification
           sample:
@@ -39,14 +44,14 @@ stages:
           attack_path: attack
     outs:
     - path: generate_data/data
-      md5: 2484d5e12f88d11934657fc6c70ae252.dir
+      md5: 8258ff26abeda15389b00881df011984.dir
       size: 8040380
       nfiles: 1
   train:
-    cmd: python -m deckard.layers.train
+    cmd: python -m deckard.layers.runner
     deps:
     - path: generate_data/data
-      md5: 5d1db7ff7c61d41d28d59b84667ba77c.dir
+      md5: 8258ff26abeda15389b00881df011984.dir
       size: 8040380
       nfiles: 1
     params:
@@ -62,6 +67,11 @@ stages:
             n_redundant: 1
             n_samples: 10000
             n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
           name:
           - classification
           sample:
@@ -110,15 +120,15 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/train
-      md5: f6e6323376bc7ce4253c3047e23bdf27.dir
-      size: 191471
+      md5: 24a4c94ee1aa6b6d241bc4d3459243a9.dir
+      size: 192901
       nfiles: 10
     - path: train/data
-      md5: cc639a18caee041883d530cbc1a1fc67.dir
+      md5: 7d562d31b789a751710a60d195eb09d4.dir
       size: 8080380
       nfiles: 1
     - path: train/model
-      md5: b09551372b5e01afe25696ef14c67401.dir
+      md5: 1754ab135a4abb650cea11b82885eb2e.dir
       size: 3372
       nfiles: 1
   sklearn_pipeline:
@@ -203,14 +213,14 @@ stages:
       size: 6662
       nfiles: 2
   pipeline:
-    cmd: python -m deckard.layers.train pipeline
+    cmd: python -m deckard.layers.runner pipeline
     deps:
     - path: train/data
-      md5: cc639a18caee041883d530cbc1a1fc67.dir
+      md5: 7d562d31b789a751710a60d195eb09d4.dir
       size: 8080380
       nfiles: 1
     - path: train/model
-      md5: b09551372b5e01afe25696ef14c67401.dir
+      md5: 1754ab135a4abb650cea11b82885eb2e.dir
       size: 3372
       nfiles: 1
     params:
@@ -226,6 +236,11 @@ stages:
             n_redundant: 1
             n_samples: 10000
             n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
           name:
           - classification
           sample:
@@ -252,14 +267,6 @@ stages:
         model.init:
           loss: log
           name: sklearn.linear_model.SGDClassifier
-        model.sklearn_pipeline:
-          scaling:
-            name: sklearn.preprocessing.StandardScaler
-            with_mean: true
-            with_std: true
-          feature_selection:
-            name: sklearn.feature_selection.SelectKBest
-            k: 50
         plots:
           balance: balance
           classification: classification
@@ -282,27 +289,27 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: pipeline/data
-      md5: a16589e01ffa60f0f4c8dec33007991d.dir
+      md5: 1851e5a27afcb86a1f9d19e289495909.dir
       size: 8080380
       nfiles: 1
     - path: pipeline/model
-      md5: 9ad58126444e0d0e977ccf95a8e650b5.dir
-      size: 4841
+      md5: ada93ecd1748236f089d46d38774ea96.dir
+      size: 3372
       nfiles: 1
     - path: reports/pipeline
-      md5: 4f788d06fe06d97e05e4377b71ad1dc4.dir
-      size: 190799
+      md5: 53d555cd7186207053c2d94dd5d10fb9.dir
+      size: 192824
       nfiles: 10
   defend:
-    cmd: python -m deckard.layers.train defend
+    cmd: python -m deckard.layers.runner defend
     deps:
     - path: pipeline/data
-      md5: a16589e01ffa60f0f4c8dec33007991d.dir
+      md5: 1851e5a27afcb86a1f9d19e289495909.dir
       size: 8080380
       nfiles: 1
     - path: pipeline/model
-      md5: 9ad58126444e0d0e977ccf95a8e650b5.dir
-      size: 4841
+      md5: ada93ecd1748236f089d46d38774ea96.dir
+      size: 3372
       nfiles: 1
     params:
       params.yaml:
@@ -317,6 +324,11 @@ stages:
             n_redundant: 1
             n_samples: 10000
             n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
           name:
           - classification
           sample:
@@ -351,14 +363,6 @@ stages:
         model.init:
           loss: log
           name: sklearn.linear_model.SGDClassifier
-        model.sklearn_pipeline:
-          scaling:
-            name: sklearn.preprocessing.StandardScaler
-            with_mean: true
-            with_std: true
-          feature_selection:
-            name: sklearn.feature_selection.SelectKBest
-            k: 50
         plots:
           balance: balance
           classification: classification
@@ -381,27 +385,27 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: defend/data
-      md5: f707af2dccdb9c47bfb87cdb5aec2271.dir
+      md5: 0cd3b20756aa9aa94a5f37063bcf2bc2.dir
       size: 8080380
       nfiles: 1
     - path: defend/model
-      md5: a7035dc5735f4d783469c0ed7c205fc0.dir
-      size: 4841
+      md5: 9454aa16662b4f7268c92fd517584094.dir
+      size: 3372
       nfiles: 1
     - path: reports/defend
-      md5: 1a068ad39aba560eb912f1b153079add.dir
-      size: 192044
+      md5: e96e1a985a5fd6eda68b6b51cd44a169.dir
+      size: 193344
       nfiles: 10
   attack:
-    cmd: python -m deckard.layers.train attack
+    cmd: python -m deckard.layers.runner attack
     deps:
     - path: defend/data
-      md5: f707af2dccdb9c47bfb87cdb5aec2271.dir
+      md5: 0cd3b20756aa9aa94a5f37063bcf2bc2.dir
       size: 8080380
       nfiles: 1
     - path: defend/model
-      md5: a7035dc5735f4d783469c0ed7c205fc0.dir
-      size: 4841
+      md5: 9454aa16662b4f7268c92fd517584094.dir
+      size: 3372
       nfiles: 1
     params:
       params.yaml:
@@ -422,6 +426,11 @@ stages:
             n_redundant: 1
             n_samples: 10000
             n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
           name:
           - classification
           sample:
@@ -456,14 +465,6 @@ stages:
         model.init:
           loss: log
           name: sklearn.linear_model.SGDClassifier
-        model.sklearn_pipeline:
-          scaling:
-            name: sklearn.preprocessing.StandardScaler
-            with_mean: true
-            with_std: true
-          feature_selection:
-            name: sklearn.feature_selection.SelectKBest
-            k: 50
         plots:
           balance: balance
           classification: classification
@@ -486,6 +487,6 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/attack
-      md5: c5170b0590e36dd34a522a27403db71a.dir
-      size: 4175558
+      md5: 078d670bfbc9908798643c4972a89a37.dir
+      size: 4177307
       nfiles: 13
