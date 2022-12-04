@@ -1,7 +1,7 @@
 import collections
 from pathlib import Path
 from time import process_time
-from typing import Union, List, NamedTuple
+from typing import List
 import numpy as np
 import yaml
 import pickle
@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import is_regressor, is_classifier
 from argparse import Namespace
+
 # from dvc.api import params_show
 # from dvclive import Live
 # from tqdm import tqdm
@@ -36,8 +37,6 @@ class Experiment(
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
-    
-    
 
     def load(self) -> tuple:
         """
@@ -50,20 +49,22 @@ class Experiment(
             yaml.add_constructor("!Data:", Data)
             data_document = """!Data:\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
-            assert isinstance(data, Data), "Data initialization failed. Check config file."
+            assert isinstance(
+                data, Data,
+            ), "Data initialization failed. Check config file."
         else:
             raise ValueError("Data not specified in config file")
         if len(params["model"]) > 0:
             yaml.add_constructor("!Model:", Model)
             model_document = """!Model:\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
-            assert isinstance(model, Model), "Model initialization failed. Check config file."
+            assert isinstance(
+                model, Model,
+            ), "Model initialization failed. Check config file."
         else:
             model = {}
         files = deepcopy(params["files"]) if "files" in params else {}
         return (data, model, files)
-
-    
 
     def save_data(self, data: dict) -> Path:
         """Saves data to specified file.
@@ -89,7 +90,7 @@ class Experiment(
         """Saves parameters to specified file.
         :returns: Path, path to saved parameters.
         """
-        filename = Path(self.files['path'], self.files['params_file'])
+        filename = Path(self.files["path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         params = deepcopy(self._asdict())
         files = params.pop("files", None)
@@ -112,7 +113,11 @@ class Experiment(
         files["data"] = str(data_file)
         files["model"] = str(model_file)
         params["files"] = files
-        params["scorer"] = list(params.pop("scorers", {}).keys())[0] if len(params["scorers"]) > 0 else None
+        params["scorer"] = (
+            list(params.pop("scorers", {}).keys())[0]
+            if len(params["scorers"]) > 0
+            else None
+        )
         params.pop("plots", None)
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(params).to_json(filename)
@@ -157,7 +162,7 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            self.files['predictions_file'],
+            self.files["predictions_file"],
         )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
@@ -182,7 +187,7 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            self.files['ground_truth_file'],
+            self.files["ground_truth_file"],
         )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
@@ -204,7 +209,7 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            self.files['time_dict_file'],
+            self.files["time_dict_file"],
         )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
@@ -223,7 +228,7 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            self.files['score_dict_file'],
+            self.files["score_dict_file"],
         )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
@@ -231,16 +236,15 @@ class Experiment(
             filename,
         )
         return str(Path(filename).as_posix())
-    
-    
-    def fit(self, data: Namespace, model: object, art_bool = None) -> tuple:
+
+    def fit(self, data: Namespace, model: object, art_bool=None) -> tuple:
         """
         Fits model to data.
         :param data: dict, data to fit model to.
         :param model: object, model to fit.
         :returns: tuple, (model, data, fit_time).
         """
-        fit_params = deepcopy(self.model['fit']) if "fit" in self.model else {}
+        fit_params = deepcopy(self.model["fit"]) if "fit" in self.model else {}
         if isinstance(self.attack, dict) and self.attack is not {}:
             art_bool = True
         else:
@@ -254,19 +258,22 @@ class Experiment(
             loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         except np.AxisError as e:
             loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
-            loaded_data.y_test = LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
+            loaded_data.y_test = (
+                LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
+            )
             try:
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             except ValueError as e:
                 if "number of classes" in str(e):
-                    loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+                    loaded_model.fit(
+                        loaded_data.X_train, loaded_data.y_train, **fit_params
+                    )
                 else:
                     raise e
         result = process_time() - start
-        return  (loaded_data, loaded_model, result / len(loaded_data.X_train))
+        return (loaded_data, loaded_model, result / len(loaded_data.X_train))
 
-    
-    def predict(self, data: dict, model: object, art = False) -> tuple:
+    def predict(self, data: dict, model: object, art=False) -> tuple:
         """
         Predicts data with model.
         :param data: dict, data to predict.
@@ -277,14 +284,13 @@ class Experiment(
         if isinstance(data, Data):
             data = data.load()
         if isinstance(model, Model):
-            model = model.load(art = art)
+            model = model.load(art=art)
         predictions = model.predict(data.X_test)
         if len(predictions.shape) > 1:
             predictions = predictions.argmax(axis=1)
         result = process_time() - start
         return predictions, result / len(data.X_test)
-    
-    
+
     def save(
         self,
         data: dict = None,
@@ -304,25 +310,34 @@ class Experiment(
         :param predictions: np.ndarray, predictions to save.
         """
         files = {}
-        path = Path(self.files['path'])
+        path = Path(self.files["path"])
         path.mkdir(parents=True, exist_ok=True)
         if "files" in self.data:
-            files.update({"data" : self.save_data(data)})
+            files.update({"data": self.save_data(data)})
         if "files" in self.model:
-            files.update({"model" : self.save_model(model)})
+            files.update({"model": self.save_model(model)})
         if "params_file" in self.files:
-            files.update({"params" : self.save_params()})
+            files.update({"params": self.save_params()})
         if "ground_truth_file" in self.files:
-            files.update({"ground_truth" : self.save_ground_truth(ground_truth)})
+            files.update({"ground_truth": self.save_ground_truth(ground_truth)})
         if "predictions_file" in self.files:
-            files.update({"predictions" : self.save_predictions(predictions)})
+            files.update({"predictions": self.save_predictions(predictions)})
         if time_dict is not None:
-            files.update({"time" : self.save_time_dict(time_dict)})
+            files.update({"time": self.save_time_dict(time_dict)})
         if score_dict is not None:
-            files.update({"scores" : self.save_scores(score_dict)})
+            files.update({"scores": self.save_scores(score_dict)})
         return files
 
-    def run(self, fit=True, predict=True, score=True, visualise=True, art = False, attack = True, mtype = "classifier") -> dict:
+    def run(
+        self,
+        fit=True,
+        predict=True,
+        score=True,
+        visualise=True,
+        art=False,
+        attack=True,
+        mtype="classifier",
+    ) -> dict:
         """
         Runs experiment and saves results according to config file.
         """
@@ -333,7 +348,7 @@ class Experiment(
         time_dict = {}
         outs = {}
         path = Path(params["files"]["path"], str(my_hash(self._asdict())))
-        self.files.update({"path" : str(path.as_posix())})
+        self.files.update({"path": str(path.as_posix())})
         if path.exists():
             logger.warning(
                 f"Path {path} already exists. Will overwrite any files specified in the config.",
@@ -349,23 +364,32 @@ class Experiment(
             logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model)
             time_dict.update({"fit_time": fit_time})
-            results = {"data": loaded_data, "model": fitted_model, "time_dict": {"fit_time": fit_time}, "ground_truth": loaded_data.y_test}
+            results = {
+                "data": loaded_data,
+                "model": fitted_model,
+                "time_dict": {"fit_time": fit_time},
+                "ground_truth": loaded_data.y_test,
+            }
         elif isinstance(model, Model):
             loaded_data = data.load()
             fitted_model = model.load(art=art)
             time_dict = {}
-            results = {"data": loaded_data, "model": fitted_model, "ground_truth": loaded_data.y_test}
+            results = {
+                "data": loaded_data,
+                "model": fitted_model,
+                "ground_truth": loaded_data.y_test,
+            }
             results["time_dict"] = time_dict
         elif isinstance(model, dict):
             loaded_data = data.load()
-            results = {"data": loaded_data,"ground_truth": loaded_data.y_test}
+            results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
         #######################################################################
         if predict is True:
             logger.info("Predicting")
             predictions, predict_time = self.predict(loaded_data, fitted_model)
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
-            results['time_dict'].update(time_dict)
+            results["time_dict"].update(time_dict)
         #######################################################################
         if score is True:
             logger.info("Scoring")
@@ -373,12 +397,12 @@ class Experiment(
             results.update({"score_dict": score_dict})
         #######################################################################
         if visualise is True:
-            if 'art' in str(type(fitted_model)):
+            if "art" in str(type(fitted_model)):
                 art = True
             else:
                 art = False
-            self.files['path'] = str(path.as_posix())
-            plots = self.visualise(data = loaded_data, model = fitted_model, art = art)
+            self.files["path"] = str(path.as_posix())
+            plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
             outs.update({"plots": plots})
             logger.info("Visualising")
         #######################################################################
@@ -387,16 +411,20 @@ class Experiment(
             attack = "!Attack:\n" + str(self._asdict())
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
-            self.files['attack_path'] = str(path.as_posix())
-            targeted = attack.attack["init"]["targeted"] if "targeted" in attack.attack["init"] else False
-            attack_results = attack.run_attack(data = loaded_data, model = fitted_model, mtype = mtype, targeted = targeted)
+            self.files["attack_path"] = str(path.as_posix())
+            targeted = (
+                attack.attack["init"]["targeted"]
+                if "targeted" in attack.attack["init"]
+                else False
+            )
+            attack_results = attack.run_attack(
+                data=loaded_data, model=fitted_model, mtype=mtype, targeted=targeted,
+            )
         saved_files = self.save(**results)
         outs.update(saved_files)
         return outs
-    
-    
 
-    def visualise(self, data, model, mtype=None, art:bool=False) -> List[Path]:
+    def visualise(self, data, model, mtype=None, art: bool = False) -> List[Path]:
         """
         Visualises data and model according to config file.
 
@@ -409,21 +437,24 @@ class Experiment(
             List[Path]: _description_
         """
         plots = []
-        
+
         yaml.add_constructor("!YellowBrick_Visualiser:", Yellowbrick_Visualiser)
-        vis = yaml.load("!YellowBrick_Visualiser:\n"+str(self._asdict()), Loader=yaml.FullLoader)
+        vis = yaml.load(
+            "!YellowBrick_Visualiser:\n" + str(self._asdict()), Loader=yaml.FullLoader,
+        )
         plot_dict = vis.visualise(data=data, model=model, mtype=mtype, art=art)
         plots.extend(plot_dict)
         return plots
-    
+
     def score(self, ground_truth, predictions) -> List[Path]:
         """
         :param self: specified in the config file.
         """
         yaml.add_constructor("!Scorer:", Scorer)
-        scorer = yaml.load("!Scorer:\n"+str(self._asdict()), Loader=yaml.FullLoader)
+        scorer = yaml.load("!Scorer:\n" + str(self._asdict()), Loader=yaml.FullLoader)
         score_paths = scorer.score_from_memory(ground_truth, predictions)
         return score_paths
+
 
 config = """
     model:
@@ -446,7 +477,7 @@ config = """
             feature_selection:
                 name: sklearn.feature_selection.SelectKBest
                 k : 2
-                
+
     data:
         sample:
             shuffle : True

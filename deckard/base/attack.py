@@ -2,19 +2,17 @@ import collections
 import logging
 from pathlib import Path
 from time import process_time
-from typing import Union, Callable, List, NamedTuple
+from typing import Callable, List
 from argparse import Namespace
 import json
-import numpy as np 
+import numpy as np
 import yaml
-from copy import deepcopy 
+from copy import deepcopy
 from pandas import DataFrame, Series
 
 from .hashable import BaseHashable, my_hash
 from .utils import factory
 from .model import Model
-
-
 
 
 ART_NUMPY_DTYPE = "float32"
@@ -26,14 +24,13 @@ class Attack(
     collections.namedtuple(
         typename="Attack",
         field_names="data, model, attack, scorers, files, plots",
-        defaults = ({},)
+        defaults=({},),
     ),
     BaseHashable,
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
-    
-    
+
     def load(self, model) -> tuple:
         """
         Loads data, model from the config file.
@@ -41,9 +38,9 @@ class Attack(
         :returns: tuple(object, dict), (attck, generate).
         """
         params = deepcopy(dict(self._asdict()))
-        name = params['attack']['init'].pop("name")
+        name = params["attack"]["init"].pop("name")
         try:
-            attack = factory(name, args = [model], **params['attack']['init'])    
+            attack = factory(name, args=[model], **params["attack"]["init"])
         except ValueError as e:
             attack = factory(name, **params)
         except Exception as e:
@@ -51,13 +48,13 @@ class Attack(
         generate = params.pop("generate", {})
         return (attack, generate)
 
-    def fit(self, data, model, targeted = False):
+    def fit(self, data, model, targeted=False):
         time_dict = {}
         start = process_time()
         if "X_test" not in vars(data):
             data = data.load()
         if isinstance(model, BaseHashable):
-            model = model.load(art = True)
+            model = model.load(art=True)
         assert hasattr(model, "fit"), "Model must have a fit method."
         attack, gen = self.load(model)
         if targeted is False:
@@ -70,8 +67,8 @@ class Attack(
         end = process_time()
         time_dict.update({"attack_pred_time": end - start})
         return attack_samples, attack_pred, time_dict
-    
-    def run_attack(self, data, model, mtype:str=None, targeted = False):
+
+    def run_attack(self, data, model, mtype: str = None, targeted=False):
         attack_samples, attack_pred, time_dict = self.fit(data, model, targeted)
         results = {
             "samples": attack_samples,
@@ -82,36 +79,37 @@ class Attack(
         return outs
 
     def save_attack_time(
-        self, time_dict: dict, 
-    )-> Path:
+        self,
+        time_dict: dict,
+    ) -> Path:
         """
         Saves the time dictionary to a json file.
         """
-        filename = Path(self.files['path'], self.files['attack_time_dict_file'])
+        filename = Path(self.files["path"], self.files["attack_time_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
         return Path(filename).resolve()
-    
-    def save_attack_params(self)-> Path:
+
+    def save_attack_params(self) -> Path:
         """
         Saves the attack parameters to a json file.
         """
-        filename = Path(self.files['path'], self.files['attack_params_file'])
+        filename = Path(self.files["path"], self.files["attack_params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
         assert Path(filename).exists(), f"File {filename} not saved."
         return Path(filename).resolve()
-                
+
     def save_attack_samples(
         self,
-        samples: np.ndarray, 
+        samples: np.ndarray,
     ) -> Path:
         """
         Saves adversarial examples to specified file.
         """
-        filename = Path(self.files['path'], self.files['attack_samples_file'])
+        filename = Path(self.files["path"], self.files["attack_samples_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(samples.reshape(samples.shape[0], -1))
         attack_results.to_json(filename)
@@ -125,7 +123,7 @@ class Attack(
         """
         Saves adversarial predictions to specified file.
         """
-        filename = Path(self.files['path'], self.files['attack_predictions_file'])
+        filename = Path(self.files["path"], self.files["attack_predictions_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(predictions)
         attack_results.to_json(filename)
@@ -142,14 +140,22 @@ class Attack(
 
         :return path: Path to saved file.
         """
-        filename = Path(self.files['path'],  self.files['attack_scores_file'])
+        filename = Path(self.files["path"], self.files["attack_scores_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(score_dict, f)
         assert Path(filename).exists(), "Adversarial example file not saved"
         return Path(filename).resolve()
-    
-    def save(self, data: Namespace = None, model: Callable = None, score_dict:dict = None, predictions:dict = None, samples:dict = None, time_dict:dict = None)-> List[Path]:
+
+    def save(
+        self,
+        data: Namespace = None,
+        model: Callable = None,
+        score_dict: dict = None,
+        predictions: dict = None,
+        samples: dict = None,
+        time_dict: dict = None,
+    ) -> List[Path]:
         """
         Saves the attack result as specified in the config file.
         :param data: Namespace, data object.

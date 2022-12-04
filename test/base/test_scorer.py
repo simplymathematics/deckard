@@ -17,9 +17,11 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 logger = logging.getLogger(__name__)
 
 yaml.add_constructor("!Scorer", Scorer)
+
+
 class testScorer(unittest.TestCase):
     def setUp(self):
-        
+
         self.path = "reports"
         self.config = config
         self.scorer = yaml.load("!Scorer" + str(config), Loader=yaml.FullLoader)
@@ -42,7 +44,6 @@ class testScorer(unittest.TestCase):
         with open(self.scores_file, "w") as f:
             json.dump(score_dict, f)
         assert self.scores_file.exists()
-        
 
     def test_scorer(self):
         self.assertIsInstance(self.scorer, Scorer)
@@ -71,9 +72,6 @@ class testScorer(unittest.TestCase):
         path = self.path
         full_path = scorer.save(scores)
         self.assertTrue(Path(full_path).exists())
-        
-
-
 
     def tearDown(self):
         if os.path.isfile("scores.json"):

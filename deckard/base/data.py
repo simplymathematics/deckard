@@ -79,7 +79,9 @@ class Data(
         else:
             name = params.pop("name")
             if isinstance(name, list):
-                assert len(name) == 1, "Only one dataset can be loaded at a time. See documentation for setting up multiple experiments."
+                assert (
+                    len(name) == 1
+                ), "Only one dataset can be loaded at a time. See documentation for setting up multiple experiments."
                 name = name.pop(0)
             if name in real or name in generate:
                 ns = self.sklearn_load()
@@ -91,7 +93,7 @@ class Data(
             ns = self.modify(ns)
         return ns
 
-    def modify(self, data:Namespace) -> Namespace:
+    def modify(self, data: Namespace) -> Namespace:
         """
         Modify the data according to the parameters in the configuration file.
         Args:
@@ -100,7 +102,7 @@ class Data(
             self.generate (dict): Dictionary of parameters to pass to sklearn.datasets.make_*
             self.sample (dict): Dictionary of parameters to pass to sklearn.model_selection.train_test_split
             self.add_noise (dict): Dictionaries of parameters to pass to sklearn.datasets.make_sparse_coded_signal
-            self.transform (dict): Dictionary of transformers to apply to the data 
+            self.transform (dict): Dictionary of transformers to apply to the data
         Returns:
             Namespace: Namespace containing the data. Either "X" and "y" or "X_train", "X_test", "y_train", "y_test"
         """
@@ -197,7 +199,9 @@ class Data(
                 y_train = data["y_train"]
                 y_test = data["y_test"]
             else:
-                raise ValueError("Pickle file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.")
+                raise ValueError(
+                    "Pickle file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
+                )
         else:
             raise ValueError(f"Unknown datatype: {filetype}")
         if "X" in locals():
@@ -214,13 +218,14 @@ class Data(
                 y_test=y_test,
             )
         else:
-            raise ValueError(f"""Data not found in correct format. Check {name}. Should be a pickle file or a csv, json, npz, or txt file. It is type {Path(name).suffix}.""")
+            raise ValueError(
+                f"""Data not found in correct format. Check {name}. Should be a pickle file or a csv, json, npz, or txt file. It is type {Path(name).suffix}.""",
+            )
         return ns
-        
-        
+
     def add_noise_to_data(
         self,
-        data : Namespace,
+        data: Namespace,
     ) -> Namespace:
         """
         Adds noise to the data according to the parameters specified in params.yaml
@@ -271,7 +276,7 @@ class Data(
     def sklearn_transform(
         self,
         data: Namespace,
-        transform : dict,
+        transform: dict,
     ) -> Namespace:
         """
         Transofrms the data according to the parameters specified in params.yaml
@@ -324,12 +329,12 @@ class Data(
         for layer in pipeline:
             new_data = deepcopy(data)
             transform = self.sklearn_pipeline[layer]
-            data = self.sklearn_transform(data = new_data, transform = transform)
+            data = self.sklearn_transform(data=new_data, transform=transform)
         return data
 
     def sampler(
         self,
-        data:Namespace,
+        data: Namespace,
     ) -> Namespace:
         """
         Samples the data using train_test_split
@@ -397,7 +402,6 @@ class Data(
         ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
         return ns
 
-
     def save(self, data: Namespace) -> Path:
         """
         Saves the data to a pickle file at self.files.data_path/hash/self.files.data_name
@@ -414,6 +418,7 @@ class Data(
         with open(filename, "wb") as f:
             pickle.dump(data, f)
         return Path(filename).resolve()
+
 
 config = """
     sample:

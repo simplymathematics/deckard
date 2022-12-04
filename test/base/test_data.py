@@ -1,6 +1,4 @@
-import os
 import shutil
-import tempfile
 import unittest
 import yaml
 import numpy as np
@@ -14,7 +12,7 @@ names = ["mnist", "cifar10", "iris"]
 
 
 class testData(unittest.TestCase):
-    def setUp(self, config = config):
+    def setUp(self, config=config):
         yaml.add_constructor("!Data:", Data)
         self.data_document = "!Data:\n" + config
         self.data = yaml.load(self.data_document, Loader=yaml.Loader)
@@ -32,7 +30,7 @@ class testData(unittest.TestCase):
 
     def test_get_params(self):
         data = self.data
-        params = data._asdict()['sample']
+        params = data._asdict()["sample"]
         self.assertIsInstance(params["train_size"], (float, int))
         self.assertIsInstance(params["random_state"], int)
         self.assertIsInstance(params["shuffle"], bool)
@@ -60,4 +58,3 @@ class testData(unittest.TestCase):
     def tearDown(self):
         if Path(self.data.files["data_path"]).exists():
             shutil.rmtree(Path(self.data.files["data_path"]))
-        

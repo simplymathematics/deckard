@@ -1,6 +1,6 @@
 import yaml
 import logging
-from typing import Callable, Union, NamedTuple, List
+from typing import Callable, List
 from copy import deepcopy
 from sklearn.base import is_regressor, is_classifier
 import numpy as np
@@ -14,12 +14,19 @@ from yellowbrick.features import (
     Manifold,
     ParallelCoordinates,
 )
-from yellowbrick.contrib.prepredict import (PrePredict, CLASSIFIER, REGRESSOR, CLUSTERER, )
+from yellowbrick.contrib.prepredict import (
+    PrePredict,
+    CLASSIFIER,
+    REGRESSOR,
+    CLUSTERER,
+)
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 from yellowbrick.regressor import PredictionError, ResidualsPlot
 from yellowbrick.regressor.alphas import AlphaSelection
 from yellowbrick.cluster import (
-    KElbowVisualizer, SilhouetteVisualizer, InterclusterDistance
+    KElbowVisualizer,
+    SilhouetteVisualizer,
+    InterclusterDistance,
 )
 from yellowbrick.model_selection import (
     LearningCurve,
@@ -112,8 +119,9 @@ class Yellowbrick_Visualiser(
         """Generates a new Data object from a YAML node"""
         return super().__new__(cls, **loader.construct_mapping(node))
 
-
-    def visualise_data(self, data: Namespace, classes:list=None, features:list=None) -> List[Path]:
+    def visualise_data(
+        self, data: Namespace, classes: list = None, features: list = None,
+    ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
         :param data: dict of data to be used for visualisation
@@ -147,50 +155,100 @@ class Yellowbrick_Visualiser(
             if "radviz" in plots:
                 visualiser = RadViz(classes=classes)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path, plots["radviz"]+ str(plots.pop("filetype", ".png"))))
-                paths["radviz"] = str(Path(path, plots["radviz"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["radviz"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["radviz"] = str(
+                    Path(
+                        path, plots["radviz"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "rank1d" in plots:
                 visualiser = Rank1D(algorithm="shapiro")
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path, plots["rank1d"]+ str(plots.pop("filetype", ".png"))))
-                paths["rank1d"] = str(Path(path, plots["rank1d"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["rank1d"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["rank1d"] = str(
+                    Path(
+                        path, plots["rank1d"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "rank2d" in plots:
                 visualiser = Rank2D(algorithm="pearson")
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path, plots["rank2d"]+ str(plots.pop("filetype", ".png"))))
-                paths["rank2d"] = str(Path(path, plots["rank2d"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["rank2d"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["rank2d"] = str(
+                    Path(
+                        path, plots["rank2d"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "balance" in plots:
                 visualiser = ClassBalance(labels=classes)
                 visualiser.fit(y_train)
-                visualiser.show(Path(path, plots["balance"]+ str(plots.pop("filetype", ".png"))))
-                paths["balance"] = str(Path(path, plots["balance"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["balance"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["balance"] = str(
+                    Path(
+                        path, plots["balance"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "correlation" in plots:
                 visualiser = FeatureCorrelation(labels=features)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path, plots["correlation"]+ str(plots.pop("filetype", ".png"))))
-                paths['correlation'] = str(Path(path, plots["correlation"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(
+                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
+                    ),
+                )
+                paths["correlation"] = str(
+                    Path(
+                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "pca" in plots:
                 visualiser = PCA()
                 visualiser.fit_transform(X_train, y_train)
-                visualiser.show(Path(path, plots["pca"]+ str(plots.pop("filetype", ".png"))))
-                paths['pca'] = str(Path(path, plots["pca"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["pca"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["pca"] = str(
+                    Path(
+                        path, plots["pca"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "manifold" in plots:
                 visualiser = Manifold(manifold="tsne")
                 visualiser.fit_transform(X_train, y_train)
-                visualiser.show(Path(path, plots["manifold"]+ str(plots.pop("filetype", ".png"))))
-                paths['manifold'] = str(Path(path, plots["manifold"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["manifold"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["manifold"] = str(
+                    Path(
+                        path, plots["manifold"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
             if "parallel" in plots:
                 visualiser = ParallelCoordinates(classes=classes, features=features)
                 visualiser.fit(X_train, y_train)
-                visualiser.show(Path(path, plots["parallel"]+ str(plots.pop("filetype", ".png"))))
-                paths['parallel'] = str(Path(path, plots["parallel"]+ str(plots.pop("filetype", ".png"))).as_posix())
+                visualiser.show(
+                    Path(path, plots["parallel"] + str(plots.pop("filetype", ".png"))),
+                )
+                paths["parallel"] = str(
+                    Path(
+                        path, plots["parallel"] + str(plots.pop("filetype", ".png")),
+                    ).as_posix(),
+                )
                 plt.gcf().clear()
         return paths
 
@@ -198,7 +256,7 @@ class Yellowbrick_Visualiser(
         self,
         data: Namespace,
         model: Callable,
-        classes : list = None,
+        classes: list = None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -235,7 +293,7 @@ class Yellowbrick_Visualiser(
                     try:
                         viz = visualiser(
                             model,
-                            classes = [int(y) for y in np.unique(data.y_train)],
+                            classes=[int(y) for y in np.unique(data.y_train)],
                             binary=True,
                         )
                     except TypeError as e:
@@ -244,16 +302,16 @@ class Yellowbrick_Visualiser(
                         )
                         viz = visualiser(
                             model,
-                            classes = [int(y) for y in np.unique(data.y_train)],
+                            classes=[int(y) for y in np.unique(data.y_train)],
                         )
                 else:
                     viz = visualiser(
                         model,
                         classes=[0],
                     )
-                viz.fit(X = data.X_train, y = data.y_train)
+                viz.fit(X=data.X_train, y=data.y_train)
                 viz.score(data.X_test, data.y_test)
-                filename = Path(path, plots[name]+ str(plots.pop("filetype", ".png")))
+                filename = Path(path, plots[name] + str(plots.pop("filetype", ".png")))
                 _ = viz.show(outpath=filename)
                 assert filename.exists(), f"File {filename} does not exist"
                 paths[name] = str(filename.as_posix())
@@ -263,7 +321,7 @@ class Yellowbrick_Visualiser(
     def visualise_regression(self, data: Namespace, model: object) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
-        
+
         :param data: dict of data to be used for visualisation
         :param model: model object
         :param self.files.path: path to save the plots
@@ -279,7 +337,9 @@ class Yellowbrick_Visualiser(
             if name in plots.keys():
                 visualiser = regression_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
-                name = plots[name] if isinstance(plots[name], str) else params.pop("name")
+                name = (
+                    plots[name] if isinstance(plots[name], str) else params.pop("name")
+                )
                 try:
                     viz = visualiser(
                         model,
@@ -298,7 +358,7 @@ class Yellowbrick_Visualiser(
                     )
                 viz.fit(data.X_train, data.y_train)
                 viz.score(data.X_test, data.y_test)
-                filename =Path(path, plots[name]+ str(plots.pop("filetype", ".png")))
+                filename = Path(path, plots[name] + str(plots.pop("filetype", ".png")))
                 _ = viz.show(outpath=filename)
                 assert filename.is_file(), f"File {name} does not exist."
                 paths[name] = str(filename.as_posix())
@@ -323,7 +383,9 @@ class Yellowbrick_Visualiser(
             if name in plots.keys():
                 visualiser = clustering_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
-                name = plots[name] if isinstance(plots[name], str) else params.pop("name")
+                name = (
+                    plots[name] if isinstance(plots[name], str) else params.pop("name")
+                )
                 if name == "elbow":
                     assert (
                         "k" in params
@@ -333,7 +395,7 @@ class Yellowbrick_Visualiser(
                 # viz.score(data.X_test, data.y_test)
                 filename = Path(path, name + str(plots.pop("filetype", ".png")))
                 _ = viz.show(outpath=filename)
-                viz.show(outpath=Path(path, name+ str(plots.pop("filetype", ".png"))))
+                viz.show(outpath=Path(path, name + str(plots.pop("filetype", ".png"))))
                 paths[name] = str(filename.as_posix())
                 plt.gcf().clear()
         return paths
@@ -375,7 +437,9 @@ class Yellowbrick_Visualiser(
             if name in plots.keys():
                 visualiser = model_selection_visualisers[name]
                 params = plots[name] if isinstance(plots[name], dict) else {}
-                name = plots[name] if isinstance(plots[name], str) else params.pop("name")
+                name = (
+                    plots[name] if isinstance(plots[name], str) else params.pop("name")
+                )
                 if "cross" or "recursive" or "validation" in name:
                     if "validation" in name:
                         assert (
@@ -395,7 +459,9 @@ class Yellowbrick_Visualiser(
                         model,
                     )
                 elif "learning" in name:
-                    assert "train_sizes" in params, "Learning curve visualiser requires train_sizes parameter."
+                    assert (
+                        "train_sizes" in params
+                    ), "Learning curve visualiser requires train_sizes parameter."
                     viz = visualiser(
                         model,
                         scoring=scorer,
@@ -413,7 +479,7 @@ class Yellowbrick_Visualiser(
                 plt.gcf().clear()
         return paths
 
-    def visualise(self, data, model, mtype=None, art = False) -> dict:
+    def visualise(self, data, model, mtype=None, art=False) -> dict:
         """
         Visualise classification results according to the configuration file.
         :param data: Namespace of data to be used for visualisation
@@ -425,7 +491,7 @@ class Yellowbrick_Visualiser(
         """
         paths = []
         files = deepcopy(dict(self.files))
-        path = files['path']
+        path = files["path"]
         if art is True and hasattr(model, "model"):
             model = model.model
         if is_regressor(model):
@@ -449,10 +515,9 @@ class Yellowbrick_Visualiser(
         if reg_plots is not None:
             plot_dict["regression"] = reg_plots
         if clu_plots is not None:
-            plot_dict['clustering'] = clu_plots
+            plot_dict["clustering"] = clu_plots
         return plot_dict
-        
-        
+
     # def render(
     #     self,
     #     plot_dict,

@@ -2,16 +2,16 @@ import collections
 import logging
 import pickle
 import warnings
-from argparse import Namespace
 from copy import deepcopy
 from pathlib import Path
-from time import process_time
 import numpy as np
-from typing import Callable
 from art.estimators import ScikitlearnEstimator
-from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
-                                           TensorFlowClassifier,
-                                           TensorFlowV2Classifier)
+from art.estimators.classification import (
+    KerasClassifier,
+    PyTorchClassifier,
+    TensorFlowClassifier,
+    TensorFlowV2Classifier,
+)
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
@@ -63,7 +63,7 @@ class Model(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self, art = False):
+    def load(self, art=False):
         filename = Path(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
@@ -97,29 +97,25 @@ class Model(
         if len(self.art_pipeline) > 0 or art is True:
             art = self.art_pipeline
             if "preprocessor_defence" in art:
-                preprocessor_defences = (
-                    [
-                        load_from_tup(
-                            (
-                                art["preprocessor_defence"]["name"],
-                                art["preprocessor_defence"]["params"],
-                            ),
+                preprocessor_defences = [
+                    load_from_tup(
+                        (
+                            art["preprocessor_defence"]["name"],
+                            art["preprocessor_defence"]["params"],
                         ),
-                    ]
-                )
+                    ),
+                ]
             else:
                 preprocessor_defences = None
             if "postprocessor_defence" in art:
-                postprocessor_defences = (
-                    [
-                        load_from_tup(
-                            (
-                                art["postprocessor_defence"]["name"],
-                                art["postprocessor_defence"]["params"],
-                            ),
+                postprocessor_defences = [
+                    load_from_tup(
+                        (
+                            art["postprocessor_defence"]["name"],
+                            art["postprocessor_defence"]["params"],
                         ),
-                    ]
-                )
+                    ),
+                ]
             else:
                 postprocessor_defences = None
             if library == "sklearn":
@@ -171,29 +167,20 @@ class Model(
                     output="logits",
                 )
             if "transformer_defence" in art:
-                model = (
-                    load_from_tup(
-                        (
-                            art["transformer_defence"]["name"],
-                            art["transformer_defence"]["params"],
-                        ),
-                        model,
-                    )()
-                )
+                model = load_from_tup(
+                    (
+                        art["transformer_defence"]["name"],
+                        art["transformer_defence"]["params"],
+                    ),
+                    model,
+                )()
             if "trainer_defence" in art:
-                model = (
-                    load_from_tup(
-                        (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
-                        model,
-                    )()
-                )
+                model = load_from_tup(
+                    (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
+                    model,
+                )()
         return model
 
-    
-    
-    
-    
-    
     def save(self, model):
         filename = Path(
             self.files["model_path"],

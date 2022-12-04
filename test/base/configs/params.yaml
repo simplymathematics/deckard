@@ -47,9 +47,9 @@ model:
   art_pipeline:
     preprocessor_defence:
       name: art.defences.preprocessor.FeatureSqueezing
-      params: 
+      params:
         bit_depth : 8
-        clip_values : [0, 255]  
+        clip_values : [0, 255]
 plots:
   balance: balance
   classification: classification

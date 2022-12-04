@@ -1,4 +1,3 @@
-import tempfile
 import unittest
 import warnings
 import yaml
@@ -9,6 +8,7 @@ from deckard.base import Attack, Experiment
 from deckard.base.experiment import config
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
@@ -22,28 +22,33 @@ class testAttackExperiment(unittest.TestCase):
         yaml.add_constructor("!Experiment:", Experiment)
         exp_config = "!Experiment:" + config
         self.exp = yaml.load(exp_config, Loader=yaml.FullLoader)
-        self.path = self.attack._asdict()['files']['path']
+        self.path = self.attack._asdict()["files"]["path"]
         data, model, _ = self.exp.load()
         self.data = data.load()
         self.model = model.load()
         self.data.y_train = LabelBinarizer().fit_transform(self.data.y_train)
         self.data.y_test = LabelBinarizer().fit_transform(self.data.y_test)
         self.model.fit(self.data.X_train, self.data.y_train)
+
     def test_init(self):
         self.assertTrue(isinstance(self.attack, Attack))
-    
+
     def test_load(self):
         atk, gen = self.attack.load(self.model)
         self.assertTrue(hasattr(atk, "generate"))
         self.assertIsInstance(gen, dict)
-    
+
     def test_generate(self):
         atk, gen = self.attack.load(self.model)
-        adv_samples, attack_pred, time_dict, = self.attack.fit(self.data, self.model, atk, **gen)
+        (
+            adv_samples,
+            attack_pred,
+            time_dict,
+        ) = self.attack.fit(self.data, self.model, atk, **gen)
         self.assertIsInstance(adv_samples, np.ndarray)
         self.assertIsInstance(time_dict, dict)
         self.assertIsInstance(attack_pred, np.ndarray)
-    
+
     def test_save_attack_predictions(self):
         preds = self.data.y_test
         path = self.attack.save_attack_predictions(preds)
@@ -58,8 +63,7 @@ class testAttackExperiment(unittest.TestCase):
         time = {"time": 1}
         path = self.attack.save_attack_time(time)
         self.assertTrue(path.exists())
-    
-    
+
     def test_run_attack(self):
         outs = self.attack.run_attack(self.data, self.model, self.attack)
         for name, filename in outs.items():
@@ -67,6 +71,7 @@ class testAttackExperiment(unittest.TestCase):
 
     def tearDown(self) -> None:
         from shutil import rmtree
+
         if Path(self.path).is_dir():
             rmtree(self.path)
         if Path("model").is_dir():

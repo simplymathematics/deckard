@@ -1,8 +1,5 @@
-import os
 import shutil
-import tempfile
 import unittest
-from copy import deepcopy
 
 import numpy as np
 from deckard.base import Data, Model
@@ -13,9 +10,11 @@ import yaml
 
 yaml.add_constructor("!Data:", Data)
 yaml.add_constructor("!Model:", Model)
+
+
 class testModel(unittest.TestCase):
     def setUp(self):
-        self.path ="model"
+        self.path = "model"
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.model1 = """
         !Model:
@@ -74,7 +73,7 @@ class testModel(unittest.TestCase):
                 n_classes: 2
         """
         self.url = "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
-        
+
         self.loaded_model1 = yaml.load(self.model1, Loader=yaml.FullLoader)
         self.loaded_model2 = yaml.load(self.model2, Loader=yaml.FullLoader)
         self.loaded_model3 = yaml.load(self.model1, Loader=yaml.FullLoader)
@@ -100,7 +99,6 @@ class testModel(unittest.TestCase):
         model3 = self.loaded_model2
         self.assertEqual(model1, model2)
         self.assertNotEqual(model1, model3)
-
 
     def test_save_model(self):
         model1 = self.loaded_model1

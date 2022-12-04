@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore", category=ResourceWarning)
 
 from deckard.base.utils import load_from_tup, factory, parse_config_for_libraries
 
+
 class testUtils(unittest.TestCase):
     def setUp(self):
         self.path = "configs"
@@ -23,24 +24,27 @@ class testUtils(unittest.TestCase):
             "penalty": "l2",
         }
         self.obj_gen = ("sklearn.linear_model.LogisticRegression", {"penalty": "l2"})
-        self.regex =  "params.yaml"
+        self.regex = "params.yaml"
         self.file = Path(self.path) / self.regex
         self.output = "requirements.txt"
-        assert self.file.exists(), f"File {self.file} does not exist in {self.path}. Found {list(Path(self.path).iterdir())}"
-        
+        assert (
+            self.file.exists()
+        ), f"File {self.file} does not exist in {self.path}. Found {list(Path(self.path).iterdir())}"
+
     def test_load_from_tuple(self):
         obj = load_from_tup(self.obj_gen)
         self.assertIsInstance(obj, BaseEstimator)
-    
+
     def test_factory(self):
         obj = factory(**self.factory)
         self.assertIsInstance(obj, BaseEstimator)
-    
+
     def test_parse_config_for_libraries(self):
-        (libraries , path)= parse_config_for_libraries(path=self.path, regex=self.regex, output=self.output)
+        (libraries, path) = parse_config_for_libraries(
+            path=self.path, regex=self.regex, output=self.output,
+        )
         self.assertEqual(libraries, ["art", "sklearn"])
         with open(path, "r") as f:
             for count, _ in enumerate(f):
                 pass
         self.assertEqual(count + 1, len(libraries))
-
