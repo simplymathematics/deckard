@@ -1,10 +1,4 @@
 stages:
-  # parse_params:
-  #   cmd : python -m deckard.layers.parse
-  #   deps:
-  #    - conf
-    # outs:
-    #  - params.yaml
   generate_data:
     cmd: python -m deckard.layers.runner generate_data --layer data
     params:
@@ -64,9 +58,7 @@ stages:
     cmd: python -m deckard.layers.runner attack
     params:
       - data
-      - model.files
-      - model.init
-      - model.art_pipeline
+      - model
       - attack
       - files
       - plots
@@ -76,31 +68,32 @@ stages:
       - defend/${data.files.data_path}
     outs:
       - ${files.path}/attack
+  evaluate:
+    cmd: python -m deckard.layers.runner evaluate --layer evaluate
+    params:
+      - data
+      - model
+      - attack
+      - files
+      - plots
+      - scorers
+    deps:
+      - ${files.path}/attack
+      - ${files.path}/defend
+    outs:
+      - ${files.path}/evaluate
+  visualise:
+    cmd: python -m deckard.layers.runner visualise --layer visualise
+    params:
+      - data
+      - model
+      - attack
+      - files
+      - plots
+      - scorers
+    deps:
+      - ${files.path}/attack
+      - ${files.path}/defend
+    outs:
+      - ${files.path}/visualise
 
-  # visualise:
-  #     cmd: python -m deckard.layers.visualise --layer_name visualise
-  #     params:
-  #       - visualise.config
-  #     plots:
-  #       - ${visualise.outputs.folder}/${visualise.plots.roc_auc}
-  #     deps:
-  #       - ${defend.outputs.folder}/${defend.outputs.model}
-  #       - ${prepare.outputs.folder}/${prepare.outputs.file}
-  #     # metrics:
-  #     #   - visualise.scores
-  # evaluate:
-  #     cmd: python -m deckard.layers.evaluate --layer_name evaluate
-  #     params:
-  #       - evaluate.config
-  #     metrics:
-  #       - ${evaluate.outputs.folder}/${evaluate.metrics.scores}
-  #     deps:
-  #       - ${train.outputs.folder}
-  #       - ${prepare.outputs.folder}
-  #       - ${pipeline.outputs.folder}
-  #       - ${featurize.outputs.folder}
-  #       - ${art_model.outputs.folder}
-  #       - ${defend.outputs.folder}
-  #       - ${attack.outputs.folder}
-  #     # plots:
-  #     #   - evaluate.plots

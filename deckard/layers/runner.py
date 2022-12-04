@@ -10,20 +10,48 @@ from deckard.base import Experiment
 # from deckard.base.hashable import generate_queue, my_hash, sort_queue
 
 layers = {
-    "fit": {"fit": True},
+    "fit": {
+        "fit": True,
+        "predict": True,
+        "score": True,
+        "visualise": True,
+        "attack": False,
+    },
     "data": {
         "fit": False,
         "predict": False,
         "score": False,
         "visualise": False,
-        "art": False,
         "attack": False,
     },
-    "predict": {"predict": True},
-    "evaluate": {"score": True},
-    "visualise": {"visualise": True},
-    "attack": {"attack": True},
-    "art": {"art": True},
+    "predict": {
+        "fit": False,
+        "predict": False,
+        "score": False,
+        "visualise": False,
+        "attack": False,
+    },
+    "evaluate": {
+        "fit": True,
+        "predict": True,
+        "score": True,
+        "visualise": False,
+        "attack": False,
+    },
+    "visualise": {
+        "fit": False,
+        "predict": False,
+        "score": False,
+        "visualise": True,
+        "attack": False,
+    },
+    "attack": {
+        "fit": True,
+        "predict": True,
+        "score": True,
+        "visualise": True,
+        "attack": True,
+    },
     "all": {
         "fit": True,
         "predict": True,

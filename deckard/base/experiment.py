@@ -100,18 +100,19 @@ class Experiment(
             path = Path(path)
             for x in files:
                 x = Path(path, files[x])
-                new_files[x] = str(x.relative_to(path.parent).as_posix())
+                new_files[x] = str(x.relative_to(path).as_posix())
         files = new_files
-        data_files = params["data"].pop("files", {})
-        data_path = data_files.pop("data_path", "")
-        data_filetype = data_files.pop("data_filetype", "")
+        data_files = params["data"].pop("files")
+        data_path = data_files.pop("data_path")
+        data_filetype = data_files.pop("data_filetype")
         data_file = Path(data_path, my_hash(self.data) + "." + data_filetype)
-        model_files = params["model"].pop("files", {})
-        model_path = model_files.pop("path", "")
-        model_filetype = model_files.pop("model_filetype", "")
-        model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
         files["data"] = str(data_file)
-        files["model"] = str(model_file)
+        if len(params["model"]) > 0:
+            model_files = params["model"].pop("files")
+            model_path = model_files.pop("model_path")
+            model_filetype = model_files.pop("model_filetype")
+            model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
+            files["model"] = str(model_file)
         params["files"] = files
         params["scorer"] = (
             list(params.pop("scorers", {}).keys())[0]
@@ -399,16 +400,6 @@ class Experiment(
             score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
         #######################################################################
-        if visualise is True:
-            if "art" in str(type(fitted_model)):
-                art = True
-            else:
-                art = False
-            self.files["path"] = str(path.as_posix())
-            plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
-            outs.update({"plots": plots})
-            logger.info("Visualising")
-        #######################################################################
         attack_keys = len(self.attack)
         if attack is True and attack_keys > 0:
             attack = "!Attack:\n" + str(self._asdict())
@@ -429,6 +420,16 @@ class Experiment(
             outs.update(attack_results)
         saved_files = self.save(**results)
         outs.update(saved_files)
+        #######################################################################
+        if visualise is True:
+            if "art" in str(type(fitted_model)):
+                art = True
+            else:
+                art = False
+            self.files["path"] = str(path.as_posix())
+            plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
+            outs.update({"plots": plots})
+            logger.info("Visualising")
         return outs
 
     def visualise(self, data, model, mtype=None, art: bool = False) -> List[Path]:

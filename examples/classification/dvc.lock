@@ -43,14 +43,14 @@ stages:
           attack_path: attack
     outs:
     - path: generate_data/data
-      md5: 05beca732f3b73547fba15b779548093.dir
+      md5: 178eb3942517a332df1ac4ab3e293941.dir
       size: 84369
       nfiles: 1
   train:
     cmd: python -m deckard.layers.runner
     deps:
     - path: generate_data/data
-      md5: 05beca732f3b73547fba15b779548093.dir
+      md5: 178eb3942517a332df1ac4ab3e293941.dir
       size: 84369
       nfiles: 1
     params:
@@ -118,15 +118,15 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/train
-      md5: e866a98aedea4258aecad96fad7fb07b.dir
-      size: 108365
+      md5: 85273256eb26f7cecbca400bee8fba6e.dir
+      size: 109966
       nfiles: 10
     - path: train/data
-      md5: 823c78b491d44ada6190ab99d7e12d16.dir
-      size: 88369
+      md5: 1d29b4fed3d2def031d42b8cd21a1d35.dir
+      size: 92373
       nfiles: 1
     - path: train/model
-      md5: 1ee83c66037290b342bd3fb169125100.dir
+      md5: 825dbf93f4aa5994aef6f67852c2b94e.dir
       size: 1209
       nfiles: 1
   sklearn_pipeline:
@@ -214,11 +214,11 @@ stages:
     cmd: python -m deckard.layers.runner pipeline
     deps:
     - path: train/data
-      md5: 823c78b491d44ada6190ab99d7e12d16.dir
-      size: 88369
+      md5: 1d29b4fed3d2def031d42b8cd21a1d35.dir
+      size: 92373
       nfiles: 1
     - path: train/model
-      md5: 1ee83c66037290b342bd3fb169125100.dir
+      md5: 825dbf93f4aa5994aef6f67852c2b94e.dir
       size: 1209
       nfiles: 1
     params:
@@ -286,26 +286,26 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: pipeline/data
-      md5: 3a0228123d16e4fc1b4bef4ab4248c5e.dir
-      size: 88369
+      md5: 4881ec221df083585ce5f471aef4c19b.dir
+      size: 92373
       nfiles: 1
     - path: pipeline/model
-      md5: 3ef2ca015eea1058915a74d2fd67cfd5.dir
+      md5: ebb072814355d56ff8d3baad2dc077ae.dir
       size: 1209
       nfiles: 1
     - path: reports/pipeline
-      md5: a484c5045b7b3b924a53524cb56c0e1e.dir
-      size: 106592
+      md5: 40c37b87d9c161407eac31e96d108ce4.dir
+      size: 108635
       nfiles: 10
   defend:
     cmd: python -m deckard.layers.runner defend
     deps:
     - path: pipeline/data
-      md5: 3a0228123d16e4fc1b4bef4ab4248c5e.dir
-      size: 88369
+      md5: 4881ec221df083585ce5f471aef4c19b.dir
+      size: 92373
       nfiles: 1
     - path: pipeline/model
-      md5: 3ef2ca015eea1058915a74d2fd67cfd5.dir
+      md5: ebb072814355d56ff8d3baad2dc077ae.dir
       size: 1209
       nfiles: 1
     params:
@@ -381,26 +381,26 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: defend/data
-      md5: 33e3099166cd15928845b4c41e10815a.dir
-      size: 88369
+      md5: f71a908078e22f6b3ed704897be71dc7.dir
+      size: 92373
       nfiles: 1
     - path: defend/model
-      md5: a52704ae0b58528243dec87dd690478e.dir
+      md5: 2b8165e8288b9944ce300c2df0530079.dir
       size: 1209
       nfiles: 1
     - path: reports/defend
-      md5: b603c254aa81e8c1c208fc4ee3e50376.dir
-      size: 108996
+      md5: ebc429fc3e08eb315fcc4d282823c8b9.dir
+      size: 110309
       nfiles: 10
   attack:
     cmd: python -m deckard.layers.runner attack
     deps:
     - path: defend/data
-      md5: 33e3099166cd15928845b4c41e10815a.dir
-      size: 88369
+      md5: f71a908078e22f6b3ed704897be71dc7.dir
+      size: 92373
       nfiles: 1
     - path: defend/model
-      md5: a52704ae0b58528243dec87dd690478e.dir
+      md5: 2b8165e8288b9944ce300c2df0530079.dir
       size: 1209
       nfiles: 1
     params:
@@ -446,20 +446,25 @@ stages:
           attack_time_dict_file: adv_time_dict.json
           attack_params_file: attack_params.json
           attack_path: attack
-        model.art_pipeline:
-          preprocessor_defence:
-            name: art.defences.preprocessor.FeatureSqueezing
-            params:
-              bit_depth: 8
-              clip_values:
-              - 0
-              - 255
-        model.files:
-          model_filetype: pickle
-          model_path: model
-        model.init:
-          loss: log
-          name: sklearn.linear_model.SGDClassifier
+        model:
+          files:
+            model_filetype: pickle
+            model_path: model
+          init:
+            loss: log
+            name: sklearn.linear_model.SGDClassifier
+          sklearn_pipeline:
+            feature_selection:
+              name: sklearn.feature_selection.SelectKBest
+              k: 3
+          art_pipeline:
+            preprocessor_defence:
+              name: art.defences.preprocessor.FeatureSqueezing
+              params:
+                bit_depth: 8
+                clip_values:
+                - 0
+                - 255
         plots:
           balance: balance
           classification: classification
@@ -482,6 +487,202 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/attack
-      md5: b02614eb8ef504eb0237bf6d0b09ddc9.dir
-      size: 159491
+      md5: ed680ffc93bb5f5715d3f92f8be76904.dir
+      size: 160671
       nfiles: 13
+  evaluate:
+    cmd: python -m deckard.layers.runner evaluate --layer evaluate
+    deps:
+    - path: reports/attack
+      md5: ed680ffc93bb5f5715d3f92f8be76904.dir
+      size: 160671
+      nfiles: 13
+    - path: reports/defend
+      md5: ebc429fc3e08eb315fcc4d282823c8b9.dir
+      size: 110309
+      nfiles: 10
+    params:
+      params.yaml:
+        attack:
+          init:
+            name: art.attacks.evasion.HopSkipJump
+            max_iter: 1
+            init_eval: 10
+            init_size: 10
+        data:
+          files:
+            data_filetype: pickle
+            data_path: data
+          generate:
+            n_classes: 3
+            n_features: 10
+            n_informative: 8
+            n_redundant: 1
+            n_samples: 1000
+            n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+          name:
+          - classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+        files:
+          ground_truth_file: ground_truth.json
+          predictions_file: predictions.json
+          time_dict_file: time_dict.json
+          params_file: params.json
+          score_dict_file: scores.json
+          path: reports
+          attack_samples_file: adv_samples.json
+          attack_predictions_file: adv_predictions.json
+          attack_time_dict_file: adv_time_dict.json
+          attack_params_file: attack_params.json
+          attack_path: attack
+        model:
+          files:
+            model_filetype: pickle
+            model_path: model
+          init:
+            loss: log
+            name: sklearn.linear_model.SGDClassifier
+          sklearn_pipeline:
+            feature_selection:
+              name: sklearn.feature_selection.SelectKBest
+              k: 3
+          art_pipeline:
+            preprocessor_defence:
+              name: art.defences.preprocessor.FeatureSqueezing
+              params:
+                bit_depth: 8
+                clip_values:
+                - 0
+                - 255
+        plots:
+          balance: balance
+          classification: classification
+          confusion: confusion
+          correlation: correlation
+          radviz: radviz
+          rank: rank
+        scorers:
+          accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          f1:
+            average: weighted
+            name: sklearn.metrics.f1_score
+          precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+          recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+    outs:
+    - path: reports/evaluate
+      md5: 6bb29ab6eb20f0f18c1d669532323c5a.dir
+      size: 5731
+      nfiles: 5
+  visualise:
+    cmd: python -m deckard.layers.runner visualise --layer visualise
+    deps:
+    - path: reports/attack
+      md5: ed680ffc93bb5f5715d3f92f8be76904.dir
+      size: 160671
+      nfiles: 13
+    - path: reports/defend
+      md5: ebc429fc3e08eb315fcc4d282823c8b9.dir
+      size: 110309
+      nfiles: 10
+    params:
+      params.yaml:
+        attack:
+          init:
+            name: art.attacks.evasion.HopSkipJump
+            max_iter: 1
+            init_eval: 10
+            init_size: 10
+        data:
+          files:
+            data_filetype: pickle
+            data_path: data
+          generate:
+            n_classes: 3
+            n_features: 10
+            n_informative: 8
+            n_redundant: 1
+            n_samples: 1000
+            n_clusters_per_class: 1
+          sklearn_pipeline:
+            scaling:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+          name:
+          - classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+        files:
+          ground_truth_file: ground_truth.json
+          predictions_file: predictions.json
+          time_dict_file: time_dict.json
+          params_file: params.json
+          score_dict_file: scores.json
+          path: reports
+          attack_samples_file: adv_samples.json
+          attack_predictions_file: adv_predictions.json
+          attack_time_dict_file: adv_time_dict.json
+          attack_params_file: attack_params.json
+          attack_path: attack
+        model:
+          files:
+            model_filetype: pickle
+            model_path: model
+          init:
+            loss: log
+            name: sklearn.linear_model.SGDClassifier
+          sklearn_pipeline:
+            feature_selection:
+              name: sklearn.feature_selection.SelectKBest
+              k: 3
+          art_pipeline:
+            preprocessor_defence:
+              name: art.defences.preprocessor.FeatureSqueezing
+              params:
+                bit_depth: 8
+                clip_values:
+                - 0
+                - 255
+        plots:
+          balance: balance
+          classification: classification
+          confusion: confusion
+          correlation: correlation
+          radviz: radviz
+          rank: rank
+        scorers:
+          accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          f1:
+            average: weighted
+            name: sklearn.metrics.f1_score
+          precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+          recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+    outs:
+    - path: reports/visualise
+      md5: f9dc103e485dee9132937d7fe1a810e7.dir
+      size: 106161
+      nfiles: 9
