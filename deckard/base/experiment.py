@@ -418,6 +418,20 @@ class Experiment(
                 targeted=targeted,
             )
             outs.update(attack_results)
+            if visualise is True:
+                if "art" in str(type(fitted_model)):
+                    art = True
+                else:
+                    art = False
+                self.files["path"] = str(path.as_posix())
+                loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
+                atk_plots = deepcopy(dict(self.plots))
+                atk_plots = {k: "attack_" + str(v) for k, v in atk_plots.items()}
+                for key in self.plots:
+                    self.plots[key] = atk_plots[key]
+                plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
+                outs.update({"attack_plots": plots})
+            logger.info("Visualising")
         saved_files = self.save(**results)
         outs.update(saved_files)
         #######################################################################
