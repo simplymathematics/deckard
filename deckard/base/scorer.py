@@ -58,6 +58,9 @@ class Scorer(
                     obj_name, **scorer, y_pred=predictions, y_true=ground_truth
                 )
             except ValueError as e:
+                logger.warning(
+                    f"Scorer failed with error: {e}. Trying to score with np.argmax.",
+                )
                 if len(predictions.shape) > 1:
                     predictions = np.argmax(predictions, axis=1)
                 if len(ground_truth.shape) > 1:

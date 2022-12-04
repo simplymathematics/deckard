@@ -499,7 +499,6 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        files = deepcopy(dict(self.files))
         if art is True and hasattr(model, "model"):
             model = model.model
         if is_regressor(model):

@@ -32,7 +32,9 @@ def to_dict(obj: Union[dict, collections.OrderedDict, NamedTuple]) -> dict:
     return new
 
 
-my_hash = lambda obj: md5(str(to_dict(obj)).encode("utf-8")).hexdigest()
+def my_hash(obj: Union[dict, collections.OrderedDict, NamedTuple]) -> str:
+    return md5(str(to_dict(obj)).encode("utf-8")).hexdigest()
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,14 +106,14 @@ class BaseHashable:
         """
         params = self.to_dict()
         # sub_key = key.split(delimiter)
-        cmd = f"params"
+        cmd = "params"
         if isinstance(key_list, str):
             key_list = key_list.split(delimiter)
         if not isinstance(key_list, list):
             key_list = [key_list]
         for sub in key_list:
             cmd += f"['{sub}']"
-        cmd += f" = value"
+        cmd += " = value"
         exec(cmd, locals())
         filename = tempfile.mktemp()
         with open(filename, "w") as f:
@@ -163,7 +165,6 @@ def generate_line_search(hashable, param_name, param_list):
     :param log: whether to use a logarithmic scale
     :return: a list of experiments
     """
-    params = hashable.to_dict()
     new_param_list = []
     for entry in param_list:
         new_param_list.append(hashable.set_param(param_name, entry))
@@ -175,7 +176,6 @@ def generate_grid_search(hashable, param_dict):
     :param param_dict: a dictionary of parameters to search
     :return: a list of experiments
     """
-    params = hashable.to_dict()
     new_param_list = []
     for entry in ParameterGrid(param_dict):
         for key in entry:

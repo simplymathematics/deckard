@@ -4,7 +4,6 @@ import pickle
 import warnings
 from copy import deepcopy
 from pathlib import Path
-import numpy as np
 from art.estimators import ScikitlearnEstimator
 from art.estimators.classification import (
     KerasClassifier,

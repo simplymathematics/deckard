@@ -5,7 +5,6 @@ import numpy as np
 from copy import deepcopy
 from pathlib import Path
 from deckard.base.data import Data, config
-from deckard.base.hashable import my_hash
 
 names = ["mnist", "cifar10", "iris"]
 # TODO other names

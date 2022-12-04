@@ -1,24 +1,23 @@
+import collections
 import unittest
 import warnings
-import yaml
 from pathlib import Path
-import collections
-import numpy as np
+
+import yaml
+
 from deckard.base.hashable import (
     BaseHashable,
-    my_hash,
-    from_yaml,
-    generate_line_search,
-    generate_grid_search,
-    generate_queue,
-    sort_queue,
     from_dict,
+    from_yaml,
+    generate_grid_search,
+    generate_line_search,
+    generate_queue,
+    my_hash,
+    sort_queue,
 )
-from deckard.base import Data
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-from sklearn.model_selection import ParameterGrid
 
 
 class TestHashable(

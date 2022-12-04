@@ -1,17 +1,17 @@
 import logging
 import unittest
 import warnings
-from sklearn.base import BaseEstimator
 from pathlib import Path
-import yaml
+
+from sklearn.base import BaseEstimator
+
+from deckard.base.utils import factory, load_from_tup, parse_config_for_libraries
 
 logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=ResourceWarning)
-
-from deckard.base.utils import load_from_tup, factory, parse_config_for_libraries
 
 
 class testUtils(unittest.TestCase):

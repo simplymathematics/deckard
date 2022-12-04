@@ -6,13 +6,11 @@ from typing import Callable, List
 from argparse import Namespace
 import json
 import numpy as np
-import yaml
 from copy import deepcopy
 from pandas import DataFrame, Series
 
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 from .utils import factory
-from .model import Model
 
 
 ART_NUMPY_DTYPE = "float32"
@@ -42,6 +40,9 @@ class Attack(
         try:
             attack = factory(name, args=[model], **params["attack"]["init"])
         except ValueError as e:
+            logger.warning(
+                f"White-box attack failed with error: {e}. Trying black-box.",
+            )
             attack = factory(name, **params)
         except Exception as e:
             raise e

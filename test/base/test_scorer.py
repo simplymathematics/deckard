@@ -6,8 +6,7 @@ import warnings
 import yaml
 import json
 from pathlib import Path
-import numpy as np
-from pandas import DataFrame, Series
+from pandas import Series
 from deckard.base import Scorer
 from deckard.base.experiment import config
 
@@ -68,8 +67,6 @@ class testScorer(unittest.TestCase):
     def test_save_results(self):
         scorer = self.scorer
         scores = {"ACC": 0.5, "F1": 0.5}
-        filename = self.scores_file
-        path = self.path
         full_path = scorer.save(scores)
         self.assertTrue(Path(full_path).exists())
 

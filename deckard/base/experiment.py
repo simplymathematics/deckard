@@ -10,13 +10,11 @@ import json
 from copy import deepcopy
 import pandas as pd
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.base import is_regressor, is_classifier
 from argparse import Namespace
 
 # from dvc.api import params_show
 # from dvclive import Live
 # from tqdm import tqdm
-from .utils import factory
 from .data import Data
 from .model import Model
 from .hashable import BaseHashable, my_hash
@@ -259,6 +257,9 @@ class Experiment(
         try:
             loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         except np.AxisError as e:
+            logger.warning(
+                f"Error fitting model: {e}. Trying to reshape data using LabelBinarize.",
+            )
             loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
             loaded_data.y_test = (
                 LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
@@ -425,6 +426,7 @@ class Experiment(
                 mtype=mtype,
                 targeted=targeted,
             )
+            outs.update(attack_results)
         saved_files = self.save(**results)
         outs.update(saved_files)
         return outs
