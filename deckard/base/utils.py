@@ -106,7 +106,7 @@ def parse_config_for_libraries(path:Union[str, Path], regex: str = r"(.*)\.yml",
                 for key in config["data"]["transform"]:
                     libraries.append(key.split(".")[0])
         if "model" in config:
-            libraries.append(config["model"]['name'].split(".")[0])
+            libraries.append(config["model"]['init']['name'].split(".")[0])
             if "transform" in config["model"]:
                 for key in config["model"]["transform"]:
                     libraries.append(key.split(".")[0])
@@ -115,7 +115,7 @@ def parse_config_for_libraries(path:Union[str, Path], regex: str = r"(.*)\.yml",
             for scorer in scorers:
                 libraries.append(scorers[scorer]['name'].split(".")[0])
         if "attack" in config:
-            libraries.append(config["attack"]['name'].split(".")[0])
+            libraries.append(config["attack"]['init']['name'].split(".")[0])
     filename = path / output
     libraries = list(set(libraries))
     with filename.open("w") as f:

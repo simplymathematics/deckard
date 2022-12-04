@@ -26,7 +26,7 @@ class testUtils(unittest.TestCase):
         self.regex =  "params.yaml"
         self.file = Path(self.path) / self.regex
         self.output = "requirements.txt"
-        assert self.file.exists()
+        assert self.file.exists(), f"File {self.file} does not exist in {self.path}. Found {list(Path(self.path).iterdir())}"
         
     def test_load_from_tuple(self):
         obj = load_from_tup(self.obj_gen)
@@ -38,7 +38,7 @@ class testUtils(unittest.TestCase):
     
     def test_parse_config_for_libraries(self):
         (libraries , path)= parse_config_for_libraries(path=self.path, regex=self.regex, output=self.output)
-        self.assertEqual(libraries, ["sklearn"])
+        self.assertEqual(libraries, ["art", "sklearn"])
         with open(path, "r") as f:
             for count, _ in enumerate(f):
                 pass
