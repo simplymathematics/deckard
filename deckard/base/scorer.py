@@ -39,7 +39,9 @@ class Scorer(
         return score_dict[name]
 
     def score_from_memory(
-        self, ground_truth: pd.DataFrame, predictions: pd.DataFrame,
+        self,
+        ground_truth: pd.DataFrame,
+        predictions: pd.DataFrame,
     ) -> None:
         """
         Sets scorers for evalauation if specified, returns a dict of scores in general.
@@ -78,7 +80,9 @@ class Scorer(
         """
         files = deepcopy(self._asdict())["files"]
         score_file = Path(
-            files.pop("path"), my_hash(self), files.pop("score_dict_file"),
+            files.pop("path"),
+            my_hash(self),
+            files.pop("score_dict_file"),
         )
         score_file.parent.mkdir(parents=True, exist_ok=True)
         if not isinstance(results, pd.Series):

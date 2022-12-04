@@ -18,7 +18,6 @@ from deckard.base import Data, Experiment, Model, Yellowbrick_Visualiser
 from deckard.base.experiment import config as exp_config
 from deckard.base.model import config as model_config
 from deckard.base.data import config as data_config
-from deckard.base.hashable import my_hash
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -32,13 +31,17 @@ yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
 
 class testVisualiser(unittest.TestCase):
     def setUp(
-        self, exp_config=exp_config, data_config=data_config, model_config=model_config,
+        self,
+        exp_config=exp_config,
+        data_config=data_config,
+        model_config=model_config,
     ) -> None:
 
         self.path = "reports"
         self.config = exp_config
         data, model, _ = yaml.load(
-            "!Experiment:\n" + str(self.config), Loader=yaml.FullLoader,
+            "!Experiment:\n" + str(self.config),
+            Loader=yaml.FullLoader,
         ).load()
         self.data = data.load()
         self.model = model.load(art=False)
@@ -91,8 +94,8 @@ class testVisualiser(unittest.TestCase):
             "recursive": "recursive",
             "feature_dropping": "dropping_curve",
         }
-        self.tag = f"!Yellowbrick_Visualiser:\n"
-        self.exp = f"!Experiment:\n"
+        self.tag = "!Yellowbrick_Visualiser:\n"
+        self.exp = "!Experiment:\n"
 
     def test_visualise_data(self):
         params = yaml.load(self.config, Loader=yaml.FullLoader)

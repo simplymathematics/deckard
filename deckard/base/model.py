@@ -17,10 +17,8 @@ from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import BaseEstimator, is_regressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import LabelBinarizer
 from validators import url as is_url
 
-from .data import Data
 from .hashable import BaseHashable, my_hash
 from .utils import factory, load_from_tup
 

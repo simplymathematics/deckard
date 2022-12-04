@@ -1,4 +1,3 @@
-import yaml
 import logging
 from typing import Callable, List
 from copy import deepcopy
@@ -14,12 +13,13 @@ from yellowbrick.features import (
     Manifold,
     ParallelCoordinates,
 )
-from yellowbrick.contrib.prepredict import (
-    PrePredict,
-    CLASSIFIER,
-    REGRESSOR,
-    CLUSTERER,
-)
+
+# from yellowbrick.contrib.prepredict import (
+#     PrePredict,
+#     CLASSIFIER,
+#     REGRESSOR,
+#     CLUSTERER,
+# )
 from yellowbrick.target import ClassBalance, FeatureCorrelation
 from yellowbrick.regressor import PredictionError, ResidualsPlot
 from yellowbrick.regressor.alphas import AlphaSelection
@@ -47,9 +47,7 @@ import collections
 
 
 from .utils import factory
-from .data import Data
-from .model import Model
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 
 
 classification_visualisers = {
@@ -120,7 +118,10 @@ class Yellowbrick_Visualiser(
         return super().__new__(cls, **loader.construct_mapping(node))
 
     def visualise_data(
-        self, data: Namespace, classes: list = None, features: list = None,
+        self,
+        data: Namespace,
+        classes: list = None,
+        features: list = None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -160,7 +161,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["radviz"] = str(
                     Path(
-                        path, plots["radviz"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["radviz"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -172,7 +174,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["rank1d"] = str(
                     Path(
-                        path, plots["rank1d"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["rank1d"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -184,7 +187,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["rank2d"] = str(
                     Path(
-                        path, plots["rank2d"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["rank2d"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -196,7 +200,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["balance"] = str(
                     Path(
-                        path, plots["balance"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["balance"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -205,12 +210,14 @@ class Yellowbrick_Visualiser(
                 visualiser.fit(X_train, y_train)
                 visualiser.show(
                     Path(
-                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["correlation"] + str(plots.pop("filetype", ".png")),
                     ),
                 )
                 paths["correlation"] = str(
                     Path(
-                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["correlation"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -222,7 +229,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["pca"] = str(
                     Path(
-                        path, plots["pca"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["pca"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -234,7 +242,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["manifold"] = str(
                     Path(
-                        path, plots["manifold"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["manifold"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -246,7 +255,8 @@ class Yellowbrick_Visualiser(
                 )
                 paths["parallel"] = str(
                     Path(
-                        path, plots["parallel"] + str(plots.pop("filetype", ".png")),
+                        path,
+                        plots["parallel"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -489,9 +499,7 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
-        paths = []
         files = deepcopy(dict(self.files))
-        path = files["path"]
         if art is True and hasattr(model, "model"):
             model = model.model
         if is_regressor(model):

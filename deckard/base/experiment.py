@@ -50,7 +50,8 @@ class Experiment(
             data_document = """!Data:\n""" + str(dict(params["data"]))
             data = yaml.load(data_document, Loader=yaml.Loader)
             assert isinstance(
-                data, Data,
+                data,
+                Data,
             ), "Data initialization failed. Check config file."
         else:
             raise ValueError("Data not specified in config file")
@@ -59,7 +60,8 @@ class Experiment(
             model_document = """!Model:\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
             assert isinstance(
-                model, Model,
+                model,
+                Model,
             ), "Model initialization failed. Check config file."
         else:
             model = {}
@@ -418,7 +420,10 @@ class Experiment(
                 else False
             )
             attack_results = attack.run_attack(
-                data=loaded_data, model=fitted_model, mtype=mtype, targeted=targeted,
+                data=loaded_data,
+                model=fitted_model,
+                mtype=mtype,
+                targeted=targeted,
             )
         saved_files = self.save(**results)
         outs.update(saved_files)
@@ -440,7 +445,8 @@ class Experiment(
 
         yaml.add_constructor("!YellowBrick_Visualiser:", Yellowbrick_Visualiser)
         vis = yaml.load(
-            "!YellowBrick_Visualiser:\n" + str(self._asdict()), Loader=yaml.FullLoader,
+            "!YellowBrick_Visualiser:\n" + str(self._asdict()),
+            Loader=yaml.FullLoader,
         )
         plot_dict = vis.visualise(data=data, model=model, mtype=mtype, art=art)
         plots.extend(plot_dict)

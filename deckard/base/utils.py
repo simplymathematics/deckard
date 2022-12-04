@@ -65,7 +65,7 @@ def factory(module_class_string, super_cls: type = None, **kwargs) -> object:
     """
     try:
         module_name, class_name = module_class_string.rsplit(".", 1)
-    except:
+    except Exception as e:  # noqa E722
         logger.warning(f"Invalid module_class_string: {module_class_string}")
         raise e
     module = import_module(module_name)

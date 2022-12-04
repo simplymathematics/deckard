@@ -4,7 +4,6 @@ import yaml
 from collections.abc import Callable  # noqa F401
 from pathlib import Path
 
-import numpy as np
 from art.attacks.evasion import BoundaryAttack  # noqa F401
 from art.defences.postprocessor import HighConfidence  # noqa F401
 from art.defences.preprocessor import FeatureSqueezing  # noqa F401
@@ -31,7 +30,10 @@ yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
 
 class testExperiment(unittest.TestCase):
     def setUp(
-        self, exp_config=exp_config, data_config=data_config, model_config=model_config,
+        self,
+        exp_config=exp_config,
+        data_config=data_config,
+        model_config=model_config,
     ) -> None:
 
         self.path = "reports"

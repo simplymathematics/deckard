@@ -1,7 +1,6 @@
 import shutil
 import unittest
 
-import numpy as np
 from deckard.base import Data, Model
 from deckard.base.hashable import my_hash
 from pathlib import Path

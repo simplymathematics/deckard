@@ -124,7 +124,8 @@ class testBaseHashable(unittest.TestCase):
         filename = self.hashable.save_yaml(self.path)
         with open(filename, "r") as f:
             self.assertEqual(
-                yaml.load(f, Loader=yaml.FullLoader), self.hashable.to_dict(),
+                yaml.load(f, Loader=yaml.FullLoader),
+                self.hashable.to_dict(),
             )
 
     def test_save_yaml(self):
@@ -140,7 +141,9 @@ class testBaseHashable(unittest.TestCase):
 
     def test_generate_line_search(self):
         exp_list = generate_line_search(
-            self.hashable, "files.filetype", ["json", "csv", "xml"],
+            self.hashable,
+            "files.filetype",
+            ["json", "csv", "xml"],
         )
         self.assertEqual(
             exp_list[0].to_dict(),

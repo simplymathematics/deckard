@@ -5,8 +5,9 @@ from pathlib import Path
 import dvc.api
 import yaml
 
-from deckard.base import Attack, Experiment
-from deckard.base.hashable import generate_queue, my_hash, sort_queue
+from deckard.base import Experiment
+
+# from deckard.base.hashable import generate_queue, my_hash, sort_queue
 
 layers = {
     "fit": {"fit": True},

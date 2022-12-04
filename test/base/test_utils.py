@@ -41,7 +41,9 @@ class testUtils(unittest.TestCase):
 
     def test_parse_config_for_libraries(self):
         (libraries, path) = parse_config_for_libraries(
-            path=self.path, regex=self.regex, output=self.output,
+            path=self.path,
+            regex=self.regex,
+            output=self.output,
         )
         self.assertEqual(libraries, ["art", "sklearn"])
         with open(path, "r") as f:

@@ -137,7 +137,8 @@ def from_yaml(hashable: BaseHashable, filename: Union[str, Path], key=None) -> A
     if key is not None:
         result = result[key]
     assert isinstance(
-        result, hashable.__class__,
+        result,
+        hashable.__class__,
     ), f"Loaded object is not of type {hashable.__class__.__name__}. It is {type(result)}"
     return result
 
@@ -184,7 +185,10 @@ def generate_grid_search(hashable, param_dict):
 
 
 def generate_queue(
-    hashable, param_dict, path: Union[str, Path] = "queue", filename="queue.csv",
+    hashable,
+    param_dict,
+    path: Union[str, Path] = "queue",
+    filename="queue.csv",
 ) -> Path:
     """Generates a queue of experiments in specified path using a grid search
     :hashable: the hashable object to generate the queue for
@@ -219,7 +223,9 @@ def generate_queue(
 
 
 def sort_queue(
-    path: Union[str, Path] = "queue", filename="queue.csv", by=["status", "time"],
+    path: Union[str, Path] = "queue",
+    filename="queue.csv",
+    by=["status", "time"],
 ) -> Path:
     """Sorts the queue by status
     :param path: the path to save the queue to

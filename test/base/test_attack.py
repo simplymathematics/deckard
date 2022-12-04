@@ -55,7 +55,6 @@ class testAttackExperiment(unittest.TestCase):
         self.assertTrue(path.exists())
 
     def test_save_attack_params(self):
-        params = self.attack._asdict()
         path = self.attack.save_attack_params()
         self.assertTrue(path.exists())
 
