@@ -39,9 +39,10 @@ class testAttackExperiment(unittest.TestCase):
     
     def test_generate(self):
         atk, gen = self.attack.load(self.model)
-        adv_samples, time_dict = self.attack.fit(self.data, self.model, atk, **gen)
+        adv_samples, attack_pred, time_dict, = self.attack.fit(self.data, self.model, atk, **gen)
         self.assertIsInstance(adv_samples, np.ndarray)
         self.assertIsInstance(time_dict, dict)
+        self.assertIsInstance(attack_pred, np.ndarray)
     
     def test_save_attack_predictions(self):
         preds = self.data.y_test
@@ -60,12 +61,10 @@ class testAttackExperiment(unittest.TestCase):
     
     
     def test_run_attack(self):
-        outs = self.attack.run(self.data, self.model, self.attack)
+        outs = self.attack.run_attack(self.data, self.model, self.attack)
         for name, filename in outs.items():
             self.assertTrue(Path(filename).exists())
 
-
-    
     def tearDown(self) -> None:
         from shutil import rmtree
         if Path(self.path).is_dir():

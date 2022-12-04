@@ -74,75 +74,83 @@ class testVisualiser(unittest.TestCase):
         self.tag = f"!Yellowbrick_Visualiser:\n"
         self.exp = f"!Experiment:\n" 
     
-    # def test_visualise_data(self):
-    #     params = yaml.load(self.config, Loader=yaml.FullLoader)
-    #     params['plots'] = self.data_viz
-    #     viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-    #     paths = viz.visualise_data(self.data)
-    #     for path in paths:
-    #         filename = Path(paths[path])
-    #         self.assertTrue(Path(filename).exists())
+    def test_visualise_data(self):
+        params = yaml.load(self.config, Loader=yaml.FullLoader)
+        params['plots'] = self.data_viz
+        viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
+        paths = viz.visualise_data(self.data)
+        for path in paths:
+            filename = Path(paths[path])
+            self.assertTrue(Path(filename).exists())
     
     
-    # def test_visualise_classification(self):
-    #     params = yaml.load(self.config, Loader=yaml.FullLoader)
-    #     params['plots'] = self.class_viz
-    #     viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-    #     self.model.fit(self.data.X_train, self.data.y_train)
-    #     paths = viz.visualise_classification(self.data, classifier(self.model.model))
-    #     for path in paths:
-    #         filename = Path(paths[path])
-    #         self.assertTrue(Path(filename).exists())
+    def test_visualise_classification(self):
+        params = yaml.load(self.config, Loader=yaml.FullLoader)
+        params['plots'] = self.class_viz
+        viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
+        self.model.fit(self.data.X_train, self.data.y_train)
+        paths = viz.visualise_classification(self.data, classifier(self.model.model))
+        for path in paths:
+            filename = Path(paths[path])
+            self.assertTrue(Path(filename).exists())
     
     
-    # def test_visualise_regression(self):
-    #     params = yaml.load(self.config, Loader=yaml.FullLoader)
-    #     params['plots'] = self.reg_viz
-    #     params['model']['init'] = {"name" : "sklearn.linear_model.LinearRegression", "fit_intercept" : True}
-    #     viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-    #     exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
-    #     data, model, _ = exp.load()
-    #     data = data.load()
-    #     model = model.load()
-    #     model.fit(data.X_train, data.y_train)
-    #     paths = viz.visualise_regression(data, regressor(model.model))
-    #     for path in paths:
-    #         filename = Path(paths[path])
-    #         self.assertTrue(Path(filename).exists())
+    def test_visualise_regression(self):
+        params = yaml.load(self.config, Loader=yaml.FullLoader)
+        params['plots'] = self.reg_viz
+        params['model']['init'] = {"name" : "sklearn.linear_model.LinearRegression", "fit_intercept" : True}
+        viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
+        exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
+        data, model, _ = exp.load()
+        data = data.load()
+        model = model.load()
+        model.fit(data.X_train, data.y_train)
+        paths = viz.visualise_regression(data, regressor(model.model))
+        for path in paths:
+            filename = Path(paths[path])
+            self.assertTrue(Path(filename).exists())
             
             
-    # def test_visualise_clustering(self):
-    #     params = yaml.load(self.config, Loader=yaml.FullLoader)
-    #     params['plots'] = self.clustering_viz
-    #     params['model']['init'] = {"name" : "sklearn.cluster.KMeans", "n_clusters" : 3}
-    #     viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-    #     exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
-    #     data, model, _ = exp.load()
-    #     data = data.load()
-    #     model = model.load(art = True)
-    #     model = model.model.fit(data.X_train, data.y_train).steps[-1][1]
-    #     paths = viz.visualise_clustering(data, clusterer(model))
-    #     for path in paths:
-    #         filename = Path(paths[path])
-    #         self.assertTrue(Path(filename).exists())
+    def test_visualise_clustering(self):
+        params = yaml.load(self.config, Loader=yaml.FullLoader)
+        params['plots'] = self.clustering_viz
+        params['model']['init'] = {"name" : "sklearn.cluster.KMeans", "n_clusters" : 3}
+        viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
+        exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
+        data, model, _ = exp.load()
+        data = data.load()
+        model = model.load(art = True)
+        model = model.model.fit(data.X_train, data.y_train).steps[-1][1]
+        paths = viz.visualise_clustering(data, clusterer(model))
+        for path in paths:
+            filename = Path(paths[path])
+            self.assertTrue(Path(filename).exists())
     
     def test_visualise_model_selection(self):
         params = yaml.load(self.config, Loader=yaml.FullLoader)
         params['plots'] = self.selection_viz
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-        
         self.data.y_train = np.argmax(self.data.y_train, axis=1)
-        self.data.y_test = np.argmax(self.data.y_test, axis=1)        
+        self.data.y_test = np.argmax(self.data.y_test, axis=1)
         model = self.model.model.fit(self.data.X_train, self.data.y_train).steps[-1][1]
-        print(type(model))
-        input("Press Enter to continue...")
         paths = viz.visualise_model_selection(self.data, model)
         for path in paths:
             filename = Path(paths[path])
             self.assertTrue(Path(filename).exists())
-            input(f"Check path: {filename}")
         
-    
+    def test_visualise(self):
+        params = yaml.load(self.config, Loader=yaml.FullLoader)
+        viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
+        self.data.y_train = np.argmax(self.data.y_train, axis=1)
+        self.data.y_test = np.argmax(self.data.y_test, axis=1)
+        model = self.model.model.fit(self.data.X_train, self.data.y_train).steps[-1][1]
+        paths = viz.visualise(self.data, classifier(model))
+        for path in paths:
+            for subpath in paths[path]:
+                filename = Path(paths[path][subpath])
+                self.assertTrue(Path(filename).exists())
+            
+
     def tearDown(self) -> None:
         from shutil import rmtree
         if Path(self.here, "data").exists():

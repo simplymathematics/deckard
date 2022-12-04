@@ -406,8 +406,6 @@ class Yellowbrick_Visualiser(
                 viz.fit(data.X_train, data.y_train)
                 viz.score(data.X_test, data.y_test)
                 filename = Path(path, str(name) + str(plots.pop("filetype", ".png")))
-                print("filename", filename)
-                input("Press enter to continue")
                 _ = viz.show(outpath=str(filename))
                 assert filename.is_file(), f"File {name} does not exist."
                 paths[name] = str(filename.as_posix())
