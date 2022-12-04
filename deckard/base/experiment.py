@@ -89,7 +89,7 @@ class Experiment(
         """Saves parameters to specified file.
         :returns: Path, path to saved parameters.
         """
-        filename = Path(self.files['path'], my_hash(self._asdict()) , self.files['params_file'])
+        filename = Path(self.files['path'], self.files['params_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         params = deepcopy(self._asdict())
         files = params.pop("files", None)
@@ -98,9 +98,8 @@ class Experiment(
             path = files.pop("path", ".")
             path = Path(path)
             for x in files:
-                x = Path(path, my_hash(self._asdict()), files[x])
-                new_files[x] = x.relative_to(path.parent).as_posix()
-
+                x = Path(path, files[x])
+                new_files[x] = str(x.relative_to(path.parent).as_posix())
         files = new_files
         data_files = params["data"].pop("files", {})
         data_path = data_files.pop("data_path", "")
@@ -158,7 +157,6 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            my_hash(self._asdict()),
             self.files['predictions_file'],
         )
         path = Path(filename).parent
@@ -184,7 +182,6 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            my_hash(self._asdict()),
             self.files['ground_truth_file'],
         )
         path = Path(filename).parent
@@ -207,7 +204,6 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            my_hash(self._asdict()),
             self.files['time_dict_file'],
         )
         path = Path(filename).parent
@@ -227,7 +223,6 @@ class Experiment(
         """
         filename = Path(
             self.files["path"],
-            my_hash(self._asdict()),
             self.files['score_dict_file'],
         )
         path = Path(filename).parent
@@ -309,7 +304,7 @@ class Experiment(
         :param predictions: np.ndarray, predictions to save.
         """
         files = {}
-        path = Path(self.files['path'], str(my_hash(self._asdict())))
+        path = Path(self.files['path'])
         path.mkdir(parents=True, exist_ok=True)
         if "files" in self.data:
             files.update({"data" : self.save_data(data)})
@@ -338,6 +333,7 @@ class Experiment(
         time_dict = {}
         outs = {}
         path = Path(params["files"]["path"], str(my_hash(self._asdict())))
+        self.files.update({"path" : str(path.as_posix())})
         if path.exists():
             logger.warning(
                 f"Path {path} already exists. Will overwrite any files specified in the config.",
@@ -381,16 +377,19 @@ class Experiment(
                 art = True
             else:
                 art = False
+            self.files['path'] = str(path.as_posix())
             plots = self.visualise(data = loaded_data, model = fitted_model, art = art)
-            
             outs.update({"plots": plots})
             logger.info("Visualising")
         #######################################################################
-        if attack is True and len(self.attack) > 0:
+        attack_keys = len(self.attack)
+        if attack is True and attack_keys > 0:
             attack = "!Attack:\n" + str(self._asdict())
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
-            attack_results = attack.run(data = loaded_data, model = fitted_model, art = True)
+            self.files['attack_path'] = str(path.as_posix())
+            targeted = attack.attack["init"]["targeted"] if "targeted" in attack.attack["init"] else False
+            attack_results = attack.run_attack(data = loaded_data, model = fitted_model, mtype = mtype, targeted = targeted)
         saved_files = self.save(**results)
         outs.update(saved_files)
         return outs

@@ -51,7 +51,7 @@ class Attack(
         generate = params.pop("generate", {})
         return (attack, generate)
 
-    def fit(self, data, model, targeted = False, **kwargs):
+    def fit(self, data, model, targeted = False):
         time_dict = {}
         start = process_time()
         if "X_test" not in vars(data):
@@ -62,20 +62,17 @@ class Attack(
         attack, gen = self.load(model)
         if targeted is False:
             start = process_time()
-            attack_samples = attack.generate(data.X_test, **kwargs)
+            attack_samples = attack.generate(data.X_test, **gen)
         else:
             start = process_time()
-            attack_samples = attack.generate(data.X_test, data.y_test, **kwargs)
-        end = process_time()
-        time_dict.update({"attack_fit_time:": end - start})
-        return attack_samples, time_dict
-    
-    def run(self, data, model, targeted = False, **kwargs):
-        attack_samples, time_dict = self.fit(data, model, targeted, **kwargs)
-        start = process_time()
+            attack_samples = attack.generate(data.X_test, data.y_test, **gen)
         attack_pred = model.model.predict(attack_samples)
         end = process_time()
         time_dict.update({"attack_pred_time": end - start})
+        return attack_samples, attack_pred, time_dict
+    
+    def run_attack(self, data, model, mtype:str=None, targeted = False):
+        attack_samples, attack_pred, time_dict = self.fit(data, model, targeted)
         results = {
             "samples": attack_samples,
             "predictions": attack_pred,
@@ -90,7 +87,7 @@ class Attack(
         """
         Saves the time dictionary to a json file.
         """
-        filename = Path(self.files['path'], my_hash(self), self.files['attack_time_dict_file'])
+        filename = Path(self.files['path'], self.files['attack_time_dict_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
@@ -100,7 +97,7 @@ class Attack(
         """
         Saves the attack parameters to a json file.
         """
-        filename = Path(self.files['path'], my_hash(self), self.files['attack_params_file'])
+        filename = Path(self.files['path'], self.files['attack_params_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
@@ -114,7 +111,7 @@ class Attack(
         """
         Saves adversarial examples to specified file.
         """
-        filename = Path(self.files['path'], my_hash(self), self.files['attack_samples_file'])
+        filename = Path(self.files['path'], self.files['attack_samples_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(samples.reshape(samples.shape[0], -1))
         attack_results.to_json(filename)
@@ -128,7 +125,7 @@ class Attack(
         """
         Saves adversarial predictions to specified file.
         """
-        filename = Path(self.files['path'], my_hash(self), self.files['attack_predictions_file'])
+        filename = Path(self.files['path'], self.files['attack_predictions_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(predictions)
         attack_results.to_json(filename)
@@ -145,7 +142,7 @@ class Attack(
 
         :return path: Path to saved file.
         """
-        filename = Path(self.files['path'], my_hash(self), self.files['attack_scores_file'])
+        filename = Path(self.files['path'],  self.files['attack_scores_file'])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(score_dict, f)

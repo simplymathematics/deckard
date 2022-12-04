@@ -12,10 +12,10 @@ stages:
             data_path: data
           generate:
             n_classes: 3
-            n_features: 100
-            n_informative: 4
+            n_features: 10
+            n_informative: 8
             n_redundant: 1
-            n_samples: 10000
+            n_samples: 1000
             n_clusters_per_class: 1
           sklearn_pipeline:
             scaling:
@@ -29,7 +29,6 @@ stages:
             shuffle: true
             stratify: true
             time_series: true
-            train_size: 8000
         files:
           ground_truth_file: ground_truth.json
           predictions_file: predictions.json
@@ -44,15 +43,15 @@ stages:
           attack_path: attack
     outs:
     - path: generate_data/data
-      md5: 8258ff26abeda15389b00881df011984.dir
-      size: 8040380
+      md5: 05beca732f3b73547fba15b779548093.dir
+      size: 84369
       nfiles: 1
   train:
     cmd: python -m deckard.layers.runner
     deps:
     - path: generate_data/data
-      md5: 8258ff26abeda15389b00881df011984.dir
-      size: 8040380
+      md5: 05beca732f3b73547fba15b779548093.dir
+      size: 84369
       nfiles: 1
     params:
       params.yaml:
@@ -62,10 +61,10 @@ stages:
             data_path: data
           generate:
             n_classes: 3
-            n_features: 100
-            n_informative: 4
+            n_features: 10
+            n_informative: 8
             n_redundant: 1
-            n_samples: 10000
+            n_samples: 1000
             n_clusters_per_class: 1
           sklearn_pipeline:
             scaling:
@@ -79,7 +78,6 @@ stages:
             shuffle: true
             stratify: true
             time_series: true
-            train_size: 8000
         files:
           ground_truth_file: ground_truth.json
           predictions_file: predictions.json
@@ -120,16 +118,16 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/train
-      md5: 24a4c94ee1aa6b6d241bc4d3459243a9.dir
-      size: 192901
+      md5: e866a98aedea4258aecad96fad7fb07b.dir
+      size: 108365
       nfiles: 10
     - path: train/data
-      md5: 7d562d31b789a751710a60d195eb09d4.dir
-      size: 8080380
+      md5: 823c78b491d44ada6190ab99d7e12d16.dir
+      size: 88369
       nfiles: 1
     - path: train/model
-      md5: 1754ab135a4abb650cea11b82885eb2e.dir
-      size: 3372
+      md5: 1ee83c66037290b342bd3fb169125100.dir
+      size: 1209
       nfiles: 1
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
@@ -216,12 +214,12 @@ stages:
     cmd: python -m deckard.layers.runner pipeline
     deps:
     - path: train/data
-      md5: 7d562d31b789a751710a60d195eb09d4.dir
-      size: 8080380
+      md5: 823c78b491d44ada6190ab99d7e12d16.dir
+      size: 88369
       nfiles: 1
     - path: train/model
-      md5: 1754ab135a4abb650cea11b82885eb2e.dir
-      size: 3372
+      md5: 1ee83c66037290b342bd3fb169125100.dir
+      size: 1209
       nfiles: 1
     params:
       params.yaml:
@@ -231,10 +229,10 @@ stages:
             data_path: data
           generate:
             n_classes: 3
-            n_features: 100
-            n_informative: 4
+            n_features: 10
+            n_informative: 8
             n_redundant: 1
-            n_samples: 10000
+            n_samples: 1000
             n_clusters_per_class: 1
           sklearn_pipeline:
             scaling:
@@ -248,7 +246,6 @@ stages:
             shuffle: true
             stratify: true
             time_series: true
-            train_size: 8000
         files:
           ground_truth_file: ground_truth.json
           predictions_file: predictions.json
@@ -289,27 +286,27 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: pipeline/data
-      md5: 1851e5a27afcb86a1f9d19e289495909.dir
-      size: 8080380
+      md5: 3a0228123d16e4fc1b4bef4ab4248c5e.dir
+      size: 88369
       nfiles: 1
     - path: pipeline/model
-      md5: ada93ecd1748236f089d46d38774ea96.dir
-      size: 3372
+      md5: 3ef2ca015eea1058915a74d2fd67cfd5.dir
+      size: 1209
       nfiles: 1
     - path: reports/pipeline
-      md5: 53d555cd7186207053c2d94dd5d10fb9.dir
-      size: 192824
+      md5: a484c5045b7b3b924a53524cb56c0e1e.dir
+      size: 106592
       nfiles: 10
   defend:
     cmd: python -m deckard.layers.runner defend
     deps:
     - path: pipeline/data
-      md5: 1851e5a27afcb86a1f9d19e289495909.dir
-      size: 8080380
+      md5: 3a0228123d16e4fc1b4bef4ab4248c5e.dir
+      size: 88369
       nfiles: 1
     - path: pipeline/model
-      md5: ada93ecd1748236f089d46d38774ea96.dir
-      size: 3372
+      md5: 3ef2ca015eea1058915a74d2fd67cfd5.dir
+      size: 1209
       nfiles: 1
     params:
       params.yaml:
@@ -319,10 +316,10 @@ stages:
             data_path: data
           generate:
             n_classes: 3
-            n_features: 100
-            n_informative: 4
+            n_features: 10
+            n_informative: 8
             n_redundant: 1
-            n_samples: 10000
+            n_samples: 1000
             n_clusters_per_class: 1
           sklearn_pipeline:
             scaling:
@@ -336,7 +333,6 @@ stages:
             shuffle: true
             stratify: true
             time_series: true
-            train_size: 8000
         files:
           ground_truth_file: ground_truth.json
           predictions_file: predictions.json
@@ -385,34 +381,34 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: defend/data
-      md5: 0cd3b20756aa9aa94a5f37063bcf2bc2.dir
-      size: 8080380
+      md5: 33e3099166cd15928845b4c41e10815a.dir
+      size: 88369
       nfiles: 1
     - path: defend/model
-      md5: 9454aa16662b4f7268c92fd517584094.dir
-      size: 3372
+      md5: a52704ae0b58528243dec87dd690478e.dir
+      size: 1209
       nfiles: 1
     - path: reports/defend
-      md5: e96e1a985a5fd6eda68b6b51cd44a169.dir
-      size: 193344
+      md5: b603c254aa81e8c1c208fc4ee3e50376.dir
+      size: 108996
       nfiles: 10
   attack:
     cmd: python -m deckard.layers.runner attack
     deps:
     - path: defend/data
-      md5: 0cd3b20756aa9aa94a5f37063bcf2bc2.dir
-      size: 8080380
+      md5: 33e3099166cd15928845b4c41e10815a.dir
+      size: 88369
       nfiles: 1
     - path: defend/model
-      md5: 9454aa16662b4f7268c92fd517584094.dir
-      size: 3372
+      md5: a52704ae0b58528243dec87dd690478e.dir
+      size: 1209
       nfiles: 1
     params:
       params.yaml:
         attack:
           init:
             name: art.attacks.evasion.HopSkipJump
-            max_iter: 10
+            max_iter: 1
             init_eval: 10
             init_size: 10
         data:
@@ -421,10 +417,10 @@ stages:
             data_path: data
           generate:
             n_classes: 3
-            n_features: 100
-            n_informative: 4
+            n_features: 10
+            n_informative: 8
             n_redundant: 1
-            n_samples: 10000
+            n_samples: 1000
             n_clusters_per_class: 1
           sklearn_pipeline:
             scaling:
@@ -438,7 +434,6 @@ stages:
             shuffle: true
             stratify: true
             time_series: true
-            train_size: 8000
         files:
           ground_truth_file: ground_truth.json
           predictions_file: predictions.json
@@ -487,6 +482,6 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/attack
-      md5: 078d670bfbc9908798643c4972a89a37.dir
-      size: 4177307
+      md5: b02614eb8ef504eb0237bf6d0b09ddc9.dir
+      size: 159491
       nfiles: 13
