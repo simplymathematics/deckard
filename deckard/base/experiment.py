@@ -63,6 +63,11 @@ class Experiment(
             ), "Model initialization failed. Check config file."
         else:
             model = {}
+        if "files" in self.data:
+            self.data['files']['data_file'] = my_hash(data)
+        if "files" in self.model:
+            self.model['files']['model_file'] = my_hash(model) 
+        self.files['path'] = str(Path(self.files['path'], my_hash(self)).as_posix())
         files = deepcopy(params["files"]) if "files" in params else {}
         return (data, model, files)
 
@@ -77,8 +82,8 @@ class Experiment(
             "data_filetype" in self.data["files"]
         ), "Data must have data_filetype attribute"
         filename = Path(
-            self.data["files"]["data_path"],
-            my_hash(self.data) + "." + self.data["files"]["data_filetype"],
+            self.data["files"]["data_path"], self.data["files"]["data_file"]
+            + "." + self.data["files"]["data_filetype"],
         )
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
@@ -105,13 +110,15 @@ class Experiment(
         data_files = params["data"].pop("files")
         data_path = data_files.pop("data_path")
         data_filetype = data_files.pop("data_filetype")
-        data_file = Path(data_path, my_hash(self.data) + "." + data_filetype)
+        data_file = data_files.pop("data_file")
+        data_file = Path(data_path,  data_file + "." + data_filetype)
         files["data"] = str(data_file)
         if len(params["model"]) > 0:
             model_files = params["model"].pop("files")
             model_path = model_files.pop("model_path")
             model_filetype = model_files.pop("model_filetype")
-            model_file = Path(model_path, my_hash(self.model) + "." + model_filetype)
+            model_file = model_files.pop("model_file")
+            model_file = Path(model_path, model_file + "." + model_filetype)
             files["model"] = str(model_file)
         params["files"] = files
         params["scorer"] = (
@@ -138,7 +145,7 @@ class Experiment(
         ), "Model must have model_filetype attribute"
         filename = Path(
             self.model["files"]["model_path"],
-            my_hash(self.model) + "." + self.model["files"]["model_filetype"],
+            self.model['files']['model_file'] + "." + self.model["files"]["model_filetype"],
         )
         path = Path(filename).parent
         file = Path(filename).name
@@ -384,8 +391,7 @@ class Experiment(
         params = deepcopy(self._asdict())
         time_dict = {}
         outs = {}
-        path = Path(params["files"]["path"], str(my_hash(self._asdict())))
-        self.files.update({"path": str(path.as_posix())})
+        path = Path(files["path"])
         if path.exists():
             logger.warning(
                 f"Path {path} already exists. Will overwrite any files specified in the config.",

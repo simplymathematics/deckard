@@ -107,9 +107,9 @@ logger = logging.getLogger(__name__)
 
 class Yellowbrick_Visualiser(
     collections.namedtuple(
-        typename="YellowBrick_Visualiser",
-        field_names="data, model, plots, files, scorers, attack,",
-        defaults=({},),
+        typename="Scorer",
+        field_names="data, scorers, files, attack, model,  plots",
+        defaults=({}, {}, {}, {}),
     ),
     BaseHashable,
 ):

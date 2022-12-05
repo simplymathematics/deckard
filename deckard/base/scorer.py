@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from copy import deepcopy
 import numpy as np
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 import pandas as pd
 import collections
 from .utils import factory
@@ -17,7 +17,6 @@ class Scorer(
         typename="Scorer",
         field_names="data, scorers, files, attack, model,  plots",
         defaults=({}, {}, {}, {}),
-        rename=True,
     ),
     BaseHashable,
 ):
@@ -84,7 +83,6 @@ class Scorer(
         files = deepcopy(self._asdict())["files"]
         score_file = Path(
             files.pop("path"),
-            my_hash(self),
             files.pop("score_dict_file"),
         )
         score_file.parent.mkdir(parents=True, exist_ok=True)
@@ -105,8 +103,8 @@ class Scorer(
         path = filenames.pop("path")
         pred_file = filenames.pop("predictions_file")
         true_file = filenames.pop("ground_truth_file")
-        pred_file = Path(path, my_hash(self), pred_file)
-        true_file = Path(path, my_hash(self), true_file)
+        pred_file = Path(path, pred_file)
+        true_file = Path(path, true_file)
         test = self.read_data_from_json(pred_file)
         true = self.read_data_from_json(true_file)
         scores = self.score(true, test)

@@ -42,15 +42,15 @@ stages:
           attack_params_file: attack_params.json
           attack_path: attack
     outs:
-    - path: generate_data/data
-      md5: 49f3fd4fc58bda4c05e968a62fa5d935.dir
+    - path: data/generate_data/
+      md5: 5f6d7df21fcafe6d0a9fa53d14fc0e2d.dir
       size: 84369
       nfiles: 1
   train:
-    cmd: python -m deckard.layers.runner
+    cmd: python -m deckard.layers.runner train
     deps:
-    - path: generate_data/data
-      md5: 49f3fd4fc58bda4c05e968a62fa5d935.dir
+    - path: data/generate_data/
+      md5: 5f6d7df21fcafe6d0a9fa53d14fc0e2d.dir
       size: 84369
       nfiles: 1
     params:
@@ -117,18 +117,18 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
+    - path: data/train/
+      md5: 0c4729581f1a3dd50f72585bf50e0e95.dir
+      size: 92373
+      nfiles: 1
+    - path: model/train/
+      md5: 9f577dfb4d28565a5664417b53cbf85e.dir
+      size: 1751
+      nfiles: 1
     - path: reports/train
-      md5: 5d987a02931353dee29bf08f75043686.dir
-      size: 108234
+      md5: 0dee764ecf43685a3ce942ae2ddfe0f3.dir
+      size: 107514
       nfiles: 10
-    - path: train/data
-      md5: 06f033992a184fe73e91c5340da51ba3.dir
-      size: 84369
-      nfiles: 1
-    - path: train/model
-      md5: 308656c7e25492c23b41326735252f54.dir
-      size: 1197
-      nfiles: 1
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
     deps:
@@ -213,13 +213,13 @@ stages:
   pipeline:
     cmd: python -m deckard.layers.runner pipeline
     deps:
-    - path: train/data
-      md5: 06f033992a184fe73e91c5340da51ba3.dir
-      size: 84369
+    - path: data/train/
+      md5: 0c4729581f1a3dd50f72585bf50e0e95.dir
+      size: 92373
       nfiles: 1
-    - path: train/model
-      md5: 308656c7e25492c23b41326735252f54.dir
-      size: 1197
+    - path: model/train/
+      md5: 9f577dfb4d28565a5664417b53cbf85e.dir
+      size: 1751
       nfiles: 1
     params:
       params.yaml:
@@ -285,28 +285,28 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: pipeline/data
-      md5: 02d95912d4b7e41b5d1510b947df5009.dir
-      size: 84369
+    - path: data/pipeline/
+      md5: 6ff76e5a3c2b538b027383a70ff2d622.dir
+      size: 92373
       nfiles: 1
-    - path: pipeline/model
-      md5: b8f0d0d3707781960a27e5fe99c7ea01.dir
-      size: 1197
+    - path: model/pipeline/
+      md5: 907303c4bd8774f77272e52254573e75.dir
+      size: 1751
       nfiles: 1
     - path: reports/pipeline
-      md5: 277510df29a597d4dfb1882b47c8ee5a.dir
-      size: 110300
+      md5: bc52f1db895369f203303e74f1de09cb.dir
+      size: 108759
       nfiles: 10
   defend:
     cmd: python -m deckard.layers.runner defend
     deps:
-    - path: pipeline/data
-      md5: 02d95912d4b7e41b5d1510b947df5009.dir
-      size: 84369
+    - path: data/pipeline/
+      md5: 6ff76e5a3c2b538b027383a70ff2d622.dir
+      size: 92373
       nfiles: 1
-    - path: pipeline/model
-      md5: b8f0d0d3707781960a27e5fe99c7ea01.dir
-      size: 1197
+    - path: model/pipeline/
+      md5: 907303c4bd8774f77272e52254573e75.dir
+      size: 1751
       nfiles: 1
     params:
       params.yaml:
@@ -380,28 +380,28 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: defend/data
-      md5: 73648e8b13651368145684d9678a4f4e.dir
-      size: 84369
+    - path: data/defend/
+      md5: b5d5972809beb0ae19a1c6d0df0618ba.dir
+      size: 92373
       nfiles: 1
-    - path: defend/model
-      md5: ffea6d668c707e5c5571b7edbcce503d.dir
-      size: 1197
+    - path: model/defend/
+      md5: fa87890f175c60c8d971a3fd339293da.dir
+      size: 1876
       nfiles: 1
     - path: reports/defend
-      md5: 9e869684ecea4e7dc9a2bee626cee35e.dir
-      size: 111966
+      md5: 36ce5880ba4840b45ad6c61d7bbcdd0d.dir
+      size: 111464
       nfiles: 10
   attack:
     cmd: python -m deckard.layers.runner attack
     deps:
-    - path: defend/data
-      md5: 73648e8b13651368145684d9678a4f4e.dir
-      size: 84369
+    - path: data/defend/
+      md5: b5d5972809beb0ae19a1c6d0df0618ba.dir
+      size: 92373
       nfiles: 1
-    - path: defend/model
-      md5: ffea6d668c707e5c5571b7edbcce503d.dir
-      size: 1197
+    - path: model/defend/
+      md5: fa87890f175c60c8d971a3fd339293da.dir
+      size: 1876
       nfiles: 1
     params:
       params.yaml:
@@ -483,8 +483,8 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/attack
-      md5: 698060cb9b97deaf194efa412b27906c.dir
-      size: 259305
+      md5: 507260675f19d261404197b87cfe5b60.dir
+      size: 261584
       nfiles: 18
   evaluate:
     cmd: python -m deckard.layers.runner evaluate --layer evaluate

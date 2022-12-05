@@ -5,9 +5,9 @@ stages:
       - data
       - files
     outs:
-      - generate_data/${data.files.data_path}
+      - ${data.files.data_path}/generate_data/
   train:
-    cmd: python -m deckard.layers.runner
+    cmd: python -m deckard.layers.runner train
     params:
       - data
       - model.files
@@ -16,10 +16,10 @@ stages:
       - plots
       - scorers
     deps:
-      - generate_data/${data.files.data_path}
+      - ${data.files.data_path}/generate_data/
     outs:
-      - train/${model.files.model_path}
-      - train/${data.files.data_path}
+      - ${data.files.data_path}/train/
+      - ${model.files.model_path}/train/
       - ${files.path}/train
   pipeline:
     cmd: python -m deckard.layers.runner pipeline
@@ -31,12 +31,12 @@ stages:
       - plots
       - scorers
     deps:
-      - train/${model.files.model_path}
-      - train/${data.files.data_path}
+      - ${model.files.model_path}/train/
+      - ${data.files.data_path}/train/
     outs:
       - ${files.path}/pipeline
-      - pipeline/${model.files.model_path}
-      - pipeline/${data.files.data_path}
+      - ${model.files.model_path}/pipeline/
+      - ${data.files.data_path}/pipeline/
   defend:
     cmd: python -m deckard.layers.runner defend
     params:
@@ -48,12 +48,12 @@ stages:
       - plots
       - scorers
     deps:
-      - pipeline/${model.files.model_path}
-      - pipeline/${data.files.data_path}
+      - ${model.files.model_path}/pipeline/
+      - ${data.files.data_path}/pipeline/
     outs:
       - ${files.path}/defend
-      - defend/${model.files.model_path}
-      - defend/${data.files.data_path}
+      - ${model.files.model_path}/defend/
+      - ${data.files.data_path}/defend/
   attack:
     cmd: python -m deckard.layers.runner attack
     params:
@@ -64,7 +64,7 @@ stages:
       - plots
       - scorers
     deps:
-      - defend/${model.files.model_path}
-      - defend/${data.files.data_path}
+      - ${model.files.model_path}/defend/
+      - ${data.files.data_path}/defend/
     outs:
       - ${files.path}/attack

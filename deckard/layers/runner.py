@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("stage", type=str, default="train", nargs="?")
+    parser.add_argument("stage", type=str, help="Stage to run.")
     parser.add_argument("--layer", type=str, default="all")
     parser.add_argument("--regex", type=str, default="**/params.yaml", nargs="?")
     parser.add_argument("queue", default=".", type=str, nargs="?")
@@ -62,15 +62,15 @@ if __name__ == "__main__":
         params["files"]["path"] = str(Path(params["files"]["path"], args.stage))
     if "data" in params:
         params["data"]["files"]["data_path"] = str(
-            Path(args.stage, params["data"]["files"]["data_path"]).as_posix(),
+            Path(params["data"]["files"]["data_path"], args.stage).as_posix(),
         )
     if "model" in params:
         params["model"]["files"]["model_path"] = str(
-            Path(args.stage, params["model"]["files"]["model_path"]).as_posix(),
+            Path(params["model"]["files"]["model_path"], args.stage).as_posix(),
         )
     if "attack" in params:
         params["files"]["attack_path"] = str(
-            Path(args.stage, params["files"]["attack_path"]).as_posix(),
+            Path(params["files"]["attack_path"], args.stage).as_posix(),
         )
     tag = "!Experiment:"
     yaml.add_constructor(tag, Experiment)
