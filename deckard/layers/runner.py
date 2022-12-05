@@ -31,24 +31,10 @@ layers = {
         "visualise": False,
         "attack": False,
     },
-    "evaluate": {
-        "fit": True,
-        "predict": True,
-        "score": True,
-        "visualise": False,
-        "attack": False,
-    },
-    "visualise": {
+    "attack": {
         "fit": False,
         "predict": False,
         "score": False,
-        "visualise": True,
-        "attack": False,
-    },
-    "attack": {
-        "fit": True,
-        "predict": True,
-        "score": True,
         "visualise": True,
         "attack": True,
     },
@@ -76,15 +62,15 @@ if __name__ == "__main__":
         params["files"]["path"] = str(Path(params["files"]["path"], args.stage))
     if "data" in params:
         params["data"]["files"]["data_path"] = str(
-            Path(args.stage, params["data"]["files"]["data_path"]),
+            Path(args.stage, params["data"]["files"]["data_path"]).as_posix(),
         )
     if "model" in params:
         params["model"]["files"]["model_path"] = str(
-            Path(args.stage, params["model"]["files"]["model_path"]),
+            Path(args.stage, params["model"]["files"]["model_path"]).as_posix(),
         )
     if "attack" in params:
         params["files"]["attack_path"] = str(
-            Path(args.stage, params["files"]["attack_path"]),
+            Path(args.stage, params["files"]["attack_path"]).as_posix(),
         )
     tag = "!Experiment:"
     yaml.add_constructor(tag, Experiment)

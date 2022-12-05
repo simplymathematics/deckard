@@ -40,11 +40,11 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 filetypes = {
     "pkl": "sklearn",
     "h5": "keras",
-    "pt": "pytorch",
-    "pth": "pytorch",
+    "pt": "torch",
+    "pth": "torch",
     "pb": "tensorflow",
     "pbtxt": "tensorflow",
-    "tflite": "tf-lite",
+    "tflite": "tflite",
     "pickle": "sklearn",
 }
 
@@ -65,117 +65,137 @@ class Model(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
         )
+        library = filetypes[self.files["model_filetype"]]
         params = deepcopy(self.init)
         if is_url(self.url):
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
-        elif isinstance(params["name"], str):
-            library = params["name"].split(".")[0]
+        elif isinstance(params["name"], str)  or library == "sklearn":
             if params is None:
                 params = {}
             model = factory(params.pop("name"), **params)
-        else:
-            raise ValueError(f"Unknown model: {params['name']}")
-
-        # Build sklearn pipeline
-        if len(self.sklearn_pipeline) > 0:
-            if not isinstance(model, Pipeline):
-                model = Pipeline(steps=[("model", model)])
-            i = 0
-            for entry in self.sklearn_pipeline:
-                config = deepcopy(self.sklearn_pipeline[entry])
-                name = config.pop("name")
-                object_ = factory(name, **config)
-                model.steps.insert(i, (name, object_))
-                object_ = factory(name, **config)
-                i += 1
-        # Build art pipeline
-        if len(self.art_pipeline) > 0 or art is True:
-            art = self.art_pipeline
-            if "preprocessor_defence" in art:
-                preprocessor_defences = [
-                    load_from_tup(
-                        (
-                            art["preprocessor_defence"]["name"],
-                            art["preprocessor_defence"]["params"],
-                        ),
-                    ),
-                ]
-            else:
-                preprocessor_defences = None
-            if "postprocessor_defence" in art:
-                postprocessor_defences = [
-                    load_from_tup(
-                        (
-                            art["postprocessor_defence"]["name"],
-                            art["postprocessor_defence"]["params"],
-                        ),
-                    ),
-                ]
-            else:
-                postprocessor_defences = None
-            if library == "sklearn":
-                if is_regressor(model) is False:
-                    model = ScikitlearnClassifier(
-                        model,
-                        postprocessing_defences=postprocessor_defences,
-                        preprocessing_defences=preprocessor_defences,
-                    )
-                else:
-                    model = ScikitlearnRegressor(
-                        model,
-                        postprocessing_defences=postprocessor_defences,
-                        preprocessing_defences=preprocessor_defences,
-                    )
-            elif library == "torch":
-                model = PyTorchClassifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                    output="logits",
-                )
-            elif library == "tensorflow":
-                model = TensorFlowClassifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                    output="logits",
-                )
-            elif library == "tfv1":
-                model = TensorFlowClassifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                    output="logits",
-                )
-            elif library == "keras":
-                model = KerasClassifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                    output="logits",
-                )
-            elif library == "tensorflowv2":
-                model = TensorFlowV2Classifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                    output="logits",
-                )
-            if "transformer_defence" in art:
-                model = load_from_tup(
+            # Build sklearn pipeline
+            if len(self.sklearn_pipeline) > 0:
+                model = self.build_sklearn_pipeline(model)
+        if len(self.art_pipeline) > 0 or art==True or library != "sklearn":
+            model = self.build_art_pipeline(model)
+        return model
+            
+            
+    
+    
+    
+    def build_sklearn_pipeline(self, model):
+        if not isinstance(model, Pipeline):
+            model = Pipeline(steps=[("model", model)])
+        i = 0
+        for entry in self.sklearn_pipeline:
+            config = deepcopy(self.sklearn_pipeline[entry])
+            name = config.pop("name")
+            object_ = factory(name, **config)
+            model.steps.insert(i, (name, object_))
+            object_ = factory(name, **config)
+            i += 1
+        return model
+            
+            
+    def build_art_pipeline(self, model):
+        library = filetypes[self.files["model_filetype"]]
+        art = self.art_pipeline
+        if "preprocessor_defence" in art:
+            preprocessor_defences = [
+                load_from_tup(
                     (
-                        art["transformer_defence"]["name"],
-                        art["transformer_defence"]["params"],
+                        art["preprocessor_defence"]["name"],
+                        art["preprocessor_defence"]["params"],
                     ),
+                ),
+            ]
+        else:
+            preprocessor_defences = None
+        if "postprocessor_defence" in art:
+            postprocessor_defences = [
+                load_from_tup(
+                    (
+                        art["postprocessor_defence"]["name"],
+                        art["postprocessor_defence"]["params"],
+                    ),
+                ),
+            ]
+        else:
+            postprocessor_defences = None
+        if library == "sklearn":
+            if is_regressor(model) is False:
+                model = ScikitlearnClassifier(
                     model,
-                )()
-            if "trainer_defence" in art:
-                model = load_from_tup(
-                    (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
+                    postprocessing_defences=postprocessor_defences,
+                    preprocessing_defences=preprocessor_defences,
+                )
+            else:
+                model = ScikitlearnRegressor(
                     model,
-                )()
+                    postprocessing_defences=postprocessor_defences,
+                    preprocessing_defences=preprocessor_defences,
+                )
+        elif library == "torch":
+            model = PyTorchClassifier(
+                model,
+                optimizer = factory(init_params['optimizer'].pop("name"), params = model.parameters(), **init_params['optimizer']),
+                loss = factory(init_params['loss'].pop("name"), **init_params['loss']),
+                clip_values=(min_pixel_value, max_pixel_value),
+                input_shape=input_shape,
+                nb_classes=num_classes,
+                postprocessing_defences=postprocessor_defences,
+                preprocessing_defences=preprocessor_defences,
+                **init_params,
+                # output="logits",
+            )
+        elif library == "tensorflow":
+            model = TensorFlowClassifier(
+                model,
+                postprocessing_defences=postprocessor_defences,
+                preprocessing_defences=preprocessor_defences,
+                output="logits",
+                **init_params,
+            )
+        elif library == "tfv1":
+            model = TensorFlowClassifier(
+                model,
+                postprocessing_defences=postprocessor_defences,
+                preprocessing_defences=preprocessor_defences,
+                output="logits",
+                **init_params,
+            )
+        elif library == "keras":
+            model = KerasClassifier(
+                model,
+                postprocessing_defences=postprocessor_defences,
+                preprocessing_defences=preprocessor_defences,
+                output="logits",
+                **init_params,
+            )
+        elif library == "tensorflowv2":
+            model = TensorFlowV2Classifier(
+                model,
+                postprocessing_defences=postprocessor_defences,
+                preprocessing_defences=preprocessor_defences,
+                output="logits",
+                **init_params,
+            )
+        if "transformer_defence" in art:
+            model = load_from_tup(
+                (
+                    art["transformer_defence"]["name"],
+                    art["transformer_defence"]["params"],
+                ),
+                model,
+            )()
+        if "trainer_defence" in art:
+            model = load_from_tup(
+                (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
+                model,
+            )()
         return model
 
     def save(self, model):
@@ -183,26 +203,17 @@ class Model(
             self.files["model_path"],
             my_hash(self._asdict()) + "." + self.files["model_filetype"],
         )
+        library = filetypes[self.files["model_filetype"]]
         filename.parent.mkdir(parents=True, exist_ok=True)
-        if hasattr(self, "model") and hasattr(model, "save"):
-            flag = False
-            # Hacky workaround for art sklearn saving due to a bug in art.
-            if filename.endswith(".pickle"):
-                old = filename[-7:]
-                filename = filename[:-7]
-                flag = True
-            elif filename.endswith(".pkl"):
-                old = filename[-4:]
-                filename = filename[:-4]
-                flag = True
-            ##############################################################
-            # Using art to save models
-            model.save(filename)
-            ##############################################################
-            # Hacky workaround for art sklearn saving due to a bug in art.
-            if flag is True:
-                filename = filename + old
-            ##############################################################
+        if library == "torch":
+            import torch
+            torch.save(model.model, filename)
+        elif library == "tensorflow":
+            model.model.save(filename) 
+        elif library == "tfv1":
+            model.model.save(filname.stem)   
+        elif library == "keras":
+            model.model.save(filename)
         else:
             with open(filename, "wb") as f:
                 pickle.dump(model, f)

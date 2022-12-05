@@ -143,12 +143,11 @@ class Experiment(
         path = Path(filename).parent
         file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
-        if hasattr(model, "save"):
-            if file.endswith(".pickle") or file.endswith(".pkl"):
-                model.save(Path(filename).stem, path=path)
-            else:
-                model.save(filename=file, path=path)
+        if hasattr(model, "save") and not file.endswith(".pickle") and not file.endswith(".pkl"):
+            model.save(Path(filename).stem, path=path)
         else:
+            if hasattr("model", "model"):
+                model = model.model
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return str(Path(filename).as_posix())
@@ -221,6 +220,21 @@ class Experiment(
         pd.Series(time_dict).to_json(filename)
         return str(Path(filename).as_posix())
 
+    def save_probabilities(self, probabilities: np.ndarray) -> Path:
+        """
+        :param filename: str, name of file to save predictions to.
+        :param probabilities: np.ndarray, probabilities to save.
+        :returns: Path, path to saved probabilities.
+        """
+        filename = Path(
+            self.files["path"],
+            self.files["probabilities_file"],
+        )
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        pd.Series(probabilities).to_json(filename)
+        return str(Path(filename).as_posix())
+    
     def save_scores(self, scores: dict) -> Path:
         """
         :param filename: str, name of file to save predictions to.
@@ -295,6 +309,22 @@ class Experiment(
         result = process_time() - start
         return predictions, result / len(data.X_test)
 
+    def predict_proba(self, data: dict, model: object) -> tuple:
+        """
+        Predicts data with model.
+        :param data: dict, data to predict.
+        :param model: object, model to predict with.
+        :returns: tuple, (predictions, predict_time).
+        """
+        start = process_time()
+        if isinstance(data, Data):
+            data = data.load()
+        if isinstance(model, Model):
+            model = model.load()
+        predictions = model.predict_proba(data.X_test)
+        result = process_time() - start
+        return predictions, result / len(data.X_test)
+    
     def save(
         self,
         data: dict = None,
@@ -326,6 +356,8 @@ class Experiment(
             files.update({"ground_truth": self.save_ground_truth(ground_truth)})
         if "predictions_file" in self.files:
             files.update({"predictions": self.save_predictions(predictions)})
+        if "probabilities_file" in self.files:
+            files.update({"probabilities": self.save_probabilities(predictions)})
         if time_dict is not None:
             files.update({"time": self.save_time_dict(time_dict)})
         if score_dict is not None:
@@ -336,6 +368,7 @@ class Experiment(
         self,
         fit=True,
         predict=True,
+        probability=False,
         score=True,
         visualise=True,
         art=False,
@@ -371,22 +404,23 @@ class Experiment(
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
-                "time_dict": {"fit_time": fit_time},
                 "ground_truth": loaded_data.y_test,
             }
+        # if Model is initialized
         elif isinstance(model, Model):
             loaded_data = data.load()
             fitted_model = model.load(art=art)
-            time_dict = {}
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
                 "ground_truth": loaded_data.y_test,
             }
-            results["time_dict"] = time_dict
+        
+        # only true if model not specificed in config
         elif isinstance(model, dict):
             loaded_data = data.load()
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
+        results["time_dict"] = time_dict
         #######################################################################
         if predict is True:
             logger.info("Predicting")
@@ -394,6 +428,12 @@ class Experiment(
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
             results["time_dict"].update(time_dict)
+        #######################################################################
+        if probability is True:
+            logger.info("Predicting probabilities")
+            probabilities, proba_time = self.predict_proba(loaded_data, fitted_model)
+            results.update({"probabilities": probabilities})
+            time_dict.update({"proba_time": proba_time})
         #######################################################################
         if score is True:
             logger.info("Scoring")
