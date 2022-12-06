@@ -22,10 +22,10 @@ class testAttackExperiment(unittest.TestCase):
         yaml.add_constructor("!Experiment:", Experiment)
         exp_config = "!Experiment:" + config
         self.exp = yaml.load(exp_config, Loader=yaml.FullLoader)
-        self.path = self.attack._asdict()["files"]["path"]
+        self.path = "reports"
         data, model, _ = self.exp.load()
-        self.data = data.load()
-        self.model = model.load()
+        self.data = data.load("reports/filename.pickle")
+        self.model = model.load("reports/filename.pickle")
         self.data.y_train = LabelBinarizer().fit_transform(self.data.y_train)
         self.data.y_test = LabelBinarizer().fit_transform(self.data.y_test)
         self.model.fit(self.data.X_train, self.data.y_train)
@@ -52,15 +52,18 @@ class testAttackExperiment(unittest.TestCase):
     def test_save_attack_predictions(self):
         preds = self.data.y_test
         path = self.attack.save_attack_predictions(preds)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_save_attack_params(self):
         path = self.attack.save_attack_params()
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_save_attack_time(self):
         time = {"time": 1}
         path = self.attack.save_attack_time(time)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_run_attack(self):

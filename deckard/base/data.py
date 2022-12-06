@@ -44,7 +44,7 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name,  files, sample, generate, real, add_noise, transform, sklearn_pipeline",
+        field_names="name, sample, generate, real, add_noise, transform, sklearn_pipeline",
         defaults=(
             {},
             {},
@@ -60,22 +60,16 @@ class Data(
         """Generates a new Data object from a YAML node"""
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self):
+    def load(self, filename):
         """
         Load data from sklearn.datasets, sklearn.datasets.make_*, csv, json, npz, or pickle as specified in params.yaml
         :return: Namespace object with X_train, X_test, y_train, y_test
         """
-        assert (
-            "name" in self._asdict()
-        ), "Name of the dataset is not specified in params.yaml"
-        filename = Path(
-            self.files["data_path"],
-            my_hash(self._asdict()) + "." + self.files["data_filetype"],
-        )
+        
         params = deepcopy(self._asdict())
-        if filename.exists():
+        if Path(filename).exists():
             logger.info(f"Loading data from {filename}")
-            ns = self.read()
+            ns = self.read(filename)
         else:
             name = params.pop("name")
             if isinstance(name, list):
@@ -85,9 +79,6 @@ class Data(
                 name = name.pop(0)
             if name in real or name in generate:
                 ns = self.sklearn_load()
-            elif Path(name).exists():
-                ns = self.read()
-            # Otherwise, raise an error
             else:
                 raise ValueError(f"Unknown dataset: {name}")
             ns = self.modify(ns)
@@ -141,14 +132,14 @@ class Data(
         ns = Namespace(X=big_X, y=big_y)
         return ns
 
-    def read(self) -> Tuple[np.ndarray, np.ndarray]:
+    def read(self, filename) -> Tuple[np.ndarray, np.ndarray]:
         """
         Read data from csv, json, npz, or pickle as specified in params.yaml
         :param self.name: Path to the data file
         :return Tuple of X, y
         """
-        name = self.name
-        filetype = Path(self.name).suffix
+        name = Path(filename)
+        filetype = name.suffix.split(".")[-1]
         params = deepcopy(self._asdict())
         # If the data is a csv file
         if filetype == "csv":
@@ -191,13 +182,13 @@ class Data(
             with open(name, "rb") as f:
                 data = pickle.load(f)
             if "X" in data:
-                big_X = data["X"]
-                big_y = data["y"]
+                big_X = data.X
+                big_y = data.y
             elif "X_train" in data:
-                X_train = data["X_train"]
-                X_test = data["X_test"]
-                y_train = data["y_train"]
-                y_test = data["y_test"]
+                X_train = data.X_train
+                X_test = data.X_test
+                y_train = data.y_train
+                y_test = data.y_test
             else:
                 raise ValueError(
                     "Pickle file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
@@ -402,18 +393,13 @@ class Data(
         ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
         return ns
 
-    def save(self, data: Namespace) -> Path:
+    def save(self, data: Namespace, filename) -> Path:
         """
-        Saves the data to a pickle file at self.files.data_path/hash/self.files.data_name
+        Saves the data to a pickle file 
         :param data (Namespace): Namespace containing the data
-        :param self.files.data_path : Path to save the data
-        :param self.files.data_name : Name of the data
+        :param filename (str): Name of the file to save the data to
         :return Path to the saved data
         """
-        filename = Path(
-            self.files["data_path"],
-            my_hash(self._asdict()) + "." + self.files["data_filetype"],
-        )
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
             pickle.dump(data, f)
@@ -429,9 +415,6 @@ config = """
     add_noise:
         train_noise : 1
     name: classification
-    files:
-        data_path : data
-        data_filetype : pickle
     generate:
         n_samples: 1000
         n_features: 2

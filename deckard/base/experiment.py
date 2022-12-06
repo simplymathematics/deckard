@@ -61,13 +61,9 @@ class Experiment(
                 model,
                 Model,
             ), "Model initialization failed. Check config file."
+            
         else:
             model = {}
-        if "files" in self.data:
-            self.data['files']['data_file'] = my_hash(data)
-        if "files" in self.model:
-            self.model['files']['model_file'] = my_hash(model) 
-        self.files['path'] = str(Path(self.files['path'], my_hash(self)).as_posix())
         files = deepcopy(params["files"]) if "files" in params else {}
         return (data, model, files)
 
@@ -76,15 +72,7 @@ class Experiment(
         :data data: dict, data to save.
         :returns: Path, path to saved data.
         """
-        assert "files" in self.data, "Data must have files attribute"
-        assert "data_path" in self.data["files"], "Data must have data_path attribute"
-        assert (
-            "data_filetype" in self.data["files"]
-        ), "Data must have data_filetype attribute"
-        filename = Path(
-            self.data["files"]["data_path"], self.data["files"]["data_file"]
-            + "." + self.data["files"]["data_filetype"],
-        )
+        filename = Path(self.files["data_file"])
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
         with open(filename, "wb") as f:
@@ -98,59 +86,20 @@ class Experiment(
         filename = Path(self.files["path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         params = deepcopy(self._asdict())
-        files = params.pop("files", None)
-        new_files = {}
-        if files is not None:
-            path = files.pop("path", ".")
-            path = Path(path)
-            for x in files:
-                x = Path(path, files[x])
-                new_files[x] = str(x.relative_to(path).as_posix())
-        files = new_files
-        data_files = params["data"].pop("files")
-        data_path = data_files.pop("data_path")
-        data_filetype = data_files.pop("data_filetype")
-        data_file = data_files.pop("data_file")
-        data_file = Path(data_path,  data_file + "." + data_filetype)
-        files["data"] = str(data_file)
-        if len(params["model"]) > 0:
-            model_files = params["model"].pop("files")
-            model_path = model_files.pop("model_path")
-            model_filetype = model_files.pop("model_filetype")
-            model_file = model_files.pop("model_file")
-            model_file = Path(model_path, model_file + "." + model_filetype)
-            files["model"] = str(model_file)
-        params["files"] = files
-        params["scorer"] = (
-            list(params.pop("scorers", {}).keys())[0]
-            if len(params["scorers"]) > 0
-            else None
-        )
-        params.pop("plots", None)
-        path.mkdir(parents=True, exist_ok=True)
         pd.Series(params).to_json(filename)
-        return str(Path(filename).as_posix())
+        assert Path(filename).exists(), "Parameters not saved."
+        return str(Path(filename))
 
     def save_model(self, model: object) -> Path:
         """Saves model to specified file.
         :model model: object, model to save.
         :returns: Path, path to saved model.
         """
-        assert "files" in self.model, "Model must have files attribute"
-        assert (
-            "model_path" in self.model["files"]
-        ), "Model must have model_path attribute"
-        assert (
-            "model_filetype" in self.model["files"]
-        ), "Model must have model_filetype attribute"
-        filename = Path(
-            self.model["files"]["model_path"],
-            self.model['files']['model_file'] + "." + self.model["files"]["model_filetype"],
-        )
+        filename = Path(self.files['model_file'])
         path = Path(filename).parent
         file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
-        if hasattr(model, "save") and not file.endswith(".pickle") and not file.endswith(".pkl"):
+        if hasattr(model, "save"):
             model.save(Path(filename).stem, path=path)
         else:
             if hasattr("model", "model"):
@@ -259,7 +208,7 @@ class Experiment(
         )
         return str(Path(filename).as_posix())
 
-    def fit(self, data: Namespace, model: object, art_bool=None) -> tuple:
+    def fit(self, data: Namespace, model: object, art=False) -> tuple:
         """
         Fits model to data.
         :param data: dict, data to fit model to.
@@ -267,34 +216,41 @@ class Experiment(
         :returns: tuple, (model, data, fit_time).
         """
         fit_params = deepcopy(self.model["fit"]) if "fit" in self.model else {}
-        if isinstance(self.attack, dict) and self.attack is not {}:
-            art_bool = True
-        else:
-            art_bool = False
         if isinstance(data, Data):
-            loaded_data = data.load()
+            loaded_data = data.load(self.files['data_file'])
         if isinstance(model, Model):
-            loaded_model = model.load(art_bool)
-        start = process_time()
+            loaded_model = model.load(self.files['model_file'], art)
+        else:
+            raise ValueError(f"model must be a Model object. It is type {type(model)}")
         try:
+            start = process_time()
             loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
-        except np.AxisError as e:
-            logger.warning(
-                f"Error fitting model: {e}. Trying to reshape data using LabelBinarize.",
-            )
-            loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
-            loaded_data.y_test = (
-                LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
-            )
-            try:
+        except Exception as e:
+            if "number of classes" in str(e):
+                start = process_time()
+                loaded_model.fit(
+                    loaded_data.X_train, loaded_data.y_train, **fit_params
+                )
+            elif "1d" in str(e):
+                if len(loaded_data.y_train.shape) > 1:
+                    loaded_data.y_train = loaded_data.y_train.argmax(axis=1)
+                if len(loaded_data.y_test.shape) > 1:
+                    loaded_data.y_test = loaded_data.y_test.argmax(axis=1)
+                start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
-            except ValueError as e:
-                if "number of classes" in str(e):
-                    loaded_model.fit(
-                        loaded_data.X_train, loaded_data.y_train, **fit_params
-                    )
-                else:
-                    raise e
+            elif "out of bounds" in str(e):
+                logger.warning(
+                    f"Error fitting model: {e}. Trying to reshape data using LabelBinarize.",
+                )
+                loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
+                loaded_data.y_test = (
+                    LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
+                )
+                start = process_time()
+                loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+            else:
+                raise e
+        
         result = process_time() - start
         return (loaded_data, loaded_model, result / len(loaded_data.X_train))
 
@@ -307,16 +263,16 @@ class Experiment(
         """
         start = process_time()
         if isinstance(data, Data):
-            data = data.load()
+            data = data.load(self.files['data_file'])
         if isinstance(model, Model):
-            model = model.load(art=art)
+            model = model.load(self.files['model_file'], art=art)
         predictions = model.predict(data.X_test)
         if len(predictions.shape) > 1:
             predictions = predictions.argmax(axis=1)
         result = process_time() - start
         return predictions, result / len(data.X_test)
 
-    def predict_proba(self, data: dict, model: object) -> tuple:
+    def predict_proba(self, data: dict, model: object, art) -> tuple:
         """
         Predicts data with model.
         :param data: dict, data to predict.
@@ -325,10 +281,13 @@ class Experiment(
         """
         start = process_time()
         if isinstance(data, Data):
-            data = data.load()
+            data = data.load(self.files['data_file'])
         if isinstance(model, Model):
-            model = model.load()
-        predictions = model.predict_proba(data.X_test)
+            model = model.load(self.files['model_file'], art=art)
+        try:
+            predictions = model.predict_proba(data.X_test)
+        except:
+            predictions = model.predict(data.X_test)
         result = process_time() - start
         return predictions, result / len(data.X_test)
     
@@ -340,6 +299,7 @@ class Experiment(
         time_dict: dict = None,
         score_dict: dict = None,
         predictions: np.ndarray = None,
+        probabilities: np.ndarray = None,
     ) -> dict:
         """
         Saves data, model, parameters, predictions, scores, and time dictionary.
@@ -353,33 +313,27 @@ class Experiment(
         files = {}
         path = Path(self.files["path"])
         path.mkdir(parents=True, exist_ok=True)
-        if "files" in self.data:
+        if "data_file" in self.files and data is not None:
             files.update({"data": self.save_data(data)})
-        if "files" in self.model:
+        if "model_file" in self.files and model is not None:
             files.update({"model": self.save_model(model)})
         if "params_file" in self.files:
             files.update({"params": self.save_params()})
-        if "ground_truth_file" in self.files:
+        if "ground_truth_file" in self.files and ground_truth is not None:
             files.update({"ground_truth": self.save_ground_truth(ground_truth)})
-        if "predictions_file" in self.files:
+        if "predictions_file" in self.files and predictions is not None:
             files.update({"predictions": self.save_predictions(predictions)})
-        if "probabilities_file" in self.files:
+        if "probabilities_file" in self.files and probabilities is not None:
             files.update({"probabilities": self.save_probabilities(predictions)})
-        if time_dict is not None:
+        if "time_dict_file" in self.files and time_dict is not None:
             files.update({"time": self.save_time_dict(time_dict)})
-        if score_dict is not None:
+        if "score_dict_file" in self.files and score_dict is not None:
             files.update({"scores": self.save_scores(score_dict)})
         return files
 
     def run(
         self,
-        fit=True,
-        predict=True,
-        probability=False,
-        score=True,
-        visualise=True,
         art=False,
-        attack=True,
         mtype="classifier",
     ) -> dict:
         """
@@ -389,6 +343,7 @@ class Experiment(
         logger.info("Parsing Config File")
         data, model, files = self.load()
         params = deepcopy(self._asdict())
+        results = {}
         time_dict = {}
         outs = {}
         path = Path(files["path"])
@@ -403,55 +358,57 @@ class Experiment(
         assert isinstance(model, (Model, dict))
         #######################################################################
         # Fit model, if applicable
-        if fit is True:
+        if "ground_truth_file" in files and  len(model) > 0:
             logger.info("Fitting model")
-            loaded_data, fitted_model, fit_time = self.fit(data, model)
+            loaded_data, fitted_model, fit_time = self.fit(data, model, art=art)
             time_dict.update({"fit_time": fit_time})
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
                 "ground_truth": loaded_data.y_test,
             }
+            results["time_dict"] = time_dict
         # if Model is initialized
-        elif isinstance(model, Model):
-            loaded_data = data.load()
-            fitted_model = model.load(art=art)
+        elif isinstance(model, Model) and  "ground_truth_file" not in files:
+            loaded_data = data.load(self.files["data_file"])
+            fitted_model = model.load(self.files['model_file'], art=art)
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
                 "ground_truth": loaded_data.y_test,
             }
+            results["time_dict"] = time_dict
         
         # only true if model not specificed in config
-        elif isinstance(model, dict):
-            loaded_data = data.load()
+        elif isinstance(model, dict) and len(model) == 0:
+            loaded_data = data.load(self.files['data_file'])
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
-        results["time_dict"] = time_dict
+            results["time_dict"] = time_dict
         #######################################################################
-        if predict is True:
+        if "predictions_file" in files and len(model) > 0:
             logger.info("Predicting")
-            predictions, predict_time = self.predict(loaded_data, fitted_model)
+            predictions, predict_time = self.predict(loaded_data, fitted_model, art=art)
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
             results["time_dict"].update(time_dict)
         #######################################################################
-        if probability is True:
+        if "probabilities_file" in files and len(model) > 0:
             logger.info("Predicting probabilities")
-            probabilities, proba_time = self.predict_proba(loaded_data, fitted_model)
+            probabilities, proba_time = self.predict_proba(loaded_data, fitted_model, art=art)
             results.update({"probabilities": probabilities})
             time_dict.update({"proba_time": proba_time})
         #######################################################################
-        if score is True:
+        if "score_dict_file" in files and len(model) > 0:
             logger.info("Scoring")
             score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
         #######################################################################
-        attack_keys = len(self.attack)
-        if attack is True and attack_keys > 0:
+        if "attack_samples_file" in files and len(model) > 0:
             attack = "!Attack:\n" + str(self._asdict())
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
             self.files["attack_path"] = str(path.as_posix())
+            
             targeted = (
                 attack.attack["init"]["targeted"]
                 if "targeted" in attack.attack["init"]
@@ -464,34 +421,15 @@ class Experiment(
                 targeted=targeted,
             )
             outs.update(attack_results)
-            if visualise is True:
-                if "art" in str(type(fitted_model)):
-                    art = True
-                else:
-                    art = False
-                self.files["path"] = str(path.as_posix())
-                old_data = deepcopy(loaded_data)
-                loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
-                atk_plots = deepcopy(dict(self.plots))
-                atk_plots = {k: "attack_" + str(v) for k, v in atk_plots.items()}
-                old_plots = deepcopy(dict(self.plots))
-                for key in self.plots:
-                    self.plots[key] = atk_plots[key]
-                plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
-                for key in self.plots:
-                    self.plots[key] = old_plots[key]
-                loaded_data = old_data
-                outs.update({"attack_plots": plots})
-            logger.info("Visualising")
+            loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
         saved_files = self.save(**results)
         outs.update(saved_files)
         #######################################################################
-        if visualise is True:
+        if len(self.plots) > 0 and len(model) > 0:
             if "art" in str(type(fitted_model)):
                 art = True
             else:
                 art = False
-            self.files["path"] = str(path.as_posix())
             plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
             outs.update({"plots": plots})
             logger.info("Visualising")
@@ -536,13 +474,6 @@ config = """
             loss: "hinge"
             name: sklearn.linear_model.SGDClassifier
             alpha: 0.0001
-        files:
-            model_path : model
-            model_filetype : pickle
-        # fit:
-        #     epochs: 1000
-        #     learning_rate: 1.0e-08
-        #     log_interval: 10
         art_pipeline:
             preprocessor:
                 name: art.defences.preprocessor.FeatureSqueezing
@@ -561,9 +492,6 @@ config = """
         add_noise:
             train_noise : 1
         name: classification
-        files:
-            data_path : data
-            data_filetype : pickle
         generate:
             n_samples: 1000
             n_features: 2
@@ -620,4 +548,6 @@ config = """
         attack_time_dict_file : adv_time_dict.json
         attack_params_file : attack_params.json
         attack_path : attack
+        data_file : reports/data.pickle
+        model_file : reports/model.pickle
     """

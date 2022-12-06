@@ -20,9 +20,6 @@ class testModel(unittest.TestCase):
             init:
                 loss: "log_loss"
                 name: sklearn.linear_model.SGDClassifier
-            files:
-                model_path : model
-                model_filetype : pickle
             fit:
                 epochs: 1000
                 learning_rate: 1.0e-08
@@ -38,9 +35,6 @@ class testModel(unittest.TestCase):
             init:
                 loss: "hinge"
                 name: sklearn.linear_model.SGDClassifier
-            files:
-                model_path : model
-                model_filetype : pickle
             fit:
                 epochs: 1000
                 learning_rate: 1.0e-08
@@ -61,9 +55,6 @@ class testModel(unittest.TestCase):
             add_noise:
                 train_noise : 1
             name: classification
-            files:
-                data_path : data
-                data_filetype : pickle
             generate:
                 n_samples: 1000
                 n_features: 2
@@ -76,6 +67,7 @@ class testModel(unittest.TestCase):
         self.loaded_model1 = yaml.load(self.model1, Loader=yaml.FullLoader)
         self.loaded_model2 = yaml.load(self.model2, Loader=yaml.FullLoader)
         self.loaded_model3 = yaml.load(self.model1, Loader=yaml.FullLoader)
+        self.filename = Path(self.path, "model.pickle")
 
     def test_model(self):
         doc = self.model1
@@ -99,12 +91,6 @@ class testModel(unittest.TestCase):
         self.assertEqual(model1, model2)
         self.assertNotEqual(model1, model3)
 
-    def test_save_model(self):
-        model1 = self.loaded_model1
-        new = model1.load()
-        filename = model1.save(new)
-        self.assertTrue(Path(self.path, my_hash(model1._asdict()) + ".pickle").exists())
-        self.assertTrue(Path(filename).exists())
 
     def test_load(self):
         self.assertEqual(self.loaded_model1, self.loaded_model3)

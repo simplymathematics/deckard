@@ -15,6 +15,8 @@ class testData(unittest.TestCase):
         yaml.add_constructor("!Data:", Data)
         self.data_document = "!Data:\n" + config
         self.data = yaml.load(self.data_document, Loader=yaml.Loader)
+        self.path = Path(__file__).parent / "data"
+        self.filename = Path(self.path, "data.pkl")
 
     def test_hash(self):
         data1 = yaml.load(self.data_document, Loader=yaml.Loader)
@@ -36,7 +38,7 @@ class testData(unittest.TestCase):
 
     def test_load(self):
         data = self.data
-        data = data.load()
+        data = data.load(self.filename)
         self.assertIsInstance(data.X_train, np.ndarray)
         self.assertIsInstance(data.y_train, np.ndarray)
         self.assertIsInstance(data.X_test, np.ndarray)
@@ -49,11 +51,6 @@ class testData(unittest.TestCase):
         data2 = yaml.load(document, Loader=yaml.Loader)
         self.assertNotEqual(self.data, data2)
 
-    def test_save_data(self):
-        data = self.data
-        out = data.save(data=self.data.load())
-        self.assertTrue(Path(out).exists())
-
     def tearDown(self):
-        if Path(self.data.files["data_path"]).exists():
-            shutil.rmtree(Path(self.data.files["data_path"]))
+        if Path(self.path).exists():
+            shutil.rmtree(Path(self.path))

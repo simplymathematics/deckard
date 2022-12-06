@@ -37,6 +37,7 @@ class Attack(
         """
         params = deepcopy(dict(self._asdict()))
         name = params["attack"]["init"].pop("name")
+        
         try:
             attack = factory(name, args=[model], **params["attack"]["init"])
         except ValueError as e:
@@ -54,10 +55,9 @@ class Attack(
         start = process_time()
         if "X_test" not in vars(data):
             data = data.load()
-        if isinstance(model, BaseHashable):
-            model = model.load(art=True)
-        assert hasattr(model, "fit"), "Model must have a fit method."
         attack, gen = self.load(model)
+        if hasattr(data.X_test, "values"):
+            data.X_test = data.X_test.values
         if targeted is False:
             start = process_time()
             attack_samples = attack.generate(data.X_test, **gen)
@@ -86,22 +86,22 @@ class Attack(
         """
         Saves the time dictionary to a json file.
         """
-        filename = Path(self.files["path"], self.files["attack_time_dict_file"])
+        filename = Path(self.files["path"], self.files["time_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
-        return Path(filename).resolve()
+        return str(Path(filename))
 
     def save_attack_params(self) -> Path:
         """
         Saves the attack parameters to a json file.
         """
-        filename = Path(self.files["path"], self.files["attack_params_file"])
+        filename = Path(self.files["path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
         assert Path(filename).exists(), f"File {filename} not saved."
-        return Path(filename).resolve()
+        return str(Path(filename))
 
     def save_attack_samples(
         self,
@@ -115,7 +115,7 @@ class Attack(
         attack_results = DataFrame(samples.reshape(samples.shape[0], -1))
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
-        return Path(filename).resolve()
+        return str(Path(filename))
 
     def save_attack_predictions(
         self,
@@ -124,12 +124,12 @@ class Attack(
         """
         Saves adversarial predictions to specified file.
         """
-        filename = Path(self.files["path"], self.files["attack_predictions_file"])
+        filename = Path(self.files["path"], self.files["predictions_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(predictions)
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
-        return Path(filename).resolve()
+        return str(Path(filename))
 
     def save_attack_scores(
         self,
@@ -141,12 +141,12 @@ class Attack(
 
         :return path: Path to saved file.
         """
-        filename = Path(self.files["path"], self.files["attack_scores_file"])
+        filename = Path(self.files["path"], self.files["score_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(score_dict, f)
         assert Path(filename).exists(), "Adversarial example file not saved"
-        return Path(filename).resolve()
+        return str(Path(filename))
 
     def save(
         self,

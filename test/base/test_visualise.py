@@ -43,8 +43,8 @@ class testVisualiser(unittest.TestCase):
             "!Experiment:\n" + str(self.config),
             Loader=yaml.FullLoader,
         ).load()
-        self.data = data.load()
-        self.model = model.load(art=False)
+        self.data = data.load("reports/filename.pickle")
+        self.model = model.load("reports/model.pickle", art=False)
         self.data.y_train = (
             LabelBinarizer().fit(self.data.y_train).transform(self.data.y_train)
         )
@@ -126,8 +126,8 @@ class testVisualiser(unittest.TestCase):
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
         exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
         data, model, _ = exp.load()
-        data = data.load()
-        model = model.load()
+        data = data.load("reports/filename.pickle")
+        model = model.load("reports/model.pickle")
         model.fit(data.X_train, data.y_train)
         paths = viz.visualise_regression(data, regressor(model.model))
         for path in paths:
@@ -141,8 +141,8 @@ class testVisualiser(unittest.TestCase):
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
         exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
         data, model, _ = exp.load()
-        data = data.load()
-        model = model.load(art=True)
+        data = data.load("reports/filename.pickle")
+        model = model.load("reports/model.pickle", art=True)
         model = model.model.fit(data.X_train, data.y_train).steps[-1][1]
         paths = viz.visualise_clustering(data, clusterer(model))
         for path in paths:

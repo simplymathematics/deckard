@@ -62,7 +62,7 @@ class testExperiment(unittest.TestCase):
         self.assertEqual(my_hash(exp._asdict()), my_hash(self.exp._asdict()))
 
     def test_run(self):
-        _ = self.exp.run(fit=True, predict=True, score=True, visualise=True)
+        _ = self.exp.run()
         self.assertTrue(Path(self.path).exists())
 
     def test_save_data(self):
@@ -71,8 +71,8 @@ class testExperiment(unittest.TestCase):
             _,
             _,
         ) = self.exp.load()
-        data_dict = dict(vars(data.load()))
-        path = data.save(data_dict)
+        data_dict = data.load("reports/filename.pickle")
+        path = data.save(data_dict, "reports/filename.pickle")
         self.assertTrue(path.exists())
 
     def test_save_params(self):
@@ -91,9 +91,9 @@ class testExperiment(unittest.TestCase):
             model,
             _,
         ) = self.exp.load()
-        model = model.load()
-        path = self.model.save(model)
-        self.assertTrue(path.exists())
+        model = model.load("reports/filename.pickle")
+        path = self.exp.save_model(model)
+        self.assertTrue(Path(path).exists())
 
     def test_save_predictions(self):
         (
@@ -101,8 +101,8 @@ class testExperiment(unittest.TestCase):
             model,
             _,
         ) = self.exp.load()
-        model = model.load()
-        data = data.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
         data.y_train = LabelBinarizer().fit_transform(data.y_train)
         data.y_test = LabelBinarizer().fit_transform(data.y_test)
         model.fit(data.X_train, data.y_train)
@@ -117,8 +117,8 @@ class testExperiment(unittest.TestCase):
             model,
             _,
         ) = self.exp.load()
-        model = model.load()
-        data = data.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
         data.y_train = LabelBinarizer().fit_transform(data.y_train)
         data.y_test = LabelBinarizer().fit_transform(data.y_test)
         model.fit(data.X_train, data.y_train)
@@ -144,8 +144,8 @@ class testExperiment(unittest.TestCase):
             model,
             _,
         ) = self.exp.load()
-        model = model.load()
-        data = data.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
         data.y_train = LabelBinarizer().fit_transform(data.y_train)
         data.y_test = LabelBinarizer().fit_transform(data.y_test)
         model.fit(data.X_train, data.y_train)
