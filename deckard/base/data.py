@@ -33,7 +33,7 @@ generate = {
     "moons": make_moons,
     "classification": make_classification,
     "signal": make_sparse_coded_signal,
-    "regression" : make_regression,
+    "regression": make_regression,
 }
 real = {
     "boston": load_boston,
@@ -67,7 +67,7 @@ class Data(
         Load data from sklearn.datasets, sklearn.datasets.make_*, csv, json, npz, or pickle as specified in params.yaml
         :return: Namespace object with X_train, X_test, y_train, y_test
         """
-        
+
         params = deepcopy(self._asdict())
         if Path(filename).exists():
             logger.info(f"Loading data from {filename}")
@@ -398,7 +398,7 @@ class Data(
 
     def save(self, data: Namespace, filename) -> Path:
         """
-        Saves the data to a pickle file 
+        Saves the data to a pickle file
         :param data (Namespace): Namespace containing the data
         :param filename (str): Name of the file to save the data to
         :return Path to the saved data

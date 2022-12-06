@@ -1,6 +1,6 @@
 stages:
   generate_data:
-    cmd: python -m deckard.layers.runner generate_data 
+    cmd: python -m deckard.layers.runner generate_data
     params:
       - data.name
       - data.generate
@@ -9,7 +9,7 @@ stages:
       - generate_data/${files.data_file}
       - ${files.reports}/generate_data/${files.path}
   sample:
-    cmd: python -m deckard.layers.runner sample 
+    cmd: python -m deckard.layers.runner sample
     params:
       - data
       - model.init

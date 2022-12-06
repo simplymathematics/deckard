@@ -37,7 +37,7 @@ class Attack(
         """
         params = deepcopy(dict(self._asdict()))
         name = params["attack"]["init"].pop("name")
-        
+
         try:
             attack = factory(name, args=[model], **params["attack"]["init"])
         except ValueError as e:

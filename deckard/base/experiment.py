@@ -61,7 +61,7 @@ class Experiment(
                 model,
                 Model,
             ), "Model initialization failed. Check config file."
-            
+
         else:
             model = {}
         files = deepcopy(params["files"]) if "files" in params else {}
@@ -95,7 +95,7 @@ class Experiment(
         :model model: object, model to save.
         :returns: Path, path to saved model.
         """
-        filename = Path(self.files['model_file'])
+        filename = Path(self.files["model_file"])
         path = Path(filename).parent
         file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
@@ -190,7 +190,7 @@ class Experiment(
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(probabilities).to_json(filename)
         return str(Path(filename).as_posix())
-    
+
     def save_scores(self, scores: dict) -> Path:
         """
         :param filename: str, name of file to save predictions to.
@@ -217,9 +217,9 @@ class Experiment(
         """
         fit_params = deepcopy(self.model["fit"]) if "fit" in self.model else {}
         if isinstance(data, Data):
-            loaded_data = data.load(self.files['data_file'])
+            loaded_data = data.load(self.files["data_file"])
         if isinstance(model, Model):
-            loaded_model = model.load(self.files['model_file'], art)
+            loaded_model = model.load(self.files["model_file"], art)
         else:
             raise ValueError(f"model must be a Model object. It is type {type(model)}")
         try:
@@ -228,9 +228,7 @@ class Experiment(
         except Exception as e:
             if "number of classes" in str(e):
                 start = process_time()
-                loaded_model.fit(
-                    loaded_data.X_train, loaded_data.y_train, **fit_params
-                )
+                loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             elif "1d" in str(e):
                 if len(loaded_data.y_train.shape) > 1:
                     loaded_data.y_train = loaded_data.y_train.argmax(axis=1)
@@ -242,15 +240,19 @@ class Experiment(
                 logger.warning(
                     f"Error fitting model: {e}. Trying to reshape data using LabelBinarize.",
                 )
-                loaded_data.y_train = LabelBinarizer().fit_transform(loaded_data.y_train)
+                loaded_data.y_train = LabelBinarizer().fit_transform(
+                    loaded_data.y_train,
+                )
                 loaded_data.y_test = (
-                    LabelBinarizer().fit(loaded_data.y_train).transform(loaded_data.y_test)
+                    LabelBinarizer()
+                    .fit(loaded_data.y_train)
+                    .transform(loaded_data.y_test)
                 )
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             else:
                 raise e
-        
+
         result = process_time() - start
         return (loaded_data, loaded_model, result / len(loaded_data.X_train))
 
@@ -263,9 +265,9 @@ class Experiment(
         """
         start = process_time()
         if isinstance(data, Data):
-            data = data.load(self.files['data_file'])
+            data = data.load(self.files["data_file"])
         if isinstance(model, Model):
-            model = model.load(self.files['model_file'], art=art)
+            model = model.load(self.files["model_file"], art=art)
         predictions = model.predict(data.X_test)
         if len(predictions.shape) > 1:
             predictions = predictions.argmax(axis=1)
@@ -281,16 +283,16 @@ class Experiment(
         """
         start = process_time()
         if isinstance(data, Data):
-            data = data.load(self.files['data_file'])
+            data = data.load(self.files["data_file"])
         if isinstance(model, Model):
-            model = model.load(self.files['model_file'], art=art)
+            model = model.load(self.files["model_file"], art=art)
         try:
             predictions = model.predict_proba(data.X_test)
         except:
             predictions = model.predict(data.X_test)
         result = process_time() - start
         return predictions, result / len(data.X_test)
-    
+
     def save(
         self,
         data: dict = None,
@@ -358,7 +360,7 @@ class Experiment(
         assert isinstance(model, (Model, dict))
         #######################################################################
         # Fit model, if applicable
-        if "ground_truth_file" in files and  len(model) > 0:
+        if "ground_truth_file" in files and len(model) > 0:
             logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model, art=art)
             time_dict.update({"fit_time": fit_time})
@@ -369,19 +371,19 @@ class Experiment(
             }
             results["time_dict"] = time_dict
         # if Model is initialized
-        elif isinstance(model, Model) and  "ground_truth_file" not in files:
+        elif isinstance(model, Model) and "ground_truth_file" not in files:
             loaded_data = data.load(self.files["data_file"])
-            fitted_model = model.load(self.files['model_file'], art=art)
+            fitted_model = model.load(self.files["model_file"], art=art)
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
                 "ground_truth": loaded_data.y_test,
             }
             results["time_dict"] = time_dict
-        
+
         # only true if model not specificed in config
         elif isinstance(model, dict) and len(model) == 0:
-            loaded_data = data.load(self.files['data_file'])
+            loaded_data = data.load(self.files["data_file"])
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
             results["time_dict"] = time_dict
         #######################################################################
@@ -394,7 +396,9 @@ class Experiment(
         #######################################################################
         if "probabilities_file" in files and len(model) > 0:
             logger.info("Predicting probabilities")
-            probabilities, proba_time = self.predict_proba(loaded_data, fitted_model, art=art)
+            probabilities, proba_time = self.predict_proba(
+                loaded_data, fitted_model, art=art,
+            )
             results.update({"probabilities": probabilities})
             time_dict.update({"proba_time": proba_time})
         #######################################################################
@@ -408,7 +412,7 @@ class Experiment(
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
             self.files["attack_path"] = str(path.as_posix())
-            
+
             targeted = (
                 attack.attack["init"]["targeted"]
                 if "targeted" in attack.attack["init"]

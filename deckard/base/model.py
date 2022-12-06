@@ -67,36 +67,35 @@ class Model(
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
-        elif isinstance(params["name"], str)  or library == "sklearn":
+        elif isinstance(params["name"], str) or library == "sklearn":
             if params is None:
                 params = {}
             model = factory(params.pop("name"), **params)
             # Build sklearn pipeline
             if len(self.sklearn_pipeline) > 0:
                 model = self.build_sklearn_pipeline(model)
-        if len(self.art_pipeline) > 0 or art==True:
+        if len(self.art_pipeline) > 0 or art == True:
             model = self.build_art_pipeline(model, library)
         return model
-            
+
     def save_model(self, model, filename):
         library = filetypes[Path(filename).suffix.split(".")[-1]]
         filename.parent.mkdir(parents=True, exist_ok=True)
         if library == "torch":
             import torch
+
             torch.save(model.model, filename)
         elif library == "tensorflow":
-            model.model.save(filename) 
+            model.model.save(filename)
         elif library == "tfv1":
-            model.model.save(filname.stem)   
+            model.model.save(filname.stem)
         elif library == "keras":
             model.model.save(filename)
         else:
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
-        return Path(filename).resolve()   
-    
-    
-    
+        return Path(filename).resolve()
+
     def build_sklearn_pipeline(self, model):
         if not isinstance(model, Pipeline):
             model = Pipeline(steps=[("model", model)])
@@ -109,8 +108,7 @@ class Model(
             object_ = factory(name, **config)
             i += 1
         return model
-            
-            
+
     def build_art_pipeline(self, model, library):
         art = self.art_pipeline
         if "preprocessor_defence" in art:
@@ -151,8 +149,12 @@ class Model(
         elif library == "torch":
             model = PyTorchClassifier(
                 model,
-                optimizer = factory(init_params['optimizer'].pop("name"), params = model.parameters(), **init_params['optimizer']),
-                loss = factory(init_params['loss'].pop("name"), **init_params['loss']),
+                optimizer=factory(
+                    init_params["optimizer"].pop("name"),
+                    params=model.parameters(),
+                    **init_params["optimizer"],
+                ),
+                loss=factory(init_params["loss"].pop("name"), **init_params["loss"]),
                 clip_values=(min_pixel_value, max_pixel_value),
                 input_shape=input_shape,
                 nb_classes=num_classes,
@@ -209,8 +211,6 @@ class Model(
                 model,
             )()
         return model
-
-    
 
 
 config = """

@@ -91,7 +91,6 @@ class testModel(unittest.TestCase):
         self.assertEqual(model1, model2)
         self.assertNotEqual(model1, model3)
 
-
     def test_load(self):
         self.assertEqual(self.loaded_model1, self.loaded_model3)
 
