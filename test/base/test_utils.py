@@ -16,7 +16,8 @@ warnings.filterwarnings("ignore", category=ResourceWarning)
 
 class testUtils(unittest.TestCase):
     def setUp(self):
-        self.path = "configs"
+        here = Path(__file__).parent
+        self.path = here / "configs"
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.factory = {
             "module_class_string": "sklearn.linear_model.LogisticRegression",
