@@ -1,251 +1,169 @@
+import unittest
 import warnings
+import yaml
+from collections.abc import Callable  # noqa F401
+from pathlib import Path
 
+from art.attacks.evasion import BoundaryAttack  # noqa F401
+from art.defences.postprocessor import HighConfidence  # noqa F401
+from art.defences.preprocessor import FeatureSqueezing  # noqa F401
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier  # noqa F401
+
+from sklearn.cluster import KMeans  # noqa F401
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.preprocessing import LabelBinarizer
+from deckard.base import Data, Experiment, Model, Yellowbrick_Visualiser
+from deckard.base.experiment import config as exp_config
+from deckard.base.model import config as model_config
+from deckard.base.data import config as data_config
+from deckard.base.hashable import my_hash
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-import tempfile
-import unittest
-from collections.abc import Callable
-from copy import deepcopy
-from os import path
 
-import numpy as np
-from art.attacks.evasion import BoundaryAttack
-from art.defences.postprocessor import HighConfidence
-from art.defences.preprocessor import FeatureSqueezing
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
-from deckard.base import Data, Experiment, Model
-from sklearn.cluster import KMeans
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
+yaml.add_constructor("!Data:", Data)
+yaml.add_constructor("!Model:", Model)
+yaml.add_constructor("!Experiment:", Experiment)
+yaml.add_constructor("!Yellowbrick_Visualiser:", Yellowbrick_Visualiser)
 
 
 class testExperiment(unittest.TestCase):
-    def setUp(self):
+    def setUp(
+        self,
+        exp_config=exp_config,
+        data_config=data_config,
+        model_config=model_config,
+    ) -> None:
 
-        self.path = path.abspath(tempfile.mkdtemp())
-        ART_DATA_PATH = self.path
+        self.path = "reports"
+        self.config = exp_config
         self.file = "test_filename"
-        self.here = path.dirname(path.abspath(__file__))
+        self.here = Path(__file__).parent
+        exp_config = "!Experiment:" + exp_config
+        data_config = "!Data:" + data_config
+        model_config = "!Model:" + model_config
+        self.exp = yaml.load(exp_config, Loader=yaml.FullLoader)
+        self.data = yaml.load(data_config, Loader=yaml.FullLoader)
+        self.model = yaml.load(model_config, Loader=yaml.FullLoader)
+
+    def test_data(self):
+        self.assertIsInstance(self.data, Data)
+
+    def test_model(self):
+        self.assertIsInstance(self.model, Model)
 
     def test_experiment(self):
-        data = Data("iris", test_size=30)
-        self.assertIsInstance(data, Data)
-        model = Model(KNeighborsRegressor(), model_type="sklearn")
-        model()
-        self.assertIsInstance(model, Model)
-        experiment = Experiment(data=data, model=model)
-        self.assertIsInstance(experiment, Experiment)
-        self.assertIsInstance(experiment.data, Data)
-        self.assertIsInstance(experiment.model, Model)
-        self.assertIsInstance(experiment.params, dict)
-        self.assertEqual(
-            experiment.model.model_type,
-            "sklearn",
-        )
+        self.assertIsInstance(self.exp, Experiment)
 
     def test_hash(self):
-        data = Data("iris", test_size=30)
-        model = Model(KNeighborsRegressor(5), model_type="sklearn", path=self.path)
-        model2 = Model(KNeighborsRegressor(4), model_type="sklearn", path=self.path)
-        model3 = Model(KNeighborsRegressor(), model_type="sklearn", path=self.path)
-        model4 = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment2 = Experiment(data=data, model=model2)
-        experiment3 = Experiment(data=data, model=model3)
-        experiment4 = Experiment(data=data, model=model4)
-        experiment5 = deepcopy(experiment)
-        self.assertEqual(experiment, experiment3)
-        self.assertEqual(hash(experiment.data), hash(experiment3.data))
-        self.assertEqual(hash(experiment.model), hash(experiment3.model))
-        self.assertEqual(hash(experiment), hash(experiment3))
-        self.assertEqual(hash(experiment), hash(experiment5))
-        self.assertNotEqual(hash(experiment), hash(experiment4))
-        self.assertNotEqual(hash(experiment), hash(experiment2))
-
-    def test_eq(self):
-        data = Data("iris", test_size=30)
-        model = Model(
-            KNeighborsRegressor(5),
-            model_type="sklearn",
-            path=self.path,
-            classifier=False,
-        )
-        model2 = Model(
-            KNeighborsRegressor(4),
-            model_type="sklearn",
-            path=self.path,
-            classifier=False,
-        )
-        model3 = Model(
-            KNeighborsRegressor(),
-            model_type="sklearn",
-            path=self.path,
-            classifier=False,
-        )
-        model4 = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment2 = Experiment(data=data, model=model2)
-        experiment3 = Experiment(data=data, model=model3)
-        experiment4 = Experiment(data=data, model=model4)
-        experiment5 = deepcopy(experiment)
-        self.assertEqual(experiment.data, experiment3.data)
-        self.assertEqual(experiment.model, experiment3.model)
-        self.assertEqual(experiment, experiment3)
-        self.assertEqual(experiment, experiment5)
-        self.assertNotEqual(experiment, experiment4)
-        self.assertNotEqual(experiment, experiment2)
+        exp_config = "!Experiment:" + self.config
+        exp = yaml.load(exp_config, Loader=yaml.FullLoader)
+        self.assertEqual(my_hash(exp._asdict()), my_hash(self.exp._asdict()))
 
     def test_run(self):
-        data = Data("iris", test_size=30)
-        model = Model(
-            KNeighborsRegressor(),
-            model_type="sklearn",
-            path=self.path,
-            classifier=False,
-        )
-        experiment = Experiment(data=data, model=model)
-        experiment(path=self.path)
-        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
-        self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIn("fit_time", experiment.time_dict)
-        self.assertIn("pred_time", experiment.time_dict)
-        model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment(path=self.path)
-        self.assertIsInstance(experiment.predictions, (list, np.ndarray))
-        self.assertIsInstance(experiment.time_dict, dict)
-        self.assertIn("fit_time", experiment.time_dict)
-        self.assertIn("pred_time", experiment.time_dict)
-
-    def test_save_cv_scores(self):
-        from sklearn.model_selection import GridSearchCV
-
-        data = Data("iris", test_size=30)
-        estimator = DecisionTreeClassifier()
-        grid = GridSearchCV(
-            estimator,
-            {"max_depth": [1, 2, 3, 4, 5]},
-            cv=3,
-            return_train_score=True,
-        )
-        model = Model(grid, model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment(path=self.path)
-        experiment.save_cv_scores(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        _ = self.exp.run()
+        self.assertTrue(Path(self.path).exists())
 
     def test_save_data(self):
-        data = Data("iris", test_size=30)
-        model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment.save_data(filename=self.file, path=self.path)
-        self.assertTrue(path.exists(path.join(self.path, self.file)))
+        (
+            data,
+            _,
+            _,
+        ) = self.exp.load()
+        data_dict = data.load("reports/filename.pickle")
+        path = data.save(data_dict, "reports/filename.pickle")
+        self.assertTrue(path.exists())
 
     def test_save_params(self):
-        data = Data("iris", test_size=30)
-        model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        filenames = experiment.save_params(filename="params.json", path=self.path)
-        for f in filenames:
-            filename = path.join(self.path, f)
-            self.assertTrue(path.exists(filename))
+        (
+            _,
+            _,
+            _,
+        ) = self.exp.load()
+        path = self.exp.save_params()
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
     def test_save_model(self):
-        data = Data("iris", test_size=30)
-        model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        filename = experiment.save_model(filename="model", path=self.path)
-        self.assertTrue(path.exists(filename))
+        (
+            _,
+            model,
+            _,
+        ) = self.exp.load()
+        model = model.load("reports/filename.pickle")
+        path = self.exp.save_model(model)
+        self.assertTrue(Path(path).exists())
 
     def test_save_predictions(self):
-        data = Data("iris", test_size=30)
-        model = Model(DecisionTreeClassifier(), model_type="sklearn", path=self.path)
-        experiment = Experiment(data=data, model=model)
-        experiment(path=self.path)
-        filename = experiment.save_predictions(filename=self.file, path=self.path)
-        self.assertTrue(filename)
+        (
+            data,
+            model,
+            _,
+        ) = self.exp.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        predictions = model.predict(data.X_test)
+        path = self.exp.save_predictions(predictions)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
-    ####################################################################################################################
-    #                                                    DEFENSES                                                      #
-    ####################################################################################################################
+    def test_save_ground_truth(self):
+        (
+            data,
+            model,
+            _,
+        ) = self.exp.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        truth = model.predict(data.X_test)
+        path = self.exp.save_ground_truth(truth)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
-    def test_insert_sklearn_preprocessor(self):
-        config = {
-            "name": "sklearn.preprocessing.StandardScaler",
-            "params": {"with_mean": True, "with_std": True},
-        }
-        config2 = {
-            "name": "sklearn.impute.SimpleImputer",
-            "params": {"strategy": "mean"},
-        }
-        data = Data("iris", test_size=30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator)
-        model.insert_sklearn_preprocessor(
-            name="Preprocessor",
-            preprocessor=config,
-            position=0,
-        )
-        model.insert_sklearn_preprocessor(
-            name="Featurizer",
-            preprocessor=config2,
-            position=1,
-        )
-        model()
-        self.assertIn("Preprocessor", str(model.model.steps))
-        self.assertIn(str("with_mean"), str(model.model.steps[0][1].get_params()))
-        self.assertDictContainsSubset(
-            config["params"],
-            model.model.steps[0][1].get_params(),
-        )
-        self.assertIn("Featurizer", str(model.model.steps))
-        self.assertIn(str("strategy"), str(model.model.steps[1][1].get_params()))
-        self.assertDictContainsSubset(
-            config2["params"],
-            model.model.steps[1][1].get_params(),
-        )
-        self.assertIn(str(config["params"]), str(model.params))
-        self.assertIn(str(config2["params"]), str(model.params))
+    def test_save_time_dict(self):
+        (
+            data,
+            model,
+            _,
+        ) = self.exp.load()
+        time_dict = {"fit_time": 0, "pred_time": 0}
+        path = self.exp.save_time_dict(time_dict)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
-    def test_insert_art_defence(self):
-        config = {
-            "name": "art.defences.preprocessor.FeatureSqueezing",
-            "params": {"clip_values": (0, 1), "bit_depth": 4},
-        }
-        data = Data("iris", test_size=30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator)
-        model.insert_art_defence(config)
-        self.assertIn("FeatureSqueezing", str(model.params["Defence"]))
-        self.assertIn(str("clip_values"), str(model.params["Defence"]))
-
-    def test_experiment_param_printing(self):
-        config = {
-            "name": "art.defences.preprocessor.FeatureSqueezing",
-            "params": {"clip_values": (0, 1), "bit_depth": 4},
-        }
-        data = Data("iris", test_size=30)
-        estimator = DecisionTreeClassifier()
-        model = Model(estimator)
-        model.insert_art_defence(config)
-        self.assertIn("FeatureSqueezing", str(model.params["Defence"]))
-        self.assertIn(str("clip_values"), str(model.params["Defence"]))
-        exp = Experiment(data, model)
-        self.assertIn("Defence", str(exp))
-        self.assertIn("Experiment", str(exp))
-        self.assertIn("Model", str(exp))
-        self.assertIn("Data", str(exp))
+    def test_score(self):
+        (
+            data,
+            model,
+            _,
+        ) = self.exp.load()
+        model = model.load("reports/filename.pickle")
+        data = data.load("reports/filename.pickle")
+        data.y_train = LabelBinarizer().fit_transform(data.y_train)
+        data.y_test = LabelBinarizer().fit_transform(data.y_test)
+        model.fit(data.X_train, data.y_train)
+        predictions = model.predict(data.X_test)
+        score_dict = self.exp.score(predictions=predictions, ground_truth=data.y_test)
+        path = self.exp.save_scores(score_dict)
+        path = Path(self.path)
+        self.assertTrue(path.exists())
 
     def tearDown(self) -> None:
         from shutil import rmtree
 
-        rmtree(self.path)
+        if Path(self.here, "data").exists():
+            rmtree(Path(self.here, "data"))
+        if Path(self.here, "models").exists():
+            rmtree(Path(self.here, "models"))
+        if Path(self.here, self.path).exists():
+            rmtree(Path(self.here, self.path))
         del self.path
         del self.file
 

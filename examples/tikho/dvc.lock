@@ -1,0 +1,101 @@
+schema: '2.0'
+stages:
+  data:
+    cmd: python make_data.py
+    deps:
+    - path: params.yaml
+      md5: 5b511e769e2c95d3b7e38dc8aac54bd0
+      size: 1237
+    params:
+      params.yaml:
+        data:
+          generated:
+            n_classes: 2
+            n_features: 5
+            n_informative: 4
+            n_redundant: 1
+            n_samples: 10000
+          params:
+            name: classification
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+            train_noise: 0
+            train_size: 8000
+    outs:
+    - path: data.pickle
+      md5: c0ecda61aebaa4dcb02733bc0b87e068
+      size: 480380
+    - path: reports/balance.png
+      md5: 3c5fbec1f35fceb32ede2a5b119bcfcd
+      size: 18296
+    - path: reports/correlation.png
+      md5: dce5947dd76df75a1ba4a0b15ea545ba
+      size: 15226
+    - path: reports/radviz.png
+      md5: c2501975e73956f5f2127c804f671c8c
+      size: 27297
+  model:
+    cmd: python experiment.py
+    deps:
+    - path: data.pickle
+      md5: a1f6fcf0ce3c044c316c1ee86d49578a
+      size: 480380
+    - path: params.yaml
+      md5: 5b511e769e2c95d3b7e38dc8aac54bd0
+      size: 1237
+    params:
+      params.yaml:
+        model:
+          name: tikhonov.TikhonovClassifier
+          params:
+            mtype: linear
+            scale: 0
+    outs:
+    - path: model.pickle
+      md5: 30af24a29daf5a01aa3f2a8a4f46ad14
+      size: 53723
+    - path: reports/classification.png
+      md5: 1c7b89aee9bbf209b3eeae167cfb4269
+      size: 21253
+    - path: reports/confusion.png
+      md5: 3854f8f5aea5f2cc6b0d8b713b638e74
+      size: 16717
+    - path: reports/ground_truth.json
+      md5: e4c8ee204a26879a8672c7eddcd0387b
+      size: 28888
+    - path: reports/predictions.json
+      md5: 21a312ac7348482494ee64ed53471990
+      size: 28894
+    - path: reports/report.html
+      md5: 12e4e4f8ade99c4a983a17acf3c833a5
+      size: 35631
+    - path: reports/scores.json
+      md5: 251294dbb0a1bcac9353836df8c78988
+      size: 144
+  cache:
+    cmd: python cache.py
+    deps:
+    - path: data.pickle
+      md5: a1f6fcf0ce3c044c316c1ee86d49578a
+      size: 480380
+    - path: model.pickle
+      md5: 30af24a29daf5a01aa3f2a8a4f46ad14
+      size: 53723
+    - path: reports/ground_truth.json
+      md5: e4c8ee204a26879a8672c7eddcd0387b
+      size: 28888
+    - path: reports/predictions.json
+      md5: 21a312ac7348482494ee64ed53471990
+      size: 28894
+  parse:
+    cmd: python parse.py
+    deps:
+    - path: conf/config.yaml
+      md5: 12f45368f98e241b1b5924ce2766c480
+      size: 243
+    outs:
+    - path: params.yaml
+      md5: 83ddfe20f498794a11e3ee8ff69801e0
+      size: 802

@@ -1,4 +1,4 @@
 - name: sklearn.preprocessing.StandardScaler
-  params: 
+  params:
     'with_mean' : [False, True]
     'with_std' : [False, True]

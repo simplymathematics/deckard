@@ -1,11 +1,11 @@
 stages:
   prepare:
-    cmd: 
-      - python -m deckard.layers.prepare  
-    deps: 
+    cmd:
+      - python -m deckard.layers.prepare
+    deps:
       - configs/prepare.yml
       - original.csv
-    outs: 
+    outs:
       - data/data.pkl
   train:
     cmd: python -m deckard.layers.train  --name train
@@ -21,7 +21,7 @@ stages:
     metrics:
     - data/train/scores.json:
         cache: true
-    
+
   preprocess:
     cmd: python -m deckard.layers.preprocess  --name preprocess --input train
     deps:
@@ -36,7 +36,7 @@ stages:
     metrics:
     - data/preprocess/scores.json:
         cache: true
-   
+
   featurize:
     cmd: python -m deckard.layers.preprocess  --name featurize --input preprocess
     deps:
@@ -51,5 +51,3 @@ stages:
     metrics:
     - data/featurize/scores.json:
         cache: true
-
-

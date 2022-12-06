@@ -1,7 +1,7 @@
-prepare: 
+prepare:
   name: 'cifar10'
   params:
-    shuffle : True 
+    shuffle : True
     stratify : True
     random_state : 0
     train_size : .01
@@ -9,24 +9,24 @@ prepare:
   output_folder : "."
 control:
   input_model : "https://www.dropbox.com/s/hbvua7ynhvara12/cifar-10_ratio%3D0.h5?dl=1"
-  model_type : "tf1" 
-  data_file : "data.pkl" 
+  model_type : "tf1"
+  data_file : "data.pkl"
   output_folder : "control"
   output_name : control_model.pb
 defend:
   defence_config: "configs/defence_config.yaml"
-  input_model : "control_model.pb" 
-  input_folder : "control/" 
-  model_type : "tf1" 
-  data_file : "data.pkl" 
-  output_folder : "defences/" 
-  output_name : "defended_model"  
+  input_model : "control_model.pb"
+  input_folder : "control/"
+  model_type : "tf1"
+  data_file : "data.pkl"
+  output_folder : "defences/"
+  output_name : "defended_model"
 attack:
   attack_config: "configs/attack_config.yaml"
-  input_model : "defended_model" 
-  input_folder : "defences/" 
-  model_type : "tf1" 
-  data_file : "data.pkl" 
-  output_folder : "attacks/" 
+  input_model : "defended_model"
+  input_folder : "defences/"
+  model_type : "tf1"
+  data_file : "data.pkl"
+  output_folder : "attacks/"
   output_name : "attacked_model"
   attack_size : 100

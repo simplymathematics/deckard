@@ -1,279 +1,433 @@
+import collections
 import logging
-import os
 import pickle
+from typing import Tuple
+from argparse import Namespace
+from copy import deepcopy
 from pathlib import Path
-from types import NoneType
-from typing import Union
 
 import numpy as np
 import pandas as pd
 
-# mnist dataset from
-from art.utils import load_dataset
-from deckard.base.hashable import BaseHashable
+from sklearn.datasets import (
+    load_boston,
+    load_diabetes,
+    load_iris,
+    load_wine,
+    make_blobs,
+    make_classification,
+    make_moons,
+    make_sparse_coded_signal,
+    make_regression,
+)
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
+from .utils import factory
+from .hashable import BaseHashable
+
 
 logger = logging.getLogger(__name__)
 
 
-SUPPORTED_DATASETS = ["mnist", "iris", "cifar10"]
+generate = {
+    "blobs": make_blobs,
+    "moons": make_moons,
+    "classification": make_classification,
+    "signal": make_sparse_coded_signal,
+    "regression": make_regression,
+}
+real = {
+    "boston": load_boston,
+    "iris": load_iris,
+    "diabetes": load_diabetes,
+    "wine": load_wine,
+}
 
 
-class Data(BaseHashable):
-    """
-    :attribute dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
-    :attribute target: The target column to use. If None, the last column is used.
-    :attribute time_series: If True, the dataset is treated as a time series. Default is False.
-    :attribute train_size: The percentage of the dataset to use. Default is 0.1.
-    :attribute random_state: The random state to use. Default is 0.
-    :attribute shuffle: If True, the data is shuffled. Default is False.
-    :attribute X_train: The training data. Created during initialization.
-    :attribute X_test: The testing data. Created during initialization.
-    :attribute y_train: The training target. Created during initialization.
-    :attribute y_test: The testing target. Created during initialization.
+class Data(
+    collections.namedtuple(
+        typename="Data",
+        field_names="name, sample, generate, real, add_noise, transform, sklearn_pipeline",
+        defaults=(
+            {},
+            {},
+            {},
+            {},
+            {},
+            [],
+        ),
+    ),
+    BaseHashable,
+):
+    def __new__(cls, loader, node):
+        """Generates a new Data object from a YAML node"""
+        return super().__new__(cls, **loader.construct_mapping(node))
 
-    """
-
-    def __init__(
-        self,
-        dataset: str,
-        target=False,
-        time_series: bool = False,
-        train_size: int = 100,
-        random_state=0,
-        shuffle: bool = True,
-        stratify=False,
-        test_size: int = 100,
-        path=None,
-    ):
+    def load(self, filename):
         """
-        Initializes the data object.
-        :param dataset: The dataset to use. Can be either a csv file, a string, or a pickled Data object.
-        :param target: The target column to use. If None, the last column is used.
-        :param time_series: If True, the dataset is treated as a time series. Default is False.
-        :param train_size: The percentage of the dataset to use. Default is 0.1.
-        :param random_state: The random state to use. Default is 0.
-        :param train_size: The percentage of the dataset to use for testing. Default is 0.2.
-        :param shuffle: If True, the data is shuffled. Default is False.
-        :param flatten: If True, the dataset is flattened. Default is False.
+        Load data from sklearn.datasets, sklearn.datasets.make_*, csv, json, npz, or pickle as specified in params.yaml
+        :return: Namespace object with X_train, X_test, y_train, y_test
         """
-        self.dataset = dataset
-        self.target = target
-        self.time_series = time_series
-        self.train_size = train_size
-        self.random_state = random_state
-        self.shuffle = shuffle
-        self.stratify = stratify
-        self.test_size = test_size
-        self.path = False
-        tmp = dict(vars(self))
-        self.params = tmp
 
-    def __call__(self) -> None:
-        if self.path is None or self.path is False:
-            self.path = "."
-        if isinstance(self.dataset, str) and not Path(self.path, self.dataset).exists():
-            if self.dataset.endswith(".csv") or self.dataset.endswith(".txt"):
-                (X_train, y_train), (X_test, y_test) = self._parse_csv(
-                    self.dataset,
-                    self.target,
-                )
-            elif self.dataset in SUPPORTED_DATASETS:
-                (X_train, y_train), (X_test, y_test), _, _ = load_dataset(self.dataset)
+        params = deepcopy(self._asdict())
+        if Path(filename).exists():
+            logger.info(f"Loading data from {filename}")
+            ns = self.read(filename)
+        else:
+            name = params.pop("name")
+            if isinstance(name, list):
+                assert (
+                    len(name) == 1
+                ), "Only one dataset can be loaded at a time. See documentation for setting up multiple experiments."
+                name = name.pop(0)
+            if name in real or name in generate:
+                ns = self.sklearn_load()
+            else:
+                raise ValueError(f"Unknown dataset: {name}")
+            ns = self.modify(ns)
+        return ns
+
+    def modify(self, data: Namespace) -> Namespace:
+        """
+        Modify the data according to the parameters in the configuration file.
+        Args:
+            data (Namespace): Namespace containing the data. Either "X" and "y" or "X_train", "X_test", "y_train", "y_test". If "X" and "y" are present, they are split into train and test sets.
+            self.sklearn_pipeline (OrderedDict): OrderedDict of sklearn transformers to apply to the data
+            self.generate (dict): Dictionary of parameters to pass to sklearn.datasets.make_*
+            self.sample (dict): Dictionary of parameters to pass to sklearn.model_selection.train_test_split
+            self.add_noise (dict): Dictionaries of parameters to pass to sklearn.datasets.make_sparse_coded_signal
+            self.transform (dict): Dictionary of transformers to apply to the data
+        Returns:
+            Namespace: Namespace containing the data. Either "X" and "y" or "X_train", "X_test", "y_train", "y_test"
+        """
+        params = deepcopy(self._asdict())
+        if "sample" in params and "X_test" not in data:
+            ns = self.sampler(data)
+        else:
+            assert "X_test" in data, "X_test is not in data"
+            assert "y_test" in data, "y_test is not in data"
+            assert "X_train" in data, "X_train is not in data"
+            assert "y_train" in data, "y_train is not in data"
+        ns = self.run_sklearn_pipeline(ns)
+        ns = self.add_noise_to_data(ns)
+        return ns
+
+    def sklearn_load(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Load  data from sklearn.datasets.make_* or sklearn.datasets.load_*, according to the name specified in params.yaml and the entry in the generate or real dictionary.
+        :param self.name: Name of the dataset to load
+        :return: Tuple of X, y
+        """
+        name = self.name
+        if isinstance(name, list):
+            name = name[0]
+        # If the data is among the sklearn "real" datasets
+        if name in real:
+            big_X, big_y = real[name](return_X_y=True, **self.real)
+        # If the data is among the sklearn "generate" datasets
+        elif name in generate:
+            assert self.generate is not None, ValueError(
+                "generate datasets requires a dictionary of parameters named 'generate' in params.yaml",
+            )
+            big_X, big_y = generate[name](**self.generate)
+        else:
+            raise ValueError(f"Unknown dataset: {name}")
+        ns = Namespace(X=big_X, y=big_y)
+        return ns
+
+    def read(self, filename) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Read data from csv, json, npz, or pickle as specified in params.yaml
+        :param self.name: Path to the data file
+        :return Tuple of X, y
+        """
+        name = Path(filename)
+        filetype = name.suffix.split(".")[-1]
+        params = deepcopy(self._asdict())
+        # If the data is a csv file
+        if filetype == "csv":
+            assert "target" in params, "target column must be specified"
+            df = pd.read_csv(name)
+            big_X = df.drop(params["target"], axis=1)
+            big_y = df[params["target"]]
+        # If the data is a json
+        elif filetype == "json":
+            assert "target" in params, "target column must be specified"
+            data = pd.read_json(name)
+            if "X" in data:
+                big_X = data.X
+                big_y = data.y
+            elif "X_train" in data:
+                X_train = data.X_train
+                y_train = data.y_train
+                X_test = data.X_test
+                y_test = data.y_test
             else:
                 raise ValueError(
-                    "String dataset must be a csv file or a supported dataset.",
+                    "JSON file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
                 )
-            (
-                self.X_train,
-                self.y_train,
-                self.X_test,
-                self.y_test,
-                minimum,
-                maximum,
-            ) = self._sample_data(X_train, y_train, X_test, y_test)
-            self.clip_values = (minimum, maximum)
-        elif (
-            isinstance(self.dataset, Union[str, Path])
-            and Path(self.path, self.dataset).exists()
-        ):
-            with open(Path(self.path, self.dataset), "rb") as f:
+        # If the data is a numpy npz file
+        elif filetype == "npz":
+            data = np.load(name)
+            if "X" in data:
+                big_X = data["X"]
+                big_y = data["y"]
+            elif "X_train" in data:
+                X_train = data["X_train"]
+                y_train = data["y_train"]
+                X_test = data["X_test"]
+                y_test = data["y_test"]
+            else:
+                raise ValueError(
+                    "Numpy npz file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
+                )
+        elif filetype == "pickle" or filetype == "pkl":
+            with open(name, "rb") as f:
                 data = pickle.load(f)
-            for key, value in vars(data).items():
-                if hasattr(self.params, key):
-                    setattr(self.params, key, value)
-                setattr(self, key, value)
+            if "X" in data:
+                big_X = data.X
+                big_y = data.y
+            elif "X_train" in data:
+                X_train = data.X_train
+                X_test = data.X_test
+                y_train = data.y_train
+                y_test = data.y_test
+            else:
+                raise ValueError(
+                    "Pickle file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
+                )
+        else:
+            raise ValueError(f"Unknown datatype: {filetype}")
+        if "X" in locals():
+            assert "y" in locals(), f"y must be specified in {name}"
+            ns = Namespace(X=big_X, y=big_y)
+        elif "X_train" in locals():
+            assert "y_train" in locals(), f"y_train must be specified in {name}"
+            assert "X_test" in locals(), f"X_test must be specified in {name}"
+            assert "y_test" in locals(), f"y_test must be specified in {name}"
+            ns = Namespace(
+                X_train=X_train,
+                X_test=X_test,
+                y_train=y_train,
+                y_test=y_test,
+            )
         else:
             raise ValueError(
-                f"Dataset must be a csv file, a string, or a pickled Data object. Strings must be a supported dataset: {SUPPORTED_DATASETS}",
+                f"""Data not found in correct format. Check {name}. Should be a pickle file or a csv, json, npz, or txt file. It is type {Path(name).suffix}.""",
             )
-        assert hasattr(self, "X_train"), "X_train is not defined. Something went wrong."
-        assert hasattr(self, "X_test"), "X_test is not defined. Something went wrong."
-        assert hasattr(self, "y_train"), "y_train is not defined. Something went wrong."
-        assert hasattr(self, "y_test"), "y_test is not defined. Something went wrong."
-        assert hasattr(
-            self,
-            "clip_values",
-        ), "clip_values is not defined. Something went wrong."
+        return ns
 
-    def set_params(self, **kwargs):
-        """
-        :param params: A dictionary of parameters to set.
-        Sets the parameters of the data object.
-        """
-        self.__init__(**kwargs)
-        try:
-            self.__call__()
-        except Exception as e:
-            raise e
-
-    def _sample_data(
+    def add_noise_to_data(
         self,
-        X_train: np.ndarray,
-        y_train: np.ndarray,
-        X_test: np.ndarray,
-        y_test: np.ndarray,
-    ) -> None:
+        data: Namespace,
+    ) -> Namespace:
         """
-        :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, diabetes, and an arbitrary csv.
-        :param target: The target column to use. If None, the last column is used.
-        Chooses the dataset to use. Returns self.
+        Adds noise to the data according to the parameters specified in params.yaml
+        :param add_noise.train_noise (bool): Whether to add noise to the training data
+        :param add_noise.test_noise (bool): Whether to add noise to the test data
+        :param add_noise.y_train_noise (float, int): Amount of noise to add to the training labels
+        :param add_noise.y_test_noise (float, int): Amount of noise to add to the test labels
         """
-        # sets target, if specified
-        if self.target is not None:
-            self.target = self.target
-        big_X = np.vstack((X_train, X_test))
-        big_y = np.vstack((y_train, y_test))
-        # sets stratify to None if stratify is False
-        stratify = big_y if self.stratify is True else None
-        assert len(big_X) == len(
-            big_y,
-        ), "length of X is: {}. length of y is: {}".format(len(big_X), len(big_y))
-        assert big_X.shape[0] == big_y.shape[0], "X has {} rows. y has {} rows.".format(
-            big_X.shape[0],
-            big_y.shape[0],
-        )
-        if self.train_size == 1:
-            pass
-        else:
-            X_train, X_test, y_train, y_test = train_test_split(
-                big_X,
-                big_y,
-                train_size=self.train_size,
-                random_state=self.random_state,
-                shuffle=self.shuffle,
-                stratify=stratify,
-            )
-        if hasattr(self, "test_size"):
-            assert isinstance(self.test_size, int) or isinstance(
-                self.test_size,
-                NoneType,
-            ), "test_size must be an integer"
-            if self.test_size is not None and self.test_size <= len(X_test):
-                stratify = y_test if self.stratify is True else None
-                _, X_test, _, y_test = train_test_split(
-                    X_test,
-                    y_test,
-                    test_size=self.test_size,
-                    random_state=self.random_state,
-                    shuffle=self.shuffle,
-                    stratify=stratify,
-                )
-                X_test = X_test[: self.test_size]
-                y_test = y_test[: self.test_size]
-                assert (
-                    len(X_test) == self.test_size
-                ), "X_test has {} rows. test_size is {}".format(
-                    len(X_test),
-                    self.test_size,
-                )
+        ###########################################################
+        # Adding Noise
+        ###########################################################
+        data = vars(data)
+        add_noise = deepcopy(dict(self.add_noise))
+        train_noise = add_noise.pop("train_noise", 0)
+        test_noise = add_noise.pop("test_noise", 0)
+        y_train_noise = add_noise.pop("y_train_noise", 0)
+        y_test_noise = add_noise.pop("y_test_noise", 0)
+        X_train = data.pop("X_train", None)
+        y_train = data.pop("y_train", None)
+        X_test = data.pop("X_test", None)
+        y_test = data.pop("y_test", None)
+        # additive noise
+        if train_noise != 0:
+            X_train += np.random.normal(0, train_noise, X_train.shape)
+        if test_noise != 0:
+            X_test += np.random.normal(0, test_noise, X_test.shape)
+        if y_train_noise != 0:
+            if isinstance(y_train_noise, int):
+                y_train += np.random.randint(0, y_train_noise, y_train.shape)
+            elif isinstance(y_train_noise, float):
+                y_train += np.random.normal(0, y_train_noise, y_train.shape)
             else:
-                logger.warning(
-                    "test_size is greater than the number of test samples. Setting test_size to {}".format(
-                        len(X_test),
-                    ),
+                raise TypeError(
+                    f"y_train_noise must be int or float, not {type(y_train_noise)}",
                 )
-                pass
-        else:
-            pass
-        maximum = np.max(X_train)
-        minimum = np.min(X_train)
-        return X_train, y_train, X_test, y_test, minimum, maximum
-
-    def _parse_csv(self, dataset: str = "mnist", target=None) -> None:
-        """
-        :param dataset: A string specifying the dataset to use. Supports mnist, iris, stl10, cifar10, nursery, and diabetes
-        Chooses the dataset to use. Returns self.
-        """
-        assert dataset.endswith(".csv") or dataset.endswith(
-            ".txt",
-        ), "Dataset must be a .csv  or .txt file"
-        df = pd.read_csv(dataset)
-        df = df.dropna(axis=0, how="any")
-        if target is None:
-            self.target = df.columns[-1]
-        else:
-            self.target = target
-        y = df[self.target]
-        X = df.drop(self.target, axis=1)
-        if self.time_series is False:
-            stratify = y if self.stratify is True else None
-            X_train, X_test, y_train, y_test = train_test_split(
-                X,
-                y,
-                train_size=self.train_size,
-                random_state=self.random_state,
-                shuffle=self.shuffle,
-                stratify=stratify,
-            )
-            maximum = max(X_train)
-            minimum = min(X_train)
-        else:
-            if isinstance(self.train_size, float):
-                train_size = int(len(X) * self.train_size)
+        if y_test_noise != 0:
+            if isinstance(y_test_noise, int):
+                y_test += np.random.randint(0, y_test_noise, y_test.shape)
+            elif isinstance(y_test_noise, float):
+                y_test += np.random.normal(0, y_test_noise, y_test.shape)
             else:
-                train_size = self.train_size
-            splitter = TimeSeriesSplit(n_splits=2, max_train_size=train_size)
-            for tr_i, te_i in splitter.split(X):
-                X_train, X_test = X.iloc[tr_i], X.iloc[te_i]
-                y_train, y_test = y.iloc[tr_i], y.iloc[te_i]
-            maximum = max(X_train)
-            minimum = min(X_train)
-        return (X_train, y_train), (X_test, y_test), (minimum, maximum)
+                raise TypeError(
+                    f"y_test_noise must be int or float, not {type(y_test_noise)}",
+                )
+        ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        return ns
 
-    def load(self, filename: str = None, path: str = "."):
+    def sklearn_transform(
+        self,
+        data: Namespace,
+        transform: dict,
+    ) -> Namespace:
         """
-        Load a data file.
-        data_file: the data file to load
+        Transofrms the data according to the parameters specified in params.yaml
+        :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
+        :param name (str): Name of the transformation
+        :return: Namespace containing X_train, X_test, y_train, y_test
         """
-        data_file = os.path.join(path, filename)
-        from .data import Data
+        new_data = deepcopy(data)
+        X_train_bool = transform.pop("X_train", False)
+        X_test_bool = transform.pop("X_test", False)
+        y_train_bool = transform.pop("y_train", False)
+        y_test_bool = transform.pop("y_test", False)
+        object_name = transform.pop("name")
+        transformer = factory(object_name, **transform)
+        X_train = deepcopy(data.X_train)
+        y_train = deepcopy(data.y_train)
+        X_test = deepcopy(data.X_test) if hasattr(data, "X_test") else None
+        y_test = deepcopy(data.y_test) if hasattr(data, "y_test") else None
+        assert isinstance(X_train, np.ndarray)
+        assert isinstance(X_test, np.ndarray)
+        assert isinstance(y_train, np.ndarray)
+        assert isinstance(y_test, np.ndarray)
+        if X_train_bool or X_test_bool is True:
+            transformer.fit(X_train, y_train)
+            if X_train_bool is True:
+                new_X_train = transformer.transform(X_train, copy=True)
+                new_data.X_train = new_X_train
+            if X_test_bool is True:
+                new_X_test = transformer.transform(X_test, copy=True)
+                new_data.X_test = new_X_test
+        if y_train_bool or y_test_bool is True:
+            transformer.fit(y_train)
+            if y_train_bool is True:
+                new_y_train = transformer.transform(y_train, copy=True)
+                new_data.y_train = new_y_train
+            if y_test_bool is True:
+                new_y_test = transformer.transform(y_test, copy=True)
+                new_data.y_test = new_y_test
+        del data
+        return new_data
 
-        logger.debug("Loading data")
-        # load the data
-        with open(data_file, "rb") as f:
-            data = pickle.load(f)
-        assert isinstance(
-            self,
-            Data,
-        ), "Data is not an instance of Data. It is type: {}".format(type(self))
-        logger.info("Loaded model")
+    def run_sklearn_pipeline(self, data) -> Namespace:
+        """
+        Runs the sklearn pipeline specified in params.yaml
+        :param data (Namespace): Data to be transformed
+        :param self.sklearn_pipeline: list of sklearn transformers
+        :param self.transform: dictionary of transformers to apply to the data
+        """
+        pipeline = self.sklearn_pipeline
+        for layer in pipeline:
+            new_data = deepcopy(data)
+            transform = self.sklearn_pipeline[layer]
+            data = self.sklearn_transform(data=new_data, transform=transform)
         return data
 
-    def save(self, filename: str, path: str = None) -> None:
+    def sampler(
+        self,
+        data: Namespace,
+    ) -> Namespace:
         """
-        Save a data file.
-        filename: the filename to save the data file as
+        Samples the data using train_test_split
+        :param data.X (np.ndarray): data
+        :param data.y (np.ndarray): labels
+        :param self.sample: Dictionary of parameters for train_test_split
+        :return Tuple of X_train, X_test, y_train, y_test
         """
-        if path is None or False:
-            path = os.getcwd()
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        data_file = os.path.join(path, filename)
-        logger.debug("Saving data")
-        # save the data
-        if not hasattr(self, "X_train"):
-            self()
-        with open(data_file, "wb") as f:
-            pickle.dump(self, f)
-        logger.info("Saved model")
+        samples = deepcopy(dict(self.sample))
+        data = vars(data)
+        y = data.pop("y", None)
+        X = data.pop("X", None)
+        ########################################################
+        # Sample params
+        ########################################################
+        time_series = samples.pop("time_series", False)
+        if "stratify" in samples and samples["stratify"] is True:
+            samples.pop("stratify")
+            stratify = y
+        else:
+            samples.pop("stratify", None)
+            stratify = None
+        gap = samples.pop("gap", 0)
+        time_series = samples.pop("time_series", False)
+        random_state = samples.pop("random_state", 0)
+        ###########################################################
+        # Sampling
+        ###########################################################
+        # regular test/train split
+        if time_series is False:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, stratify=stratify, **samples
+            )
+        # timeseries split
+        elif time_series is True:
+            assert (
+                "test_size" or "train_size" in samples
+            ), "if time series, test_size must be specified"
+            max_train_size = (
+                samples.pop("train_size")
+                if "train_size" in samples
+                else int(round(len(X) * 0.8))
+            )
+            assert isinstance(gap, int), "gap must be an integer"
+            test_size = (
+                samples.pop("test_size")
+                if "test_size" in samples
+                #
+                else int(round(len(X) / 2 + gap))
+            )
+            splitter = TimeSeriesSplit(
+                n_splits=2,
+                max_train_size=max_train_size,
+                test_size=test_size,
+                gap=gap,
+            )
+            initial = 0
+            assert initial < len(X), ValueError(
+                "random_state is used to select the index of the of a subset of time series data and must be less than the length of said data + test_size",
+            )
+            for tr_idx, te_idx in splitter.split(X[random_state:-1]):
+                X_train, X_test = X[tr_idx], X[te_idx]
+                y_train, y_test = y[tr_idx], y[te_idx]
+        else:
+            raise ValueError(f"time_series must be True or False, not {time_series}")
+        ns = Namespace(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        return ns
+
+    def save(self, data: Namespace, filename) -> Path:
+        """
+        Saves the data to a pickle file
+        :param data (Namespace): Namespace containing the data
+        :param filename (str): Name of the file to save the data to
+        :return Path to the saved data
+        """
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+        with open(filename, "wb") as f:
+            pickle.dump(data, f)
+        return Path(filename).resolve()
+
+
+config = """
+    sample:
+        shuffle : True
+        random_state : 42
+        train_size : 800
+        stratify : True
+    add_noise:
+        train_noise : 1
+    name: classification
+    generate:
+        n_samples: 1000
+        n_features: 2
+        n_informative: 2
+        n_redundant : 0
+        n_classes: 3
+        n_clusters_per_class: 1
+    sklearn_pipeline:
+        scaling :
+            name : sklearn.preprocessing.StandardScaler
+            with_mean : true
+            with_std : true
+"""

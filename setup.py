@@ -1,4 +1,3 @@
-from setuptools import setup
 import codecs
 import os
 
@@ -19,9 +18,11 @@ install_requires = [
     "wheel",
     "dvc",
     "pandas",
+    "pre-commit",
     "PyYAML",
     "pytest",
-    "tensorflow",
+    # "tensorflow",
+    "validators",
     "yellowbrick",
 ]
 

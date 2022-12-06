@@ -1,0 +1,59 @@
+data:
+  name: classification
+  generate:
+    n_classes: 2
+    n_features: 5
+    n_informative: 4
+    n_redundant: 1
+    n_samples: 10000
+  sample:
+    random_state: 42
+    shuffle: true
+    stratify: true
+    time_series: true
+    train_noise: 0
+    train_size: 8000
+  files:
+    data_filetype : pickle
+    data_path : data
+model:
+  name: sklearn.ensemble.RandomForestClassifier
+  params:
+    n_estimators: 100
+    max_depth: 5
+  files:
+    model_path : models
+    model_filetype : pickle
+plots:
+  balance: balance
+  classification: classification
+  confusion: confusion
+  correlation: correlation
+  radviz: radviz
+  rank: rank
+scorers:
+  accuracy:
+    name: sklearn.metrics.accuracy_score
+    normalize: true
+  f1_macro:
+    average: macro
+    name: sklearn.metrics.f1_score
+  f1_micro:
+    average: micro
+    name: sklearn.metrics.f1_score
+  f1_weighted:
+    average: weighted
+    name: sklearn.metrics.f1_score
+  precision:
+    average: weighted
+    name: sklearn.metrics.precision_score
+  recall:
+    average: weighted
+    name: sklearn.metrics.recall_score
+files:
+  ground_truth_file: ground_truth.json
+  predictions_file: predictions.json
+  time_dict_file: time_dict.json
+  params_file: params.json
+  score_dict_file: scores.json
+  path: reports

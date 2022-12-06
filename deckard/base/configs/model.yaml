@@ -1,0 +1,11 @@
+model:
+  init:
+      loss: "hinge"
+      name: sklearn.linear_model.SGDClassifier
+  files:
+      model_path : model
+      model_filetype : pickle
+  fit:
+      epochs: 1000
+      learning_rate: 1.0e-08
+      log_interval: 10

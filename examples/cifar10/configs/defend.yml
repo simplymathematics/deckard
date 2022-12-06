@@ -22,11 +22,11 @@
 #     norm : [1, 2, 3]
 #     lamb : [.05, .5, .95]
 #     max_iter : [100]
-    
+
 # - name : art.defences.postprocessor.ClassLabels
 #   params:
 #     apply_predict : [True]
-#     apply_fit : [False] 
+#     apply_fit : [False]
 
 # - name : art.defences.postprocessor.GaussianNoise
 #   params:
@@ -44,4 +44,3 @@
 # - name : art.defences.postprocessor.Rounded
 #   params:
 #     decimals : [1, 2, 4, 8]
-  

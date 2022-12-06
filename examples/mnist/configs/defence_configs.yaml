@@ -41,4 +41,3 @@
   params:
     clip_values : !!python/tuple [0,255]
     decimals : [1, 2, 4, 8]
-  

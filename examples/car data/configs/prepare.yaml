@@ -3,4 +3,4 @@
     shuffle : True
     random_state : 0
     train_size : .9
-    stratify : False    
+    stratify : False
