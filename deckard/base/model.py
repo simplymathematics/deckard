@@ -64,9 +64,25 @@ class Model(
         library = filetypes[Path(filename).suffix.split(".")[-1]]
         params = deepcopy(self.init)
         if is_url(self.url):
+            filename = Path(self.init.pop("name"))
+            library = self.init.pop("library")
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
+            if library == "keras":
+                from keras.models import load_model
+                model = load_model(model)
+            elif library == "torch":
+                from torch import load
+                model = load(model)
+            elif library == "tensorflow":
+                from tensorflow import keras
+                model = keras.models.load_model(model)
+            elif library == "tfv1":
+                model = keras.models.load_model(model)
+            elif library == "sklearn":
+                with open(model, "rb") as f:
+                    model = pickle.load(f)
         elif isinstance(params["name"], str) or library == "sklearn":
             if params is None:
                 params = {}
@@ -181,11 +197,11 @@ class Model(
                 **init_params,
             )
         elif library == "keras":
+            
             model = KerasClassifier(
                 model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         elif library == "tensorflowv2":

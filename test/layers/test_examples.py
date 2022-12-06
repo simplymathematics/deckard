@@ -35,4 +35,14 @@ class testExamples(unittest.TestCase):
             p.stdout.close()
             exit_code = p.wait()
             self.assertEqual(exit_code, 0)
+    
+    def tearDown(self) -> None:
+        from shutil import rmtree
+        if Path("model").is_dir():
+            rmtree("model")
+        if Path("data").is_dir():
+            rmtree("data")
+        if Path("reports").is_dir():
+            rmtree("reports")
+        del self.path
             

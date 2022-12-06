@@ -66,7 +66,7 @@ class testModel(unittest.TestCase):
         model_document = """
         !Model:
             init:
-                name : "art_models/model.h5"
+                name : "reports/model.pb"
             url : https://www.dropbox.com/s/hbvua7ynhvara12/cifar-10_ratio%3D0.h5?dl=1
             art_pipeline:
                 preprocessor_defence : {name: art.defences.preprocessor.FeatureSqueezing, params: {bit_depth: 4, clip_values: [0, 1]}}

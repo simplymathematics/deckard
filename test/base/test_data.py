@@ -54,3 +54,12 @@ class testData(unittest.TestCase):
     def tearDown(self):
         if Path(self.path).exists():
             shutil.rmtree(Path(self.path))
+        if Path(self.path).is_dir():
+            rmtree(self.path)
+        if Path("model").is_dir():
+            rmtree("model")
+        if Path("data").is_dir():
+            rmtree("data")
+        if Path("reports").is_dir():
+            rmtree("reports")
+        del self.path
