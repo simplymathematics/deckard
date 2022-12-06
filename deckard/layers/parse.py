@@ -46,7 +46,8 @@ def parse(cfg: DictConfig, queue_path="queue"):
     with open(Path(os.getcwd(), "params.yaml"), "w") as f:
         yaml.dump(params, f)
     assert Path(
-        os.getcwd(), "params.yaml",
+        os.getcwd(),
+        "params.yaml",
     ).exists(), f"params.yaml not found in {os.getcwd()}"
     params = dvc.api.params_show(Path(os.getcwd(), "params.yaml"))
     if "files" in params:
