@@ -35,7 +35,6 @@ def parse(cfg: DictConfig, queue_path = "queue"):
         params["files"]['model_file'] = str(Path(files['model_path'], my_hash(model) + "." + files['model_filetype']).as_posix())
     with open(Path(os.getcwd(), "params.yaml"), "w") as f:
         yaml.dump(params, f)
-    logger.info(f"Wrote params to {Path(os.getcwd(), 'params.yaml')}")
     assert Path(os.getcwd(), 'params.yaml').exists(), f"File {path} does not exist. Something went wrong."
     params = dvc.api.params_show(Path(os.getcwd(), 'params.yaml'))
     if "files" in params:
@@ -54,6 +53,7 @@ def parse(cfg: DictConfig, queue_path = "queue"):
     filename.parent.mkdir(parents=True, exist_ok=True)
     with open(Path(filename), "w") as f:
         yaml.dump(params, f)
+    logger.info(f"Wrote params to {filename}")
     return None
 
 

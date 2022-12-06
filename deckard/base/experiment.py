@@ -426,6 +426,7 @@ class Experiment(
         outs.update(saved_files)
         #######################################################################
         if len(self.plots) > 0 and len(model) > 0:
+            logging.info("Visualising")
             if "art" in str(type(fitted_model)):
                 art = True
             else:

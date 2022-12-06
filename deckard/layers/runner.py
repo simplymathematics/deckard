@@ -31,7 +31,6 @@ def run_experiment(params, stage):
     print(params['files']['data_file'])
     print(params['files']['model_file'])
     print(params['files']['path'])
-    input("Press Enter to continue...")
     exp = yaml.load(f"{tag}\n" + str(params), Loader=yaml.FullLoader)
     files = exp.run()
     return files
@@ -57,18 +56,16 @@ if "__main__" == __name__:
             total = 1
         else:
             raise ValueError(f"No experiments found in queue folder {args.queue_path} with regex {args.regex} and no params.yaml file in current directory.")
+    elif Path("params.yaml").exists():
+        Path("params.yaml").unlink()
     while len(inputs) > 0:
         pipeline = inputs.pop(0)
+        try:
+            Path(pipeline).rename(Path("params.yaml"))
+        except FileNotFoundError:
+            pass
         logger.info(f"Running experiment {pipeline} with {len(inputs)} experiments remaining.")
-        if pipeline != 'params.yaml':
-            
-            print(pipeline)
-            input("Press Enter to continue...")
-            try:
-                Path(pipeline).rename(Path("params.yaml"))
-            except FileExistsError:
-                Path("params.yaml").unlink()
-                Path(pipeline).rename(Path("params.yaml"))
+
         files[str(pipeline)] = {}
         params = dvc.api.params_show("params.yaml", stages = [args.stage])
         try:

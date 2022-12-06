@@ -52,20 +52,16 @@ filetypes = {
 class Model(
     collections.namedtuple(
         typename="model",
-        field_names="init, files, fit, predict, sklearn_pipeline, art_pipeline, url, library",
-        defaults=({}, {}, {}, [], [], "", ""),
+        field_names="init, files, fit, predict, sklearn_pipeline, art_pipeline, url",
+        defaults=({}, {}, {}, [], [], ""),
     ),
     BaseHashable,
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self, art=False):
-        filename = Path(
-            self.files["model_path"],
-            my_hash(self._asdict()) + "." + self.files["model_filetype"],
-        )
-        library = filetypes[self.files["model_filetype"]]
+    def load(self, filename, art=False):
+        library = filetypes[Path(filename).suffix.split(".")[-1]]
         params = deepcopy(self.init)
         if is_url(self.url):
             name = filename.name
@@ -78,11 +74,26 @@ class Model(
             # Build sklearn pipeline
             if len(self.sklearn_pipeline) > 0:
                 model = self.build_sklearn_pipeline(model)
-        if len(self.art_pipeline) > 0 or art==True or library != "sklearn":
-            model = self.build_art_pipeline(model)
+        if len(self.art_pipeline) > 0 or art==True:
+            model = self.build_art_pipeline(model, library)
         return model
             
-            
+    def save_model(self, model, filename):
+        library = filetypes[Path(filename).suffix.split(".")[-1]]
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        if library == "torch":
+            import torch
+            torch.save(model.model, filename)
+        elif library == "tensorflow":
+            model.model.save(filename) 
+        elif library == "tfv1":
+            model.model.save(filname.stem)   
+        elif library == "keras":
+            model.model.save(filename)
+        else:
+            with open(filename, "wb") as f:
+                pickle.dump(model, f)
+        return Path(filename).resolve()   
     
     
     
@@ -100,8 +111,7 @@ class Model(
         return model
             
             
-    def build_art_pipeline(self, model):
-        library = filetypes[self.files["model_filetype"]]
+    def build_art_pipeline(self, model, library):
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
@@ -183,6 +193,8 @@ class Model(
                 output="logits",
                 **init_params,
             )
+        else:
+            raise ValueError(f"Library {library} not supported")
         if "transformer_defence" in art:
             model = load_from_tup(
                 (
@@ -198,35 +210,13 @@ class Model(
             )()
         return model
 
-    def save(self, model):
-        filename = Path(
-            self.files["model_path"],
-            my_hash(self._asdict()) + "." + self.files["model_filetype"],
-        )
-        library = filetypes[self.files["model_filetype"]]
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        if library == "torch":
-            import torch
-            torch.save(model.model, filename)
-        elif library == "tensorflow":
-            model.model.save(filename) 
-        elif library == "tfv1":
-            model.model.save(filname.stem)   
-        elif library == "keras":
-            model.model.save(filename)
-        else:
-            with open(filename, "wb") as f:
-                pickle.dump(model, f)
-        return Path(filename).resolve()
+    
 
 
 config = """
     init:
         loss: "hinge"
         name: sklearn.linear_model.SGDClassifier
-    files:
-        model_path : model
-        model_filetype : pickle
     # fit:
     #     epochs: 1000
     #     learning_rate: 1.0e-08

@@ -18,6 +18,7 @@ from sklearn.datasets import (
     make_classification,
     make_moons,
     make_sparse_coded_signal,
+    make_regression,
 )
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
 from .utils import factory
@@ -32,6 +33,7 @@ generate = {
     "moons": make_moons,
     "classification": make_classification,
     "signal": make_sparse_coded_signal,
+    "regression" : make_regression,
 }
 real = {
     "boston": load_boston,
@@ -346,6 +348,7 @@ class Data(
             samples.pop("stratify")
             stratify = y
         else:
+            samples.pop("stratify", None)
             stratify = None
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
