@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-
+import sys
 import dvc.api
 import hydra
 import yaml
@@ -23,7 +23,7 @@ queue_path = "queue"
 def parse(cfg: DictConfig, queue_path="queue"):
     params = OmegaConf.to_object(cfg)
     files = params["files"]
-    data = params["data"]
+    data = dict(params["data"])
     model = params["model"]
     if "data" in params and "files" in params["data"]:
         files.update(params["data"].pop("files"))
@@ -73,8 +73,9 @@ def parse(cfg: DictConfig, queue_path="queue"):
     return None
 
 
-if __name__ == "__main__":
+if  "__main__" == __name__:
     _ = parse()
     assert Path(
         queue_path,
     ).exists(), f"Queue path {queue_path} does not exist. Something went wrong."
+    sys.exit(0)

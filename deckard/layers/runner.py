@@ -79,9 +79,6 @@ if "__main__" == __name__:
             failures += 1
             raise e
         finally:
-            assert (
-                failures + successes == total
-            ), f"Failures {failures} + successes {successes} != total {total}"
             logger.info(
                 f"Finished {len(files)} of {total} experiments with {failures} failures.",
             )

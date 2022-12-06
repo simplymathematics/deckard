@@ -15,7 +15,7 @@ names = ["classification", "regression"]
 # TODO other names
 
 logger = logging.basicConfig(level=logging.DEBUG)
-class testData(unittest.TestCase):
+class testExamples(unittest.TestCase):
     def setUp(self, config=config):
         yaml.add_constructor("!Data:", Data)
         self.data_document = "!Data:\n" + config
@@ -36,7 +36,3 @@ class testData(unittest.TestCase):
             exit_code = p.wait()
             self.assertEqual(exit_code, 0)
             
-
-    def tearDown(self):
-        if Path(self.path).exists():
-            shutil.rmtree(Path(self.path))
