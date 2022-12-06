@@ -46,7 +46,7 @@ class testUtils(unittest.TestCase):
             regex=self.regex,
             output=self.output,
         )
-        self.assertEqual(libraries, ["art", "sklearn"])
+        self.assertEqual(libraries, ["art", "sklearn"]) or self.assertEqual(libraries, ["sklearn", "art"])
         with open(path, "r") as f:
             for count, _ in enumerate(f):
                 pass
