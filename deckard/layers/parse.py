@@ -16,7 +16,9 @@ queue_path = "queue"
 
 
 @hydra.main(
-    version_base=None, config_path=Path(os.getcwd(), "conf"), config_name="config",
+    version_base=None,
+    config_path=Path(os.getcwd(), "conf"),
+    config_name="config",
 )
 def parse(cfg: DictConfig, queue_path="queue"):
     params = OmegaConf.to_object(cfg)
@@ -30,20 +32,22 @@ def parse(cfg: DictConfig, queue_path="queue"):
     if "data_file" not in params and "data" in params:
         params["files"]["data_file"] = str(
             Path(
-                files["data_path"], my_hash(data) + "." + files["data_filetype"],
+                files["data_path"],
+                my_hash(data) + "." + files["data_filetype"],
             ).as_posix(),
         )
     if "model_file" not in params and "model" in params:
         params["files"]["model_file"] = str(
             Path(
-                files["model_path"], my_hash(model) + "." + files["model_filetype"],
+                files["model_path"],
+                my_hash(model) + "." + files["model_filetype"],
             ).as_posix(),
         )
     with open(Path(os.getcwd(), "params.yaml"), "w") as f:
         yaml.dump(params, f)
     assert Path(
         os.getcwd(), "params.yaml",
-    ).exists(), f"File {path} does not exist. Something went wrong."
+    ).exists(), f"params.yaml not found in {os.getcwd()}"
     params = dvc.api.params_show(Path(os.getcwd(), "params.yaml"))
     if "files" in params:
         params["files"]["path"] = str(my_hash(params))

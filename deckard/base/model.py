@@ -18,7 +18,7 @@ from sklearn.base import BaseEstimator, is_regressor
 from sklearn.pipeline import Pipeline
 from validators import url as is_url
 
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 from .utils import factory, load_from_tup
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ class Model(
             # Build sklearn pipeline
             if len(self.sklearn_pipeline) > 0:
                 model = self.build_sklearn_pipeline(model)
-        if len(self.art_pipeline) > 0 or art == True:
+        if len(self.art_pipeline) > 0 or art is True:
             model = self.build_art_pipeline(model, library)
         return model
 
@@ -88,7 +88,7 @@ class Model(
         elif library == "tensorflow":
             model.model.save(filename)
         elif library == "tfv1":
-            model.model.save(filname.stem)
+            model.model.save(filename.stem)
         elif library == "keras":
             model.model.save(filename)
         else:
@@ -110,6 +110,7 @@ class Model(
         return model
 
     def build_art_pipeline(self, model, library):
+        init_params = deepcopy(dict(self.init))
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
@@ -155,9 +156,9 @@ class Model(
                     **init_params["optimizer"],
                 ),
                 loss=factory(init_params["loss"].pop("name"), **init_params["loss"]),
-                clip_values=(min_pixel_value, max_pixel_value),
-                input_shape=input_shape,
-                nb_classes=num_classes,
+                clip_values=init_params.pop("clip_values"),
+                input_shape=init_params.pop("input_shape"),
+                nb_classes=init_params.pop("num_classes"),
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
                 **init_params,

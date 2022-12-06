@@ -17,7 +17,7 @@ from argparse import Namespace
 # from tqdm import tqdm
 from .data import Data
 from .model import Model
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 from .scorer import Scorer
 from .attack import Attack
 from .visualise import Yellowbrick_Visualiser
@@ -97,7 +97,6 @@ class Experiment(
         """
         filename = Path(self.files["model_file"])
         path = Path(filename).parent
-        file = Path(filename).name
         path.mkdir(parents=True, exist_ok=True)
         if hasattr(model, "save"):
             model.save(Path(filename).stem, path=path)
@@ -288,7 +287,7 @@ class Experiment(
             model = model.load(self.files["model_file"], art=art)
         try:
             predictions = model.predict_proba(data.X_test)
-        except:
+        except:  # noqa E722
             predictions = model.predict(data.X_test)
         result = process_time() - start
         return predictions, result / len(data.X_test)
@@ -344,7 +343,6 @@ class Experiment(
         #######################################################################
         logger.info("Parsing Config File")
         data, model, files = self.load()
-        params = deepcopy(self._asdict())
         results = {}
         time_dict = {}
         outs = {}
@@ -397,7 +395,9 @@ class Experiment(
         if "probabilities_file" in files and len(model) > 0:
             logger.info("Predicting probabilities")
             probabilities, proba_time = self.predict_proba(
-                loaded_data, fitted_model, art=art,
+                loaded_data,
+                fitted_model,
+                art=art,
             )
             results.update({"probabilities": probabilities})
             time_dict.update({"proba_time": proba_time})

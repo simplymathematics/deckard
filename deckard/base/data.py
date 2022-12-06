@@ -22,7 +22,7 @@ from sklearn.datasets import (
 )
 from sklearn.model_selection import TimeSeriesSplit, train_test_split
 from .utils import factory
-from .hashable import BaseHashable, my_hash
+from .hashable import BaseHashable
 
 
 logger = logging.getLogger(__name__)
