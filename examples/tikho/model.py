@@ -40,23 +40,24 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 class Model(
     collections.namedtuple(
-        typename="Data",
-        field_names="name,  params, fit, predict, transform, sklearn_pipeline, art_pipeline, url, library",
+        typename="Model",
+        field_names="name, params, fit, predict, transform, sklearn_pipeline, art_pipeline, url",
         defaults=({}, {}, {}, {}, [], [], "", ""),
     ),
+    BaseHashable,
 ):
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
     def load(self):
         if is_url(self.url):
+            library = self.name.split(".")[0]
             name = Path(self.name).name
             path = Path(self.name).parent
             assert hasattr(
                 self,
                 "library",
             ), "library must be specified if model is loaded from url"
-            library = self.library
             model = get_file(name, self.url, path)
         elif isinstance(self.name, str):
             library = self.name.split(".")[0]
@@ -70,7 +71,6 @@ class Model(
                 self,
                 "library",
             ), "library must be specified if model is loaded from file"
-            library = self.library
             if library == "sklearn":
                 with open(model, "rb") as f:
                     model = pickle.load(f)
