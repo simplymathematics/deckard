@@ -1,12 +1,12 @@
 import shutil
 import unittest
-
-from deckard.base.data import Data
-from deckard.base.model import Model
-from deckard.base.hashable import my_hash
 from pathlib import Path
+
 import yaml
 
+from deckard.base.data import Data
+from deckard.base.hashable import my_hash
+from deckard.base.model import Model
 
 yaml.add_constructor("!Data:", Data)
 yaml.add_constructor("!Model:", Model)
@@ -74,14 +74,14 @@ class testModel(unittest.TestCase):
                 transformer_defence : {name: art.defences.transformer.evasion.DefensiveDistillation, params: {batch_size: 128}}
                 trainer_defence : {name: art.defences.trainer.AdversarialTrainerMadryPGD, params: {nb_epochs: 10}}
         """
-        self.tf1 = yaml.load(model_document, Loader = yaml.Loader)
+        self.tf1 = yaml.load(model_document, Loader=yaml.Loader)
         self.url = "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
 
         self.loaded_model1 = yaml.load(self.model1, Loader=yaml.FullLoader)
         self.loaded_model2 = yaml.load(self.model2, Loader=yaml.FullLoader)
         self.loaded_model3 = yaml.load(self.model1, Loader=yaml.FullLoader)
         self.filename = Path(self.path, "model.pickle")
-    
+
     def test_model(self):
         doc = self.model1
         model1 = yaml.load(doc, Loader=yaml.FullLoader)
@@ -128,7 +128,7 @@ class testModel(unittest.TestCase):
         """
         model1 = yaml.load(model1, Loader=yaml.FullLoader)
         self.assertIn("preprocessor_defence", model1.art_pipeline)
-    
+
     def test_tf_model(self):
         self.assertIsInstance(self.tf1, Model)
 

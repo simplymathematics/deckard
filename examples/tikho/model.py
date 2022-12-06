@@ -4,6 +4,7 @@ import pickle
 from pathlib import Path
 import warnings
 import yaml
+from validators import url as is_url
 from art.estimators import ScikitlearnEstimator
 from art.estimators.classification import (
     KerasClassifier,
@@ -18,8 +19,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, is_regressor
 
 from .utils import factory, load_from_tup
-from validators import url as is_url
-
+from .hashable import BaseHashable
 
 logger = logging.getLogger(__name__)
 supported_estimators = (

@@ -73,7 +73,7 @@ def parse(cfg: DictConfig, queue_path="queue"):
     return None
 
 
-if  "__main__" == __name__:
+if "__main__" == __name__:
     _ = parse()
     assert Path(
         queue_path,

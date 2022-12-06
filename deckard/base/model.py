@@ -71,12 +71,15 @@ class Model(
             model = get_file(name, self.url, path)
             if library == "keras":
                 from keras.models import load_model
+
                 model = load_model(model)
             elif library == "torch":
                 from torch import load
+
                 model = load(model)
             elif library == "tensorflow":
                 from tensorflow import keras
+
                 model = keras.models.load_model(model)
             elif library == "tfv1":
                 model = keras.models.load_model(model)
@@ -197,7 +200,7 @@ class Model(
                 **init_params,
             )
         elif library == "keras":
-            
+
             model = KerasClassifier(
                 model,
                 postprocessing_defences=postprocessor_defences,

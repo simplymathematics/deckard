@@ -29,6 +29,6 @@ Check that deckard works
 ```>>> import deckard```
 Then CTRL+D or `quit()` to quit.
 # Navigate to your favorite subfolder in `examples`
-(NOTE: only 'iris' is fully supported at the moment).
+(NOTE: only 'iris' and 'mnist' are fully supported at the moment).
 ```dvc repro --force```
 ### _like tears in the rain_, this tool is meant for bladerunners. NOT INTENDED FOR USE BY REPLICANTS

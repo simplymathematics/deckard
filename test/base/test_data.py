@@ -55,11 +55,11 @@ class testData(unittest.TestCase):
         if Path(self.path).exists():
             shutil.rmtree(Path(self.path))
         if Path(self.path).is_dir():
-            rmtree(self.path)
+            shutil.rmtree(self.path)
         if Path("model").is_dir():
-            rmtree("model")
+            shutil.rmtree("model")
         if Path("data").is_dir():
-            rmtree("data")
+            shutil.rmtree("data")
         if Path("reports").is_dir():
-            rmtree("reports")
+            shutil.rmtree("reports")
         del self.path

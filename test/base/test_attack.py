@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 
 class testAttackExperiment(unittest.TestCase):
-    def setUp(self, default_config = default_config):
+    def setUp(self, default_config=default_config):
         yaml.add_constructor("!Attack:", Attack)
         atk_config = "!Attack:" + default_config
         self.attack = yaml.load(atk_config, Loader=yaml.FullLoader)
@@ -29,12 +29,11 @@ class testAttackExperiment(unittest.TestCase):
         self.path = "reports"
         data, model, _ = self.exp.load()
         self.data = data.load("reports/filename.pickle")
-        self.model = model.load("reports/filename.pickle", art = True)
+        self.model = model.load("reports/filename.pickle", art=True)
         self.data.y_train = LabelBinarizer().fit_transform(self.data.y_train)
         self.data.y_test = LabelBinarizer().fit_transform(self.data.y_test)
         self.model.fit(self.data.X_train, self.data.y_train)
         self.url = "https://www.dropbox.com/s/ta75pl4krya5djj/cifar_resnet.h5?dl=1"
-        
 
     def test_init(self):
         self.assertTrue(isinstance(self.attack, Attack))
@@ -76,30 +75,47 @@ class testAttackExperiment(unittest.TestCase):
         outs = self.attack.run_attack(self.data, self.model, self.attack)
         for _, filename in outs.items():
             self.assertTrue(Path(filename).exists())
-    
+
     def test_whitebox_on_tf1(self):
         # disable eager execution
         import tensorflow as tf
+
         tf.compat.v1.disable_eager_execution()
-        whitebox = {"attack" : {"init" : {"name" : "art.attacks.evasion.ZooAttack", "confidence" : 0.3, "max_iter" : 1}}}
+        whitebox = {
+            "attack": {
+                "init": {
+                    "name": "art.attacks.evasion.ZooAttack",
+                    "confidence": 0.3,
+                    "max_iter": 1,
+                },
+            },
+        }
         config = deepcopy(self.exp._asdict())
-        from keras.datasets import cifar10
-        (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset('cifar10')
-        data = Namespace(X_train = X_train[:10], y_train = y_train[:10], X_test = X_test[:1], y_test = y_test[:1])
+
+        (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset("cifar10")
+        data = Namespace(
+            X_train=X_train[:10],
+            y_train=y_train[:10],
+            X_test=X_test[:1],
+            y_test=y_test[:1],
+        )
         Path("reports").mkdir(parents=True, exist_ok=True)
         with open("reports/data.pickle", "wb") as f:
             pickle.dump(data, f)
-        config['attack'] = whitebox['attack']
-        tf1 = {"init" : {"name" : "art_models/model.pb", "library":"keras"}, "url" : "https://www.dropbox.com/s/ta75pl4krya5djj/cifar_resnet.h5?dl=1"}
-        config['attack'] = whitebox['attack']
-        config['model'] = tf1        
-        config['data'] = {"name" : "reports/data.pickle"}
-        del config['plots']
+        config["attack"] = whitebox["attack"]
+        tf1 = {
+            "init": {"name": "art_models/model.pb", "library": "keras"},
+            "url": "https://www.dropbox.com/s/ta75pl4krya5djj/cifar_resnet.h5?dl=1",
+        }
+        config["attack"] = whitebox["attack"]
+        config["model"] = tf1
+        config["data"] = {"name": "reports/data.pickle"}
+        del config["plots"]
         white_conf = "!Attack:\n" + str(yaml.dump(config))
         exp_conf = "!Experiment:\n" + str(yaml.dump(config))
         whitebox = yaml.load(white_conf, Loader=yaml.FullLoader)
         exp = yaml.load(exp_conf, Loader=yaml.FullLoader)
-        outs = exp.run(art = True)
+        outs = exp.run(art=True)
         self.assertIsInstance(outs, dict)
 
     def tearDown(self) -> None:
