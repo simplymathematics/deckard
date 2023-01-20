@@ -1,6 +1,6 @@
 stages:
   prepare:
-    cmd: python -m deckard.layers.prepare
+    cmd: python -m deckard.layers.runner prepare
     params:
       - prepare.config
     outs:

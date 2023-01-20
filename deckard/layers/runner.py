@@ -20,14 +20,10 @@ def run_experiment(params, stage):
     Path(params["files"]["data_file"]).parent.mkdir(parents=True, exist_ok=True)
     Path(params["files"]["model_file"]).parent.mkdir(parents=True, exist_ok=True)
     full_report = params["files"]["path"]
-    print(full_report)
     parents = list(Path(full_report).parents)
     name = Path(full_report).name
     parents.insert(1, Path(stage))
     params["files"]["path"] = str(Path(params["files"]["reports"], *parents, name))
-    print(params["files"]["data_file"])
-    print(params["files"]["model_file"])
-    print(params["files"]["path"])
     exp = yaml.load(f"{tag}\n" + str(params), Loader=yaml.FullLoader)
     files = exp.run()
     return files

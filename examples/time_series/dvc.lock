@@ -2,52 +2,93 @@ schema: '2.0'
 stages:
   prepare:
     cmd:
-    - python ../deckard/layers/prepare.py  -d "US-CAL-CISO 2020.csv"
+    - python -m deckard.layers.runner prepare
     deps:
-    - path: ../deckard/base/data.py
-      md5: 6dfc440e9939c40b7359f201cb31916e
-      size: 7990
-    - path: US-CAL-CISO 2020.csv
+    - path: original.csv
       md5: ae283bfbb48ca15407dca5d2423600cf
       size: 4656066
-    - path: configs/prepare.yml
-      md5: dbcbea862101ad5875f6ad9dc97f2f6e
-      size: 150
+    params:
+      params.yaml:
+        data:
+          name: original.csv
+          target: carbon_intensity_avg
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: false
+            time_series: true
+            train_size: 8000
+        files:
+          data_file: data\0d2b9fab517f78660b79f4bbb7392769.pickle
+          data_filetype: pickle
+          data_path: data
+          ground_truth_file: ground_truth.json
+          model_file: model\0946b5ccd6d0eb16c442b603db474d31.pickle
+          model_filetype: pickle
+          model_path: model
+          params_file: params.json
+          path: 07376fbc332b85299463a75113350069
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        plots:
+          correlation: correlation
     outs:
-    - path: data/data.pkl
-      md5: 7b5b7d973da868ac3116055fc73eec9b
-      size: 7032895
+    - path: prepare/data\0d2b9fab517f78660b79f4bbb7392769.pickle
+      md5: f3641622414823f6f30a9909aab72acc
+      size: 7173750
   train:
-    cmd: python ../deckard/layers/train.py  -f data -b False
+    cmd: python -m deckard.layers.runner train
     deps:
-    - path: ../deckard/base/experiment.py
-      md5: f1a923fa9a8983d3dd6c54f4cab3d470
-      size: 11947
-    - path: ../deckard/base/utils.py
-      md5: 4e0d9df173cb0f85329b9fb841ecf07b
-      size: 2559
-    - path: ../deckard/layers/train.py
-      md5: 9f3e5b29608f98a3110ad21b4c11b889
-      size: 2174
-    - path: configs/model.yml
-      md5: 9c0f3af72adc7e5448903f9090e070af
-      size: 247
-    - path: data/data.pkl
-      md5: 7b5b7d973da868ac3116055fc73eec9b
-      size: 7032895
+    - path: prepare/data\0d2b9fab517f78660b79f4bbb7392769.pickle
+      md5: f3641622414823f6f30a9909aab72acc
+      size: 7173750
+    params:
+      params.yaml:
+        data:
+          name: original.csv
+          target: carbon_intensity_avg
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: false
+            time_series: true
+            train_size: 8000
+        files:
+          data_file: data\0d2b9fab517f78660b79f4bbb7392769.pickle
+          data_filetype: pickle
+          data_path: data
+          ground_truth_file: ground_truth.json
+          model_file: model\0946b5ccd6d0eb16c442b603db474d31.pickle
+          model_filetype: pickle
+          model_path: model
+          params_file: params.json
+          path: 07376fbc332b85299463a75113350069
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        model:
+          init:
+            loss: squared_error
+            name: sklearn.linear_model.SGDRegressor
+        plots:
+          correlation: correlation
+        scorers:
+          rmse:
+            name: sklearn.metrics.mean_squared_error
     outs:
-    - path: data/best_train/data_params.json
-      md5: a8ae5a808f4f851c93e0f297f7a0a33b
-      size: 134
-    - path: data/best_train/experiment.pkl
-      md5: b229f8a2ac23a1ec1a1e3d01e566413f
-      size: 12562726
-    - path: data/best_train/model_params.json
-      md5: 819ec065a49d5d940b5b0f7187812c28
-      size: 1187
-    - path: data/best_train/results.json
-      md5: f3675334cf8eaf6375da48e6393f4c5c
-      size: 234
+    - path: reports/train/07376fbc332b85299463a75113350069/scores.json
+      md5: 08a847866bc7f3eb9dd6d4d743b47ab2
+      size: 24
+    - path: train/model\0946b5ccd6d0eb16c442b603db474d31.pickle
+      md5: 2de1686b26fe8b41910481510904721e
+      size: 5061
   preprocess:
     cmd: python ../deckard/layers/preprocess.py  -f data -b False
     deps:
