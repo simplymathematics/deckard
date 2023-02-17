@@ -1,0 +1,8 @@
+name: art.attacks.evasion.HopSkipJump
+batch_size : 64
+targeted : False
+norm : 2
+max_iter : 100
+max_eval : 1000
+init_eval : 100
+init_size : 10

@@ -1,0 +1,5 @@
+loss: hinge
+name: sklearn.linear_model.SGDClassifier
+penalty: 'l2'
+alpha: .0001
+max_iter: 1000

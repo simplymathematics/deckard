@@ -1,0 +1,6 @@
+C : 1.0
+kernel : poly
+name : sklearn.svm.SVC
+degree : 3
+gamma : scale
+probability : True
