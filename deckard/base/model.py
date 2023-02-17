@@ -19,7 +19,7 @@ from sklearn.pipeline import Pipeline
 from validators import url as is_url
 
 from .hashable import BaseHashable
-from .utils import factory, load_from_tup
+from .utils import factory
 
 logger = logging.getLogger(__name__)
 supported_estimators = (
@@ -46,6 +46,7 @@ filetypes = {
     "pbtxt": "tensorflow",
     "tflite": "tflite",
     "pickle": "sklearn",
+    "tf1" : "h5"
 }
 
 
@@ -65,27 +66,30 @@ class Model(
         params = deepcopy(self.init)
         if is_url(self.url):
             filename = Path(self.init.pop("name"))
-            library = self.init.pop("library")
+            lib = filetypes[filename.suffix.split(".")[-1]]
+            library = Path(self.init.pop("library", lib))
             name = filename.name
             path = filename.parent
             model = get_file(name, self.url, path)
             if library == "keras":
                 from keras.models import load_model
-
                 model = load_model(model)
             elif library == "torch":
                 from torch import load
 
                 model = load(model)
-            elif library == "tensorflow":
-                from tensorflow import keras
-
-                model = keras.models.load_model(model)
-            elif library == "tfv1":
-                model = keras.models.load_model(model)
+            elif library == "tensorflow" or "tf2" or "tfv2":
+                from keras.models import load_model
+                model = load_model(model)
+            elif library == "tfv1" or "tf1":
+                from keras.models import load_model
+                tf.compat.v1.disable_eager_execution()
+                model = load_model(model)
             elif library == "sklearn":
                 with open(model, "rb") as f:
                     model = pickle.load(f)
+            else:
+                raise ValueError("Unsupported library {}".format(library))
         elif isinstance(params["name"], str) or library == "sklearn":
             if params is None:
                 params = {}
@@ -107,7 +111,7 @@ class Model(
         elif library == "tensorflow":
             model.model.save(filename)
         elif library == "tfv1":
-            model.model.save(filename.stem)
+            model.model.save(filename)
         elif library == "keras":
             model.model.save(filename)
         else:
@@ -133,7 +137,7 @@ class Model(
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
-                load_from_tup(
+                factory(
                     (
                         art["preprocessor_defence"]["name"],
                         art["preprocessor_defence"]["params"],
@@ -144,7 +148,7 @@ class Model(
             preprocessor_defences = None
         if "postprocessor_defence" in art:
             postprocessor_defences = [
-                load_from_tup(
+                factory(
                     (
                         art["postprocessor_defence"]["name"],
                         art["postprocessor_defence"]["params"],
@@ -184,19 +188,21 @@ class Model(
                 # output="logits",
             )
         elif library == "tensorflow":
-            model = TensorFlowClassifier(
+            model = KerasClassifier(
                 model,
+                use_logits = True,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
-        elif library == "tfv1":
-            model = TensorFlowClassifier(
-                model,
+        elif library == "tfv1" or "tf1":
+            import tensorflow.compat.v1 as tf
+            import tensorflow.compat.v1.keras as keras
+            tf.compat.v1.disable_eager_execution()
+            model = KerasClassifier(
+                model = model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         elif library == "keras":
@@ -208,17 +214,16 @@ class Model(
                 **init_params,
             )
         elif library == "tensorflowv2":
-            model = TensorFlowV2Classifier(
+            model = KerasClassifier(
                 model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         else:
             raise ValueError(f"Library {library} not supported")
         if "transformer_defence" in art:
-            model = load_from_tup(
+            model = factory(
                 (
                     art["transformer_defence"]["name"],
                     art["transformer_defence"]["params"],
@@ -226,7 +231,7 @@ class Model(
                 model,
             )()
         if "trainer_defence" in art:
-            model = load_from_tup(
+            model = factory(
                 (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
                 model,
             )()

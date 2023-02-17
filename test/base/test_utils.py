@@ -5,7 +5,7 @@ from pathlib import Path
 
 from sklearn.base import BaseEstimator
 
-from deckard.base.utils import factory, load_from_tup, parse_config_for_libraries
+from deckard.base.utils import factory, parse_config_for_libraries
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,6 @@ class testUtils(unittest.TestCase):
             self.file.exists()
         ), f"File {self.file} does not exist in {self.path}. Found {list(Path(self.path).iterdir())}"
 
-    def test_load_from_tuple(self):
-        obj = load_from_tup(self.obj_gen)
-        self.assertIsInstance(obj, BaseEstimator)
 
     def test_factory(self):
         obj = factory(**self.factory)

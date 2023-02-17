@@ -29,6 +29,18 @@ class Scorer(
             data = json.load(f)
         data = pd.Series(data)
         return data
+    
+    def return_best_from_json(self, json_file: str, criteria = 'accuracy', mode = 'max'):
+        """Read data from json file."""
+        data = self.read_data_from_json(json_file)
+        if mode == "max":
+            data.sort_values(by = criteria, ascending = False, inplace = True)
+        elif mode == "min":
+            data.sort_values(by = criteria, ascending = True, inplace = True)
+        else:
+            raise NotImplementedError(f"Mode {mode} not implemented.")
+        best = data.iloc[0]
+        return best
 
     def read_score_from_json(self, name: str, score_file: str):
         """Read score from score file."""

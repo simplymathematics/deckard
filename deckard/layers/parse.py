@@ -1,18 +1,19 @@
 import logging
 import os
-from pathlib import Path
 import sys
 import dvc.api
 import hydra
 import yaml
-from omegaconf import DictConfig, OmegaConf
+import json
+from pathlib import Path
 
+from omegaconf import DictConfig, OmegaConf
+from sklearn.model_selection import ParameterGrid
 from deckard.base.hashable import my_hash
 
 config_path = Path(os.getcwd())
 
 logger = logging.getLogger(__name__)
-queue_path = "queue"
 
 
 @hydra.main(
@@ -20,11 +21,17 @@ queue_path = "queue"
     config_path=Path(os.getcwd(), "conf"),
     config_name="config",
 )
-def parse(cfg: DictConfig, queue_path="queue"):
+def hydra_parser(cfg: DictConfig, **kwargs):
     params = OmegaConf.to_object(cfg)
-    files = params["files"]
+    params = parse(params, **kwargs)
+    print(json.dumps(params, indent=4))
+    logger.info("Successfully parsed the hydra config and saved it to params.yaml")
+
+def parse(params:dict, queue_path="queue", default = "params.yaml", filename = "default.yaml"):
+    params = dict(params)
+    files = dict(params["files"])
     data = dict(params["data"])
-    model = params["model"]
+    model = dict(params["model"])
     if "data" in params and "files" in params["data"]:
         files.update(params["data"].pop("files"))
     if "model" in params and "files" in params["model"]:
@@ -43,19 +50,8 @@ def parse(cfg: DictConfig, queue_path="queue"):
                 my_hash(model) + "." + files["model_filetype"],
             ).as_posix(),
         )
-    with open(Path(os.getcwd(), "params.yaml"), "w") as f:
-        yaml.dump(params, f)
-    assert Path(
-        os.getcwd(),
-        "params.yaml",
-    ).exists(), f"params.yaml not found in {os.getcwd()}"
-    params = dvc.api.params_show(Path(os.getcwd(), "params.yaml"))
     if "files" in params:
         params["files"]["path"] = str(my_hash(params))
-    if "data_file" in params.get("files", {}):
-        params["files"]["data_file"] = str(Path(params["files"]["data_file"]))
-    if "model_file" in params.get("files", {}):
-        params["files"]["model_file"] = str(Path(params["files"]["model_file"]))
     if "attack" in params:
         if (
             "files" in params["attack"]
@@ -64,18 +60,19 @@ def parse(cfg: DictConfig, queue_path="queue"):
             attack_files = params["attack"].pop("files")
             for atk_file in attack_files:
                 params["files"][atk_file] = str(Path(attack_files[atk_file]))
-    Path(os.getcwd(), "params.yaml").unlink()
-    filename = Path(queue_path, my_hash(params) + ".yaml")
+    Path(os.getcwd(), default).unlink()
+    filename = Path(queue_path, my_hash(params) + ".yaml") if filename is None else Path(queue_path, filename)
     filename.parent.mkdir(parents=True, exist_ok=True)
     with open(Path(filename), "w") as f:
         yaml.dump(params, f)
-    logger.info(f"Wrote params to {filename}")
-    return None
+    with open(Path(default), "w") as f:
+        yaml.dump(params, f)
+    logger.info(f"Wrote params to {filename} and {default}")
+    return params
 
 
 if "__main__" == __name__:
-    _ = parse()
-    assert Path(
-        queue_path,
-    ).exists(), f"Queue path {queue_path} does not exist. Something went wrong."
+    _ = hydra_parser()
+    assert Path("params.yaml").exists(), \
+        f"Params path, 'params.yaml', does not exist. Something went wrong."
     sys.exit(0)

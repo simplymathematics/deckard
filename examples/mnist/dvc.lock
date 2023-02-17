@@ -1,21 +1,44 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python -m deckard.layers.prepare
+    cmd: python -m deckard.layers.runner prepare
     params:
       params.yaml:
-        prepare.config:
-          name: mnist
-          params:
+        data:
+          generate:
+            n_classes: 3
+            n_features: 100
+            n_informative: 98
+            n_redundant: 1
+            n_samples: 10000
+          name:
+          - classification
+          sample:
+            random_state: 42
             shuffle: true
             stratify: true
-            random_state: 0
-            test_size: 200
-            train_size: 200
+            time_series: true
+            train_size: 8000
+        files:
+          data_file: data\0d2b9fab517f78660b79f4bbb7392769.pickle
+          data_filetype: pickle
+          data_path: data
+          ground_truth_file: ground_truth.json
+          model_file: model\0946b5ccd6d0eb16c442b603db474d31.pickle
+          model_filetype: pickle
+          model_path: model
+          params_file: params.json
+          path: 07376fbc332b85299463a75113350069
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
     outs:
-    - path: prepare/data.pickle
-      md5: 4e59a3b535717f8c94defed69fd9068e
-      size: 2525426
+    - path: prepare/data\0d2b9fab517f78660b79f4bbb7392769.pickle
+      md5: 76e3617e72196a2cb820f21be27ecab0
+      size: 8040380
   train:
     cmd: python ../../deckard/layers/art_model.py --model_path "https://www.dropbox.com/s/bv1xwjaf1ov4u7y/mnist_ratio%3D0.h5?dl=1"
       --model_name "model.h5" --model_type "tf1" --dataset "data/data.pkl" --output_folder

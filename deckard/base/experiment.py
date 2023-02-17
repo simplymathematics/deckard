@@ -9,12 +9,9 @@ import logging
 import json
 from copy import deepcopy
 import pandas as pd
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, label_binarize
 from argparse import Namespace
-
-# from dvc.api import params_show
-# from dvclive import Live
-# from tqdm import tqdm
+from art.utils import to_categorical
 from .data import Data
 from .model import Model
 from .hashable import BaseHashable
@@ -170,9 +167,9 @@ class Experiment(
         path.mkdir(parents=True, exist_ok=True)
         if filename.exists():
             with open(filename, "r") as f:
-                old_dict = json.load(f)
-            time_dict = old_dict.update(time_dict)
-        pd.Series(time_dict).to_json(filename)
+                time_dict = {**json.load(f), **time_dict}
+        with open(filename, "w") as f:
+            json.dump(time_dict, f)
         return str(Path(filename).as_posix())
 
     def save_probabilities(self, probabilities: np.ndarray) -> Path:
@@ -214,9 +211,11 @@ class Experiment(
         :param model: object, model to fit.
         :returns: tuple, (model, data, fit_time).
         """
+        
         fit_params = deepcopy(self.model["fit"]) if "fit" in self.model else {}
         if isinstance(data, Data):
             loaded_data = data.load(self.files["data_file"])
+                 
         if isinstance(model, Model):
             loaded_model = model.load(self.files["model_file"], art)
         else:
@@ -226,6 +225,10 @@ class Experiment(
             loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
         except Exception as e:
             if "number of classes" in str(e):
+                if len(loaded_data.y_train.shape) == 1:
+                    loaded_data.y_train =  to_categorical(loaded_data.y_train)
+                if len(loaded_data.y_test.shape) == 1:
+                    loaded_data.y_test = to_categorical(loaded_data.y_test)
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             elif "1d" in str(e):
@@ -236,17 +239,11 @@ class Experiment(
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             elif "out of bounds" in str(e):
-                logger.warning(
-                    f"Error fitting model: {e}. Trying to reshape data using LabelBinarize.",
-                )
-                loaded_data.y_train = LabelBinarizer().fit_transform(
-                    loaded_data.y_train,
-                )
-                loaded_data.y_test = (
-                    LabelBinarizer()
-                    .fit(loaded_data.y_train)
-                    .transform(loaded_data.y_test)
-                )
+                if len(loaded_data.y_train.shape) == 1:
+                    loaded_data.y_train =  to_categorical(loaded_data.y_train)
+                if len(loaded_data.y_test.shape) == 1:
+                    loaded_data.y_test = to_categorical(loaded_data.y_test)
+                start = process_time()
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             else:
@@ -327,7 +324,8 @@ class Experiment(
         if "probabilities_file" in self.files and probabilities is not None:
             files.update({"probabilities": self.save_probabilities(predictions)})
         if "time_dict_file" in self.files and time_dict is not None:
-            files.update({"time": self.save_time_dict(time_dict)})
+            time_file = self.save_time_dict(time_dict)
+            files.update({"time": time_file})
         if "score_dict_file" in self.files and score_dict is not None:
             files.update({"scores": self.save_scores(score_dict)})
         return files
@@ -354,8 +352,10 @@ class Experiment(
         else:
             path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Saving to {path}")
-        assert isinstance(data, Data)
-        assert isinstance(model, (Model, dict))
+        if not isinstance(data, Data) and len(data) > 0:
+            data = data.load(self.files["data_file"])
+        if not isinstance(model, (Model)) and len(model) > 0:
+            model = model.load(self.files["model_file"], art=art)
         #######################################################################
         # Fit model, if applicable
         if "ground_truth_file" in files and len(model) > 0:
@@ -412,7 +412,6 @@ class Experiment(
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
             self.files["attack_path"] = str(path.as_posix())
-
             targeted = (
                 attack.attack["init"]["targeted"]
                 if "targeted" in attack.attack["init"]
@@ -463,7 +462,7 @@ class Experiment(
         plots.extend(plot_dict)
         return plots
 
-    def score(self, ground_truth, predictions) -> List[Path]:
+    def score(self, ground_truth = None, predictions = None) -> List[Path]:
         """
         :param self: specified in the config file.
         """

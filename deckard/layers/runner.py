@@ -1,20 +1,32 @@
 import argparse
 import logging
 import os
-from pathlib import Path
-
-import dvc.api
 import yaml
-
+import json
+import subprocess
+import hydra
+import dvc.api
+from pathlib import Path
+from omegaconf import DictConfig
+from art.utils import to_categorical
 from deckard.base import Experiment
-
+from deckard.layers.parse import parse
 
 logger = logging.getLogger(__name__)
 
 
-def run_experiment(params, stage):
-    tag = "!Experiment:"
-    yaml.add_constructor(tag, Experiment)
+
+
+
+def run_dvc_experiment(stage = None, params = None):
+    results = {}
+    # Load params from dvc
+    if stage is None:
+        with open(Path(os.getcwd(), "dvc.yaml"), "r") as f:
+            stages = yaml.load(f, Loader=yaml.FullLoader)["stages"].keys()
+        stage = list(stages)[-1]
+    params = dvc.api.params_show("params.yaml", stages=[stage]) if params is None else params
+    # Update params with paths from dvc
     params["files"]["data_file"] = str(Path(stage, params["files"]["data_file"]))
     params["files"]["model_file"] = str(Path(stage, params["files"]["model_file"]))
     Path(params["files"]["data_file"]).parent.mkdir(parents=True, exist_ok=True)
@@ -24,21 +36,44 @@ def run_experiment(params, stage):
     name = Path(full_report).name
     parents.insert(1, Path(stage))
     params["files"]["path"] = str(Path(params["files"]["reports"], *parents, name))
+    # Load and run experiment from yaml
+    tag = "!Experiment:"
+    yaml.add_constructor(tag, Experiment)
     exp = yaml.load(f"{tag}\n" + str(params), Loader=yaml.FullLoader)
-    files = exp.run()
-    return files
+    results[stage] = exp.run()
+    return results
 
-
+def run_queue(inputs, stage):
+    results = {}
+    failures = 0
+    successes = 0
+    total = len(inputs)
+    while len(inputs) > 0:
+        pipeline = inputs.pop(0)
+        if pipeline.name != "params.yaml":
+            # move file to "params.yaml"
+            Path("params.yaml").unlink(missing_ok=True)
+            Path(pipeline).rename("params.yaml")
+        try:
+            output = run_dvc_experiment(stage)
+            successes += 1
+            results[str(pipeline)] = output
+        except Exception as e:
+            output = str(e)
+            failures += 1
+            raise e
+        finally:
+            logger.info(f"Successes: {successes}, Failures: {failures}, Total: {total}")
+    return results
+    
 if "__main__" == __name__:
     parser = argparse.ArgumentParser()
     parser.add_argument("--queue_path", type=str, default="queue")
     parser.add_argument("--regex", type=str, default="*.yaml")
     parser.add_argument("--verbosity", type=str, default="INFO")
-    parser.add_argument("stage", type=str, default="train")
+    parser.add_argument("stage", type=str, default=None)
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
-    with open(Path(os.getcwd(), "dvc.yaml"), "r") as f:
-        stages = yaml.load(f, Loader=yaml.FullLoader)["stages"].keys()
     files = {}
     inputs = list(Path(os.getcwd(), args.queue_path).glob(args.regex))
     failures = 0
@@ -54,27 +89,5 @@ if "__main__" == __name__:
             )
     elif Path("params.yaml").exists():
         Path("params.yaml").unlink()
-    while len(inputs) > 0:
-        pipeline = inputs.pop(0)
-        try:
-            Path(pipeline).rename(Path("params.yaml"))
-        except FileNotFoundError:
-            pass
-        logger.info(
-            f"Running experiment {pipeline} with {len(inputs)} experiments remaining.",
-        )
-
-        files[str(pipeline)] = {}
-        params = dvc.api.params_show("params.yaml", stages=[args.stage])
-        try:
-            files[str(pipeline)] = run_experiment(params, stage=args.stage)
-            successes += 1
-        except Exception as e:
-            logger.warning("Experiment failed. Moving to failed folder.")
-            Path("params.yaml").rename(Path("failed", str(pipeline)))
-            failures += 1
-            raise e
-        finally:
-            logger.info(
-                f"Finished {len(files)} of {total} experiments with {failures} failures.",
-            )
+    results = run_queue(inputs, args.stage)
+    logger.info(json.dumps(results))
