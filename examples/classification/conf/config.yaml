@@ -5,37 +5,27 @@ defaults:
   - data/name : default.yaml
   - model/files : default.yaml
   - model/init : svc.yaml
-  - model/art_pipeline/postprocessor: default.yaml
-  - model/art_pipeline/preprocessor: default.yaml
-  - plots: default.yaml
+  # - model/art_pipeline/postprocessor: default.yaml
+  # - model/art_pipeline/preprocessor: default.yaml
+  # - plots: default.yaml
   - scorers/accuracy : default.yaml
   - scorers/f1 : default.yaml
   - scorers/precision : default.yaml
   - scorers/recall : default.yaml
   - files : default.yaml
-  - attack/init : default.yaml
-  - attack/generate : default.yaml
+  # - attack/init : default.yaml
+  # - attack/generate : default.yaml
   - override hydra/sweeper: optuna
-  - override hydra/sweeper/sampler: nsgaii
+  - override hydra/sweeper/sampler: grid
 hydra:
   sweeper:
     sampler:
-      _target_: optuna.samplers.NSGAIISampler
-      seed: 123
-      population_size: 50
-      mutation_prob: null
-      crossover_prob: 0.9
-      swapping_prob: 0.5
-      constraints_func: null
+      _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction:
     - maximize
-    - minimize
     storage: null
     study_name: pareto
-    n_trials: 100
     n_jobs: 1
     params:
-      model.init.kernel : choice(rbf, linear, poly, sigmoid)
-      model.init.C : tag(log, interval(1e-9, 1e9))
-      model.init.degree : choice(1,2,3,4,5)
+      model.init.C : tag(log, range(1e-9, 1e9, step = 1000))

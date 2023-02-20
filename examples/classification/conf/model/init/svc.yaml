@@ -1,6 +1,6 @@
 C : 1.0
-kernel : poly
+kernel : linear
 name : sklearn.svm.SVC
-degree : 3
-gamma : scale
 probability : True
+max_iter: 1000
+random_state: 1
