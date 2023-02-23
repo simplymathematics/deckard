@@ -3,11 +3,12 @@ import logging
 import os
 from pathlib import Path
 from copy import deepcopy
+
 import numpy as np
-from .hashable import BaseHashable
 import pandas as pd
 import collections
 from .utils import factory
+from .hashable import BaseHashable
 
 logger = logging.getLogger(__name__)
 
@@ -65,20 +66,16 @@ class Scorer(
         for name, scorer in zip(names, scorers):
             obj_name = scorer.pop("name")
             try:
-                score = factory(
-                    obj_name, **scorer, y_pred=predictions, y_true=ground_truth
-                )
+                score = factory(obj_name, predictions, ground_truth, **scorer, )
             except ValueError as e:
-                logger.warning(
-                    f"Scorer failed with error: {e}. Trying to score with np.argmax.",
-                )
-                if len(predictions.shape) > 1:
-                    predictions = np.argmax(predictions, axis=1)
-                if len(ground_truth.shape) > 1:
-                    ground_truth = np.argmax(ground_truth, axis=1)
-                score = factory(
-                    obj_name, **scorer, y_pred=predictions, y_true=ground_truth
-                )
+                if "classification" in str(e).lower():
+                    if len(predictions.shape) > 1:
+                        predictions = np.argmax(predictions, axis=1)
+                    if len(ground_truth.shape) > 1:
+                        ground_truth = np.argmax(ground_truth, axis=1)
+                    score = factory(obj_name, predictions, ground_truth, **scorer, )
+                else:
+                    raise e
             scores[name] = score
         scores = pd.Series(scores).T
         return scores

@@ -114,6 +114,8 @@ class Data(
         name = self.name
         if isinstance(name, list):
             name = name[0]
+        elif not isinstance(name, str) and isinstance(eval(name), list):
+            name = eval(name)[0]
         # If the data is among the sklearn "real" datasets
         if name in real:
             big_X, big_y = real[name](return_X_y=True, **self.real)
@@ -139,7 +141,7 @@ class Data(
         params = deepcopy(self._asdict())
         # If the data is a csv file
         if filetype == "csv":
-            assert "target" is not None, "target column must be specified"
+            assert "target" != None, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
@@ -347,6 +349,9 @@ class Data(
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
         random_state = samples.pop("random_state", 0)
+        train_size = samples.pop("train_size", .8)
+        test_size = samples.pop("test_size", 1 - train_size)
+        start_position = samples.pop("start_position", random_state)
         ###########################################################
         # Sampling
         ###########################################################
@@ -355,6 +360,8 @@ class Data(
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, stratify=stratify, **samples
             )
+            X_test = X_test[start_position: int(round(len(X_test) * test_size))]
+            y_test = y_test[start_position: int(round(len(y_test) * test_size))]
         # timeseries split
         elif time_series is True:
             assert (

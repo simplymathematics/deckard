@@ -6,6 +6,7 @@ from typing import Callable, List
 from argparse import Namespace
 import json
 import numpy as np
+from art.exceptions import EstimatorError
 from copy import deepcopy
 from pandas import DataFrame, Series
 
@@ -37,9 +38,9 @@ class Attack(
         """
         params = deepcopy(dict(self._asdict()))
         name = params["attack"]["init"].pop("name")
-
+        art_model = model.load(model, art = True)
         try:
-            attack = factory(name, args=[model], **params["attack"]["init"])
+            attack = factory(name, model, **params["attack"]["init"])
         except ValueError as e:
             logger.warning(
                 f"White-box attack failed with error: {e}. Trying black-box.",
@@ -48,33 +49,45 @@ class Attack(
         except Exception as e:
             raise e
         generate = params.pop("generate", {})
-        return (attack, generate)
+        return (attack, generate, art_model)
 
     def fit(self, data, model, targeted=False):
-        time_dict = {}
         start = process_time()
         if "X_test" not in vars(data):
             data = data.load()
-        attack, gen = self.load(model)
+        attack, gen, _ = self.load(model)
         if hasattr(data.X_test, "values"):
             data.X_test = data.X_test.values
+        if hasattr(data.y_test, "values"):
+            data.y_test = data.y_test.values
+        start_position = gen.pop("start_position", 0)
+        attack_size = gen.pop("attack_size", 100)
+        data.X_test = data.X_test[start_position : start_position + attack_size]
+        data.y_test = data.y_test[start_position : start_position + attack_size]
         if targeted is False:
             start = process_time()
             attack_samples = attack.generate(data.X_test, **gen)
         else:
             start = process_time()
             attack_samples = attack.generate(data.X_test, data.y_test, **gen)
+        end = process_time() - start
+        
+        return attack_samples, end/attack_size
+    
+    def predict(self, attack_samples, model):
+        start = process_time()
         attack_pred = model.model.predict(attack_samples)
-        end = process_time()
-        time_dict.update({"attack_pred_time": end - start})
-        return attack_samples, attack_pred, time_dict
-
-    def run_attack(self, data, model, mtype: str = None, targeted=False):
-        attack_samples, attack_pred, time_dict = self.fit(data, model, targeted)
+        end = process_time() - start
+        return attack_pred, end/len(attack_samples)
+    
+    def run_attack(self, data, model, targeted=False):
+        attack_samples, fit_time = self.fit(data, model, targeted)
+        probabilities, predict_time = self.predict(attack_samples, model)
+        time_dict = {"fit_time": fit_time, "predict_time": predict_time}
         results = {
-            "samples": attack_samples,
-            "predictions": attack_pred,
-            "time_dict": time_dict,
+            "adv_samples": attack_samples,
+            "adv_predictions": probabilities,
+            "adv_time_dict": time_dict,
         }
         outs = self.save(**results)
         return outs
@@ -86,7 +99,7 @@ class Attack(
         """
         Saves the time dictionary to a json file.
         """
-        filename = Path(self.files["path"], self.files["time_dict_file"])
+        filename = Path(self.files["attack_path"], self.files["time_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
@@ -96,7 +109,7 @@ class Attack(
         """
         Saves the attack parameters to a json file.
         """
-        filename = Path(self.files["path"], self.files["params_file"])
+        filename = Path(self.files["attack_path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
@@ -110,7 +123,7 @@ class Attack(
         """
         Saves adversarial examples to specified file.
         """
-        filename = Path(self.files["path"], self.files["attack_samples_file"])
+        filename = Path(self.files["attack_path"], self.files["attack_samples_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(samples.reshape(samples.shape[0], -1))
         attack_results.to_json(filename)
@@ -124,7 +137,7 @@ class Attack(
         """
         Saves adversarial predictions to specified file.
         """
-        filename = Path(self.files["path"], self.files["predictions_file"])
+        filename = Path(self.files["attack_path"], self.files["predictions_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         attack_results = DataFrame(predictions)
         attack_results.to_json(filename)
@@ -141,7 +154,7 @@ class Attack(
 
         :return path: Path to saved file.
         """
-        filename = Path(self.files["path"], self.files["score_dict_file"])
+        filename = Path(self.files["attack_path"], self.files["score_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(score_dict, f)

@@ -2,68 +2,53 @@ stages:
   generate_data:
     cmd: python -m deckard.layers.runner generate_data
     params:
-      - data.name
-      - data.generate
-      - files
-    outs:
-      - generate_data/${files.data_file}
-      - ${files.reports}/generate_data/${files.path}
-  sample:
-    cmd: python -m deckard.layers.runner sample
-    params:
       - data
-      - model.init
       - files
-      - plots
-      - scorers
-    deps:
-      - generate_data/${files.data_file}
     outs:
-      - sample/${files.data_file}
-      - sample/${files.model_file}
-      - ${files.reports}/sample/${files.path}
+      - generate_data/${files.data_file}
+    metrics:
+      - ${files.reports}/generate_data/${files.path}
+    deps:
+      - params.yaml
   train:
     cmd: python -m deckard.layers.runner train
     params:
       - data
-      - model.init
+      - model
       - files
-      - plots
       - scorers
     deps:
-      - sample/${files.data_file}
-      - sample/${files.model_file}
+      - generate_data/${files.data_file}
     outs:
       - train/${files.data_file}
       - train/${files.model_file}
-      - ${files.reports}/train/${files.path}
-  defend:
-    cmd: python -m deckard.layers.runner defend
-    params:
-      - data
-      - model.init
-      - model.art_pipeline
-      - files
-      - plots
-      - scorers
-    deps:
-      - train/${files.data_file}
-      - train/${files.model_file}
+    metrics:
+      - ${files.reports}/train/${files.path}/
+  attack : 
+    cmd : python -m deckard.layers.runner attack 
     outs:
-      - defend/${files.data_file}
-      - defend/${files.model_file}
-      - ${files.reports}/defend/${files.path}
-  attack:
-    cmd: python -m deckard.layers.runner attack
+      - attack/
     params:
       - data
       - model
       - attack
       - files
-      - plots
       - scorers
     deps:
-      - defend/${files.data_file}
-      - defend/${files.model_file}
-    outs:
-      - ${files.reports}/attack/${files.path}
+      - train/
+  # generate_queue:
+  #   cmd: bash experiments.sh 
+  #   outs:
+  #     - queue/
+  #   deps:
+  #     - train/${files.data_file}
+  #     - train/${files.model_file}
+  # compile_results:
+  #   cmd : python -m deckard.layers.compile
+  #   outs: 
+  #     - best
+  #   metrics:
+  #     - newest_results.csv
+  #   deps:
+  #     - queue/
+  

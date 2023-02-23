@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @hydra.main(
     version_base=None,
-    config_path=Path(os.getcwd(), "conf"),
+    config_path=str(Path(os.getcwd(), "conf")),
     config_name="config",
 )
 def hydra_parser(cfg: DictConfig, **kwargs):
@@ -60,7 +60,8 @@ def parse(params:dict, queue_path="queue", default = "params.yaml", filename = "
             attack_files = params["attack"].pop("files")
             for atk_file in attack_files:
                 params["files"][atk_file] = str(Path(attack_files[atk_file]))
-    Path(os.getcwd(), default).unlink()
+    if Path(default).exists():
+        Path(os.getcwd(), default).unlink()
     filename = Path(queue_path, my_hash(params) + ".yaml") if filename is None else Path(queue_path, filename)
     filename.parent.mkdir(parents=True, exist_ok=True)
     with open(Path(filename), "w") as f:

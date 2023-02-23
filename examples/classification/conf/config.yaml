@@ -1,4 +1,5 @@
 defaults:
+  - _self_
   - data/files : default.yaml
   - data/generate : default.yaml
   - data/sample : default.yaml
@@ -13,8 +14,8 @@ defaults:
   - scorers/precision : default.yaml
   - scorers/recall : default.yaml
   - files : default.yaml
-  # - attack/init : default.yaml
-  # - attack/generate : default.yaml
+  - attack/init : default.yaml
+  - attack/generate : default.yaml
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: grid
 hydra:
@@ -26,6 +27,5 @@ hydra:
     - maximize
     storage: null
     study_name: pareto
-    n_jobs: 1
-    params:
-      model.init.C : tag(log, range(1e-9, 1e9, step = 1000))
+    n_jobs: 32
+    
