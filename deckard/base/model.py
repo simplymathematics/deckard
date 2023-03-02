@@ -4,14 +4,13 @@ import pickle
 import warnings
 from copy import deepcopy
 from pathlib import Path
+
 from art.estimators import ScikitlearnEstimator
-from art.estimators.classification import (
-    KerasClassifier,
-    PyTorchClassifier,
-    TensorFlowClassifier,
-    TensorFlowV2Classifier,
-)
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
+                                           TensorFlowClassifier,
+                                           TensorFlowV2Classifier)
+from art.estimators.classification.scikitlearn import (ScikitlearnClassifier,
+                                                       ScikitlearnSVC)
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import BaseEstimator, is_regressor
@@ -132,15 +131,15 @@ class Model(
             i += 1
         return model
 
-    def build_art_pipeline(self, model, library):
+    def build_art_pipeline(self, model, library  = "sklearn"):
         init_params = deepcopy(dict(self.init))
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
                 factory(
                     (
-                        art["preprocessor_defence"]["name"],
-                        art["preprocessor_defence"]["params"],
+                        art['preprocessor_defence'].pop("name"),
+                        art["preprocessor_defence"],
                     ),
                 ),
             ]
@@ -150,8 +149,8 @@ class Model(
             postprocessor_defences = [
                 factory(
                     (
-                        art["postprocessor_defence"]["name"],
-                        art["postprocessor_defence"]["params"],
+                        art["postprocessor_defence"].pop("name"),
+                        art["postprocessor_defence"],
                     ),
                 ),
             ]
@@ -159,7 +158,9 @@ class Model(
             postprocessor_defences = None
         if library == "sklearn":
             if is_regressor(model) is False:
-                model = ScikitlearnClassifier(
+                if hasattr(model, "steps"):
+                    model = model.steps[-1][1]
+                model = ScikitlearnSVC(
                     model,
                     postprocessing_defences=postprocessor_defences,
                     preprocessing_defences=preprocessor_defences,
@@ -224,17 +225,25 @@ class Model(
             raise ValueError(f"Library {library} not supported")
         if "transformer_defence" in art:
             model = factory(
-                (
-                    art["transformer_defence"]["name"],
-                    art["transformer_defence"]["params"],
-                ),
-                model,
+                    art["transformer_defence"].pop('name'),
+                    model, **art["transformer_defence"],
             )()
-        if "trainer_defence" in art:
+        if "retrainer_defence" in art:
+            assert "attack" in art, "Attack must be specified for retraining"
+            assert "name" in art["attack"], "Attack name must be specified for retraining"
+            try:
+                name = art['attack'].pop('name')
+                attack = factory(
+                    name, 
+                    model, 
+                    **art['attack'],
+                )
+            except Exception as e:
+                attack = factory(art['attack'].pop('name'), **art['attack'])
             model = factory(
-                (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
-                model,
-            )()
+                art["retrainer_defence"].pop('name'),
+                model, attack, **art["retrainer_defence"],
+            )
         return model
 
 

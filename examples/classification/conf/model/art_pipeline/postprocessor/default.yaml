@@ -1,2 +1,2 @@
 name: art.defences.postprocessor
-HighConfidencecutoff : interval(0, 1)
+HighConfidencecutoff : .99

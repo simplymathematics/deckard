@@ -6,86 +6,97 @@ stages:
     cmd: python -m deckard.layers.runner generate_data
     deps:
     - path: params.yaml
-      md5: 1fa88c920f80a81fa9e0b5460070ab41
-      size: 1337
+      md5: c1c977c0ef4c96da1aad23d10f487309
+      size: 1717
     params:
       params.yaml:
         data:
           generate:
             class_sep: 1
             n_classes: 2
-            n_features: 10
-            n_informative: 9
+            n_features: 100
+            n_informative: 99
             n_redundant: 0
             n_repeated: 0
-            n_samples: 100
-          name:
-          - classification
+            n_samples: 101000
+          name: classification
           sample:
             random_state: 42
             shuffle: true
             stratify: true
+            test_size: 1000
             time_series: true
-            train_size: 0.8
+            train_size: 1000
         files:
-          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+          attack_file: attack/6bc16f621427375278e59654f3d997f3.pkl
+          attack_predictions_file: attack_predictions.json
+          attack_probabilities_file: attack_probabilities.json
+          attack_samples_file: samples.json
+          attack_score_dict_file: attack_scores.json
+          attack_time_dict_file: attack_time_dict.json
+          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
           ground_truth_file: ground_truth.json
-          model_file: model/8bcf8e8412b091e2793a6d4233a52b74.pickle
+          model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
           params_file: params.json
-          path: 4536fd7a92f23c038c16e3c039a279e6
+          path: be8a84048824e17fb4fd00169e0c1fb2
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
-          samples_file: samples.json
           score_dict_file: scores.json
           time_dict_file: time_dict.json
     outs:
-    - path: generate_data/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
-      md5: 2e45fbecb19e34a89a26a4a5d71645b6
-      size: 9155
-    - path: reports/generate_data/4536fd7a92f23c038c16e3c039a279e6
-      md5: cfdfadc12c50cbfe5f81cef9e1e86620.dir
-      size: 926
+    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+      md5: 6876341f49c55e24fa78f2386d3c31bb
+      size: 80800393
+    - path: reports/generate_data/be8a84048824e17fb4fd00169e0c1fb2
+      md5: cd0f0a57c027b978d8f6d0554e33fe1c.dir
+      size: 979942
       nfiles: 3
   train:
     cmd: python -m deckard.layers.runner train
     deps:
-    - path: generate_data/data/5298bdd0919bf4d04ad38c1c4fde629e.pickle
-      md5: 09a90e5fda0f5b14596da0649edfe655
-      size: 88369
+    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+      md5: 6876341f49c55e24fa78f2386d3c31bb
+      size: 80800393
     params:
       params.yaml:
         data:
           generate:
             class_sep: 1
             n_classes: 2
-            n_features: 10
-            n_informative: 9
+            n_features: 100
+            n_informative: 99
             n_redundant: 0
             n_repeated: 0
-            n_samples: 1000
-          name:
-          - classification
+            n_samples: 101000
+          name: classification
           sample:
             random_state: 42
             shuffle: true
             stratify: true
+            test_size: 1000
             time_series: true
-            train_size: 0.8
+            train_size: 1000
         files:
-          data_file: data/5298bdd0919bf4d04ad38c1c4fde629e.pickle
+          attack_file: attack/6bc16f621427375278e59654f3d997f3.pkl
+          attack_predictions_file: attack_predictions.json
+          attack_probabilities_file: attack_probabilities.json
+          attack_samples_file: samples.json
+          attack_score_dict_file: attack_scores.json
+          attack_time_dict_file: attack_time_dict.json
+          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
           ground_truth_file: ground_truth.json
-          model_file: model/6682710a1a0a35299d15173185d3e616.pickle
+          model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
           params_file: params.json
-          path: 80469423a8101517386fe5a47b1f7935
+          path: be8a84048824e17fb4fd00169e0c1fb2
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
-          samples_file: samples.json
           score_dict_file: scores.json
           time_dict_file: time_dict.json
         model.init:
-          C: 0.001
+          C: 1
+          degree: 1
           kernel: linear
           max_iter: 1000
           name: sklearn.svm.SVC
@@ -104,16 +115,10 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: reports/train/80469423a8101517386fe5a47b1f7935/
-      md5: a587e2821313de5a5c002f6f72140e32.dir
-      size: 5801
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/
+      md5: 54497b16f7b8a17d9955659d33771129.dir
+      size: 2938298
       nfiles: 6
-    - path: train/data/5298bdd0919bf4d04ad38c1c4fde629e.pickle
-      md5: 85a24063b49b9d18bc063b8e42a4c9af
-      size: 88369
-    - path: train/model/6682710a1a0a35299d15173185d3e616.pickle
-      md5: c74084a053fcd3e385d08c1fe89398f7
-      size: 56991
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
     deps:
@@ -182,196 +187,13 @@ stages:
           recall:
             average: weighted
             name: sklearn.metrics.recall_score
-    outs:
-    - path: reports/sklearn_pipeline
-      md5: 3288cd03dca50a020031ccde9994a224.dir
-      size: 190626
-      nfiles: 10
-    - path: sklearn_pipeline/data
-      md5: 8946cf6b612fb109f0e0ed94d9cc9fac.dir
-      size: 8120393
-      nfiles: 1
-    - path: sklearn_pipeline/model
-      md5: b5e0f6c3a8c0cb8de807ef1922eca086.dir
-      size: 6662
-      nfiles: 2
-  pipeline:
-    cmd: python -m deckard.layers.runner pipeline
-    deps:
-    - path: data/train/
-      md5: dee7458583445f0c2d13b00741567e2b.dir
-      size: 8120393
-      nfiles: 1
-    - path: model/train/
-      md5: 2ae2adb4025ab8a524069d857d447a1b.dir
-      size: 3372
-      nfiles: 1
-    params:
-      params.yaml:
-        data:
-          files:
-            data_filetype: pickle
-            data_path: data
-          generate:
-            n_classes: 3
-            n_features: 100
-            n_informative: 98
-            n_redundant: 1
-            n_samples: 10000
-            n_clusters_per_class: 1
-          sklearn_pipeline:
-            scaling:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-        files:
-          ground_truth_file: ground_truth.json
-          predictions_file: predictions.json
-          time_dict_file: time_dict.json
-          params_file: params.json
-          score_dict_file: scores.json
-          path: reports
-          attack_samples_file: adv_samples.json
-          attack_predictions_file: adv_predictions.json
-          attack_time_dict_file: adv_time_dict.json
-          attack_params_file: attack_params.json
-          attack_path: attack
-        model.files:
-          model_filetype: pickle
-          model_path: model
-        model.init:
-          loss: log
-          name: sklearn.linear_model.SGDClassifier
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: data/pipeline/
-      md5: 01ff75edd1f93494d183a650f344c036.dir
-      size: 8120393
-      nfiles: 1
-    - path: model/pipeline/
-      md5: 73608a42a0fc630f2716b3387d6f635c.dir
-      size: 3373
-      nfiles: 1
-    - path: reports/pipeline
-      md5: a8e8ddd9682a5d86416926f2faadceac.dir
-      size: 202576
-      nfiles: 10
-  defend:
-    cmd: python -m deckard.layers.runner defend
-    deps:
-    - path: train/data/a13e9468531ddf91226edba69f158515.pickle
-      md5: 8c29122c64de7d490730b8e20244a4d6
-      size: 8080380
-    - path: train/model/c08b30265781b42e42a964a9f336501e.pickle
-      md5: 5777d30b21625d323a533bae5b9926f3
-      size: 4596489
-    params:
-      params.yaml:
-        data:
-          generate:
-            n_classes: 2
-            n_features: 100
-            n_informative: 98
-            n_redundant: 1
-            n_samples: 10000
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-            train_size: 8000
-        files:
-          data_file: data/a13e9468531ddf91226edba69f158515.pickle
-          ground_truth_file: ground_truth.json
-          model_file: model/c08b30265781b42e42a964a9f336501e.pickle
-          params_file: params.json
-          path: f05d8713280aa17c1dab850847200c93
-          predictions_file: predictions.json
-          probabilities_file: probabilities.json
-          reports: reports
-          samples_file: samples.json
-          score_dict_file: scores.json
-          time_dict_file: time_dict.json
-        model.art_pipeline:
-          postprocessor:
-            HighConfidencecutoff: interval(0, 1)
-            name: art.defences.postprocessor
-          preprocessor:
-            bit_depth: 8
-            name: art.defences.preprocessor.FeatureSqueezing
-        model.init:
-          C: 1.0
-          degree: 3
-          gamma: scale
-          kernel: poly
-          name: sklearn.svm.SVC
-          probability: true
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: defend/data/a13e9468531ddf91226edba69f158515.pickle
-      md5: c16d68f021fc6f00dcff265c59c38d98
-      size: 8080384
-    - path: defend/model/c08b30265781b42e42a964a9f336501e.pickle
-      md5: 8dd7e5de8dd7e1c4460650a4d585cd40
-      size: 4567789
-    - path: reports/defend/f05d8713280aa17c1dab850847200c93
-      md5: 6b6c90f6c9d85979ccfa72e97124b392.dir
-      size: 204502
-      nfiles: 11
   attack:
     cmd: python -m deckard.layers.runner attack
     deps:
-    - path: best/
-      md5: 649f84533206134c30dd451d4491eecf.dir
-      size: 5407
-      nfiles: 4
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/
+      md5: 54497b16f7b8a17d9955659d33771129.dir
+      size: 2938298
+      nfiles: 6
     params:
       params.yaml:
         attack:
@@ -391,6 +213,73 @@ stages:
             n_informative: 99
             n_redundant: 0
             n_repeated: 0
+            n_samples: 101000
+          name: classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            test_size: 1000
+            time_series: true
+            train_size: 1000
+        files:
+          attack_file: attack/6bc16f621427375278e59654f3d997f3.pkl
+          attack_predictions_file: attack_predictions.json
+          attack_probabilities_file: attack_probabilities.json
+          attack_samples_file: samples.json
+          attack_score_dict_file: attack_scores.json
+          attack_time_dict_file: attack_time_dict.json
+          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+          ground_truth_file: ground_truth.json
+          model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
+          params_file: params.json
+          path: be8a84048824e17fb4fd00169e0c1fb2
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        model.init:
+          C: 1
+          degree: 1
+          kernel: linear
+          max_iter: 1000
+          name: sklearn.svm.SVC
+          probability: true
+        scorers:
+          accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          f1:
+            average: weighted
+            name: sklearn.metrics.f1_score
+          precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+          recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+    outs:
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/
+      md5: cd771ded40d8a2461ac1afec963decc6.dir
+      size: 3126616
+      nfiles: 10
+  train@sigmoid:
+    cmd: python -m deckard.layers.runner train@sigmoid
+    deps:
+    - path: generate_data/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+      md5: 756db574e4c4cfcdf4c585d69abcf47b
+      size: 7391
+    params:
+      params.yaml:
+        data:
+          generate:
+            class_sep: 1
+            n_classes: 2
+            n_features: 10
+            n_informative: 9
+            n_redundant: 0
+            n_repeated: 0
             n_samples: 100
           name:
           - classification
@@ -401,24 +290,23 @@ stages:
             time_series: true
             train_size: 0.8
         files:
-          data_file: data/7e48b4031b26a701de2ca34c428e0dcf.pickle
+          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
           ground_truth_file: ground_truth.json
-          model_file: model/fb898e724aa6fedaf76f477b42a13c8a.pickle
+          model_file: model/23de12c657f6d021dd9602e7aeb95b8f.pickle
           params_file: params.json
-          path: a3098a6e24ce412fabd2a7cae4e0f3cf
+          path: 89f75bf6df8dbc8072198a68f2a704c3
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
           samples_file: samples.json
           score_dict_file: scores.json
           time_dict_file: time_dict.json
-        model:
-          init:
-            C: 1.0
-            kernel: linear
-            max_iter: 1000
-            name: sklearn.svm.SVC
-            probability: true
+        model.init.sigmoid:
+          C: 1
+          coef0: 1
+          gamma: auto
+          kernel: sigmoid
+          name: sklearn.svm.SVC
         scorers:
           accuracy:
             name: sklearn.metrics.accuracy_score
@@ -432,362 +320,23 @@ stages:
           recall:
             average: weighted
             name: sklearn.metrics.recall_score
-    outs:
-    - path: attack/
-      md5: 2580f12d404ab583cb5d91fbef7f9434.dir
-      size: 130727
-      nfiles: 2
-  evaluate:
-    cmd: python -m deckard.layers.runner evaluate --layer evaluate
+  train@linear:
+    cmd: python -m deckard.layers.runner train@linear
     deps:
-    - path: reports/attack
-      md5: 47319ab6d023b9f1e4e176f148f272d1.dir
-      size: 258132
-      nfiles: 18
-    - path: reports/defend
-      md5: 7f5eac8aae6d187282b7d73a77dc1474.dir
-      size: 108215
-      nfiles: 10
-    params:
-      params.yaml:
-        attack:
-          init:
-            name: art.attacks.evasion.HopSkipJump
-            max_iter: 1
-            init_eval: 10
-            init_size: 10
-        data:
-          files:
-            data_filetype: pickle
-            data_path: data
-          generate:
-            n_classes: 3
-            n_features: 10
-            n_informative: 8
-            n_redundant: 1
-            n_samples: 1000
-            n_clusters_per_class: 1
-          sklearn_pipeline:
-            scaling:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-        files:
-          ground_truth_file: ground_truth.json
-          predictions_file: predictions.json
-          time_dict_file: time_dict.json
-          params_file: params.json
-          score_dict_file: scores.json
-          path: reports
-          attack_samples_file: adv_samples.json
-          attack_predictions_file: adv_predictions.json
-          attack_time_dict_file: adv_time_dict.json
-          attack_params_file: attack_params.json
-          attack_path: attack
-        model:
-          files:
-            model_filetype: pickle
-            model_path: model
-          init:
-            loss: log
-            name: sklearn.linear_model.SGDClassifier
-          sklearn_pipeline:
-            feature_selection:
-              name: sklearn.feature_selection.SelectKBest
-              k: 3
-          art_pipeline:
-            preprocessor_defence:
-              name: art.defences.preprocessor.FeatureSqueezing
-              params:
-                bit_depth: 8
-                clip_values:
-                - 0
-                - 255
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: reports/evaluate
-      md5: 110e25332e1bdd971423c067fd5b6498.dir
-      size: 5731
-      nfiles: 5
-  visualise:
-    cmd: python -m deckard.layers.runner visualise --layer visualise
-    deps:
-    - path: reports/attack
-      md5: 41b5dd5561c4d19f79fb20a9d28bfa42.dir
-      size: 265688
-      nfiles: 18
-    - path: reports/defend
-      md5: 565eca1f39cc2ced96e4d8079bb092f8.dir
-      size: 109830
-      nfiles: 10
-    params:
-      params.yaml:
-        attack:
-          init:
-            name: art.attacks.evasion.HopSkipJump
-            max_iter: 1
-            init_eval: 10
-            init_size: 10
-        data:
-          files:
-            data_filetype: pickle
-            data_path: data
-          generate:
-            n_classes: 3
-            n_features: 10
-            n_informative: 8
-            n_redundant: 1
-            n_samples: 1000
-            n_clusters_per_class: 1
-          sklearn_pipeline:
-            scaling:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-        files:
-          ground_truth_file: ground_truth.json
-          predictions_file: predictions.json
-          time_dict_file: time_dict.json
-          params_file: params.json
-          score_dict_file: scores.json
-          path: reports
-          attack_samples_file: adv_samples.json
-          attack_predictions_file: adv_predictions.json
-          attack_time_dict_file: adv_time_dict.json
-          attack_params_file: attack_params.json
-          attack_path: attack
-        model:
-          files:
-            model_filetype: pickle
-            model_path: model
-          init:
-            loss: log
-            name: sklearn.linear_model.SGDClassifier
-          art_pipeline:
-            preprocessor_defence:
-              name: art.defences.preprocessor.FeatureSqueezing
-              params:
-                bit_depth: 8
-                clip_values:
-                - 0
-                - 255
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: reports/visualise
-      md5: 919fd5104db94ad55741492abf20eec5.dir
-      size: 106685
-      nfiles: 9
-  data_pipeline:
-    cmd: python -m deckard.layers.runner data_pipeline --layer data
-    deps:
-    - path: generate_data/data/59262eecc62ef7821fa51f39b1115f48.pickle
-      md5: 4aa8cb94b9bd0d9ea00f010f76d9cc23
-      size: 440380
-    params:
-      params.yaml:
-        data:
-          generate:
-            n_classes: 2
-            n_features: 5
-            n_informative: 4
-            n_redundant: 1
-            n_samples: 10000
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-            train_size: 8000
-        files:
-          data_file: data/59262eecc62ef7821fa51f39b1115f48.pickle
-          data_filetype: pickle
-          data_path: data
-          ground_truth_file: ground_truth.json
-          model_file: model/c078deafcfaec35653e56148b3431815.pickle
-          model_filetype: pickle
-          model_path: model
-          params_file: params.json
-          path: reports\7525510d3567faacd8b810682460ee79
-          predictions_file: predictions.json
-          score_dict_file: scores.json
-          time_dict_file: time_dict.json
-        model.init:
-          loss: hinge
-          name: sklearn.linear_model.SGDClassifier
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: data_pipeline/data/59262eecc62ef7821fa51f39b1115f48.pickle
-      md5: 4c3c03e19749226220a6b8c2b0638553
-      size: 440380
-    - path: data_pipeline/model/c078deafcfaec35653e56148b3431815.pickle
-      md5: b4a7c46b19934310d5425c61a3b45d54
-      size: 475
-    - path: data_pipeline/reports\7525510d3567faacd8b810682460ee79
-      md5: 089bb1f7cea665a897397814478062af.dir
-      size: 18177
-      nfiles: 5
-  data:
-    cmd: python -m deckard.layers.runner data_pipeline --layer data
-    deps:
-    - path: generate_data/data/64cbc447e7d099829a25194130467cd1.pickle
-      md5: 5cdfc307243c9cd91360aa95c3ec2960
-      size: 8040380
-    params:
-      params.yaml:
-        data:
-          generate:
-            n_classes: 3
-            n_features: 100
-            n_informative: 98
-            n_redundant: 1
-            n_samples: 10000
-          name:
-          - classification
-          sample:
-            random_state: 42
-            shuffle: true
-            stratify: true
-            time_series: true
-            train_size: 8000
-        files:
-          data_file: data/64cbc447e7d099829a25194130467cd1.pickle
-          data_filetype: pickle
-          data_path: data
-          ground_truth_file: ground_truth.json
-          model_file: model/abb22b2e9164d4524203fd2db69d0871.pickle
-          model_filetype: pickle
-          model_path: model
-          params_file: params.json
-          path: reports\ec8f28915e730a1980e430aeb714e4a5
-          predictions_file: predictions.json
-          probabilities_file: probabilities.json
-          samples_file: samples.json
-          score_dict_file: scores.json
-          time_dict_file: time_dict.json
-        model.init:
-          loss: hinge
-          name: sklearn.linear_model.SGDClassifier
-        plots:
-          balance: balance
-          classification: classification
-          confusion: confusion
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-        scorers:
-          accuracy:
-            name: sklearn.metrics.accuracy_score
-            normalize: true
-          f1:
-            average: weighted
-            name: sklearn.metrics.f1_score
-          precision:
-            average: weighted
-            name: sklearn.metrics.precision_score
-          recall:
-            average: weighted
-            name: sklearn.metrics.recall_score
-    outs:
-    - path: data_pipeline/data/64cbc447e7d099829a25194130467cd1.pickle
-      md5: 11e56a373f0002b0da5089591d3de442
-      size: 8040380
-    - path: data_pipeline/model/abb22b2e9164d4524203fd2db69d0871.pickle
-      md5: b4a7c46b19934310d5425c61a3b45d54
-      size: 475
-    - path: data_pipeline/reports\ec8f28915e730a1980e430aeb714e4a5
-      md5: ce7b4c9445cbd9b76b0695cdc6ecc935.dir
-      size: 18602
-      nfiles: 6
-  sample:
-    cmd: python -m deckard.layers.runner sample
-    deps:
-    - path: generate_data/data/5efcdee41e808f60812f41f06a212f13.pickle
-      md5: e15fb0b84c374ed0c8495ef51d4e7f42
-      size: 808378
+    - path: generate_data/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+      md5: 756db574e4c4cfcdf4c585d69abcf47b
+      size: 7391
     params:
       params.yaml:
         data:
           generate:
             class_sep: 1
             n_classes: 2
-            n_features: 100
-            n_informative: 99
+            n_features: 10
+            n_informative: 9
             n_redundant: 0
             n_repeated: 0
-            n_samples: 1000
+            n_samples: 100
           name:
           - classification
           sample:
@@ -797,23 +346,352 @@ stages:
             time_series: true
             train_size: 0.8
         files:
-          data_file: data/5efcdee41e808f60812f41f06a212f13.pickle
+          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
           ground_truth_file: ground_truth.json
-          model_file: model/87363500836d56347584d0a08d0c7a7d.pickle
+          model_file: model/23de12c657f6d021dd9602e7aeb95b8f.pickle
           params_file: params.json
-          path: e6f127be14ebd8f547dde85dc479bc22
+          path: 89f75bf6df8dbc8072198a68f2a704c3
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
           samples_file: samples.json
           score_dict_file: scores.json
           time_dict_file: time_dict.json
-        model.init:
-          C: 1.0
+        model.init.linear:
+          C: 1
           kernel: linear
           name: sklearn.svm.SVC
-          probability: true
-          max_iter: 1000
+        scorers:
+          accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          f1:
+            average: weighted
+            name: sklearn.metrics.f1_score
+          precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+          recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+  train@poly:
+    cmd: python -m deckard.layers.runner train@poly
+    deps:
+    - path: generate_data/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+      md5: 756db574e4c4cfcdf4c585d69abcf47b
+      size: 7391
+    params:
+      params.yaml:
+        data:
+          generate:
+            class_sep: 1
+            n_classes: 2
+            n_features: 10
+            n_informative: 9
+            n_redundant: 0
+            n_repeated: 0
+            n_samples: 100
+          name:
+          - classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            time_series: true
+            train_size: 0.8
+        files:
+          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/23de12c657f6d021dd9602e7aeb95b8f.pickle
+          params_file: params.json
+          path: 89f75bf6df8dbc8072198a68f2a704c3
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        model.init.poly:
+          C: 1
+          coef0: 1
+          degree: 2
+          gamma: auto
+          kernel: poly
+          name: sklearn.svm.SVC
+        scorers:
+          accuracy:
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          f1:
+            average: weighted
+            name: sklearn.metrics.f1_score
+          precision:
+            average: weighted
+            name: sklearn.metrics.precision_score
+          recall:
+            average: weighted
+            name: sklearn.metrics.recall_score
+  generate_data@ten_thousand_features:
+    cmd: python -m deckard.layers.runner generate_data@ten_thousand_features
+    deps:
+    - path: params.yaml
+      md5: 2b2cd5d03f6fcdf4327f5e746cffa4cf
+      size: 2130
+    params:
+      params.yaml:
+        data.generate.ten_thousand_features:
+          n_classes: 2
+          n_features: 10000
+          n_informative: 9999
+          n_samples: 100
+        files:
+          data_file: data/3f7ed61b1a5891ff70cb6604bc5e6bd1.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/f22bb8a5fef3f4d620464f9ac666ff4e.pickle
+          params_file: params.json
+          path: 2cf65b96cfe0c8903003d666f11bb114
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+  generate_data@one_hundred_features:
+    cmd: python -m deckard.layers.runner generate_data@one_hundred_features
+    deps:
+    - path: params.yaml
+      md5: 1d5d956df69d4012d38b685a3f67b269
+      size: 2118
+    params:
+      params.yaml:
+        data.generate.one_hundred_features:
+          n_classes: 2
+          n_features: 100
+          n_informative: 99
+          n_samples: 100000
+          n_repeated: 0
+          n_redundant: 0
+          class_sep: 1
+        data.name: classification
+  generate_data@one_thousand_features:
+    cmd: python -m deckard.layers.runner generate_data@one_thousand_features
+    deps:
+    - path: params.yaml
+      md5: 1d5d956df69d4012d38b685a3f67b269
+      size: 2118
+    params:
+      params.yaml:
+        data.generate.one_thousand_features:
+          n_classes: 2
+          n_features: 1000
+          n_informative: 999
+          n_samples: 100000
+          n_repeated: 0
+          n_redundant: 0
+          class_sep: 1
+        data.name: classification
+  generate_data@one_hundred_thousand_features:
+    cmd: python -m deckard.layers.runner generate_data@one_hundred_thousand_features
+    deps:
+    - path: params.yaml
+      md5: 1d5d956df69d4012d38b685a3f67b269
+      size: 2118
+    params:
+      params.yaml:
+        data.generate.one_hundred_thousand_features:
+          n_classes: 2
+          n_features: 100000
+          n_informative: 99999
+          n_samples: 100000
+        files:
+          data_file: data/8844be495f5ac531a307edf0d0018f4c.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/bcf8dd16efee6bccdd9de3e10951b36f.pickle
+          params_file: params.json
+          path: ccff0abf18147ed8b82c5d7776ce131d
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+  generate_data@ten_features:
+    cmd: python -m deckard.layers.runner generate_data@ten_features
+    deps:
+    - path: params.yaml
+      md5: 1d5d956df69d4012d38b685a3f67b269
+      size: 2118
+    params:
+      params.yaml:
+        data.name: classification
+  data_generate_@one_thousand_features:
+    cmd: python -m deckard.layers.runner data_generate_@one_thousand_features
+    deps:
+    - path: params.yaml
+      md5: 2b2cd5d03f6fcdf4327f5e746cffa4cf
+      size: 2130
+    params:
+      params.yaml:
+        data.generate.one_thousand_features.n_features: 1000
+        files:
+          data_file: data/3f7ed61b1a5891ff70cb6604bc5e6bd1.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/f22bb8a5fef3f4d620464f9ac666ff4e.pickle
+          params_file: params.json
+          path: 2cf65b96cfe0c8903003d666f11bb114
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+  data_generate@one_hundred:
+    cmd: python -m deckard.layers.runner data_generate@one_hundred
+    deps:
+    - path: params.yaml
+      md5: 5499f8506cb1a7dde2c7a27e81f9f626
+      size: 1260
+    params:
+      params.yaml:
+        data.generate:
+          class_sep: 1
+          n_classes: 2
+          n_features: 10
+          n_informative: 9
+          n_redundant: 0
+          n_repeated: 0
+          n_samples: 100
+        data.name:
+        - classification
+        files:
+          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/c552e4f2b16431c8fa16fbb903c21434.pickle
+          params_file: params.json
+          path: 1f7b44460ac68826b244491382179f51
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+    outs:
+    - path: data_generate/one_hundred/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+      md5: 3d737f2f92397b56c5c65b21654e5aa0
+      size: 7395
+  data_generate@one_thousand:
+    cmd: python -m deckard.layers.runner data_generate@one_thousand
+    deps:
+    - path: params.yaml
+      md5: 5499f8506cb1a7dde2c7a27e81f9f626
+      size: 1260
+    params:
+      params.yaml:
+        data.generate:
+          class_sep: 1
+          n_classes: 2
+          n_features: 10
+          n_informative: 9
+          n_redundant: 0
+          n_repeated: 0
+          n_samples: 100
+        data.name:
+        - classification
+        files:
+          data_file: data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/c552e4f2b16431c8fa16fbb903c21434.pickle
+          params_file: params.json
+          path: 1f7b44460ac68826b244491382179f51
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+    outs:
+    - path: data_generate/one_thousand/data/4b1101225624b2cd491acdbf10bbf2f9.pickle
+      md5: 4720d0e404af18789f19b34186841e7f
+      size: 7395
+  model_queue:
+    cmd: bash experiments.sh
+    deps:
+    - path: attack/
+      md5: 20b5c490ad1b441aee705ebdbd5d6630.dir
+      size: 80878144
+      nfiles: 2
+    outs:
+    - path: model_queue/
+      md5: db0bbb3542d7ebdfdb998e203776fa48.dir
+      size: 9401308
+      nfiles: 66
+  retrain:
+    cmd: python -m deckard.layers.runner retrain
+    deps:
+    - path: attack/
+      md5: dffffe1a6d9592044b5727be1ad91fb6.dir
+      size: 80800402
+      nfiles: 1
+    params:
+      params.yaml:
+        attack:
+          generate:
+            attack_size: 100
+          init:
+            batch_size: 32
+            eps: 0.01
+            eps_step: 0.001
+            max_iter: 1
+            name: art.attacks.evasion.ProjectedGradientDescent
+        data:
+          generate:
+            class_sep: 1
+            n_classes: 2
+            n_features: 100
+            n_informative: 99
+            n_redundant: 0
+            n_repeated: 0
+            n_samples: 101000
+          name:
+          - classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            test_size: 1000
+            time_series: true
+            train_size: 10000
+        files:
+          data_file: data/1332ceae94be76b20525d9dbb1b61dc8.pickle
+          ground_truth_file: ground_truth.json
+          model_file: model/a44064d36f3aba6afaceef4173c37c04.pickle
+          params_file: params.json
+          path: 57a1a9bb727817c33da447ee6c08c215
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          samples_file: samples.json
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        model:
+          art_pipeline:
+            trainer_defence:
+              name: art.defences.trainer.AdversarialTrainer
+              ratio: 0.5
+          init:
+            C: 1.0
+            coef0: 1
+            degree: 2
+            gamma: auto
+            kernel: poly
+            max_iter: 1000
+            name: sklearn.svm.SVC
+            probability: true
+          sklearn_pipeline:
+            feature_selection:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
         scorers:
           accuracy:
             name: sklearn.metrics.accuracy_score
@@ -828,38 +706,7 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: reports/sample/e6f127be14ebd8f547dde85dc479bc22
-      md5: 062660e9f204192aae829785257989b1.dir
-      size: 5817
-      nfiles: 6
-    - path: sample/data/5efcdee41e808f60812f41f06a212f13.pickle
-      md5: 321b572acba7628248c169ae86fe5290
-      size: 808378
-    - path: sample/model/87363500836d56347584d0a08d0c7a7d.pickle
-      md5: f78992eea3225fdcca855818d9402cba
-      size: 352981
-  parse:
-    cmd: python -m deckard.layers.parse
-    outs:
-    - path: params.yaml
-      md5: cea1294af10b10110cd8b78f2fdc6c9c
-      size: 1350
-  compile_results:
-    cmd: python -m deckard.layers.compile
-    deps:
-    - path: reports/
-      md5: 3e2c59b25838b77255ef7052fb3258ca.dir
-      size: 72230216
-      nfiles: 3660
-    - path: train/
-      md5: 4459af52b0080a496dd8180e419771d6.dir
-      size: 6117112853
-      nfiles: 237
-    outs:
-    - path: best
-      md5: 649f84533206134c30dd451d4491eecf.dir
-      size: 5407
-      nfiles: 4
-    - path: newest_results.csv
-      md5: 814cbe6f788440febb2f782d211f9885
-      size: 391336
+    - path: retrain/
+      md5: 2dedc2e18b31e2f9112e9c607f7956cd.dir
+      size: 80800406
+      nfiles: 1

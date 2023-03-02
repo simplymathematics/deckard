@@ -5,9 +5,9 @@ import subprocess
 import yaml
 import json
 from pathlib import Path
-import optuna
 import hydra
-
+from optuna.trial import Trial
+import optuna
 from omegaconf import DictConfig, OmegaConf
 from deckard.base import Experiment
 from deckard.layers.runner import load_dvc_experiment
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
     config_path=str(Path(os.getcwd(), "conf")),
     config_name="config",
 )
-def hydra_runner(cfg:DictConfig):
+def hydra_optimizer(cfg:DictConfig):
     # Stage selects a subset of the pipeline to run (i.e. number of layers to run inside a single container)
     if "stage" in cfg:
         stage = cfg.stage
@@ -66,15 +66,22 @@ def hydra_runner(cfg:DictConfig):
         del cfg.dry_run
     else:
         dry_run = False
-    if "queue" in cfg:
-        queue = cfg.queue
+    if "queue_path" in cfg:
+        queue = cfg.queue_path
+        del cfg.queue_path
     else:
         queue = "queue"
+    if "verbosity" in cfg:
+        verbosity = cfg.verbosity
+        del cfg.verbosity
+    else:
+        verbosity = "INFO"
+    logging.basicConfig(level=verbosity)
     if not Path(os.getcwd(), queue).exists():
         Path(os.getcwd(), queue).mkdir()
-    params = OmegaConf.to_object(cfg) # This converts the hydra config to a dictionary
-    params = parse(params) # This is a hack to add file names based on the hash of the parameterization
-    logger.info("Params:\n"+json.dumps(params, indent=4)) # For debugging
+    params = OmegaConf.to_container(cfg, resolve=True)
+    params = parse(params,) # This is a hack to add file names based on the hash of the parameterization    
+    logger.debug("Params:\n"+json.dumps(params, indent=4)) # For debugging
     filename = Path(os.getcwd(), queue, my_hash(params)+".yaml") # This is the file that will be used to run the experiment
     with open(filename, 'w') as f:
         yaml.dump(params, f)
@@ -85,24 +92,27 @@ def hydra_runner(cfg:DictConfig):
         # This uses the normal fit/predict/eval loop and returns the scores 
         # on the test set as specified in the config file. 
         # So, essentially, we would a function that takes in the parameters and returns the score here.
-        results = exp.run() 
+        try:
+            results = exp.run()
+            logger.info("Results:\n"+json.dumps(results, indent=4))
+            with open(results['scores'], 'r') as f:
+                score = yaml.load(f, Loader=yaml.FullLoader)
+            logger.info("Score:\n"+json.dumps(score, indent=4))
+            score = list(score.values())[0]
+            logger.info("Score:\n"+json.dumps(score, indent=4))
+            with open(results['time'], 'r') as f:
+                time = yaml.load(f, Loader=yaml.FullLoader)
+            logger.info("Time:\n"+json.dumps(time, indent=4))
+            time = list(time.values())[0]
+            logger.info("Time:\n"+json.dumps(time, indent=4))
+        except Exception as e:
+            raise e
+            # score = None
         ########################################
-        logger.info("Results:\n"+json.dumps(results, indent=4))
-        with open(results['scores'], 'r') as f:
-            score = yaml.load(f, Loader=yaml.FullLoader)
-        logger.info("Score:\n"+json.dumps(score, indent=4))
-        score = list(score.values())[0]
-        logger.info("Score:\n"+json.dumps(score, indent=4))
-        with open(results['time'], 'r') as f:
-            time = yaml.load(f, Loader=yaml.FullLoader)
-        logger.info("Time:\n"+json.dumps(time, indent=4))
-        time = list(time.values())[0]
-        logger.info("Time:\n"+json.dumps(time, indent=4))
     else:
         score = 0
     return score
 
-
-
 if '__main__' == __name__:
-    hydra_runner()
+    
+    hydra_optimizer()

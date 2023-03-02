@@ -163,15 +163,15 @@ class Data(
                 )
         # If the data is a numpy npz file
         elif filetype == "npz":
-            data = np.load(name)
+            data = np.load(name, allow_pickle=True)
             if "X" in data:
-                big_X = data["X"]
-                big_y = data["y"]
+                big_X = data.X
+                big_y = data.y
             elif "X_train" in data:
-                X_train = data["X_train"]
-                y_train = data["y_train"]
-                X_test = data["X_test"]
-                y_test = data["y_test"]
+                X_train = data.X_train
+                y_train = data.y_train
+                X_test = data.X_test
+                y_test = data.y_test
             else:
                 raise ValueError(
                     "Numpy npz file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
@@ -351,17 +351,20 @@ class Data(
         random_state = samples.pop("random_state", 0)
         train_size = samples.pop("train_size", .8)
         test_size = samples.pop("test_size", 1 - train_size)
-        start_position = samples.pop("start_position", random_state)
+        if isinstance(train_size, float):
+            train_size = int(round(len(X) * train_size))
+        if isinstance(test_size, float):
+            test_size = int(round(len(X) * test_size))
         ###########################################################
         # Sampling
         ###########################################################
         # regular test/train split
         if time_series is False:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, stratify=stratify, **samples
+                X, y, stratify=stratify, **samples, train_size=train_size
             )
-            X_test = X_test[start_position: int(round(len(X_test) * test_size))]
-            y_test = y_test[start_position: int(round(len(y_test) * test_size))]
+            X_test = X_test[test_size:]
+            y_test = y_test[test_size:]
         # timeseries split
         elif time_series is True:
             assert (

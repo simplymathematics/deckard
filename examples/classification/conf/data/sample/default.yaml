@@ -2,4 +2,5 @@ random_state: 42
 shuffle: true
 stratify: true
 time_series: true
-train_size: .8
+test_size: 1000
+train_size: 1000

@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 import yaml
 import logging 
-from sklearn.model_selection import ParameterGrid
+from typing import List
 from mergedeep import merge
 from deckard.base.hashable import my_hash
 
@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 
 def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'ground_truth']) -> pd.DataFrame:
     """
-    
-    
+    Parse a folder containing json files and return a dataframe with the results, excluding the files in the exclude list.
+    :param folder: Path to folder containing json files
+    :param exclude: List of files to exclude. Default: ['probabilities', 'predictions', 'plots', 'ground_truth'].
+    :return: Pandas dataframe with the results
     """
     folder = Path(folder)
     results = {}
@@ -28,6 +30,10 @@ def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'gr
     return pd.DataFrame(results).T
 
 def flatten_results(results):
+    """
+    Flatten a dataframe containing json files. So that each json dict entry becomes a column with dot notation (e.g. "key1.subkey1")
+    :param results: Pandas dataframe containing json files
+    """
     new_results = pd.DataFrame()
     logger.debug("Flattening results...")
     for col in results.columns:
@@ -36,23 +42,34 @@ def flatten_results(results):
     return new_results
 
 
-def parse_results(result_dir, delete_columns = []):
+def parse_results(result_dir, regex="*/*", flatten = True):
+    """
+    Recursively parse a directory containing json files and return a dataframe with the results.
+    :param result_dir: Path to directory containing json files
+    :param regex: Regex to match folders to parse. Default: "*/*"
+    :param flatten: Whether to flatten the results. Default: True
+    :return: Pandas dataframe with the results
+    """
     result_dir = Path(result_dir)
     assert result_dir.is_dir(), f"Result directory {result_dir} does not exist."
     results = pd.DataFrame()
     logger.debug("Parsing results...")
-    for folder in result_dir.glob("*/*"):
+    for folder in result_dir.glob(regex):
         tmp = parse_folder(folder)
-        tmp = flatten_results(tmp)
+        if flatten == True:
+            tmp = flatten_results(tmp)
         results = pd.concat([results, tmp])
-    # results = drop_static_columns(results, delete_columns =delete_columns)
     return results
 
 
 
-def set_for_keys(my_dict, key_arr, val):
+def set_for_keys(my_dict, key_arr, val) -> dict:
     """
-    Set val at path in my_dict defined by the string (or serializable object) array key_arr
+    Set val at path in my_dict defined by the string (or serializable object) array key_arr.
+    :param my_dict: Dictionary to set value in
+    :param key_arr: Array of keys to set value at
+    :param val: Value to set
+    :return: Dictionary with value set
     """
     current = my_dict
     for i in range(len(key_arr)):
@@ -66,12 +83,16 @@ def set_for_keys(my_dict, key_arr, val):
             if type(current[key]) is not dict:
                 print("Given dictionary is not compatible with key structure requested")
                 raise ValueError("Dictionary key already occupied")
-
         current = current[key]
-
     return my_dict
 
-def unflatten_results(df, sep="."):
+def unflatten_results(df, sep=".") -> List[dict]:
+    """
+    Unflatten a dataframe with dot notation columns (e.g. "key1.subkey1") into a list of dictionaries.
+    :param df: Pandas dataframe with dot notation columns
+    :param sep: Separator to use. Default: "."
+    :return: List of dictionaries
+    """
     logger.debug("Unflattening results...")
     result = []
     for _, row in df.iterrows():
@@ -80,11 +101,13 @@ def unflatten_results(df, sep="."):
             if val == val:
                 keys = idx.split(sep)
                 parsed_row = set_for_keys(parsed_row, keys, val)
-
         result.append(parsed_row)
     return result
 
-def find_best_subset(df, kwargs: dict = {}):
+def find_subset(df, kwargs: dict = {}) -> pd.DataFrame:
+    """
+    Finds the subset of a dataframe that matches the given kwargs.
+    """
     logger.debug("Finding best subset...")
     for col in kwargs.keys():
         df = df[df[col] == kwargs[col]]
@@ -118,13 +141,16 @@ def create_param_files_from_df(df, default_param_file = "queue/default.yaml", ou
         paths.append(str(Path(output_dir, filename + ".yaml")))
     return paths
 
-def drop_static_columns(df, delete_columns = []):
+def drop_static_columns(df) -> pd.DataFrame:
+    """
+    Drop columns that contain only one unique value.
+    :param df: Pandas dataframe
+    :return: Pandas dataframe with static columns dropped
+    """
     logger.debug("Dropping static columns...")
     for col in df.columns:  # Loop through columns
         if isinstance(df[col].iloc[0], list) and len(df[col].iloc[0]) == 1:  # Find columns that contain lists of length 1
             df[col] = df[col].apply(lambda x: x[0])
-        if col in delete_columns:
-            df.drop([col], axis=1, inplace=True)
         try:
             if len(df[col].unique()) == 1:  # Find unique values in column along with their length and if len is == 1 then it contains same values
                 df.drop([col], axis=1, inplace=True) 
@@ -133,7 +159,10 @@ def drop_static_columns(df, delete_columns = []):
     return df
 
 
-def compile_results(report_folder, results_file, delete_columns = []):
+def save_results(report_folder, results_file, delete_columns = []) -> str:
+    """
+    
+    """
     logger.info("Compiling results...")
     results = parse_results(report_folder, delete_columns = delete_columns)
     results.to_csv(results_file)
@@ -151,7 +180,7 @@ def find_best_params(filename, scorer, default_param_file, output_folder, contro
     else:
         best_df = pd.DataFrame()
         for params in big_list:
-            subset = find_best_subset(results, kwargs = {control_for : params})
+            subset = find_subset(results, kwargs = {control_for : params})
             sorted = subset.sort_values(by =scorer, ascending = False).head(1)
             best_df = pd.concat([best_df, sorted])
             best_df = best_df.reset_index(drop = True)
@@ -159,7 +188,41 @@ def find_best_params(filename, scorer, default_param_file, output_folder, contro
     best_df['files.path'] = indexes
     return best_df
 
+def delete_these_columns(df, columns) -> pd.DataFrame:
+    """
+    Delete columns from a dataframe.
+    :param df: dataframe
+    :param columns: list of columns to delete
+    :return: dataframe
+    """
+    for col in columns:
+        del df[col]
+    return df
 
+
+def dump_best_model_to_yaml(df, col = None, path = "best_models", scorer = "accuracy", n=1) -> List[str]:
+    """
+    Dumps the best model to a yaml configuration file.
+    :param df: dataframe
+    :param col: column to group by. Will find the best configuration for each unique value in the column.
+    :param path: path to save the yaml file. Defaults to "best_models".
+    :param scorer: column to sort by. Defaults to "accuracy".
+    :param n: number of best models to save. Defaults to 1.
+    :return: list of yaml files
+    """
+    Path(path).mkdir(parents=True, exist_ok=True)
+    files = []
+    if col is None:
+        result = df.sort_values(by = scorer, ascending = False).head(n)
+    else:
+        cols = df[col].unique()
+        for col_i in cols:
+            result = df[df[col] == col_i].sort_values(by = scorer, ascending = False).head(n)
+            del result[scorer]
+            with open(f"{path}/{col}.yaml", "w") as f:
+                yaml.dump(unflatten_results(result)[0], f)
+            files.append(f"{path}/{col}.yaml")
+    return files
 
 if __name__ == "__main__":
     
@@ -180,7 +243,12 @@ if __name__ == "__main__":
     default_param_file = args.default_param_file
     output_folder = args.output_folder
     control_for = args.control_for
-    report_file = compile_results(report_folder, results_file, delete_columns = ["Unnamed: 0", "model.init.random_state"])
+    report_file = save_results(report_folder, results_file, delete_columns = ["Unnamed: 0", "model.init.random_state"])
     assert Path(report_file).exists(), f"Results file {report_folder} does not exist. Something went wrong."
-    best_df = find_best_params(report_file, scorer, default_param_file, output_folder, control_for)
-    param_files = create_param_files_from_df(best_df, default_param_file = default_param_file, output_dir = output_folder)
+    results = pd.read_csv(report_file, index_col = 0)
+    kwargs = { "data.sample.train_size" : 1000, "data.generate.n_features" : 100}
+    tmp = find_subset(results, kwargs = kwargs)
+    tmp = delete_these_columns(tmp, ['f1', 'precision', 'recall', 'predict_time', 'fit_time', 'proba_time'])
+    best_files = dump_best_model_to_yaml(tmp, col = 'model.init.kernel', path = output_folder, scorer = scorer, n=1)
+    for file in best_files:
+        assert Path(file).exists(), f"{file} does not exist."

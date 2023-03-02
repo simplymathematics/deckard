@@ -1,21 +1,14 @@
 defaults:
   - _self_
-  - data/files : default.yaml
-  - data/generate : default.yaml
-  - data/sample : default.yaml
-  - data/name : default.yaml
-  - model/files : default.yaml
-  - model/init : svc.yaml
-  # - model/art_pipeline/postprocessor: default.yaml
-  # - model/art_pipeline/preprocessor: default.yaml
-  # - plots: default.yaml
+  - data : default.yaml
+  - model : default.yaml
   - scorers/accuracy : default.yaml
   - scorers/f1 : default.yaml
   - scorers/precision : default.yaml
   - scorers/recall : default.yaml
   - files : default.yaml
-  - attack/init : default.yaml
-  - attack/generate : default.yaml
+  - attack : default.yaml
+  - plots : default.yaml
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: grid
 hydra:
@@ -25,7 +18,15 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction:
     - maximize
-    storage: null
-    study_name: pareto
+    storage: sqlite:////Home/staff/cmeyers/deckard/examples/classification/db.sqlite3
+    study_name: models
     n_jobs: 32
+    n_trials : 1000
+    # custom_search_space: deckard.layers.optimize.configure_SVC
+    # params:
+      # model.init.kernel : choice(rbf, poly, linear, sigmoid)
+      # model.init.coef0: choice(.0001, .001, .01, .1, 1, 10, 100, 1000, 10000, 100000)
+      # model.init.degree: choice(1, 2, 3, 4, 5)
+      # model.init.C : choice(.0001, .001, .01, .1, 1, 10, 100, 1000, 10000, 100000)
+      # data.generate.n_features: choice(10, 100, 300, 500, 1000)
     

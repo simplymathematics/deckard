@@ -92,3 +92,5 @@ examples/tikho/Tikhonov Training Loss/scalars/f1.tsv
 examples/**/*/report.hml
 examples/.tikho/
 **/*/.dvc/*
+outputs/
+examples/**/*.nfs*

@@ -1,18 +1,21 @@
 import collections
+import json
 import logging
+import pickle
+from argparse import Namespace
+from copy import deepcopy
 from pathlib import Path
 from time import process_time
 from typing import Callable, List
-from argparse import Namespace
-import json
+
 import numpy as np
-from art.exceptions import EstimatorError
-from copy import deepcopy
+import yaml
+from art.estimators.classification.scikitlearn import ScikitlearnSVC
 from pandas import DataFrame, Series
 
 from .hashable import BaseHashable
+from .scorer import Scorer
 from .utils import factory
-
 
 ART_NUMPY_DTYPE = "float32"
 
@@ -36,9 +39,12 @@ class Attack(
         :param config: str, path to config file.
         :returns: tuple(object, dict), (attck, generate).
         """
+        logger.info("Loading attack")
         params = deepcopy(dict(self._asdict()))
         name = params["attack"]["init"].pop("name")
-        art_model = model.load(model, art = True)
+        if hasattr(model, "steps"):
+            model = model.steps[-1][1]
+        model = ScikitlearnSVC(model, clip_values=(0, 1))
         try:
             attack = factory(name, model, **params["attack"]["init"])
         except ValueError as e:
@@ -46,16 +52,18 @@ class Attack(
                 f"White-box attack failed with error: {e}. Trying black-box.",
             )
             attack = factory(name, **params)
+        
         except Exception as e:
             raise e
         generate = params.pop("generate", {})
-        return (attack, generate, art_model)
+        return (attack, generate, model)
 
     def fit(self, data, model, targeted=False):
+        logger.info("Fitting attack")
         start = process_time()
         if "X_test" not in vars(data):
             data = data.load()
-        attack, gen, _ = self.load(model)
+        attack, gen, model = self.load(model)
         if hasattr(data.X_test, "values"):
             data.X_test = data.X_test.values
         if hasattr(data.y_test, "values"):
@@ -75,23 +83,72 @@ class Attack(
         return attack_samples, end/attack_size
     
     def predict(self, attack_samples, model):
+        logger.info("Predicting attack samples")
         start = process_time()
-        attack_pred = model.model.predict(attack_samples)
+        attack_pred = model.predict(attack_samples)
+        end = process_time() - start
+        return attack_pred, end/len(attack_samples)
+
+    def predict_proba(self, attack_samples, model):
+        logger.info("Predicting attack samples")
+        start = process_time()
+        attack_pred = model.predict_proba(attack_samples)
         end = process_time() - start
         return attack_pred, end/len(attack_samples)
     
+    def score(self, ground_truth = None, predictions = None) -> List[Path]:
+        """
+        :param self: specified in the config file.
+        """
+        logger.info("Scoring attack")
+        yaml.add_constructor("!Scorer:", Scorer)
+        scorer = yaml.load("!Scorer:\n" + str(self._asdict()), Loader=yaml.FullLoader)
+        score_paths = scorer.score_from_memory(ground_truth, predictions)
+        return score_paths
+    
     def run_attack(self, data, model, targeted=False):
+        logger.info("Running attack")
+        score_dict = {}
         attack_samples, fit_time = self.fit(data, model, targeted)
-        probabilities, predict_time = self.predict(attack_samples, model)
-        time_dict = {"fit_time": fit_time, "predict_time": predict_time}
+        probabilities, proba_time = self.predict_proba(attack_samples, model)
+        predictions, predict_time = self.predict(attack_samples, model)
+        time_dict = {
+            "attack_fit_time": fit_time,
+            "attack_predict_time": predict_time,
+            "attack_proba_time": proba_time,
+        }
+        if "score_dict_file" in self.files:
+            logger.info("Scoring")
+            score_dict = self.score(data.y_test, predictions)
+        for key in score_dict.keys():
+            new_key = "attack_" + key
+            score_dict[new_key] = score_dict[key]
         results = {
-            "adv_samples": attack_samples,
-            "adv_predictions": probabilities,
-            "adv_time_dict": time_dict,
+            "attack_samples": attack_samples,
+            "attack_predictions": probabilities,
+            "attack_time_dict": time_dict,
+            "attack_score_dict": score_dict,
         }
         outs = self.save(**results)
         return outs
-
+    
+    def save_model(self, model: object) -> Path:
+        """Saves model to specified file.
+        :model model: object, model to save.
+        :returns: Path, path to saved model.
+        """
+        filename = Path(self.files["model_file"])
+        path = Path(filename).parent
+        path.mkdir(parents=True, exist_ok=True)
+        if hasattr(model, "save"):
+            model.save(Path(filename).stem, path=path)
+        else:
+            if hasattr("model", "model"):
+                model = model.model
+            with open(filename, "wb") as f:
+                pickle.dump(model, f)
+        return str(Path(filename).as_posix())
+    
     def save_attack_time(
         self,
         time_dict: dict,
@@ -99,7 +156,8 @@ class Attack(
         """
         Saves the time dictionary to a json file.
         """
-        filename = Path(self.files["attack_path"], self.files["time_dict_file"])
+        logger.info("Saving attack time")
+        filename = Path(self.files["path"], self.files["attack_time_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         Series(time_dict).to_json(filename)
         assert Path(filename).exists(), f"File {filename} not saved."
@@ -109,7 +167,8 @@ class Attack(
         """
         Saves the attack parameters to a json file.
         """
-        filename = Path(self.files["attack_path"], self.files["params_file"])
+        logger.info("Saving attack parameters")
+        filename = Path(self.files["path"], self.files["attack_params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(self._asdict(), f)
@@ -118,35 +177,37 @@ class Attack(
 
     def save_attack_samples(
         self,
-        samples: np.ndarray,
+        attack_samples: np.ndarray,
     ) -> Path:
         """
         Saves adversarial examples to specified file.
         """
-        filename = Path(self.files["attack_path"], self.files["attack_samples_file"])
+        logger.info("Saving attack samples")
+        filename = Path(self.files["path"], self.files["attack_samples_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
-        attack_results = DataFrame(samples.reshape(samples.shape[0], -1))
+        attack_results = DataFrame(attack_samples.reshape(attack_samples.shape[0], -1))
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
         return str(Path(filename))
 
     def save_attack_predictions(
         self,
-        predictions: np.ndarray,
+        attack_predictions: np.ndarray,
     ) -> Path:
         """
         Saves adversarial predictions to specified file.
         """
-        filename = Path(self.files["attack_path"], self.files["predictions_file"])
+        logger.info("Saving attack predictions")
+        filename = Path(self.files["path"], self.files["attack_predictions_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
-        attack_results = DataFrame(predictions)
+        attack_results = DataFrame(attack_predictions)
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
         return str(Path(filename))
 
     def save_attack_scores(
         self,
-        score_dict: dict,
+        attack_score_dict: dict,
     ) -> Path:
         """Saves adversarial results to specified file.
 
@@ -154,10 +215,17 @@ class Attack(
 
         :return path: Path to saved file.
         """
-        filename = Path(self.files["attack_path"], self.files["score_dict_file"])
+        logger.info("Saving attack scores")
+        filename = Path(self.files["path"], self.files["attack_score_dict_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w") as f:
-            json.dump(score_dict, f)
+            try:
+                json.dump(attack_score_dict, f)
+            except TypeError as e:
+                if isinstance(attack_score_dict, Series):
+                    attack_score_dict.to_json(f)
+                else:
+                    raise e
         assert Path(filename).exists(), "Adversarial example file not saved"
         return str(Path(filename))
 
@@ -165,10 +233,10 @@ class Attack(
         self,
         data: Namespace = None,
         model: Callable = None,
-        score_dict: dict = None,
-        predictions: dict = None,
-        samples: dict = None,
-        time_dict: dict = None,
+        attack_score_dict: dict = None,
+        attack_predictions: dict = None,
+        attack_samples: dict = None,
+        attack_time_dict: dict = None,
     ) -> List[Path]:
         """
         Saves the attack result as specified in the config file.
@@ -179,21 +247,22 @@ class Attack(
         :param samples: dict, dictionary of adversarial samples.
         :param time_dict: dict, dictionary of times.
         """
+        logger.info("Saving attack results")
         outs = {}
-        if data is not None:
-            raise NotImplementedError("Saving data not implemented yet.")
+        # if data is not None:
+        #     raise NotImplementedError("Saving data not implemented yet.")
         if model is not None:
-            raise NotImplementedError("Saving model not implemented yet.")
-        if score_dict is not None:
-            file = self.save_attack_scores(score_dict)
-            outs.update({"scores": file})
-        if predictions is not None:
-            file = self.save_attack_predictions(predictions)
+            self.save_model(model)
+        if attack_score_dict is not None:
+            file = self.save_attack_scores(attack_score_dict)
+            outs.update({"attack_scores": file})
+        if attack_predictions is not None:
+            file = self.save_attack_predictions(attack_predictions)
             outs.update({"attack_predictions": file})
-        if samples is not None:
-            file = self.save_attack_samples(samples)
+        if attack_samples is not None:
+            file = self.save_attack_samples(attack_samples)
             outs.update({"attack_samples": file})
-        if time_dict is not None:
-            file = self.save_attack_time(time_dict)
+        if attack_time_dict is not None:
+            file = self.save_attack_time(attack_time_dict)
             outs.update({"attack_time": file})
         return outs

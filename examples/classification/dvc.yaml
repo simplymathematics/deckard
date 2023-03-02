@@ -5,7 +5,7 @@ stages:
       - data
       - files
     outs:
-      - generate_data/${files.data_file}
+      - ${files.data_file}
     metrics:
       - ${files.reports}/generate_data/${files.path}
     deps:
@@ -14,35 +14,47 @@ stages:
     cmd: python -m deckard.layers.runner train
     params:
       - data
-      - model
+      - model.init
       - files
       - scorers
     deps:
-      - generate_data/${files.data_file}
-    outs:
-      - train/${files.data_file}
-      - train/${files.model_file}
+      - ${files.data_file}
+    # outs:
+      # - ${files.data_file}
+      # - train/${files.model_file}
     metrics:
       - ${files.reports}/train/${files.path}/
   attack : 
     cmd : python -m deckard.layers.runner attack 
-    outs:
-      - attack/
+    metrics:
+      - ${files.reports}/attack/${files.path}/
     params:
       - data
-      - model
+      - model.init
       - attack
       - files
       - scorers
     deps:
-      - train/
-  # generate_queue:
+      - ${files.reports}/train/${files.path}/
+  # retrain:
+  #   cmd : python retrain.py
+  #   params: 
+  #     - data
+  #     - model.init
+  #     - model.art_pipeline
+  #     - attack
+  #     - files
+  #     - scorers
+  #   deps:
+  #     - attack/
+  #   outs:
+  #     - retrain/
+  # model_queue:
   #   cmd: bash experiments.sh 
   #   outs:
-  #     - queue/
+  #     - model_queue/
   #   deps:
-  #     - train/${files.data_file}
-  #     - train/${files.model_file}
+  #     - attack/
   # compile_results:
   #   cmd : python -m deckard.layers.compile
   #   outs: 
@@ -50,5 +62,5 @@ stages:
   #   metrics:
   #     - newest_results.csv
   #   deps:
-  #     - queue/
+  #     - model_queue/
   
