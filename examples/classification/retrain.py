@@ -1,16 +1,17 @@
-import pickle 
 import json
 import logging
 from pathlib import Path
 from time import process_time
+
 import numpy as np
-from tqdm import tqdm
-from pandas import DataFrame
-from sklearn.svm import SVC
-from art.estimators.classification.scikitlearn import ScikitlearnSVC
+import pandas as pd
 from art.attacks.evasion import ProjectedGradientDescent
 from art.defences.trainer import AdversarialTrainer
+from art.estimators.classification.scikitlearn import ScikitlearnSVC
 from art.utils import to_categorical
+from pandas import DataFrame
+from sklearn.svm import SVC
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
             "ben_loss": ben_loss,
             "adv_loss": adv_loss,
             "attack_size": attack_size,
+            "train_size": len(X_train),
         })
         outputs = {
             "ben_predictions": DataFrame(ben_predictions).to_json(orient="records"),
@@ -59,37 +61,38 @@ def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
         # Some Logging
         print("Epoch: {} - Benign Time: {} - Benign Score: {} - Adversarial Time: {} - Adversarial Score: {}".format(i, ben_time, ben_score, adv_time, adv_score))
         logger.info("Epoch: {} - Benign Time: {} - Benign Score: {} - Adversarial Time: {} - Adversarial Score: {}".format(i, ben_time, ben_score, adv_time, adv_score))
+    results = pd.DataFrame(results)
     return results, outputs
 
-def save_results_and_outputs(results, outputs, path = "retrain/tmp") -> list:
+def save_results_and_outputs(results, outputs, path = "retrain") -> list:
     Path(path).mkdir(parents=True, exist_ok=True)
     for output in outputs:
         with open(f"{path}/{output}.json", "w") as f:
             json.dump(outputs[output], f)
         assert Path(f"{path}/{output}.json").exists(), f"Problem saving {path}/{output}"
-    with open(f"{path}/results.json", "w") as f:
-        json.dump(results, f)
-    assert Path(f"{path}/results.json").exists(), f"Problem saving results to {path}/results.json"
+    results.to_csv(f"{path}/results.csv")
+    assert Path(f"{path}/results.csv").exists(), f"Problem saving results to {path}/results.csv"
     
 
 
 attack_size = 100
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
+
 epochs = 20
-max_iter = 1000
+max_iter = -1
 X,y = make_classification(n_samples=12500, n_features=100, n_informative=99, n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=1, weights=None,  class_sep=1.0, hypercube=True, shift=0.0, scale=1.0, shuffle=True, random_state=None)
 y = to_categorical(y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 logger.info("Creating model")
-for kernel in ['linear', 'poly', 'rbf', 'sigmoid']:
-    model = SVC(kernel=kernel, probability=True)
+for kernel in ['linear', 'poly', 'rbf']:
+    model = SVC(kernel=kernel, probability=True,max_iter=max_iter)
     clf = ScikitlearnSVC(model=model)
     logger.info("Fitting model")
     clf.fit(X_train, y_train)
     atk = ProjectedGradientDescent(estimator=clf, eps=1, eps_step=0.1, max_iter=10, targeted=False, num_random_init=0, batch_size=attack_size)
     results, outputs = retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs)
-    save_results_and_outputs(results, outputs, path = f"retrain/{kernel}")
+    
 
     
 

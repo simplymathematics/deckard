@@ -11,6 +11,7 @@ defaults:
   - plots : default.yaml
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: grid
+  - override hydra/launcher: joblib
 hydra:
   sweeper:
     sampler:
@@ -18,15 +19,22 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction:
     - maximize
-    storage: sqlite:////Home/staff/cmeyers/deckard/examples/classification/db.sqlite3
+    storage: sqlite:///db.sqlite3
     study_name: models
-    n_jobs: 32
     n_trials : 1000
-    # custom_search_space: deckard.layers.optimize.configure_SVC
-    # params:
-      # model.init.kernel : choice(rbf, poly, linear, sigmoid)
-      # model.init.coef0: choice(.0001, .001, .01, .1, 1, 10, 100, 1000, 10000, 100000)
-      # model.init.degree: choice(1, 2, 3, 4, 5)
-      # model.init.C : choice(.0001, .001, .01, .1, 1, 10, 100, 1000, 10000, 100000)
-      # data.generate.n_features: choice(10, 100, 300, 500, 1000)
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 1
+    backend: null
+    prefer: processes
+    require: null
+    verbose: 0
+    timeout: null
+    pre_dispatch: 2*n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: null
+    mmap_mode: r
+#@package hydra.launcher
+
     

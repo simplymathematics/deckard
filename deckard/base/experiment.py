@@ -10,6 +10,7 @@ import json
 from copy import deepcopy
 import pandas as pd
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder, label_binarize
+from sklearn.exceptions import NotFittedError
 from argparse import Namespace
 from art.utils import to_categorical
 from .data import Data
@@ -40,6 +41,7 @@ class Experiment(
         :returns: tuple(dict, dict, dict, dict, YellowbrickVisualizer), (data, model, attack, files, vis).
         """
         params = deepcopy(self._asdict())
+        
         if len(params["data"]) > 0:
             yaml.add_constructor("!Data:", Data)
             data_document = """!Data:\n""" + str(dict(params["data"]))
@@ -50,7 +52,10 @@ class Experiment(
             ), "Data initialization failed. Check config file."
         else:
             raise ValueError("Data not specified in config file")
-        if len(params["model"]) > 0:
+        if "data_file" in params["files"] and Path(params["files"]["data_file"]).exists():
+            data = data.load(params["files"]["data_file"])
+        
+        if len(params["model"]) > 0 :
             yaml.add_constructor("!Model:", Model)
             model_document = """!Model:\n""" + str(dict(params["model"]))
             model = yaml.load(model_document, Loader=yaml.Loader)
@@ -61,6 +66,8 @@ class Experiment(
 
         else:
             model = {}
+        if "model_file" in params["files"] and Path(params["files"]["model_file"]).exists():
+            model = model.load(params["files"]["model_file"])
         files = deepcopy(params["files"]) if "files" in params else {}
         return (data, model, files)
 
@@ -215,11 +222,12 @@ class Experiment(
         fit_params = deepcopy(self.model["fit"]) if "fit" in self.model else {}
         if isinstance(data, Data):
             loaded_data = data.load(self.files["data_file"])
-                 
+        else:
+            loaded_data = data        
         if isinstance(model, Model):
             loaded_model = model.load(self.files["model_file"], art)
         else:
-            raise ValueError(f"model must be a Model object. It is type {type(model)}")
+            loaded_model = model
         try:
             start = process_time()
             loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
@@ -244,6 +252,15 @@ class Experiment(
                 if len(loaded_data.y_test.shape) == 1:
                     loaded_data.y_test = to_categorical(loaded_data.y_test)
                 start = process_time()
+                loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
+            elif "Scikitlearn" and  "loss_gradient" in str(e):
+                from art.estimators.classification.scikitlearn import ScikitlearnSVC
+                if hasattr(loaded_model, "steps"):
+                    loaded_model = loaded_model.steps[-1][-1]
+                if hasattr(loaded_model, "model"):
+                    loaded_model = ScikitlearnSVC(model=loaded_model.model, clip_values=(0, 1))
+                else:
+                    loaded_model = ScikitlearnSVC(model=model, clip_values=(0, 1))
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             else:
@@ -313,8 +330,8 @@ class Experiment(
         path.mkdir(parents=True, exist_ok=True)
         if "data_file" in self.files and data is not None:
             files.update({"data": self.save_data(data)})
-        if "model_file" in self.files and model is not None:
-            files.update({"model": self.save_model(model)})
+        # if "model_file" in self.files and model is not None:
+        #     files.update({"model": self.save_model(model)})
         if "params_file" in self.files:
             files.update({"params": self.save_params()})
         if "ground_truth_file" in self.files and ground_truth is not None:
@@ -333,7 +350,6 @@ class Experiment(
     def run(
         self,
         art=False,
-        mtype="classifier",
     ) -> dict:
         """
         Runs experiment and saves results according to config file.
@@ -352,13 +368,13 @@ class Experiment(
         else:
             path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Saving to {path}")
-        if not isinstance(data, Data) and len(data) > 0:
-            data = data.load(self.files["data_file"])
-        if not isinstance(model, (Model)) and len(model) > 0:
-            model = model.load(self.files["model_file"], art=art)
         #######################################################################
         # Fit model, if applicable
-        if "ground_truth_file" in files and len(model) > 0:
+        if isinstance(data, Namespace) :
+            loaded_data = data
+        else:
+            loaded_data = data.load(self.files["data_file"])
+        if len(model) > 0 and isinstance(model, Model):
             logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model, art=art)
             time_dict.update({"fit_time": fit_time})
@@ -368,10 +384,8 @@ class Experiment(
                 "ground_truth": loaded_data.y_test,
             }
             results["time_dict"] = time_dict
-        # if Model is initialized
-        elif isinstance(model, Model) and "ground_truth_file" not in files:
-            loaded_data = data.load(self.files["data_file"])
-            fitted_model = model.load(self.files["model_file"], art=art)
+        elif hasattr(model, "fit"):
+            fitted_model = model
             results = {
                 "data": loaded_data,
                 "model": fitted_model,
@@ -381,13 +395,19 @@ class Experiment(
 
         # only true if model not specificed in config
         elif isinstance(model, dict) and len(model) == 0:
-            loaded_data = data.load(self.files["data_file"])
+            
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
             results["time_dict"] = time_dict
         #######################################################################
         if "predictions_file" in files and len(model) > 0:
             logger.info("Predicting")
-            predictions, predict_time = self.predict(loaded_data, fitted_model, art=art)
+            try:
+                predictions, predict_time = self.predict(loaded_data, fitted_model, art=art)
+            except NotFittedError or ValueError:
+                logger.warning("Model not fitted. Fitting model.")
+                loaded_data, fitted_model, fit_time = self.fit(data, model, art=art)
+                predictions, predict_time = self.predict(loaded_data, fitted_model, art=art)
+                time_dict.update({"fit_time": fit_time})
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
             results["time_dict"].update(time_dict)
@@ -407,20 +427,18 @@ class Experiment(
             score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
         #######################################################################
-        if "attack_samples_file" in files and len(model) > 0:
+        if "attack_samples_file" in files and len(self.attack) > 0:
             attack = "!Attack:\n" + str(self._asdict())
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
-            self.files["attack_path"] = str(path.as_posix())
             targeted = (
-                attack.attack["init"]["targeted"]
-                if "targeted" in attack.attack["init"]
+                attack._asdict()['attack']["init"]["targeted"]
+                if "targeted" in attack._asdict()['attack']["init"]
                 else False
             )
             attack_results = attack.run_attack(
                 data=loaded_data,
                 model=fitted_model,
-                mtype=mtype,
                 targeted=targeted,
             )
             outs.update(attack_results)

@@ -2,13 +2,11 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
+from collections import OrderedDict
 
 import hydra
 import numpy as np
-import yaml
-from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate, call
-from omegaconf import DictConfig, OmegaConf
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
@@ -134,7 +132,11 @@ class DataConfig:
         if filetype is None:
             filetype = self.filetype if self.filetype is not None else "npz"
         path = Path(path) / Path(str(filename) + "." + filetype)
-        np.savez(file=str(path.resolve()), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        if filetype == "npz":
+            np.savez(file=str(path.resolve()), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        else:
+            raise NotImplementedErrror(f"Filetype {filetype} not implemented yet.")
+        
         return path
 
     def __call__(self, filename=None, path=None, filetype=None) -> Tuple:
@@ -154,9 +156,9 @@ def my_app(cfg) -> None:
     yaml_config = dict(cfg)
     parsed_config = parse(yaml_config)
     instance = instantiate(parsed_config)
-    generator = instantiate(instance.data.generate)
-    generator.pop("__target__")
-    generator = ClassificationGeneratorConfig(**generator)
+    generator_params = instantiate(instance.data.generate)
+    generator = generator_params.pop("__target__", "ClassificationGeneratorConfig")
+    generator = generator(**generator_params)
     sampler = instantiate(instance.data.sample)
     sampler.pop("__target__")
     sampler = SamplerConfig(**sampler)

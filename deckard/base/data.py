@@ -124,6 +124,9 @@ class Data(
             assert self.generate is not None, ValueError(
                 "generate datasets requires a dictionary of parameters named 'generate' in params.yaml",
             )
+            for k, v in self.generate.items():
+                if str(v).capitalize in ["None", "False", "Null", ""]:
+                    self.generate.pop(k)
             big_X, big_y = generate[name](**self.generate)
         else:
             raise ValueError(f"Unknown dataset: {name}")

@@ -33,7 +33,7 @@ class Attack(
     def __new__(cls, loader, node):
         return super().__new__(cls, **loader.construct_mapping(node))
 
-    def load(self, model) -> tuple:
+    def load(self, data, model) -> tuple:
         """
         Loads data, model from the config file.
         :param config: str, path to config file.
@@ -45,6 +45,7 @@ class Attack(
         if hasattr(model, "steps"):
             model = model.steps[-1][1]
         model = ScikitlearnSVC(model, clip_values=(0, 1))
+        model.model.fit_status_ = 0
         try:
             attack = factory(name, model, **params["attack"]["init"])
         except ValueError as e:
@@ -63,7 +64,7 @@ class Attack(
         start = process_time()
         if "X_test" not in vars(data):
             data = data.load()
-        attack, gen, model = self.load(model)
+        attack, gen, model = self.load(data, model)
         if hasattr(data.X_test, "values"):
             data.X_test = data.X_test.values
         if hasattr(data.y_test, "values"):
@@ -92,6 +93,7 @@ class Attack(
     def predict_proba(self, attack_samples, model):
         logger.info("Predicting attack samples")
         start = process_time()
+        assert hasattr(model, "predict_proba"), "Model must have predict_proba method."
         attack_pred = model.predict_proba(attack_samples)
         end = process_time() - start
         return attack_pred, end/len(attack_samples)
@@ -125,7 +127,8 @@ class Attack(
             score_dict[new_key] = score_dict[key]
         results = {
             "attack_samples": attack_samples,
-            "attack_predictions": probabilities,
+            "attack_probabilities": probabilities,
+            "attack_predictions": predictions,
             "attack_time_dict": time_dict,
             "attack_score_dict": score_dict,
         }
@@ -204,6 +207,21 @@ class Attack(
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
         return str(Path(filename))
+    
+    def save_attack_probabilities(
+        self,
+        attack_probabilities: np.ndarray,
+    ) -> Path:
+        """
+        Saves adversarial probabilities to specified file.
+        """
+        logger.info("Saving attack probabilities")
+        filename = Path(self.files["path"], self.files["attack_probabilities_file"])
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        attack_results = DataFrame(attack_probabilities)
+        attack_results.to_json(filename)
+        assert Path(filename).exists(), "Adversarial example file not saved"
+        return str(Path(filename))
 
     def save_attack_scores(
         self,
@@ -235,6 +253,7 @@ class Attack(
         model: Callable = None,
         attack_score_dict: dict = None,
         attack_predictions: dict = None,
+        attack_probabilities: dict = None,
         attack_samples: dict = None,
         attack_time_dict: dict = None,
     ) -> List[Path]:
@@ -249,20 +268,23 @@ class Attack(
         """
         logger.info("Saving attack results")
         outs = {}
-        # if data is not None:
-        #     raise NotImplementedError("Saving data not implemented yet.")
+        if data is not None:
+            logger.warning("Saving ttack data is not implemented yet.")
         if model is not None:
             self.save_model(model)
         if attack_score_dict is not None:
             file = self.save_attack_scores(attack_score_dict)
-            outs.update({"attack_scores": file})
+            outs.update({"attack_score_dict": file})
         if attack_predictions is not None:
             file = self.save_attack_predictions(attack_predictions)
             outs.update({"attack_predictions": file})
+        if attack_probabilities is not None:
+            file = self.save_attack_probabilities(attack_probabilities)
+            outs.update({"attack_probabilities": file})
         if attack_samples is not None:
             file = self.save_attack_samples(attack_samples)
             outs.update({"attack_samples": file})
         if attack_time_dict is not None:
             file = self.save_attack_time(attack_time_dict)
-            outs.update({"attack_time": file})
+            outs.update({"attack_time_dict": file})
         return outs

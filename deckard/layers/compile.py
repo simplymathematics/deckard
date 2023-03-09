@@ -7,10 +7,13 @@ import logging
 from typing import List
 from mergedeep import merge
 from deckard.base.hashable import my_hash
+from tqdm import tqdm
+import os
+
 
 logger = logging.getLogger(__name__)
 
-def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'ground_truth']) -> pd.DataFrame:
+def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'ground_truth', "attack_predictions", "attack_probabilities", "samples"]) -> pd.DataFrame:
     """
     Parse a folder containing json files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing json files
@@ -42,7 +45,7 @@ def flatten_results(results):
     return new_results
 
 
-def parse_results(result_dir, regex="*/*", flatten = True):
+def parse_results(result_dir,  flatten = True):
     """
     Recursively parse a directory containing json files and return a dataframe with the results.
     :param result_dir: Path to directory containing json files
@@ -54,10 +57,13 @@ def parse_results(result_dir, regex="*/*", flatten = True):
     assert result_dir.is_dir(), f"Result directory {result_dir} does not exist."
     results = pd.DataFrame()
     logger.debug("Parsing results...")
-    for folder in result_dir.glob(regex):
+    total = len(list(Path(result_dir).iterdir()))
+    print(f"Parsing {total} folders...")
+    for folder in tqdm(Path(result_dir).iterdir()):
         tmp = parse_folder(folder)
         if flatten == True:
             tmp = flatten_results(tmp)
+        tmp = tmp.loc[:, ~tmp.columns.duplicated()]
         results = pd.concat([results, tmp])
     return results
 
@@ -111,10 +117,9 @@ def find_subset(df, kwargs: dict = {}) -> pd.DataFrame:
     logger.debug("Finding best subset...")
     for col in kwargs.keys():
         df = df[df[col] == kwargs[col]]
-    select_these = df
-    return select_these
+    return df
 
-def create_param_files_from_df(df, default_param_file = "queue/default.yaml", output_dir = "best" ):
+def create_param_files_from_df(df, default_param_file = "queue/default.yaml", output_dir = "best" ) -> List[Path]:
     logger.debug("Creating param files from dataframe...")
     paths = []
     select_these = df.copy()
@@ -161,7 +166,7 @@ def drop_static_columns(df) -> pd.DataFrame:
 
 def save_results(report_folder, results_file, delete_columns = []) -> str:
     """
-    
+    Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
     logger.info("Compiling results...")
     results = parse_results(report_folder, delete_columns = delete_columns)
@@ -170,11 +175,14 @@ def save_results(report_folder, results_file, delete_columns = []) -> str:
     logger.debug(f"Results saved to {results_file}")
     return results_file
     
-def find_best_params(filename, scorer, default_param_file, output_folder, control_for):
+def find_best_params(filename, scorer, control_for = None):
+    """
+    
+    """
     logger.info("Finding best params...")
     assert Path(filename).exists(), f"Results file {filename} does not exist."
     results = pd.read_csv(filename, index_col = 0)
-    big_list = results[control_for].unique()
+    big_list = results[control_for].unique() if control_for else []
     if len(big_list) <= 1:
         best_df = results
     else:

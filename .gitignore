@@ -94,3 +94,4 @@ examples/.tikho/
 **/*/.dvc/*
 outputs/
 examples/**/*.nfs*
+*/*/.hydra/*

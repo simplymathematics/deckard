@@ -46,17 +46,16 @@ stages:
           time_dict_file: time_dict.json
     outs:
     - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 6876341f49c55e24fa78f2386d3c31bb
+      md5: fa57c92f194c614aff8d55f73ad19563
       size: 80800393
-    - path: reports/generate_data/be8a84048824e17fb4fd00169e0c1fb2
-      md5: cd0f0a57c027b978d8f6d0554e33fe1c.dir
-      size: 979942
-      nfiles: 3
+    - path: reports/generate_data/be8a84048824e17fb4fd00169e0c1fb2/ground_truth.json
+      md5: 2d29796c3fd00fee4921449aab589828
+      size: 978891
   train:
     cmd: python -m deckard.layers.runner train
     deps:
     - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 6876341f49c55e24fa78f2386d3c31bb
+      md5: fa57c92f194c614aff8d55f73ad19563
       size: 80800393
     params:
       params.yaml:
@@ -115,10 +114,21 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/
-      md5: 54497b16f7b8a17d9955659d33771129.dir
-      size: 2938298
-      nfiles: 6
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/params.json
+      md5: e9ed96f884b064e2f69fdf8f8298252c
+      size: 1421
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/predictions.json
+      md5: 50464838fd620d823f1171f18dd8db04
+      size: 978891
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/probabilities.json
+      md5: 50464838fd620d823f1171f18dd8db04
+      size: 978891
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/scores.json
+      md5: 1584e5e6e2f63a5e729f8c579ccef807
+      size: 89
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/time_dict.json
+      md5: 065e0a76e496666fb39e5fa9725fcbb2
+      size: 113
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
     deps:
@@ -190,10 +200,12 @@ stages:
   attack:
     cmd: python -m deckard.layers.runner attack
     deps:
-    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/
-      md5: 54497b16f7b8a17d9955659d33771129.dir
-      size: 2938298
-      nfiles: 6
+    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+      md5: 63ef9df09ea3ad6c68fd107d5954a468
+      size: 891312
+    - path: reports/train/be8a84048824e17fb4fd00169e0c1fb2/params.json
+      md5: e9ed96f884b064e2f69fdf8f8298252c
+      size: 1421
     params:
       params.yaml:
         attack:
@@ -260,10 +272,36 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/
-      md5: cd771ded40d8a2461ac1afec963decc6.dir
-      size: 3126616
-      nfiles: 10
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/attack_predictions.json
+      md5: afa3e60035ce65d71084231be65667da
+      size: 697
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/attack_probabilities.json
+      md5: 59defb8735b3ddcc579677dfe16e6c18
+      size: 3497
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/attack_scores.json
+      md5: 44f67e5d4ccdea25dc95fe3476e0cea5
+      size: 175
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/attack_time_dict.json
+      md5: 11c52eb583b21623b7e5e8278f3870c0
+      size: 100
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/params.json
+      md5: 893005ece9eb9b51802d036f232bad8a
+      size: 1572
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/predictions.json
+      md5: 50464838fd620d823f1171f18dd8db04
+      size: 978891
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/probabilities.json
+      md5: 50464838fd620d823f1171f18dd8db04
+      size: 978891
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/samples.json
+      md5: 15eea99bdaca5b1e0e8d73e589f2a17f
+      size: 184378
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/scores.json
+      md5: 1584e5e6e2f63a5e729f8c579ccef807
+      size: 89
+    - path: reports/attack/be8a84048824e17fb4fd00169e0c1fb2/time_dict.json
+      md5: e37c1930ba0d45eafcca29081365ecb4
+      size: 114
   train@sigmoid:
     cmd: python -m deckard.layers.runner train@sigmoid
     deps:

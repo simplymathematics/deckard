@@ -10,7 +10,7 @@ from mergedeep import merge
 from omegaconf import DictConfig, OmegaConf
 
 from deckard.base import Experiment
-from deckard.layers.parse import parse
+from deckard.layers.parse import generate_paths_from_params
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def hydra_runner(cfg: DictConfig, **kwargs):
         filename = "default.yaml"
     params = OmegaConf.to_object(cfg)
     kwargs.update({"default": default, "queue_path": queue_path, "filename": filename})
-    params = parse(params, **kwargs)
+    params = generate_paths_from_params(params, **kwargs)
     exp = load_dvc_experiment(params)
     results = exp.run()
     return results

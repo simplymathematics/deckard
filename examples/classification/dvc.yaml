@@ -1,42 +1,58 @@
 stages:
+  attack:
+    cmd: python -m deckard.layers.runner attack
+    deps:
+    - ${files.data_file}
+    - ${files.reports}/train/${files.path}/${files.params_file}
+    metrics:
+    - ${files.reports}/attack/${files.path}/${files.score_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.time_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.predictions_file}
+    - ${files.reports}/attack/${files.path}/${files.probabilities_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_score_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_time_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_predictions_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_probabilities_file}
+    outs:
+    - ${files.reports}/attack/${files.path}/${files.params_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_samples_file}
+    params:
+    - data
+    - model.init
+    - files
+    - scorers
+    - attack
   generate_data:
     cmd: python -m deckard.layers.runner generate_data
-    params:
-      - data
-      - files
-    outs:
-      - ${files.data_file}
-    metrics:
-      - ${files.reports}/generate_data/${files.path}
     deps:
-      - params.yaml
+    - params.yaml
+    metrics:
+    - ${files.reports}/generate_data/${files.path}/${files.ground_truth_file}
+    outs:
+    - ${files.data_file}
+    params:
+    - data
+    - files
   train:
     cmd: python -m deckard.layers.runner train
-    params:
-      - data
-      - model.init
-      - files
-      - scorers
     deps:
-      - ${files.data_file}
-    # outs:
-      # - ${files.data_file}
-      # - train/${files.model_file}
+    - ${files.data_file}
     metrics:
-      - ${files.reports}/train/${files.path}/
-  attack : 
-    cmd : python -m deckard.layers.runner attack 
-    metrics:
-      - ${files.reports}/attack/${files.path}/
+    - ${files.reports}/train/${files.path}/${files.score_dict_file}
+    - ${files.reports}/train/${files.path}/${files.time_dict_file}
+    - ${files.reports}/train/${files.path}/${files.predictions_file}
+    - ${files.reports}/train/${files.path}/${files.probabilities_file}
+    outs:
+    - ${files.reports}/train/${files.path}/${files.params_file}
     params:
-      - data
-      - model.init
-      - attack
-      - files
-      - scorers
-    deps:
-      - ${files.reports}/train/${files.path}/
-  # retrain:
+    - data
+    - model.init
+    - files
+    - scorers
+
+
+    
+# retrain:
   #   cmd : python retrain.py
   #   params: 
   #     - data
@@ -63,4 +79,3 @@ stages:
   #     - newest_results.csv
   #   deps:
   #     - model_queue/
-  

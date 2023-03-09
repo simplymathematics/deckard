@@ -1,51 +1,78 @@
-import argparse
 import logging
 import os
-import subprocess
 import yaml
 import json
 from pathlib import Path
+from typing import Union, List
 import hydra
-from optuna.trial import Trial
-import optuna
 from omegaconf import DictConfig, OmegaConf
 from deckard.base import Experiment
 from deckard.layers.runner import load_dvc_experiment
-from deckard.layers.parse import parse
+from deckard.layers.parse import generate_paths_from_params
 from deckard.base.hashable import my_hash
 
-
 logger = logging.getLogger(__name__)
+def merge_params(default, params) -> dict:
+    """
+    Overwrite default params with params if key is found in default.
+    :param default: Default params
+    :param params: Params to overwrite default params
+    :return: Merged params
+    """
+    for key, value in params.items():
+        if key in default:
+            if isinstance(default[key], dict):
+                default[key] = merge_params(default[key], value)
+            else:
+                default[key] = value
+        else:
+            logger.warning(f"Key {key} not found in default params. Ignoring.")
+    return default
 
-# import numpy as np
-# from sklearn.datasets import load_iris
-# from sklearn.linear_model import SGDClassifier
-# from sklearn.model_selection import train_test_split
-# from sklearn.utils import gen_batches
+def parse_stage(stage:Union[dict, List[dict]] = None,  params:dict = None) -> dict:
+    """
+    Parse params from dvc.yaml and merge with params from hydra config
+    :param stage: Stage to load params from. If None, loads the last stage in dvc.yaml
+    :param params: Params to merge with params from dvc.yaml
+    :return: Merged params
+    """
+    # Load params from dvc
+    if stage is None:
+        with open(Path(os.getcwd(), "dvc.yaml"), "r") as f:
+            stages = yaml.load(f, Loader=yaml.FullLoader)["stages"].keys() #  Get all stages
+        stage = list(stages)[-1] # Get the last stage
+    if params is None:
+        with open(Path(os.getcwd(), "paramns.yaml"), "r") as f:
+            params = yaml.load(f, Loader=yaml.FullLoader)
+    else:
+        with open(Path(os.getcwd(), "dvc.yaml"), "r") as f:
+            key_list = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]["params"]
+        with open(Path(os.getcwd(), "params.yaml"), "r") as f:
+            all_params = yaml.load(f, Loader=yaml.FullLoader)
+        default_params = read_subset_of_params(key_list, all_params)
+        params = merge_params(default_params, params)
+    # Update params with paths from dvc
+    full_report = params["files"]["path"]
+    parents = list(Path(full_report).parents)
+    name = Path(full_report).name
+    parents.insert(1, Path(stage))
+    params["files"]["path"] = str(Path(params["files"]["reports"], *parents, name))
+    
+    return params
 
-# X, y = load_iris(return_X_y=True)
-# X_train, X_test, y_train, y_test = train_test_split(X, y)
-# classes = np.unique(y)
-# n_train_iter = 10000
-# length = len(X_train)
-
-
-# def objective(trial):
-#     alpha = trial.suggest_uniform('alpha', 0.0, 1.0)
-#     loss = trial.suggest_categorical('loss', ['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'])
-#     penalty = trial.suggest_categorical('penalty', ['l2', 'l1', 'elasticnet'])
-#     clf = SGDClassifier(alpha=alpha, loss=loss, penalty=penalty)
-
-#     for step in range(n_train_iter):
-#         clf.partial_fit(X_train, y_train, classes=classes)
-#         intermediate_value = clf.score(X_test, y_test)
-#         trial.report(intermediate_value, step)
-#         if trial.should_prune():
-#             raise optuna.TrialPruned()
-#     return clf.score(X_test, y_test)
-
-
-
+def load_dvc_experiment(stage = None, params = None) -> Experiment:
+    """
+    Load experiment from dvc.yaml for a given stage and overwrite the default params with optional user-supplied params.
+    :param stage: Stage to load params from. If None, loads the last stage in dvc.yaml
+    :param params: Params to merge with params from dvc.yaml
+    :return: Experiment
+    """
+    # Load and run experiment from yaml
+    params = parse_stage(stage, params)
+    tag = "!Experiment:"
+    yaml.add_constructor(tag, Experiment)
+    exp = yaml.load(f"{tag}\n" + str(params), Loader=yaml.FullLoader)
+    return exp
 
 
 
@@ -80,7 +107,7 @@ def hydra_optimizer(cfg:DictConfig):
     if not Path(os.getcwd(), queue).exists():
         Path(os.getcwd(), queue).mkdir()
     params = OmegaConf.to_container(cfg, resolve=True)
-    params = parse(params,) # This is a hack to add file names based on the hash of the parameterization    
+    params = generate_paths_from_params(params, default=None) # This is a hack to add file names based on the hash of the parameterization    
     logger.debug("Params:\n"+json.dumps(params, indent=4)) # For debugging
     filename = Path(os.getcwd(), queue, my_hash(params)+".yaml") # This is the file that will be used to run the experiment
     with open(filename, 'w') as f:
@@ -113,6 +140,38 @@ def hydra_optimizer(cfg:DictConfig):
         score = 0
     return score
 
-if '__main__' == __name__:
+
+def read_subset_of_params(key_list:list, params:dict):
+    new_params = {}
+    for key in key_list:
+        if key in params:
+            new_params[key] = params[key]
+        elif "." in key:
+            first_loop = True
+            dot_key = key
+            total = len(key.split("."))
+            i = 1
+            for entry in key.split("."):
+                if first_loop is True:
+                    sub_params = params
+                    first_loop = False
+                if entry in sub_params:
+                    sub_params = sub_params[entry]
+                    i += 1
+                else:
+                    raise ValueError(f"{dot_key} not found in {params}")
+                if i == total:
+                    new_params[dot_key.split(".")[0]] = {**sub_params}
+                else:
+                    pass
+                
+                    
+        else:
+            raise ValueError(f"{key} not found in {params}")
+    return new_params
+            
     
+    
+if '__main__' == __name__:
+    logging.basicConfig(level="INFO")
     hydra_optimizer()
