@@ -77,7 +77,7 @@ retrain:
     deps:
       - model_queue/
   attack_queue:
-    cmd: bash experiments.sh 
+    cmd: bash attacks.sh 
     outs:
       - attack_queue/
     deps:
