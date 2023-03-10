@@ -27,11 +27,6 @@
 
 To check basic code functionality, run  
 ```dvc repro --force```  
-which will execute the [dvc pipeline](https://dvc.org/doc/start/data-management/data-pipelines) that makes all of the inputs and outputs git trackable. This will execute all of the code on the default configurations.
-
-
-
-To execute the entire set of experiments, run  
-```bash experiments.sh```
+which will execute the [dvc pipeline](https://dvc.org/doc/start/data-management/data-pipelines) that makes all of the inputs and outputs git trackable. This will execute all of the code on the default configurations first (stages `generate`, `train`, and `attack` on the `dvc.yaml`), followed by grid search on all of the models in stage `model-queue` and all of the attacks in stage `attack-queue`. After finding the best configuration for each kernel (stage `compile`) 
 
 which overrides the default configurations, using [hydra](https://hydra.cc/docs/patterns/configuring_experiments/) and its [optuna plugin](https://hydra.cc/docs/plugins/optuna_sweeper/) to specify a search space for each set of parameters specified in the bash script. Sets of parameters that apply to all experiments are set in the `config.yaml`. Parameters particular to a experiment are specified using command line overrides within the bash script.
