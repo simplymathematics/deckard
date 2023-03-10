@@ -76,7 +76,7 @@ retrain:
       - newest_results.csv
     deps:
       - model_queue/
-  model_queue:
+  attack_queue:
     cmd: bash experiments.sh 
     outs:
       - attack_queue/
