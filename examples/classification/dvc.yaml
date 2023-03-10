@@ -49,9 +49,6 @@ stages:
     - model.init
     - files
     - scorers
-
-
-    
 retrain:
     cmd : python retrain.py
     params: 
