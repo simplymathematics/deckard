@@ -3,100 +3,108 @@ stages:
   print:
     cmd: cat params.yaml
   generate_data:
-    cmd: python -m deckard.layers.runner generate_data
-    params:
-      params.yaml:
-        data.generate:
-          n_features: 100
-          n_informative: 98
-          n_samples: 1000
-        data.name:
-        - regression
-        files:
-          data_file: data\519667861af9ce927e47f3b733c928f1.pickle
-          data_filetype: pickle
-          data_path: data
-          ground_truth_file: ground_truth.json
-          model_file: model\7003cda1d080b5e0e50839bb9713ff61.pickle
-          model_filetype: pickle
-          model_path: model
-          params_file: params.json
-          path: 4aea1dc0fa4130c7ed229d854c94e87d
-          predictions_file: predictions.json
-          probabilities_file: probabilities.json
-          reports: reports
-          samples_file: samples.json
-          score_dict_file: scores.json
-          time_dict_file: time_dict.json
-    outs:
-    - path: generate_data/data\519667861af9ce927e47f3b733c928f1.pickle
-      md5: 950b30603d8535a5fb61b6938249e5a6
-      size: 808344
-    - path: reports/generate_data/4aea1dc0fa4130c7ed229d854c94e87d
-      md5: 1b8e8674c66abd90169df8b555e5f2ba.dir
-      size: 5936
-      nfiles: 3
-  train:
-    cmd: python -m deckard.layers.runner train
-    deps:
-    - path: sample/data\519667861af9ce927e47f3b733c928f1.pickle
-      md5: 22553bbe54d1e7fe8d0f953efd8cd470
-      size: 808335
-    - path: sample/model\7003cda1d080b5e0e50839bb9713ff61.pickle
-      md5: 188bd4f42410c709ce247ce6d9a24045
-      size: 67702
+    cmd: python -m deckard.layers.runner --stage generate_data
     params:
       params.yaml:
         data:
           generate:
+            class_sep: 1
+            n_classes: 2
             n_features: 100
-            n_informative: 98
-            n_samples: 1000
-          name:
-          - regression
+            n_informative: 99
+            n_redundant: 0
+            n_repeated: 0
+            n_samples: 101000
+          name: classification
           sample:
             random_state: 42
             shuffle: true
-            stratify: false
-            train_size: 80
+            stratify: true
+            test_size: 1000
+            time_series: true
+            train_size: 1000
         files:
-          data_file: data\519667861af9ce927e47f3b733c928f1.pickle
-          data_filetype: pickle
-          data_path: data
+          attack_file: attack/c865dbe43131fcd31f85ab06ce209e8e.pkl
+          attack_predictions_file: attack_predictions.json
+          attack_probabilities_file: attack_probabilities.json
+          attack_samples_file: samples.json
+          attack_score_dict_file: attack_scores.json
+          attack_time_dict_file: attack_time_dict.json
+          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
           ground_truth_file: ground_truth.json
-          model_file: model\7003cda1d080b5e0e50839bb9713ff61.pickle
-          model_filetype: pickle
-          model_path: model
+          model_file: models/30fa77b58d17ae4463cf12591d8f3968.pkl
           params_file: params.json
-          path: 4aea1dc0fa4130c7ed229d854c94e87d
+          path: 150553146751e7220d72fff4212a0285
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
-          samples_file: samples.json
           score_dict_file: scores.json
           time_dict_file: time_dict.json
-        model.init:
-          n_estimators: 10
-          name: sklearn.ensemble.RandomForestRegressor
-        plots:
-          correlation: correlation
-          radviz: radviz
-          rank: rank
-          residuals: residuals
-        scorers:
-          rmse:
-            name: sklearn.metrics.mean_squared_error
     outs:
-    - path: reports/train/4aea1dc0fa4130c7ed229d854c94e87d
-      md5: 89b787e7d089c1b15f862a99d752f523.dir
-      size: 316381
-      nfiles: 9
-    - path: train/data\519667861af9ce927e47f3b733c928f1.pickle
-      md5: a8d8fcd32b8ab02afbae41b6ec5405f5
-      size: 808335
-    - path: train/model\7003cda1d080b5e0e50839bb9713ff61.pickle
-      md5: cce3f3d54d717279028150cd7ff45123
-      size: 68470
+    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+      md5: 822723775b733ca9b6c61063214c6740
+      size: 80800393
+    - path: reports/generate_data/150553146751e7220d72fff4212a0285
+      md5: 80a3a5ee559408ff4672c64bf5532ea0.dir
+      size: 979942
+      nfiles: 3
+  train:
+    cmd: python -m deckard.layers.runner --stage train
+    deps:
+    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+      md5: 822723775b733ca9b6c61063214c6740
+      size: 80800393
+    params:
+      params.yaml:
+        data:
+          generate:
+            class_sep: 1
+            n_classes: 2
+            n_features: 100
+            n_informative: 99
+            n_redundant: 0
+            n_repeated: 0
+            n_samples: 101000
+          name: classification
+          sample:
+            random_state: 42
+            shuffle: true
+            stratify: true
+            test_size: 1000
+            time_series: true
+            train_size: 1000
+        files:
+          attack_file: attack/c865dbe43131fcd31f85ab06ce209e8e.pkl
+          attack_predictions_file: attack_predictions.json
+          attack_probabilities_file: attack_probabilities.json
+          attack_samples_file: samples.json
+          attack_score_dict_file: attack_scores.json
+          attack_time_dict_file: attack_time_dict.json
+          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+          ground_truth_file: ground_truth.json
+          model_file: models/30fa77b58d17ae4463cf12591d8f3968.pkl
+          params_file: params.json
+          path: 150553146751e7220d72fff4212a0285
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: scores.json
+          time_dict_file: time_dict.json
+        model:
+          init:
+            name: sklearn.linear_model.SGDRegressor
+        scorers:
+          mape:
+            name: sklearn.metrics.mean_absolute_percentage_error
+          mse:
+            name: sklearn.metrics.mean_squared_error
+          r2:
+            name: sklearn.metrics.r2_score
+    outs:
+    - path: reports/train/150553146751e7220d72fff4212a0285
+      md5: 7d8010d83f4e84548e8989a1ff74457e.dir
+      size: 7339319
+      nfiles: 6
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
     deps:
