@@ -49,33 +49,36 @@ stages:
     - model.init
     - files
     - scorers
-
-
-    
-# retrain:
-  #   cmd : python retrain.py
-  #   params: 
-  #     - data
-  #     - model.init
-  #     - model.art_pipeline
-  #     - attack
-  #     - files
-  #     - scorers
-  #   deps:
-  #     - attack/
-  #   outs:
-  #     - retrain/
-  # model_queue:
-  #   cmd: bash experiments.sh 
-  #   outs:
-  #     - model_queue/
-  #   deps:
-  #     - attack/
-  # compile_results:
-  #   cmd : python -m deckard.layers.compile
-  #   outs: 
-  #     - best
-  #   metrics:
-  #     - newest_results.csv
-  #   deps:
-  #     - model_queue/
+retrain:
+    cmd : python retrain.py
+    params: 
+      - data
+      - model.init
+      - model.art_pipeline
+      - attack
+      - files
+      - scorers
+    deps:
+      - attack/
+    outs:
+      - retrain/
+  model_queue:
+    cmd: bash experiments.sh 
+    outs:
+      - model_queue/
+    deps:
+      - attack/
+  compile_results:
+    cmd : python -m deckard.layers.compile
+    outs: 
+      - best
+    metrics:
+      - newest_results.csv
+    deps:
+      - model_queue/
+  attack_queue:
+    cmd: bash attacks.sh 
+    outs:
+      - attack_queue/
+    deps:
+      - best/
