@@ -408,6 +408,7 @@ class Experiment(
             }
             results["time_dict"] = time_dict
         elif hasattr(model, "fit") and "ground_truth_file" in files and isinstance(files['ground_truth_file'], str) and len(self.model) > 0:
+            logger.info("Fitting model")
             fitted_model = model
             results = {
                 "data": loaded_data,
@@ -416,6 +417,7 @@ class Experiment(
             }
             results["time_dict"] = time_dict
         elif hasattr(model, "fit") and "ground_truth_file" in files and not isinstance(files['ground_truth_file'], str) and len(self.model) > 0:
+            logger.info("Model already fitted.")
             time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
             fitted_model = model
             results = {
@@ -426,6 +428,7 @@ class Experiment(
             }
         # only true if model not specificed in config
         elif isinstance(model, dict) and len(self.model) == 0:
+            logger.info("No model specified. Skipping model fitting.")
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
             results["time_dict"] = time_dict
         #######################################################################
@@ -441,7 +444,9 @@ class Experiment(
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
             results["time_dict"].update(time_dict)
-        elif "predictions_file" in files and not isinstance(files['predictions_file'], str):
+        elif "predictions_file" in files and not isinstance(files['predictions_file'], str) and len(self.model) > 0:
+            logger.info("Predictions already made.")
+            predictions = files['predictions_file']
             results.update({"predictions": files['predictions_file']})
             time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
             results["time_dict"].update(time_dict)
@@ -456,7 +461,9 @@ class Experiment(
             results.update({"probabilities": probabilities})
             time_dict.update({"proba_time": proba_time})
         elif "probabilities_file" in files and not isinstance(files['probabilities_file'], str):
+            logger.info("Probabilities already made.")
             results.update({"probabilities": files['probabilities_file']})
+            probabilities = files['probabilities_file']
             time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
             results["time_dict"].update(time_dict)
         #######################################################################
@@ -465,7 +472,9 @@ class Experiment(
             score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
         elif "score_dict_file" in files and not isinstance(files['score_dict_file'], str):
+            logger.info("Scores already made.")
             results.update({"score_dict": files['score_dict_file']})
+            score_dict = files['score_dict_file']
             time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
             results['time_dict'].update(time_dict)
         #######################################################################
@@ -489,6 +498,7 @@ class Experiment(
             attack_kwargs = [k for k in files.keys() if "attack_" in k]
             attack_results = {}
             rerun = False
+            logger.info("Attack samples already made. Checking if attack needs to be rerun.")
             for kwarg in attack_kwargs:
                 if isinstance(files[kwarg], str) and Path(files[kwarg]).exists():
                     if Path(files[kwarg]).suffix == ".json":
@@ -508,6 +518,7 @@ class Experiment(
                 elif isinstance(files[kwarg], str) and kwarg in ['data_file', 'model_file', 'attack_file']:
                     pass          
             if rerun:
+                logger.info("Rerunning attack.")
                 attack = "!Attack:\n" + str(self._asdict())
                 yaml.add_constructor("!Attack:", Attack)
                 attack = yaml.load(attack, Loader=yaml.FullLoader)
@@ -527,7 +538,7 @@ class Experiment(
         saved_files = self.save(**results, save_data=save_data, save_model=save_model)
         outs.update(saved_files)
         #######################################################################
-        if len(self.plots) > 0 and len(self.model) > 0:
+        if len(self.plots) > 0 and len(self.model) > 0: # and not isinstance(files['plots_folder'], str):
             logger.info("Visualising")
             if "art" in str(type(fitted_model)):
                 art = True

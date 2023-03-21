@@ -36,13 +36,12 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default:
-            if isinstance(default[key], dict):
-                default[key] = merge_params(default[key], value)
-            else:
-                default[key] = value
+        if isinstance(default[key], dict):
+            default[key] = merge_params(default[key], value)
+        elif isinstance(default[key], (list, tuple, int, float, str, bool)):
+            default[key] = value
         else:
-            logger.warning(f"Key {key} not found in default params. Ignoring.")
+            raise ValueError(f"Type {type(default[key])} not supported. Supported types are dict, list, tuple, int, float, str, bool")
     return default
 
 def read_subset_of_params(key_list:list, params:dict):
