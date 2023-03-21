@@ -85,8 +85,7 @@ class DataConfig:
         if filetype is None:
             filetype = self.filetype if self.filetype is not None else "npz"
         full_path =Path(path, str(filename)+ "." + filetype)
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-        
+      
         if not full_path.is_file():
             if Path(self.name).is_file():
                 X_train, X_test, y_train, y_test = self._load(filename=self.name, path=self.path, filetype=self.filetype)

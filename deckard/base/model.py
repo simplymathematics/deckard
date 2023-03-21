@@ -63,13 +63,14 @@ class Model(
     def load(self, filename, art=False):
         library = filetypes[Path(filename).suffix.split(".")[-1]]
         params = deepcopy(self.init)
-        if is_url(self.url):
+        if is_url(self.url) or Path(self.init.pop("name")).exists():
             filename = Path(self.init.pop("name"))
             lib = filetypes[filename.suffix.split(".")[-1]]
             library = Path(self.init.pop("library", lib))
             name = filename.name
             path = filename.parent
-            model = get_file(name, self.url, path)
+            if is_url(self.url):
+                model = get_file(name, self.url, path)
             if library == "keras":
                 from keras.models import load_model
                 model = load_model(model)

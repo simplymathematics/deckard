@@ -11,6 +11,8 @@ from typing import Callable, List
 import numpy as np
 import yaml
 from art.estimators.classification.scikitlearn import ScikitlearnSVC
+from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.estimators.regression.scikitlearn import ScikitlearnRegressor
 from pandas import DataFrame, Series
 
 from .hashable import BaseHashable
@@ -44,8 +46,18 @@ class Attack(
         name = params["attack"]["init"].pop("name")
         if hasattr(model, "steps"):
             model = model.steps[-1][1]
-        model = ScikitlearnSVC(model, clip_values=(0, 1))
-        model.model.fit_status_ = 0
+        if "art" not in str(type(model)).lower():
+            if "svm" in str(type(model)).lower() and "scikitlearn" in str(type(model)).lower():
+                model = ScikitlearnSVC(model, clip_values=(0, 1))
+                model.model.fit_status_ = 0
+            elif "scikitlearn" in str(type(model)).lower():
+                logger.warning("Model is not ART compatible. Wrapping in ART wrapper. This uses ScikitlearnClassifier and ScikitlearnRegressor. If you are using a regressor, you may get an error.")
+                try:
+                    model = ScikitlearnClassifier(model, clip_values=(0, 1))
+                except:
+                    model = ScikitlearnRegressor(model, clip_values=(0, 1))
+            else:
+                raise NotImplementedError(f"Model type {type(model)} not supported.")
         try:
             attack = factory(name, model, **params["attack"]["init"])
         except ValueError as e:
@@ -91,10 +103,16 @@ class Attack(
         return attack_pred, end/len(attack_samples)
 
     def predict_proba(self, attack_samples, model):
-        logger.info("Predicting attack samples")
-        start = process_time()
-        assert hasattr(model, "predict_proba"), "Model must have predict_proba method."
-        attack_pred = model.predict_proba(attack_samples)
+        logger.info("Predicting attack probabilities")
+        if hasattr(model, "model"):
+            if hasattr(model.model, "predict_proba"):
+                start = process_time()
+                attack_pred = model.model.predict_proba(attack_samples)
+        elif hasattr(model, "predict_proba"):
+            start = process_time()
+            attack_pred = model.predict_proba(attack_samples)
+        else:
+            raise ValueError("Model does not have a predict_proba method")
         end = process_time() - start
         return attack_pred, end/len(attack_samples)
     

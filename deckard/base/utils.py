@@ -1,11 +1,11 @@
 from importlib import import_module
 from copy import deepcopy
-import logging
 from typing import Union, Tuple
 from pathlib import Path
 import yaml
-
+import logging
 logger = logging.getLogger(__name__)
+
 
 
 def factory(module_class_string,  *args, super_cls: type = None, **kwargs) -> object:

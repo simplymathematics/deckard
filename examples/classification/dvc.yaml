@@ -1,14 +1,13 @@
 stages:
   attack:
-    cmd: python -m deckard.layers.runner attack
+    cmd: python -m deckard.layers.runner --stage attack
     deps:
     - ${files.data_file}
     - ${files.reports}/train/${files.path}/${files.params_file}
+    - ${files.reports}/train/${files.path}/${files.predictions_file}
     metrics:
     - ${files.reports}/attack/${files.path}/${files.score_dict_file}
     - ${files.reports}/attack/${files.path}/${files.time_dict_file}
-    - ${files.reports}/attack/${files.path}/${files.predictions_file}
-    - ${files.reports}/attack/${files.path}/${files.probabilities_file}
     - ${files.reports}/attack/${files.path}/${files.attack_score_dict_file}
     - ${files.reports}/attack/${files.path}/${files.attack_time_dict_file}
     - ${files.reports}/attack/${files.path}/${files.attack_predictions_file}
@@ -16,6 +15,8 @@ stages:
     outs:
     - ${files.reports}/attack/${files.path}/${files.params_file}
     - ${files.reports}/attack/${files.path}/${files.attack_samples_file}
+    - ${files.reports}/attack/${files.path}/${files.predictions_file}
+    - ${files.reports}/attack/${files.path}/${files.probabilities_file}
     params:
     - data
     - model.init
@@ -23,7 +24,7 @@ stages:
     - scorers
     - attack
   generate_data:
-    cmd: python -m deckard.layers.runner generate_data
+    cmd: python -m deckard.layers.runner --stage generate_data
     deps:
     - params.yaml
     metrics:
@@ -34,51 +35,91 @@ stages:
     - data
     - files
   train:
-    cmd: python -m deckard.layers.runner train
+    cmd: python -m deckard.layers.runner --stage train
     deps:
-    - ${files.data_file}
+      - ${files.data_file}
     metrics:
-    - ${files.reports}/train/${files.path}/${files.score_dict_file}
-    - ${files.reports}/train/${files.path}/${files.time_dict_file}
-    - ${files.reports}/train/${files.path}/${files.predictions_file}
-    - ${files.reports}/train/${files.path}/${files.probabilities_file}
+      - ${files.reports}/train/${files.path}/${files.score_dict_file}
+      - ${files.reports}/train/${files.path}/${files.time_dict_file}
+      - ${files.reports}/train/${files.path}/${files.predictions_file}
+      - ${files.reports}/train/${files.path}/${files.probabilities_file}
     outs:
-    - ${files.reports}/train/${files.path}/${files.params_file}
+      - ${files.reports}/train/${files.path}/${files.params_file}
     params:
-    - data
-    - model.init
-    - files
-    - scorers
-retrain:
-    cmd : python retrain.py
-    params: 
       - data
       - model.init
-      - model.art_pipeline
-      - attack
+      - files
+      - scorers
+  models:
+    cmd: bash experiments.sh
+    outs:
+      - logs/models/
+      - ${files.reports}/models/
+    params:
+      - data
+      - model.init
       - files
       - scorers
     deps:
-      - attack/
-    outs:
-      - retrain/
-  model_queue:
-    cmd: bash experiments.sh 
-    outs:
-      - model_queue/
-    deps:
-      - attack/
+      - ${files.reports}/train/
   compile_results:
-    cmd : python -m deckard.layers.compile
+    cmd: 
+      python -m deckard.layers.compile --output_folder best_models --kwargs "data.sample.train_size=1000" "data.generate.n_features=100" --report_folder "reports/model_queue" --results_file "plots/model_results.csv" --scorer_minimize False --control_for "model.init.kernel" --exclude sigmoid --stage models
     outs: 
-      - best
+      - best_models/
     metrics:
-      - newest_results.csv
+      - plots/model_results.csv
     deps:
-      - model_queue/
-  attack_queue:
+      - ${files.reports}/models/
+  attacks:
     cmd: bash attacks.sh 
     outs:
-      - attack_queue/
+      - logs/attacks/
+      - ${files.reports}/attacks/
     deps:
-      - best/
+      - best_models/
+    params:
+      - data
+      - model.init
+      - files
+      - attack
+      - scorers
+  compile_attacks:
+    cmd: 
+      python -m deckard.layers.compile --output_folder best_attacks --kwargs "attack.init.max_iter=10" --report_folder "reports/attack" --results_file "plots/attack_results.csv" --scorer_minimize True --exclude sigmoid --stage attacks
+    metrics:
+      - plots/attack_results.csv
+    deps:
+      - ${files.reports}/attacks/
+    outs:
+      - best_attacks/
+  retrain:
+      cmd : python retrain.py
+      deps:
+        - ${files.reports}/models/
+        - ${files.reports}/attacks/
+        - best_models/
+        - best_attacks/
+      outs:
+        - retrain/
+      metrics:
+        - plots/before_retrain_confidence.csv
+        - plots/after_retrain_confidence.csv
+  plots:
+      cmd : python plots.py
+      deps :
+        - plots/after_retrain_confidence.csv
+        - plots/attack_results.csv
+        - plots/before_retrain_confidence.csv
+        - plots/model_results.csv
+      plots : 
+        - plots/accuracy_vs_attack_parameters.pdf
+        - plots/accuracy_vs_features.pdf
+        - plots/accuracy_vs_samples.pdf
+        - plots/confidence_vs_attack_parameters.pdf
+        - plots/fit_time_vs_attack_parameters.pdf
+        - plots/fit_time_vs_features.pdf
+        - plots/fit_time_vs_samples.pdf
+        - plots/retrain_accuracy.pdf
+        - plots/retrain_confidence_vs_attack_parameters.pdf
+        - plots/retrain_time.pdf

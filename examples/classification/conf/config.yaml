@@ -8,10 +8,11 @@ defaults:
   - scorers/recall : default.yaml
   - files : default.yaml
   - attack : default.yaml
-  - plots : default.yaml
+  # - plots : default.yaml
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: grid
   - override hydra/launcher: joblib
+#@package hydra.launcher
 hydra:
   sweeper:
     sampler:
@@ -24,17 +25,17 @@ hydra:
     n_trials : 1000
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 1
-    backend: null
+    n_jobs: 32
+    backend: multiprocessing
     prefer: processes
     require: null
     verbose: 0
     timeout: null
-    pre_dispatch: 2*n_jobs
-    batch_size: auto
+    pre_dispatch: 4*n_jobs
+    batch_size: 32
     temp_folder: /tmp/deckard
     max_nbytes: null
     mmap_mode: r
-#@package hydra.launcher
+
 
     

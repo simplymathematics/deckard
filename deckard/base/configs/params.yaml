@@ -54,6 +54,6 @@ files:
   ground_truth_file: ground_truth.json
   predictions_file: predictions.json
   time_dict_file: time_dict.json
-  params_file: params.json
+  params_file: params.yaml
   score_dict_file: scores.json
   path: reports

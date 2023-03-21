@@ -1,23 +1,24 @@
 import collections
+import json
+import logging
+import pickle
+from argparse import Namespace
+from copy import deepcopy
 from pathlib import Path
 from time import process_time
 from typing import List
+
 import numpy as np
-import yaml
-import pickle
-import logging
-import json
-from copy import deepcopy
 import pandas as pd
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder, label_binarize
-from sklearn.exceptions import NotFittedError
-from argparse import Namespace
+import yaml
 from art.utils import to_categorical
-from .data import Data
-from .model import Model
-from .hashable import BaseHashable
-from .scorer import Scorer
+from sklearn.exceptions import NotFittedError
+
 from .attack import Attack
+from .data import Data
+from .hashable import BaseHashable
+from .model import Model
+from .scorer import Scorer
 from .visualise import Yellowbrick_Visualiser
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,29 @@ class Experiment(
         if "model_file" in params["files"] and Path(params["files"]["model_file"]).exists():
             model = model.load(params["files"]["model_file"])
         files = deepcopy(params["files"]) if "files" in params else {}
+        path = Path(files["path"]) if "path" in files else Path.cwd()
+        for k, v in files.items():
+            if isinstance(v, str) and k not in ["reports", "path"]:
+                full_path = Path(path, v)
+                if full_path.exists():
+                    if full_path.suffix == ".json":
+                        with open(full_path, "r") as f:
+                            try:
+                                files[k] = json.load(f)
+                            except json.decoder.JSONDecodeError:
+                                files[k] = yaml.load(f, Loader=yaml.Loader)
+                    elif full_path.suffix == ".yaml":
+                        with open(full_path, "r") as f:
+                            files[k] = yaml.load(f, Loader=yaml.Loader)
+                    elif full_path.suffix == ".pkl" or full_path.suffix == ".pickle":
+                        with open(full_path, "rb") as f:
+                            files[k] = pickle.load(f)
+                    elif full_path.suffix == ".csv":
+                        files[k] = pd.read_csv(full_path)
+                    else:
+                        raise NotImplementedError(f"File type, {full_path.suffix}, not supported")
+                else:
+                    files[k] = v
         return (data, model, files)
 
     def save_data(self, data: dict) -> Path:
@@ -87,10 +111,12 @@ class Experiment(
         """Saves parameters to specified file.
         :returns: Path, path to saved parameters.
         """
+        logger.info(f"Saving parameters to {self.files['params_file']}")
         filename = Path(self.files["path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         params = deepcopy(self._asdict())
-        pd.Series(params).to_json(filename)
+        with open(filename, "w") as f:
+            yaml.dump(params, f, default_flow_style=False)
         assert Path(filename).exists(), "Parameters not saved."
         return str(Path(filename))
 
@@ -254,7 +280,8 @@ class Experiment(
                 start = process_time()
                 loaded_model.fit(loaded_data.X_train, loaded_data.y_train, **fit_params)
             elif "Scikitlearn" and  "loss_gradient" in str(e):
-                from art.estimators.classification.scikitlearn import ScikitlearnSVC
+                from art.estimators.classification.scikitlearn import \
+                    ScikitlearnSVC
                 if hasattr(loaded_model, "steps"):
                     loaded_model = loaded_model.steps[-1][-1]
                 if hasattr(loaded_model, "model"):
@@ -315,6 +342,8 @@ class Experiment(
         score_dict: dict = None,
         predictions: np.ndarray = None,
         probabilities: np.ndarray = None,
+        save_data = True,
+        save_model = False,
     ) -> dict:
         """
         Saves data, model, parameters, predictions, scores, and time dictionary.
@@ -328,10 +357,10 @@ class Experiment(
         files = {}
         path = Path(self.files["path"])
         path.mkdir(parents=True, exist_ok=True)
-        if "data_file" in self.files and data is not None:
+        if "data_file" in self.files and data is not None and save_data is True:
             files.update({"data": self.save_data(data)})
-        # if "model_file" in self.files and model is not None:
-        #     files.update({"model": self.save_model(model)})
+        if "model_file" in self.files and model is not None and save_model is True:
+            files.update({"model": self.save_model(model)})
         if "params_file" in self.files:
             files.update({"params": self.save_params()})
         if "ground_truth_file" in self.files and ground_truth is not None:
@@ -349,7 +378,9 @@ class Experiment(
 
     def run(
         self,
-        art=False,
+        art=True,
+        save_data = False,
+        save_model = False,
     ) -> dict:
         """
         Runs experiment and saves results according to config file.
@@ -360,21 +391,13 @@ class Experiment(
         results = {}
         time_dict = {}
         outs = {}
-        path = Path(files["path"])
-        if path.exists():
-            logger.warning(
-                f"Path {path} already exists. Will overwrite any files specified in the config.",
-            )
-        else:
-            path.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Saving to {path}")
         #######################################################################
         # Fit model, if applicable
         if isinstance(data, Namespace) :
             loaded_data = data
         else:
             loaded_data = data.load(self.files["data_file"])
-        if len(model) > 0 and isinstance(model, Model):
+        if isinstance(model, Model) and len(self.model) > 0:
             logger.info("Fitting model")
             loaded_data, fitted_model, fit_time = self.fit(data, model, art=art)
             time_dict.update({"fit_time": fit_time})
@@ -384,7 +407,7 @@ class Experiment(
                 "ground_truth": loaded_data.y_test,
             }
             results["time_dict"] = time_dict
-        elif hasattr(model, "fit"):
+        elif hasattr(model, "fit") and "ground_truth_file" in files and isinstance(files['ground_truth_file'], str) and len(self.model) > 0:
             fitted_model = model
             results = {
                 "data": loaded_data,
@@ -392,14 +415,21 @@ class Experiment(
                 "ground_truth": loaded_data.y_test,
             }
             results["time_dict"] = time_dict
-
+        elif hasattr(model, "fit") and "ground_truth_file" in files and not isinstance(files['ground_truth_file'], str) and len(self.model) > 0:
+            time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
+            fitted_model = model
+            results = {
+                "data": loaded_data,
+                "model": fitted_model,
+                "ground_truth": files['ground_truth_file'],
+                "time_dict": time_dict,
+            }
         # only true if model not specificed in config
-        elif isinstance(model, dict) and len(model) == 0:
-            
+        elif isinstance(model, dict) and len(self.model) == 0:
             results = {"data": loaded_data, "ground_truth": loaded_data.y_test}
             results["time_dict"] = time_dict
         #######################################################################
-        if "predictions_file" in files and len(model) > 0:
+        if "predictions_file" in files and isinstance(files['predictions_file'], str) and len(self.model) > 0:
             logger.info("Predicting")
             try:
                 predictions, predict_time = self.predict(loaded_data, fitted_model, art=art)
@@ -411,8 +441,12 @@ class Experiment(
             time_dict.update({"predict_time": predict_time})
             results.update({"predictions": predictions})
             results["time_dict"].update(time_dict)
+        elif "predictions_file" in files and not isinstance(files['predictions_file'], str):
+            results.update({"predictions": files['predictions_file']})
+            time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
+            results["time_dict"].update(time_dict)
         #######################################################################
-        if "probabilities_file" in files and len(model) > 0:
+        if "probabilities_file" in files and isinstance(files['probabilities_file'], str) and len(self.model) > 0:
             logger.info("Predicting probabilities")
             probabilities, proba_time = self.predict_proba(
                 loaded_data,
@@ -421,13 +455,21 @@ class Experiment(
             )
             results.update({"probabilities": probabilities})
             time_dict.update({"proba_time": proba_time})
+        elif "probabilities_file" in files and not isinstance(files['probabilities_file'], str):
+            results.update({"probabilities": files['probabilities_file']})
+            time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
+            results["time_dict"].update(time_dict)
         #######################################################################
-        if "score_dict_file" in files and len(model) > 0:
+        if "score_dict_file" in files and isinstance(files['score_dict_file'], str) and len(self.model) > 0:
             logger.info("Scoring")
             score_dict = self.score(loaded_data.y_test, predictions)
             results.update({"score_dict": score_dict})
+        elif "score_dict_file" in files and not isinstance(files['score_dict_file'], str):
+            results.update({"score_dict": files['score_dict_file']})
+            time_dict = files['time_dict_file'] if "time_dict_file" in files else {}
+            results['time_dict'].update(time_dict)
         #######################################################################
-        if "attack_samples_file" in files and len(self.attack) > 0:
+        if "attack_samples_file" in files and isinstance(files['attack_samples_file'], str) and len(self.attack) > 0:
             attack = "!Attack:\n" + str(self._asdict())
             yaml.add_constructor("!Attack:", Attack)
             attack = yaml.load(attack, Loader=yaml.FullLoader)
@@ -443,10 +485,49 @@ class Experiment(
             )
             outs.update(attack_results)
             loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
-        saved_files = self.save(**results)
+        elif "attack_samples_file" in files and not isinstance(files['attack_samples_file'], str):
+            attack_kwargs = [k for k in files.keys() if "attack_" in k]
+            attack_results = {}
+            rerun = False
+            for kwarg in attack_kwargs:
+                if isinstance(files[kwarg], str) and Path(files[kwarg]).exists():
+                    if Path(files[kwarg]).suffix == ".json":
+                        attack_results.update({kwarg: pd.read_json(files[kwarg])})
+                    elif Path(files[kwarg]).suffix == ".csv":
+                        attack_results.update({kwarg: pd.read_csv(files[kwarg])})
+                    elif Path(files[kwarg]).suffix == ".pkl":
+                        with open(Path(files[kwarg]), "rb") as f:
+                            attack_results.update({kwarg: pickle.load(f)})
+                    elif Path(files[kwarg]).suffix == '.yaml':
+                        attack_results.update({kwarg: yaml.load(files[kwarg], Loader=yaml.FullLoader)})
+                    else:
+                        raise NotImplementedError(f"File type {Path(files[kwarg]).suffix} not implemented.")
+                elif isinstance(files[kwarg], str) and kwarg not in ['data_file', 'model_file', 'attack_file']:
+                    rerun = True
+                    break
+                elif isinstance(files[kwarg], str) and kwarg in ['data_file', 'model_file', 'attack_file']:
+                    pass          
+            if rerun:
+                attack = "!Attack:\n" + str(self._asdict())
+                yaml.add_constructor("!Attack:", Attack)
+                attack = yaml.load(attack, Loader=yaml.FullLoader)
+                targeted = (
+                    attack._asdict()['attack']["init"]["targeted"]
+                    if "targeted" in attack._asdict()['attack']["init"]
+                    else False
+                )
+                attack_results = attack.run_attack(
+                    data=loaded_data,
+                    model=fitted_model,
+                    targeted=targeted,
+                )
+                outs.update(attack_results)
+                loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
+                self['files']['data_file']  = self['files']['attack_file']
+        saved_files = self.save(**results, save_data=save_data, save_model=save_model)
         outs.update(saved_files)
         #######################################################################
-        if len(self.plots) > 0 and len(model) > 0:
+        if len(self.plots) > 0 and len(self.model) > 0:
             logger.info("Visualising")
             if "art" in str(type(fitted_model)):
                 art = True
@@ -562,13 +643,13 @@ config = """
         ground_truth_file: ground_truth.json
         predictions_file: predictions.json
         time_dict_file: time_dict.json
-        params_file: params.json
+        params_file: params.yaml
         score_dict_file: scores.json
         path: reports
         attack_samples_file: adv_samples.json
         attack_predictions_file : adv_predictions.json
         attack_time_dict_file : adv_time_dict.json
-        attack_params_file : attack_params.json
+        attack_params_file : attack_params.yaml
         attack_path : attack
         data_file : reports/data.pickle
         model_file : reports/model.pickle

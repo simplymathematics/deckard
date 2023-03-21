@@ -1,5 +1,5 @@
 ground_truth_file: ground_truth.json
-params_file: params.json
+params_file: params.yaml
 reports: reports
 path : 
 predictions_file: predictions.json
