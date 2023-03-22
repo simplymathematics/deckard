@@ -23,18 +23,6 @@ class JSONMixin:
             score_dict[scorer] = score
         return score_dict
 
-    def save_data(self, data: dict, filename: str = "data.pickle") -> Path:
-        """Saves data to specified file.
-        :param filename: str, name of file to save data to.
-        :data data: dict, data to save.
-        :returns: Path, path to saved data.
-        """
-        path = Path(filename).parent
-        path.mkdir(parents=True, exist_ok=True)
-        with open(filename, "wb") as f:
-            pickle.dump(data, f)
-        return Path(filename).resolve()
-
     def save_params(self, filename: str, params: dict) -> Path:
         """Saves parameters to specified file.
         :param filename: str, name of file to save parameters to.
@@ -43,24 +31,6 @@ class JSONMixin:
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
         pd.Series(params).to_json(filename)
-        return Path(filename).resolve()
-
-    def save_model(self, model: object, filename: str) -> Path:
-        """Saves model to specified file.
-        :param filename: str, name of file to save parameters to.
-        :model model: object, model to save.
-        :returns: Path, path to saved model.
-        """
-        path = Path(filename).parent
-        file = Path(filename).name
-        path.mkdir(parents=True, exist_ok=True)
-        if hasattr(model, "save"):
-            if file.endswith(".pickle"):
-                model.save(Path(filename).stem, path=path)
-            model.save(filename=file, path=path)
-        else:
-            with open(filename, "wb") as f:
-                pickle.dump(model, f)
         return Path(filename).resolve()
 
     def save_predictions(

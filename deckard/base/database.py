@@ -70,7 +70,6 @@ def dump_database_to_file(db: str, collection: str, file: str):
 
 
 def get_subset_from_db(db: str, collection: str, query: dict, n: int) -> list:
-
     """
     Get a subset of the database.
     :param db: the database

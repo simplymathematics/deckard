@@ -1,14 +1,16 @@
-import json
-import yaml
-from hashlib import md5
-from typing import Union, Any, NamedTuple
 import collections
+import json
 import logging
-from pathlib import Path
 import tempfile
+from hashlib import md5
+from pathlib import Path
 from time import time
-from sklearn.model_selection import ParameterGrid
+from typing import Any, NamedTuple, Union
+
+import yaml
+from omegaconf import DictConfig, OmegaConf
 from pandas import DataFrame, Series, read_csv
+from sklearn.model_selection import ParameterGrid
 
 
 def to_dict(obj: Union[dict, collections.OrderedDict, NamedTuple]) -> dict:
@@ -20,6 +22,20 @@ def to_dict(obj: Union[dict, collections.OrderedDict, NamedTuple]) -> dict:
         sorted_keys.sort()
     elif isinstance(obj, collections.OrderedDict):
         sorted_keys = obj
+    elif isinstance(obj, OmegaConf):
+        obj = OmegaConf.to_container(obj)
+        sorted_keys = list(obj.keys())
+        sorted_keys.sort()
+    elif isinstance(obj, DictConfig):
+        obj = OmegaConf.to_container(obj)
+        sorted_keys = list(obj.keys())
+        sorted_keys.sort()
+    elif isinstance(obj, str):
+        obj = obj
+        sorted_keys = []
+    elif isinstance(obj, type(None)):
+        obj = None
+        sorted_keys = []
     else:
         raise ValueError(
             f"obj must be a Dict, collections.namedtuple or collections.OrderedDict. It is {type(obj)}",

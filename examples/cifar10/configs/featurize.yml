@@ -1,4 +1,0 @@
-- name: sklearn.impute.SimpleImputer
-  params:
-    'strategy' : ['mean', 'most_frequent', 'constant']
-    'fill_value' : [0]

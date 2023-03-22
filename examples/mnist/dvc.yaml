@@ -1,64 +1,41 @@
 stages:
   prepare:
-    cmd: python -m deckard.layers.prepare
+    cmd: python -m deckard.layers.runner prepare
     params:
-      - prepare.config
+      - data
+      - files
     outs:
-      - ${prepare.outputs.folder}/${prepare.outputs.file}
-    # deps:
-    #   -
+      - prepare/${files.data_file}
+  train:
+    cmd:  python  -m deckard.layers.runner train
+    deps:
+    - prepare/${files.data_file}
+    params:
+    - data
+    - files
+    - model
+    - plots
+    - scorers
+    # outs:
     # metrics:
-    #   - prepare.scores
-    # plots:
-    #   - prepare.plots
-  art_model:
-    cmd:  python  -m deckard.layers.art_model --layer_name art_model
-    deps:
-    - ${prepare.outputs.folder}/${prepare.outputs.file}
-    params:
-    - art_model
-    outs:
-    - art_model/:
-        cache: true
-  defend:
-    cmd:  python  -m deckard.layers.defend --layer_name defend
-    deps:
-    - ${prepare.outputs.folder}/${prepare.outputs.file}
-    - art_model/
-    params:
-    - defend.config
-    - defend.inputs
-    outs:
-    - defend/:
-        cache: true
-  attack:
-    cmd:  python  -m deckard.layers.attack --layer_name attack
-    deps:
-    - ${prepare.outputs.folder}/${prepare.outputs.file}
-    - defend
-    params:
-    - attack
-    outs:
-    - attack/:
-        cache: true
-  # visualise:
-  #   cmd: python  -m deckard.layers.visualise --layer_name visualise
+  # defend:
+  #   cmd:  python  -m deckard.layers.defend --layer_name defend
   #   deps:
-  #     - ${prepare.outputs.folder}/${prepare.outputs.file}
-  #     - art_model/
+  #   - ${prepare.outputs.folder}/${prepare.outputs.file}
+  #   - art_model/
   #   params:
-  #     - visualise
+  #   - defend.config
+  #   - defend.inputs
   #   outs:
-  #     - plots/:
-  #         cache: true
-  evaluate:
-    cmd: python  -m deckard.layers.evaluate --layer_name evaluate
-    deps:
-      - ${prepare.outputs.folder}/${prepare.outputs.file}
-      - art_model/
-      - attack/
-      - defend/
-    params:
-      - evaluate
-    outs:
-      - evaluate/
+  #   - defend/:
+  #       cache: true
+  # attack:
+  #   cmd:  python  -m deckard.layers.attack --layer_name attack
+  #   deps:
+  #   - ${prepare.outputs.folder}/${prepare.outputs.file}
+  #   - defend
+  #   params:
+  #   - attack
+  #   outs:
+  #   - attack/:
+  #       cache: true

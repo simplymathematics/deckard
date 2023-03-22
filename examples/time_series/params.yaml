@@ -1,37 +1,54 @@
-prepare:
-  name: original.csv
-  params:
-    shuffle : True
-    stratify : False
-    random_state : 0
-    train_size : .8
-    target : carbon_intensity_avg
-  data_file : "data.pkl"
-  output_folder : "."
-  input_folder : "."
-train:
-  input_folder : "."
-  output_folder : "train"
-  output_name : "model.pickle"
-  data_file : "data.pkl"
-  layer_name : train
-  config : "configs/train.yaml"
-  is_fitted : False
-preprocess:
-  input_folder : ""
-  output_folder : "preprocess"
-  input_name : "model.pickle"
-  output_name : "model.pickle"
-  data_file : "data.pkl"
-  layer_name : train
-  config : "configs/train.yaml"
-  is_fitted : False
-featurize:
-  input_folder : "."
-  input_name : "model.pickle"
-  output_folder : "featurize"
-  output_name : "model.pickle"
-  data_file : "data.pkl"
-  layer_name : train
-  config : "configs/train.yaml"
-  is_fitted : False
+attack:
+  generate: {}
+  init:
+    batch_size: 64
+    init_eval: 100
+    init_size: 10
+    max_eval: 1000
+    max_iter: 10
+    name: art.attacks.evasion.HopSkipJump
+    norm: 2
+    targeted: false
+data:
+  name: "original.csv"
+  target : carbon_intensity_avg
+  sample:
+    random_state: 42
+    shuffle: true
+    stratify: false
+    time_series: true
+    train_size: 8000
+files:
+  data_file: data\0d2b9fab517f78660b79f4bbb7392769.pickle
+  data_filetype: pickle
+  data_path: data
+  ground_truth_file: ground_truth.json
+  model_file: model\0946b5ccd6d0eb16c442b603db474d31.pickle
+  model_filetype: pickle
+  model_path: model
+  params_file: params.json
+  path: 07376fbc332b85299463a75113350069
+  predictions_file: predictions.json
+  probabilities_file: probabilities.json
+  reports: reports
+  samples_file: samples.json
+  score_dict_file: scores.json
+  time_dict_file: time_dict.json
+model:
+  # art_pipeline:
+  #   postprocessor:
+  #     HighConfidencecutoff: 0.25
+  #     name: art.defences.postprocessor
+  #   preprocessor:
+  #     bit_depth: 8
+  #     name: art.defences.preprocessor.FeatureSqueezing
+  init:
+    loss: squared_error
+    name: sklearn.linear_model.SGDRegressor
+plots:
+  correlation: correlation
+  # radviz: radviz
+  # rank: rank
+scorers:
+  rmse:
+    name: sklearn.metrics.mean_squared_error

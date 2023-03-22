@@ -1,0 +1,6 @@
+kernel: [ rbf ]
+C : [.0001,.001,.01,.1,1,10,100,1000,10000,10000]
+name : [sklearn.svm.SVC]
+probability : [true]
+max_iter : [1000]
+gamma: [scale]

@@ -25,13 +25,13 @@ files:
   ground_truth_file: ground_truth.json
   predictions_file: predictions.json
   time_dict_file: time_dict.json
-  params_file: params.json
+  params_file: params.yaml
   score_dict_file: scores.json
   path: reports
   attack_samples_file: adv_samples.json
   attack_predictions_file : adv_predictions.json
   attack_time_dict_file : adv_time_dict.json
-  attack_params_file : attack_params.json
+  attack_params_file : adv_params.yaml
   attack_path : attack
 model:
   files:

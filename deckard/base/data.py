@@ -46,7 +46,7 @@ real = {
 class Data(
     collections.namedtuple(
         typename="Data",
-        field_names="name, sample, generate, real, add_noise, transform, sklearn_pipeline",
+        field_names="name, sample, generate, real, add_noise, transform, sklearn_pipeline, target",
         defaults=(
             {},
             {},
@@ -54,6 +54,7 @@ class Data(
             {},
             {},
             [],
+            None,
         ),
     ),
     BaseHashable,
@@ -70,20 +71,12 @@ class Data(
 
         params = deepcopy(self._asdict())
         if Path(filename).exists():
-            logger.info(f"Loading data from {filename}")
             ns = self.read(filename)
+        elif len(params["generate"]) > 0:
+            ns = self.sklearn_load()
         else:
-            name = params.pop("name")
-            if isinstance(name, list):
-                assert (
-                    len(name) == 1
-                ), "Only one dataset can be loaded at a time. See documentation for setting up multiple experiments."
-                name = name.pop(0)
-            if name in real or name in generate:
-                ns = self.sklearn_load()
-            else:
-                raise ValueError(f"Unknown dataset: {name}")
-            ns = self.modify(ns)
+            ns = self.read(self.name)
+        ns = self.modify(ns)
         return ns
 
     def modify(self, data: Namespace) -> Namespace:
@@ -107,6 +100,7 @@ class Data(
             assert "y_test" in data, "y_test is not in data"
             assert "X_train" in data, "X_train is not in data"
             assert "y_train" in data, "y_train is not in data"
+            ns = data
         ns = self.run_sklearn_pipeline(ns)
         ns = self.add_noise_to_data(ns)
         return ns
@@ -120,6 +114,8 @@ class Data(
         name = self.name
         if isinstance(name, list):
             name = name[0]
+        elif not isinstance(name, str) and isinstance(eval(name), list):
+            name = eval(name)[0]
         # If the data is among the sklearn "real" datasets
         if name in real:
             big_X, big_y = real[name](return_X_y=True, **self.real)
@@ -128,6 +124,9 @@ class Data(
             assert self.generate is not None, ValueError(
                 "generate datasets requires a dictionary of parameters named 'generate' in params.yaml",
             )
+            for k, v in self.generate.items():
+                if str(v).capitalize in ["None", "False", "Null", ""]:
+                    self.generate.pop(k)
             big_X, big_y = generate[name](**self.generate)
         else:
             raise ValueError(f"Unknown dataset: {name}")
@@ -141,11 +140,11 @@ class Data(
         :return Tuple of X, y
         """
         name = Path(filename)
-        filetype = name.suffix.split(".")[-1]
+        filetype = name.suffix.replace(".", "")
         params = deepcopy(self._asdict())
         # If the data is a csv file
         if filetype == "csv":
-            assert "target" in params, "target column must be specified"
+            assert self.target is not None, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
@@ -167,15 +166,15 @@ class Data(
                 )
         # If the data is a numpy npz file
         elif filetype == "npz":
-            data = np.load(name)
+            data = np.load(name, allow_pickle=True)
             if "X" in data:
-                big_X = data["X"]
-                big_y = data["y"]
+                big_X = data.X
+                big_y = data.y
             elif "X_train" in data:
-                X_train = data["X_train"]
-                y_train = data["y_train"]
-                X_test = data["X_test"]
-                y_test = data["y_test"]
+                X_train = data.X_train
+                y_train = data.y_train
+                X_test = data.X_test
+                y_test = data.y_test
             else:
                 raise ValueError(
                     "Numpy npz file must contain X and y attributes or X_train, y_train, X_test, and y_test attributes.",
@@ -197,8 +196,8 @@ class Data(
                 )
         else:
             raise ValueError(f"Unknown datatype: {filetype}")
-        if "X" in locals():
-            assert "y" in locals(), f"y must be specified in {name}"
+        if "big_X" in locals():
+            assert "big_y" in locals(), f"big_y must be specified in {name}"
             ns = Namespace(X=big_X, y=big_y)
         elif "X_train" in locals():
             assert "y_train" in locals(), f"y_train must be specified in {name}"
@@ -272,7 +271,7 @@ class Data(
         transform: dict,
     ) -> Namespace:
         """
-        Transofrms the data according to the parameters specified in params.yaml
+        Transforms the data according to the parameters specified in params.yaml
         :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
         :param name (str): Name of the transformation
         :return: Namespace containing X_train, X_test, y_train, y_test
@@ -320,8 +319,9 @@ class Data(
         """
         pipeline = self.sklearn_pipeline
         for layer in pipeline:
+            logger.info(f"Running layer {layer} of the sklearn pipeline")
             new_data = deepcopy(data)
-            transform = self.sklearn_pipeline[layer]
+            transform = deepcopy(self.sklearn_pipeline[layer])
             data = self.sklearn_transform(data=new_data, transform=transform)
         return data
 
@@ -353,14 +353,22 @@ class Data(
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
         random_state = samples.pop("random_state", 0)
+        train_size = samples.pop("train_size", 0.8)
+        test_size = samples.pop("test_size", 1 - train_size)
+        if isinstance(train_size, float):
+            train_size = int(round(len(X) * train_size))
+        if isinstance(test_size, float):
+            test_size = int(round(len(X) * test_size))
         ###########################################################
         # Sampling
         ###########################################################
         # regular test/train split
         if time_series is False:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, stratify=stratify, **samples
+                X, y, stratify=stratify, **samples, train_size=train_size
             )
+            X_test = X_test[test_size:]
+            y_test = y_test[test_size:]
         # timeseries split
         elif time_series is True:
             assert (

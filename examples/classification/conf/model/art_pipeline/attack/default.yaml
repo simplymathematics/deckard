@@ -1,0 +1,5 @@
+name: art.attacks.evasion.ProjectedGradientDescent
+eps: .01
+eps_step: .001
+max_iter : 1
+batch_size : 32

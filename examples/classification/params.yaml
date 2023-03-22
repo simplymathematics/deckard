@@ -1,0 +1,63 @@
+attack:
+  generate:
+    attack_size: 100
+  init:
+    batch_size: 32
+    eps: 0.01
+    eps_step: 0.001
+    max_iter: 1
+    name: art.attacks.evasion.ProjectedGradientDescent
+data:
+  generate:
+    class_sep: 1
+    n_classes: 2
+    n_features: 100
+    n_redundant: 1
+    n_repeated: 0
+    n_samples: 101000
+  name: classification
+  sample:
+    random_state: 42
+    shuffle: true
+    stratify: true
+    test_size: 1000
+    time_series: true
+    train_size: 1000
+files:
+  attack_file: attack/6bc16f621427375278e59654f3d997f3.pkl
+  attack_predictions_file: attack_predictions.json
+  attack_probabilities_file: attack_probabilities.json
+  attack_samples_file: samples.json
+  attack_score_dict_file: attack_scores.json
+  attack_time_dict_file: attack_time_dict.json
+  data_file: data/6b9043563b91a2469cbae373787df58a.npz
+  ground_truth_file: ground_truth.json
+  model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
+  params_file: params.yaml
+  path: ea961a9a112eff845c7407e242949664
+  predictions_file: predictions.json
+  probabilities_file: probabilities.json
+  reports: reports
+  score_dict_file: scores.json
+  time_dict_file: time_dict.json
+model:
+  init:
+    C: 1
+    degree: 1
+    kernel: linear
+    max_iter: 1000
+    name: sklearn.svm.SVC
+    probability: true
+scorers:
+  accuracy:
+    name: sklearn.metrics.accuracy_score
+    normalize: true
+  f1:
+    average: weighted
+    name: sklearn.metrics.f1_score
+  precision:
+    average: weighted
+    name: sklearn.metrics.precision_score
+  recall:
+    average: weighted
+    name: sklearn.metrics.recall_score

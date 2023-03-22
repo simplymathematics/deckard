@@ -1,0 +1,9 @@
+defaults:
+  - init/linear.yaml
+  - init/sgd.yaml
+  # - sklearn_pipeline : default.yaml
+  # - art_pipeline : default.yaml
+  # - fit : default.yaml
+path : models
+filename :
+filetype :

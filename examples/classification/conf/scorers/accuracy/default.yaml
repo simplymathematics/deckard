@@ -1,0 +1,2 @@
+name: sklearn.metrics.accuracy_score
+normalize: true

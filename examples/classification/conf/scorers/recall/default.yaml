@@ -1,0 +1,2 @@
+average: weighted
+name: sklearn.metrics.recall_score

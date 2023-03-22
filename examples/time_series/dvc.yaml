@@ -1,53 +1,26 @@
 stages:
   prepare:
     cmd:
-      - python -m deckard.layers.prepare
+      - python -m deckard.layers.runner prepare
     deps:
-      - configs/prepare.yml
       - original.csv
     outs:
-      - data/data.pkl
+      - prepare/${files.data_file}
+    params:
+      - data
+      - files
+      - plots
   train:
-    cmd: python -m deckard.layers.train  --name train
+    cmd: python -m deckard.layers.runner train
     deps:
-    - configs/model.yml
-    - data/data.pkl
+    - prepare/${files.data_file}
+    params:
+    - data
+    - files
+    - model
+    - plots
+    - scorers
     outs:
-    - data/train/model
-    - data/train/data_params.json:
-        cache: true
-    - data/train/model_params.json:
-        cache: true
+    - train/${files.model_file}
     metrics:
-    - data/train/scores.json:
-        cache: true
-
-  preprocess:
-    cmd: python -m deckard.layers.preprocess  --name preprocess --input train
-    deps:
-    - configs/preprocess.yml
-    - data/train/model
-    outs:
-    - data/preprocess/model
-    - data/preprocess/data_params.json:
-        cache: true
-    - data/preprocess/model_params.json:
-        cache: true
-    metrics:
-    - data/preprocess/scores.json:
-        cache: true
-
-  featurize:
-    cmd: python -m deckard.layers.preprocess  --name featurize --input preprocess
-    deps:
-    - configs/featurize.yml
-    - data/preprocess/model.pickle
-    outs:
-    - data/featurize/model.pickle
-    - data/featurize/data_params.json:
-        cache: true
-    - data/featurize/model_params.json:
-        cache: true
-    metrics:
-    - data/featurize/scores.json:
-        cache: true
+    - ${files.reports}/train/${files.path}/${files.score_dict_file}

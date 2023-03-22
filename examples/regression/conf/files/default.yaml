@@ -1,0 +1,13 @@
+ground_truth_file: ground_truth.json
+params_file: params.json
+reports: reports
+path :
+predictions_file: predictions.json
+score_dict_file: scores.json
+time_dict_file: time_dict.json
+probabilities_file : probabilities.json
+attack_samples_file : samples.json
+attack_score_dict_file : attack_scores.json
+attack_predictions_file : attack_predictions.json
+attack_time_dict_file : attack_time_dict.json
+attack_probabilities_file : attack_probabilities.json

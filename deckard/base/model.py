@@ -4,6 +4,7 @@ import pickle
 import warnings
 from copy import deepcopy
 from pathlib import Path
+
 from art.estimators import ScikitlearnEstimator
 from art.estimators.classification import (
     KerasClassifier,
@@ -11,7 +12,10 @@ from art.estimators.classification import (
     TensorFlowClassifier,
     TensorFlowV2Classifier,
 )
-from art.estimators.classification.scikitlearn import ScikitlearnClassifier
+from art.estimators.classification.scikitlearn import (
+    ScikitlearnClassifier,
+    ScikitlearnSVC,
+)
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import BaseEstimator, is_regressor
@@ -19,7 +23,7 @@ from sklearn.pipeline import Pipeline
 from validators import url as is_url
 
 from .hashable import BaseHashable
-from .utils import factory, load_from_tup
+from .utils import factory
 
 logger = logging.getLogger(__name__)
 supported_estimators = (
@@ -46,6 +50,7 @@ filetypes = {
     "pbtxt": "tensorflow",
     "tflite": "tflite",
     "pickle": "sklearn",
+    "tf1": "h5",
 }
 
 
@@ -63,10 +68,37 @@ class Model(
     def load(self, filename, art=False):
         library = filetypes[Path(filename).suffix.split(".")[-1]]
         params = deepcopy(self.init)
-        if is_url(self.url):
+        if is_url(self.url) or Path(self.init.pop("name")).exists():
+            filename = Path(self.init.pop("name"))
+            lib = filetypes[filename.suffix.split(".")[-1]]
+            library = Path(self.init.pop("library", lib))
             name = filename.name
             path = filename.parent
-            model = get_file(name, self.url, path)
+            if is_url(self.url):
+                model = get_file(name, self.url, path)
+            if library == "keras":
+                from keras.models import load_model
+
+                model = load_model(model)
+            elif library == "torch":
+                from torch import load
+
+                model = load(model)
+            elif library == "tensorflow" or "tf2" or "tfv2":
+                from keras.models import load_model
+
+                model = load_model(model)
+            elif library == "tfv1" or "tf1":
+                from keras.models import load_model
+                from tensorflow.compat.v1 import disable_eager_execution
+
+                disable_eager_execution()
+                model = load_model(model)
+            elif library == "sklearn":
+                with open(model, "rb") as f:
+                    model = pickle.load(f)
+            else:
+                raise ValueError("Unsupported library {}".format(library))
         elif isinstance(params["name"], str) or library == "sklearn":
             if params is None:
                 params = {}
@@ -88,7 +120,7 @@ class Model(
         elif library == "tensorflow":
             model.model.save(filename)
         elif library == "tfv1":
-            model.model.save(filename.stem)
+            model.model.save(filename)
         elif library == "keras":
             model.model.save(filename)
         else:
@@ -109,15 +141,15 @@ class Model(
             i += 1
         return model
 
-    def build_art_pipeline(self, model, library):
+    def build_art_pipeline(self, model, library="sklearn"):
         init_params = deepcopy(dict(self.init))
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
-                load_from_tup(
+                factory(
                     (
-                        art["preprocessor_defence"]["name"],
-                        art["preprocessor_defence"]["params"],
+                        art["preprocessor_defence"].pop("name"),
+                        art["preprocessor_defence"],
                     ),
                 ),
             ]
@@ -125,10 +157,10 @@ class Model(
             preprocessor_defences = None
         if "postprocessor_defence" in art:
             postprocessor_defences = [
-                load_from_tup(
+                factory(
                     (
-                        art["postprocessor_defence"]["name"],
-                        art["postprocessor_defence"]["params"],
+                        art["postprocessor_defence"].pop("name"),
+                        art["postprocessor_defence"],
                     ),
                 ),
             ]
@@ -136,11 +168,20 @@ class Model(
             postprocessor_defences = None
         if library == "sklearn":
             if is_regressor(model) is False:
-                model = ScikitlearnClassifier(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                )
+                if hasattr(model, "steps"):
+                    model = model.steps[-1][1]
+                if "svm" in str(type(model)).lower():
+                    model = ScikitlearnSVC(
+                        model,
+                        postprocessing_defences=postprocessor_defences,
+                        preprocessing_defences=preprocessor_defences,
+                    )
+                else:
+                    model = ScikitlearnClassifier(
+                        model=model,
+                        postprocessing_defences=postprocessor_defences,
+                        preprocessing_defences=preprocessor_defences,
+                    )
             else:
                 model = ScikitlearnRegressor(
                     model,
@@ -165,19 +206,21 @@ class Model(
                 # output="logits",
             )
         elif library == "tensorflow":
-            model = TensorFlowClassifier(
+            model = KerasClassifier(
                 model,
+                use_logits=True,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
-        elif library == "tfv1":
-            model = TensorFlowClassifier(
-                model,
+        elif library == "tfv1" or "tf1":
+            import tensorflow.compat.v1 as tf
+
+            tf.compat.v1.disable_eager_execution()
+            model = KerasClassifier(
+                model=model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         elif library == "keras":
@@ -185,32 +228,46 @@ class Model(
                 model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         elif library == "tensorflowv2":
-            model = TensorFlowV2Classifier(
+            model = KerasClassifier(
                 model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
-                output="logits",
                 **init_params,
             )
         else:
             raise ValueError(f"Library {library} not supported")
         if "transformer_defence" in art:
-            model = load_from_tup(
-                (
-                    art["transformer_defence"]["name"],
-                    art["transformer_defence"]["params"],
-                ),
+            model = factory(
+                art["transformer_defence"].pop("name"),
                 model,
+                **art["transformer_defence"],
             )()
-        if "trainer_defence" in art:
-            model = load_from_tup(
-                (art["trainer_defence"]["name"], art["trainer_defence"]["params"]),
+        if "retrainer_defence" in art:
+            assert "attack" in art, "Attack must be specified for retraining"
+            assert (
+                "name" in art["attack"]
+            ), "Attack name must be specified for retraining"
+            try:
+                name = art["attack"].pop("name")
+                attack = factory(
+                    name,
+                    model,
+                    **art["attack"],
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to create attack {name} with error: {e}. Trying to create attack without model (i.e. black-box attack).",
+                )
+                attack = factory(art["attack"].pop("name"), **art["attack"])
+            model = factory(
+                art["retrainer_defence"].pop("name"),
                 model,
-            )()
+                attack,
+                **art["retrainer_defence"],
+            )
         return model
 
 

@@ -18,9 +18,8 @@ data:
         n_redundant : 0
         n_classes: 2
     sklearn_pipeline:
-        - sklearn.preprocessing.StandardScaler
-    transform:
-        sklearn.preprocessing.StandardScaler:
+        transform:
+            name : sklearn.preprocessing.StandardScaler
             with_mean : true
             with_std : true
             X_train : true

@@ -11,7 +11,7 @@ from yellowbrick.classifier import (
 from data import Data
 from model import Model
 
-from .hashable import BaseHashable
+from deckard.base.hashable import BaseHashable
 
 classification_visualizers = {
     "confusion": confusion_matrix,
