@@ -1,23 +1,23 @@
 import subprocess
+
 param_dict = {
     "data.generate.n_features": [10, 100, 1000, 10000],
     "data.generate.n_samples": [110000],
     "data.sample.train_size": [1000000, 100000, 10000, 1000, 100],
-    
-    "model.init.C": [.0001, .001, .01, .1, 1, 10, 100, 1000, 10000, 10000],
+    "model.init.C": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 10000],
 }
 
 extra_dict = {
     "model.init.gamma": ["scale"],
     "model.init.degree": [2, 3, 4, 5],
-    "model.init.coef0": [.0001,.001,.01,.1,1,10,100,1000,10000,10000],
+    "model.init.coef0": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 10000],
 }
 
 big_list = []
 for kernel in ["linear", "poly", "rbf"]:
     if str(kernel) == "linear":
         new_dict = param_dict.copy()
-        
+
     elif str(kernel) == "poly":
         sub_dict = {}
         for key in ["model.init.gamma", "model.init.degree", "model.init.coef0"]:
@@ -32,16 +32,22 @@ for kernel in ["linear", "poly", "rbf"]:
         new_dict = {**param_dict, **sub_dict}
     else:
         raise ValueError(f"Kernel {kernel} not recognized.")
-    new_dict['model.init.kernel'] = [kernel]
+    new_dict["model.init.kernel"] = [kernel]
     for key, value in new_dict.items():
-        value = str(value).replace("[", "").replace("]", "").replace("'", "").replace(" ", "")
+        value = (
+            str(value)
+            .replace("[", "")
+            .replace("]", "")
+            .replace("'", "")
+            .replace(" ", "")
+        )
         big_list.append(f"{key}={value} ")
-    cmd = f"python -m deckard.layers.optimize +stage=models "
+    cmd = "python -m deckard.layers.optimize +stage=models "
     for item in big_list:
         cmd += f" {item}"
     cmd += " --multirun"
     subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
+
 
 # for train_size in ${TRAIN_SIZES[@]}; do
 #     for n_samples in ${N_SAMPLES[@]}; do
@@ -83,7 +89,7 @@ for kernel in ["linear", "poly", "rbf"]:
 #             data.generate.n_samples=$n_samples \
 #             data.sample.train_size=$train_size \
 #             model.init.kernel=poly \
-#             model.init.degree=1,2,3,4,5 
+#             model.init.degree=1,2,3,4,5
 #             +model.init.gamma=scale \
 #             +model.init.coef0=.0001,.001,.01,.1,1,10,100,1000,10000,10000  \
 #             model.init.C=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
