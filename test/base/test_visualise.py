@@ -33,8 +33,6 @@ class testVisualiser(unittest.TestCase):
     def setUp(
         self,
         exp_config=exp_config,
-        data_config=data_config,
-        model_config=model_config,
     ) -> None:
 
         self.path = "reports"
