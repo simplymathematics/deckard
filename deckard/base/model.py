@@ -224,7 +224,6 @@ class Model(
                 **init_params,
             )
         elif library == "keras":
-
             model = KerasClassifier(
                 model,
                 postprocessing_defences=postprocessor_defences,
