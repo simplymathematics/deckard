@@ -211,7 +211,6 @@ def delete_these_columns(df, columns) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-
     import argparse
 
     parser = argparse.ArgumentParser()
