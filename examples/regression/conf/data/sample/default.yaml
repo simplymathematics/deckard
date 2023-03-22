@@ -1,0 +1,6 @@
+random_state: 42
+shuffle: true
+stratify: true
+time_series: true
+test_size: 1000
+train_size: 1000

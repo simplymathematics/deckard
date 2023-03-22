@@ -1,0 +1,4 @@
+feature_selection:
+    name: sklearn.preprocessing.StandardScaler
+    with_mean : true
+    with_std : true

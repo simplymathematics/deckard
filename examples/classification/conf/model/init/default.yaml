@@ -1,0 +1,6 @@
+kernel: linear 
+C : 1
+name : sklearn.svm.SVC
+probability : true
+max_iter : 1000
+degree: 1

@@ -1,0 +1,38 @@
+defaults:
+  - _self_
+  - data : default.yaml
+  - model : default.yaml
+  - scorers/mape: default.yaml
+  - scorers/mse: default.yaml
+  - scorers/r2: default.yaml
+  - files : default.yaml
+  - plots : default.yaml
+  - override hydra/sweeper: optuna
+  - override hydra/sweeper/sampler: grid
+  - override hydra/launcher: joblib
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.GridSampler
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction:
+    - maximize
+    storage: sqlite:///db.sqlite3
+    study_name: models
+    n_trials : 1000
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 1
+    backend: null
+    prefer: processes
+    require: null
+    verbose: 0
+    timeout: null
+    pre_dispatch: 2*n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: null
+    mmap_mode: r
+#@package hydra.launcher
+
+    
