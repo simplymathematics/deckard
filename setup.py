@@ -24,7 +24,6 @@ install_requires = [
     # "tensorflow",
     "validators",
     "yellowbrick",
-    "hydra",
     "hydra-core",
     "hydra-optuna-sweeper",
     "hydra-joblib-launcher",
