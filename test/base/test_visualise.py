@@ -124,8 +124,9 @@ class testVisualiser(unittest.TestCase):
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
         model = model.load("reports/model.pickle")
-        y_train = np.argmax(data.y_train, axis=1)
-        model.fit(data.X_train, y_train)
+        if hasattr(model, "model"):
+            model = model.model
+        model.fit(data.X_train, data.y_train)
         paths = viz.visualise_regression(data, regressor(model.model))
         for path in paths:
             filename = Path(paths[path])
@@ -157,6 +158,8 @@ class testVisualiser(unittest.TestCase):
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
         model = model.load("reports/model.pickle", art=True)
+        if hasattr(model, "model"):
+            model = model.model
         model.fit(data.X_train, data.y_train)
         paths = viz.visualise_model_selection(self.data, model.model)
         for path in paths:
@@ -170,6 +173,8 @@ class testVisualiser(unittest.TestCase):
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
         model = model.load("reports/model.pickle", art=True)
+        if hasattr(model, "model"):
+            model = model.model
         model.fit(data.X_train, data.y_train)
         paths = viz.visualise(self.data, classifier(model.model))
         for path in paths:
