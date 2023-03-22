@@ -27,6 +27,7 @@ install_requires = [
     "hydra",
     "hydra-core",
     "hydra-optuna-sweeper",
+    "hydra-joblib-launcher",
 ]
 
 docs_require = [
