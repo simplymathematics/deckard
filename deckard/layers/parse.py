@@ -41,27 +41,23 @@ def parse(params: dict, stage:str=None, default:str=None):
     else:
         assert stage in pipe.keys(), f"{stage} not in {list(pipe.keys())}"
     big_list = []
+    if default is not None:
+        dump_params_to_default(params, default)
+        logger.info("Successfully parsed the hydra config and saved it to params.yaml")
+    else:
+        assert Path("params.yaml").exists(), f"Path params.yaml does not exist"
     for entry in grid:
         logger.info(f"Entry {i+1} of {len(grid)}")
         i += 1
-        
-        if default is not None:
-            dump_params_to_default(params, default)
-            logger.info("Successfully parsed the hydra config and saved it to params.yaml")
         param_dict = flatten_dict(entry)
         stage_dict = generate_stage_from_params(stage, param_dict)
         # pipefile = dump_stage_to_queue(entry, stage_dict, stagename = stage)
         paramfile = dump_params_to_queue(entry, Path(stage))
         # assert Path(pipefile).exists(), f"Path {pipefile} does not exist"
         # assert Path(paramfile).exists(), f"Path {paramfile} does not exist"
-        if default is not None:
-            defaultfile = dump_params_to_default(entry, default)
-            assert Path(defaultfile) == Path(default), f"Path {defaultfile} does not equal {default}"
-            assert Path(default).exists(), f"Path {default} does not exist"
-        else:
-            assert Path("params.yaml").exists(), f"Path params.yaml does not exist"
+        
         # assert Path(paramfile).parent == Path(pipefile).parent, f"Path {paramfile} and {pipefile} are not in the same directory"
-        logger.info(f"Successfully parsed the hydra config and saved it to {Path(params['files']['reports'], stage, params['files']['path'], 'params.yaml')}")
+        logger.info(f"Successfully parsed the hydra config and saved it to {Path(params['files']['reports'], params['files']['path'], 'params.yaml')}")
         logger.debug(yaml.dump(params, indent=4))
         
         big_list.append(params)
@@ -121,13 +117,11 @@ def generate_paths_from_params(params:dict, stage=str) -> dict:
             params['attack'] = attack
     # Setup the output
     params['files'] = files
-    params["files"]["path"] = params['files'].pop("path", None)
-    if params['files']['path'] is None and stage is not None:
-        params['files']['path'] = str(Path(params['files']['reports'], stage, my_hash(params)).as_posix())
-    elif params['files']['path'] is None and stage is None:
-        params['files']['path'] = str(Path(params['files']['reports'], my_hash(params)).as_posix())
-    else:
-        params['files']['path'] = str(Path(params['files']['reports'], params['files']['path']).as_posix())
+    assert params['files']['path'] is None, f"Path is already specified as {params['files']['path']}"
+    if stage is not None:
+        params['files']['path'] = str(Path(stage, my_hash(params)).as_posix())
+    elif stage is None:
+        params['files']['path'] = str(Path(my_hash(params)).as_posix())
     params = DictConfig(params)
     params = OmegaConf.to_container(params, resolve=True)
     return params
@@ -142,7 +136,7 @@ def dump_params_to_queue(params:dict, stage) -> None:
     :return: None
     """
     # Write the params to the queue
-    filename = Path(params['files']['reports'], stage, params['files']['path'], "params.yaml")
+    filename = Path(params['files']['reports'], params['files']['path'], "params.yaml")
     filename.parent.mkdir(parents=True, exist_ok=True)
     
     with open(filename, "w") as f:
@@ -278,11 +272,7 @@ if "__main__" == __name__:
     if "--multirun" not in args:
         if "+default" not in args:
             if Path(os.getcwd(), "params.yaml").exists():
-                reply = input("params.yaml exists, reply with 'yes' to delete it. (This is to prevent overwriting your params.yaml file.)")
-                if "yes" in reply.lower():
-                    Path(os.getcwd(), "params.yaml").unlink()
-                    args.append(f"+default={Path(os.getcwd(), 'params.yaml').as_posix()}")
-                else:
-                    pass
+                Path(os.getcwd(), "params.yaml").unlink()
+                args.append(f"+default={Path(os.getcwd(), 'params.yaml').as_posix()}")
     hydra_parser()
         

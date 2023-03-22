@@ -15,7 +15,6 @@ for train_size in ${TRAIN_SIZES[@]}; do
             echo "Running experiment with n_features=${n_features} and n_samples=${n_samples} and a train size of ${train_size}" >| log.txt
             HYDRA_FULL_ERROR=1; python ../../deckard/layers/optimize.py  \
             data.generate.n_features=$n_features \
-            data.generate.n_informative=$n_informative \
             data.generate.n_samples=$n_samples \
             data.sample.train_size=$train_size \
             model.init.kernel=linear \
@@ -26,7 +25,6 @@ for train_size in ${TRAIN_SIZES[@]}; do
             i=$(( i + 1 ))
             python ../../deckard/layers/optimize.py \
             data.generate.n_features=$n_features \
-            data.generate.n_informative=$n_informative \
             data.generate.n_samples=$n_samples \
             data.sample.train_size=$train_size \
             model.init.kernel=rbf \
@@ -39,7 +37,6 @@ for train_size in ${TRAIN_SIZES[@]}; do
             i=$(( i + 1 ))
             python ../../deckard/layers/optimize.py \
             data.generate.n_features=$n_features \
-            data.generate.n_informative=$n_informative \
             data.generate.n_samples=$n_samples \
             data.sample.train_size=$train_size \
             model.init.kernel=poly \

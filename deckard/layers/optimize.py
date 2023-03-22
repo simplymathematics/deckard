@@ -48,7 +48,14 @@ def optimize(params:dict, stage:str=None, scorer=None, scorer_maximize:bool=Fals
     for entry in parsed_df.iterrows():
         entry = entry[1].to_dict()
         exp = load_dvc_experiment(stage=stage, params=entry, mode='hydra')
-        results = exp.run(save_model=False)
+        try:
+            results = exp.run(save_model=False)
+        except Exception as e:
+            logger.error(f"Error running experiment: {e}")
+            continue
+        if "scores" not in results:
+            logger.error(f"Scores file not found in results. Keys: {results.keys()}")
+            continue
         if Path(results['scores']).exists() is False:
             logger.error("Scores file does not exist")
             continue
