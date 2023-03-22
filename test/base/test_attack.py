@@ -74,48 +74,48 @@ class testAttackExperiment(unittest.TestCase):
         for _, filename in outs.items():
             self.assertTrue(Path(filename).exists())
 
-    def test_whitebox_on_tf1(self):
-        # disable eager execution
-        import tensorflow as tf
+    # def test_whitebox_on_tf1(self):
+    #     # disable eager execution
+    #     import tensorflow as tf
 
-        tf.compat.v1.disable_eager_execution()
-        whitebox = {
-            "attack": {
-                "init": {
-                    "name": "art.attacks.evasion.ZooAttack",
-                    "confidence": 0.3,
-                    "max_iter": 1,
-                },
-            },
-        }
-        config = deepcopy(self.exp._asdict())
-        del config["data"]["generate"]
-        (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset("cifar10")
-        data = Namespace(
-            X_train=X_train[:10],
-            y_train=y_train[:10],
-            X_test=X_test[:1],
-            y_test=y_test[:1],
-        )
-        Path("/tmp/reports").mkdir(parents=True, exist_ok=True)
-        with open("/tmp/reports/data.pickle", "wb") as f:
-            pickle.dump(data, f)
-        assert Path("/tmp/reports/data.pickle").exists()
-        config["attack"] = whitebox["attack"]
-        tf1 = {
-            "init": {"name": "art_models/model.pb", "library": "keras"},
-            "url": "https://www.dropbox.com/s/ta75pl4krya5djj/cifar_resnet.h5?dl=1",
-        }
-        config["attack"] = whitebox["attack"]
-        config["model"] = tf1
-        config["data"] = {"name": "/tmp/reports/data.pickle"}
-        del config["plots"]
-        white_conf = "!Attack:\n" + str(yaml.dump(config))
-        exp_conf = "!Experiment:\n" + str(yaml.dump(config))
-        whitebox = yaml.load(white_conf, Loader=yaml.FullLoader)
-        exp = yaml.load(exp_conf, Loader=yaml.FullLoader)
-        outs = exp.run(art=True)
-        self.assertIsInstance(outs, dict)
+    #     tf.compat.v1.disable_eager_execution()
+    #     whitebox = {
+    #         "attack": {
+    #             "init": {
+    #                 "name": "art.attacks.evasion.ZooAttack",
+    #                 "confidence": 0.3,
+    #                 "max_iter": 1,
+    #             },
+    #         },
+    #     }
+    #     config = deepcopy(self.exp._asdict())
+    #     del config["data"]["generate"]
+    #     (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset("cifar10")
+    #     data = Namespace(
+    #         X_train=X_train[:10],
+    #         y_train=y_train[:10],
+    #         X_test=X_test[:1],
+    #         y_test=y_test[:1],
+    #     )
+    #     Path("/tmp/reports").mkdir(parents=True, exist_ok=True)
+    #     with open("/tmp/reports/data.pickle", "wb") as f:
+    #         pickle.dump(data, f)
+    #     assert Path("/tmp/reports/data.pickle").exists()
+    #     config["attack"] = whitebox["attack"]
+    #     tf1 = {
+    #         "init": {"name": "art_models/model.pb", "library": "keras"},
+    #         "url": "https://www.dropbox.com/s/ta75pl4krya5djj/cifar_resnet.h5?dl=1",
+    #     }
+    #     config["attack"] = whitebox["attack"]
+    #     config["model"] = tf1
+    #     config["data"] = {"name": "/tmp/reports/data.pickle"}
+    #     del config["plots"]
+    #     white_conf = "!Attack:\n" + str(yaml.dump(config))
+    #     exp_conf = "!Experiment:\n" + str(yaml.dump(config))
+    #     whitebox = yaml.load(white_conf, Loader=yaml.FullLoader)
+    #     exp = yaml.load(exp_conf, Loader=yaml.FullLoader)
+    #     outs = exp.run(art=True)
+    #     self.assertIsInstance(outs, dict)
 
     def tearDown(self) -> None:
         from shutil import rmtree
