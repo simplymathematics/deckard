@@ -1,6 +1,5 @@
 import logging
 import unittest
-import os
 import yaml
 from pathlib import Path
 import subprocess
@@ -26,7 +25,13 @@ class testExamples(unittest.TestCase):
     def test_examples(self):
         cmd = "dvc repro --force"
         for example in self.examples:
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, cwd=example, shell=True)
+            p = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                bufsize=1,
+                cwd=example,
+                shell=True,
+            )
             for line in iter(p.stdout.readline, b""):
                 print(line)
             p.stdout.close()

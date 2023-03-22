@@ -32,7 +32,6 @@ class testUtils(unittest.TestCase):
             self.file.exists()
         ), f"File {self.file} does not exist in {self.path}. Found {list(Path(self.path).iterdir())}"
 
-
     def test_factory(self):
         obj = factory(**self.factory)
         self.assertIsInstance(obj, BaseEstimator)

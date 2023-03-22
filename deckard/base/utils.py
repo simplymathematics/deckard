@@ -1,14 +1,13 @@
 from importlib import import_module
-from copy import deepcopy
 from typing import Union, Tuple
 from pathlib import Path
 import yaml
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-
-def factory(module_class_string,  *args, super_cls: type = None, **kwargs) -> object:
+def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> object:
     """
     :param module_class_string: full name of the class to create an object of
     :param super_cls: expected super class for validity, None if bypass

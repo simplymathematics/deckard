@@ -1,7 +1,7 @@
 ground_truth_file: ground_truth.json
 params_file: params.yaml
 reports: reports
-path : 
+path :
 predictions_file: predictions.json
 score_dict_file: scores.json
 time_dict_file: time_dict.json

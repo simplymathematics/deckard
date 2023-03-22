@@ -72,11 +72,11 @@ class Data(
         params = deepcopy(self._asdict())
         if Path(filename).exists():
             ns = self.read(filename)
-        elif  len(params["generate"]) > 0:
+        elif len(params["generate"]) > 0:
             ns = self.sklearn_load()
         else:
             ns = self.read(self.name)
-        ns = self.modify(ns)            
+        ns = self.modify(ns)
         return ns
 
     def modify(self, data: Namespace) -> Namespace:
@@ -140,11 +140,11 @@ class Data(
         :return Tuple of X, y
         """
         name = Path(filename)
-        filetype = name.suffix.replace(".","")
+        filetype = name.suffix.replace(".", "")
         params = deepcopy(self._asdict())
         # If the data is a csv file
         if filetype == "csv":
-            assert "target" != None, "target column must be specified"
+            assert self.target is not None, "target column must be specified"
             df = pd.read_csv(name)
             big_X = df.drop(params["target"], axis=1)
             big_y = df[params["target"]]
@@ -353,7 +353,7 @@ class Data(
         gap = samples.pop("gap", 0)
         time_series = samples.pop("time_series", False)
         random_state = samples.pop("random_state", 0)
-        train_size = samples.pop("train_size", .8)
+        train_size = samples.pop("train_size", 0.8)
         test_size = samples.pop("test_size", 1 - train_size)
         if isinstance(train_size, float):
             train_size = int(round(len(X) * train_size))

@@ -52,4 +52,3 @@ plots:
 scorers:
   rmse:
     name: sklearn.metrics.mean_squared_error
-

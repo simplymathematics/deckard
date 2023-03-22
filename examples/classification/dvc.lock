@@ -6,8 +6,8 @@ stages:
     cmd: python -m deckard.layers.runner --stage generate_data
     deps:
     - path: params.yaml
-      md5: 32360729467218be8cd94ff1f1d8f8bc
-      size: 1579
+      md5: e52368ff2202c070b22fe0fdcbec0b94
+      size: 1556
     params:
       params.yaml:
         data:
@@ -15,8 +15,7 @@ stages:
             class_sep: 1
             n_classes: 2
             n_features: 100
-            n_informative: 99
-            n_redundant: 0
+            n_redundant: 1
             n_repeated: 0
             n_samples: 101000
           name: classification
@@ -34,28 +33,28 @@ stages:
           attack_samples_file: samples.json
           attack_score_dict_file: attack_scores.json
           attack_time_dict_file: attack_time_dict.json
-          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+          data_file: data/6b9043563b91a2469cbae373787df58a.npz
           ground_truth_file: ground_truth.json
           model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
           params_file: params.yaml
-          path: 6ac89af11163a0bfaf101ac77aeaea35
+          path: ea961a9a112eff845c7407e242949664
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
           score_dict_file: scores.json
           time_dict_file: time_dict.json
     outs:
-    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 500523176c752e279e3d71711487c54a
+    - path: data/6b9043563b91a2469cbae373787df58a.npz
+      md5: d228326cc4f61ad26e10391e86ac9216
       size: 80800393
-    - path: reports/generate_data/6ac89af11163a0bfaf101ac77aeaea35/ground_truth.json
-      md5: a1e02abe6331fd5d1218a3c1069d3e27
+    - path: reports/generate_data/ea961a9a112eff845c7407e242949664/ground_truth.json
+      md5: 4e5b2419ccb1e47ae0f022b8acf917d2
       size: 978891
   train:
     cmd: python -m deckard.layers.runner --stage train
     deps:
-    - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 500523176c752e279e3d71711487c54a
+    - path: data/6b9043563b91a2469cbae373787df58a.npz
+      md5: d228326cc4f61ad26e10391e86ac9216
       size: 80800393
     params:
       params.yaml:
@@ -64,8 +63,7 @@ stages:
             class_sep: 1
             n_classes: 2
             n_features: 100
-            n_informative: 99
-            n_redundant: 0
+            n_redundant: 1
             n_repeated: 0
             n_samples: 101000
           name: classification
@@ -83,11 +81,11 @@ stages:
           attack_samples_file: samples.json
           attack_score_dict_file: attack_scores.json
           attack_time_dict_file: attack_time_dict.json
-          data_file: data/ad5713b7391bfb03f94e026cc3cf6421.npz
+          data_file: data/6b9043563b91a2469cbae373787df58a.npz
           ground_truth_file: ground_truth.json
           model_file: models/e3e79e8b49f531ee566f7f31ae211f64.pkl
           params_file: params.yaml
-          path: 6ac89af11163a0bfaf101ac77aeaea35
+          path: ea961a9a112eff845c7407e242949664
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
@@ -114,21 +112,21 @@ stages:
             average: weighted
             name: sklearn.metrics.recall_score
     outs:
-    - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/params.yaml
-      md5: a884713200e6363341f405d95c9f2c44
-      size: 1440
-    - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/predictions.json
-      md5: 8e44e57e53ebcf452fbee90ff37401af
+    - path: reports/train/ea961a9a112eff845c7407e242949664/params.yaml
+      md5: f6c0e8dc1c36deeeece4ad52eac2be7b
+      size: 1418
+    - path: reports/train/ea961a9a112eff845c7407e242949664/predictions.json
+      md5: 3415a5b678e42c9af40c067552b3646a
       size: 978891
-    - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/probabilities.json
-      md5: 8e44e57e53ebcf452fbee90ff37401af
+    - path: reports/train/ea961a9a112eff845c7407e242949664/probabilities.json
+      md5: 3415a5b678e42c9af40c067552b3646a
       size: 978891
-    - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/scores.json
-      md5: 5349b35b9af05de39cc29f8dc4171c46
+    - path: reports/train/ea961a9a112eff845c7407e242949664/scores.json
+      md5: 17e26501e996d2e9a66cf1464054a000
       size: 90
-    - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/time_dict.json
-      md5: 1ee0c6849c0bd56f1223f3f7cbcbb2a6
-      size: 113
+    - path: reports/train/ea961a9a112eff845c7407e242949664/time_dict.json
+      md5: 3f1b9241147c6b6f4a7e081943bcd57e
+      size: 112
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline
     deps:
@@ -201,13 +199,13 @@ stages:
     cmd: python -m deckard.layers.runner --stage attack
     deps:
     - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: a046a18e53cac85ec2ebb1e05ba3f488
+      md5: 67afac428182167cd09a20224fd336e1
       size: 891312
     - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/params.yaml
       md5: a884713200e6363341f405d95c9f2c44
       size: 1440
     - path: reports/train/6ac89af11163a0bfaf101ac77aeaea35/predictions.json
-      md5: ef9bb3a1caed0e331b0f32dcdb992ce7
+      md5: 95537e0dc2e8eadebe9357e2c1f75930
       size: 978891
     params:
       params.yaml:
@@ -276,34 +274,34 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/attack_predictions.json
-      md5: 876d7ee348aa93a4b4e76f13661fae09
-      size: 3573
+      md5: 982731dd0d4e035a84d1ae0ea3ede25c
+      size: 3507
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/attack_probabilities.json
-      md5: 876d7ee348aa93a4b4e76f13661fae09
-      size: 3573
+      md5: 982731dd0d4e035a84d1ae0ea3ede25c
+      size: 3507
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/attack_scores.json
-      md5: 02d5dfccde400e54bd4fb3f7fa3b6876
+      md5: 17cd65c711ba4b8b3832950284ee47c8
       size: 175
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/attack_time_dict.json
-      md5: 8e856d28d4391f5fa1b41d6bf867920b
-      size: 98
+      md5: 371d3bd7614da4df823d0bc5345f49e5
+      size: 99
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/params.yaml
       md5: 274d4eefc6fc7cef25c70874f804c4ef
       size: 1603
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/predictions.json
-      md5: efdcc06117fbb1a5f87bc7c90f7c90c4
+      md5: e02e12778a0b8b3d8802527f69be4ceb
       size: 978891
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/probabilities.json
-      md5: efdcc06117fbb1a5f87bc7c90f7c90c4
+      md5: e02e12778a0b8b3d8802527f69be4ceb
       size: 978891
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/samples.json
-      md5: c4bf94b5c810b59589017de17333a0d3
-      size: 184292
+      md5: d0c58417b8674f40fc6b7b1c163ada67
+      size: 184624
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/scores.json
-      md5: e328fa564f5c0eb380fbcd35326d3660
+      md5: 0b46017f2808a739da93b388ffa224e5
       size: 90
     - path: reports/attack/6ac89af11163a0bfaf101ac77aeaea35/time_dict.json
-      md5: acf79b4efae78d048382b2744f34d130
+      md5: 2662d74d80cd78582cd137e2a574c51f
       size: 113
   train@sigmoid:
     cmd: python -m deckard.layers.runner train@sigmoid
@@ -700,8 +698,8 @@ stages:
     cmd: bash experiments.sh
     deps:
     - path: reports/train/
-      md5: 5633363ec8e060d9a76976ac4005fac2.dir
-      size: 5876633
+      md5: 929ee6cdb668c79e88c6aa8fdd20e8d2.dir
+      size: 5876632
       nfiles: 12
     params:
       params.yaml:
@@ -761,13 +759,13 @@ stages:
             name: sklearn.metrics.recall_score
     outs:
     - path: logs/models/
-      md5: 5e9a7393b4b0e570a04d84ddffcba537.dir
-      size: 34616
+      md5: 4f23e46ca26f7aa5572bc01da568aa48.dir
+      size: 35056
       nfiles: 2
     - path: reports/models/
-      md5: 95c54355edd41fec021788a3b02ff108.dir
-      size: 38411013
-      nfiles: 84
+      md5: dc1e7b7fdc86a8031e4eee47a3ff6c7d.dir
+      size: 41611947
+      nfiles: 91
   attacks:
     cmd: bash attacks.sh
     deps:

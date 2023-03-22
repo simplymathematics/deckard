@@ -6,11 +6,16 @@ from copy import deepcopy
 from pathlib import Path
 
 from art.estimators import ScikitlearnEstimator
-from art.estimators.classification import (KerasClassifier, PyTorchClassifier,
-                                           TensorFlowClassifier,
-                                           TensorFlowV2Classifier)
-from art.estimators.classification.scikitlearn import (ScikitlearnClassifier,
-                                                       ScikitlearnSVC)
+from art.estimators.classification import (
+    KerasClassifier,
+    PyTorchClassifier,
+    TensorFlowClassifier,
+    TensorFlowV2Classifier,
+)
+from art.estimators.classification.scikitlearn import (
+    ScikitlearnClassifier,
+    ScikitlearnSVC,
+)
 from art.estimators.regression import ScikitlearnRegressor
 from art.utils import get_file
 from sklearn.base import BaseEstimator, is_regressor
@@ -45,7 +50,7 @@ filetypes = {
     "pbtxt": "tensorflow",
     "tflite": "tflite",
     "pickle": "sklearn",
-    "tf1" : "h5"
+    "tf1": "h5",
 }
 
 
@@ -73,6 +78,7 @@ class Model(
                 model = get_file(name, self.url, path)
             if library == "keras":
                 from keras.models import load_model
+
                 model = load_model(model)
             elif library == "torch":
                 from torch import load
@@ -80,10 +86,13 @@ class Model(
                 model = load(model)
             elif library == "tensorflow" or "tf2" or "tfv2":
                 from keras.models import load_model
+
                 model = load_model(model)
             elif library == "tfv1" or "tf1":
                 from keras.models import load_model
-                tf.compat.v1.disable_eager_execution()
+                from tensorflow.compat.v1 import disable_eager_execution
+
+                disable_eager_execution()
                 model = load_model(model)
             elif library == "sklearn":
                 with open(model, "rb") as f:
@@ -132,14 +141,14 @@ class Model(
             i += 1
         return model
 
-    def build_art_pipeline(self, model, library  = "sklearn"):
+    def build_art_pipeline(self, model, library="sklearn"):
         init_params = deepcopy(dict(self.init))
         art = self.art_pipeline
         if "preprocessor_defence" in art:
             preprocessor_defences = [
                 factory(
                     (
-                        art['preprocessor_defence'].pop("name"),
+                        art["preprocessor_defence"].pop("name"),
                         art["preprocessor_defence"],
                     ),
                 ),
@@ -168,8 +177,11 @@ class Model(
                         preprocessing_defences=preprocessor_defences,
                     )
                 else:
-                    model = ScikitlearnClassifier(model=model, postprocessing_defences=postprocessor_defences,
-                                                  preprocessing_defences=preprocessor_defences)
+                    model = ScikitlearnClassifier(
+                        model=model,
+                        postprocessing_defences=postprocessor_defences,
+                        preprocessing_defences=preprocessor_defences,
+                    )
             else:
                 model = ScikitlearnRegressor(
                     model,
@@ -196,17 +208,17 @@ class Model(
         elif library == "tensorflow":
             model = KerasClassifier(
                 model,
-                use_logits = True,
+                use_logits=True,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
                 **init_params,
             )
         elif library == "tfv1" or "tf1":
             import tensorflow.compat.v1 as tf
-            import tensorflow.compat.v1.keras as keras
+
             tf.compat.v1.disable_eager_execution()
             model = KerasClassifier(
-                model = model,
+                model=model,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
                 **init_params,
@@ -230,24 +242,32 @@ class Model(
             raise ValueError(f"Library {library} not supported")
         if "transformer_defence" in art:
             model = factory(
-                    art["transformer_defence"].pop('name'),
-                    model, **art["transformer_defence"],
+                art["transformer_defence"].pop("name"),
+                model,
+                **art["transformer_defence"],
             )()
         if "retrainer_defence" in art:
             assert "attack" in art, "Attack must be specified for retraining"
-            assert "name" in art["attack"], "Attack name must be specified for retraining"
+            assert (
+                "name" in art["attack"]
+            ), "Attack name must be specified for retraining"
             try:
-                name = art['attack'].pop('name')
+                name = art["attack"].pop("name")
                 attack = factory(
-                    name, 
-                    model, 
-                    **art['attack'],
+                    name,
+                    model,
+                    **art["attack"],
                 )
             except Exception as e:
-                attack = factory(art['attack'].pop('name'), **art['attack'])
+                logger.warning(
+                    f"Failed to create attack {name} with error: {e}. Trying to create attack without model (i.e. black-box attack).",
+                )
+                attack = factory(art["attack"].pop("name"), **art["attack"])
             model = factory(
-                art["retrainer_defence"].pop('name'),
-                model, attack, **art["retrainer_defence"],
+                art["retrainer_defence"].pop("name"),
+                model,
+                attack,
+                **art["retrainer_defence"],
             )
         return model
 

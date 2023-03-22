@@ -30,14 +30,14 @@ class Scorer(
             data = json.load(f)
         data = pd.Series(data)
         return data
-    
-    def return_best_from_json(self, json_file: str, criteria = 'accuracy', mode = 'max'):
+
+    def return_best_from_json(self, json_file: str, criteria="accuracy", mode="max"):
         """Read data from json file."""
         data = self.read_data_from_json(json_file)
         if mode == "max":
-            data.sort_values(by = criteria, ascending = False, inplace = True)
+            data.sort_values(by=criteria, ascending=False, inplace=True)
         elif mode == "min":
-            data.sort_values(by = criteria, ascending = True, inplace = True)
+            data.sort_values(by=criteria, ascending=True, inplace=True)
         else:
             raise NotImplementedError(f"Mode {mode} not implemented.")
         best = data.iloc[0]
@@ -66,14 +66,24 @@ class Scorer(
         for name, scorer in zip(names, scorers):
             obj_name = scorer.pop("name")
             try:
-                score = factory(obj_name, predictions, ground_truth, **scorer, )
+                score = factory(
+                    obj_name,
+                    predictions,
+                    ground_truth,
+                    **scorer,
+                )
             except ValueError as e:
                 if "classification" in str(e).lower():
                     if len(predictions.shape) > 1:
                         predictions = np.argmax(predictions, axis=1)
                     if len(ground_truth.shape) > 1:
                         ground_truth = np.argmax(ground_truth, axis=1)
-                    score = factory(obj_name, predictions, ground_truth, **scorer, )
+                    score = factory(
+                        obj_name,
+                        predictions,
+                        ground_truth,
+                        **scorer,
+                    )
                 else:
                     raise e
             scores[name] = score

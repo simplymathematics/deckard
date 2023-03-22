@@ -47,14 +47,19 @@ class Attack(
         if hasattr(model, "steps"):
             model = model.steps[-1][1]
         if "art" not in str(type(model)).lower():
-            if "svm" in str(type(model)).lower() and "scikitlearn" in str(type(model)).lower():
+            if (
+                "svm" in str(type(model)).lower()
+                and "scikitlearn" in str(type(model)).lower()
+            ):
                 model = ScikitlearnSVC(model, clip_values=(0, 1))
                 model.model.fit_status_ = 0
             elif "scikitlearn" in str(type(model)).lower():
-                logger.warning("Model is not ART compatible. Wrapping in ART wrapper. This uses ScikitlearnClassifier and ScikitlearnRegressor. If you are using a regressor, you may get an error.")
+                logger.warning(
+                    "Model is not ART compatible. Wrapping in ART wrapper. This uses ScikitlearnClassifier and ScikitlearnRegressor. If you are using a regressor, you may get an error.",
+                )
                 try:
                     model = ScikitlearnClassifier(model, clip_values=(0, 1))
-                except:
+                except:  # noqa E722
                     model = ScikitlearnRegressor(model, clip_values=(0, 1))
             else:
                 raise NotImplementedError(f"Model type {type(model)} not supported.")
@@ -82,8 +87,12 @@ class Attack(
             data.y_test = data.y_test.values
         start_position = gen.pop("start_position", 0)
         attack_size = gen.pop("attack_size", 100)
-        data.X_test = data.X_test[start_position : start_position + attack_size]
-        data.y_test = data.y_test[start_position : start_position + attack_size]
+        data.X_test = data.X_test[
+            start_position : start_position + attack_size  # noqa E203
+        ]
+        data.y_test = data.y_test[
+            start_position : start_position + attack_size  # noqa E203
+        ]
         if targeted is False:
             start = process_time()
             attack_samples = attack.generate(data.X_test, **gen)
@@ -91,15 +100,15 @@ class Attack(
             start = process_time()
             attack_samples = attack.generate(data.X_test, data.y_test, **gen)
         end = process_time() - start
-        
-        return attack_samples, end/attack_size
-    
+
+        return attack_samples, end / attack_size
+
     def predict(self, attack_samples, model):
         logger.info("Predicting attack samples")
         start = process_time()
         attack_pred = model.predict(attack_samples)
         end = process_time() - start
-        return attack_pred, end/len(attack_samples)
+        return attack_pred, end / len(attack_samples)
 
     def predict_proba(self, attack_samples, model):
         logger.info("Predicting attack probabilities")
@@ -109,7 +118,9 @@ class Attack(
                 attack_pred = model.model.predict_proba(attack_samples)
                 end = process_time() - start
             else:
-                logger.warning("Model does not have a predict_proba method. Using predict instead.")
+                logger.warning(
+                    "Model does not have a predict_proba method. Using predict instead.",
+                )
                 start = process_time()
                 attack_pred = model.predict(attack_samples)
                 end = process_time() - start
@@ -118,13 +129,15 @@ class Attack(
             attack_pred = model.predict_proba(attack_samples)
             end = process_time() - start
         else:
-            logger.warning("Model does not have a predict_proba method. Using predict instead.")
+            logger.warning(
+                "Model does not have a predict_proba method. Using predict instead.",
+            )
             start = process_time()
             attack_pred = model.predict(attack_samples)
             end = process_time() - start
-        return attack_pred, end/len(attack_samples)
-    
-    def score(self, ground_truth = None, predictions = None) -> List[Path]:
+        return attack_pred, end / len(attack_samples)
+
+    def score(self, ground_truth=None, predictions=None) -> List[Path]:
         """
         :param self: specified in the config file.
         """
@@ -133,7 +146,7 @@ class Attack(
         scorer = yaml.load("!Scorer:\n" + str(self._asdict()), Loader=yaml.FullLoader)
         score_paths = scorer.score_from_memory(ground_truth, predictions)
         return score_paths
-    
+
     def run_attack(self, data, model, targeted=False):
         logger.info("Running attack")
         score_dict = {}
@@ -160,7 +173,7 @@ class Attack(
         }
         outs = self.save(**results)
         return outs
-    
+
     def save_model(self, model: object) -> Path:
         """Saves model to specified file.
         :model model: object, model to save.
@@ -177,7 +190,7 @@ class Attack(
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
         return str(Path(filename).as_posix())
-    
+
     def save_attack_time(
         self,
         time_dict: dict,
@@ -233,7 +246,7 @@ class Attack(
         attack_results.to_json(filename)
         assert Path(filename).exists(), "Adversarial example file not saved"
         return str(Path(filename))
-    
+
     def save_attack_probabilities(
         self,
         attack_probabilities: np.ndarray,

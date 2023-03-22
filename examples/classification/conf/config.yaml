@@ -38,6 +38,3 @@ hydra:
     temp_folder: /tmp/deckard
     max_nbytes: 100000
     mmap_mode: r
-
-
-    

@@ -80,7 +80,7 @@ class TikhonovClassifier:
 # yaml.add_constructor('!Experiment:', Experiment)
 # experiment = yaml.load( "!Experiment:\n" + str(params), Loader = yaml.Loader)
 # data, model = Experiment.load(experiment)
-# logger = Live(path = Path(files['path']), report = "html")
+# logger = Live(path = Path(files["path"]), report = "html")
 # epochs = round(int(epoch/log_interval))
 # for i in tqdm(range(epochs)):
 #     start = process_time()

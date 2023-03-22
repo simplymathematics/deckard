@@ -440,9 +440,7 @@ class Yellowbrick_Visualiser(
         assert (
             "name" in cv
         ), f"Cross validation method must be specified. Your config is {cv}."
-        cv = factory(
-            cv.pop("name"), **cv
-        )
+        cv = factory(cv.pop("name"), **cv)
         for name in model_selection_visualisers.keys():
             if name in plots.keys():
                 visualiser = model_selection_visualisers[name]

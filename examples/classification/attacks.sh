@@ -14,7 +14,7 @@ mkdir -p logs/attacks/best_models
 for max_iter in ${MAX_ITERS[@]}
     do
       for model in ${BEST[@]}
-        do      
+        do
             i=$(($i+1))
             echo "Running attacks on ${model} with max_iter=${max_iter}-- ${i} of ${TOTAL}."
             HYDRA_FULL_ERROR=1 python ../../deckard/layers/optimize.py \
@@ -29,7 +29,7 @@ for max_iter in ${MAX_ITERS[@]}
             +files.attack_file="attack_file.pkl" \ # this is the file that will be saved and must be added to the base config
             ++files.attack_score_dict_file="attack_scores.json" \ # This is the scores file that will be saved and must will override the base config
             --config-name params.yaml \
-            --config-dir $( dirname  ${model}) 
+            --config-dir $( dirname  ${model})
             >| logs/attacks/"$(basename $(dirname $model))"_$i.log
   done
 done

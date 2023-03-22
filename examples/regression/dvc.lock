@@ -24,7 +24,6 @@ stages:
             time_series: true
             train_size: 1000
         files:
-          attack_file: attack/c865dbe43131fcd31f85ab06ce209e8e.pkl
           attack_predictions_file: attack_predictions.json
           attack_probabilities_file: attack_probabilities.json
           attack_samples_file: samples.json
@@ -34,7 +33,7 @@ stages:
           ground_truth_file: ground_truth.json
           model_file: models/30fa77b58d17ae4463cf12591d8f3968.pkl
           params_file: params.json
-          path: 150553146751e7220d72fff4212a0285
+          path: 6f5cea2ad9f3567f1d5bf4e9c8b6cba5
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
@@ -42,17 +41,17 @@ stages:
           time_dict_file: time_dict.json
     outs:
     - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 822723775b733ca9b6c61063214c6740
+      md5: 9e75aca1687af008c2079c6caa2b3827
       size: 80800393
-    - path: reports/generate_data/150553146751e7220d72fff4212a0285
-      md5: 80a3a5ee559408ff4672c64bf5532ea0.dir
-      size: 979942
+    - path: reports/generate_data/6f5cea2ad9f3567f1d5bf4e9c8b6cba5
+      md5: bd6dc831e16582778cf116cd336730db.dir
+      size: 979887
       nfiles: 3
   train:
     cmd: python -m deckard.layers.runner --stage train
     deps:
     - path: data/ad5713b7391bfb03f94e026cc3cf6421.npz
-      md5: 822723775b733ca9b6c61063214c6740
+      md5: 9e75aca1687af008c2079c6caa2b3827
       size: 80800393
     params:
       params.yaml:
@@ -74,7 +73,6 @@ stages:
             time_series: true
             train_size: 1000
         files:
-          attack_file: attack/c865dbe43131fcd31f85ab06ce209e8e.pkl
           attack_predictions_file: attack_predictions.json
           attack_probabilities_file: attack_probabilities.json
           attack_samples_file: samples.json
@@ -84,7 +82,7 @@ stages:
           ground_truth_file: ground_truth.json
           model_file: models/30fa77b58d17ae4463cf12591d8f3968.pkl
           params_file: params.json
-          path: 150553146751e7220d72fff4212a0285
+          path: 6f5cea2ad9f3567f1d5bf4e9c8b6cba5
           predictions_file: predictions.json
           probabilities_file: probabilities.json
           reports: reports
@@ -101,9 +99,9 @@ stages:
           r2:
             name: sklearn.metrics.r2_score
     outs:
-    - path: reports/train/150553146751e7220d72fff4212a0285
-      md5: 7d8010d83f4e84548e8989a1ff74457e.dir
-      size: 7339319
+    - path: reports/train/6f5cea2ad9f3567f1d5bf4e9c8b6cba5
+      md5: 1fee8583d12fb5fd674a2ee86b6a9b0b.dir
+      size: 5150879
       nfiles: 6
   sklearn_pipeline:
     cmd: python -m deckard.layers.train sklearn_pipeline

@@ -1,19 +1,26 @@
-
 import pandas as pd
 from pathlib import Path
 import json
 import yaml
-import logging 
+import logging
 from typing import List
-from mergedeep import merge
-from deckard.base.hashable import my_hash
 from deckard.layers.runner import load_dvc_experiment
-from tqdm import tqdm
-
 
 logger = logging.getLogger(__name__)
 
-def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'ground_truth', "attack_predictions", "attack_probabilities", "samples"]) -> pd.DataFrame:
+
+def parse_folder(
+    folder,
+    exclude=[
+        "probabilities",
+        "predictions",
+        "plots",
+        "ground_truth",
+        "attack_predictions",
+        "attack_probabilities",
+        "samples",
+    ],
+) -> pd.DataFrame:
     """
     Parse a folder containing json files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing json files
@@ -32,6 +39,7 @@ def parse_folder(folder, exclude = ['probabilities', 'predictions', 'plots', 'gr
                 results[folder][Path(file).stem] = json.load(f)
     return pd.DataFrame(results).T
 
+
 def flatten_results(results):
     """
     Flatten a dataframe containing json files. So that each json dict entry becomes a column with dot notation (e.g. "key1.subkey1")
@@ -45,7 +53,7 @@ def flatten_results(results):
     return new_results
 
 
-def parse_results(result_dir,  flatten = True):
+def parse_results(result_dir, flatten=True):
     """
     Recursively parse a directory containing json files and return a dataframe with the results.
     :param result_dir: Path to directory containing json files
@@ -61,12 +69,11 @@ def parse_results(result_dir,  flatten = True):
     logger.info(f"Parsing {total} folders...")
     for folder in Path(result_dir).iterdir():
         tmp = parse_folder(folder)
-        if flatten == True:
+        if flatten is True:
             tmp = flatten_results(tmp)
         tmp = tmp.loc[:, ~tmp.columns.duplicated()]
         results = pd.concat([results, tmp])
     return results
-
 
 
 def set_for_keys(my_dict, key_arr, val) -> dict:
@@ -81,16 +88,19 @@ def set_for_keys(my_dict, key_arr, val) -> dict:
     for i in range(len(key_arr)):
         key = key_arr[i]
         if key not in current:
-            if i==len(key_arr)-1:
+            if i == len(key_arr) - 1:
                 current[key] = val
             else:
                 current[key] = {}
         else:
             if type(current[key]) is not dict:
-                print("Given dictionary is not compatible with key structure requested")
+                logger.info(
+                    "Given dictionary is not compatible with key structure requested",
+                )
                 raise ValueError("Dictionary key already occupied")
         current = current[key]
     return my_dict
+
 
 def unflatten_results(df, sep=".") -> List[dict]:
     """
@@ -110,6 +120,7 @@ def unflatten_results(df, sep=".") -> List[dict]:
         result.append(parsed_row)
     return result
 
+
 def find_results(df, kwargs: dict = {}) -> pd.DataFrame:
     """
     Finds the results of a dataframe that matches the given kwargs.
@@ -123,7 +134,6 @@ def find_results(df, kwargs: dict = {}) -> pd.DataFrame:
     return df
 
 
-
 def drop_static_columns(df) -> pd.DataFrame:
     """
     Drop columns that contain only one unique value.
@@ -132,17 +142,21 @@ def drop_static_columns(df) -> pd.DataFrame:
     """
     logger.debug("Dropping static columns...")
     for col in df.columns:  # Loop through columns
-        if isinstance(df[col].iloc[0], list) and len(df[col].iloc[0]) == 1:  # Find columns that contain lists of length 1
+        if (
+            isinstance(df[col].iloc[0], list) and len(df[col].iloc[0]) == 1
+        ):  # Find columns that contain lists of length 1
             df[col] = df[col].apply(lambda x: x[0])
         try:
-            if len(df[col].unique()) == 1:  # Find unique values in column along with their length and if len is == 1 then it contains same values
-                df.drop([col], axis=1, inplace=True) 
-        except:
+            if (
+                len(df[col].unique()) == 1
+            ):  # Find unique values in column along with their length and if len is == 1 then it contains same values
+                df.drop([col], axis=1, inplace=True)
+        except:  # noqa E722
             pass
     return df
 
 
-def save_results(report_folder, results_file, delete_columns = []) -> str:
+def save_results(report_folder, results_file, delete_columns=[]) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
@@ -150,35 +164,38 @@ def save_results(report_folder, results_file, delete_columns = []) -> str:
     results = parse_results(report_folder)
     for col in delete_columns:
         try:
-            results.drop(col, axis = 1, inplace = True)
+            results.drop(col, axis=1, inplace=True)
         except KeyError as e:
+            logger.warning(e)
             logger.warning(f"Column {col} not found in results. Skipping.")
             pass
     results.to_csv(results_file)
-    assert Path(results_file).exists(), f"Results file {results_file} does not exist. Something went wrong."
+    assert Path(
+        results_file,
+    ).exists(), f"Results file {results_file} does not exist. Something went wrong."
     logger.debug(f"Results saved to {results_file}")
     return results_file
-    
-def find_best_params(filename, scorer, control_for = None):
-    """
-    
-    """
+
+
+def find_best_params(filename, scorer, control_for=None):
+    """ """
     logger.info("Finding best params...")
     assert Path(filename).exists(), f"Results file {filename} does not exist."
-    results = pd.read_csv(filename, index_col = 0)
+    results = pd.read_csv(filename, index_col=0)
     big_list = results[control_for].unique() if control_for else []
     if len(big_list) <= 1:
         best_df = results
     else:
         best_df = pd.DataFrame()
         for params in big_list:
-            results = find_results(results, kwargs = {control_for : params})
-            sorted = results.sort_values(by =scorer, ascending = False).head(1)
+            results = find_results(results, kwargs={control_for: params})
+            sorted = results.sort_values(by=scorer, ascending=False).head(1)
             best_df = pd.concat([best_df, sorted])
-            best_df = best_df.reset_index(drop = True)
-    indexes = [Path(x).name for x in best_df['files.path']]
-    best_df['files.path'] = indexes
+            best_df = best_df.reset_index(drop=True)
+    indexes = [Path(x).name for x in best_df["files.path"]]
+    best_df["files.path"] = indexes
     return best_df
+
 
 def delete_these_columns(df, columns) -> pd.DataFrame:
     """
@@ -194,8 +211,9 @@ def delete_these_columns(df, columns) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    
+
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--report_folder", type=str, default="reports/model_queue")
     parser.add_argument("--results_file", type=str, default="plots/model_results.csv")
@@ -204,11 +222,16 @@ if __name__ == "__main__":
     parser.add_argument("--default_param_file", type=str, default="params.yaml")
     parser.add_argument("--output_folder", type=str, default="best_models")
     parser.add_argument("--control_for", type=str, default="model.init.kernel")
-    parser.add_argument("--exclude", type=list, default=["sigmoid"], nargs='+')
+    parser.add_argument("--exclude", type=list, default=["sigmoid"], nargs="+")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument("--stage", type=str, default=None)
-    parser.add_argument("--kwargs", type=list, default = ["data.sample.train_size=1000", "data.generate.n_features=100"], nargs='+')
-    parser.add_argument("--delete_columns", type=list, nargs='+', default = [])
+    parser.add_argument(
+        "--kwargs",
+        type=list,
+        default=["data.sample.train_size=1000", "data.generate.n_features=100"],
+        nargs="+",
+    )
+    parser.add_argument("--delete_columns", type=list, nargs="+", default=[])
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
@@ -229,19 +252,27 @@ if __name__ == "__main__":
         kwargs[entry.split("=")[0]] = value
     columns_to_delete = args.delete_columns
     stage = args.stage
-    report_file = save_results(report_folder, results_file, delete_columns = columns_to_delete)
-    assert Path(report_file).exists(), f"Results file {report_file} does not exist. Something went wrong."
+    report_file = save_results(
+        report_folder,
+        results_file,
+        delete_columns=columns_to_delete,
+    )
+    assert Path(
+        report_file,
+    ).exists(), f"Results file {report_file} does not exist. Something went wrong."
     logger.info(f"Results saved to {report_file}")
-    results = pd.read_csv(report_file, index_col = 0)
+    results = pd.read_csv(report_file, index_col=0)
     logger.info(f"Shape of results: {results.shape}")
-    for k,v in kwargs.items():
-        print(f"Keyword {k} has {len(results[k])} values.")
+    for k, v in kwargs.items():
+        logger.info(f"Keyword {k} has {len(results[k])} values.")
         for value in results[k].unique():
-            print(f"Value {value} has {len(results[results[k] == value])} entries.")
-    print(f"Shape of results: {results.shape}")
-    results = find_results(results, kwargs = kwargs)
+            logger.info(
+                f"Value {value} has {len(results[results[k] == value])} entries.",
+            )
+    logger.info(f"Shape of results: {results.shape}")
+    results = find_results(results, kwargs=kwargs)
     outputs = {}
-    
+
     names = list(results[control_for].unique())
     for exclude_this in args.exclude:
         exclude_this = "".join(exclude_this)
@@ -251,30 +282,46 @@ if __name__ == "__main__":
         except ValueError:
             pass
     for name in names:
+        params_file = Path(report_folder, name, default_param_file)
         i = 0
         first_run = True
         while first_run or not Path(params_file).exists():
             if first_run is True:
                 first_run = False
-            results =  results[~results['files.path'].str.contains("retrain")]
-            results = results[~results['files.params_file'].str.contains("retrain")]
-            best = results[results[control_for] == name].sort_values(by = scorer, ascending = args.scorer_minimize).head(i+1)
+            results = results[~results["files.path"].str.contains("retrain")]
+            results = results[~results["files.params_file"].str.contains("retrain")]
+            best = (
+                results[results[control_for] == name]
+                .sort_values(by=scorer, ascending=args.scorer_minimize)
+                .head(i + 1)
+            )
             unflattened = unflatten_results(best.tail(1))
             if len(unflattened) == 0:
-                params_file = Path(unflattened['files']['path'], unflattened['files']['params_file'])
+                params_file = Path(
+                    unflattened["files"]["path"],
+                    unflattened["files"]["params_file"],
+                )
             else:
-                params_file = Path(unflattened[0]['files']['path'], unflattened[0]['files']['params_file'])
+                params_file = Path(
+                    unflattened[0]["files"]["path"],
+                    unflattened[0]["files"]["params_file"],
+                )
             i += 1
             logger.debug("Params file: ", params_file)
             logger.debug("Iteration: ", i)
-        with open(params_file, 'r') as f:
+        with open(params_file, "r") as f:
             params = yaml.load(f, Loader=yaml.FullLoader)
-            params['files']['params_file'] = str(Path(params['files']['params_file']).as_posix()).split(".")[-2]+".yaml"
-            params['files']['path'] = str(Path(output_folder, name).as_posix())
-            filetype = params['files']['model_file'].split('.')[-1]
-            params['files']['model_file'] = str(Path(output_folder,  f"{name}.{filetype}" ).as_posix())
+            params["files"]["params_file"] = (
+                str(Path(params["files"]["params_file"]).as_posix()).split(".")[-2]
+                + ".yaml"
+            )
+            params["files"]["path"] = str(Path(output_folder, name).as_posix())
+            filetype = params["files"]["model_file"].split(".")[-1]
+            params["files"]["model_file"] = str(
+                Path(output_folder, f"{name}.{filetype}").as_posix(),
+            )
         logger.info(f"Loading experiment for {control_for}={name}...")
-        exp = load_dvc_experiment(params = params, stage = stage, parse = False)
+        exp = load_dvc_experiment(params=params, stage=stage, parse=False)
         logger.info(f"Running experiment for {control_for}={name}...")
         outputs[name] = exp.run(save_model=True)
         logger.info(f"Finished running experiment for {control_for}={name}.")

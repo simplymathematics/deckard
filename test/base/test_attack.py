@@ -89,7 +89,7 @@ class testAttackExperiment(unittest.TestCase):
             },
         }
         config = deepcopy(self.exp._asdict())
-        del config['data']['generate']
+        del config["data"]["generate"]
         (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset("cifar10")
         data = Namespace(
             X_train=X_train[:10],

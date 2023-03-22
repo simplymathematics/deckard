@@ -63,7 +63,7 @@ class testExperiment(unittest.TestCase):
 
     def test_run(self):
         outputs = self.exp.run()
-        self.assertTrue(Path(outputs['scores']).exists())
+        self.assertTrue(Path(outputs["scores"]).exists())
 
     def test_save_data(self):
         (

@@ -9,7 +9,7 @@ from art.attacks.evasion import BoundaryAttack  # noqa F401
 from art.defences.postprocessor import HighConfidence  # noqa F401
 from art.defences.preprocessor import FeatureSqueezing  # noqa F401
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier  # noqa F401
-from yellowbrick.contrib.wrapper import classifier, regressor, clusterer
+from yellowbrick.contrib.wrapper import classifier, regressor  # , clusterer
 
 from sklearn.cluster import KMeans  # noqa F401
 from sklearn.exceptions import UndefinedMetricWarning
