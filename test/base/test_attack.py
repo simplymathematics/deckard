@@ -1,15 +1,13 @@
-import pickle
 import unittest
 import warnings
-from argparse import Namespace
-from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
 import yaml
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer
-from art.utils import load_dataset
+
+# from art.utils import load_dataset
 from deckard.base import Attack, Experiment
 from deckard.base.experiment import config as default_config
 
