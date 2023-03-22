@@ -3,7 +3,7 @@ import warnings
 import yaml
 from collections.abc import Callable  # noqa F401
 from pathlib import Path
-
+from argparse import Namespace
 import numpy as np
 from art.attacks.evasion import BoundaryAttack  # noqa F401
 from art.defences.postprocessor import HighConfidence  # noqa F401
@@ -14,11 +14,10 @@ from yellowbrick.contrib.wrapper import classifier, regressor  # , clusterer
 
 from sklearn.cluster import KMeans  # noqa F401
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression  # noqa F401
 from deckard.base import Data, Experiment, Model, Yellowbrick_Visualiser
 from deckard.base.experiment import config as exp_config
-from deckard.base.model import config as model_config
-from deckard.base.data import config as data_config
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -74,16 +73,16 @@ class testVisualiser(unittest.TestCase):
         self.selection_viz = {
             "validation": {
                 "name": "validation",
-                "param_name": "alpha",
+                "param_name": "penalty",
                 "param_range": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
             },
             "learning": {
                 "name": "learning",
-                "train_sizes": [10, 50, 100, 200, 500, 640],
+                "train_sizes": [10, 20, 30, 40, 50],
             },
             "cross_validation": {
                 "name": "cross_validation",
-                "param_name": "alpha",
+                "param_name": "penalty",
                 "param_range": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
             },
             "feature_importances": "feature_importances",
@@ -124,10 +123,9 @@ class testVisualiser(unittest.TestCase):
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
         model = model.load("reports/model.pickle")
-        if hasattr(model, "model"):
-            model = model.model
-        model.fit(data.X_train, data.y_train)
-        paths = viz.visualise_regression(data, regressor(model.model))
+        y_train = 1 * np.random.rand(len(data.y_train))
+        model.model.fit(self.data.X_train, y_train)
+        paths = viz.visualise_regression(data, regressor(self.model.model))
         for path in paths:
             filename = Path(paths[path])
             self.assertTrue(Path(filename).exists())
@@ -153,15 +151,14 @@ class testVisualiser(unittest.TestCase):
     def test_visualise_model_selection(self):
         params = yaml.load(self.config, Loader=yaml.FullLoader)
         params["plots"] = self.selection_viz
+        params["model"]["init"] = {"name": "sklearn.linear_model.LogisticRegression"}
+        params["model"]["fit"] = {}
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-        exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
-        data, model, _ = exp.load()
-        data = data.load("reports/filename.pickle")
-        model = model.load("reports/model.pickle", art=True)
-        if hasattr(model, "model"):
-            model = model.model
-        model.fit(data.X_train, data.y_train)
-        paths = viz.visualise_model_selection(self.data, model.model)
+        model = LogisticRegression()
+        X, y = load_iris(return_X_y=True)
+        model.fit(X, y)
+        data = Namespace(X_train=X, y_train=y, X_test=X, y_test=y)
+        paths = viz.visualise_model_selection(data, model)
         for path in paths:
             filename = Path(paths[path])
             self.assertTrue(Path(filename).exists())
@@ -172,10 +169,8 @@ class testVisualiser(unittest.TestCase):
         exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
-        model = model.load("reports/model.pickle", art=True)
-        if hasattr(model, "model"):
-            model = model.model
-        model.fit(data.X_train, data.y_train)
+        model = model.load("reports/model.pickle")
+        model.model.fit(data.X_train, data.y_train)
         paths = viz.visualise(self.data, classifier(model.model))
         for path in paths:
             for subpath in paths[path]:

@@ -3,5 +3,5 @@ defaults:
   - sample : default.yaml
 path : data
 name : classification
-filename: 
+filename:
 filetype:

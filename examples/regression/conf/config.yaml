@@ -34,5 +34,3 @@ hydra:
     max_nbytes: null
     mmap_mode: r
 #@package hydra.launcher
-
-    

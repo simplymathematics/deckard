@@ -2,5 +2,5 @@ defaults:
   - init : default.yaml
   # - sklearn_pipeline : default.yaml
 path : models
-filename : 
-filetype :   
+filename :
+filetype :

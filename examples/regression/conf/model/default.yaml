@@ -5,5 +5,5 @@ defaults:
   # - art_pipeline : default.yaml
   # - fit : default.yaml
 path : models
-filename : 
-filetype :   
+filename :
+filetype :
