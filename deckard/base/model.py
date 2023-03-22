@@ -161,11 +161,15 @@ class Model(
             if is_regressor(model) is False:
                 if hasattr(model, "steps"):
                     model = model.steps[-1][1]
-                model = ScikitlearnSVC(
-                    model,
-                    postprocessing_defences=postprocessor_defences,
-                    preprocessing_defences=preprocessor_defences,
-                )
+                if "svm" in str(type(model)).lower():
+                    model = ScikitlearnSVC(
+                        model,
+                        postprocessing_defences=postprocessor_defences,
+                        preprocessing_defences=preprocessor_defences,
+                    )
+                else:
+                    model = ScikitlearnClassifier(model=model, postprocessing_defences=postprocessor_defences,
+                                                  preprocessing_defences=preprocessor_defences)
             else:
                 model = ScikitlearnRegressor(
                     model,

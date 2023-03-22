@@ -15,14 +15,14 @@ data:
     train_size: 8000
   files:
     data_filetype : pickle
-    data_path : data
+    data_path : /tmp/data
 model:
   name: sklearn.ensemble.RandomForestClassifier
   params:
     n_estimators: 100
     max_depth: 5
   files:
-    model_path : models
+    model_path : /tmp/models
     model_filetype : pickle
 plots:
   balance: balance
@@ -56,4 +56,5 @@ files:
   time_dict_file: time_dict.json
   params_file: params.yaml
   score_dict_file: scores.json
-  path: reports
+  path: tmp/reports/
+  attack_score_dict_file : adv_scores.json

@@ -65,7 +65,6 @@ class Attack(
                 f"White-box attack failed with error: {e}. Trying black-box.",
             )
             attack = factory(name, **params)
-        
         except Exception as e:
             raise e
         generate = params.pop("generate", {})
@@ -108,12 +107,21 @@ class Attack(
             if hasattr(model.model, "predict_proba"):
                 start = process_time()
                 attack_pred = model.model.predict_proba(attack_samples)
+                end = process_time() - start
+            else:
+                logger.warning("Model does not have a predict_proba method. Using predict instead.")
+                start = process_time()
+                attack_pred = model.predict(attack_samples)
+                end = process_time() - start
         elif hasattr(model, "predict_proba"):
             start = process_time()
             attack_pred = model.predict_proba(attack_samples)
+            end = process_time() - start
         else:
-            raise ValueError("Model does not have a predict_proba method")
-        end = process_time() - start
+            logger.warning("Model does not have a predict_proba method. Using predict instead.")
+            start = process_time()
+            attack_pred = model.predict(attack_samples)
+            end = process_time() - start
         return attack_pred, end/len(attack_samples)
     
     def score(self, ground_truth = None, predictions = None) -> List[Path]:
@@ -287,22 +295,32 @@ class Attack(
         logger.info("Saving attack results")
         outs = {}
         if data is not None:
-            logger.warning("Saving ttack data is not implemented yet.")
+            logger.warning("Saving attack data is not implemented yet.")
         if model is not None:
-            self.save_model(model)
+            logger.warning("Saving attack model is not implemented yet.")
         if attack_score_dict is not None:
+            logger.info("Saving attack scores")
             file = self.save_attack_scores(attack_score_dict)
+            assert Path(file).exists(), f"Attack score file {file} not saved."
             outs.update({"attack_score_dict": file})
         if attack_predictions is not None:
+            logger.info("Saving attack predictions")
             file = self.save_attack_predictions(attack_predictions)
+            assert Path(file).exists(), f"Attack prediction file {file} not saved."
             outs.update({"attack_predictions": file})
         if attack_probabilities is not None:
+            logger.info("Saving attack probabilities")
             file = self.save_attack_probabilities(attack_probabilities)
+            assert Path(file).exists(), f"Attack probability file {file} not saved."
             outs.update({"attack_probabilities": file})
         if attack_samples is not None:
+            logger.info("Saving attack samples")
             file = self.save_attack_samples(attack_samples)
+            assert Path(file).exists(), f"Attack sample file {file} not saved."
             outs.update({"attack_samples": file})
         if attack_time_dict is not None:
+            logger.info("Saving attack time")
             file = self.save_attack_time(attack_time_dict)
+            assert Path(file).exists(), f"Attack time file {file} not saved."
             outs.update({"attack_time_dict": file})
         return outs

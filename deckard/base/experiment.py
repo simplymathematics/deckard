@@ -16,7 +16,7 @@ from sklearn.exceptions import NotFittedError
 
 from .attack import Attack
 from .data import Data
-from .hashable import BaseHashable
+from .hashable import BaseHashable, my_hash
 from .model import Model
 from .scorer import Scorer
 from .visualise import Yellowbrick_Visualiser
@@ -111,7 +111,6 @@ class Experiment(
         """Saves parameters to specified file.
         :returns: Path, path to saved parameters.
         """
-        logger.info(f"Saving parameters to {self.files['params_file']}")
         filename = Path(self.files["path"], self.files["params_file"])
         filename.parent.mkdir(parents=True, exist_ok=True)
         params = deepcopy(self._asdict())
@@ -128,6 +127,8 @@ class Experiment(
         filename = Path(self.files["model_file"])
         path = Path(filename).parent
         path.mkdir(parents=True, exist_ok=True)
+        if Path(filename).suffix == ".pkl":
+            filename = filename.with_suffix(".pickle")
         if hasattr(model, "save"):
             model.save(Path(filename).stem, path=path)
         else:
@@ -135,7 +136,7 @@ class Experiment(
                 model = model.model
             with open(filename, "wb") as f:
                 pickle.dump(model, f)
-        return str(Path(filename).as_posix())
+        return str(Path(filename))
 
     def save_predictions(
         self,
@@ -358,22 +359,38 @@ class Experiment(
         path = Path(self.files["path"])
         path.mkdir(parents=True, exist_ok=True)
         if "data_file" in self.files and data is not None and save_data is True:
+            logger.info("Saving data...")
             files.update({"data": self.save_data(data)})
+            assert Path(files['data']).exists(), f"Data file {files['data']} does not exist."
         if "model_file" in self.files and model is not None and save_model is True:
+            logger.info("Saving model...")
             files.update({"model": self.save_model(model)})
+            assert Path(files['model']).exists(), f"Model file {files['model']} does not exist."
         if "params_file" in self.files:
+            logger.info("Saving parameters...")
             files.update({"params": self.save_params()})
+            assert Path(files['params']).exists(), f"Params file {files['params']} does not exist."
         if "ground_truth_file" in self.files and ground_truth is not None:
+            logger.info("Saving ground truth...")
             files.update({"ground_truth": self.save_ground_truth(ground_truth)})
+            assert Path(files['ground_truth']).exists(), f"Ground truth file {files['ground_truth']} does not exist."
         if "predictions_file" in self.files and predictions is not None:
+            logger.info("Saving predictions...")
             files.update({"predictions": self.save_predictions(predictions)})
+            assert Path(files['predictions']).exists(), f"Predictions file {files['predictions']} does not exist."
         if "probabilities_file" in self.files and probabilities is not None:
+            logger.info("Saving probabilities...")
             files.update({"probabilities": self.save_probabilities(predictions)})
+            assert Path(files['probabilities']).exists(), f"Probabilities file {files['probabilities']} does not exist."
         if "time_dict_file" in self.files and time_dict is not None:
+            logger.info("Saving time dictionary...")
             time_file = self.save_time_dict(time_dict)
             files.update({"time": time_file})
+            assert Path(time_file).exists(), f"Time file {time_file} does not exist."
         if "score_dict_file" in self.files and score_dict is not None:
+            logger.info("Saving score dictionary...")
             files.update({"scores": self.save_scores(score_dict)})
+            assert Path(files['scores']).exists(), f"Scores file {files['scores']} does not exist."
         return files
 
     def run(
@@ -535,6 +552,7 @@ class Experiment(
                 outs.update(attack_results)
                 loaded_data.X_test = pd.read_json(attack_results["attack_samples"])
                 self['files']['data_file']  = self['files']['attack_file']
+        
         saved_files = self.save(**results, save_data=save_data, save_model=save_model)
         outs.update(saved_files)
         #######################################################################
@@ -547,6 +565,7 @@ class Experiment(
             plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
             outs.update({"plots": plots})
             logger.info("Visualising")
+        logger.info(f"Experiment {self.files['path']} finished.")
         return outs
 
     def visualise(self, data, model, mtype=None, art: bool = False) -> List[Path]:
@@ -651,17 +670,21 @@ config = """
             average: weighted
             name: sklearn.metrics.recall_score
     files:
-        ground_truth_file: ground_truth.json
-        predictions_file: predictions.json
-        time_dict_file: time_dict.json
+        attack_file: /tmp/attack.pkl
+        attack_predictions_file: attack_predictions.json
+        attack_probabilities_file: attack_probabilities.json
+        attack_samples_file: samples.json
+        attack_score_dict_file: attack_scores.json
+        attack_time_dict_file: attack_time_dict.json
+        data_file: /tmp/data.pkl
+        model_file: /tmp/model.pkl
         params_file: params.yaml
+        path : /tmp/reports/deckard_test
+        predictions_file: predictions.json
+        probabilities_file: probabilities.json
+        reports: /tmp/reports
         score_dict_file: scores.json
-        path: reports
-        attack_samples_file: adv_samples.json
-        attack_predictions_file : adv_predictions.json
-        attack_time_dict_file : adv_time_dict.json
-        attack_params_file : attack_params.yaml
-        attack_path : attack
-        data_file : reports/data.pickle
-        model_file : reports/model.pickle
+        time_dict_file: time_dict.json
+        ground_truth_file: ground_truth.json
+        attack_params_file: attack_params.json
     """

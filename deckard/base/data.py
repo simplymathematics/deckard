@@ -72,7 +72,7 @@ class Data(
         params = deepcopy(self._asdict())
         if Path(filename).exists():
             ns = self.read(filename)
-        elif "generate" in params:
+        elif  len(params["generate"]) > 0:
             ns = self.sklearn_load()
         else:
             ns = self.read(self.name)
@@ -271,7 +271,7 @@ class Data(
         transform: dict,
     ) -> Namespace:
         """
-        Transofrms the data according to the parameters specified in params.yaml
+        Transforms the data according to the parameters specified in params.yaml
         :param data (Namespace): Namespace containing X_train, X_test, y_train, y_test
         :param name (str): Name of the transformation
         :return: Namespace containing X_train, X_test, y_train, y_test
@@ -319,8 +319,9 @@ class Data(
         """
         pipeline = self.sklearn_pipeline
         for layer in pipeline:
+            logger.info(f"Running layer {layer} of the sklearn pipeline")
             new_data = deepcopy(data)
-            transform = self.sklearn_pipeline[layer]
+            transform = deepcopy(self.sklearn_pipeline[layer])
             data = self.sklearn_transform(data=new_data, transform=transform)
         return data
 

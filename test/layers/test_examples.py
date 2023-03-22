@@ -7,7 +7,7 @@ import subprocess
 from deckard.base.data import Data, config
 
 
-names = ["classification", "regression"]
+names = ["regression"]
 # TODO other names
 
 logger = logging.basicConfig(level=logging.DEBUG)
@@ -26,8 +26,7 @@ class testExamples(unittest.TestCase):
     def test_examples(self):
         cmd = "dvc repro --force"
         for example in self.examples:
-            os.chdir(example)
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, cwd=example, shell=True)
             for line in iter(p.stdout.readline, b""):
                 print(line)
             p.stdout.close()

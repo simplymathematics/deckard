@@ -36,7 +36,7 @@ class testExperiment(unittest.TestCase):
         model_config=model_config,
     ) -> None:
 
-        self.path = "reports"
+        self.path = "tmp/reports/"
         self.config = exp_config
         self.file = "test_filename"
         self.here = Path(__file__).parent
@@ -62,8 +62,8 @@ class testExperiment(unittest.TestCase):
         self.assertEqual(my_hash(exp._asdict()), my_hash(self.exp._asdict()))
 
     def test_run(self):
-        _ = self.exp.run()
-        self.assertTrue(Path(self.path).exists())
+        outputs = self.exp.run()
+        self.assertTrue(Path(outputs['scores']).exists())
 
     def test_save_data(self):
         (
@@ -81,8 +81,7 @@ class testExperiment(unittest.TestCase):
             _,
             _,
         ) = self.exp.load()
-        path = self.exp.save_params()
-        path = Path(self.path)
+        path = Path(self.exp.save_params())
         self.assertTrue(path.exists())
 
     def test_save_model(self):
@@ -108,7 +107,7 @@ class testExperiment(unittest.TestCase):
         model.fit(data.X_train, data.y_train)
         predictions = model.predict(data.X_test)
         path = self.exp.save_predictions(predictions)
-        path = Path(self.path)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_save_ground_truth(self):
@@ -124,7 +123,7 @@ class testExperiment(unittest.TestCase):
         model.fit(data.X_train, data.y_train)
         truth = model.predict(data.X_test)
         path = self.exp.save_ground_truth(truth)
-        path = Path(self.path)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_save_time_dict(self):
@@ -135,7 +134,7 @@ class testExperiment(unittest.TestCase):
         ) = self.exp.load()
         time_dict = {"fit_time": 0, "pred_time": 0}
         path = self.exp.save_time_dict(time_dict)
-        path = Path(self.path)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def test_score(self):
@@ -152,7 +151,7 @@ class testExperiment(unittest.TestCase):
         predictions = model.predict(data.X_test)
         score_dict = self.exp.score(predictions=predictions, ground_truth=data.y_test)
         path = self.exp.save_scores(score_dict)
-        path = Path(self.path)
+        path = Path(path)
         self.assertTrue(path.exists())
 
     def tearDown(self) -> None:

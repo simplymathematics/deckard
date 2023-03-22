@@ -39,20 +39,18 @@ class testAttackExperiment(unittest.TestCase):
         self.assertTrue(isinstance(self.attack, Attack))
 
     def test_load(self):
-        atk, gen = self.attack.load(self.model)
+        atk, gen, _ = self.attack.load(self.data, self.model)
         self.assertTrue(hasattr(atk, "generate"))
         self.assertIsInstance(gen, dict)
 
     def test_generate(self):
-        atk, gen = self.attack.load(self.model)
+        tup = self.attack.load(self.data, self.model)
         (
             adv_samples,
-            attack_pred,
-            time_dict,
-        ) = self.attack.fit(self.data, self.model, atk, **gen)
+            time,
+        ) = self.attack.fit(self.data, tup[2], tup[0], **tup[1])
         self.assertIsInstance(adv_samples, np.ndarray)
-        self.assertIsInstance(time_dict, dict)
-        self.assertIsInstance(attack_pred, np.ndarray)
+        self.assertIsInstance(time, float)
 
     def test_save_attack_predictions(self):
         preds = self.data.y_test
@@ -91,7 +89,7 @@ class testAttackExperiment(unittest.TestCase):
             },
         }
         config = deepcopy(self.exp._asdict())
-
+        del config['data']['generate']
         (X_train, y_train), (X_test, y_test), min_, max_ = load_dataset("cifar10")
         data = Namespace(
             X_train=X_train[:10],
@@ -99,9 +97,10 @@ class testAttackExperiment(unittest.TestCase):
             X_test=X_test[:1],
             y_test=y_test[:1],
         )
-        Path("reports").mkdir(parents=True, exist_ok=True)
-        with open("reports/data.pickle", "wb") as f:
+        Path("/tmp/reports").mkdir(parents=True, exist_ok=True)
+        with open("/tmp/reports/data.pickle", "wb") as f:
             pickle.dump(data, f)
+        assert Path("/tmp/reports/data.pickle").exists()
         config["attack"] = whitebox["attack"]
         tf1 = {
             "init": {"name": "art_models/model.pb", "library": "keras"},
@@ -109,7 +108,7 @@ class testAttackExperiment(unittest.TestCase):
         }
         config["attack"] = whitebox["attack"]
         config["model"] = tf1
-        config["data"] = {"name": "reports/data.pickle"}
+        config["data"] = {"name": "/tmp/reports/data.pickle"}
         del config["plots"]
         white_conf = "!Attack:\n" + str(yaml.dump(config))
         exp_conf = "!Experiment:\n" + str(yaml.dump(config))

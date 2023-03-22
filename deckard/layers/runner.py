@@ -36,12 +36,12 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if isinstance(default[key], dict):
+        if key in default and isinstance(default[key], dict):
             default[key] = merge_params(default[key], value)
-        elif isinstance(default[key], (list, tuple, int, float, str, bool)):
+        elif isinstance(value, (list, tuple, int, float, str, bool)):
             default[key] = value
         else:
-            raise ValueError(f"Type {type(default[key])} not supported. Supported types are dict, list, tuple, int, float, str, bool")
+            logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
 
 def read_subset_of_params(key_list:list, params:dict):
@@ -119,11 +119,15 @@ def parse_stage(stage:str = None,  params:dict = None, path = None) -> dict:
         params = merge_params(default_params, params)
     assert isinstance(params, dict), f"Params must be a dict. It is type {type(params)}."
     # Update params with paths from dvc
-    full_report = params["files"]["path"]
-    parents = list(Path(full_report).parents)
-    name = Path(full_report).name
-    parents.insert(1, Path(stage))
-    params["files"]["path"] = str(Path(params["files"]["reports"], stage, name))
+    report = params["files"]["reports"]
+    name = params['files']['path']
+    if name in str(Path(report)):
+        name = str(Path(report).name)
+        report = str(Path(report).parent.parent)
+    else:
+        name = str(Path(name).name)
+    new_path = str(Path(report, stage, name))
+    params["files"]["path"] = new_path
     return params
 
     

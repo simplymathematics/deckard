@@ -17,7 +17,7 @@ class testRunner(unittest.TestCase):
 
     def test_runner(self):
         os.chdir(self.path)
-        cmd = "python -m deckard.layers.runner train"
+        cmd = "python -m deckard.layers.runner --stage train"
         p = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
