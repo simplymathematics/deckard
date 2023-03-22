@@ -9,6 +9,7 @@ from art.attacks.evasion import BoundaryAttack  # noqa F401
 from art.defences.postprocessor import HighConfidence  # noqa F401
 from art.defences.preprocessor import FeatureSqueezing  # noqa F401
 from art.estimators.classification.scikitlearn import ScikitlearnClassifier  # noqa F401
+from art.utils import to_categorical
 from yellowbrick.contrib.wrapper import classifier, regressor  # , clusterer
 
 from sklearn.cluster import KMeans  # noqa F401
@@ -44,12 +45,8 @@ class testVisualiser(unittest.TestCase):
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.data = data.load("reports/filename.pickle")
         self.model = model.load("reports/model.pickle", art=False)
-        self.data.y_train = (
-            LabelBinarizer().fit(self.data.y_train).transform(self.data.y_train)
-        )
-        self.data.y_test = (
-            LabelBinarizer().fit(self.data.y_train).transform(self.data.y_test)
-        )
+        self.data.y_train = to_categorical(self.data.y_train)
+        self.data.y_test = to_categorical(self.data.y_test)
         self.here = Path(__file__).parent
         self.data_viz = {
             "rank1d": "rank1d",
@@ -127,7 +124,8 @@ class testVisualiser(unittest.TestCase):
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
         model = model.load("reports/model.pickle")
-        model.fit(data.X_train, data.y_train)
+        y_train = np.argmax(data.y_train, axis=1)
+        model.fit(data.X_train, y_train)
         paths = viz.visualise_regression(data, regressor(model.model))
         for path in paths:
             filename = Path(paths[path])
@@ -144,7 +142,8 @@ class testVisualiser(unittest.TestCase):
     #     data, model, _ = exp.load()
     #     data = data.load(f"{self.path}/tmp_data.pickle")
     #     model = model.load(f"{self.path}/new_model.pickle")
-    #     model, _ = model.fit(data.X_train, data.y_train)
+    #     y_train = np.argmax(data.y_train, axis=1)
+    #     model, _ = model.fit(data.X_train, y_train)
     #     paths = viz.visualise_clustering(data, clusterer(model.model))
     #     for path in paths:
     #         filename = Path(paths[path])
