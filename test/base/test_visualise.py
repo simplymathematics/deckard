@@ -156,8 +156,10 @@ class testVisualiser(unittest.TestCase):
         params = yaml.load(self.config, Loader=yaml.FullLoader)
         params["plots"] = self.selection_viz
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-        self.data.y_train = np.argmax(self.data.y_train, axis=1)
-        self.data.y_test = np.argmax(self.data.y_test, axis=1)
+        if len(self.data.y_train.shape) > 1:
+            self.data.y_train = np.argmax(self.data.y_train, axis=1)
+        if len(self.data.y_test.shape) > 1:
+            self.data.y_test = np.argmax(self.data.y_test, axis=1)
         exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
@@ -171,8 +173,10 @@ class testVisualiser(unittest.TestCase):
     def test_visualise(self):
         params = yaml.load(self.config, Loader=yaml.FullLoader)
         viz = yaml.load(self.tag + str(params), Loader=yaml.FullLoader)
-        self.data.y_train = np.argmax(self.data.y_train, axis=1)
-        self.data.y_test = np.argmax(self.data.y_test, axis=1)
+        if len(self.data.y_train.shape) > 1:
+            self.data.y_train = np.argmax(self.data.y_train, axis=1)
+        if len(self.data.y_test.shape) > 1:
+            self.data.y_test = np.argmax(self.data.y_test, axis=1)
         exp = yaml.load(self.exp + str(params), Loader=yaml.FullLoader)
         data, model, _ = exp.load()
         data = data.load("reports/filename.pickle")
