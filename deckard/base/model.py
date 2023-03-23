@@ -208,7 +208,6 @@ class Model(
         elif library == "tensorflow":
             model = KerasClassifier(
                 model,
-                use_logits=True,
                 postprocessing_defences=postprocessor_defences,
                 preprocessing_defences=preprocessor_defences,
                 **init_params,
