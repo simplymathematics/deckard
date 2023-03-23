@@ -1,37 +1,25 @@
 stages:
   data:
-    cmd: python make_data.py
+    cmd: python -m deckard.layers.runner --stage data
     outs:
     - ${files.data_file}
-    plots:
-    - ${files.path}/balance.png
-    - ${files.path}/radviz.png
-    - ${files.path}/correlation.png
     params:
     - data
+    - files
     deps:
     - params.yaml
   model:
-    cmd: python experiment.py
+    cmd: python -m deckard.layers.runner --stage model
     outs:
-    - ${files.model_file}
-    - ${files.path}/${files.predictions_file}
-    - ${files.path}/${files.ground_truth_file}
-    - ${files.path}/report.html
+    - ${files.reports}/model/${files.path}/${files.predictions_file}
+    - ${files.reports}/model/${files.path}/${files.ground_truth_file}
     deps:
     - ${files.data_file}
     - params.yaml
     metrics:
-    - ${files.path}/scores.json
-    plots:
-    - ${files.path}/classification.png
-    - ${files.path}/confusion.png
+    - ${files.reports}/model/${files.path}/scores.json
     params:
+    - data
     - model
-  cache:
-    cmd: python cache.py
-    deps:
-    - ${files.data_file}
-    - ${files.model_file}
-    - ${files.path}/${files.ground_truth_file}
-    - ${files.path}/${files.predictions_file}
+    - files
+    - scorers

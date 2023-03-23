@@ -130,6 +130,7 @@ class Yellowbrick_Visualiser(
         :param self.plots: dict of plots to be generated
         :return: list of paths to the generated plots
         """
+        logger.info("Visualising data")
         plots = deepcopy(self.plots)
         files = deepcopy(self.files)
         path = Path(files["path"])
@@ -278,6 +279,7 @@ class Yellowbrick_Visualiser(
         :param model: model object to be used for visualisation
         :return: list of paths to the generated plots
         """
+        logger.info("Visualising classification results")
         plots = deepcopy(self.plots)
         files = deepcopy(self.files)
         path = Path(files["path"])
@@ -338,6 +340,7 @@ class Yellowbrick_Visualiser(
         :param self.plots: dict of plots to be generated
         :return: list of paths to the generated plots
         """
+        logger.info("Visualising regression results")
         files = deepcopy(dict(self.files))
         path = Path(files["path"])
         path.mkdir(parents=True, exist_ok=True)
@@ -384,6 +387,7 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
+        logger.info("Visualising clustering results")
         files = deepcopy(dict(self.files))
         path = Path(files["path"])
         path.mkdir(parents=True, exist_ok=True)
@@ -423,23 +427,27 @@ class Yellowbrick_Visualiser(
         :param self.files.path: path to save the plots
         :return: list of paths to the generated plots
         """
+        logger.info("Visualising model selection results")
         files = deepcopy(dict(self.files))
         path = Path(files["path"])
         path.mkdir(parents=True, exist_ok=True)
         paths = {}
         plots = deepcopy(self.plots)
-        scorer = list(self.scorers.keys())[0] if self.scorers is not {} else None
-        cv = plots.pop("cv", None)
+        scorer = list(self.scorers.keys())[0] if len(self.scorers) > 1 else None
         if scorer is None:
-            if all([isinstance(item, int) for item in list(set(data.y_train))]):
+            if all([isinstance(item, int) for item in list(np.unique(data.y_train))]):
                 scorer = "f1_weighted"
             else:
                 scorer = "mse"
-        if cv is None:
+        if "cv" not in self:
             cv = {"name": "sklearn.model_selection.StratifiedKFold", "n_splits": 5}
+            
+            
+        else:
+            cv = self.cv
         assert (
-            "name" in cv
-        ), f"Cross validation method must be specified. Your config is {cv}."
+                "name" in cv
+            ), f"Cross validation method must be specified. Your config is {cv}."
         cv = factory(cv.pop("name"), **cv)
         for name in model_selection_visualisers.keys():
             if name in plots.keys():
@@ -488,6 +496,7 @@ class Yellowbrick_Visualiser(
         return paths
 
     def visualise(self, data, model, mtype=None, art=False) -> dict:
+        logger.info("Visualising results")
         """
         Visualise classification results according to the configuration file.
         :param data: Namespace of data to be used for visualisation

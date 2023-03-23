@@ -548,7 +548,14 @@ class Experiment(
             and len(self.model) > 0
         ):
             logger.info("Scoring")
-            score_dict = self.score(loaded_data.y_test, predictions)
+            try:
+                score_dict = self.score(loaded_data.y_test, predictions)
+            except ValueError as e:
+                if "binary" and "continuous" in str(e):
+                    predictions = to_categorical(predictions)
+                    score_dict = self.score(loaded_data.y_test, predictions)
+                else:
+                    raise e
             results.update({"score_dict": score_dict})
         elif "score_dict_file" in files and not isinstance(
             files["score_dict_file"],
@@ -643,14 +650,17 @@ class Experiment(
         outs.update(saved_files)
         #######################################################################
         if (
-            len(self.plots) > 0 and len(self.model) > 0
-        ):  # and not isinstance(files['plots_folder'], str):
+            len(self.plots) > 0 
+        ):
             logger.info("Visualising")
-            if "art" in str(type(fitted_model)):
-                art = True
+            if "fitted_model" in locals():
+                if "art." in str(type(fitted_model)):
+                    art = True
+                else:
+                    art = False
+                plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
             else:
-                art = False
-            plots = self.visualise(data=loaded_data, model=fitted_model, art=art)
+                plots = self.visualise(data=loaded_data, model=None, art=False)
             outs.update({"plots": plots})
             logger.info("Visualising")
         logger.info(f"Experiment {self.files['path']} finished.")
@@ -669,7 +679,7 @@ class Experiment(
             List[Path]: _description_
         """
         plots = []
-
+        logger.info("Loading Yellowbrick visualiser.")
         yaml.add_constructor("!YellowBrick_Visualiser:", Yellowbrick_Visualiser)
         vis = yaml.load(
             "!YellowBrick_Visualiser:\n" + str(self._asdict()),
