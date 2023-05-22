@@ -171,7 +171,7 @@ class ModelTrainer:
             except Exception as e:
                 raise e
         except RuntimeError as e:
-            if "tf.data.Dataset" in str(e):
+            if "eager mode" in str(e):
                 import tensorflow as tf
 
                 tf.config.run_functions_eagerly(True)
@@ -460,6 +460,11 @@ class Model:
                     logger.warning("Disabling eager execution for Tensorflow.")
                     import tensorflow as tf
                     tf.compat.v1.disable_eager_execution()
+                    model = self.init()
+                elif "eager" in str(e):
+                    logger.warning("Enabling eager execution for Tensorflow.")
+                    import tensorflow as tf
+                    tf.config.run_functions_eagerly(True)
                     model = self.init()
                 else:
                     raise e

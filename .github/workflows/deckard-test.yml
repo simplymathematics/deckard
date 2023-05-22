@@ -23,5 +23,5 @@ jobs:
         python -m pip install pytest pandas pillow PyYAML ffmpeg
     - name: Test base folder with pytest
       run: |
-        python -m pip install --editable .
+        python -m pip install .[tensorflow-image,pytorch-image,non-framework]
         python -m pytest test

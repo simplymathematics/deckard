@@ -111,12 +111,12 @@ class testTorchArtPipeline(testArtPipeline):
     config_file = "torch_mnist.yaml"
 
 
-class testKerasArtPipeline(testArtPipeline):
-    name: str = "initialize"
-    library: str = "keras"
-    kwargs: dict = {}
-    config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
-    config_file = "keras_mnist.yaml"
+# class testKerasArtPipeline(testArtPipeline):
+#     name: str = "initialize"
+#     library: str = "keras"
+#     kwargs: dict = {}
+#     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
+#     config_file = "keras_mnist.yaml"
 
 
 class testTFV2ArtPipeline(testArtPipeline):

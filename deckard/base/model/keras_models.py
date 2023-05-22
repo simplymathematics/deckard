@@ -107,7 +107,10 @@ class KerasInitializer:
         if library in keras_dict:
             if "library" in kwargs:
                 kwargs.pop("library")
-            model = keras_dict[library](model, **kwargs)
+            if str(type(model)).startswith("<class 'art."):
+                model = keras_dict[library](model.model, **kwargs)
+            else:
+                model = keras_dict[library](model, **kwargs)
         else:
             raise ValueError(f"library must be one of {keras_models}. Got {library}")
         return model
