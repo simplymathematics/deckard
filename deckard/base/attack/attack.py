@@ -417,7 +417,6 @@ class InferenceAttack:
     def __init__(
         self, name: str, data: Data, model: Model, init: dict, attack_size=-1, **kwargs
     ):
-
         self.name = name
         self.data = data
         self.model = model
