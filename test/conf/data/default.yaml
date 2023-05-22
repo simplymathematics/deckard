@@ -1,0 +1,11 @@
+defaults:
+  - classification
+  - regression
+  - keras_cifar
+  - keras_mnist
+  - tensorflow_mnist
+  - tensorflow_cifar
+  - time_series
+  - torch_mnist
+  - torch_cifar
+  - time_series

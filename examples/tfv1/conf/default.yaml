@@ -1,0 +1,7 @@
+defaults:
+    # - _target_ : deckard.base.experiment.Experiment
+    - data: tfv1_mnist
+    - model: tfv1_mnist
+    - attack: hsj
+    - files: default
+    - scorers: default

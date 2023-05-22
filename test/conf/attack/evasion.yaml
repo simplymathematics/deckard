@@ -1,0 +1,51 @@
+data:
+    _target_: deckard.base.data.Data
+    generate:
+        name: classification
+        random_state : 0
+        n_samples : 2000
+        n_features : 20
+    sample:
+        # _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state : 0
+        stratify: True
+        train_size : 100
+        test_size : 1000
+model:
+    data:
+        _target_: deckard.base.data.Data
+        generate:
+            name: classification
+            random_state : 0
+            n_samples : 2000
+            n_features : 20
+        sample:
+            # _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state : 0
+            stratify: True
+            train_size : 100
+            test_size : 1000
+    library : sklearn
+    init:
+        _target_: deckard.base.model.ModelInitializer
+        name : sklearn.svm.SVC
+        kernel: rbf
+        C : 1.0
+        probability: true
+
+    _target_: deckard.base.model.Model
+    art:
+        _target_ : deckard.base.model.art_pipeline.ArtPipeline
+        library : sklearn
+        initialize:
+            name :
+_target_ : deckard.base.attack.Attack
+init:
+    name: art.attacks.evasion.HopSkipJump
+    batch_size : 64
+    max_iter : 10
+    max_eval : 10
+    init_eval : 10
+    model: ${model}
+attack_size : 10
+method : evasion

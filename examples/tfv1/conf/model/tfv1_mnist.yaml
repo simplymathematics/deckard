@@ -1,0 +1,17 @@
+data:  ${data}
+init:
+    name : tfv1_example.MNISTNet
+_target_: deckard.base.model.Model
+trainer:
+    nb_epoch: 1
+    batch_size: 64
+library : tfv1
+art:
+    initialize:
+        loss:
+            name: tensorflow.compat.v1.losses.softmax_cross_entropy
+            reduction : tensorflow.compat.v1.reduce_mean
+            criterion : minimize
+        optimizer:
+            name : tensorflow.compat.v1.train.AdamOptimizer
+            learning_rate : 0.001

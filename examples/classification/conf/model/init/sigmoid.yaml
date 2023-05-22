@@ -1,7 +1,0 @@
-kernel: sigmoid
-C : 1.0
-gamma : 'auto'
-coef0 : 1.0
-name : sklearn.svm.SVC
-probability : true
-max_iter : 1000

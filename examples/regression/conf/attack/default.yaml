@@ -1,6 +1,0 @@
-defaults:
-  - init : default.yaml
-  - generate : default.yaml
-path : attack
-filename :
-filetype :

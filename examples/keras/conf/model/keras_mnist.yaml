@@ -1,0 +1,14 @@
+data:  ${data}
+library : keras
+init:
+    name : keras_example.MNISTNet
+    loss: categorical_crossentropy
+    optimizer: SGD
+    metrics: accuracy
+_target_: deckard.base.model.Model
+trainer:
+    nb_epoch: 1
+    batch_size: 64
+art:
+    library : ${model.library}
+    initialize:

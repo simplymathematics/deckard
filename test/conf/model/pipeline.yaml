@@ -1,0 +1,32 @@
+data:
+    _target_: deckard.base.data.Data
+    generate:
+        # _target_: deckard.base.data.generator.DataGenerator
+        name: classification
+        random_state : 0
+        n_samples : 2000
+        n_features : 20
+    sample:
+        # _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state : 0
+        stratify: True
+        train_size : 10
+        test_size : 10
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name : sklearn.svm.SVC
+    kernel: rbf
+    C : 1.0
+    probability: true
+    pipeline:
+        preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: True
+            with_std: True
+
+_target_: deckard.base.model.Model
+library : sklearn
+art:
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    library : sklearn
+    initialize:

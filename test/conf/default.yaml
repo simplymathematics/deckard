@@ -1,0 +1,54 @@
+defaults:
+    # - _target_ : deckard.base.experiment.Experiment
+    - data: default
+    - model: classification
+    - attack: evasion
+    - files: default
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/launcher : joblib
+hydra:
+  run:
+    dir : "."
+  # @package hydra.sweeper
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      seed: 123
+      consider_prior: true
+      prior_weight: 1.0
+      consider_magic_clip: true
+      consider_endpoints: false
+      n_startup_trials: 10
+      n_ei_candidates: 24
+      multivariate: false
+      warn_independent_sampling: true
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction: minimize
+    storage: sqlite:///optuna.db
+    study_name: attack
+    n_trials: 100
+    n_jobs: 1
+    params:
+      data.generate.n_features : 20
+      data.sample.train_size : 10000
+      data.sample.test_size : 1000
+      data.sample.random_state : 0
+      data.sample.stratify : true
+      model.init.C : tag(log, int(interval(1, 1e6)))
+      attack.init.name: [art.attacks.evasion.HopSkipJump]
+      attack.init.batch_size : [1, 4, 16, 65, 128]
+      attack.init.max_iter :  [1, 10, 100, 1000]
+      attack.init.max_eval : [1, 10, 100, 1000]
+      attack.init.init_eval : [1, 10, 100, 1000]
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 1
+    prefer : processes
+    verbose: 1
+    timeout: null
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r

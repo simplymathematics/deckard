@@ -1,0 +1,11 @@
+_target_: deckard.base.scorer.ScorerDict
+accuracy:
+    _target_: deckard.base.scorer.ScorerConfig
+    name: sklearn.metrics.accuracy_score
+    direction: maximize
+    normalize: True
+log_loss:
+    _target_: deckard.base.scorer.ScorerConfig
+    name: sklearn.metrics.log_loss
+    direction: minimize
+    normalize: True

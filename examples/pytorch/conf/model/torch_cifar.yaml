@@ -1,0 +1,18 @@
+data: ${data}
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name : torch_example.Cifar10Net
+_target_: deckard.base.model.Model
+trainer:
+    nb_epoch: 1
+    batch_size: 64
+art:
+    library : torch
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    initialize:
+        criterion:
+            name : "torch.nn.CrossEntropyLoss"
+        optimizer:
+            name : "torch.optim.SGD"
+            lr : 0.01
+            momentum : 0.9

@@ -1,4 +1,3 @@
-
 For Developers:
 ```
 ######################################
@@ -20,7 +19,7 @@ python3 -m pip install -e deckard/
 python3 -m pip install pyinstaller
 python3 -m pip install -u numba pip setuptools
 cd deckard && pyinstaller --onefile deckard.py -n deckard
-./dist/deckard examples/iris
+./dist/deckard examples/sklearn
 ```
 
 Check that deckard works
@@ -28,7 +27,6 @@ Check that deckard works
 ```$ python```
 ```>>> import deckard```
 Then CTRL+D or `quit()` to quit.
-# Navigate to your favorite subfolder in `examples`
-(NOTE: only 'classification' and 'regression' are fully supported at the moment due to a large API change).
-```dvc repro --force```
+# Navigate to your favorite subfolder in `examples`. One is provided for each framework.
+```python -m deckard.layers.experiment```
 ### _like tears in the rain_, this tool is meant for bladerunners. NOT INTENDED FOR USE BY REPLICANTS
