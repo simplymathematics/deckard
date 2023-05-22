@@ -162,6 +162,7 @@ class ModelTrainer:
         except AttributeError as e:
             logger.warning(f"AttributeError: {e}. Trying to fit model anyway.")
             try:
+
                 data[0] = np.array(data[0])
                 data[2] = np.array(data[2])
                 start = process_time_ns()
@@ -205,6 +206,7 @@ class Model:
         name: str = None,
         **kwargs,
     ):
+
         self.data = data
         if isinstance(init, ModelInitializer):
             self.init = init
