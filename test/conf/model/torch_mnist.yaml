@@ -1,0 +1,36 @@
+data:
+    _target_: deckard.base.data.Data
+    generate:
+        _target_: deckard.base.data.generator.DataGenerator
+        name: torch_mnist
+    sample:
+        _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state : 0
+        stratify: True
+        train_size : .01
+        test_size : .01
+    sklearn_pipeline:
+        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+        preprocessor:
+
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: True
+            with_std: True
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name: torch_example.MNISTNet
+_target_: deckard.base.model.Model
+trainer:
+    nb_epoch: 1
+    batch_size: 64
+library : torch
+art:
+    library : torch
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    initialize:
+        criterion:
+            name : "torch.nn.CrossEntropyLoss"
+        optimizer:
+            name : "torch.optim.SGD"
+            lr : 0.01
+            momentum : 0.9

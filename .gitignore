@@ -1,97 +1,131 @@
-*/__pycache__/*
-*.pyc
-*.pyc*
-*.ipynb_checkpoints/
-*.json
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Data files
 *.pkl
 *.h5
+*.hdf5
+*.npz
+*.npy
+*.xls
+*.xlsx
 *.csv
-*.tsv
-
-# Jupyter Notebooks
-*.ipynb
-
-# Logs
-*.log
-*.txt
+*.json
+*.npz
+*.npy
+examples/pytorch/output/models/model.optimizer.pt
 
 
-# egg stuff
-deckard.egg-info/*
-
-# data science stuff
-*.zip
-*.db
-*.csv
+# PyTorch Model Checkpoints
+*.pt
+*.pth
+# Tensorflow Models
+*.h5
+*.written
+# Pickle files
+*.pkl
 *.pickle
+# Model files
 *.pb
-*.txt
-*.model
-*variables.index
-*variables.data*
-*model
-*.tsv
-
-
-# windows stuff
-*.exe
-*.dll
-*.pyd
-*.pyo
-*.pyc
-*.idb
-*.ilk
-*.stackdump
-.vscode/
-.gitignore
-.coverage
-
-
-# package files
-build/
+*.tf/
+*_tf/
+# Sqlite files
+*.sqlite3
+*.sqlite
+*.db
+# env
 env/
-examples/time_series/timeseries/
-*.deb
-*.deb*
-*.egg
-test/*/pytest_report.html
+examples/*/multirun/*
+examples/sklearn/example-study.db
+examples/sklearn/output/.hydra/config.yaml
 
-# include everything in the .github folder
-!.github/
-!test/
+*.hydra
 
-# the submodule
-adversarial-robustness-toolbox
-test/base/__pycache__/*
+# Example output
+examples/*/output/*
 
-# Mounted blob storage
-simplymathematics.blob.core.windows.net/
-
-
-
-*rwlock
-dist/*
-
-## Experiment stuff
-examples/**/*.yaml
-examples/*/*/*.yaml
-examples/tikho/Tikhonov Training Loss/scalars/f1.tsv
-
-#Always include dvc.yaml files
-!dvc.yaml
-
-*attack.yaml
-*defend.yaml
-*evaluate.yaml
-*train.yaml
-*cotrol.yaml
-*predict.yaml
-*visualise.yaml
-*evaluate.yaml
-!**/*dvc.yaml
-examples/**/*/report.hml
-examples/.tikho/
-**/*/.dvc/*
-outputs/
-examples/**/*.nfs*
-*/*/.hydra/*
+# Python egg metadata
+**/*.egg-info/*
+**/*.egg-info
+deckard/deckard.egg-info/*

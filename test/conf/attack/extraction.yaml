@@ -1,0 +1,71 @@
+data:
+    _target_: deckard.base.data.Data
+    generate:
+        name: classification
+        n_samples: 100
+        n_features: 20
+        n_classes: 3
+        n_clusters_per_class: 1
+        n_informative: 20
+        n_redundant: 0
+        n_repeated: 0
+    sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state : 0
+            stratify: True
+            train_size : .8
+            test_size : .2
+model:
+    data : ${data}
+    init:
+        _target_: deckard.base.model.ModelInitializer
+        name: torch_example.LogisticRegression
+        input_dim :
+            - ${data.generate.n_features}
+        output_dim :
+             - ${data.generate.n_classes}
+    _target_: deckard.base.model.Model
+    trainer:
+        nb_epoch: 1
+        batch_size: 64
+    library : torch
+    art:
+        library : torch
+        _target_ : deckard.base.model.art_pipeline.ArtPipeline
+        initialize:
+            criterion:
+                name : "torch.nn.CrossEntropyLoss"
+            optimizer:
+                name : "torch.optim.SGD"
+                lr : 0.01
+                momentum : 0.9
+_target_ : deckard.base.attack.Attack
+init:
+    name: art.attacks.extraction.KnockoffNets
+    model: ${model}
+kwargs:
+    extract:
+        thieved_classifier:
+            data : ${data}
+            init:
+                _target_: deckard.base.model.ModelInitializer
+                name: torch_example.LogisticRegression
+                input_dim : ${data.generate.n_features}
+                output_dim : ${data.generate.n_classes}
+            _target_: deckard.base.model.Model
+            trainer:
+                nb_epoch: 1
+                batch_size: 64
+            library : torch
+            art:
+                library : torch
+                _target_ : deckard.base.model.art_pipeline.ArtPipeline
+                initialize:
+                    criterion:
+                        name : "torch.nn.CrossEntropyLoss"
+                    optimizer:
+                        name : "torch.optim.SGD"
+                        lr : 0.01
+                        momentum : 0.9
+attack_size : 10
+method : extraction

@@ -3,8 +3,5 @@
         "test"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.analysis.extraPaths": [
-        "./adversarial-robustness-toolbox"
-    ]
+    "python.testing.pytestEnabled": true
 }

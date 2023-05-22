@@ -1,0 +1,7 @@
+defaults:
+    # - _target_ : deckard.base.experiment.Experiment
+    - data: tensorflow_mnist
+    - model: tensorflow_mnist
+    - attack: hsj
+    - files: default
+    - scorers: default

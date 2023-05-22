@@ -1,4 +1,0 @@
-[parsing]
-    list = nargs
-[core]
-    autostage = true

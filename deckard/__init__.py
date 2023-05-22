@@ -5,11 +5,18 @@ import warnings
 
 from sklearn.exceptions import UndefinedMetricWarning
 
-from deckard import base  # noqa: F401
-from deckard import layers  # noqa: F401
+from .base import *  # noqa: F401, F403
+from .base import Data as Data
+from .base import Model as Model
+from .base import Attack as Attack
+from .base import Experiment as Experiment
+from .base import FileConfig as FileConfig
+from .base import ScorerDict as ScorerDict
+
+# from deckard import layers  # noqa: F401
 
 # Semantic Version
-__version__ = "0.30"
+__version__ = "0.630"
 
 # pylint: disable=C0103
 

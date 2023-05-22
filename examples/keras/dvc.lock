@@ -1,0 +1,273 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: keras_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .h5
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            initialize:
+            library: keras
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: keras_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            loss: categorical_crossentropy
+            metrics: accuracy
+            name: keras_example.MNISTNet
+            optimizer: SGD
+          library: keras
+          trainer:
+            batch_size: 64
+            nb_epoch: 1
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/data/data.pkl
+      md5: 8b80b882758b381c2a461d1e9b9b2439
+      size: 441840345
+    - path: output/models/model.h5
+      md5: 417d9f3e49b0340577d0394f58ac570f
+      size: 94808
+    - path: output/reports/train/predictions.json
+      md5: 45a50b9659a925225f4840d0314446c8
+      size: 3197390
+    - path: output/reports/train/probabilities.json
+      md5: 45a50b9659a925225f4840d0314446c8
+      size: 3197390
+    - path: output/reports/train/score_dict.json
+      md5: ee63f0742a5bf4eb2921e6a26775982f
+      size: 377
+    - path: output/reports/train/test_labels.json
+      md5: f26b1ad6bd01a70de4290c6ae713e2c7
+      size: 728000
+    - path: output/reports/train/train_labels.json
+      md5: b78e69f96f37e36ba2cf279422642325
+      size: 2912000
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - path: output/data/data.pkl
+      md5: 8b80b882758b381c2a461d1e9b9b2439
+      size: 441840345
+    - path: output/models/model.h5
+      md5: eac8cfe2d348f5b72ec4033bf2538b4a
+      size: 92784
+    params:
+      params.yaml:
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: keras_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.attack.AttackInitializer
+            init_eval: 10
+            max_eval: 10
+            max_iter: 10
+            model:
+              _target_: deckard.base.model.Model
+              art:
+                initialize:
+                library: keras
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: keras_mnist
+                sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
+                  random_state: 0
+                  stratify: true
+                sklearn_pipeline:
+                  _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              init:
+                loss: categorical_crossentropy
+                metrics: accuracy
+                name: keras_example.MNISTNet
+                optimizer: SGD
+              library: keras
+              trainer:
+                batch_size: 64
+                nb_epoch: 1
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            _target_: deckard.base.model.Model
+            art:
+              initialize:
+              library: keras
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: keras_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            init:
+              loss: categorical_crossentropy
+              metrics: accuracy
+              name: keras_example.MNISTNet
+              optimizer: SGD
+            library: keras
+            trainer:
+              batch_size: 64
+              nb_epoch: 1
+        data.generate:
+          _target_: deckard.base.data.generator.DataGenerator
+          name: keras_mnist
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .h5
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            initialize:
+            library: keras
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: keras_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            loss: categorical_crossentropy
+            metrics: accuracy
+            name: keras_example.MNISTNet
+            optimizer: SGD
+          library: keras
+          trainer:
+            batch_size: 64
+            nb_epoch: 1
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/attacks/attack.pkl
+      md5: bbb1b7c621d6374fd7fa2baa1316f70a
+      size: 31517
+    - path: output/reports/attack/adv_predictions.json
+      md5: 591fefa56dcdc26a0a28da2f3a16187d
+      size: 2146
+    - path: output/reports/attack/adv_probabilities.json
+      md5: 591fefa56dcdc26a0a28da2f3a16187d
+      size: 2146
+    - path: output/reports/attack/score_dict.json
+      md5: 6e9fa23241de50090ca2ae8ec028d7fb
+      size: 495

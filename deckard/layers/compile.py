@@ -1,10 +1,8 @@
 import pandas as pd
 from pathlib import Path
 import json
-import yaml
 import logging
 from typing import List
-from deckard.layers.runner import load_dvc_experiment
 
 logger = logging.getLogger(__name__)
 
@@ -214,21 +212,21 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--report_folder", type=str, default="reports/model_queue")
-    parser.add_argument("--results_file", type=str, default="plots/model_results.csv")
+    parser.add_argument("--report_folder", type=str, default="reports")
+    parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--scorer", type=str, default="accuracy")
     parser.add_argument("--scorer_minimize", type=bool, default=False)
     parser.add_argument("--default_param_file", type=str, default="params.yaml")
     parser.add_argument("--output_folder", type=str, default="best_models")
-    parser.add_argument("--control_for", type=str, default="model.init.kernel")
-    parser.add_argument("--exclude", type=list, default=["sigmoid"], nargs="+")
+    parser.add_argument("--control_for", type=str, default=None)
+    parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument("--stage", type=str, default=None)
     parser.add_argument(
         "--kwargs",
         type=list,
-        default=["data.sample.train_size=1000", "data.generate.n_features=100"],
-        nargs="+",
+        default=None,
+        nargs="*",
     )
     parser.add_argument("--delete_columns", type=list, nargs="+", default=[])
     args = parser.parse_args()
@@ -259,69 +257,3 @@ if __name__ == "__main__":
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."
-    logger.info(f"Results saved to {report_file}")
-    results = pd.read_csv(report_file, index_col=0)
-    logger.info(f"Shape of results: {results.shape}")
-    for k, v in kwargs.items():
-        logger.info(f"Keyword {k} has {len(results[k])} values.")
-        for value in results[k].unique():
-            logger.info(
-                f"Value {value} has {len(results[results[k] == value])} entries.",
-            )
-    logger.info(f"Shape of results: {results.shape}")
-    results = find_results(results, kwargs=kwargs)
-    outputs = {}
-
-    names = list(results[control_for].unique())
-    for exclude_this in args.exclude:
-        exclude_this = "".join(exclude_this)
-        try:
-            names.remove(exclude_this)
-            logger.info(f"Removing {exclude_this} from list of names to search for.")
-        except ValueError:
-            pass
-    for name in names:
-        params_file = Path(report_folder, name, default_param_file)
-        i = 0
-        first_run = True
-        while first_run or not Path(params_file).exists():
-            if first_run is True:
-                first_run = False
-            results = results[~results["files.path"].str.contains("retrain")]
-            results = results[~results["files.params_file"].str.contains("retrain")]
-            best = (
-                results[results[control_for] == name]
-                .sort_values(by=scorer, ascending=args.scorer_minimize)
-                .head(i + 1)
-            )
-            unflattened = unflatten_results(best.tail(1))
-            if len(unflattened) == 0:
-                params_file = Path(
-                    unflattened["files"]["path"],
-                    unflattened["files"]["params_file"],
-                )
-            else:
-                params_file = Path(
-                    unflattened[0]["files"]["path"],
-                    unflattened[0]["files"]["params_file"],
-                )
-            i += 1
-            logger.debug("Params file: ", params_file)
-            logger.debug("Iteration: ", i)
-        with open(params_file, "r") as f:
-            params = yaml.load(f, Loader=yaml.FullLoader)
-            params["files"]["params_file"] = (
-                str(Path(params["files"]["params_file"]).as_posix()).split(".")[-2]
-                + ".yaml"
-            )
-            params["files"]["path"] = str(Path(output_folder, name).as_posix())
-            filetype = params["files"]["model_file"].split(".")[-1]
-            params["files"]["model_file"] = str(
-                Path(output_folder, f"{name}.{filetype}").as_posix(),
-            )
-        logger.info(f"Loading experiment for {control_for}={name}...")
-        exp = load_dvc_experiment(params=params, stage=stage, parse=False)
-        logger.info(f"Running experiment for {control_for}={name}...")
-        outputs[name] = exp.run(save_model=True)
-        logger.info(f"Finished running experiment for {control_for}={name}.")
-        logger.debug(f"Results: {yaml.dump(outputs[name])}")

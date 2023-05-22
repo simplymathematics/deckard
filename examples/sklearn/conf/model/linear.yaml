@@ -1,0 +1,14 @@
+data: ${data}
+library : sklearn-svc
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name : sklearn.svm.SVC
+    C : 1.0
+    kernel : linear
+    probability : true
+    random_state : 0
+_target_: deckard.base.model.Model
+art:
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    library : sklearn-svc
+    initialize:

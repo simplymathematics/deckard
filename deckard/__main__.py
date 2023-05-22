@@ -1,20 +1,34 @@
+""""Runs a submodule passed as an arg."""
+
 import argparse
-import logging
 import subprocess
-import os
+import logging
 
 logger = logging.getLogger(__name__)
 
-if "__name__" == "__main__":
+
+def run_submodule(submodule):
+    cmd = f"python -m deckard.layers.{submodule}"
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, bufsize=1) as proc:
+        for line in proc.stdout:
+            logger.info(line)
+        # for line in proc.stderr:
+        #     logger.error(line)
+    return 0
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--verbosity",
+        "submodule",
         type=str,
-        default="INFO",
-        help="Verbosity of logging. Options are 'DEBUG', 'INFO', 'WARNING', 'ERROR', and 'CRITICAL'.",
+        choices=[
+            "experiment",
+            "optimise",
+            "find_best",
+        ],
     )
     args = parser.parse_args()
-    command = "python -m deckard.layers --layer parse"
-    logger.info(f"Running {command}")
-    subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    command = f"dvc repro -f {os.getcwd()}/dvc.yaml"
+    submodule = args.submodule
+    run_submodule(submodule)

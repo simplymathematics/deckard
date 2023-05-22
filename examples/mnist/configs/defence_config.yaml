@@ -1,4 +1,0 @@
-name: art.defences.preprocessor.FeatureSqueezing
-params:
-  clip_values : [0,255]
-  bit_depth : 4

@@ -1,0 +1,13 @@
+- attack:
+  data: ${data}
+  model: ${model}
+  _target_ : deckard.base.attack.Attack
+  init:
+      _target_: [deckard.base.attack.AttackInitializer]
+      name: [art.attacks.evasion.HopSkipJump]
+      batch_size : [1, 4, 16, 65, 128]
+      max_iter :  [1, 10, 100, 1000]
+      max_eval : [1, 10, 100, 1000]
+      init_eval : [1, 10, 100, 1000]
+  attack_size : [100]
+  method : evasion

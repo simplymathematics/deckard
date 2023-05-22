@@ -1,0 +1,18 @@
+_target_: deckard.base.files.FileConfig
+reports: reports
+data_dir: data
+model_dir: models
+attack_dir: attacks
+directory: output
+score_dict_file: score_dict.json
+data_file : data
+model_file : model
+attack_file : attack
+attack_type : .pkl
+data_type : .pkl
+model_type : .h5
+params_file : params.yaml
+train_labels_file : train_labels.csv
+test_labels_file : test_labels.csv
+probabilities_file: probabilities.json
+predictions_file : predictions.json

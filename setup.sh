@@ -17,16 +17,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     echo "This script is not tested on Mac OSX."
     echo "Mac OSX"
 elif [[ "$OSTYPE" == "cygwin" ]]; then
-    # POSIX compatibility layer and Linux environment emulation for Windows
-    echo "This script is not tested on Windows Subsystem for Linux."
     echo "POSIX compatibility layer and Linux environment emulation for Windows"
 elif [[ "$OSTYPE" == "msys" ]]; then
-    echo "This script is not tested on Windows git shell."
-    # Lightweight shell and GNU utilities compiled for Windows (part of MinGW)
-    echo "Lightweight shell and GNU utilities compiled for Windows (part of MinGW)"
+    echo "Installing on windows git shell."
 elif [[ "$OSTYPE" == "win32" ]]; then
-    echo "This script is not tested on Windows."
-    echo "I'm not sure this can happen."
+    echo "I'm not sure this can happen. Good luck."
 elif [[ "$OSTYPE" == "freebsd"* ]]; then
     echo "This script is not tested on FreeBSD."
     echo "FreeBSD"
@@ -34,13 +29,8 @@ else
     # Unknown.
     echo "Unknown"
 fi
-
 ######################################
-
 git clone --recurse-submodules -j8 https://github.com/simplymathematics/deckard.git || (cd deckard && git submodule update --init --recursive)
-python3 -m pip install ./adversarial-robustness-toolbox/
-python3 -m pip install -e .
-# python3 -m pip install pyinstaller
-# python3 -m pip install -u numba pip setuptools
-# cd deckard && pyinstaller --onefile deckard.py -n deckard
-# ./dist/deckard examples/iris
+python3 -m pip install adversarial-robustness-toolbox/
+python3 -m pip install  -e . --user 
+

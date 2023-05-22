@@ -1,0 +1,16 @@
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      - data
+      - model
+      - scorers
+      - files
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    params:
+      - data
+      - model
+      - attack
+      - scorers
+      - files

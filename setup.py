@@ -27,8 +27,14 @@ install_requires = [
     "hydra-core",
     "hydra-optuna-sweeper",
     "hydra-joblib-launcher",
+    "adversarial-robustness-toolbox",
+    "sqlalchemy<=1.4.46",
 ]
-
+test_requires = [
+    "pytest",
+    "pytest-xdist",
+]
+test_requires += install_requires
 docs_require = [
     "sphinx >= 1.4",
     "sphinx_rtd_theme",
@@ -41,6 +47,7 @@ docs_require = [
     "scikit-learn>=0.22.2,<1.1.0",
     "Pillow>=6.0.0",
 ]
+test_requires += docs_require
 
 
 def read(rel_path):
@@ -71,6 +78,7 @@ setup(
     extras_require={
         "docs": docs_require,
         "catboost": ["catboost"],
+        "test": test_requires,
         "gpy": ["GPy"],
         "keras": ["keras", "h5py"],
         "lightgbm": ["lightgbm"],
@@ -138,7 +146,7 @@ setup(
             "cma",
             "librosa",
             "opencv-python",
-            "tensorflow-gpu",
+            "tensorflow",
             "dvc-gdrive",
         ],
         "non_framework": [
