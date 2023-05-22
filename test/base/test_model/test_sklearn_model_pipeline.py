@@ -13,7 +13,6 @@ this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 
 class testSklearnModelPipeline(unittest.TestCase):
-
     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
     config_file = "pipeline.yaml"
 
