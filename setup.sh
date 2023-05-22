@@ -32,5 +32,4 @@ fi
 ######################################
 git clone --recurse-submodules -j8 https://github.com/simplymathematics/deckard.git || (cd deckard && git submodule update --init --recursive)
 python3 -m pip install adversarial-robustness-toolbox/
-python3 -m pip install  -e . --user 
-
+python3 -m pip install  -e . --user

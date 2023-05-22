@@ -79,10 +79,13 @@ class ArtInitializer:
             except ValueError as e:
                 if "disable eager execution" in str(e):
                     import tensorflow as tf
+
                     tf.compat.v1.disable_eager_execution()
                     if str(type(model)).startswith("<class 'art."):
                         model = model.model
-                    model = KerasInitializer(data=data, model=model, library=library, **kwargs)()
+                    model = KerasInitializer(
+                        data=data, model=model, library=library, **kwargs
+                    )()
                 else:
                     raise e
         elif "sklearn" in str(library) or library is None:

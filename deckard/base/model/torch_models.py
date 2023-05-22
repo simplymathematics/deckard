@@ -75,7 +75,7 @@ class TorchOptimizer:
         dict_.update(**params)
         if hasattr(model, "parameters"):
             dict_.update({"params": model.parameters()})
-        elif hasattr(model, 'model') and hasattr(model.model, 'parameters'):
+        elif hasattr(model, "model") and hasattr(model.model, "parameters"):
             dict_.update({"params": model.model.parameters()})
         else:
             raise ValueError(f"Model {model} has no parameters attribute.")
@@ -113,6 +113,7 @@ class TorchInitializer:
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
         import torch
+
         if "art" in str(type(model)) and hasattr(model, "model"):
             model = model.model
         if "optimizer" in kwargs:
@@ -136,7 +137,7 @@ class TorchInitializer:
                 kwargs.update({"nb_classes": data[2].shape[1]})
         if hasattr(model, "to"):
             model.to(self.device)
-        elif hasattr(model, 'model') and hasattr(model.model, 'to'):
+        elif hasattr(model, "model") and hasattr(model.model, "to"):
             model.model.to(self.device)
         if library in torch_dict:
             kwargs.pop("library", None)

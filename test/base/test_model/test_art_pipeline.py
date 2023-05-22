@@ -8,7 +8,6 @@ from hydra.utils import instantiate
 
 from deckard.base.model.art_pipeline import (
     ArtPipeline,
-    ArtPipelineStage,
 )
 
 

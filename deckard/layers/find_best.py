@@ -18,13 +18,13 @@ def find_optuna_best(
     params_file=None,
     config_folder=Path(Path(), "conf"),
     config_name="default.yaml",
-    direction=None
+    direction=None,
 ):
     study = optuna.create_study(
         study_name=study_name,
         storage=storage_name,
         load_if_exists=True,
-        direction=direction,    
+        direction=direction,
     )
     df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
     if study_csv is not None:
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             params_file=args.params_file,
             config_folder=args.config_folder,
             config_name=args.config_name,
-            direction = direction,
+            direction=direction,
         )
     else:
         raise NotImplementedError(f"Study type {args.study_type} not implemented.")

@@ -295,7 +295,7 @@ class Experiment:
         else:
             name = my_hash(vars(self))
         return name
-    
+
     def get_name(self):
         return self.name
 
