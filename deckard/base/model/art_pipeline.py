@@ -128,10 +128,6 @@ class ArtPipeline:
                 pipeline[stage] = OmegaConf.to_container(pipeline[stage])
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
-            elif isinstance(pipeline[stage], type(None)):
-                pipeline[stage] = {"name": "initialize"}
-            elif isinstance(pipeline[stage], dict):
-                pipeline[stage].update({"name": "initialize"})
             else:
                 assert isinstance(
                     pipeline[stage],
@@ -139,6 +135,8 @@ class ArtPipeline:
                 ), f"Expected dict, got {type(pipeline[stage])}"
             while "kwargs" in pipeline[stage]:
                 pipeline[stage].update(**pipeline[stage].pop("kwargs"))
+            while "params" in pipeline[stage]:
+                pipeline[stage].update(**pipeline[stage].pop("params"))
             name = pipeline[stage].pop("name", stage)
             params = pipeline[stage]
             params.pop("name", None)
@@ -172,22 +170,32 @@ class ArtPipeline:
         assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
         if "preprocessor" in self.pipeline:
             name, kwargs = self.pipeline["preprocessor"]()
-            obj = instantiate(library, name, **kwargs)
+            config = {"_target_": name}
+            config.update(**kwargs)
+            obj = instantiate(config)
             pre_def.append(obj)
             kwargs.update({"preprocessing_defenses": pre_def})
         if "postprocessor" in self.pipeline:
             name, kwargs = self.pipeline["postprocessor"]()
-            obj = instantiate(library, name, **kwargs)
+            config = {
+                "_target_": name,
+            }
+            config.update(**kwargs)
+            obj = instantiate(config)
             post_def.append(obj)
             kwargs.update({"postprocessing_defenses": post_def})
         if "initialize" in self.pipeline:
             name, kwargs = self.pipeline["initialize"]()
             model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
         else:
-            model = ArtInitializer(model=model, data=data, library=library)()
+            raise ValueError("Art Pipeline must have an initialize stage")
         if "transformer" in self.pipeline:
             name, kwargs = self.pipeline["transformer"]()
-            model = instantiate(model, name, **kwargs)
+            config = {
+                "_target_": name,
+            }
+            config.update(**kwargs)
+            model = obj(model)
         if "trainer" in self.pipeline:
             raise NotImplementedError("Training Defense not implemented yet")
         return model

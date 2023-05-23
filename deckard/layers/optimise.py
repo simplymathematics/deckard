@@ -24,12 +24,13 @@ def find_stage_params(params_file, pipeline_file, stage, working_dir, **kwargs):
         stages = stage
     working_dir = Path(working_dir).resolve()
     old_params = dvc.api.params_show(params_file, stages=[stage], repo=working_dir)
-    old_params = flatten_dict(old_params)
-    new_params = flatten_dict(kwargs)
-    params = deepcopy(old_params)
-    params.update(**new_params)
+    params = {}
+    for key in kwargs:
+        if key in old_params:
+            params[key] = kwargs[key]
+        else:
+            pass
     # Setup the files
-    params = unflatten_dict(params)
     params["files"] = {}
     files = dvc.api.params_show(pipeline_file, stages=stages, repo=working_dir)
     unflattened_files = unflatten_dict(files).pop("files", {})
