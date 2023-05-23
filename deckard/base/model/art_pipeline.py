@@ -158,35 +158,36 @@ class ArtPipeline:
     #     return iter(self.pipeline)
 
     def __call__(self, model: object, library: str = None, data=None) -> BaseEstimator:
-        for stage in self.pipeline:
-            name, kwargs = self.pipeline[stage]()
-            logger.info(
-                f"Applying pipeline stage: {name} with library: {library} and kwargs: {kwargs}",
-            )
-            pre_def = []
-            post_def = []
-            if data is None:
-                data = model.data()
-            if library in kwargs:
-                library = kwargs.pop("library", None)
-            elif library is None:
-                library = self.library
-            else:
-                assert (
-                    library in supported_models
-                ), f"library must be one of {supported_models}. Got {library}"
-            assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
-            if name == "preprocessor":
-                obj = instantiate(library, name, **kwargs)
-                pre_def.append(obj)
-                kwargs.update({"preprocessing_defenses": pre_def})
-            if name == "postprocessor":
-                obj = instantiate(library, name, **kwargs)
-                post_def.append(obj)
-                kwargs.update({"postprocessing_defenses": post_def})
+        
+        pre_def = []
+        post_def = []
+        if data is None:
+            data = model.data()
+        if library is None:
+            library = self.library
+        else:
+            assert (
+                library in supported_models
+            ), f"library must be one of {supported_models}. Got {library}"
+        assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
+        if "preprocessor" in self.pipeline:
+            name, kwargs = self.pipeline["preprocessor"]()
+            obj = instantiate(library, name, **kwargs)
+            pre_def.append(obj)
+            kwargs.update({"preprocessing_defenses": pre_def})
+        if "postprocessor" in self.pipeline:
+            name, kwargs = self.pipeline["postprocessor"]()
+            obj = instantiate(library, name, **kwargs)
+            post_def.append(obj)
+            kwargs.update({"postprocessing_defenses": post_def})
+        if "initialize" in self.pipeline:
+            name, kwargs = self.pipeline["initialize"]()
             model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
-            if name == "transformer":
-                model = instantiate(model, name, **kwargs)
-            if name == "trainer":
-                raise NotImplementedError("Training Defense not implemented yet")
-            return model
+        else:
+            model = ArtInitializer(model=model, data=data, library=library)()
+        if "transformer" in self.pipeline:
+            name, kwargs = self.pipeline["transformer"]()
+            model = instantiate(model, name, **kwargs)
+        if "trainer" in self.pipeline:
+            raise NotImplementedError("Training Defense not implemented yet")
+        return model

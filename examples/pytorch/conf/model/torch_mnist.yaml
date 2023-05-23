@@ -8,12 +8,12 @@ trainer:
     batch_size: 64
 library : pytorch
 art:
-    library : ${model.library}
+    library : ${..library}
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
     initialize:
         criterion:
-            name : "torch.nn.CrossEntropyLoss"
+            name : torch.nn.CrossEntropyLoss
         optimizer:
-            name : "torch.optim.SGD"
+            name : torch.optim.SGD
             lr : 0.01
             momentum : 0.9

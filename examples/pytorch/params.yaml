@@ -121,6 +121,7 @@ files:
   model_dir: models
   model_file: model
   model_type: .pt
+  name: default
   params_file: params.yaml
   predictions_file: predictions.json
   probabilities_file: probabilities.json

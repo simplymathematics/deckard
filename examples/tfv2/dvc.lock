@@ -75,7 +75,8 @@ stages:
           library: tensorflow
           trainer:
             batch_size: 64
-            nb_epoch: 1
+            nb_epoch: 20
+            verbose: true
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -91,18 +92,18 @@ stages:
       md5: 8b80b882758b381c2a461d1e9b9b2439
       size: 441840345
     - path: output/models/model.tf
-      md5: 265fd4f79a403c523a2b2353ec6e6cab.dir
-      size: 167515
-      nfiles: 5
+      md5: 7bf2a040eda3ad04aa54e15d5fc47316.dir
+      size: 156314
+      nfiles: 4
     - path: output/reports/train/predictions.json
-      md5: d30043c1764a5e2545830ebf0a9c2d5d
-      size: 2853811
+      md5: e5838d87c78e9328c01f1f061632cd41
+      size: 2852985
     - path: output/reports/train/probabilities.json
-      md5: d30043c1764a5e2545830ebf0a9c2d5d
-      size: 2853811
+      md5: e5838d87c78e9328c01f1f061632cd41
+      size: 2852985
     - path: output/reports/train/score_dict.json
-      md5: 110432525713e4e1b2d74f2083cd4a86
-      size: 394
+      md5: 1557880eda9afbb8c21ed39541b748b7
+      size: 407
     - path: output/reports/train/test_labels.json
       md5: f26b1ad6bd01a70de4290c6ae713e2c7
       size: 728000
@@ -116,9 +117,9 @@ stages:
       md5: 8b80b882758b381c2a461d1e9b9b2439
       size: 441840345
     - path: output/models/model.tf
-      md5: bab0a96c07a8dd4284d2ae89cf1561cd.dir
-      size: 148092
-      nfiles: 5
+      md5: 946ef52d35969a69af7c03553ee2c40f.dir
+      size: 140044
+      nfiles: 4
     params:
       params.yaml:
         attack:
@@ -180,7 +181,8 @@ stages:
               library: tensorflow
               trainer:
                 batch_size: 64
-                nb_epoch: 1
+                nb_epoch: 20
+                verbose: true
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -218,7 +220,8 @@ stages:
             library: tensorflow
             trainer:
               batch_size: 64
-              nb_epoch: 1
+              nb_epoch: 20
+              verbose: true
         data.generate:
           _target_: deckard.base.data.generator.DataGenerator
           name: mnist
@@ -278,7 +281,8 @@ stages:
           library: tensorflow
           trainer:
             batch_size: 64
-            nb_epoch: 1
+            nb_epoch: 20
+            verbose: true
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -291,14 +295,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 6e05db6a7eb04e5033e5452df75d714d
+      md5: 05b301e6ee78495771f3a9e59c151935
       size: 31517
     - path: output/reports/attack/adv_predictions.json
-      md5: 958ba8e2e66058200a9caac5c2335aa0
-      size: 2104
+      md5: e8c113b2ffd5c8f13be160464c3d126c
+      size: 2097
     - path: output/reports/attack/adv_probabilities.json
-      md5: 958ba8e2e66058200a9caac5c2335aa0
-      size: 2104
+      md5: e8c113b2ffd5c8f13be160464c3d126c
+      size: 2097
     - path: output/reports/attack/score_dict.json
-      md5: ba1f43095378c8d03ef5edbc008818d3
-      size: 506
+      md5: b032a45445a8b088e2880baff87ece0f
+      size: 538

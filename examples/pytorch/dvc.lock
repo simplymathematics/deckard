@@ -33,6 +33,7 @@ stages:
           model_dir: models
           model_file: model
           model_type: .pt
+          name: default
           params_file: params.yaml
           predictions_file: predictions.json
           probabilities_file: probabilities.json
@@ -89,21 +90,21 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: f4e046a289ebf1a5f85b69291b4b7aa5
-      size: 76859
-    - path: output/reports/train/predictions.json
-      md5: 09cc9498df88abb687c90bb417f539ec
-      size: 2830313
-    - path: output/reports/train/probabilities.json
-      md5: 09cc9498df88abb687c90bb417f539ec
-      size: 2830313
-    - path: output/reports/train/score_dict.json
-      md5: 32e4503d6eef78775f5e116a31ea8450
-      size: 367
-    - path: output/reports/train/test_labels.json
+      md5: c3a53ff12de22b40ebf1c0cd8618c33a
+      size: 76623
+    - path: output/reports/train/default/predictions.json
+      md5: 1431cff19f3459f50ccfdf3b2f0ea91d
+      size: 2831070
+    - path: output/reports/train/default/probabilities.json
+      md5: 1431cff19f3459f50ccfdf3b2f0ea91d
+      size: 2831070
+    - path: output/reports/train/default/score_dict.json
+      md5: 4d99a831a24d1bbb46e91b90fb1cd49d
+      size: 398
+    - path: output/reports/train/default/test_labels.json
       md5: f26b1ad6bd01a70de4290c6ae713e2c7
       size: 728000
-    - path: output/reports/train/train_labels.json
+    - path: output/reports/train/default/train_labels.json
       md5: b78e69f96f37e36ba2cf279422642325
       size: 2912000
   attack:
@@ -113,8 +114,8 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: f4e046a289ebf1a5f85b69291b4b7aa5
-      size: 76859
+      md5: c3a53ff12de22b40ebf1c0cd8618c33a
+      size: 76623
     params:
       params.yaml:
         attack:
@@ -228,6 +229,7 @@ stages:
           model_dir: models
           model_file: model
           model_type: .pt
+          name: default
           params_file: params.yaml
           predictions_file: predictions.json
           probabilities_file: probabilities.json
@@ -281,14 +283,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: dcf9bdf69bf7faa99fbfc927b338ba57
+      md5: f6933d3d01f97b4f400414bfaf4b72c2
       size: 31517
-    - path: output/reports/attack/adv_predictions.json
-      md5: 6cce32b645f77a3e736b7709052adfde
-      size: 2178
-    - path: output/reports/attack/adv_probabilities.json
-      md5: 6cce32b645f77a3e736b7709052adfde
-      size: 2178
-    - path: output/reports/attack/score_dict.json
-      md5: 68e51697c6e65a82353824f6f9cd32b3
-      size: 482
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 37f7e29d1ad7fd70bd14338b9ae2abdd
+      size: 2220
+    - path: output/reports/attack/default/adv_probabilities.json
+      md5: 37f7e29d1ad7fd70bd14338b9ae2abdd
+      size: 2220
+    - path: output/reports/attack/default/score_dict.json
+      md5: 2958a67178c47bf468fc23eaff679891
+      size: 539

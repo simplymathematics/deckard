@@ -57,7 +57,8 @@ attack:
       library: tensorflow
       trainer:
         batch_size: 64
-        nb_epoch: 1
+        nb_epoch: 20
+        verbose: true
     name: art.attacks.evasion.HopSkipJump
   method: evasion
   model:
@@ -95,7 +96,8 @@ attack:
     library: tensorflow
     trainer:
       batch_size: 64
-      nb_epoch: 1
+      nb_epoch: 20
+      verbose: true
 data:
   _target_: deckard.base.data.Data
   generate:
@@ -167,7 +169,8 @@ model:
   library: tensorflow
   trainer:
     batch_size: 64
-    nb_epoch: 1
+    nb_epoch: 20
+    verbose: true
 scorers:
   _target_: deckard.base.scorer.ScorerDict
   accuracy:

@@ -26,14 +26,8 @@ def find_stage_params(params_file, pipeline_file, stage, working_dir, **kwargs):
     old_params = dvc.api.params_show(params_file, stages=[stage], repo=working_dir)
     old_params = flatten_dict(old_params)
     new_params = flatten_dict(kwargs)
-    new_trunc_keys = [".".join(key.split(".")[:-1]) for key in new_params.keys()]
-    params = {}
-    for key in old_params:
-        trunc = ".".join(key.split(".")[:-1]) if len(key.split(".")) > 1 else key
-        if trunc in new_trunc_keys and key in new_params:
-            params[key] = new_params[key]
-        else:
-            params[key] = old_params[key]
+    params = deepcopy(old_params)
+    params.update(**new_params)
     # Setup the files
     params = unflatten_dict(params)
     params["files"] = {}
@@ -66,7 +60,7 @@ def get_params(
         stage=stage,
         **cfg,
     )
-    id_ = my_hash(cfg)
+    
     cfg.update({"_target_": "deckard.base.experiment.Experiment"})
 
     if "attack_file" in cfg["files"] and cfg["files"]["attack_file"] is not None:
@@ -86,6 +80,8 @@ def get_params(
             Path(cfg["files"]["data_file"]).with_name(my_hash(cfg["data"])).as_posix(),
         )
     cfg["files"]["_target_"] = "deckard.base.files.FileConfig"
+    id_ = my_hash(cfg)
+    cfg['name'] = id_
     cfg["files"]["name"] = id_
     if stage is not None:
         cfg["files"]["stage"] = stage

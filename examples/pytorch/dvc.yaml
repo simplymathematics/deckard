@@ -9,12 +9,12 @@ stages:
     outs:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.reports}/train/${files.train_labels_file}
-      - ${files.directory}/${files.reports}/train/${files.test_labels_file}
-      - ${files.directory}/${files.reports}/train/${files.predictions_file}
-      - ${files.directory}/${files.reports}/train/${files.probabilities_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.train_labels_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
     metrics:
-      - ${files.directory}/${files.reports}/train/${files.score_dict_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
     cmd: python -m deckard.layers.experiment attack
     params:
@@ -25,10 +25,27 @@ stages:
       - files
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
-      - ${files.directory}/${files.reports}/attack/${files.adv_predictions_file}
-      - ${files.directory}/${files.reports}/attack/${files.adv_probabilities_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
     deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
-      - ${files.directory}/${files.reports}/attack/${files.score_dict_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+
+        ##############################################################################
+  models:
+    cmd: bash models.sh
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    outs:
+    - model.db
+  attacks:
+    cmd: bash attacks.sh
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    - model.db
+    outs:
+    - attack.db

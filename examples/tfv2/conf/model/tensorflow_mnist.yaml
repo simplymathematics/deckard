@@ -13,8 +13,9 @@ init:
 
 _target_: deckard.base.model.Model
 trainer:
-    nb_epoch: 1
+    nb_epoch: 20
     batch_size: 64
+    verbose: true
 library : tensorflow
 art:
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
