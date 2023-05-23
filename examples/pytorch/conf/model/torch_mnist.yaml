@@ -4,7 +4,7 @@ init:
     name : torch_example.MNISTNet
 _target_: deckard.base.model.Model
 trainer:
-    nb_epoch: 1
+    nb_epoch: 20
     batch_size: 64
 library : pytorch
 art:
@@ -17,3 +17,4 @@ art:
             name : torch.optim.SGD
             lr : 0.01
             momentum : 0.9
+        clip_values : [0.0, 1.0]

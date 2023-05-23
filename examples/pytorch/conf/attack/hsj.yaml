@@ -5,9 +5,5 @@ init:
     model: ${model}
     _target_: deckard.base.attack.AttackInitializer
     name: art.attacks.evasion.HopSkipJump
-    batch_size : 64
-    max_iter : 10
-    max_eval : 10
-    init_eval : 10
-attack_size : 10
+attack_size : 100
 method : evasion

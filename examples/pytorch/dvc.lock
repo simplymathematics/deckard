@@ -114,7 +114,7 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: da97fd96cfa8c28375f634217119916f
+      md5: b1189f381258ece9c17cc4208dfc53a6
       size: 76623
     params:
       params.yaml:
@@ -283,14 +283,43 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 37da8b1f571a75cbfd90b908516c3976
+      md5: f6933d3d01f97b4f400414bfaf4b72c2
       size: 31517
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 4216ed601a67da2df7e6a0d3adaaae71
-      size: 2205
+      md5: 70410693cc66bd568b33164bd1eb62bc
+      size: 2172
     - path: output/reports/attack/default/adv_probabilities.json
-      md5: 4216ed601a67da2df7e6a0d3adaaae71
-      size: 2205
+      md5: 70410693cc66bd568b33164bd1eb62bc
+      size: 2172
     - path: output/reports/attack/default/score_dict.json
-      md5: d5f55a6743c6389b0795542bb3f1e982
-      size: 530
+      md5: 328e9c9222026204796cf149ebec9921
+      size: 538
+  models:
+    cmd: bash models.sh
+    deps:
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.pt
+      md5: b1189f381258ece9c17cc4208dfc53a6
+      size: 76623
+    outs:
+    - path: model.db
+      md5: 88a46dfe71f37b9aea64527b3b8c94ff
+      size: 159744
+  attacks:
+    cmd: bash attacks.sh
+    deps:
+    - path: model.db
+      md5: 88a46dfe71f37b9aea64527b3b8c94ff
+      size: 159744
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.pt
+      md5: b1189f381258ece9c17cc4208dfc53a6
+      size: 76623
+    outs:
+    - path: attack.db
+      md5: 133098c7364b498637ca6e44fe656979
+      size: 172032
