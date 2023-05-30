@@ -98,8 +98,8 @@ stages:
       md5: ee673f125eb8878721afc412badf4483
       size: 43249
     - path: output/reports/train/default/score_dict.json
-      md5: 202835a0b13d03cfee5f10717e618fa1
-      size: 291
+      md5: 1e55ab76827b9d20330a4fcaeec348bd
+      size: 303
     - path: output/reports/train/default/test_labels.json
       md5: 8b08830bcf914dc948fc4b2ecf3ce5aa
       size: 3000
@@ -161,7 +161,7 @@ stages:
             mmap_mode: r
     outs:
     - path: model.db
-      md5: c6b798f8f2948b712bed35e02ae36db6
+      md5: b81615d3ba2e13fd93349a224c255a06
       size: 114688
   attack:
     cmd: python -m deckard.layers.experiment attack
@@ -407,13 +407,13 @@ stages:
             mmap_mode: r
     outs:
     - path: attack.db
-      md5: 94373f5cfefbb35aef2967e8b5da0dc9
+      md5: bed3fd93db63d1308427125d8060655e
       size: 114688
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
-      md5: c6b798f8f2948b712bed35e02ae36db6
+      md5: b81615d3ba2e13fd93349a224c255a06
       size: 114688
     outs:
     - path: conf/model/best.yaml
@@ -1281,11 +1281,15 @@ stages:
       md5: 0ea32658bbb675057f7907091abc827c
       size: 1804313
   model_search:
-    cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db
+    cmd: bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db
       ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
+    deps:
+    - path: conf/model/best.yaml
+      md5: c18e5944789ca22898f538f001f9d158
+      size: 683
     outs:
     - path: model_grid.db
-      md5: 8983db1f9da6c9f8b2c7a0fb8125e24e
+      md5: 6fd29d3d7bdfcd796e352610a380f4e5
       size: 114688
   attack_search:
     cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db
