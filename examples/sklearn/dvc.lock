@@ -98,8 +98,8 @@ stages:
       md5: ee673f125eb8878721afc412badf4483
       size: 43249
     - path: output/reports/train/default/score_dict.json
-      md5: 7bb19b5630473dadc47f94b515de1dc5
-      size: 315
+      md5: 202835a0b13d03cfee5f10717e618fa1
+      size: 291
     - path: output/reports/train/default/test_labels.json
       md5: 8b08830bcf914dc948fc4b2ecf3ce5aa
       size: 3000
@@ -114,8 +114,8 @@ stages:
       md5: ea29369c6476a7a45814995cb2e4ff58
       size: 180702
     - path: output/models/model.pkl
-      md5: ca55c4c533fa0d399bdfb53a282927f9
-      size: 15436
+      md5: 97c5321edbc2e178dd3d6a931caf8354
+      size: 15402
     params:
       conf/model.yaml:
         hydra:
@@ -161,8 +161,8 @@ stages:
             mmap_mode: r
     outs:
     - path: model.db
-      md5: c9a878900767813ccb60bc755886c9f4
-      size: 110592
+      md5: c6b798f8f2948b712bed35e02ae36db6
+      size: 114688
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
@@ -341,14 +341,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/reports/attack/default/adv_predictions.json
-      md5: ce53463d2dc0ff7c5df246b449ae053f
-      size: 424
+      md5: a8552fd95a19943d46551e5efb79fabb
+      size: 426
     - path: output/reports/attack/default/adv_probabilities.json
-      md5: ce53463d2dc0ff7c5df246b449ae053f
-      size: 424
+      md5: a8552fd95a19943d46551e5efb79fabb
+      size: 426
     - path: output/reports/attack/default/score_dict.json
-      md5: 246efdce5c31c3a610f53e6b950f0bd4
-      size: 448
+      md5: f6aeeee2df7330756eaefe77b94db887
+      size: 446
   attack_optimise:
     cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy
       model=best --multirun --config-name attack
@@ -360,8 +360,8 @@ stages:
       md5: ea29369c6476a7a45814995cb2e4ff58
       size: 180702
     - path: output/models/model.pkl
-      md5: ca55c4c533fa0d399bdfb53a282927f9
-      size: 15436
+      md5: 97c5321edbc2e178dd3d6a931caf8354
+      size: 15402
     params:
       conf/attack.yaml:
         hydra:
@@ -407,14 +407,14 @@ stages:
             mmap_mode: r
     outs:
     - path: attack.db
-      md5: 79312bc2bae4f5902833eb3e85ee95f4
-      size: 110592
+      md5: 94373f5cfefbb35aef2967e8b5da0dc9
+      size: 114688
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
-      md5: c9a878900767813ccb60bc755886c9f4
-      size: 110592
+      md5: c6b798f8f2948b712bed35e02ae36db6
+      size: 114688
     outs:
     - path: conf/model/best.yaml
       md5: c18e5944789ca22898f538f001f9d158
@@ -423,12 +423,12 @@ stages:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
     - path: attack.db
-      md5: 79312bc2bae4f5902833eb3e85ee95f4
-      size: 110592
+      md5: 94373f5cfefbb35aef2967e8b5da0dc9
+      size: 114688
     outs:
     - path: conf/attack/best.yaml
-      md5: f0518e891f88fe02086e02a0e0f9e8b9
-      size: 2057
+      md5: 4d05c325c57569b497140f774bfd2a2e
+      size: 2063
   generate_data@small:
     cmd: python -m deckard.layers.data --data_config_name small
     params:
@@ -1280,3 +1280,22 @@ stages:
     - path: output/data/medium.pkl
       md5: 0ea32658bbb675057f7907091abc827c
       size: 1804313
+  model_search:
+    cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db
+      ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
+    outs:
+    - path: model_grid.db
+      md5: 8983db1f9da6c9f8b2c7a0fb8125e24e
+      size: 114688
+  attack_search:
+    cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db
+      ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
+      ++attack.init.max_iter=10
+    deps:
+    - path: model_grid.db
+      md5: ee31011ca40755b7cafb889633eb36e1
+      size: 114688
+    outs:
+    - path: attack_grid.db
+      md5: c9518b4b2f94ab2ecc153efffa603f23
+      size: 114688
