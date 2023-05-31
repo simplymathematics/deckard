@@ -22,7 +22,6 @@ class MNISTNet(nn.Module):
 
     def forward(self, x):
         torch.set_default_dtype(self.conv_1.weight.dtype)
-        x = x.clone().detach().requires_grad_(True).to(x.device)
         x = F.relu(self.conv_1(x))
         x = F.max_pool2d(x, 2, 2)
         x = F.relu(self.conv_2(x))

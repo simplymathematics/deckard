@@ -14,7 +14,7 @@ init:
 _target_: deckard.base.model.Model
 trainer:
     nb_epoch: 20
-    batch_size: 64
+    batch_size: 1024
     verbose: true
 library : tensorflow
 art:

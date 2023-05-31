@@ -48,7 +48,7 @@ attack:
         optimizer: SGD
       library: keras
       trainer:
-        batch_size: 64
+        batch_size: 1024
         nb_epoch: 1
     name: art.attacks.evasion.HopSkipJump
   method: evasion
@@ -79,7 +79,7 @@ attack:
       optimizer: SGD
     library: keras
     trainer:
-      batch_size: 64
+      batch_size: 1024
       nb_epoch: 1
 data:
   _target_: deckard.base.data.Data
@@ -144,7 +144,7 @@ model:
     optimizer: SGD
   library: keras
   trainer:
-    batch_size: 64
+    batch_size: 1024
     nb_epoch: 1
 scorers:
   _target_: deckard.base.scorer.ScorerDict

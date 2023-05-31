@@ -1,0 +1,7 @@
+defaults:
+  - initialize : default
+  # - preprocessor: default
+  # - postprocessor: default
+data : ${..data}
+library : ${..library}
+_target_ : deckard.base.model.art_pipeline.ArtPipeline

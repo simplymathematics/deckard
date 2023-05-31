@@ -14,8 +14,8 @@ def parse_folder(
         "predictions",
         "plots",
         "ground_truth",
-        "attack_predictions",
-        "attack_probabilities",
+        "adv_predictions",
+        "adv_probabilities",
         "samples",
     ],
 ) -> pd.DataFrame:
@@ -221,7 +221,6 @@ if __name__ == "__main__":
     parser.add_argument("--control_for", type=str, default=None)
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
-    parser.add_argument("--stage", type=str, default=None)
     parser.add_argument(
         "--kwargs",
         type=list,
@@ -238,17 +237,17 @@ if __name__ == "__main__":
     output_folder = args.output_folder
     control_for = args.control_for
     kwargs = {}
-    for entry in args.kwargs:
-        entry = "".join(entry)
-        value = entry.split("=")[1]
-        if str(value).isnumeric():
-            if int(value) == float(value):
-                value = int(value)
-            else:
-                value = float(value)
-        kwargs[entry.split("=")[0]] = value
+    if args.kwargs is not None and len(args.kwargs > 0):
+        for entry in args.kwargs:
+            entry = "".join(entry)
+            value = entry.split("=")[1]
+            if str(value).isnumeric():
+                if int(value) == float(value):
+                    value = int(value)
+                else:
+                    value = float(value)
+            kwargs[entry.split("=")[0]] = value
     columns_to_delete = args.delete_columns
-    stage = args.stage
     report_file = save_results(
         report_folder,
         results_file,
