@@ -129,10 +129,11 @@ class ArtPipeline:
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
             else:
-                assert isinstance(
+                if not isinstance(
                     pipeline[stage],
                     dict,
-                ), f"Expected dict, got {type(pipeline[stage])}"
+                ):
+                    pipeline[stage] = {**pipeline[stage]} if pipeline[stage] is not None else {}
             while "kwargs" in pipeline[stage]:
                 pipeline[stage].update(**pipeline[stage].pop("kwargs"))
             while "params" in pipeline[stage]:
