@@ -109,10 +109,10 @@ def optimise(cfg: DictConfig) -> None:
     id_ = Path(files["score_dict_file"]).parent.name
     try:
         scores = exp()
+        direction = cfg.pop("direction", "minimize")
         if isinstance(scorer, str):
             score = scores[scorer]
         elif isinstance(scorer, list):
-            direction = cfg.pop("direction", "maximize")
             score = [scores[s] for s in scorer]
         elif scorer is None:
             score = list(scores.values())[0]
@@ -126,7 +126,7 @@ def optimise(cfg: DictConfig) -> None:
             score = 1e10
         else:
             score = -1e10
-        raise e
+        
     return score
 
 

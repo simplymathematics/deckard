@@ -70,7 +70,7 @@ def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
             f"Directory {repo} is not a git repository. Please run `dvc init` in {repo} and try again.",
         )
     if stages is None or stages == []:
-        stages = def_stages
+        raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
     elif isinstance(stages, str):
         stages = [stages]
     else:
