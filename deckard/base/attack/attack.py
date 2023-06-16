@@ -147,7 +147,7 @@ class EvasionAttack:
             ben_samples = data[0][: self.attack_size]
             start = process_time_ns()
             atk = self.init(model=model, attack_size=self.attack_size)
-            kwargs = deepcopy(atk.kwargs)
+            kwargs = deepcopy(self.init.kwargs)
             scale_max = kwargs.pop("scale_max", 1)
             targeted = kwargs.pop("targeted", False)
             if targeted is True:
