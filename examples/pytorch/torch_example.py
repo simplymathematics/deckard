@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torchvision.models import resnet18
+
 __all__ = [
     "ResNet",
     "resnet18",
@@ -19,6 +21,7 @@ class MNISTNet(nn.Module):
         self.fc_2 = nn.Linear(in_features=100, out_features=10)
 
     def forward(self, x):
+        torch.set_default_dtype(self.conv_1.weight.dtype)
         x = F.relu(self.conv_1(x))
         x = F.max_pool2d(x, 2, 2)
         x = F.relu(self.conv_2(x))
@@ -172,13 +175,14 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
     def __init__(
         self,
-        block,
+        
         layers,
         num_classes=10,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
         replace_stride_with_dilation=None,
+        block = BasicBlock,
         norm_layer=None,
     ):
         super(ResNet, self).__init__()
@@ -338,43 +342,20 @@ def resnet18(pretrained=False, progress=True, device="cpu", **kwargs):
     )
 
 
-# if "__main__" == __name__:
-# X_train, X_test, y_train, y_test = Data(generate = {"name" : "torch_mnist"})()
-# # X_train = np.array(X_train).astype(np.float32)
-# # X_test = np.array(X_test).astype(np.float32)
+class ResNet18(nn.Module):
+    def __init__(self):
+        super(MNISTNet, self).__init__()
+        self.conv_1 = nn.Conv2d(in_channels=1, out_channels=4, kernel_size=5, stride=1)
+        self.conv_2 = nn.Conv2d(in_channels=4, out_channels=10, kernel_size=5, stride=1)
+        self.fc_1 = nn.Linear(in_features=4 * 4 * 10, out_features=100)
+        self.fc_2 = nn.Linear(in_features=100, out_features=10)
 
-# # X_train = np.transpose(X_train, (0, 3, 1, 2)).astype(np.float32)
-# # X_test = np.transpose(X_test, (0, 3, 1, 2)).astype(np.float32)
-# mean_ = np.mean(X_train)
-# std_ = np.std(X_train)
-# min_pixel_value = np.amin(X_train)
-# max_pixel_value = np.amax(X_train)
-# n_classes = np.unique(y_train)
-# input_shape = X_train[0].shape
-
-# # # Step 2: Create the model
-# criterion = nn.CrossEntropyLoss()
-# net = Net()
-# optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-# classifier = PyTorchClassifier(model=net, clip_values=(min_pixel_value, max_pixel_value), loss=criterion, optimizer=optimizer, input_shape = input_shape, nb_classes = 10, preprocessing= (mean_, std_))
-
-
-# # # # Step 4: Train the ART classifier
-
-# classifier.fit(X_train, y_train, batch_size=64, nb_epochs=3)
-
-# # Step 5: Evaluate the ART classifier on benign test examples
-
-# predictions = classifier.predict(X_test)
-# accuracy = np.sum(np.argmax(predictions, axis=1) == np.argmax(y_test, axis=1)) / len(y_test)
-# print("Accuracy on benign test examples: {}%".format(accuracy * 100))
-
-# # Step 6: Generate adversarial test examples
-# attack = FastGradientMethod(estimator=classifier, eps=0.2)
-# X_test_adv = attack.generate(x=X_test)
-
-# # Step 7: Evaluate the ART classifier on adversarial test examples
-
-# predictions = classifier.predict(X_test_adv)
-# accuracy = np.sum(np.argmax(predictions, axis=1) == np.argmax(y_test, axis=1)) / len(y_test)
-# print("Accuracy on adversarial test examples: {}%".format(accuracy * 100))
+    def forward(self, x):
+        x = F.relu(self.conv_1(x))
+        x = F.max_pool2d(x, 2, 2)
+        x = F.relu(self.conv_2(x))
+        x = F.max_pool2d(x, 2, 2)
+        x = x.view(-1, 4 * 4 * 10)
+        x = F.relu(self.fc_1(x))
+        x = self.fc_2(x)
+        return x

@@ -76,3 +76,14 @@ stages:
     - attack.db
     outs:
     - conf/attack/best.yaml
+  ##############################################################################
+  # defend:
+  #   cmd : bash models.sh
+  #   deps:
+  #   - model.db
+  #   outs:
+  #   - multirun
+  # attack-again:
+  #   cmd : bash attacks.sh
+  #   deps:
+  #   - attack.db

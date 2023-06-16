@@ -128,10 +128,6 @@ class ArtPipeline:
                 pipeline[stage] = OmegaConf.to_container(pipeline[stage])
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
-            elif isinstance(pipeline[stage], type(None)):
-                pipeline[stage] = {"name": "initialize"}
-            elif isinstance(pipeline[stage], dict):
-                pipeline[stage].update({"name": "initialize"})
             else:
                 assert isinstance(
                     pipeline[stage],
@@ -139,6 +135,8 @@ class ArtPipeline:
                 ), f"Expected dict, got {type(pipeline[stage])}"
             while "kwargs" in pipeline[stage]:
                 pipeline[stage].update(**pipeline[stage].pop("kwargs"))
+            while "params" in pipeline[stage]:
+                pipeline[stage].update(**pipeline[stage].pop("params"))
             name = pipeline[stage].pop("name", stage)
             params = pipeline[stage]
             params.pop("name", None)
@@ -158,35 +156,45 @@ class ArtPipeline:
     #     return iter(self.pipeline)
 
     def __call__(self, model: object, library: str = None, data=None) -> BaseEstimator:
-        for stage in self.pipeline:
-            name, kwargs = self.pipeline[stage]()
-            logger.info(
-                f"Applying pipeline stage: {name} with library: {library} and kwargs: {kwargs}",
-            )
-            pre_def = []
-            post_def = []
-            if data is None:
-                data = model.data()
-            if library in kwargs:
-                library = kwargs.pop("library", None)
-            elif library is None:
-                library = self.library
-            else:
-                assert (
-                    library in supported_models
-                ), f"library must be one of {supported_models}. Got {library}"
-            assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
-            if name == "preprocessor":
-                obj = instantiate(library, name, **kwargs)
-                pre_def.append(obj)
-                kwargs.update({"preprocessing_defenses": pre_def})
-            if name == "postprocessor":
-                obj = instantiate(library, name, **kwargs)
-                post_def.append(obj)
-                kwargs.update({"postprocessing_defenses": post_def})
-            model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
-            if name == "transformer":
-                model = instantiate(model, name, **kwargs)
-            if name == "trainer":
-                raise NotImplementedError("Training Defense not implemented yet")
-            return model
+        if "initialize" in self.pipeline:
+            name, kwargs = self.pipeline["initialize"]()
+        else:
+            raise ValueError("Art Pipeline must have an initialize stage")
+        pre_def = []
+        post_def = []
+        if data is None:
+            data = model.data()
+        if library is None:
+            library = self.library
+        else:
+            assert (
+                library in supported_models
+            ), f"library must be one of {supported_models}. Got {library}"
+        assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
+        if "preprocessor" in self.pipeline:
+            name, sub_kwargs = self.pipeline["preprocessor"]()
+            config = {"_target_": name}
+            config.update(**sub_kwargs)
+            obj = instantiate(config)
+            pre_def.append(obj)
+            kwargs.update({"preprocessing_defences": pre_def})
+        if "postprocessor" in self.pipeline:
+            name, sub_kwargs = self.pipeline["postprocessor"]()
+            config = {
+                "_target_": name,
+            }
+            config.update(**sub_kwargs)
+            obj = instantiate(config)
+            post_def.append(obj)
+            kwargs.update({"postprocessing_defences": post_def})
+        model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
+        if "transformer" in self.pipeline:
+            name, sub_kwargs = self.pipeline["transformer"]()
+            config = {
+                "_target_": name,
+            }
+            config.update(**sub_kwargs)
+            model = obj(model)
+        if "trainer" in self.pipeline:
+            raise NotImplementedError("Training Defense not implemented yet")
+        return model

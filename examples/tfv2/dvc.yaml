@@ -32,3 +32,19 @@ stages:
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.score_dict_file}
+  ##############################################################################
+  models:
+    cmd: bash models.sh
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    outs:
+    - model.db
+  attacks:
+    cmd: bash attacks.sh
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    - model.db
+    outs:
+    - attack.db
