@@ -154,7 +154,7 @@ class EvasionAttack:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
                 patches, masks = atk.generate(ben_samples, **kwargs)
-                samples = attack.apply_patch(ben_samples, scale=scale_max)
+                samples = atk.apply_patch(ben_samples, scale=scale_max)
             else:
                 samples = atk.generate(ben_samples)
                 end = process_time_ns()

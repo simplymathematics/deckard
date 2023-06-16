@@ -6,7 +6,6 @@ from time import process_time_ns
 from typing import Union, Dict
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from copy import deepcopy
-from hydra.utils import instantiate
 import numpy as np
 from sklearn.exceptions import NotFittedError
 from ..data import Data

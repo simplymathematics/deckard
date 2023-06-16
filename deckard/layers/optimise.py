@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 from copy import deepcopy
 from pathlib import Path
 import yaml
@@ -11,7 +12,7 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["save_stage_params", "optimise", "parse_stage", "get_files"]
+__all__ = ["save_file", "optimise", "parse_stage", "get_files"]
 
 
 def get_files(
@@ -65,7 +66,7 @@ def get_files(
     return cfg
 
 
-def save_stage_params(cfg, folder, params_file):
+def save_file(cfg, folder, params_file):
     path = Path(folder, Path(params_file).name)
     with open(path, "w") as f:
         yaml.safe_dump(cfg, f)
@@ -226,7 +227,7 @@ def optimise(cfg: DictConfig) -> None:
     files = deepcopy(exp.files)()
     folder = Path(files["score_dict_file"]).parent
     Path(folder).mkdir(exist_ok=True, parents=True)
-    save_stage_params(cfg, folder, "params.yaml")
+    save_file(cfg, folder, "params.yaml")
     id_ = Path(files["score_dict_file"]).parent.name
     try:
         scores = exp()
@@ -243,6 +244,9 @@ def optimise(cfg: DictConfig) -> None:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
         )
+        with open(Path(folder, "exception.txt"), "w") as f:
+            f.write(str(e))
+            f.write(traceback.format_exc())
         if direction == "minimize":
             score = 1e10
         else:
