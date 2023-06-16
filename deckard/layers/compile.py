@@ -2,172 +2,158 @@ import pandas as pd
 from pathlib import Path
 import json
 import logging
-from typing import List
+from tqdm import tqdm
+import yaml
+import argparse
+from .utils import deckard_nones as nones
 
 logger = logging.getLogger(__name__)
 
 
-def parse_folder(
-    folder,
-    exclude=[
-        "probabilities",
-        "predictions",
-        "plots",
-        "ground_truth",
-        "attack_predictions",
-        "attack_probabilities",
-        "samples",
-    ],
-) -> pd.DataFrame:
+def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
+    for col in df.columns:
+        if isinstance(df[col][0], dict):
+            tmp = pd.json_normalize(df[col])
+            tmp.columns = [f"{col}.{subcol}" for subcol in tmp.columns]
+            tmp.index = df.index
+            df = pd.merge(df, tmp, left_index=True, how="outer", right_index=True)
+            if f"files.{col}_file" in tmp:
+                df[col] = Path(tmp[f"files.{col}_file"]).apply(lambda x: x.stem)
+            else:
+                df[col] = tmp.index
+        else:
+            df = pd.concat([df, df[col]], axis=1)
+    return df
+
+
+def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFrame:
     """
-    Parse a folder containing json files and return a dataframe with the results, excluding the files in the exclude list.
-    :param folder: Path to folder containing json files
-    :param exclude: List of files to exclude. Default: ['probabilities', 'predictions', 'plots', 'ground_truth'].
+    Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
+    :param folder: Path to folder containing files
+    :param files: List of files to parse. Defaults to ["params.yaml", "score_dict.json"]. Other files will be added as columns with hrefs.
     :return: Pandas dataframe with the results
     """
     folder = Path(folder)
     results = {}
-    results[folder] = {}
     logger.debug(f"Parsing folder {folder}...")
-    for file in folder.glob("*.json"):
-        if Path(file).stem in exclude:
-            continue
-        else:
+    path_gen = []
+    for file in files:
+        path_gen.extend(folder.glob(f"**/{file}"))
+    path_gen.sort()
+    indices = []
+    for file in tqdm(path_gen):
+        indices.append(file.parent.name)
+        suffix = file.suffix
+        folder = file.parent.name
+        stage = file.parent.parent.name
+        if folder not in results:
+            results[folder] = {}
+        if suffix == ".json":
             with open(file, "r") as f:
-                results[folder][Path(file).stem] = json.load(f)
-    return pd.DataFrame(results).T
-
-
-def flatten_results(results):
-    """
-    Flatten a dataframe containing json files. So that each json dict entry becomes a column with dot notation (e.g. "key1.subkey1")
-    :param results: Pandas dataframe containing json files
-    """
-    new_results = pd.DataFrame()
-    logger.debug("Flattening results...")
-    for col in results.columns:
-        tmp = pd.json_normalize(results[col])
-        new_results = pd.concat([new_results, tmp], axis=1)
-    return new_results
-
-
-def parse_results(result_dir, flatten=True):
-    """
-    Recursively parse a directory containing json files and return a dataframe with the results.
-    :param result_dir: Path to directory containing json files
-    :param regex: Regex to match folders to parse. Default: "*/*"
-    :param flatten: Whether to flatten the results. Default: True
-    :return: Pandas dataframe with the results
-    """
-    result_dir = Path(result_dir)
-    assert result_dir.is_dir(), f"Result directory {result_dir} does not exist."
-    results = pd.DataFrame()
-    logger.debug("Parsing results...")
-    total = len(list(Path(result_dir).iterdir()))
-    logger.info(f"Parsing {total} folders...")
-    for folder in Path(result_dir).iterdir():
-        tmp = parse_folder(folder)
-        if flatten is True:
-            tmp = flatten_results(tmp)
-        tmp = tmp.loc[:, ~tmp.columns.duplicated()]
-        results = pd.concat([results, tmp])
+                dict_ = json.load(f)
+        elif suffix == ".yaml":
+            with open(file, "r") as f:
+                dict_ = yaml.safe_load(f)
+        else:
+            raise ValueError(f"File type {suffix} not supported.")
+        results[folder]["stage"] = stage
+        results[folder].update(dict_)
+    all_files = Path(folder).glob("**/*")
+    for file in all_files:
+        if file not in path_gen:
+            if file.parent.name not in results:
+                results[file.parent.name] = {}
+            results[file.parent.name][file.stem] = file
     return results
 
 
-def set_for_keys(my_dict, key_arr, val) -> dict:
-    """
-    Set val at path in my_dict defined by the string (or serializable object) array key_arr.
-    :param my_dict: Dictionary to set value in
-    :param key_arr: Array of keys to set value at
-    :param val: Value to set
-    :return: Dictionary with value set
-    """
-    current = my_dict
-    for i in range(len(key_arr)):
-        key = key_arr[i]
-        if key not in current:
-            if i == len(key_arr) - 1:
-                current[key] = val
-            else:
-                current[key] = {}
-        else:
-            if type(current[key]) is not dict:
-                logger.info(
-                    "Given dictionary is not compatible with key structure requested",
-                )
-                raise ValueError("Dictionary key already occupied")
-        current = current[key]
-    return my_dict
-
-
-def unflatten_results(df, sep=".") -> List[dict]:
-    """
-    Unflatten a dataframe with dot notation columns (e.g. "key1.subkey1") into a list of dictionaries.
-    :param df: Pandas dataframe with dot notation columns
-    :param sep: Separator to use. Default: "."
-    :return: List of dictionaries
-    """
-    logger.debug("Unflattening results...")
-    result = []
-    for _, row in df.iterrows():
-        parsed_row = {}
-        for idx, val in row.iteritems():
-            if val == val:
-                keys = idx.split(sep)
-                parsed_row = set_for_keys(parsed_row, keys, val)
-        result.append(parsed_row)
-    return result
-
-
-def find_results(df, kwargs: dict = {}) -> pd.DataFrame:
-    """
-    Finds the results of a dataframe that matches the given kwargs.
-    """
-    logger.debug("Finding best results...")
-    for col in kwargs.keys():
-        logger.info(f"Finding best results for {col} = {kwargs[col]}...")
-        logger.info(f"Shape before: {df.shape}")
-        df = df[df[col] == kwargs[col]]
-        logger.info(f"Shape after: {df.shape}")
-    return df
-
-
-def drop_static_columns(df) -> pd.DataFrame:
-    """
-    Drop columns that contain only one unique value.
-    :param df: Pandas dataframe
-    :return: Pandas dataframe with static columns dropped
-    """
-    logger.debug("Dropping static columns...")
-    for col in df.columns:  # Loop through columns
+def merge_defences(results: pd.DataFrame):
+    defences = []
+    def_gens = []
+    for _, entry in results.iterrows():
+        defence = []
         if (
-            isinstance(df[col].iloc[0], list) and len(df[col].iloc[0]) == 1
-        ):  # Find columns that contain lists of length 1
-            df[col] = df[col].apply(lambda x: x[0])
-        try:
-            if (
-                len(df[col].unique()) == 1
-            ):  # Find unique values in column along with their length and if len is == 1 then it contains same values
-                df.drop([col], axis=1, inplace=True)
-        except:  # noqa E722
-            pass
+            "model.art.pipeline.preprocessor.name" in entry
+            and entry["model.art.pipeline.preprocessor.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.preprocessor.name"])
+        if (
+            "model.art.pipeline.postprocessor.name" in entry
+            and entry["model.art.pipeline.postprocessor.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.postprocessor.name"])
+        if (
+            "model.art.pipeline.transformer.name" in entry
+            and entry["model.art.pipeline.transformer.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.transformer.name"])
+        if (
+            "model.art.pipeline.trainer.name" in entry
+            and entry["model.art.pipeline.trainer.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.trainer.name"])
+        ############################################################################################################
+        if len(defence) > 1:
+            def_gen = [str(x).split(".")[-1] for x in defence]
+            defence = "_".join(defence)
+        elif len(defence) == 1:
+            def_gen = [str(x).split(".")[-1] for x in defence][0]
+            defence = defence[0]
+        else:
+            def_gen = None
+            defence = None
+        ############################################################################################################
+        if defence != []:
+            defences.append(defence)
+            def_gens.append(def_gen)
+        else:
+            defences.append(None)
+            def_gens.append(None)
+    results["defence"] = defences
+    results["def_gen"] = def_gens
+    return results
+
+
+def merge_attacks(results: pd.DataFrame):
+    attacks = []
+    for _, entry in results.iterrows():
+        if "attack.init.name" in entry and entry["attack.init.name"] not in nones:
+            attack = entry["attack.init.name"]
+        else:
+            attack = None
+        attacks.append(attack)
+    if attacks != [None] * len(attacks):
+        results["attack"] = attacks
+        results["atk_gen"] = [str(x).split(".")[-1] for x in attacks]
+    return results
+
+
+def parse_results(folder, files=["score_dict.json", "params.yaml"]):
+    dict_ = parse_folder(folder, files=files)
+    df = pd.DataFrame(dict_).T
+    df = flatten_results(df)
+    df = merge_defences(df)
+    df = merge_attacks(df)
     return df
 
 
-def save_results(report_folder, results_file, delete_columns=[]) -> str:
+def save_results(report_folder, results_file) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
     logger.info("Compiling results...")
     results = parse_results(report_folder)
-    for col in delete_columns:
-        try:
-            results.drop(col, axis=1, inplace=True)
-        except KeyError as e:
-            logger.warning(e)
-            logger.warning(f"Column {col} not found in results. Skipping.")
-            pass
-    results.to_csv(results_file)
+    suffix = Path(results_file).suffix
+    if suffix == ".csv":
+        results.to_csv(results_file)
+    elif suffix == ".xlsx":
+        results.to_excel(results_file)
+    elif suffix == ".html":
+        results.to_html(results_file)
+    elif suffix == ".json":
+        results.to_json(results_file)
+    else:
+        raise ValueError(f"File type {suffix} not supported.")
     assert Path(
         results_file,
     ).exists(), f"Results file {results_file} does not exist. Something went wrong."
@@ -175,85 +161,23 @@ def save_results(report_folder, results_file, delete_columns=[]) -> str:
     return results_file
 
 
-def find_best_params(filename, scorer, control_for=None):
-    """ """
-    logger.info("Finding best params...")
-    assert Path(filename).exists(), f"Results file {filename} does not exist."
-    results = pd.read_csv(filename, index_col=0)
-    big_list = results[control_for].unique() if control_for else []
-    if len(big_list) <= 1:
-        best_df = results
-    else:
-        best_df = pd.DataFrame()
-        for params in big_list:
-            results = find_results(results, kwargs={control_for: params})
-            sorted = results.sort_values(by=scorer, ascending=False).head(1)
-            best_df = pd.concat([best_df, sorted])
-            best_df = best_df.reset_index(drop=True)
-    indexes = [Path(x).name for x in best_df["files.path"]]
-    best_df["files.path"] = indexes
-    return best_df
-
-
-def delete_these_columns(df, columns) -> pd.DataFrame:
-    """
-    Delete columns from a dataframe.
-    :param df: dataframe
-    :param columns: list of columns to delete
-    :return: dataframe
-    """
-    for col in columns:
-        logger.info(f"Deleting column {col}...")
-        del df[col]
-    return df
-
-
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--report_folder", type=str, default="reports")
     parser.add_argument("--results_file", type=str, default="results.csv")
-    parser.add_argument("--scorer", type=str, default="accuracy")
-    parser.add_argument("--scorer_minimize", type=bool, default=False)
-    parser.add_argument("--default_param_file", type=str, default="params.yaml")
-    parser.add_argument("--output_folder", type=str, default="best_models")
-    parser.add_argument("--control_for", type=str, default=None)
+    parser.add_argument("--report_folder", type=str, default="best_models")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
-    parser.add_argument("--stage", type=str, default=None)
     parser.add_argument(
         "--kwargs",
         type=list,
         default=None,
         nargs="*",
     )
-    parser.add_argument("--delete_columns", type=list, nargs="+", default=[])
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    scorer = args.scorer
-    default_param_file = args.default_param_file
-    output_folder = args.output_folder
-    control_for = args.control_for
-    kwargs = {}
-    for entry in args.kwargs:
-        entry = "".join(entry)
-        value = entry.split("=")[1]
-        if str(value).isnumeric():
-            if int(value) == float(value):
-                value = int(value)
-            else:
-                value = float(value)
-        kwargs[entry.split("=")[0]] = value
-    columns_to_delete = args.delete_columns
-    stage = args.stage
-    report_file = save_results(
-        report_folder,
-        results_file,
-        delete_columns=columns_to_delete,
-    )
+    report_file = save_results(report_folder, results_file)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

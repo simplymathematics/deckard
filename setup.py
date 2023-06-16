@@ -21,13 +21,11 @@ install_requires = [
     "pre-commit",
     "PyYAML",
     "pytest",
-    # "tensorflow",
     "validators",
     "yellowbrick",
     "hydra-core",
     "hydra-optuna-sweeper",
     "hydra-joblib-launcher",
-    "adversarial-robustness-toolbox",
     "sqlalchemy<=1.4.46",
 ]
 test_requires = [

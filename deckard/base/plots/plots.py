@@ -349,10 +349,7 @@ class Yellowbrick_Visualiser:
                             classes=[int(y) for y in np.unique(data[2])],
                         )
                 else:
-                    viz = visualiser(
-                        model,
-                        classes=[0],
-                    )
+                    viz = visualiser(model, classes=[0])
                 viz.fit(X=data[0], y=data[2])
                 viz.score(data[1], data[3])
                 filename = Path(path, plots[name] + str(plots.pop("filetype", ".png")))
@@ -460,11 +457,7 @@ class Yellowbrick_Visualiser:
                 plt.gcf().clear()
         return paths
 
-    def visualise_model_selection(
-        self,
-        data: list,
-        model: object,
-    ) -> List[Path]:
+    def visualise_model_selection(self, data: list, model: object) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
         :param data: list of data to be used for visualisation
@@ -507,25 +500,14 @@ class Yellowbrick_Visualiser:
                         assert (
                             "param_range" in params
                         ), f"Validation curve visualiser requires params_range parameter. Parameter keys are {params.keys()}."
-                    viz = visualiser(
-                        model,
-                        cv=cv,
-                        scoring=scorer,
-                        **params,
-                    )
+                    viz = visualiser(model, cv=cv, scoring=scorer, **params)
                 elif "dropping" or "feature_importances" in name:
-                    viz = visualiser(
-                        model,
-                    )
+                    viz = visualiser(model)
                 elif "learning" in name:
                     assert (
                         "train_sizes" in params
                     ), "Learning curve visualiser requires train_sizes parameter."
-                    viz = visualiser(
-                        model,
-                        scoring=scorer,
-                        **params,
-                    )
+                    viz = visualiser(model, scoring=scorer, **params)
                 else:
                     raise ValueError("Unknown model selection visualiser.")
                 viz.fit(data[0], data[2])

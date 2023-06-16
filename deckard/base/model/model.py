@@ -10,7 +10,7 @@ from hydra.utils import instantiate
 import numpy as np
 from sklearn.exceptions import NotFittedError
 from ..data import Data
-from ..utils import my_hash
+from ..utils import my_hash, factory
 
 from .art_pipeline import ArtPipeline
 
@@ -80,9 +80,7 @@ class ModelInitializer:
         name = params.pop("name", self.name)
         if self.pipeline is not None:
             pipeline = deepcopy(self.pipeline)
-            config = {"_target_": name}
-            config.update(**params)
-            obj = instantiate(config)
+            obj = factory(name, **params)
             if isinstance(pipeline, DictConfig):
                 pipeline = OmegaConf.to_container(pipeline, resolve=True)
             elif isinstance(pipeline, dict):
@@ -96,9 +94,7 @@ class ModelInitializer:
             pipe_conf = SklearnModelPipeline(**pipeline["pipeline"])
             model = pipe_conf(obj)
         else:
-            config = {"_target_": name}
-            config.update(**params)
-            model = instantiate(config)
+            model = factory(name, **params)
         return model
 
     def __hash__(self):
@@ -542,10 +538,13 @@ class Model:
         end = process_time_ns() - start
         if predictions_file is not None:
             self.data.save(predictions, predictions_file)
-        return predictions, {
-            "predict_time": end / 1e9,
-            "predict_time_per_sample": end / (len(data[0]) * 1e9),
-        }
+        return (
+            predictions,
+            {
+                "predict_time": end / 1e9,
+                "predict_time_per_sample": end / (len(data[0]) * 1e9),
+            },
+        )
 
     def predict_proba(self, data=None, model=None, probabilities_file=None):
         """Predicts on the data and returns the average time per sample.
@@ -586,10 +585,13 @@ class Model:
             end = process_time_ns() - start
         if probabilities_file is not None:
             self.data.save(predictions, probabilities_file)
-        return predictions, {
-            "predict_proba_time": end / 1e9,
-            "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
-        }
+        return (
+            predictions,
+            {
+                "predict_proba_time": end / 1e9,
+                "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
+            },
+        )
 
     def predict_log_loss(self, data, model, loss_file=None):
         """Predicts on the data and returns the average time per sample.
@@ -634,10 +636,13 @@ class Model:
             )
         if loss_file is not None:
             self.data.save(predictions, loss_file)
-        return predictions, {
-            "predict_log_proba_time": end / 1e9,
-            "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
-        }
+        return (
+            predictions,
+            {
+                "predict_log_proba_time": end / 1e9,
+                "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
+            },
+        )
 
     def load(self, filename):
         """Loads a model from a file."""

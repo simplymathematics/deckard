@@ -2,7 +2,6 @@ defaults:
     - _self_
     - data: default
     - model: default
-    - attack: hsj
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
@@ -13,7 +12,7 @@ hydra:
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 123
+      # seed: 123
       consider_prior: true
       prior_weight: 1.0
       consider_magic_clip: true
@@ -26,20 +25,11 @@ hydra:
     direction: maximize
     study_name: model
     storage: sqlite:///model.db
-    n_trials: 10
+    n_trials: 100
     n_jobs: 1
-    # params:
-    #   data.generate.n_features : 20
-    #   data.sample.train_size : 1000
-    #   data.sample.test_size : 100
-    #   data.sample.random_state : 0
-    #   data.sample.stratify : true
-    #   model.init.kernel : rbf
-    #   model.init.C : tag(log, int(interval(1, 1e6)))
-    #   +model.init.max_iter : 100
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 10
+    n_jobs: 6
     prefer : processes
     verbose: 1
     timeout: null

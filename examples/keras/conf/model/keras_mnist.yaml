@@ -8,7 +8,7 @@ init:
 _target_: deckard.base.model.Model
 trainer:
     nb_epoch: 1
-    batch_size: 64
+    batch_size: 1024
 art:
     library : ${model.library}
     initialize:

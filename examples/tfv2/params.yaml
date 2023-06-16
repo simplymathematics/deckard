@@ -18,7 +18,7 @@ attack:
         with_std: true
   init:
     _target_: deckard.base.attack.AttackInitializer
-    batch_size: 64
+    batch_size: 1024
     init_eval: 10
     max_eval: 10
     max_iter: 10
@@ -56,8 +56,9 @@ attack:
             learning_rate: 0.001
       library: tensorflow
       trainer:
-        batch_size: 64
-        nb_epoch: 1
+        batch_size: 1024
+        nb_epoch: 20
+        verbose: true
     name: art.attacks.evasion.HopSkipJump
   method: evasion
   model:
@@ -94,8 +95,9 @@ attack:
           learning_rate: 0.001
     library: tensorflow
     trainer:
-      batch_size: 64
-      nb_epoch: 1
+      batch_size: 1024
+      nb_epoch: 20
+      verbose: true
 data:
   _target_: deckard.base.data.Data
   generate:
@@ -166,8 +168,9 @@ model:
         learning_rate: 0.001
   library: tensorflow
   trainer:
-    batch_size: 64
-    nb_epoch: 1
+    batch_size: 1024
+    nb_epoch: 20
+    verbose: true
 scorers:
   _target_: deckard.base.scorer.ScorerDict
   accuracy:

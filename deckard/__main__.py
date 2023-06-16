@@ -23,11 +23,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "submodule",
         type=str,
-        choices=[
-            "experiment",
-            "optimise",
-            "find_best",
-        ],
+        choices=["experiment", "optimise", "find_best"],
     )
     args = parser.parse_args()
     submodule = args.submodule

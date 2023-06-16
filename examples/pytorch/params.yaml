@@ -1,6 +1,7 @@
+_target_: deckard.base.experiment.Experiment
 attack:
   _target_: deckard.base.attack.Attack
-  attack_size: 10
+  attack_size: 100
   data:
     _target_: deckard.base.data.Data
     generate:
@@ -18,15 +19,29 @@ attack:
         with_std: true
   init:
     _target_: deckard.base.attack.AttackInitializer
-    batch_size: 64
-    init_eval: 10
-    max_eval: 10
-    max_iter: 10
     model:
       _target_: deckard.base.model.Model
       art:
         _target_: deckard.base.model.art_pipeline.ArtPipeline
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
         initialize:
+          clip_values:
+          - 0.0
+          - 1.0
           criterion:
             name: torch.nn.CrossEntropyLoss
           optimizer:
@@ -54,15 +69,33 @@ attack:
         name: torch_example.MNISTNet
       library: pytorch
       trainer:
-        batch_size: 64
-        nb_epoch: 1
+        batch_size: 1024
+        nb_epoch: 20
     name: art.attacks.evasion.HopSkipJump
   method: evasion
   model:
     _target_: deckard.base.model.Model
     art:
       _target_: deckard.base.model.art_pipeline.ArtPipeline
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          _target_: deckard.base.data.generator.DataGenerator
+          name: torch_mnist
+        sample:
+          _target_: deckard.base.data.sampler.SklearnDataSampler
+          random_state: 0
+          stratify: true
+        sklearn_pipeline:
+          _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: true
+            with_std: true
       initialize:
+        clip_values:
+        - 0.0
+        - 1.0
         criterion:
           name: torch.nn.CrossEntropyLoss
         optimizer:
@@ -90,8 +123,8 @@ attack:
       name: torch_example.MNISTNet
     library: pytorch
     trainer:
-      batch_size: 64
-      nb_epoch: 1
+      batch_size: 1024
+      nb_epoch: 20
 data:
   _target_: deckard.base.data.Data
   generate:
@@ -107,10 +140,10 @@ data:
       name: sklearn.preprocessing.StandardScaler
       with_mean: true
       with_std: true
+direction: maximize
 files:
   _target_: deckard.base.files.FileConfig
   adv_predictions_file: adv_predictions.json
-  adv_probabilities_file: adv_probabilities.json
   attack_dir: attacks
   attack_file: attack
   attack_type: .pkl
@@ -121,18 +154,34 @@ files:
   model_dir: models
   model_file: model
   model_type: .pt
+  name: default
   params_file: params.yaml
   predictions_file: predictions.json
-  probabilities_file: probabilities.json
   reports: reports
   score_dict_file: score_dict.json
-  test_labels_file: test_labels.json
-  train_labels_file: train_labels.json
 model:
   _target_: deckard.base.model.Model
   art:
     _target_: deckard.base.model.art_pipeline.ArtPipeline
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        _target_: deckard.base.data.generator.DataGenerator
+        name: torch_mnist
+      sample:
+        _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state: 0
+        stratify: true
+      sklearn_pipeline:
+        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+        preprocessor:
+          name: sklearn.preprocessing.StandardScaler
+          with_mean: true
+          with_std: true
     initialize:
+      clip_values:
+      - 0.0
+      - 1.0
       criterion:
         name: torch.nn.CrossEntropyLoss
       optimizer:
@@ -160,8 +209,9 @@ model:
     name: torch_example.MNISTNet
   library: pytorch
   trainer:
-    batch_size: 64
-    nb_epoch: 1
+    batch_size: 1024
+    nb_epoch: 20
+optimizers: accuracy
 scorers:
   _target_: deckard.base.scorer.ScorerDict
   accuracy:
@@ -172,3 +222,4 @@ scorers:
     _target_: deckard.base.scorer.ScorerConfig
     direction: minimize
     name: sklearn.metrics.log_loss
+stage: null
