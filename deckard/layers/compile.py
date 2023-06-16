@@ -9,6 +9,7 @@ from .utils import deckard_nones as nones
 
 logger = logging.getLogger(__name__)
 
+
 def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         if isinstance(df[col][0], dict):
@@ -25,17 +26,11 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_folder(
-    folder,
-    files=[
-        "params.yaml",
-        "score_dict.json",
-    ],
-) -> pd.DataFrame:
+def parse_folder(folder, files=["params.yaml", "score_dict.json",],) -> pd.DataFrame:
     """
     Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing files
-    :param exclude: List of files to exclude. Default: ['probabilities', 'predictions', 'plots', 'ground_truth'].
+    :param files: List of files to parse. Defaults to ["params.yaml", "score_dict.json"]. Other files will be added as columns with hrefs.
     :return: Pandas dataframe with the results
     """
     folder = Path(folder)
@@ -63,6 +58,12 @@ def parse_folder(
             raise ValueError(f"File type {suffix} not supported.")
         results[folder]["stage"] = stage
         results[folder].update(dict_)
+    all_files = Path(folder).glob("**/*")
+    for file in all_files:
+        if file not in path_gen:
+            if file.parent.name not in results:
+                results[file.parent.name] = {}
+            results[file.parent.name][file.stem] = file
     return results
 
 
@@ -167,19 +168,13 @@ if __name__ == "__main__":
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument(
-        "--kwargs",
-        type=list,
-        default=None,
-        nargs="*",
+        "--kwargs", type=list, default=None, nargs="*",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    report_file = save_results(
-        report_folder,
-        results_file,
-    )
+    report_file = save_results(report_folder, results_file,)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

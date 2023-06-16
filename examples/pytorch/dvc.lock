@@ -365,57 +365,57 @@ stages:
     cmd: bash attacks.sh ++stage=attack
     deps:
     - path: model.db
-      md5: ebd66436fc38a1bb192b5e2007c5b518
-      size: 131072
+      md5: a577ce18f5a95b7f48a8966d5ea3abdd
+      size: 217088
     - path: output/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: e5f7d84082d2ceb7b9249f16bf57384f
+      md5: ab52613772e3f17e7e8deb93ce5616ee
       size: 76923
     outs:
     - path: attack.db
-      md5: 0d0f87fe4110e9338b111ffe052385b4
-      size: 368640
+      md5: 576e07b1a496218659b7a425a812412b
+      size: 319488
   compile_train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
       output/reports/train.csv
     deps:
     - path: model.db
-      md5: ebd66436fc38a1bb192b5e2007c5b518
-      size: 131072
+      md5: a577ce18f5a95b7f48a8966d5ea3abdd
+      size: 217088
     - path: output/data/
       md5: 837a1c3acf188d7955e48419b38d8135.dir
       size: 2445523421
       nfiles: 11
     - path: output/models/
-      md5: aa7e2fab941318174bafd6020a707c3d.dir
-      size: 105756804
-      nfiles: 1376
+      md5: 7d1701f0df2ecd09e2b5cb470e0d4452.dir
+      size: 153557726
+      nfiles: 1998
     outs:
     - path: output/reports/train.csv
-      md5: 06e3d0464b51e00864d997e71eeb37de
-      size: 303205
+      md5: 379871ec140747dfa57fe0cb124c9fee
+      size: 627134
   compile_attack:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack/ --results_file
       output/reports/attack.csv
     deps:
     - path: attack.db
-      md5: 0d0f87fe4110e9338b111ffe052385b4
-      size: 368640
+      md5: 576e07b1a496218659b7a425a812412b
+      size: 319488
     - path: output/attacks/
-      md5: a3cc9f207932bb9ba83fbff54a1f8f96.dir
-      size: 194845864
-      nfiles: 604
+      md5: f6967d943832917c2b1e0db449d514f7.dir
+      size: 336979704
+      nfiles: 1044
     - path: output/data/
       md5: 837a1c3acf188d7955e48419b38d8135.dir
       size: 2445523421
       nfiles: 11
     - path: output/models/
-      md5: aa7e2fab941318174bafd6020a707c3d.dir
-      size: 105756804
-      nfiles: 1376
+      md5: 33fa241d9672dfc7f7f27927869d4948.dir
+      size: 160466396
+      nfiles: 2088
     outs:
     - path: output/reports/attack.csv
-      md5: 82d9942ccd27c9295a254572eeece86b
-      size: 1888668
+      md5: 36ffafc8cb80eb6fbed190be9d420ef7
+      size: 3674355

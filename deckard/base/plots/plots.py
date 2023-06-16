@@ -146,10 +146,7 @@ class Yellowbrick_Visualiser:
     scorers: ScorerDict = field(default_factory=ScorerDict)
 
     def visualise_data(
-        self,
-        data: list,
-        classes: list = None,
-        features: list = None,
+        self, data: list, classes: list = None, features: list = None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -189,8 +186,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["radviz"] = str(
                     Path(
-                        path,
-                        plots["radviz"] + str(plots.pop("filetype", ".png")),
+                        path, plots["radviz"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -202,8 +198,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["rank1d"] = str(
                     Path(
-                        path,
-                        plots["rank1d"] + str(plots.pop("filetype", ".png")),
+                        path, plots["rank1d"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -215,8 +210,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["rank2d"] = str(
                     Path(
-                        path,
-                        plots["rank2d"] + str(plots.pop("filetype", ".png")),
+                        path, plots["rank2d"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -228,8 +222,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["balance"] = str(
                     Path(
-                        path,
-                        plots["balance"] + str(plots.pop("filetype", ".png")),
+                        path, plots["balance"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -238,14 +231,12 @@ class Yellowbrick_Visualiser:
                 visualiser.fit(X_train, y_train)
                 visualiser.show(
                     Path(
-                        path,
-                        plots["correlation"] + str(plots.pop("filetype", ".png")),
+                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
                     ),
                 )
                 paths["correlation"] = str(
                     Path(
-                        path,
-                        plots["correlation"] + str(plots.pop("filetype", ".png")),
+                        path, plots["correlation"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -257,8 +248,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["pca"] = str(
                     Path(
-                        path,
-                        plots["pca"] + str(plots.pop("filetype", ".png")),
+                        path, plots["pca"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -270,8 +260,7 @@ class Yellowbrick_Visualiser:
                 )
                 paths["manifold"] = str(
                     Path(
-                        path,
-                        plots["manifold"] + str(plots.pop("filetype", ".png")),
+                        path, plots["manifold"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
@@ -283,19 +272,14 @@ class Yellowbrick_Visualiser:
                 )
                 paths["parallel"] = str(
                     Path(
-                        path,
-                        plots["parallel"] + str(plots.pop("filetype", ".png")),
+                        path, plots["parallel"] + str(plots.pop("filetype", ".png")),
                     ).as_posix(),
                 )
                 plt.gcf().clear()
         return paths
 
     def visualise_classification(
-        self,
-        data: list,
-        model: Callable,
-        classes: list = None,
-        predictions_file=None,
+        self, data: list, model: Callable, classes: list = None, predictions_file=None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -330,8 +314,7 @@ class Yellowbrick_Visualiser:
                     data[3] = np.argmax(data[3], axis=1)
                 if len(set(np.unique(data[2]))) > 2:
                     viz = visualiser(
-                        model,
-                        classes=[int(y) for y in np.unique(data[2])],
+                        model, classes=[int(y) for y in np.unique(data[2])],
                     )
                 elif len(set(np.unique(data[2]))) == 2:
                     try:
@@ -345,14 +328,10 @@ class Yellowbrick_Visualiser:
                             f"Failed due to error {e}. Trying without binary",
                         )
                         viz = visualiser(
-                            model,
-                            classes=[int(y) for y in np.unique(data[2])],
+                            model, classes=[int(y) for y in np.unique(data[2])],
                         )
                 else:
-                    viz = visualiser(
-                        model,
-                        classes=[0],
-                    )
+                    viz = visualiser(model, classes=[0],)
                 viz.fit(X=data[0], y=data[2])
                 viz.score(data[1], data[3])
                 filename = Path(path, plots[name] + str(plots.pop("filetype", ".png")))
@@ -363,10 +342,7 @@ class Yellowbrick_Visualiser:
         return paths
 
     def visualise_regression(
-        self,
-        data: list,
-        model: object,
-        predictions_file=None,
+        self, data: list, model: object, predictions_file=None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -417,10 +393,7 @@ class Yellowbrick_Visualiser:
         return paths
 
     def visualise_clustering(
-        self,
-        data: list,
-        model: object,
-        predictions_file=None,
+        self, data: list, model: object, predictions_file=None,
     ) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
@@ -460,11 +433,7 @@ class Yellowbrick_Visualiser:
                 plt.gcf().clear()
         return paths
 
-    def visualise_model_selection(
-        self,
-        data: list,
-        model: object,
-    ) -> List[Path]:
+    def visualise_model_selection(self, data: list, model: object,) -> List[Path]:
         """
         Visualise classification results according to the configuration file.
         :param data: list of data to be used for visualisation
@@ -507,25 +476,14 @@ class Yellowbrick_Visualiser:
                         assert (
                             "param_range" in params
                         ), f"Validation curve visualiser requires params_range parameter. Parameter keys are {params.keys()}."
-                    viz = visualiser(
-                        model,
-                        cv=cv,
-                        scoring=scorer,
-                        **params,
-                    )
+                    viz = visualiser(model, cv=cv, scoring=scorer, **params,)
                 elif "dropping" or "feature_importances" in name:
-                    viz = visualiser(
-                        model,
-                    )
+                    viz = visualiser(model,)
                 elif "learning" in name:
                     assert (
                         "train_sizes" in params
                     ), "Learning curve visualiser requires train_sizes parameter."
-                    viz = visualiser(
-                        model,
-                        scoring=scorer,
-                        **params,
-                    )
+                    viz = visualiser(model, scoring=scorer, **params,)
                 else:
                     raise ValueError("Unknown model selection visualiser.")
                 viz.fit(data[0], data[2])

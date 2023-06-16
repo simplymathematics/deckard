@@ -175,14 +175,13 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
     def __init__(
         self,
-        
         layers,
         num_classes=10,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
         replace_stride_with_dilation=None,
-        block = BasicBlock,
+        block=BasicBlock,
         norm_layer=None,
     ):
         super(ResNet, self).__init__()
@@ -206,12 +205,7 @@ class ResNet(nn.Module):
 
         # CIFAR10: kernel_size 7 -> 3, stride 2 -> 1, padding 3->1
         self.conv1 = nn.Conv2d(
-            3,
-            self.inplanes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            bias=False,
+            3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False,
         )
         # END
 
@@ -220,25 +214,13 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(
-            block,
-            128,
-            layers[1],
-            stride=2,
-            dilate=replace_stride_with_dilation[0],
+            block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0],
         )
         self.layer3 = self._make_layer(
-            block,
-            256,
-            layers[2],
-            stride=2,
-            dilate=replace_stride_with_dilation[1],
+            block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1],
         )
         self.layer4 = self._make_layer(
-            block,
-            512,
-            layers[3],
-            stride=2,
-            dilate=replace_stride_with_dilation[2],
+            block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2],
         )
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -323,10 +305,7 @@ def _resnet(arch, block, layers, pretrained, progress, device, **kwargs):
     model = ResNet(block, layers, **kwargs)
     if pretrained:
         # Download the model state_dict from the link: and run your code
-        state_dict = torch.load(
-            "resnet18.pt?dl=0",
-            map_location=device,
-        )
+        state_dict = torch.load("resnet18.pt?dl=0", map_location=device,)
         model.load_state_dict(state_dict)
     return model
 

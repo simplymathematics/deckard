@@ -152,15 +152,10 @@ class EvasionAttack:
             if targeted is True:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
-                patches, masks = atk.generate(
-                    ben_samples, **kwargs
-                )
-                samples = attack.apply_patch(
-                    ben_samples,
-                    scale=scale_max,
-                )
+                patches, masks = atk.generate(ben_samples, **kwargs)
+                samples = attack.apply_patch(ben_samples, scale=scale_max,)
             else:
-                
+
                 samples = atk.generate(ben_samples)
                 end = process_time_ns()
                 time_dict.update({"adv_fit_time": (end - start) / 1e9})
@@ -183,8 +178,7 @@ class EvasionAttack:
             results["adv_probabilities"] = adv_probabilities
         else:
             if hasattr(self.model, "model") and hasattr(
-                self.model.model,
-                "predict_proba",
+                self.model.model, "predict_proba",
             ):
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
@@ -227,8 +221,7 @@ class EvasionAttack:
             results["adv_loss"] = adv_loss
         elif adv_losses_file is not None:
             assert hasattr(
-                model,
-                "compute_loss",
+                model, "compute_loss",
             ), "Model does not have compute_loss method."
             try:
                 adv_loss = model.compute_loss(samples, data[3][: self.attack_size])
@@ -240,7 +233,6 @@ class EvasionAttack:
             self.data.save(adv_loss, adv_losses_file)
             results["adv_loss"] = adv_loss
         results["time_dict"] = time_dict
-        
 
         return results
 
@@ -365,8 +357,7 @@ class PoisoningAttack:
             adv_probabilities = self.data.load(adv_probabilities_file)
         else:
             if hasattr(self.model, "model") and hasattr(
-                self.model.model,
-                "predict_proba",
+                self.model.model, "predict_proba",
             ):
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
@@ -408,8 +399,7 @@ class PoisoningAttack:
             adv_loss = self.data.load(adv_losses_file)
         elif adv_losses_file is not None:
             assert hasattr(
-                model,
-                "compute_loss",
+                model, "compute_loss",
             ), "Model does not have compute_loss method."
             adv_loss = model.compute_loss(samples, data[3][: self.attack_size])
             self.data.save(adv_loss, adv_losses_file)
@@ -476,8 +466,7 @@ class InferenceAttack:
                 initial_image = np.random.uniform(0, 1, data_shape)
             elif self.initial_image == "average":
                 initial_image = np.zeroes(data_shape) + np.mean(
-                    data[1][: self.attack_size],
-                    axis=0,
+                    data[1][: self.attack_size], axis=0,
                 )
             elif self.initial_image is None:
                 pass
@@ -637,8 +626,7 @@ class ExtractionAttack:
         else:
             if hasattr(attacked_model, "compute_loss"):
                 loss = attacked_model.compute_loss(
-                    data[1][: self.attack_size],
-                    data[3][: self.attack_size],
+                    data[1][: self.attack_size], data[3][: self.attack_size],
                 )
             else:
                 from sklearn.metrics import log_loss
