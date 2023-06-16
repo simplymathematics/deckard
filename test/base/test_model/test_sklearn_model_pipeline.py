@@ -32,7 +32,7 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def test_call(self):
         _, model = self.model.initialize()
-        self.assertTrue(hasattr(model.model, "steps"))
+        self.assertTrue(hasattr(model, "steps"))
 
     def test_hash(self):
         old_hash = hash(self.model.init.pipeline)

@@ -22,7 +22,6 @@ stages:
         files:
           _target_: deckard.base.files.FileConfig
           adv_predictions_file: adv_predictions.json
-          adv_probabilities_file: adv_probabilities.json
           attack_dir: attacks
           attack_file: attack
           attack_type: .pkl
@@ -36,11 +35,8 @@ stages:
           name: default
           params_file: params.yaml
           predictions_file: predictions.json
-          probabilities_file: probabilities.json
           reports: reports
           score_dict_file: score_dict.json
-          test_labels_file: test_labels.json
-          train_labels_file: train_labels.json
         model:
           _target_: deckard.base.model.Model
           art:
@@ -108,14 +104,17 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: 5ba69865178f7e534c2478ecb297ec39
-      size: 76623
+      md5: ab52613772e3f17e7e8deb93ce5616ee
+      size: 76923
+    - path: output/reports/train/default/params.yaml
+      md5: 84f5a8b255a03d6fb1c1d2e04ed235de
+      size: 2118
     - path: output/reports/train/default/predictions.json
-      md5: 6d8a41214388fa607fdf616f9d994c07
-      size: 2844625
+      md5: 9a23b6679c6fe05ee3ffca2a398beb69
+      size: 2829336
     - path: output/reports/train/default/score_dict.json
-      md5: 8aa996b07ee26919ff7c063c32c985d7
-      size: 404
+      md5: 4c13d76a966ea4a18c11c8b94c92da86
+      size: 406
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
@@ -123,8 +122,8 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: da01eb5d3ca138b8016129b8d1a33190
-      size: 76623
+      md5: ab52613772e3f17e7e8deb93ce5616ee
+      size: 76923
     params:
       params.yaml:
         attack:
@@ -259,7 +258,6 @@ stages:
         files:
           _target_: deckard.base.files.FileConfig
           adv_predictions_file: adv_predictions.json
-          adv_probabilities_file: adv_probabilities.json
           attack_dir: attacks
           attack_file: attack
           attack_type: .pkl
@@ -273,11 +271,8 @@ stages:
           name: default
           params_file: params.yaml
           predictions_file: predictions.json
-          probabilities_file: probabilities.json
           reports: reports
           score_dict_file: score_dict.json
-          test_labels_file: test_labels.json
-          train_labels_file: train_labels.json
         model:
           _target_: deckard.base.model.Model
           art:
@@ -342,40 +337,85 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: ce5e1590a803fa13e89015e521c617d7
+      md5: e583848d62e80cc3e73aba6c82ba379c
       size: 313766
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 106e6d413b8cddca15a4a95c6e12fc1f
-      size: 21776
+      md5: d68e347485e63ca56ea124bf9893da60
+      size: 22151
+    - path: output/reports/attack/default/params.yaml
+      md5: 6fdf322889e45e61af0a130252d91844
+      size: 4863
     - path: output/reports/attack/default/score_dict.json
-      md5: 8d42724c6704293fb11c4d61af365f82
-      size: 544
+      md5: cdd16437e69b5d49a9cd26b17ecdf6eb
+      size: 542
   models:
-    cmd: bash models.sh
+    cmd: bash models.sh --config-name grid.yaml
     deps:
     - path: output/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: da01eb5d3ca138b8016129b8d1a33190
-      size: 76623
+      md5: ab52613772e3f17e7e8deb93ce5616ee
+      size: 76923
     outs:
     - path: model.db
-      md5: ee391cdbe0a9625a0e4c26fa4d669338
-      size: 176128
+      md5: a577ce18f5a95b7f48a8966d5ea3abdd
+      size: 217088
   attacks:
-    cmd: bash attacks.sh
+    cmd: bash attacks.sh ++stage=attack
     deps:
     - path: model.db
-      md5: 4bdfcf180c485957a60e0de524b96a7c
-      size: 159744
+      md5: ebd66436fc38a1bb192b5e2007c5b518
+      size: 131072
     - path: output/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: b1189f381258ece9c17cc4208dfc53a6
-      size: 76623
+      md5: e5f7d84082d2ceb7b9249f16bf57384f
+      size: 76923
     outs:
     - path: attack.db
-      md5: 6f99a25eca4a91ff0e91c6ec7d8c023e
-      size: 233472
+      md5: 0d0f87fe4110e9338b111ffe052385b4
+      size: 368640
+  compile_train:
+    cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
+      output/reports/train.csv
+    deps:
+    - path: model.db
+      md5: ebd66436fc38a1bb192b5e2007c5b518
+      size: 131072
+    - path: output/data/
+      md5: 837a1c3acf188d7955e48419b38d8135.dir
+      size: 2445523421
+      nfiles: 11
+    - path: output/models/
+      md5: aa7e2fab941318174bafd6020a707c3d.dir
+      size: 105756804
+      nfiles: 1376
+    outs:
+    - path: output/reports/train.csv
+      md5: 06e3d0464b51e00864d997e71eeb37de
+      size: 303205
+  compile_attack:
+    cmd: python -m deckard.layers.compile --report_folder output/reports/attack/ --results_file
+      output/reports/attack.csv
+    deps:
+    - path: attack.db
+      md5: 0d0f87fe4110e9338b111ffe052385b4
+      size: 368640
+    - path: output/attacks/
+      md5: a3cc9f207932bb9ba83fbff54a1f8f96.dir
+      size: 194845864
+      nfiles: 604
+    - path: output/data/
+      md5: 837a1c3acf188d7955e48419b38d8135.dir
+      size: 2445523421
+      nfiles: 11
+    - path: output/models/
+      md5: aa7e2fab941318174bafd6020a707c3d.dir
+      size: 105756804
+      nfiles: 1376
+    outs:
+    - path: output/reports/attack.csv
+      md5: 82d9942ccd27c9295a254572eeece86b
+      size: 1888668

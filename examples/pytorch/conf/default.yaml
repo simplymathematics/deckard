@@ -1,39 +1,34 @@
 defaults:
-    # - _target_ : deckard.base.experiment.Experiment
+    - _self_
     - data: torch_mnist
     - model: torch_mnist
     - attack: default
     - files: default
     - scorers: default
-    - optimizers : null
-    - stage : null
     - hydra/sweeper/params : null
     - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
+_target_ : deckard.base.experiment.Experiment
+direction: maximize
+optimizers : accuracy
+stage : null
 hydra:
   run:
     dir : "./${files.directory}"
   sweeper:
     sampler:
-      _target_: optuna.samplers.TPESampler
-      seed: 123
-      consider_prior: true
-      prior_weight: 1.0
-      consider_magic_clip: true
-      consider_endpoints: false
-      n_startup_trials: 30
-      n_ei_candidates: 24
-      multivariate: false
-      warn_independent_sampling: true
-    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+      _target_: optuna.samplers.GridSampler
     direction: maximize
     study_name: model
     storage: sqlite:///model.db
-    n_trials: 30
-    n_jobs: 1
+    n_jobs: 4
+    params:
+      ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+      ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 4
+    n_jobs: 8
     prefer : processes
     verbose: 1
     timeout: null
@@ -42,4 +37,3 @@ hydra:
     temp_folder: /tmp/deckard
     max_nbytes: 100000
     mmap_mode: r
-

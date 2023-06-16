@@ -26,7 +26,4 @@ init:
 
 _target_: deckard.base.model.Model
 library : sklearn
-art:
-    _target_ : deckard.base.model.art_pipeline.ArtPipeline
-    library : sklearn
-    initialize:
+

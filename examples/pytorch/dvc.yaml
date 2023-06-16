@@ -9,7 +9,7 @@ stages:
     outs:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.train_labels_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
@@ -26,7 +26,7 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -35,17 +35,34 @@ stages:
 
         ##############################################################################
   models:
-    cmd: bash models.sh
+    cmd: bash models.sh --config-name grid.yaml
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     outs:
     - model.db
   attacks:
-    cmd: bash attacks.sh
+    cmd: bash attacks.sh ++stage=attack
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     - model.db
     outs:
     - attack.db
+  compile_train:
+    cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/train/ --results_file ${files.directory}/${files.reports}/train.csv
+    deps:
+    - ${files.directory}/${files.data_dir}/
+    - ${files.directory}/${files.model_dir}/
+    - model.db
+    outs:
+    - ${files.directory}/${files.reports}/train.csv
+  compile_attack:
+    cmd : python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/attack/ --results_file ${files.directory}/${files.reports}/attack.csv
+    deps:
+    - ${files.directory}/${files.data_dir}/
+    - ${files.directory}/${files.model_dir}/
+    - ${files.directory}/${files.attack_dir}/
+    - attack.db
+    outs:
+    - ${files.directory}/${files.reports}/attack.csv

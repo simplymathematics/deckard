@@ -147,12 +147,26 @@ class EvasionAttack:
             ben_samples = data[0][: self.attack_size]
             start = process_time_ns()
             atk = self.init(model=model, attack_size=self.attack_size)
-            samples = atk.generate(ben_samples)
-            end = process_time_ns()
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
-            time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
-            )
+            scale_max = kwargs.pop("scale_max", 1)
+            targeted = kwargs.pop("targeted", False)
+            if targeted is True:
+                kwargs.update({"y": data[2][: self.attack_size]})
+            if "AdversarialPatch" in self.name:
+                patches, masks = atk.generate(
+                    ben_samples, **kwargs
+                )
+                samples = attack.apply_patch(
+                    ben_samples,
+                    scale=scale_max,
+                )
+            else:
+                
+                samples = atk.generate(ben_samples)
+                end = process_time_ns()
+                time_dict.update({"adv_fit_time": (end - start) / 1e9})
+                time_dict.update(
+                    {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
+                )
         results["adv_samples"] = samples
         if attack_file is not None:
             self.data.save(samples, attack_file)
@@ -226,6 +240,7 @@ class EvasionAttack:
             self.data.save(adv_loss, adv_losses_file)
             results["adv_loss"] = adv_loss
         results["time_dict"] = time_dict
+        
 
         return results
 

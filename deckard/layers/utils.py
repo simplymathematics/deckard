@@ -6,8 +6,23 @@ from hydra.errors import OverrideParseException
 from omegaconf import OmegaConf
 from copy import deepcopy
 from ..base.utils import my_hash
+from numpy import nan
 
 logger = logging.getLogger(__name__)
+
+deckard_nones = [
+    None,
+    "None",
+    "",
+    "nan",
+    "NAN",
+    "null",
+    "NULL",
+    "Null",
+    "none",
+    "NONE",
+    nan,
+]
 
 
 def find_conf_files(

@@ -10,7 +10,7 @@ from hydra.utils import instantiate
 import numpy as np
 from sklearn.exceptions import NotFittedError
 from ..data import Data
-from ..utils import my_hash
+from ..utils import my_hash, factory
 
 from .art_pipeline import ArtPipeline
 
@@ -80,9 +80,7 @@ class ModelInitializer:
         name = params.pop("name", self.name)
         if self.pipeline is not None:
             pipeline = deepcopy(self.pipeline)
-            config = {"_target_": name}
-            config.update(**params)
-            obj = instantiate(config)
+            obj = factory(name, **params)
             if isinstance(pipeline, DictConfig):
                 pipeline = OmegaConf.to_container(pipeline, resolve=True)
             elif isinstance(pipeline, dict):
@@ -96,9 +94,7 @@ class ModelInitializer:
             pipe_conf = SklearnModelPipeline(**pipeline["pipeline"])
             model = pipe_conf(obj)
         else:
-            config = {"_target_": name}
-            config.update(**params)
-            model = instantiate(config)
+            model = factory(name, **params)
         return model
 
     def __hash__(self):

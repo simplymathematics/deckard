@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse
+from copy import deepcopy
 from ..base.utils import unflatten_dict
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,12 @@ def run_stage(
     )
     exp = instantiate(params)
     id_ = exp.name
+    files = deepcopy(exp.files())
+    params_file = files.pop("params_file", None)
+    Path(params_file).parent.mkdir(parents=True, exist_ok=True)
+    if params_file is not None:
+        with open(params_file, "w") as f:
+            yaml.dump(params, f)
     score = exp()
     return id_, score
 
