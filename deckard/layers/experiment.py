@@ -22,7 +22,10 @@ __all__ = [
 
 
 def get_dvc_stage_params(
-    stage, params_file="params.yaml", pipeline_file="dvc.yaml", directory=".",
+    stage,
+    params_file="params.yaml",
+    pipeline_file="dvc.yaml",
+    directory=".",
 ):
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
@@ -38,7 +41,10 @@ def get_dvc_stage_params(
 
 
 def run_stage(
-    params_file="params.yaml", pipeline_file="dvc.yaml", directory=".", stage=None,
+    params_file="params.yaml",
+    pipeline_file="dvc.yaml",
+    directory=".",
+    stage=None,
 ):
     logger.info(
         f"Running stage {stage} with params_file: {params_file} and pipeline_file: {pipeline_file} in directory {directory}",
@@ -98,7 +104,9 @@ def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo
 
 
 def save_params_file(
-    config_dir="conf", config_file="default", params_file="params.yaml",
+    config_dir="conf",
+    config_file="default",
+    params_file="params.yaml",
 ):
     config_dir = str(Path(Path(), config_dir).absolute().as_posix())
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):

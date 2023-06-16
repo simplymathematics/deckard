@@ -59,7 +59,9 @@ class ExperimentFactory:
         stage = self.stage
         working_dir = Path(self.working_dir).resolve()
         old_params = dvc.api.params_show(
-            self.params_file, stages=[stage], repo=working_dir,
+            self.params_file,
+            stages=[stage],
+            repo=working_dir,
         )
         old_params = flatten_dict(old_params)
         new_params = flatten_dict(kwargs)
@@ -75,7 +77,9 @@ class ExperimentFactory:
         params = unflatten_dict(params)
         params["files"] = {}
         files = dvc.api.params_show(
-            self.pipeline_file, stages=[stage], repo=self.working_dir,
+            self.pipeline_file,
+            stages=[stage],
+            repo=self.working_dir,
         )
         unflattened_files = unflatten_dict(files).pop("files", {})
         params["files"].update(**unflattened_files)
@@ -85,7 +89,9 @@ class ExperimentFactory:
     def get_params(self):
         config_dir = str(Path(self.working_dir, self.config_dir).as_posix())
         with initialize_config_dir(
-            config_dir=config_dir, version_base=None, job_name="experiment_factory",
+            config_dir=config_dir,
+            version_base=None,
+            job_name="experiment_factory",
         ):
             cfg_old = compose(
                 config_name=str(
@@ -216,7 +222,9 @@ class OldExperimentFactory:
     def _find_stage_params(self, **kwargs):
         stage = self.stage
         old_params = dvc.api.params_show(
-            self.params_file, stages=[stage], repo=self.working_dir,
+            self.params_file,
+            stages=[stage],
+            repo=self.working_dir,
         )
         old_params = flatten_dict(old_params)
         new_params = flatten_dict(kwargs)
@@ -233,7 +241,9 @@ class OldExperimentFactory:
         params = unflatten_dict(params)
         params["files"] = {}
         files = dvc.api.params_show(
-            self.pipeline_file, stages=[stage], repo=self.working_dir,
+            self.pipeline_file,
+            stages=[stage],
+            repo=self.working_dir,
         )
         unflattened_files = unflatten_dict(files).pop("files", {})
         params["files"].update(**unflattened_files)
@@ -326,7 +336,11 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--config_file", type=str, default="default.yaml")
     dvc_parser.add_argument("--verbosity", type=str, default="INFO")
     dvc_parser.add_argument(
-        "stage", type=str, nargs="?", default=None, help="Stage to run",
+        "stage",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Stage to run",
     )
     args = dvc_parser.parse_args()
     os.chdir(Path())

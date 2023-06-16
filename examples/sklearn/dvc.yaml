@@ -78,18 +78,16 @@ stages:
     - conf/attack/best.yaml
   ##############################################################################
   # grid search
-  model_search : 
+  model_search :
     cmd : bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
     outs:
     - model_grid.db
     deps:
     - conf/model/best.yaml
-  attack_search : 
+  attack_search :
     cmd : bash attacks.sh model=best ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10
     deps:
     - model_grid.db
     - conf/model/best.yaml
     outs:
     - attack_grid.db
-   
-

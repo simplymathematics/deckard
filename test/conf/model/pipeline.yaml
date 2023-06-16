@@ -26,4 +26,3 @@ init:
 
 _target_: deckard.base.model.Model
 library : sklearn
-

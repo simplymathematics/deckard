@@ -26,7 +26,7 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_folder(folder, files=["params.yaml", "score_dict.json",],) -> pd.DataFrame:
+def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFrame:
     """
     Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing files
@@ -168,13 +168,16 @@ if __name__ == "__main__":
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument(
-        "--kwargs", type=list, default=None, nargs="*",
+        "--kwargs",
+        type=list,
+        default=None,
+        nargs="*",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    report_file = save_results(report_folder, results_file,)
+    report_file = save_results(report_folder, results_file)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

@@ -26,7 +26,11 @@ deckard_nones = [
 
 
 def find_conf_files(
-    config_name, config_subdir, config_dir, config_regex=None, default_file=None,
+    config_name,
+    config_subdir,
+    config_dir,
+    config_regex=None,
+    default_file=None,
 ):
     if config_name is not None:
         assert config_regex is None, "Cannot specify both config_name and config_regex"

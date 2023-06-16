@@ -21,7 +21,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "submodule", type=str, choices=["experiment", "optimise", "find_best",],
+        "submodule",
+        type=str,
+        choices=["experiment", "optimise", "find_best"],
     )
     args = parser.parse_args()
     submodule = args.submodule

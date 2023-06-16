@@ -105,7 +105,8 @@ class ArtInitializer:
                 f"library must be one of {supported_models}. Got {library}",
             )
         assert hasattr(
-            model, "fit",
+            model,
+            "fit",
         ), f"model must have a fit method. Got type {type(model)}"
         return model
 
@@ -128,7 +129,7 @@ class ArtPipeline:
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
             else:
-                if not isinstance(pipeline[stage], dict,):
+                if not isinstance(pipeline[stage], dict):
                     pipeline[stage] = (
                         {**pipeline[stage]} if pipeline[stage] is not None else {}
                     )
