@@ -156,7 +156,6 @@ class EvasionAttack:
                 patches, masks = atk.generate(ben_samples, **kwargs)
                 samples = attack.apply_patch(ben_samples, scale=scale_max)
             else:
-
                 samples = atk.generate(ben_samples)
                 end = process_time_ns()
                 time_dict.update({"adv_fit_time": (end - start) / 1e9})
