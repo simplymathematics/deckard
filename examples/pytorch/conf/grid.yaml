@@ -9,6 +9,7 @@ defaults:
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : random
     - override hydra/launcher : joblib
+    - override hydra/sweeper/params : default.yaml
 _target_ : deckard.base.experiment.Experiment
 direction: maximize
 optimizers : accuracy
