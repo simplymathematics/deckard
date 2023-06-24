@@ -79,3 +79,56 @@ resource "google_compute_firewall" "network-fw-4" {
 }
 
 
+resource "google_compute_instance" "k8s-master" {
+  name         = "k8s-master"
+  machine_type = var.machine_type
+  zone         = var.zone
+
+
+  boot_disk {
+    initialize_params {
+      image = var.image
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.subnetwork.name
+
+    access_config {
+      // Ephemeral public IP
+    }
+  }
+
+  metadata = {
+    sshKeys = "${var.gce_ssh_user}:${file(var.gce_ssh_pub_key_file)}"
+  }
+}
+
+
+resource "google_compute_instance" "k8s-worker" {
+  count = "${var.node_count}"
+  name         = "k8s-worker-${count.index}"
+  machine_type = var.machine_type
+  zone         = var.zone
+
+
+  boot_disk {
+    initialize_params {
+      image = var.image
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.subnetwork.name
+
+    access_config {
+      // Ephemeral public IP
+    }
+  }
+
+  metadata = {
+    sshKeys = "${var.gce_ssh_user}:${file(var.gce_ssh_pub_key_file)}"
+  }
+}
+
+
