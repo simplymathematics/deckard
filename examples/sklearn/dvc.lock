@@ -86,20 +86,20 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/data/data.pkl
-      md5: ea29369c6476a7a45814995cb2e4ff58
-      size: 180702
+      md5: eeabc07006294278801a3906f7016b20
+      size: 185102
     - path: output/models/model.pkl
-      md5: 97c5321edbc2e178dd3d6a931caf8354
-      size: 15402
+      md5: 4a9a983540c62bdcfa99c3a0297e7afc
+      size: 15368
     - path: output/reports/train/default/predictions.json
-      md5: ee673f125eb8878721afc412badf4483
-      size: 43249
+      md5: d8aed90aa6be874fff261a9f3215398c
+      size: 43229
     - path: output/reports/train/default/probabilities.json
-      md5: ee673f125eb8878721afc412badf4483
-      size: 43249
+      md5: d8aed90aa6be874fff261a9f3215398c
+      size: 43229
     - path: output/reports/train/default/score_dict.json
-      md5: 1e55ab76827b9d20330a4fcaeec348bd
-      size: 303
+      md5: 8ea27e3095a4ba0ef5238bdca4d0daa2
+      size: 357
     - path: output/reports/train/default/test_labels.json
       md5: 8b08830bcf914dc948fc4b2ecf3ce5aa
       size: 3000
@@ -111,11 +111,11 @@ stages:
       --config-name model
     deps:
     - path: output/data/data.pkl
-      md5: ea29369c6476a7a45814995cb2e4ff58
-      size: 180702
+      md5: eeabc07006294278801a3906f7016b20
+      size: 185102
     - path: output/models/model.pkl
-      md5: 97c5321edbc2e178dd3d6a931caf8354
-      size: 15402
+      md5: 4a9a983540c62bdcfa99c3a0297e7afc
+      size: 15368
     params:
       conf/model.yaml:
         hydra:
@@ -161,17 +161,17 @@ stages:
             mmap_mode: r
     outs:
     - path: model.db
-      md5: b81615d3ba2e13fd93349a224c255a06
-      size: 114688
+      md5: f8e916e2167cb9b3408aba0f9dc4cd6f
+      size: 110592
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
     - path: output/data/data.pkl
-      md5: ea29369c6476a7a45814995cb2e4ff58
-      size: 180702
+      md5: eeabc07006294278801a3906f7016b20
+      size: 185102
     - path: output/models/model.pkl
-      md5: ca55c4c533fa0d399bdfb53a282927f9
-      size: 15436
+      md5: 0498d04cceb9f248f8f2cac2c11e9f48
+      size: 15402
     params:
       params.yaml:
         attack:
@@ -341,26 +341,26 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/reports/attack/default/adv_predictions.json
-      md5: a8552fd95a19943d46551e5efb79fabb
-      size: 426
+      md5: 4f4e48a71cea9896298b690c3cb258a2
+      size: 424
     - path: output/reports/attack/default/adv_probabilities.json
-      md5: a8552fd95a19943d46551e5efb79fabb
-      size: 426
+      md5: 4f4e48a71cea9896298b690c3cb258a2
+      size: 424
     - path: output/reports/attack/default/score_dict.json
-      md5: f6aeeee2df7330756eaefe77b94db887
-      size: 446
+      md5: 7a7d6599127e7a5fe961642b7044ea4f
+      size: 496
   attack_optimise:
     cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy
       model=best --multirun --config-name attack
     deps:
     - path: conf/model/best.yaml
-      md5: c18e5944789ca22898f538f001f9d158
-      size: 683
+      md5: 8076f951bc284c87f0bbcf2ae8e159b8
+      size: 656
     - path: output/data/data.pkl
-      md5: ea29369c6476a7a45814995cb2e4ff58
-      size: 180702
+      md5: eeabc07006294278801a3906f7016b20
+      size: 185102
     - path: output/models/model.pkl
-      md5: 97c5321edbc2e178dd3d6a931caf8354
+      md5: 0498d04cceb9f248f8f2cac2c11e9f48
       size: 15402
     params:
       conf/attack.yaml:
@@ -407,28 +407,28 @@ stages:
             mmap_mode: r
     outs:
     - path: attack.db
-      md5: bed3fd93db63d1308427125d8060655e
-      size: 114688
+      md5: bd19744ae8a7fe26653fa92b9397f3b0
+      size: 110592
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
-      md5: b81615d3ba2e13fd93349a224c255a06
-      size: 114688
+      md5: f8e916e2167cb9b3408aba0f9dc4cd6f
+      size: 110592
     outs:
     - path: conf/model/best.yaml
-      md5: c18e5944789ca22898f538f001f9d158
-      size: 683
+      md5: 8076f951bc284c87f0bbcf2ae8e159b8
+      size: 656
   find_best_attack:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
     - path: attack.db
-      md5: 94373f5cfefbb35aef2967e8b5da0dc9
-      size: 114688
+      md5: bd19744ae8a7fe26653fa92b9397f3b0
+      size: 110592
     outs:
     - path: conf/attack/best.yaml
       md5: 4d05c325c57569b497140f774bfd2a2e
-      size: 2063
+      size: 1979
   generate_data@small:
     cmd: python -m deckard.layers.data --data_config_name small
     params:
@@ -1282,24 +1282,28 @@ stages:
       size: 1804313
   model_search:
     cmd: bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db
-      ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
+      ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize  --multirun
+      --config-name model.yaml
     deps:
     - path: conf/model/best.yaml
-      md5: c18e5944789ca22898f538f001f9d158
-      size: 683
+      md5: 8076f951bc284c87f0bbcf2ae8e159b8
+      size: 656
     outs:
     - path: model_grid.db
-      md5: 6fd29d3d7bdfcd796e352610a380f4e5
-      size: 114688
+      md5: bf2120ffcdb84e926fdee3194258ae7a
+      size: 159744
   attack_search:
-    cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db
+    cmd: bash attacks.sh model=best ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db
       ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
-      ++attack.init.max_iter=10
+      ++attack.init.max_iter=10  --multirun --config-name attack.yaml
     deps:
+    - path: conf/model/best.yaml
+      md5: 8076f951bc284c87f0bbcf2ae8e159b8
+      size: 656
     - path: model_grid.db
-      md5: ee31011ca40755b7cafb889633eb36e1
-      size: 114688
+      md5: bf2120ffcdb84e926fdee3194258ae7a
+      size: 159744
     outs:
     - path: attack_grid.db
-      md5: c9518b4b2f94ab2ecc153efffa603f23
-      size: 114688
+      md5: f3ee3cda113eb52922552c8fe975898b
+      size: 323584

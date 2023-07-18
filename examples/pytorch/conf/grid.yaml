@@ -1,45 +1,41 @@
 defaults:
     - _self_
-    - data: torch_mnist
-    - model: torch_mnist
+    - data: torch_cifar
+    - model: torch_cifar
+    - attack: default
     - files: default
     - scorers: default
     - stage : null
-    - hydra/sweeper/params : null
     - override hydra/sweeper : optuna
-    - override hydra/sweeper/sampler : random
+    - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
-    - override hydra/sweeper/params : default.yaml
 _target_ : deckard.base.experiment.Experiment
 direction: maximize
 optimizers : accuracy
 hydra:
-  run:
-    dir: output/${hydra.job.override_dirname}/seed=${data.sample.random_state}
-  job:
-    config:
-      override_dirname:
-        exclude_keys:
-          - seed
-        kv_sep: ":"
-        item_sep: "_"
-  sweep:
-    dir: multirun
-    subdir: ${hydra.job.override_dirname}
   sweeper:
     sampler:
-      _target_: optuna.samplers.RandomSampler
+      _target_: optuna.samplers.GridSampler
     direction: maximize
     study_name: model
     storage: sqlite:///model.db
-    n_jobs: 4
-    n_trials: 1
+    n_jobs: 1
     params:
+          # data: ${data}
+          # model: ${model}
+          # _target_ : deckard.base.attack.Attack
+          # init:
+          #     model: ${model}
+          #     _target_: deckard.base.attack.AttackInitializer
+          #     name: art.attacks.evasion.HopSkipJump
+          # attack_size : 100
+          # method : evasion
       ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
       ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001)
+      # ++model.init.name: choice(torch_examples.ResNet18, torch_example.ResNet50, torch_example.ResNet101, torch_example.ResNet152)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 8
+    n_jobs: 1
     prefer : processes
     verbose: 1
     timeout: null

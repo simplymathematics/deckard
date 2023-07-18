@@ -47,8 +47,7 @@ stages:
     outs:
     - conf/model/best.yaml
   model_optimise:
-    cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun
-      --config-name model
+    cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun --config-name model
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -59,8 +58,7 @@ stages:
       - hydra
   ##############################################################################
   attack_optimise:
-    cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy
-      model=best --multirun --config-name attack
+    cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -79,13 +77,13 @@ stages:
   ##############################################################################
   # grid search
   model_search :
-    cmd : bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
+    cmd : bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize  --multirun --config-name model.yaml
     outs:
     - model_grid.db
     deps:
     - conf/model/best.yaml
   attack_search :
-    cmd : bash attacks.sh model=best ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10
+    cmd : bash attacks.sh model=best ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10  --multirun --config-name attack.yaml
     deps:
     - model_grid.db
     - conf/model/best.yaml

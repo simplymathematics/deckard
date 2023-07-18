@@ -28,8 +28,8 @@ def get_files(
         cfg = unflatten_dict(cfg)
     else:
         raise TypeError(f"Expected dict or list, got {type(cfg)}")
-
-    cfg.update({"_target_": "deckard.base.experiment.Experiment"})
+    if "_target_" not in cfg:
+        cfg.update({"_target_": "deckard.base.experiment.Experiment"}) 
     if (
         "attack_file" in cfg["files"]
         and cfg["files"]["attack_file"] is not None
@@ -81,10 +81,12 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default and isinstance(default[key], dict):
+        if key in default and isinstance(default[key], dict) and value is not None:
             default[key] = merge_params(default[key], value)
-        elif isinstance(value, (list, tuple, int, float, str, bool, dict)):
+        elif isinstance(value, (list, tuple, int, float, str, bool, dict)) and value is not None:
             default[key] = value
+        elif value is None:
+            continue
         else:
             logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
@@ -244,7 +246,7 @@ def optimise(cfg: DictConfig) -> None:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
         )
-        with open(Path(folder, "exception.txt"), "w") as f:
+        with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
         if direction == "minimize":

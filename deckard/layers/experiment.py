@@ -2,13 +2,13 @@ import logging
 from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
-from hydra import initialize_config_dir, compose
-from omegaconf import OmegaConf
+
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse
 from copy import deepcopy
 from ..base.utils import unflatten_dict
+from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ __all__ = [
     "run_stage",
     "get_stages",
     "run_stages",
-    "save_params_file",
 ]
 
 
@@ -31,7 +30,8 @@ def get_dvc_stage_params(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
     )
     params = dvc.api.params_show(params_file, stages=stage, repo=directory)
-    params.update({"_target_": "deckard.base.experiment.Experiment"})
+    if "_target_" not in params:
+        params.update({"_target_": "deckard.base.experiment.Experiment"})
     files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
     unflattened_files = unflatten_dict(files)
     params["files"] = dict(unflattened_files.get("files", unflattened_files))
@@ -58,10 +58,11 @@ def run_stage(
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
-    params_file = files.pop("params_file", None)
-    Path(params_file).parent.mkdir(parents=True, exist_ok=True)
-    if params_file is not None:
-        with open(params_file, "w") as f:
+    new_params_file = files.pop('score_dict_file', None)
+    if new_params_file is not None:
+        new_params_file = Path(new_params_file).with_name(params_file).as_posix()
+        Path(new_params_file).parent.mkdir(parents=True, exist_ok=True)
+        with open(new_params_file, "w") as f:
             yaml.dump(params, f)
     score = exp()
     return id_, score
@@ -103,17 +104,7 @@ def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo
     return results
 
 
-def save_params_file(
-    config_dir="conf",
-    config_file="default",
-    params_file="params.yaml",
-):
-    config_dir = str(Path(Path(), config_dir).absolute().as_posix())
-    with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
-        cfg = compose(config_name=config_file)
-        params = OmegaConf.to_container(cfg, resolve=True)
-        with open(params_file, "w") as f:
-            yaml.dump(params, f)
+
 
 
 if __name__ == "__main__":

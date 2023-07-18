@@ -5,8 +5,14 @@ from hydra import compose, initialize_config_dir
 from hydra.errors import OverrideParseException
 from omegaconf import OmegaConf
 from copy import deepcopy
-from ..base.utils import my_hash
+import yaml
+from hydra import initialize_config_dir, compose
+from omegaconf import OmegaConf
+from pathlib import Path
+
+
 from numpy import nan
+from ..base.utils import my_hash
 
 logger = logging.getLogger(__name__)
 
@@ -35,17 +41,17 @@ def find_conf_files(
     if config_name is not None:
         assert config_regex is None, "Cannot specify both config_name and config_regex"
         config_dir = Path(Path(), config_dir).resolve().as_posix()
-        data_conf_dir = Path(config_dir, config_subdir)
-        files = [Path(data_conf_dir, config_name)]
+        sub_dir = Path(config_dir, config_subdir)
+        files = [Path(sub_dir, config_name)]
     elif config_regex is not None:
         assert config_name is None, "Cannot specify both config_name and config_regex"
         config_dir = Path(Path(), config_dir).resolve().as_posix()
-        data_conf_dir = Path(config_dir, config_subdir)
-        files = data_conf_dir.glob(config_regex)
+        sub_dir = Path(config_dir, config_subdir)
+        files = sub_dir.glob(config_regex)
     elif default_file is not None:
         assert config_name is None, "Cannot specify both config_name and config_regex"
         config_dir = Path(Path(), config_dir).resolve().as_posix()
-        data_conf_dir = Path(config_dir, config_subdir)
+        sub_dir = Path(config_dir, config_subdir)
         files = [default_file]
     else:
         raise ValueError(
@@ -113,3 +119,19 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
         cfg["name"] = id_
         cfg["files"]["name"] = id_
         return cfg
+
+def save_params_file(
+    config_dir="conf",
+    config_file="default",
+    params_file="params.yaml",
+    overrides = [], 
+):
+    config_dir = str(Path(Path(), config_dir).absolute().as_posix())
+    with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
+        cfg = compose(config_name=config_file, overrides=overrides)
+        params = OmegaConf.to_container(cfg, resolve=True)
+        with open(params_file, "w") as f:
+            yaml.dump(params, f)
+        logger.info(f"Saved params file to {params_file}")
+    assert Path(params_file).exists(), f"Failed to save params file to {params_file}"
+    return None

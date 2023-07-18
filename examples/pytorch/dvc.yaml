@@ -42,27 +42,21 @@ stages:
     outs:
     - model.db
   attacks:
-    cmd: bash attacks.sh ++stage=attack
+    cmd: bash attacks.sh ++stage=attack --config-name grid.yaml
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     - model.db
     outs:
     - attack.db
-  compile_train:
-    cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/train/ --results_file ${files.directory}/${files.reports}/train.csv
-    deps:
-    - ${files.directory}/${files.data_dir}/
-    - ${files.directory}/${files.model_dir}/
-    - model.db
-    outs:
-    - ${files.directory}/${files.reports}/train.csv
-  compile_attack:
-    cmd : python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/attack/ --results_file ${files.directory}/${files.reports}/attack.csv
-    deps:
-    - ${files.directory}/${files.data_dir}/
-    - ${files.directory}/${files.model_dir}/
-    - ${files.directory}/${files.attack_dir}/
-    - attack.db
-    outs:
-    - ${files.directory}/${files.reports}/attack.csv
+  compile:
+    foreach:
+      - attack
+      - train
+    do:
+      cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
+      deps:
+      - ${files.directory}/${files.reports}/${item}/
+      - model.db
+      outs:
+      - ${files.directory}/${files.reports}/${item}.csv
