@@ -5,14 +5,11 @@ attack:
   data:
     _target_: deckard.base.data.Data
     generate:
-      _target_: deckard.base.data.generator.DataGenerator
-      name: torch_mnist
+      name: torch_cifar10
     sample:
-      _target_: deckard.base.data.sampler.SklearnDataSampler
       random_state: 0
       stratify: true
     sklearn_pipeline:
-      _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
       preprocessor:
         name: sklearn.preprocessing.StandardScaler
         with_mean: true
@@ -26,14 +23,11 @@ attack:
         data:
           _target_: deckard.base.data.Data
           generate:
-            _target_: deckard.base.data.generator.DataGenerator
-            name: torch_mnist
+            name: torch_cifar10
           sample:
-            _target_: deckard.base.data.sampler.SklearnDataSampler
             random_state: 0
             stratify: true
           sklearn_pipeline:
-            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
             preprocessor:
               name: sklearn.preprocessing.StandardScaler
               with_mean: true
@@ -52,21 +46,18 @@ attack:
       data:
         _target_: deckard.base.data.Data
         generate:
-          _target_: deckard.base.data.generator.DataGenerator
-          name: torch_mnist
+          name: torch_cifar10
         sample:
-          _target_: deckard.base.data.sampler.SklearnDataSampler
           random_state: 0
           stratify: true
         sklearn_pipeline:
-          _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
           preprocessor:
             name: sklearn.preprocessing.StandardScaler
             with_mean: true
             with_std: true
       init:
         _target_: deckard.base.model.ModelInitializer
-        name: torch_example.MNISTNet
+        name: torch_example.ResNet18
       library: pytorch
       trainer:
         batch_size: 1024
@@ -80,14 +71,11 @@ attack:
       data:
         _target_: deckard.base.data.Data
         generate:
-          _target_: deckard.base.data.generator.DataGenerator
-          name: torch_mnist
+          name: torch_cifar10
         sample:
-          _target_: deckard.base.data.sampler.SklearnDataSampler
           random_state: 0
           stratify: true
         sklearn_pipeline:
-          _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
           preprocessor:
             name: sklearn.preprocessing.StandardScaler
             with_mean: true
@@ -106,21 +94,18 @@ attack:
     data:
       _target_: deckard.base.data.Data
       generate:
-        _target_: deckard.base.data.generator.DataGenerator
-        name: torch_mnist
+        name: torch_cifar10
       sample:
-        _target_: deckard.base.data.sampler.SklearnDataSampler
         random_state: 0
         stratify: true
       sklearn_pipeline:
-        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
         preprocessor:
           name: sklearn.preprocessing.StandardScaler
           with_mean: true
           with_std: true
     init:
       _target_: deckard.base.model.ModelInitializer
-      name: torch_example.MNISTNet
+      name: torch_example.ResNet18
     library: pytorch
     trainer:
       batch_size: 1024
@@ -128,14 +113,11 @@ attack:
 data:
   _target_: deckard.base.data.Data
   generate:
-    _target_: deckard.base.data.generator.DataGenerator
-    name: torch_mnist
+    name: torch_cifar10
   sample:
-    _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state: 0
     stratify: true
   sklearn_pipeline:
-    _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
     preprocessor:
       name: sklearn.preprocessing.StandardScaler
       with_mean: true
@@ -166,14 +148,11 @@ model:
     data:
       _target_: deckard.base.data.Data
       generate:
-        _target_: deckard.base.data.generator.DataGenerator
-        name: torch_mnist
+        name: torch_cifar10
       sample:
-        _target_: deckard.base.data.sampler.SklearnDataSampler
         random_state: 0
         stratify: true
       sklearn_pipeline:
-        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
         preprocessor:
           name: sklearn.preprocessing.StandardScaler
           with_mean: true
@@ -192,21 +171,18 @@ model:
   data:
     _target_: deckard.base.data.Data
     generate:
-      _target_: deckard.base.data.generator.DataGenerator
-      name: torch_mnist
+      name: torch_cifar10
     sample:
-      _target_: deckard.base.data.sampler.SklearnDataSampler
       random_state: 0
       stratify: true
     sklearn_pipeline:
-      _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
       preprocessor:
         name: sklearn.preprocessing.StandardScaler
         with_mean: true
         with_std: true
   init:
     _target_: deckard.base.model.ModelInitializer
-    name: torch_example.MNISTNet
+    name: torch_example.ResNet18
   library: pytorch
   trainer:
     batch_size: 1024

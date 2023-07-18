@@ -31,6 +31,7 @@ class Experiment:
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
     optimizers: Union[list, None] = field(default_factory=list)
+    kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
         self,
@@ -42,6 +43,7 @@ class Experiment:
         name=None,
         stage=None,
         optimizers=None,
+        kwargs={},
     ):
         if isinstance(data, dict):
             self.data = Data(**data)
@@ -90,7 +92,9 @@ class Experiment:
         else:
             raise ValueError("files must be a dict, DictConfig, or FileConfig object.")
         assert isinstance(self.files, FileConfig)
-        if isinstance(attack, dict):
+        if attack is None or (hasattr(attack, "__len__") and len(attack) == 0):
+            self.attack = None
+        elif isinstance(attack, dict):
             self.attack = Attack(**attack)
         elif isinstance(attack, DictConfig):
             attack_dict = OmegaConf.to_container(attack)
@@ -104,6 +108,7 @@ class Experiment:
         assert isinstance(self.attack, (Attack, type(None)))
         self.stage = stage
         self.optimizers = optimizers
+        self.kwargs = kwargs
         self.name = name if name is not None else self._set_name()
         logger.info("Instantiating Experiment with id: {}".format(self.get_name()))
 
@@ -182,8 +187,8 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        # else:
-        #     preds = data[2]
+        else:
+            preds = data[2]
         ##########################################################################
         if self.attack is not None:
             adv_results = self.attack(

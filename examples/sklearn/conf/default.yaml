@@ -2,6 +2,7 @@ defaults:
     - _self_
     - data: default
     - model: default
+    - attack: hsj
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna

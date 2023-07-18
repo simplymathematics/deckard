@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dynamic HTML Table from CSV with D3.js</title>
+  <style>
+    th, td {
+      padding: 10px;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+  <input type="file" id="csvFile" accept=".csv">
+  <div id="tableContainer"></div>
+
+  <script>
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const contents = e.target.result;
+        const data = d3.csvParse(contents);
+
+        // Create the table
+        const table = d3.select("#tableContainer")
+          .append("table");
+
+        // Create the table headers
+        const thead = table.append("thead");
+        const th = thead.append("tr")
+          .selectAll("th")
+          .data(d3.keys(data[0]))
+          .enter()
+          .append("th")
+          .text(function(d) { return d; });
+
+        // Create the table body
+        const tbody = table.append("tbody");
+        const rows = tbody.selectAll("tr")
+          .data(data)
+          .enter()
+          .append("tr");
+
+        // Populate the table cells
+        rows.selectAll("td")
+          .data(function(row) {
+            return d3.values(row);
+          })
+          .enter()
+          .append("td")
+          .text(function(d) { return d; });
+      };
+
+      reader.readAsText(file);
+    }
+
+    document.getElementById("csvFile").addEventListener("change", handleFileSelect);
+  </script>
+</body>
+</html>
