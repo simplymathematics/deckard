@@ -1,2 +1,3 @@
-art.postprocessor.name : art.defences.postprocessor.GaussianNoise
-art.postprocessor.scale : [.01, .1, .2, .3, .5, 1, 2, 3, 5, 10]
+defence:
+  art.postprocessor.name : art.defences.postprocessor.GaussianNoise
+  art.postprocessor.scale : [.01, .1, .2, .3, .5, 1, 2, 3, 5, 10]

@@ -24,7 +24,7 @@ sweeper:
   storage: sqlite:///model.db
   n_jobs: 4
   n_trials: 1
-  
+
 launcher:
   _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
   n_jobs: 8
