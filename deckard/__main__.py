@@ -35,7 +35,7 @@ def parse_and_repro(args):
         if len(proc.stderr.readlines()) > 0:
             raise ValueError(f"Error parsing with options {args}")
     if Path(Path(), "dvc.yaml").exists():
-        cmd = f"dvc repro"
+        cmd = "dvc repro"
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
             for line in proc.stdout:
                 print(line.rstrip().decode("utf-8"))
@@ -43,7 +43,7 @@ def parse_and_repro(args):
                 logger.error(f"Error running {cmd}")
                 for line in proc.stderr:
                     logger.error(line.rstrip().decode("utf-8"))
-                raise ValueError(f"Error running dvc.yaml")
+                raise ValueError("Error running dvc.yaml")
     else:
         raise ValueError("No dvc.yaml file found. Please construct a pipeline.")
     return 0
