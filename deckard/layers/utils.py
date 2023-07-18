@@ -32,7 +32,11 @@ deckard_nones = [
 
 
 def find_conf_files(
-    config_name, config_subdir, config_dir, config_regex=None, default_file=None,
+    config_name,
+    config_subdir,
+    config_dir,
+    config_regex=None,
+    default_file=None,
 ):
     if config_name is not None:
         assert config_regex is None, "Cannot specify both config_name and config_regex"
@@ -118,7 +122,10 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
 
 
 def save_params_file(
-    config_dir="conf", config_file="default", params_file="params.yaml", overrides=[],
+    config_dir="conf",
+    config_file="default",
+    params_file="params.yaml",
+    overrides=[],
 ):
     config_dir = str(Path(Path(), config_dir).absolute().as_posix())
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):

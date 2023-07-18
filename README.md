@@ -10,7 +10,7 @@ python -m pip install .[tensorflow]
 ```
 Add the `-e` flag if you want to edit files:
 ```
-python -m pip install -e . 
+python -m pip install -e .
 ```
 You can also try the bash script which attempts to install python if you have root.
 ```
@@ -36,13 +36,13 @@ Running `dvc repro` in that folder will reproduce the experiment outlined in the
 ├── README.md: this file
 ├── deckard: Source code
 ├── examples: Directory containing all the examples
-├── rpi.sh: For installation on Raspbian. 
+├── rpi.sh: For installation on Raspbian.
 ├── setup.py : for installation with pip
 ├── setup.sh : for installation using bash
 └── test : test suite
 
 
-### 
+###
 
 To build the package (optional and is a very rough draft):
 

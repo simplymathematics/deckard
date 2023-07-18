@@ -20,7 +20,8 @@ config_file = "classification.yaml"
 class testDataGenerator(unittest.TestCase):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
-            config_dir=Path(config_dir).resolve().as_posix(), version_base="1.3",
+            config_dir=Path(config_dir).resolve().as_posix(),
+            version_base="1.3",
         ):
             cfg = compose(config_name=config_file)
         self.cfg = cfg
