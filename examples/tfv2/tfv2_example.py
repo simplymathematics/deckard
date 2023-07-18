@@ -19,10 +19,7 @@ class TFNet(Model):
         self.conv1 = Conv2D(filters=4, kernel_size=5, activation="relu")
         self.conv2 = Conv2D(filters=10, kernel_size=5, activation="relu")
         self.maxpool = MaxPool2D(
-            pool_size=(2, 2),
-            strides=(2, 2),
-            padding="valid",
-            data_format=None,
+            pool_size=(2, 2), strides=(2, 2), padding="valid", data_format=None,
         )
         self.flatten = Flatten()
         self.dense1 = Dense(100, activation="relu")

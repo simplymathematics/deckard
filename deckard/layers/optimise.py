@@ -16,8 +16,7 @@ __all__ = ["save_file", "optimise", "parse_stage", "get_files"]
 
 
 def get_files(
-    cfg,
-    stage,
+    cfg, stage,
 ):
     """
     Gets the file names from
@@ -29,7 +28,7 @@ def get_files(
     else:
         raise TypeError(f"Expected dict or list, got {type(cfg)}")
     if "_target_" not in cfg:
-        cfg.update({"_target_": "deckard.base.experiment.Experiment"}) 
+        cfg.update({"_target_": "deckard.base.experiment.Experiment"})
     if (
         "attack_file" in cfg["files"]
         and cfg["files"]["attack_file"] is not None
@@ -83,7 +82,10 @@ def merge_params(default, params) -> dict:
     for key, value in params.items():
         if key in default and isinstance(default[key], dict) and value is not None:
             default[key] = merge_params(default[key], value)
-        elif isinstance(value, (list, tuple, int, float, str, bool, dict)) and value is not None:
+        elif (
+            isinstance(value, (list, tuple, int, float, str, bool, dict))
+            and value is not None
+        ):
             default[key] = value
         elif value is None:
             continue
@@ -164,8 +166,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         with open(Path(params), "r") as f:
             params = yaml.load(f, Loader=yaml.FullLoader)
         assert isinstance(
-            params,
-            dict,
+            params, dict,
         ), f"Params in file {params} must be a dict. It is a {type(params)}."
         key_list = []
         for stage in stages:
@@ -193,8 +194,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
     assert isinstance(
-        params,
-        dict,
+        params, dict,
     ), f"Params must be a dict. It is type {type(params)}."
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
@@ -259,8 +259,7 @@ def optimise(cfg: DictConfig) -> None:
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
+        "DECKARD_CONFIG_PATH", str(Path(Path(), "conf").absolute().as_posix()),
     )
     config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
 

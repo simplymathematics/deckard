@@ -58,8 +58,7 @@ class SklearnDataPipeline:
                 pass
             else:
                 assert hasattr(
-                    pipe[stage],
-                    "transform",
+                    pipe[stage], "transform",
                 ), f"Pipeline stage must be a SklearnDataPipelineStage, dict, or have a transform methods. Got {type(pipe[stage])}"
         self.pipeline = pipe
 
@@ -84,10 +83,7 @@ class SklearnDataPipeline:
             transformer = pipeline[stage]
             if isinstance(transformer, SklearnDataPipelineStage):
                 X_train, X_test, y_train, y_test = transformer(
-                    X_train,
-                    X_test,
-                    y_train,
-                    y_test,
+                    X_train, X_test, y_train, y_test,
                 )
             else:
                 X_train = transformer.fit(X_train).transform(X_train)

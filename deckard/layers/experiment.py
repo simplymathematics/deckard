@@ -21,10 +21,7 @@ __all__ = [
 
 
 def get_dvc_stage_params(
-    stage,
-    params_file="params.yaml",
-    pipeline_file="dvc.yaml",
-    directory=".",
+    stage, params_file="params.yaml", pipeline_file="dvc.yaml", directory=".",
 ):
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
@@ -41,10 +38,7 @@ def get_dvc_stage_params(
 
 
 def run_stage(
-    params_file="params.yaml",
-    pipeline_file="dvc.yaml",
-    directory=".",
-    stage=None,
+    params_file="params.yaml", pipeline_file="dvc.yaml", directory=".", stage=None,
 ):
     logger.info(
         f"Running stage {stage} with params_file: {params_file} and pipeline_file: {pipeline_file} in directory {directory}",
@@ -58,7 +52,7 @@ def run_stage(
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
-    new_params_file = files.pop('score_dict_file', None)
+    new_params_file = files.pop("score_dict_file", None)
     if new_params_file is not None:
         new_params_file = Path(new_params_file).with_name(params_file).as_posix()
         Path(new_params_file).parent.mkdir(parents=True, exist_ok=True)
@@ -102,9 +96,6 @@ def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo
         )
         results[id_] = score
     return results
-
-
-
 
 
 if __name__ == "__main__":

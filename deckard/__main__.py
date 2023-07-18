@@ -11,6 +11,7 @@ layer_list = [layer.stem for layer in layer_list]
 if "__init__" in layer_list:
     layer_list.remove("__init__")
 
+
 def run_submodule(submodule, args):
     cmd = f"python -m deckard.layers.{submodule} {args}"
     logger.info(f"Running {cmd}")
@@ -24,6 +25,7 @@ def run_submodule(submodule, args):
             return 1
         else:
             return 0
+
 
 def parse_and_repro(args):
     cmd = f"python -m deckard.layers.parse {args}"
@@ -48,15 +50,14 @@ def parse_and_repro(args):
 
 
 if __name__ == "__main__":
-    
-    
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "submodule",
         type=str,
         nargs="?",
-        help = f"Submodule to run. Choices: {layer_list}"
+        help=f"Submodule to run. Choices: {layer_list}",
     )
     parser.add_argument("other_args", type=str, nargs="*")
     args = parser.parse_args()

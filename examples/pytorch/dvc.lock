@@ -324,11 +324,11 @@ stages:
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
     - path: output/models/model.pt
-      md5: 5023f6a6c7a14ab3a3d64837ffb841d3
-      size: 44811029
+      md5: 6a8c3706076548fb337eb8d4fa814396
+      size: 44811477
     outs:
     - path: model.db
-      md5: b08e6e5f477a4cd0933e0dabc54cf8c7
+      md5: 036f26eb0fc5ef7651119927d1b7dbc2
       size: 188416
   attacks:
     cmd: bash attacks.sh ++stage=attack --config-name grid.yaml
