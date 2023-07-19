@@ -95,17 +95,17 @@ stages:
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
     - path: output/models/model.pt
-      md5: 5023f6a6c7a14ab3a3d64837ffb841d3
+      md5: 8cd16788ed8408f42c87a062d28747eb
       size: 44811029
     - path: output/reports/train/default/params.yaml
       md5: 920db8f93d5e2f930b00d3a682f524eb
       size: 2133
     - path: output/reports/train/default/predictions.json
-      md5: 07c0cbeb68ed6c78f6dab9638d8f883a
-      size: 2438013
+      md5: a0eb991263f556afb38d1c6267b9211b
+      size: 2436084
     - path: output/reports/train/default/score_dict.json
-      md5: ed212c2e234e73307ade9e1a919cea58
-      size: 394
+      md5: 696bc8c0fa4129026ad02b19ca7aef67
+      size: 392
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
@@ -113,7 +113,7 @@ stages:
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
     - path: output/models/model.pt
-      md5: 6a8c3706076548fb337eb8d4fa814396
+      md5: a152a12cd129c5d8389dd093f25b3ccb
       size: 44811477
     params:
       params.yaml:
@@ -306,17 +306,17 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 2a3840e2d4fab155af1ce3e21d955e25
+      md5: dbb70ab0e428c1b3370cb1795947f79d
       size: 1228966
     - path: output/reports/attack/default/adv_predictions.json
-      md5: c8ccadd4b4dd69c4afc5f85a04265ba6
-      size: 21362
+      md5: 2570871a6fb261fbcfc12b2493f81297
+      size: 21895
     - path: output/reports/attack/default/params.yaml
       md5: ba02fa64b136a4eee498014907161e1c
       size: 4870
     - path: output/reports/attack/default/score_dict.json
-      md5: ef1c3bff25364c36f917c686d2804d9a
-      size: 540
+      md5: 77be648b8b9a181febf04456e7e55282
+      size: 525
   models:
     cmd: bash models.sh --config-name grid.yaml
     deps:
@@ -334,18 +334,18 @@ stages:
     cmd: bash attacks.sh ++stage=attack --config-name grid.yaml
     deps:
     - path: model.db
-      md5: 6e63647e5ed42a99e2d16866953018bd
-      size: 192512
+      md5: 036f26eb0fc5ef7651119927d1b7dbc2
+      size: 188416
     - path: output/data/data.pkl
-      md5: de934a5f5157970e5f30b8f3f1856a68
-      size: 222320311
+      md5: 6503fed5d4e6cc1163898c0ab6a863dd
+      size: 739680311
     - path: output/models/model.pt
-      md5: a61b81099c0375ca2bb8269780ec8ece
-      size: 76923
+      md5: 6a8c3706076548fb337eb8d4fa814396
+      size: 44811477
     outs:
     - path: attack.db
-      md5: 7a873ae3c124a276248c766112d1a14c
-      size: 1134592
+      md5: de4d365f35bce33ef692868f9dba1237
+      size: 667648
   compile_train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
       output/reports/train.csv
@@ -393,28 +393,28 @@ stages:
       output/reports/attack.csv
     deps:
     - path: model.db
-      md5: b0c3649cf68e32904be4096b75e7231e
+      md5: 036f26eb0fc5ef7651119927d1b7dbc2
       size: 188416
     - path: output/reports/attack/
-      md5: d5dfe0cc70d22c0d8f76d8ad6b29e7f5.dir
-      size: 2078048296
-      nfiles: 3047
+      md5: 3ddc06bf42158ee654409d14a84f5ed6.dir
+      size: 1728030532
+      nfiles: 2913
     outs:
     - path: output/reports/attack.csv
-      md5: e41323f91a6b7e676c70c7cb04f9b310
-      size: 2225472
+      md5: ec5e3638a9302f339f7e3caddc8d406a
+      size: 2066258
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
     deps:
     - path: model.db
-      md5: cd13342dbfd4f78439a9070ab25abc63
-      size: 110592
+      md5: 036f26eb0fc5ef7651119927d1b7dbc2
+      size: 188416
     - path: output/reports/train/
-      md5: 080db67c68dc16d287bd42694289ecab.dir
-      size: 584406984
-      nfiles: 706
+      md5: a218b7e4704bc207fa4b57827f6061c9.dir
+      size: 238379001
+      nfiles: 352
     outs:
     - path: output/reports/train.csv
-      md5: 2cfd85cc19974ceb526baec780f691a1
-      size: 489393
+      md5: e4e0ef332634b946c69a78778023515e
+      size: 216705

@@ -35,14 +35,14 @@ stages:
 
         ##############################################################################
   models:
-    cmd: bash models.sh --config-name grid.yaml
+    cmd: bash models.sh ++model.init.name=torch_example.ResNet18,torch_example.ResNet50,torch_example.ResNet101,torch_example.ResNet152 --config-name grid.yaml
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     outs:
     - model.db
   attacks:
-    cmd: bash attacks.sh ++stage=attack --config-name grid.yaml
+    cmd: bash attacks.sh ++model.init.name=torch_example.ResNet18,torch_example.ResNet50,torch_example.ResNet101,torch_example.ResNet152 ++stage=attack --config-name grid.yaml
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
