@@ -168,7 +168,10 @@ if __name__ == "__main__":
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument(
-        "--kwargs", type=list, default=None, nargs="*",
+        "--kwargs",
+        type=list,
+        default=None,
+        nargs="*",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
