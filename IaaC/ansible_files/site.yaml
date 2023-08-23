@@ -1,0 +1,6 @@
+- name: set up Kubernetest
+  hosts: all
+  become: true
+  roles:
+    - update
+    - dep

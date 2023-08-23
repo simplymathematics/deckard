@@ -20,37 +20,17 @@ function is_logged_in {
 is_gcloud_installed
 is_logged_in
 
-# Get the currently selected project
-selected_project=$(gcloud config get-value project)
+IPs=( $(gcloud compute instances list | awk  '{ print $5 }' | awk '(NR>1)'  ))
+for i in "${IPs[@]}"
+    do
+        ssh-keyscan -H $i >> ~/.ssh/known_hosts
+    done
 
-echo "At the moment the $selected_project is selected as your default project in GCP."
-echo -n "Is it the right one? [Y/n]:"
-read -r right_project
+# Create inventory file
+echo '[master]' > IaaC/ansible_files/inventory.ini
+gcloud compute instances list  | grep master | awk '{ print $5 }' >> IaaC/ansible_files/inventory.ini
 
-case $right_project in
-    [nN]) echo "Please select the right project as your default project."
-    exit 1;;
-esac
-
-
-# Create GCP Service Account
-SA_NAME="deckard-terraform-sa"
-SA_EMAIL=${SA_NAME}@${selected_project}.iam.gserviceaccount.com
-if gcloud iam service-accounts describe "$SA_EMAIL" &> /dev/null; then
-    echo Service account $SA_NAME already exists.
-else
-    gcloud iam service-accounts create $SA_NAME  --description "Service Account for Deckard Terraform Infrastructure" --display-name "$SA_NAME"
-    gcloud projects add-iam-policy-binding $selected_project --member serviceAccount:${SA_NAME}@${selected_project}.iam.gserviceaccount.com --role roles/editor --no-user-output-enabled
-
-    SA_KEY_FILE="./IaaC/gcp/tf-service-account.json"
-    gcloud iam service-accounts keys create ${SA_KEY_FILE} --iam-account ${SA_NAME}@${selected_project}.iam.gserviceaccount.com
-fi
-
-# execute terraform
-terraform -chdir=./IaaC/gcp/ init -var="project=$selected_project"
-terraform -chdir=./IaaC/gcp/ plan -var="project=$selected_project"
-terraform -chdir=./IaaC/gcp/ apply -var="project=$selected_project"
-
-
+echo  -e "\n[workers]" >> IaaC/ansible_files/inventory.ini
+gcloud compute instances list  | grep worker | awk '{ print $5 }' >> IaaC/ansible_files/inventory.ini
 
 
