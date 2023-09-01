@@ -1,0 +1,14 @@
+num_nodes: 1
+cluster_name: k8s-cluster
+gpu_type: nvidia-tesla-v100
+gpu_count: 1
+gpu_driver_version: default
+machine_type: n1-standard-2
+min_nodes: 1
+max_nodes: 1
+storage_config: ./IaaC/gcp/sclass.yaml
+persistent_volume_claim: ./IaaC/gcp/pvc.yaml
+pod : ./IaaC/gcp/pod.yaml
+image_project: ubuntu-os-cloud
+image_family: ubuntu-2204-lts
+mount_directory: /mnt/filestore
