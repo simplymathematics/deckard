@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-gpu-pod
+spec:
+  containers:
+  - name: my-gpu-container
+    image: nvidia/cuda:11.0.3-runtime-ubuntu20.04
+    command: ["/bin/bash", "-c", "--"]
+    args: ["while true; do sleep 600; done;"]
+    resources:
+      limits:
+       nvidia.com/gpu: 1
+    volumeMounts:
+        - mountPath: /data
+          name: mypvc
+  volumes:
+  - name: mypvc
+    persistentVolumeClaim:
+      claimName: podpvc
