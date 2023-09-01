@@ -225,7 +225,6 @@ def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     scorer = cfg.pop("optimizers", None)
     working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
-    direction = cfg.pop("direction", "maximize")
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -234,9 +233,9 @@ def optimise(cfg: DictConfig) -> None:
     Path(folder).mkdir(exist_ok=True, parents=True)
     save_file(cfg, folder, "params.yaml")
     id_ = Path(files["score_dict_file"]).parent.name
+    direction = cfg.pop("direction", "minimize")
     try:
         scores = exp()
-        direction = cfg.pop("direction", "minimize")
         if isinstance(scorer, str):
             score = scores[scorer]
         elif isinstance(scorer, list):

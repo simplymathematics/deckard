@@ -31,16 +31,16 @@ Running `dvc repro` in that folder will reproduce the experiment outlined in the
 ## Files
 
 .
-├── Dockerfile: Constructs a generic Docker image for running experiments
-├── LICENSE
-├── README.md: this file
-├── deckard: Source code
-├── examples: Directory containing all the examples
-├── rpi.sh: For installation on Raspbian.
-├── setup.py : for installation with pip
-├── setup.sh : for installation using bash
-└── test : test suite
-
+├── Dockerfile: Constructs a generic Docker image for running experiments  
+├── LICENSE  
+├── README.md: this file  
+├── deckard: Source code  
+├── examples: Directory containing all the examples  
+├── rpi.sh: For installation on Raspbian.  
+├── setup.py : for installation with pip  
+├── setup.sh : for installation using bash  
+└── test : test suite  
+ 
 
 ###
 
