@@ -20,8 +20,7 @@ config_file = "classification.yaml"
 class testSklearnDataPipeline(unittest.TestCase):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
-            config_dir=Path(config_dir).resolve().as_posix(),
-            version_base="1.3",
+            config_dir=Path(config_dir).resolve().as_posix(), version_base="1.3",
         ):
             cfg = compose(config_name=config_file)
         self.cfg = cfg
@@ -38,10 +37,7 @@ class testSklearnDataPipeline(unittest.TestCase):
         X_train, X_test, y_train, y_test = self.data.sample(X, y)
         old_mean = np.mean(X_train)
         X_train, X_test, y_train, y_test = self.data.sklearn_pipeline(
-            X_train,
-            X_test,
-            y_train,
-            y_test,
+            X_train, X_test, y_train, y_test,
         )
         new_mean = np.mean(X_train)
         self.assertNotEqual(old_mean, new_mean)
@@ -72,8 +68,7 @@ class testSklearnDataPipeline(unittest.TestCase):
 class testSklearnDataPipelineStage(unittest.TestCase):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
-            config_dir=Path(config_dir).resolve().as_posix(),
-            version_base="1.3",
+            config_dir=Path(config_dir).resolve().as_posix(), version_base="1.3",
         ):
             cfg = compose(config_name=config_file)
         self.cfg = cfg
@@ -82,8 +77,7 @@ class testSklearnDataPipelineStage(unittest.TestCase):
     def test_init(self):
         self.assertTrue(
             isinstance(
-                self.data.sklearn_pipeline["preprocessor"],
-                SklearnDataPipelineStage,
+                self.data.sklearn_pipeline["preprocessor"], SklearnDataPipelineStage,
             )
             or hasattr(self.data.sklearn_pipeline["preprocessor"], "transform"),
         )
@@ -93,10 +87,7 @@ class testSklearnDataPipelineStage(unittest.TestCase):
         X_train, X_test, y_train, y_test = self.data.sample(X, y)
         old_mean = np.mean(X_train)
         X_train, X_test, y_train, y_test = self.data.sklearn_pipeline["preprocessor"](
-            X_train,
-            X_test,
-            y_train,
-            y_test,
+            X_train, X_test, y_train, y_test,
         )
         new_mean = np.mean(X_train)
         self.assertNotEqual(old_mean, new_mean)

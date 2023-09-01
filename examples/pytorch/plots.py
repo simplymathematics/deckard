@@ -173,17 +173,10 @@ if __name__ == "__main__":
         default="output/reports/results.csv",
     )
     parser.add_argument(
-        "-t",
-        "--plotfiletype",
-        type=str,
-        help="Filetype of the plots",
-        default=".pdf",
+        "-t", "--plotfiletype", type=str, help="Filetype of the plots", default=".pdf",
     )
     parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
+        "-v", "--verbosity", default="INFO", help="Increase output verbosity",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
@@ -232,10 +225,7 @@ if __name__ == "__main__":
 
     # %%
     graph14 = sns.scatterplot(
-        data=data,
-        x="train_time_per_sample",
-        y="adv_failure_rate",
-        hue="model_name",
+        data=data, x="train_time_per_sample", y="adv_failure_rate", hue="model_name",
     )
     graph14.set_yscale("log")
     graph14.set_xscale("log")
