@@ -150,6 +150,9 @@ class ScorerConfig:
                     new_args.append(arg)
                 args = new_args
                 result = call(config, *args, **kwargs)
+            elif "nan" in str(e).lower():
+                args = [np.nan_to_num(arg) for arg in args]
+                result = call(config, *args, **kwargs)
             else:
                 raise e
         return result

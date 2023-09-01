@@ -7,11 +7,14 @@ stages:
         data:
           _target_: deckard.base.data.Data
           generate:
-            name: torch_cifar10
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
           sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
             random_state: 0
             stratify: true
           sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
             preprocessor:
               name: sklearn.preprocessing.StandardScaler
               with_mean: true
@@ -41,11 +44,14 @@ stages:
             data:
               _target_: deckard.base.data.Data
               generate:
-                name: torch_cifar10
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
               sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
                 stratify: true
               sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                 preprocessor:
                   name: sklearn.preprocessing.StandardScaler
                   with_mean: true
@@ -64,11 +70,14 @@ stages:
           data:
             _target_: deckard.base.data.Data
             generate:
-              name: torch_cifar10
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
             sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
               stratify: true
             sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
               preprocessor:
                 name: sklearn.preprocessing.StandardScaler
                 with_mean: true
@@ -76,6 +85,7 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             name: torch_example.ResNet18
+            num_channels: 1
           library: pytorch
           trainer:
             batch_size: 1024
@@ -92,29 +102,29 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/data/data.pkl
-      md5: 6503fed5d4e6cc1163898c0ab6a863dd
-      size: 739680311
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
     - path: output/models/model.pt
-      md5: 5023f6a6c7a14ab3a3d64837ffb841d3
-      size: 44811029
+      md5: 35e6acec22b8542c13d4fb2ddf7d4939
+      size: 44785941
     - path: output/reports/train/default/params.yaml
-      md5: 920db8f93d5e2f930b00d3a682f524eb
-      size: 2133
+      md5: eedabd38cbbfce21b879b647497174da
+      size: 2148
     - path: output/reports/train/default/predictions.json
-      md5: 07c0cbeb68ed6c78f6dab9638d8f883a
-      size: 2438013
+      md5: 3f657fe19090e1bd62209ac130544f93
+      size: 2884704
     - path: output/reports/train/default/score_dict.json
-      md5: ed212c2e234e73307ade9e1a919cea58
-      size: 394
+      md5: f19e5106d12c8fcf19eb48edf861d949
+      size: 401
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
     - path: output/data/data.pkl
-      md5: 6503fed5d4e6cc1163898c0ab6a863dd
-      size: 739680311
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
     - path: output/models/model.pt
-      md5: 6a8c3706076548fb337eb8d4fa814396
-      size: 44811477
+      md5: 38451da384fb8f787707a2b39b8418de
+      size: 44786389
     params:
       params.yaml:
         attack:
@@ -123,17 +133,21 @@ stages:
           data:
             _target_: deckard.base.data.Data
             generate:
-              name: torch_cifar10
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
             sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
               stratify: true
             sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
               preprocessor:
                 name: sklearn.preprocessing.StandardScaler
                 with_mean: true
                 with_std: true
           init:
             _target_: deckard.base.attack.AttackInitializer
+            batch_size: 100
             model:
               _target_: deckard.base.model.Model
               art:
@@ -141,11 +155,14 @@ stages:
                 data:
                   _target_: deckard.base.data.Data
                   generate:
-                    name: torch_cifar10
+                    _target_: deckard.base.data.generator.DataGenerator
+                    name: torch_mnist
                   sample:
+                    _target_: deckard.base.data.sampler.SklearnDataSampler
                     random_state: 0
                     stratify: true
                   sklearn_pipeline:
+                    _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                     preprocessor:
                       name: sklearn.preprocessing.StandardScaler
                       with_mean: true
@@ -164,11 +181,14 @@ stages:
               data:
                 _target_: deckard.base.data.Data
                 generate:
-                  name: torch_cifar10
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
                 sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
                   random_state: 0
                   stratify: true
                 sklearn_pipeline:
+                  _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                   preprocessor:
                     name: sklearn.preprocessing.StandardScaler
                     with_mean: true
@@ -176,6 +196,7 @@ stages:
               init:
                 _target_: deckard.base.model.ModelInitializer
                 name: torch_example.ResNet18
+                num_channels: 1
               library: pytorch
               trainer:
                 batch_size: 1024
@@ -189,11 +210,14 @@ stages:
               data:
                 _target_: deckard.base.data.Data
                 generate:
-                  name: torch_cifar10
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
                 sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
                   random_state: 0
                   stratify: true
                 sklearn_pipeline:
+                  _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                   preprocessor:
                     name: sklearn.preprocessing.StandardScaler
                     with_mean: true
@@ -212,11 +236,14 @@ stages:
             data:
               _target_: deckard.base.data.Data
               generate:
-                name: torch_cifar10
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
               sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
                 stratify: true
               sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                 preprocessor:
                   name: sklearn.preprocessing.StandardScaler
                   with_mean: true
@@ -224,12 +251,14 @@ stages:
             init:
               _target_: deckard.base.model.ModelInitializer
               name: torch_example.ResNet18
+              num_channels: 1
             library: pytorch
             trainer:
               batch_size: 1024
               nb_epoch: 20
         data.generate:
-          name: torch_cifar10
+          _target_: deckard.base.data.generator.DataGenerator
+          name: torch_mnist
         files:
           _target_: deckard.base.files.FileConfig
           adv_predictions_file: adv_predictions.json
@@ -255,11 +284,14 @@ stages:
             data:
               _target_: deckard.base.data.Data
               generate:
-                name: torch_cifar10
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
               sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
                 stratify: true
               sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
                 preprocessor:
                   name: sklearn.preprocessing.StandardScaler
                   with_mean: true
@@ -278,11 +310,14 @@ stages:
           data:
             _target_: deckard.base.data.Data
             generate:
-              name: torch_cifar10
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
             sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
               stratify: true
             sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
               preprocessor:
                 name: sklearn.preprocessing.StandardScaler
                 with_mean: true
@@ -290,6 +325,7 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             name: torch_example.ResNet18
+            num_channels: 1
           library: pytorch
           trainer:
             batch_size: 1024
@@ -306,46 +342,50 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 2a3840e2d4fab155af1ce3e21d955e25
-      size: 1228966
+      md5: 54345e430aed9ed56a7230ac348900e2
+      size: 313766
     - path: output/reports/attack/default/adv_predictions.json
-      md5: c8ccadd4b4dd69c4afc5f85a04265ba6
-      size: 21362
+      md5: 1d2980ec86fa5cd4513473630186c9b5
+      size: 21523
     - path: output/reports/attack/default/params.yaml
-      md5: ba02fa64b136a4eee498014907161e1c
-      size: 4870
+      md5: daf26103182da19d13d5b73113c5688c
+      size: 4956
     - path: output/reports/attack/default/score_dict.json
-      md5: ef1c3bff25364c36f917c686d2804d9a
-      size: 540
+      md5: 39ecdefe26af87802dfaed0e3bcd98b3
+      size: 528
   models:
-    cmd: bash models.sh --config-name grid.yaml
+    cmd: bash models.sh
+      ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
+      --config-name grid.yaml
     deps:
-    - path: output/data/data.pkl
-      md5: 6503fed5d4e6cc1163898c0ab6a863dd
-      size: 739680311
-    - path: output/models/model.pt
-      md5: 6a8c3706076548fb337eb8d4fa814396
-      size: 44811477
-    outs:
-    - path: model.db
-      md5: 036f26eb0fc5ef7651119927d1b7dbc2
-      size: 188416
-  attacks:
-    cmd: bash attacks.sh ++stage=attack --config-name grid.yaml
-    deps:
-    - path: model.db
-      md5: 6e63647e5ed42a99e2d16866953018bd
-      size: 192512
     - path: output/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: a61b81099c0375ca2bb8269780ec8ece
-      size: 76923
+      md5: 38451da384fb8f787707a2b39b8418de
+      size: 44786389
+    outs:
+    - path: model.db
+      md5: d1eac324650402da6e3de1aebe0e3b3c
+      size: 237568
+  attacks:
+    cmd: bash attacks.sh
+      ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
+      ++stage=attack --config-name grid.yaml
+    deps:
+    - path: model.db
+      md5: d1eac324650402da6e3de1aebe0e3b3c
+      size: 237568
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.pt
+      md5: 38451da384fb8f787707a2b39b8418de
+      size: 44786389
     outs:
     - path: attack.db
-      md5: 7a873ae3c124a276248c766112d1a14c
-      size: 1134592
+      md5: c9f920c7233802e9c46e4051c2da78e6
+      size: 307200
   compile_train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
       output/reports/train.csv
@@ -392,29 +432,35 @@ stages:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
       output/reports/attack.csv
     deps:
+    - path: attack.db
+      md5: c9f920c7233802e9c46e4051c2da78e6
+      size: 307200
     - path: model.db
-      md5: b0c3649cf68e32904be4096b75e7231e
-      size: 188416
+      md5: d1eac324650402da6e3de1aebe0e3b3c
+      size: 237568
     - path: output/reports/attack/
-      md5: d5dfe0cc70d22c0d8f76d8ad6b29e7f5.dir
-      size: 2078048296
-      nfiles: 3047
+      md5: 2e8a51d2322c52e5cb0ea4f98ddff9f3.dir
+      size: 1723539519
+      nfiles: 3555
     outs:
     - path: output/reports/attack.csv
-      md5: e41323f91a6b7e676c70c7cb04f9b310
-      size: 2225472
+      md5: bfc77e2b24b86aa390485f2fd60a65c2
+      size: 2472144
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
     deps:
+    - path: attack.db
+      md5: c9f920c7233802e9c46e4051c2da78e6
+      size: 307200
     - path: model.db
-      md5: cd13342dbfd4f78439a9070ab25abc63
-      size: 110592
+      md5: d1eac324650402da6e3de1aebe0e3b3c
+      size: 237568
     - path: output/reports/train/
-      md5: 080db67c68dc16d287bd42694289ecab.dir
-      size: 584406984
-      nfiles: 706
+      md5: bb02cab436e3969d65066c5058939207.dir
+      size: 395685799
+      nfiles: 655
     outs:
     - path: output/reports/train.csv
-      md5: 2cfd85cc19974ceb526baec780f691a1
-      size: 489393
+      md5: 922fa64743aa481feb79213a056c816e
+      size: 363649

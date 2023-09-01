@@ -4,7 +4,8 @@ defaults:
 data:  ${data}
 init:
     _target_: deckard.base.model.ModelInitializer
-    name : torch_example.MNISTNet
+    num_channels : 1
+    name : torch_example.ResNet18
 _target_: deckard.base.model.Model
 trainer:
     nb_epoch: 20

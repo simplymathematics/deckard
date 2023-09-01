@@ -43,7 +43,7 @@ class Experiment:
         name=None,
         stage=None,
         optimizers=None,
-        kwargs={},
+        **kwargs,
     ):
         if isinstance(data, dict):
             self.data = Data(**data)

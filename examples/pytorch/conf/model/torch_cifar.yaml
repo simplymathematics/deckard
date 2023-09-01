@@ -5,9 +5,8 @@ data:  ${data}
 init:
     _target_: deckard.base.model.ModelInitializer
     name : torch_example.ResNet18
-    # name : torch_example.ResNet50
-    # name : torch_example.ResNet101
-    # name : torch_example.ResNet152
+    num_channels: 3
+    num_classes: 10
 _target_: deckard.base.model.Model
 trainer:
     nb_epoch: 20
