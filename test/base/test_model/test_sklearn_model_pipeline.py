@@ -13,13 +13,13 @@ this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 
 class testSklearnModelPipeline(unittest.TestCase):
-
     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
     config_file = "pipeline.yaml"
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(),
+            version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg

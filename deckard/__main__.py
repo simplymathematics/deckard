@@ -50,7 +50,6 @@ def parse_and_repro(args):
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(

@@ -105,7 +105,8 @@ class ArtInitializer:
                 f"library must be one of {supported_models}. Got {library}",
             )
         assert hasattr(
-            model, "fit",
+            model,
+            "fit",
         ), f"model must have a fit method. Got type {type(model)}"
         return model
 
