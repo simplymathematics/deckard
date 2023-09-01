@@ -22,7 +22,9 @@ def to_dict(obj: Union[dict, OrderedDict, NamedTuple]) -> dict:
         obj = dict(
             deepcopy(
                 OmegaConf.to_container(
-                    obj, resolve=True, structured_config_mode=SCMode.DICT,
+                    obj,
+                    resolve=True,
+                    structured_config_mode=SCMode.DICT,
                 ),
             ),
         )

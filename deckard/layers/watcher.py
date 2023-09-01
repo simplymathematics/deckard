@@ -26,7 +26,10 @@ class JSONHandler(watchdog.events.PatternMatchingEventHandler):
     def __init__(self, servers, port, user, password, filename, destination, **kwargs):
         # Set the patterns for PatternMatchingEventHandler
         watchdog.events.PatternMatchingEventHandler.__init__(
-            self, patterns=[REGEX], ignore_directories=True, case_sensitive=False,
+            self,
+            patterns=[REGEX],
+            ignore_directories=True,
+            case_sensitive=False,
         )
         self.ssh = createSSHClient(servers, port, user, password)
         logger.info("Initiated SSH client")
@@ -35,7 +38,8 @@ class JSONHandler(watchdog.events.PatternMatchingEventHandler):
         self.recurse = kwargs["recursive"] if "recurse" in kwargs else False
         logger.info(
             "Source file is {} and destination is {}".format(
-                self.filename, self.destination,
+                self.filename,
+                self.destination,
             ),
         )
         logger.info("Regex is {}".format(REGEX))
@@ -112,7 +116,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--port", "-p", type=int, help="The port to send the files to.")
     parser.add_argument(
-        "--user", "-u", type=str, required=True, help="The user to send the files to.",
+        "--user",
+        "-u",
+        type=str,
+        required=True,
+        help="The user to send the files to.",
     )
     parser.add_argument(
         "--password",
@@ -124,10 +132,18 @@ if __name__ == "__main__":
     parser.add_argument("--original", type=str, help="The original queue file.")
     parser.add_argument("--queue", type=str, help="The current queue file.")
     parser.add_argument(
-        "--regex", "-e", type=str, required=True, help="The regex to watch for.",
+        "--regex",
+        "-e",
+        type=str,
+        required=True,
+        help="The regex to watch for.",
     )
     parser.add_argument(
-        "--recursive", "-r", type=bool, default=True, help="Whether to recurse or not.",
+        "--recursive",
+        "-r",
+        type=bool,
+        default=True,
+        help="Whether to recurse or not.",
     )
     parser.add_argument(
         "--n_jobs",
@@ -137,12 +153,17 @@ if __name__ == "__main__":
         help="The number of jobs to run in parallel.",
     )
     parser.add_argument(
-        "--log", "-l", type=int, default=logging.INFO, help="The log level.",
+        "--log",
+        "-l",
+        type=int,
+        default=logging.INFO,
+        help="The log level.",
     )
     args = parser.parse_args()
     # Set up logging
     logging.basicConfig(
-        level=args.log, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=args.log,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     if args.regex is not None:
         REGEX = args.regex
