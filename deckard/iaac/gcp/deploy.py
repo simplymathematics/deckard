@@ -32,12 +32,14 @@ class GCP_Config:
     machine_type: str = 'n1-standard-2'
     min_nodes: int = 1
     max_nodes: int = 1
-    storage_config: str = './IaaC/gcp/sclass.yaml'
-    persistent_volume_claim: str = './IaaC/gcp/pvc.yaml'
-    pod = './IaaC/gcp/pod.yaml'
+    conf_dir: str = './conf/gcp/'
+    storage_config: str = 'sclass.yaml'
+    persistent_volume_claim: str = 'pvc.yaml'
+    pod = 'pod.yaml'
     image_project: str = 'ubuntu-os-cloud'
     image_family: str = 'ubuntu-2204-lts'
     mount_directory: str = '/mnt/filestore'
+    _target_ : str = 'deckard.conf.GCP_Config'
     
     def create_cluster(self):
         # Create a cluster
@@ -73,15 +75,17 @@ class GCP_Config:
     
     def create_deployment(self):
         logger.info(f'Creating deployment {self.cluster_name} in region {self.region}')
-        command = f'kubectl create -f {self.storage_config}'
+        file_name = Path(self.conf_dir, self.storage_config).resolve().as_posix()
+        command = f'kubectl create -f {file_name}'
         logger.info(f"Running command: {command}")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
 
-    def create_ersistent_volume_claim(self):
+    def create_persistent_volume_claim(self):
         logger.info(f'Creating persistent volume claim {self.cluster_name} in region {self.region}')
-        command = f'kubectl create -f {self.persistent_volume_claim}'
+        file_name = Path(self.conf_dir, self.persistent_volume_claim).resolve().as_posix()
+        command = f'kubectl create -f {file_name}'
         logger.info(f"Running command: {command}")
         output = subprocess.run(command)
         logger.info(f"{output}")
@@ -89,7 +93,8 @@ class GCP_Config:
 
     def deploy_pod(self):
         logger.info(f'Creating sample pod {self.cluster_name} in region {self.region}')
-        command = f'kubectl create -f {self.pod}'
+        file_name = Path(self.conf_dir, self.pod).resolve().as_posix()
+        command = f'kubectl create -f {file_name}'
         logger.info(f"Running command: {command}")
         output = subprocess.run(command)
         logger.info(f"{output}")
@@ -137,7 +142,7 @@ class GCP_Config:
         self.retrieve_credentials()
         self.create_node_pool()
         self.create_deployment()
-        self.create_ersistent_volume_claim()
+        self.create_persistent_volume_claim()
         self.deploy_pod()
         self.prepare_access_values()
         ip_addr = self.find_ip_of_filestore()
@@ -145,13 +150,13 @@ class GCP_Config:
 
 
 if __name__ == "__main__":
-    dvc_parser = argparse.ArgumentParser()
-    dvc_parser.add_argument("--verbosity", type=str, default="INFO")
-    dvc_parser.add_argument("--config_dir", type=str, default="conf")
-    dvc_parser.add_argument("--config_file", type=str, default="default")
-    dvc_parser.add_argument("--workdir", type=str, default=".")
-    args = dvc_parser.parse_args()
-    config_dir = Path(Path(), args.config_dir).resolve().as_posix()
+    gcp_parser = argparse.ArgumentParser()
+    gcp_parser.add_argument("--verbosity", type=str, default="INFO")
+    gcp_parser.add_argument("--config_dir", type=str, default="conf")
+    gcp_parser.add_argument("--config_file", type=str, default="default")
+    gcp_parser.add_argument("--workdir", type=str, default=".")
+    args = gcp_parser.parse_args()
+    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
     config_file = Path(config_dir, args.config_file).resolve().as_posix()
     with open(config_file, "r") as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
