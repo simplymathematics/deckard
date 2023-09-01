@@ -1,7 +1,7 @@
 defaults:
     - _self_
-    - data: torch_cifar
-    - model: torch_cifar
+    - data: torch_mnist
+    - model: torch_mnist
     - attack: hsj
     - files: default
     - scorers: default
@@ -9,7 +9,6 @@ defaults:
     - override hydra/sweeper/sampler : random
     - override hydra/launcher : joblib
 _target_ : deckard.base.experiment.Experiment
-direction: maximize
 optimizers : accuracy
 stage : null
 hydra:
@@ -25,7 +24,7 @@ hydra:
     n_trials: 1
     params:
       ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-      ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001)
+      ++model.art.initialize.optimizer.lr: choice(10000, 100, 10, 1, 0.1, 0.01, 0.001, 0.000001)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8

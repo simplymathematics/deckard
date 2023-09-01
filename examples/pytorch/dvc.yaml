@@ -34,21 +34,20 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  models:
-    cmd: bash models.sh ++model.init.name=torch_example.ResNet18,torch_example.ResNet50,torch_example.ResNet101,torch_example.ResNet152 --config-name grid.yaml
-    deps:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    outs:
-    - model.db
   attacks:
-    cmd: bash attacks.sh ++model.init.name=torch_example.ResNet18,torch_example.ResNet50,torch_example.ResNet101,torch_example.ResNet152 ++stage=attack --config-name grid.yaml
-    deps:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    - model.db
-    outs:
-    - attack.db
+    foreach:
+      - ResNet18
+      # - ResNet34
+      # - ResNet50
+      # - ResNet101
+      # - ResNet152
+    do:
+      cmd: bash attacks.sh ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name grid.yaml
+      deps:
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      outs:
+      - ${item}.db
   compile:
     foreach:
       - attack
@@ -57,6 +56,18 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      - model.db
+      - train.db
+      - ResNet18.db
+      - ResNet34.db
+      - ResNet50.db
+      - ResNet101.db
+      - ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
+  plot:
+    cmd : python plots.py --path ${files.directory}/${files.reports}/plots/
+    deps:
+      - ${files.directory}/${files.reports}/attack.csv
+      - ${files.directory}/${files.reports}/train.csv
+    outs:
+      - --path ${files.directory}/${files.reports}/plots/
