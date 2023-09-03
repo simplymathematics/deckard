@@ -260,7 +260,11 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
     results = clean_data_for_plotting(
-        results, def_gen_dict, atk_gen_dict, control_dict, report_folder
+        results,
+        def_gen_dict,
+        atk_gen_dict,
+        control_dict,
+        report_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(
