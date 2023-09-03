@@ -139,7 +139,6 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
 
 
 def format_control_parameter(data, control_dict, min_max=True):
-
     new_data = pd.DataFrame()
     logger.info("Formatting control parameters...")
     for _, row in tqdm(data.iterrows()):
