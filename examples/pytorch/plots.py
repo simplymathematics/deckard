@@ -30,6 +30,7 @@ def cat_plot(
     ylabels,
     legend_title,
     file,
+    folder,
     set={},
     **kwargs,
 ):
@@ -40,9 +41,9 @@ def cat_plot(
     graph.set_titles(titles)
     graph.legend.set_title(title=legend_title)
     graph.set(**set)
-    graph.savefig(FOLDER / file)
+    graph.savefig(folder / file)
     plt.gcf().clear()
-    logger.info(f"Saved graph to {FOLDER / file}")
+    logger.info(f"Saved graph to {folder / file}")
 
 
 def line_plot(
@@ -54,6 +55,7 @@ def line_plot(
     ylabel,
     title,
     file,
+    folder,
     y_scale=None,
     x_scale=None,
     legend={},
@@ -74,85 +76,25 @@ def line_plot(
     if x_scale is not None:
         graph.set_xscale(x_scale)
     graph.get_figure().tight_layout()
-    graph.get_figure().savefig(FOLDER / file)
+    graph.get_figure().savefig(folder / file)
     plt.gcf().clear()
     return graph
 
 
-def format_control_parameter(data, control_dict, min_max=True):
-    data.def_gen.fillna("Control", inplace=True)
-    new_data = pd.DataFrame()
-    for _, row in data.iterrows():
-        if row.defence in ["Control", None, "None", "none", "null", np.nan]:
-            row["def_param"] = np.nan
-            row["def_value"] = np.nan
-        else:
-            param = control_dict[row.defence]
-            row["def_param"] = param.split(".")[-1]
-            value = row[param]
-            row["def_value"] = value
-        if row.attack in ["Control", None, "None", "none", "null", np.nan]:
-            row["atk_param"] = np.nan
-            row["atk_value"] = np.nan
-        else:
-            param = control_dict[row.attack]
-            row["atk_param"] = param.split(".")[-1]
-            value = row[param]
-            row["atk_value"] = value
-        new_data = pd.concat([new_data, row], axis=1)
-    data = new_data.T
-    data.def_value.fillna(0, inplace=True)
-    del new_data
-
-    if min_max is True:
-        defs = data.def_gen.unique()
-        atks = data.atk_gen.unique()
-        # Min-max scaling of control parameters
-        for def_ in defs:
-            max_ = data[data.def_gen == def_].def_value.max()
-            min_ = data[data.def_gen == def_].def_value.min()
-            scaled_value = (data[data.def_gen == def_].def_value - min_) / (max_ - min_)
-            data.loc[data.def_gen == def_, "def_value"] = scaled_value
-
-        for atk in atks:
-            max_ = data[data.atk_gen == atk].atk_value.max()
-            min_ = data[data.atk_gen == atk].atk_value.min()
-            scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
-            data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
-    return data
-
-
-def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict):
-    def_gen = data.def_gen.map(def_gen_dict)
-    data.def_gen = def_gen
-    atk_gen = data.atk_gen.map(atk_gen_dict)
-    data.atk_gen = atk_gen
-    # Drops poorly merged columns
-    data = data[data.columns.drop(list(data.filter(regex=".1")))]
-    data = data[data.columns.drop(list(data.filter(regex=".1")))]
-    # Replaces model names with short names
-    model_names = data["model.init.name"]
-    # model_names = [x.get_text() for x in model_names]
-    model_names = [x.split(".")[-1] for x in model_names]
-    data["model_name"] = model_names
-    # %%
-    # Replace data.sample.random_state with random_state
-    data["random_state"] = data["data.sample.random_state"].copy()
-    del data["data.sample.random_state"]
-    data = format_control_parameter(data, control_dict, min_max=True)
-    # Calculates various failure rates
-    data["adv_failures_per_training_time"] = (
-        data["train_time_per_sample"] / (1 - data["adv_accuracy"]) * 100
-    )
-    data["adv_failure_rate"] = (1 - data["adv_accuracy"]) * data[
+def calculate_failure_rate(data):
+    data["failure_rate"] = (1 - data["accuracy"]) / data["predict_time_per_sample"]
+    data["adv_failure_rate"] = (1 - data["adv_accuracy"]) / data[
         "adv_fit_time_per_sample"
     ]
-    data["failure_rate"] = (1 - data["accuracy"]) * data["predict_time_per_sample"]
-    data["failures_per_training_time"] = (
-        data["train_time_per_sample"] / (1 - data["accuracy"]) * 100
+    data["training_time_per_failure"] = (
+        data["train_time_per_sample"] / data["failure_rate"]
     )
-    logger.info(f"Saving data to {FOLDER / 'data.csv'}")
-    data.to_csv(FOLDER / "data.csv")
+    data["training_time_per_adv_failure"] = (
+        data["train_time_per_sample"] / data["adv_failure_rate"]
+    )
+    data["adv_training_time_per_failure"] = (
+        data["adv_fit_time_per_sample"] / data["adv_failure_rate"]
+    )
     return data
 
 
@@ -163,14 +105,14 @@ if __name__ == "__main__":
         "--path",
         type=str,
         help="Path to the plot folder",
-        default="output/plots",
+        required=True,
     )
     parser.add_argument(
         "-f",
         "--file",
         type=str,
         help="Path to the plot folder",
-        default="output/reports/results.csv",
+        required=True,
     )
     parser.add_argument(
         "-t",
@@ -185,6 +127,9 @@ if __name__ == "__main__":
         default="INFO",
         help="Increase output verbosity",
     )
+    parser.add_argument(
+        "-c", "--config", help="Path to the config file", default="conf/plots.yaml"
+    )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     # %%
@@ -193,6 +138,7 @@ if __name__ == "__main__":
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     csv_file = args.file
     data = pd.read_csv(csv_file)
+    data = calculate_failure_rate(data)
     if "Unnamed: 0" in data.columns:
         data.drop("Unnamed: 0", axis=1, inplace=True)
 
@@ -209,26 +155,21 @@ if __name__ == "__main__":
         FOLDER.mkdir(parents=True, exist_ok=True)
 
     # Reads Config file
-    with open(FOLDER / "config/default.yaml", "r") as f:
+    with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    def_gen_dict = big_dict["defences"]
-    atk_gen_dict = big_dict["attacks"]
-    control_dict = big_dict["params"]
-
-    data = clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict)
     # %%
     cat_plot_list = big_dict["cat_plot"]
     i = 0
     for dict_ in cat_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = cat_plot(data, **dict_)
+        locals()[f"graph{i}"] = cat_plot(data, **dict_, folder=FOLDER)
     # %%
     line_plot_list = big_dict["line_plot"]
     for dict_ in line_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = line_plot(data, **dict_)
+        locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
 
     # %%
     graph14 = sns.scatterplot(
@@ -254,12 +195,6 @@ if __name__ == "__main__":
     conf_path = Path("output/plots/config")
     conf_path.mkdir(parents=True, exist_ok=True)
     conf_dict = {
-        **vars(args),
         "cat_plot": cat_plot_list,
         "line_plot": line_plot_list,
-        "params": control_dict,
-        "attacks": atk_gen_dict,
-        "defences": def_gen_dict,
     }
-    with open(conf_path / "default.yaml", "w") as f:
-        yaml.dump(conf_dict, f)

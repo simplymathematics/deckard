@@ -1,0 +1,30 @@
+attacks:
+  CarliniL0Method: CW_0
+  CarliniL2Method: CW_2
+  CarliniLInfMethod: CW_inf
+  DeepFool: Deep
+  FastGradientMethod: FGM
+  HopSkipJump: HSJ
+  PixelAttack: Pixel
+  ProjectGradientDescent: PGD
+  ThresholdAttack: Thresh
+defences:
+  Control: Control
+  FeatureSqueezing: FSQ
+  GaussianAugmentation: Gauss-out
+  GaussianNoise: Gauss-in
+  HighConfidence: Conf
+params:
+  art.attacks.evasion.CarliniL0Method: attack.init.kwargs.confidence
+  art.attacks.evasion.CarliniL2Method: attack.init.kwargs.confidence
+  art.attacks.evasion.CarliniLInfMethod: attack.init.kwargs.confidence
+  art.attacks.evasion.DeepFool: attack.init.kwargs.nb_grads
+  art.attacks.evasion.FastGradientMethod: attack.init.kwargs.eps
+  art.attacks.evasion.HopSkipJump: attack.init.kwargs.max_iter
+  art.attacks.evasion.PixelAttack: attack.init.kwargs.th
+  art.attacks.evasion.ProjectedGradientDescent: attack.init.kwargs.eps
+  art.attacks.evasion.ThresholdAttack: attack.init.kwargs.th
+  art.defences.postprocessor.GaussianNoise: model.art.pipeline.postprocessor.kwargs.scale
+  art.defences.postprocessor.HighConfidence: model.art.pipeline.postprocessor.kwargs.cutoff
+  art.defences.preprocessor.FeatureSqueezing: model.art.pipeline.preprocessor.kwargs.bit_depth
+  art.defences.preprocessor.GaussianAugmentation: model.art.pipeline.preprocessor.kwargs.sigma
