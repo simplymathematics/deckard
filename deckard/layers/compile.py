@@ -137,8 +137,9 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
     df = merge_attacks(df)
     return df
 
+
 def format_control_parameter(data, control_dict, min_max=True):
-    
+
     new_data = pd.DataFrame()
     logger.info("Formatting control parameters...")
     for _, row in tqdm(data.iterrows()):
@@ -187,6 +188,7 @@ def format_control_parameter(data, control_dict, min_max=True):
             data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
     return data
 
+
 def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, folder):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -199,7 +201,7 @@ def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, fold
     logger.info("Dropping poorly merged columns...")
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
-    data['model_name'] = data['model.init.name'].str.split('.').str[-1]
+    data["model_name"] = data["model.init.name"].str.split(".").str[-1]
     # %%
     # Replace data.sample.random_state with random_state
     logger.info("Replacing data.sample.random_state with random_state...")
@@ -209,12 +211,13 @@ def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, fold
     data.to_csv(Path(folder) / "data.csv")
     return data
 
+
 def save_results(results, results_file) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
     logger.info("Compiling results...")
-    
+
     suffix = Path(results_file).suffix
     if suffix == ".csv":
         results.to_csv(results_file)
@@ -256,7 +259,9 @@ if __name__ == "__main__":
     def_gen_dict = big_dict["defences"]
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
-    results = clean_data_for_plotting(results, def_gen_dict, atk_gen_dict, control_dict, report_folder)
+    results = clean_data_for_plotting(
+        results, def_gen_dict, atk_gen_dict, control_dict, report_folder
+    )
     report_file = save_results(results, results_file)
     assert Path(
         report_file,

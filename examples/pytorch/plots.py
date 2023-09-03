@@ -128,7 +128,10 @@ if __name__ == "__main__":
         help="Increase output verbosity",
     )
     parser.add_argument(
-        "-c", "--config", help="Path to the config file", default="conf/plots.yaml"
+        "-c",
+        "--config",
+        help="Path to the config file",
+        default="conf/plots.yaml",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
