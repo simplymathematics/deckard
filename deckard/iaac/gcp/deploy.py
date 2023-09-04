@@ -166,11 +166,11 @@ class GCP_Config:
         logger.info(
             f"Mounting the filestore {self.cluster_name} in region {self.region}",
         )
-        Path(self.mount_directory).mkdir(parents=True, exist_ok=True, mode=0o770,)
+        Path(self.mount_directory).mkdir(parents=True, exist_ok=True, mode=0o770)
         command = f"sudo mount -o rw,intr {ip}:/vol1 {self.mount_directory}"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
-        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if output.returncode != 0:
             raise RuntimeError(f"Error mounting filestore: {output.stderr}")
         logger.info(f"{output}")

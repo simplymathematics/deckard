@@ -79,6 +79,7 @@ def line_plot(
     plt.gcf().clear()
     return graph
 
+
 def scatter_plot(
     data,
     x,
@@ -112,10 +113,21 @@ def scatter_plot(
     plt.gcf().clear()
     return graph
 
+
 def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex="\.1$")))]
     data.columns.str.replace(" ", "")
-    data.dropna(axis=0, subset=['accuracy', 'adv_accuracy', 'train_time_per_sample', 'adv_fit_time_per_sample', 'predict_time_per_sample'], inplace=True)
+    data.dropna(
+        axis=0,
+        subset=[
+            "accuracy",
+            "adv_accuracy",
+            "train_time_per_sample",
+            "adv_fit_time_per_sample",
+            "predict_time_per_sample",
+        ],
+        inplace=True,
+    )
     data["failure_rate"] = (1 - data["accuracy"]) / data["predict_time_per_sample"]
     data["adv_failure_rate"] = (1 - data["adv_accuracy"]) / data[
         "adv_fit_time_per_sample"
@@ -212,5 +224,4 @@ if __name__ == "__main__":
 
     scatter_plot_dict = big_dict["scatter_plot"]
 
-    
-    graph = scatter_plot(data=data, **scatter_plot_dict, folder = FOLDER)
+    graph = scatter_plot(data=data, **scatter_plot_dict, folder=FOLDER)
