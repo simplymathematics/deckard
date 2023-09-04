@@ -1,7 +1,6 @@
 import os
 import subprocess
 import logging
-from hydra.utils import instantiate
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,9 +9,21 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+logging.basicConfig(level=logging.INFO)
+secret_file = os.environ.get("GCP_SECRET_FILE")
+secret_file = Path(secret_file).resolve().as_posix()
+project_name = os.environ.get("GCP_PROJECT_NAME")
+assert Path(secret_file).exists(), f"File {secret_file} does not exist"
 # Login to GCP
+
 try:
-    command = "gcloud auth login"
+    command = [
+        "gcloud",
+        "auth",
+        "login",
+        f"--cred-file={secret_file}",
+        f"--project={project_name}",
+    ]
     logger.info(f"Running command: {command}")
     output = subprocess.run(command)
     logger.info(f"{output}")
@@ -20,9 +31,6 @@ except:  # noqa: E722
     raise ImportError(
         "Error logging in to GCP. Please check your credentials and ensure that gcloud cli is installed.",
     )
-# Get username and password from ENV
-username = os.environ.get("GCP_USERNAME")
-password = os.environ.get("GCP_PASSWORD")
 
 
 @dataclass
@@ -38,11 +46,12 @@ class GCP_Config:
     conf_dir: str = "./conf/gcp/"
     storage_config: str = "sclass.yaml"
     persistent_volume_claim: str = "pvc.yaml"
-    pod = "pod.yaml"
+    pod: str = "pod.yaml"
     image_project: str = "ubuntu-os-cloud"
     image_family: str = "ubuntu-2204-lts"
     mount_directory: str = "/mnt/filestore"
-    _target_: str = "deckard.conf.GCP_Config"
+    _target_: str = "deckard.gcp.deploy.GCP_Config"
+    region: str = "europe-west4"
 
     def create_cluster(self):
         # Create a cluster
@@ -51,6 +60,7 @@ class GCP_Config:
         )
         command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -59,6 +69,7 @@ class GCP_Config:
         logger.info("Installing kubectl on the local machine")
         command = "gcloud components install kubectl"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -68,6 +79,8 @@ class GCP_Config:
             f"Retrieving credentials for cluster {self.cluster_name} in region {self.region}",
         )
         command = "gcloud container clusters get-credentials {self.cluster_name} --region {self.region}"
+        logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -76,6 +89,7 @@ class GCP_Config:
         logger.info(f"Creating node pool {self.cluster_name} in region {self.region}")
         command = f"gcloud container node-pools create {self.cluster_name} --accelerator type={self.gpu_type},count={self.gpu_count},gpu-driver-version={self.gpu_driver_version} --region {self.region} --cluster {self.cluster_name} --machine-type {self.machine_type} --num-nodes {self.num_nodes} --min-nodes {self.min_nodes} --max-nodes {self.max_nodes}"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -85,6 +99,7 @@ class GCP_Config:
         file_name = Path(self.conf_dir, self.storage_config).resolve().as_posix()
         command = f"kubectl create -f {file_name}"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -98,6 +113,7 @@ class GCP_Config:
         )
         command = f"kubectl create -f {file_name}"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -107,6 +123,7 @@ class GCP_Config:
         file_name = Path(self.conf_dir, self.pod).resolve().as_posix()
         command = f"kubectl create -f {file_name}"
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         output = subprocess.run(command)
         logger.info(f"{output}")
         return output
@@ -115,41 +132,47 @@ class GCP_Config:
         logger.info(
             f"Preparing access values in the shared volumee {self.cluster_name} in region {self.region}",
         )
-        command = f'gcloud compute instances create filestore --async --metadata=ssh-keys="{username}:{password}" --zone={self.region}-a --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet'
-        logger.info(f"Running command: {command}")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
+        # See if filestore exists
+        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
+        command = command.split(" ")
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if output.returncode == 0:
+            pass
+        else:
+            command = f"gcloud compute instances create filestore --async --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet"
+            logger.info(f"Running command: {command}")
+            command = command.split(" ")
+            output = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            logger.info(f"{output}")
         return output
 
     def find_ip_of_filestore(self):
         logger.info(
             f"Finding the IP address of the filestore {self.cluster_name} in region {self.region}",
         )
-        command = f'gcloud compute instances list --filter="name=filestore" --format="value(networkInterfaces[0].accessConfigs[0].natIP)" --zone={self.region}'
+        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
         logger.info(f"Running command: {command}")
+        command = command.split(" ")
         ip_output = subprocess.run(command)
         logger.info(f"{ip_output}")
         return ip_output
 
     def mount_filestore(self, ip):
+        # TODO: Switch the python pathlib library
         logger.info(
             f"Mounting the filestore {self.cluster_name} in region {self.region}",
         )
-        command = "sudo apt update"
-        logger.info(f"Running command: {command}")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
-        command = "sudo apt install nfs-common"
-        logger.info(f"Running command: {command}")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
-        command = f"mkdir {self.mount_directory}"
-        logger.info(f"Running command: {command}")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
+        Path(self.mount_directory).mkdir(parents=True, exist_ok=True, mode=0o770,)
         command = f"sudo mount -o rw,intr {ip}:/vol1 {self.mount_directory}"
         logger.info(f"Running command: {command}")
-        output = subprocess.run(command)
+        command = command.split(" ")
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
+        if output.returncode != 0:
+            raise RuntimeError(f"Error mounting filestore: {output.stderr}")
         logger.info(f"{output}")
         return output
 
@@ -170,12 +193,12 @@ if __name__ == "__main__":
     gcp_parser = argparse.ArgumentParser()
     gcp_parser.add_argument("--verbosity", type=str, default="INFO")
     gcp_parser.add_argument("--config_dir", type=str, default="conf")
-    gcp_parser.add_argument("--config_file", type=str, default="default")
+    gcp_parser.add_argument("--config_file", type=str, default="default.yaml")
     gcp_parser.add_argument("--workdir", type=str, default=".")
     args = gcp_parser.parse_args()
     config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
     config_file = Path(config_dir, args.config_file).resolve().as_posix()
     with open(config_file, "r") as f:
         params = yaml.load(f, Loader=yaml.FullLoader)
-    gcp = instantiate(params)
+    gcp = GCP_Config(**params)
     gcp()

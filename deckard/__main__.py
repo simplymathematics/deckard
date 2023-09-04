@@ -29,7 +29,12 @@ def run_submodule(submodule, args):
 
 def parse_and_repro(args):
     cmd = f"python -m deckard.layers.parse {args}"
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
+    with subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    ) as proc:
         for line in proc.stdout:
             print(line.rstrip().decode("utf-8"))
         if len(proc.stderr.readlines()) > 0:
