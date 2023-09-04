@@ -46,11 +46,12 @@ class GCP_Config:
     conf_dir: str = "./conf/gcp/"
     storage_config: str = "sclass.yaml"
     persistent_volume_claim: str = "pvc.yaml"
-    pod = "pod.yaml"
+    pod: str = "pod.yaml"
     image_project: str = "ubuntu-os-cloud"
     image_family: str = "ubuntu-2204-lts"
     mount_directory: str = "/mnt/filestore"
     _target_: str = "deckard.gcp.deploy.GCP_Config"
+    region: str = "europe-west4"
 
     def create_cluster(self):
         # Create a cluster
@@ -131,18 +132,29 @@ class GCP_Config:
         logger.info(
             f"Preparing access values in the shared volumee {self.cluster_name} in region {self.region}",
         )
-        command = f"gcloud compute instances create filestore --async --zone={self.region}-a --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet"
-        logger.info(f"Running command: {command}")
+        # See if filestore exists
+        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
         command = command.split(" ")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if output.returncode == 0:
+            pass
+        else:
+            command = f"gcloud compute instances create filestore --async --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet"
+            logger.info(f"Running command: {command}")
+            command = command.split(" ")
+            output = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            logger.info(f"{output}")
         return output
 
     def find_ip_of_filestore(self):
         logger.info(
             f"Finding the IP address of the filestore {self.cluster_name} in region {self.region}",
         )
-        command = f'gcloud compute instances list --filter="name=filestore" --format="value(networkInterfaces[0].accessConfigs[0].natIP)" --zone={self.region}'
+        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         ip_output = subprocess.run(command)
@@ -150,19 +162,10 @@ class GCP_Config:
         return ip_output
 
     def mount_filestore(self, ip):
+        # TODO: Switch the python pathlib library
         logger.info(
             f"Mounting the filestore {self.cluster_name} in region {self.region}",
         )
-        command = "sudo apt update"
-        logger.info(f"Running command: {command}")
-        command = command.split(" ")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
-        command = "sudo apt install nfs-common"
-        logger.info(f"Running command: {command}")
-        command = command.split(" ")
-        output = subprocess.run(command)
-        logger.info(f"{output}")
         command = f"mkdir {self.mount_directory}"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
@@ -192,7 +195,7 @@ if __name__ == "__main__":
     gcp_parser = argparse.ArgumentParser()
     gcp_parser.add_argument("--verbosity", type=str, default="INFO")
     gcp_parser.add_argument("--config_dir", type=str, default="conf")
-    gcp_parser.add_argument("--config_file", type=str, default="default")
+    gcp_parser.add_argument("--config_file", type=str, default="default.yaml")
     gcp_parser.add_argument("--workdir", type=str, default=".")
     args = gcp_parser.parse_args()
     config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
