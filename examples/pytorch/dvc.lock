@@ -354,7 +354,7 @@ stages:
       md5: 39ecdefe26af87802dfaed0e3bcd98b3
       size: 528
   models:
-    cmd: bash models.sh
+    cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
       --config-name grid.yaml
     deps:
@@ -369,7 +369,7 @@ stages:
       md5: d1eac324650402da6e3de1aebe0e3b3c
       size: 237568
   attacks:
-    cmd: bash attacks.sh
+    cmd: bash attacks.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
       ++stage=attack --config-name grid.yaml
     deps:
@@ -432,20 +432,29 @@ stages:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
       output/reports/attack.csv
     deps:
-    - path: attack.db
-      md5: c9f920c7233802e9c46e4051c2da78e6
-      size: 307200
-    - path: model.db
-      md5: d1eac324650402da6e3de1aebe0e3b3c
-      size: 237568
+    - path: ResNet101.db
+      md5: 86e9ffd22acb5ac8a10e1075cfa0cab9
+      size: 696320
+    - path: ResNet152.db
+      md5: dbcc81935187d20a249d4e27aaf560fd
+      size: 602112
+    - path: ResNet18.db
+      md5: 3d304e014200ae926dec63521b6eeca0
+      size: 1499136
+    - path: ResNet34.db
+      md5: 7bf834e39f0367deddd36074e8f69d47
+      size: 1400832
+    - path: ResNet50.db
+      md5: 771e206f2ab932ae2978783214290c41
+      size: 110592
     - path: output/reports/attack/
-      md5: 2e8a51d2322c52e5cb0ea4f98ddff9f3.dir
-      size: 1723539519
-      nfiles: 3555
+      md5: e60f6852b2b403451f3df235e55975c8.dir
+      size: 7724615819
+      nfiles: 15820
     outs:
     - path: output/reports/attack.csv
-      md5: bfc77e2b24b86aa390485f2fd60a65c2
-      size: 2472144
+      md5: 73855b1b65e8f7b1879dc390ef65325d
+      size: 11502713
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
@@ -464,3 +473,28 @@ stages:
     - path: output/reports/train.csv
       md5: 922fa64743aa481feb79213a056c816e
       size: 363649
+  attacks@ResNet152:
+    cmd: bash attacks.sh ++model.init.name=torch_example.ResNet152 ++stage=attack
+      ++hydra.sweeper.storage=sqlite:///ResNet152.db --config-name grid.yaml
+    deps:
+    - path: attacks.sh
+      md5: 6a6a91d037b4ce29f84009d9b1161d4f
+      size: 3034
+    - path: models.sh
+      md5: 76fbee55cb5f90913d0863df9debd357
+      size: 1299
+    outs:
+    - path: ResNet152.db
+      md5: dbcc81935187d20a249d4e27aaf560fd
+      size: 602112
+  plot:
+    cmd: python plots.py --path output/plots/ --file output/reports/attack.csv
+    deps:
+    - path: output/reports/attack.csv
+      md5: 73855b1b65e8f7b1879dc390ef65325d
+      size: 11502713
+    outs:
+    - path: output/plots/
+      md5: 254c4e83a0c2c9575af3430e755aba56.dir
+      size: 331904
+      nfiles: 12

@@ -90,7 +90,6 @@ cat_plot:
   xlabels: Defence Type
   y: failure_rate
   ylabels: Ben. Failure Rate
-
 line_plot:
 - control: 0.98
   control_color: green
@@ -140,3 +139,15 @@ line_plot:
   y: adv_accuracy
   y_scale: 
   ylabel: Adv. Accuracy
+scatter_plot:
+  x: train_time_per_sample
+  y: adv_failure_rate
+  hue: model_name
+  xlabel: Training Time
+  ylabel: Adversarial Failure Rate
+  title: Adversarial Failure Rate vs Training Time
+  file: adv_failure_rate_vs_train_time.pdf
+  y_scale: log
+  x_scale: log
+  legend: 
+    title: Model Name

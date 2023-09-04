@@ -8,7 +8,6 @@ import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import yaml
@@ -80,8 +79,43 @@ def line_plot(
     plt.gcf().clear()
     return graph
 
+def scatter_plot(
+    data,
+    x,
+    y,
+    hue,
+    xlabel,
+    ylabel,
+    title,
+    file,
+    folder,
+    y_scale=None,
+    x_scale=None,
+    legend={},
+):
+    graph = sns.scatterplot(
+        data=data,
+        x=x,
+        y=y,
+        hue=hue,
+    )
+    graph.set_yscale(y_scale)
+    graph.set_xscale(x_scale)
+    graph.set_xlabel(xlabel)
+    graph.set_ylabel(ylabel)
+    graph.legend(**legend)
+    graph.set_title(title)
+    graph.get_figure().tight_layout()
+    graph.get_figure().savefig(Path(folder) / file)
+    logger.info(f"Rendering graph {i+1}")
+    logger.info(f"Saved graph to {Path(folder) / file}")
+    plt.gcf().clear()
+    return graph
 
 def calculate_failure_rate(data):
+    data = data[data.columns.drop(list(data.filter(regex="\.1$")))]
+    data.columns.str.replace(" ", "")
+    data.dropna(axis=0, subset=['accuracy', 'adv_accuracy', 'train_time_per_sample', 'adv_fit_time_per_sample', 'predict_time_per_sample'], inplace=True)
     data["failure_rate"] = (1 - data["accuracy"]) / data["predict_time_per_sample"]
     data["adv_failure_rate"] = (1 - data["adv_accuracy"]) / data[
         "adv_fit_time_per_sample"
@@ -174,30 +208,9 @@ if __name__ == "__main__":
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
 
-    # %%
-    graph14 = sns.scatterplot(
-        data=data,
-        x="train_time_per_sample",
-        y="adv_failure_rate",
-        hue="model_name",
-    )
-    graph14.set_yscale("log")
-    graph14.set_xscale("log")
-    graph14.set_xlabel("Training Time")
-    graph14.set_ylabel("Adversarial Failure Rate")
-    graph14.legend(title="Model Name")
-    # graph6.legend(loc='center left', bbox_to_anchor=(1, 0.5), ncol=1)
-    # graph6.legend(labels=["ResNet18", "Resnet34", "Resnet50"])
-    graph14.set_title("Adversarial Failure Rate vs Training Time")
-    # graph6.get_figure().tight_layout()
-    file = f"adv_failure_rate_vs_train_time{IMAGE_FILETYPE}"
-    graph14.get_figure().savefig(FOLDER / file)
-    logger.info(f"Rendering graph {i+1}")
-    logger.info(f"Saved graph to {FOLDER / file}")
-    plt.gcf().clear()
-    conf_path = Path("output/plots/config")
-    conf_path.mkdir(parents=True, exist_ok=True)
-    conf_dict = {
-        "cat_plot": cat_plot_list,
-        "line_plot": line_plot_list,
-    }
+        # %%
+
+    scatter_plot_dict = big_dict["scatter_plot"]
+
+    
+    graph = scatter_plot(data=data, **scatter_plot_dict, folder = FOLDER)

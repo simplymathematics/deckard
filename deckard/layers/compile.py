@@ -4,7 +4,6 @@ import json
 import logging
 from tqdm import tqdm
 import yaml
-import argparse
 import numpy as np
 from .utils import deckard_nones as nones
 
@@ -189,7 +188,7 @@ def format_control_parameter(data, control_dict, min_max=True):
     return data
 
 
-def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, folder):
+def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, file, folder):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
         data.def_gen.fillna("Control", inplace=True)
@@ -202,12 +201,13 @@ def clean_data_for_plotting(data, def_gen_dict, atk_gen_dict, control_dict, fold
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
     data["model_name"] = data["model.init.name"].str.split(".").str[-1]
-    # %%
-    # Replace data.sample.random_state with random_state
+    data['model_layers'] = data['model_name'].str.split("Net").str[-1]
+    # Rename columns that end in '.1' by removing the '.1'
+    data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict, min_max=True)
-    logger.info(f"Saving data to {Path(folder) / 'data.csv'}")
+    logger.info(f"Saving data to {Path(folder) / file}")
     data.to_csv(Path(folder) / "data.csv")
     return data
 
@@ -237,6 +237,7 @@ def save_results(results, results_file) -> str:
 
 
 if __name__ == "__main__":
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
@@ -260,7 +261,12 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
     results = clean_data_for_plotting(
-        results, def_gen_dict, atk_gen_dict, control_dict, report_folder
+        results,
+        def_gen_dict,
+        atk_gen_dict,
+        control_dict,
+        results_file,
+        report_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(

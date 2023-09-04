@@ -36,10 +36,10 @@ stages:
         ##############################################################################
   attacks:
     foreach:
-      # - ResNet18
-      # - ResNet34
-      # - ResNet50
-      # - ResNet101
+      - ResNet18
+      - ResNet34
+      - ResNet50
+      - ResNet101
       - ResNet152
     do:
       cmd: bash attacks.sh ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name grid.yaml
@@ -55,7 +55,6 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      - train.db
       - ResNet18.db
       - ResNet34.db
       - ResNet50.db
@@ -64,8 +63,8 @@ stages:
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   plot:
-    cmd : python plots.py --path ${files.directory}/${files.reports}/plots/ --file ${files.directory}/${files.reports}/attack.csv
+    cmd : python plots.py --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
     outs:
-      - --path ${files.directory}/${files.reports}/plots/
+      - ${files.directory}/plots/
