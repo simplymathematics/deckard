@@ -115,7 +115,7 @@ def scatter_plot(
 
 
 def calculate_failure_rate(data):
-    data = data[data.columns.drop(list(data.filter(regex="\.1$")))]
+    data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     data.dropna(
         axis=0,

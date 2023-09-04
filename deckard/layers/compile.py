@@ -188,7 +188,12 @@ def format_control_parameter(data, control_dict, min_max=True):
 
 
 def clean_data_for_plotting(
-    data, def_gen_dict, atk_gen_dict, control_dict, file, folder
+    data,
+    def_gen_dict,
+    atk_gen_dict,
+    control_dict,
+    file,
+    folder,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
