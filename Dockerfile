@@ -6,4 +6,6 @@ RUN python3 -m pip install nvidia-pyindex nvidia-cuda-runtime-cu11
 RUN git clone https://github.com/simplymathematics/deckard.git
 WORKDIR /deckard
 RUN python3 -m pip install --editable .[pytorch_image,tensorflow_image,non_framework,docs,test]
+RUN git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
+RUN cd adversarial-robustness-toolbox && python3 -m pip install .
 RUN pytest test
