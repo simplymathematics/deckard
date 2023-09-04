@@ -7,6 +7,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
+    "adversarial-robustness-toolbox",
     "numpy",
     "scipy",
     "scikit-learn",
@@ -149,7 +150,7 @@ setup(
         ],
         "non_framework": [
             "matplotlib",
-            "Pillow",
+            "pillow",
             "statsmodels",
             "pydub",
             "resampy",
