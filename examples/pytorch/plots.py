@@ -30,6 +30,7 @@ def cat_plot(
     legend_title,
     file,
     folder,
+    rotation=0,
     set={},
     **kwargs,
 ):
@@ -39,7 +40,9 @@ def cat_plot(
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
     graph.legend.set_title(title=legend_title)
+    graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
+    graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
     logger.info(f"Saved graph to {folder / file}")
@@ -63,13 +66,13 @@ def line_plot(
 ):
     plt.gcf().clear()
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue, style=control)
+    graph.legend(**legend)
     if control is not None:
         assert control_color is not None, "Please specify a control color"
         graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
-    graph.legend(**legend)
     if y_scale is not None:
         graph.set_yscale(y_scale)
     if x_scale is not None:
@@ -128,18 +131,20 @@ def calculate_failure_rate(data):
         ],
         inplace=True,
     )
-    data["failure_rate"] = (1 - data["accuracy"]) / data["predict_time_per_sample"]
-    data["adv_failure_rate"] = (1 - data["adv_accuracy"]) / data[
-        "adv_fit_time_per_sample"
-    ]
-    data["training_time_per_failure"] = (
+    data.loc[:, "failure_rate"] = (
+        (1 - data["accuracy"]) * 100 / data["predict_time_per_sample"]
+    )
+    data.loc[:, "adv_failure_rate"] = (
+        (1 - data["adv_accuracy"]) * 100 / data["adv_fit_time_per_sample"]
+    )
+    data.loc[:, "training_time_per_failure"] = (
         data["train_time_per_sample"] / data["failure_rate"]
     )
-    data["training_time_per_adv_failure"] = (
+    data.loc[:, "training_time_per_adv_failure"] = (
         data["train_time_per_sample"] / data["adv_failure_rate"]
     )
-    data["adv_training_time_per_failure"] = (
-        data["adv_fit_time_per_sample"] / data["adv_failure_rate"]
+    data.loc[:, "adv_training_time_per_failure"] = (
+        data["train_time_per_sample"] / data["adv_failure_rate"]
     )
     return data
 
@@ -157,8 +162,15 @@ if __name__ == "__main__":
         "-f",
         "--file",
         type=str,
-        help="Path to the plot folder",
+        help="Data file to read from",
         required=True,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        help="Output file name",
+        default="data.csv",
     )
     parser.add_argument(
         "-t",
@@ -192,6 +204,8 @@ if __name__ == "__main__":
         data.drop("Unnamed: 0", axis=1, inplace=True)
 
     FOLDER = Path(Path(), args.path)
+    FOLDER.mkdir(parents=True, exist_ok=True)
+    data.to_csv(FOLDER / args.output)
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")

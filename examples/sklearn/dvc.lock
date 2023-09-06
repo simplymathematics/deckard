@@ -114,8 +114,8 @@ stages:
       md5: eeabc07006294278801a3906f7016b20
       size: 185102
     - path: output/models/model.pkl
-      md5: 4a9a983540c62bdcfa99c3a0297e7afc
-      size: 15368
+      md5: 11ee9fa397238b26669489c944b361d5
+      size: 15402
     params:
       conf/model.yaml:
         hydra:
@@ -161,7 +161,7 @@ stages:
             mmap_mode: r
     outs:
     - path: model.db
-      md5: f8e916e2167cb9b3408aba0f9dc4cd6f
+      md5: dc51b4e61037ce5f866f9a02afde26e7
       size: 110592
   attack:
     cmd: python -m deckard.layers.experiment attack
@@ -170,7 +170,7 @@ stages:
       md5: eeabc07006294278801a3906f7016b20
       size: 185102
     - path: output/models/model.pkl
-      md5: 0498d04cceb9f248f8f2cac2c11e9f48
+      md5: 11ee9fa397238b26669489c944b361d5
       size: 15402
     params:
       params.yaml:
@@ -341,14 +341,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 4f4e48a71cea9896298b690c3cb258a2
-      size: 424
+      md5: f2c857c1227f3827ce11db1464be9b63
+      size: 426
     - path: output/reports/attack/default/adv_probabilities.json
-      md5: 4f4e48a71cea9896298b690c3cb258a2
-      size: 424
+      md5: f2c857c1227f3827ce11db1464be9b63
+      size: 426
     - path: output/reports/attack/default/score_dict.json
-      md5: 7a7d6599127e7a5fe961642b7044ea4f
-      size: 496
+      md5: 6cb818492db3f764a2df1f41a513d8f9
+      size: 497
   attack_optimise:
     cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy
       model=best --multirun --config-name attack
@@ -360,7 +360,7 @@ stages:
       md5: eeabc07006294278801a3906f7016b20
       size: 185102
     - path: output/models/model.pkl
-      md5: 0498d04cceb9f248f8f2cac2c11e9f48
+      md5: 11ee9fa397238b26669489c944b361d5
       size: 15402
     params:
       conf/attack.yaml:
@@ -407,13 +407,13 @@ stages:
             mmap_mode: r
     outs:
     - path: attack.db
-      md5: bd19744ae8a7fe26653fa92b9397f3b0
+      md5: cdde21203e37d23fafd7a25750c986e9
       size: 110592
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
-      md5: f8e916e2167cb9b3408aba0f9dc4cd6f
+      md5: dc51b4e61037ce5f866f9a02afde26e7
       size: 110592
     outs:
     - path: conf/model/best.yaml
@@ -423,7 +423,7 @@ stages:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
     - path: attack.db
-      md5: bd19744ae8a7fe26653fa92b9397f3b0
+      md5: cdde21203e37d23fafd7a25750c986e9
       size: 110592
     outs:
     - path: conf/attack/best.yaml
