@@ -46,6 +46,29 @@ stages:
     - model.db
     outs:
     - conf/model/best.yaml
+  # model_optimise:
+  #   cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun --config-name model
+  #   deps:
+  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+  #   outs:
+  #   - model.db
+  #   params:
+  #   - conf/model.yaml:
+  #     - hydra
+  # ##############################################################################
+  # attack_optimise:
+  #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
+  #   deps:
+  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #   - conf/model/best.yaml
+  #   outs:
+  #   - attack.db
+  #   params:
+  #   - conf/attack.yaml:
+  #     - hydra
   find_best_attack:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:

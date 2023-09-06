@@ -86,26 +86,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/data/data.pkl
-      md5: eeabc07006294278801a3906f7016b20
-      size: 185102
+      md5: 9a58fd530e1d151a5f0ac40c38cbb24a
+      size: 180702
     - path: output/models/model.pkl
-      md5: 4a9a983540c62bdcfa99c3a0297e7afc
-      size: 15368
-    - path: output/reports/train/default/predictions.json
-      md5: d8aed90aa6be874fff261a9f3215398c
-      size: 43229
-    - path: output/reports/train/default/probabilities.json
-      md5: d8aed90aa6be874fff261a9f3215398c
-      size: 43229
+      md5: 03d0214bba09b1d4042b5923af1e8bcd
+      size: 15402
     - path: output/reports/train/default/score_dict.json
-      md5: 8ea27e3095a4ba0ef5238bdca4d0daa2
-      size: 357
-    - path: output/reports/train/default/test_labels.json
-      md5: 8b08830bcf914dc948fc4b2ecf3ce5aa
-      size: 3000
-    - path: output/reports/train/default/train_labels.json
-      md5: 8e93c1a7db21ebb97ce6e4ed58809240
-      size: 300
+      md5: d408e646fbad154347d891538beda08f
+      size: 340
   model_optimise:
     cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun
       --config-name model
