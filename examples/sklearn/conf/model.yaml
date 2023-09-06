@@ -36,7 +36,7 @@ hydra:
       data.sample.stratify : true
       model.init.kernel : rbf
       model.init.C : tag(log, int(interval(1, 1e6)))
-      +model.init.max_iter : 100
+      +model.init.max_iter : -1
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 10
