@@ -32,6 +32,9 @@ install_requires = [
 test_requires = [
     "pytest",
     "pytest-xdist",
+    "pytorch",
+    "torchvision",
+    "tensorflow",
 ]
 test_requires += install_requires
 docs_require = [
@@ -173,7 +176,7 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GPL License",
+        "License ::  GPL License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
