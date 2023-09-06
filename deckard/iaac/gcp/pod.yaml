@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: deckard
+spec:
+  containers:
+  - name: deckard
+    image: ghcr.io/simplymathematics/deckard:pr-116
+    imagePullPolicy: Always
+    workingDir: /deckard/examples/sklearn
+    args: ["python", "-m", "dvc", "repro"]
+    resources:
+      limits:
+       nvidia.com/gpu: 1
+    volumeMounts:
+        - mountPath: /data
+          name: mypvc
+  volumes:
+  - name: mypvc
+    persistentVolumeClaim:
+      claimName: podpvc

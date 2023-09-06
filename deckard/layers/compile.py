@@ -4,7 +4,7 @@ import json
 import logging
 from tqdm import tqdm
 import yaml
-import argparse
+import numpy as np
 from .utils import deckard_nones as nones
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ def merge_defences(results: pd.DataFrame):
         else:
             defences.append(None)
             def_gens.append(None)
-    results["defence"] = defences
+    results["defence_name"] = defences
     results["def_gen"] = def_gens
     return results
 
@@ -123,7 +123,7 @@ def merge_attacks(results: pd.DataFrame):
             attack = None
         attacks.append(attack)
     if attacks != [None] * len(attacks):
-        results["attack"] = attacks
+        results["attack_name"] = attacks
         results["atk_gen"] = [str(x).split(".")[-1] for x in attacks]
     return results
 
@@ -137,12 +137,93 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
     return df
 
 
-def save_results(report_folder, results_file) -> str:
+def format_control_parameter(data, control_dict, min_max=True):
+    new_data = pd.DataFrame()
+    logger.info("Formatting control parameters...")
+    for _, row in tqdm(data.iterrows()):
+        if hasattr(row, "defence_name"):
+            if row.defence_name in ["Control", None, "None", "none", "null", np.nan]:
+                row["def_param"] = np.nan
+                row["def_value"] = np.nan
+            else:
+                param = control_dict[row.defence_name]
+                row["def_param"] = param.split(".")[-1]
+                value = row[param]
+                row["def_value"] = value
+        if hasattr(row, "attack"):
+            if row.attack_name in ["Control", None, "None", "none", "null", np.nan]:
+                row["atk_param"] = np.nan
+                row["atk_value"] = np.nan
+            else:
+                param = control_dict[row.attack_name]
+                row["atk_param"] = param.split(".")[-1]
+                value = row[param]
+                row["atk_value"] = value
+        new_data = pd.concat([new_data, row], axis=1)
+    data = new_data.T
+    del new_data
+
+    if min_max is True:
+        if hasattr(data, "def_gen"):
+            defs = data.def_gen.unique()
+        else:
+            defs = []
+        if hasattr(data, "atk_gen"):
+            atks = data.atk_gen.unique()
+        else:
+            atks = []
+        # Min-max scaling of control parameters
+        for def_ in defs:
+            max_ = data[data.def_gen == def_].def_value.max()
+            min_ = data[data.def_gen == def_].def_value.min()
+            scaled_value = (data[data.def_gen == def_].def_value - min_) / (max_ - min_)
+            data.loc[data.def_gen == def_, "def_value"] = scaled_value
+
+        for atk in atks:
+            max_ = data[data.atk_gen == atk].atk_value.max()
+            min_ = data[data.atk_gen == atk].atk_value.min()
+            scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
+            data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
+    return data
+
+
+def clean_data_for_plotting(
+    data,
+    def_gen_dict,
+    atk_gen_dict,
+    control_dict,
+    file,
+    folder,
+):
+    logger.info("Replacing attack and defence names with short names...")
+    if hasattr(data, "def_gen"):
+        data.def_gen.fillna("Control", inplace=True)
+        def_gen = data.def_gen.map(def_gen_dict)
+        data.def_gen = def_gen
+    if hasattr(data, "atk_gen"):
+        atk_gen = data.atk_gen.map(atk_gen_dict)
+        data.atk_gen = atk_gen
+    logger.info("Dropping poorly merged columns...")
+    data.dropna(axis=1, how="all", inplace=True)
+    logger.info("Shortening model names...")
+    data["model_name"] = data["model.init.name"].str.split(".").str[-1]
+    data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    # Rename columns that end in '.1' by removing the '.1'
+    data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
+    logger.info("Replacing data.sample.random_state with random_state...")
+    data["data.sample.random_state"].rename("random_state", inplace=True)
+    data = format_control_parameter(data, control_dict, min_max=True)
+    logger.info(f"Saving data to {Path(folder) / file}")
+    data.to_csv(Path(folder) / "data.csv")
+    return data
+
+
+def save_results(results, results_file) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
     logger.info("Compiling results...")
-    results = parse_results(report_folder)
+
     suffix = Path(results_file).suffix
     if suffix == ".csv":
         results.to_csv(results_file)
@@ -162,9 +243,12 @@ def save_results(report_folder, results_file) -> str:
 
 
 if __name__ == "__main__":
+    import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
-    parser.add_argument("--report_folder", type=str, default="best_models")
+    parser.add_argument("--report_folder", type=str, default="reports", required=True)
+    parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument(
@@ -177,7 +261,21 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    report_file = save_results(report_folder, results_file)
+    results = parse_results(report_folder)
+    with open(Path(Path(), args.config), "r") as f:
+        big_dict = yaml.load(f, Loader=yaml.FullLoader)
+    def_gen_dict = big_dict["defences"]
+    atk_gen_dict = big_dict["attacks"]
+    control_dict = big_dict["params"]
+    results = clean_data_for_plotting(
+        results,
+        def_gen_dict,
+        atk_gen_dict,
+        control_dict,
+        results_file,
+        report_folder,
+    )
+    report_file = save_results(results, results_file)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

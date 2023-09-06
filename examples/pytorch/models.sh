@@ -5,6 +5,7 @@
 # Default model
 echo "python -m deckard.layers.optimise +stage=train" $@ "--multirun"
 python -m deckard.layers.optimise +stage=train $@ --multirun
+
 # This line generates the model and adds the FeatureSqueezing preprocessing defence.
 python -m deckard.layers.optimise ++model.art.preprocessor.name=art.defences.preprocessor.FeatureSqueezing +model.art.preprocessor.params.bit_depth=4,8,16,32,64 +model.art.preprocessor.params.clip_values=[0,1] +stage=train $@ --multirun
 

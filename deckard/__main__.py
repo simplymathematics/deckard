@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import logging
 from pathlib import Path
+from .layers.parse import save_params_file
 
 logger = logging.getLogger(__name__)
 layer_list = list(Path(Path(__file__).parent, "layers").glob("*.py"))
@@ -13,12 +14,20 @@ if "__init__" in layer_list:
 
 
 def run_submodule(submodule, args):
-    cmd = f"python -m deckard.layers.{submodule} {args}"
+    if len(args) == 0:
+        cmd = f"python -m deckard.layers.{submodule}"
+    else:
+        cmd = f"python -m deckard.layers.{submodule} {args}"
     logger.info(f"Running {cmd}")
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
+    with subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    ) as proc:
         for line in proc.stdout:
             print(line.rstrip().decode("utf-8"))
-        if len(proc.stderr.readlines()) > 0:
+        if proc.returncode != 0:
             logger.error(f"Error running {cmd}")
             for line in proc.stderr:
                 logger.error(line.rstrip().decode("utf-8"))
@@ -28,22 +37,25 @@ def run_submodule(submodule, args):
 
 
 def parse_and_repro(args):
-    cmd = f"python -m deckard.layers.parse {args}"
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
-        for line in proc.stdout:
-            print(line.rstrip().decode("utf-8"))
-        if len(proc.stderr.readlines()) > 0:
-            raise ValueError(f"Error parsing with options {args}")
+    if len(args) == 0:
+        assert save_params_file(config_dir=Path(Path(), "conf")) is None
+        assert Path(Path(), "params.yaml").exists()
+    else:
+        cmd = f"python -m deckard.layers.parse {args}"
+        # error = f"error parsing command: {cmd} {args}"
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            shell=True,
+        ) as proc:
+            for line in proc.stdout:
+                print(line.rstrip().decode("utf-8"))
     if Path(Path(), "dvc.yaml").exists():
         cmd = "dvc repro"
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
             for line in proc.stdout:
                 print(line.rstrip().decode("utf-8"))
-            if len(proc.stderr.readlines()) > 0:
-                logger.error(f"Error running {cmd}")
-                for line in proc.stderr:
-                    logger.error(line.rstrip().decode("utf-8"))
-                raise ValueError("Error running dvc.yaml")
+
     else:
         raise ValueError("No dvc.yaml file found. Please construct a pipeline.")
     return 0
@@ -63,7 +75,10 @@ if __name__ == "__main__":
     submodule = args.submodule
     if submodule not in layer_list and submodule is not None:
         raise ValueError(f"Submodule {submodule} not found. Choices: {layer_list}")
-    other_args = " ".join(args.other_args)
+    if len(args.other_args) > 0:
+        other_args = " ".join(args.other_args)
+    else:
+        other_args = []
     if submodule is None:
         assert parse_and_repro(other_args) == 0
     else:

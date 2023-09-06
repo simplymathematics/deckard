@@ -12,7 +12,7 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["save_file", "optimise", "parse_stage", "get_files"]
+__all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
 
 def get_files(
@@ -66,11 +66,11 @@ def get_files(
     return cfg
 
 
-def save_file(cfg, folder, params_file):
-    path = Path(folder, Path(params_file).name)
-    with open(path, "w") as f:
-        yaml.safe_dump(cfg, f)
-    assert Path(path).exists()
+# def save_file(cfg, folder, params_file):
+#     path = Path(folder, Path(params_file).name)
+#     with open(path, "w") as f:
+#         yaml.safe_dump(cfg, f)
+#     assert Path(path).exists()
 
 
 def merge_params(default, params) -> dict:
@@ -221,6 +221,32 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     return params
 
 
+def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
+    """
+    Write params to dvc.yaml
+    :param params: Params to write to dvc.yaml
+    :param stage: Stage to write params to
+    """
+    if path is None:
+        path = Path.cwd()
+    if working_dir is None:
+        working_dir = Path.cwd()
+    with open(Path(working_dir, "dvc.yaml"), "r") as f:
+        dvc = yaml.load(f, Loader=yaml.FullLoader)
+    stage_params = {"stages": {stage: {}}}
+    stage_params["stages"][stage] = dvc["stages"][stage]
+    path.mkdir(exist_ok=True, parents=True)
+    with open(path / "dvc.yaml", "w") as f:
+        yaml.dump(stage_params, f, default_flow_style=False)
+    assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
+    with open(Path(path, "params.yaml"), "w") as f:
+        yaml.dump(params, f, default_flow_style=False)
+    assert Path(
+        path / "params.yaml",
+    ).exists(), f"File {path/'params.yaml'} does not exist."
+    return None
+
+
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     scorer = cfg.pop("optimizers", None)
@@ -231,7 +257,7 @@ def optimise(cfg: DictConfig) -> None:
     files = deepcopy(exp.files)()
     folder = Path(files["score_dict_file"]).parent
     Path(folder).mkdir(exist_ok=True, parents=True)
-    save_file(cfg, folder, "params.yaml")
+    write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
     direction = cfg.pop("direction", "minimize")
     try:

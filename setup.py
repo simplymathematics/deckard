@@ -7,6 +7,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
+    "adversarial-robustness-toolbox",
     "numpy",
     "scipy",
     "scikit-learn",
@@ -31,6 +32,9 @@ install_requires = [
 test_requires = [
     "pytest",
     "pytest-xdist",
+    "torch",
+    "torchvision",
+    "tensorflow",
 ]
 test_requires += install_requires
 docs_require = [
@@ -149,7 +153,7 @@ setup(
         ],
         "non_framework": [
             "matplotlib",
-            "Pillow",
+            "pillow",
             "statsmodels",
             "pydub",
             "resampy",
@@ -172,10 +176,11 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
+        "License ::  GPL License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
