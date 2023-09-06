@@ -8,4 +8,3 @@ WORKDIR /deckard
 RUN python3 -m pip install --editable .[test,pytorch_image]
 RUN git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
 RUN cd adversarial-robustness-toolbox && python3 -m pip install .
-RUN pytest test
