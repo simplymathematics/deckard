@@ -62,7 +62,7 @@ class GCP_Config:
         logger.info(
             f"Creating cluster {self.cluster_name} in region {self.region} with {self.num_nodes} nodes",
         )
-        command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade"
+        command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade --addons=GcpFilestoreCsiDriver"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)
