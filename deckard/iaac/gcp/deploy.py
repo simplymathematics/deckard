@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
 secret_file = os.environ.get("GCP_SECRET_FILE")
+assert secret_file is not None, "Please set the GCP_SECRET_FILE environment variable"
 secret_file = Path(secret_file).resolve().as_posix()
 project_name = os.environ.get("GCP_PROJECT_NAME")
+assert project_name is not None, "Please set the GCP_PROJECT_NAME environment variable"
 assert Path(secret_file).exists(), f"File {secret_file} does not exist"
 # Login to GCP
 
