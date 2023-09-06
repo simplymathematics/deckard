@@ -32,7 +32,7 @@ install_requires = [
 test_requires = [
     "pytest",
     "pytest-xdist",
-    "pytorch",
+    "torch",
     "torchvision",
     "tensorflow",
 ]

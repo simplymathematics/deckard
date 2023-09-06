@@ -6,7 +6,7 @@ from ..iaac import GCP_Config
 
 
 logger = logging.getLogger(__name__)
-
+logging = logging.basicConfig(level=logging.INFO)
 if __name__ == "__main__":
     iaac_parser = argparse.ArgumentParser()
     iaac_parser.add_argument("--verbosity", type=str, default="INFO")
