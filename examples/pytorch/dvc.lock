@@ -104,18 +104,21 @@ stages:
     - path: output/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: da778ab9ca244100045790051485e60f
+      size: 44780845
     - path: output/models/model.pt
-      md5: 35e6acec22b8542c13d4fb2ddf7d4939
+      md5: 71c48241b81b18b3b60afc8a3f10f25a
       size: 44785941
     - path: output/reports/train/default/params.yaml
       md5: eedabd38cbbfce21b879b647497174da
       size: 2148
     - path: output/reports/train/default/predictions.json
-      md5: 3f657fe19090e1bd62209ac130544f93
-      size: 2884704
+      md5: b4d5926c71a4b54076b566a73e7af54b
+      size: 2881449
     - path: output/reports/train/default/score_dict.json
-      md5: f19e5106d12c8fcf19eb48edf861d949
-      size: 401
+      md5: 51249137fa5081d7eff95624f3d1fa1f
+      size: 410
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
@@ -123,7 +126,7 @@ stages:
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
     - path: output/models/model.pt
-      md5: 38451da384fb8f787707a2b39b8418de
+      md5: dc00c8994b407de0e23e96df50b46425
       size: 44786389
     params:
       params.yaml:
@@ -342,17 +345,17 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 54345e430aed9ed56a7230ac348900e2
+      md5: 7b734a30fe436fd122186fe8cb6ae959
       size: 313766
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 1d2980ec86fa5cd4513473630186c9b5
-      size: 21523
+      md5: 8bfac7d8e89bff0629dffa3e1a3c996f
+      size: 21748
     - path: output/reports/attack/default/params.yaml
       md5: daf26103182da19d13d5b73113c5688c
       size: 4956
     - path: output/reports/attack/default/score_dict.json
-      md5: 39ecdefe26af87802dfaed0e3bcd98b3
-      size: 528
+      md5: 9bd42e8bf85131beabb023c7983ae34e
+      size: 542
   models:
     cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
@@ -432,29 +435,17 @@ stages:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
       output/reports/attack.csv
     deps:
-    - path: ResNet101.db
-      md5: 86e9ffd22acb5ac8a10e1075cfa0cab9
-      size: 696320
     - path: ResNet152.db
-      md5: dbcc81935187d20a249d4e27aaf560fd
-      size: 602112
-    - path: ResNet18.db
-      md5: 3d304e014200ae926dec63521b6eeca0
-      size: 1499136
-    - path: ResNet34.db
-      md5: 7bf834e39f0367deddd36074e8f69d47
-      size: 1400832
-    - path: ResNet50.db
-      md5: 771e206f2ab932ae2978783214290c41
-      size: 110592
+      md5: d86a693a86ec196fcd4887013acde398
+      size: 434176
     - path: output/reports/attack/
-      md5: e60f6852b2b403451f3df235e55975c8.dir
-      size: 7724615819
-      nfiles: 15820
+      md5: 0ea96d75e1d41ddf1e4e856260d3d327.dir
+      size: 8695142484
+      nfiles: 17939
     outs:
     - path: output/reports/attack.csv
-      md5: 73855b1b65e8f7b1879dc390ef65325d
-      size: 11502713
+      md5: 1d31d2bc679e668fc31e323a444c84fd
+      size: 13006598
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
@@ -483,18 +474,36 @@ stages:
     - path: models.sh
       md5: 76fbee55cb5f90913d0863df9debd357
       size: 1299
+    - path: output/reports/attack/default/score_dict.json
+      md5: 35d505c81867c9c50d74780c19d6f7e7
+      size: 539
     outs:
     - path: ResNet152.db
-      md5: dbcc81935187d20a249d4e27aaf560fd
-      size: 602112
+      md5: d86a693a86ec196fcd4887013acde398
+      size: 434176
   plot:
     cmd: python plots.py --path output/plots/ --file output/reports/attack.csv
     deps:
+    - path: ResNet101.db
+      md5: 00e8859421e45d77c36d2a39ea5deaa5
+      size: 466944
+    - path: ResNet152.db
+      md5: d86a693a86ec196fcd4887013acde398
+      size: 434176
+    - path: ResNet18.db
+      md5: 3d304e014200ae926dec63521b6eeca0
+      size: 1499136
+    - path: ResNet34.db
+      md5: 7bf834e39f0367deddd36074e8f69d47
+      size: 1400832
+    - path: ResNet50.db
+      md5: 771e206f2ab932ae2978783214290c41
+      size: 110592
     - path: output/reports/attack.csv
-      md5: 73855b1b65e8f7b1879dc390ef65325d
-      size: 11502713
+      md5: 1d31d2bc679e668fc31e323a444c84fd
+      size: 13006598
     outs:
     - path: output/plots/
-      md5: 254c4e83a0c2c9575af3430e755aba56.dir
-      size: 331904
-      nfiles: 12
+      md5: ad60dde37b7ad40574c2e2a3e391224d.dir
+      size: 8442674
+      nfiles: 13

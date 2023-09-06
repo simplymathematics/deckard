@@ -14,7 +14,7 @@ hydra_parser.add_argument("--workdir", type=str, default=".")
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-    
+
     args = hydra_parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     config_dir = Path(Path(), args.config_dir).resolve().as_posix()

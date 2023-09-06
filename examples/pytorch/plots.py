@@ -131,10 +131,12 @@ def calculate_failure_rate(data):
         ],
         inplace=True,
     )
-    data.loc[:, "failure_rate"] = (1 - data["accuracy"])*100 / data["predict_time_per_sample"]
-    data.loc[:, "adv_failure_rate"] = (1 - data["adv_accuracy"]) * 100  / data[
-        "adv_fit_time_per_sample"
-    ]
+    data.loc[:, "failure_rate"] = (
+        (1 - data["accuracy"]) * 100 / data["predict_time_per_sample"]
+    )
+    data.loc[:, "adv_failure_rate"] = (
+        (1 - data["adv_accuracy"]) * 100 / data["adv_fit_time_per_sample"]
+    )
     data.loc[:, "training_time_per_failure"] = (
         data["train_time_per_sample"] / data["failure_rate"]
     )
@@ -200,11 +202,10 @@ if __name__ == "__main__":
     data = calculate_failure_rate(data)
     if "Unnamed: 0" in data.columns:
         data.drop("Unnamed: 0", axis=1, inplace=True)
-    
 
     FOLDER = Path(Path(), args.path)
     FOLDER.mkdir(parents=True, exist_ok=True)
-    data.to_csv(FOLDER/args.output)
+    data.to_csv(FOLDER / args.output)
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")
