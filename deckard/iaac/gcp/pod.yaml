@@ -6,6 +6,7 @@ spec:
   containers:
   - name: deckard
     image: ghcr.io/simplymathematics/deckard:pr-116
+    imagePullPolicy: Always
     workingDir: /deckard/examples/sklearn
     args: ["python", "-m", "dvc", "repro"]
     resources:
