@@ -20,4 +20,4 @@ if __name__ == "__main__":
         params = yaml.load(f, Loader=yaml.FullLoader)
     gcp = GCP_Config(**params)
     logging.basicConfig(level=args.verbosity)
-    assert gcp() == None, "Error creating cluster"
+    assert gcp() is None, "Error creating cluster"
