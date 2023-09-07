@@ -1,1 +1,1 @@
-from .deploy import GCP_Config
+from .deploy import *

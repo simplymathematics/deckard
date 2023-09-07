@@ -14,10 +14,10 @@ stages:
     outs:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.train_labels_file}
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
+    # - ${files.directory}/${files.reports}/train/${files.name}/${files.train_labels_file}
+    # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
+    # - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+    # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
     params:
     - data
     - model
@@ -31,7 +31,7 @@ stages:
     metrics:
     - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
     outs:
-    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+    # - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
     - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
     params:
     - data
@@ -46,28 +46,29 @@ stages:
     - model.db
     outs:
     - conf/model/best.yaml
-  model_optimise:
-    cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun --config-name model
-    deps:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    outs:
-    - model.db
-    params:
-    - conf/model.yaml:
-      - hydra
-  ##############################################################################
-  attack_optimise:
-    cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
-    deps:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    - conf/model/best.yaml
-    outs:
-    - attack.db
-    params:
-    - conf/attack.yaml:
-      - hydra
+  # model_optimise:
+  #   cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun --config-name model
+  #   deps:
+  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+  #   outs:
+  #   - model.db
+  #   params:
+  #   - conf/model.yaml:
+  #     - hydra
+  # ##############################################################################
+  # attack_optimise:
+  #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
+  #   deps:
+  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #   - conf/model/best.yaml
+  #   outs:
+  #   - attack.db
+  #   params:
+  #   - conf/attack.yaml:
+  #     - hydra
   find_best_attack:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
@@ -77,15 +78,16 @@ stages:
   ##############################################################################
   # grid search
   model_search :
-    cmd : bash models.sh model=best +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model_grid.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize  --multirun --config-name model.yaml
+    cmd : bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize --multirun --config-name model.yaml
     outs:
-    - model_grid.db
+    - model.db
     deps:
-    - conf/model/best.yaml
+    - models.sh
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
   attack_search :
-    cmd : bash attacks.sh model=best ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack_grid.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10  --multirun --config-name attack.yaml
+    cmd : bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10  --multirun --config-name attack.yaml
     deps:
-    - model_grid.db
-    - conf/model/best.yaml
+    - attacks.sh
+    - model.db
     outs:
-    - attack_grid.db
+    - attack.db
