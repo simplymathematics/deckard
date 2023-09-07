@@ -30,9 +30,9 @@ stages:
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
     - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
-    # outs:
+    outs:
     # - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-    # - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
     params:
     - data
     - model
@@ -83,7 +83,7 @@ stages:
     - model.db
     deps:
     - models.sh
-    - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
   attack_search :
     cmd : bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10  --multirun --config-name attack.yaml
     deps:

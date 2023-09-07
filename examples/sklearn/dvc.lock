@@ -282,8 +282,8 @@ stages:
     outs:
     - path: output/reports/attack/default/score_dict.json
       hash: md5
-      md5: cc04fa9f6331853dbc29daa7bcaee11c
-      size: 488
+      md5: 1999961946d148fa619652039a32df66
+      size: 481
   model_search:
     cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db
       ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
@@ -295,25 +295,25 @@ stages:
       size: 705
     - path: output/reports/attack/default/score_dict.json
       hash: md5
-      md5: cc04fa9f6331853dbc29daa7bcaee11c
-      size: 488
+      md5: 1999961946d148fa619652039a32df66
+      size: 481
     outs:
     - path: model.db
       hash: md5
-      md5: efd35c102e21e44c93d5a37a51ab03c0
+      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
       size: 217088
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
       hash: md5
-      md5: efd35c102e21e44c93d5a37a51ab03c0
+      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
       size: 217088
     outs:
     - path: conf/model/best.yaml
       hash: md5
-      md5: d4779834afe3c016e50c19bef9042a57
-      size: 673
+      md5: d71f5f9733dc8ebf1abeeecb0dd008c7
+      size: 669
   attack_search:
     cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db
       ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
@@ -325,10 +325,22 @@ stages:
       size: 1568
     - path: model.db
       hash: md5
-      md5: efd35c102e21e44c93d5a37a51ab03c0
+      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
       size: 217088
     outs:
     - path: attack.db
       hash: md5
-      md5: b90202724a0b485252b7b942aa461c5f
+      md5: 396dc92fd1118aba2df1965609dd08e5
       size: 110592
+  find_best_attack:
+    cmd: python -m deckard.layers.find_best attack.yaml
+    deps:
+    - path: attack.db
+      hash: md5
+      md5: 396dc92fd1118aba2df1965609dd08e5
+      size: 110592
+    outs:
+    - path: conf/attack/best.yaml
+      hash: md5
+      md5: adb93abede02406a812cf83fbb2bb50b
+      size: 2051

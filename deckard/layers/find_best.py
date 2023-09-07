@@ -4,8 +4,7 @@ from pathlib import Path
 from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
 import yaml
-from ..base.utils import flatten_dict
-
+from ..base.utils import flatten_dict, unflatten_dict
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +28,18 @@ def find_optuna_best(
     df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
     if study_csv is not None:
         df.to_csv(study_csv)
-    best_params = flatten_dict(study.best_params)
+    params = flatten_dict(study.best_params)
+    params = unflatten_dict(params)
+    best_params = {}
+    if study_name in params:
+        best_params[study_name] = params[study_name]
+    elif f"+{study_name}" in params:
+        best_params[study_name] = params[f"+{study_name}"]
+    elif f"++{study_name}" in params:
+        best_params[study_name] = params[f"++{study_name}"]
+    else:
+        raise ValueError(f"Study name {study_name} not found in best params.")
+    best_params = flatten_dict(best_params)
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
