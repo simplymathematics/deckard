@@ -75,6 +75,12 @@ class GCP_Config:
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)
+        if output.returncode == 1:
+            logger.error("Error installing kubectl. Trying with apt")
+            command = "sudo apt-get install kubectl"
+            logger.info(f"Running command: {command}")
+            command = command.split(" ")
+            output = subprocess.run(command)
         logger.info(f"{output}")
         return output
 

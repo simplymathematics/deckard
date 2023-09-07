@@ -7,7 +7,7 @@ spec:
   - name: deckard
     image: ghcr.io/simplymathematics/deckard:main
     imagePullPolicy: Always
-    workingDir: /deckard/examples/sklearn
+    workingDir: /deckard/examples/pytorch
     args: ["python", "-m", "dvc", "repro"]
     resources:
       limits:
