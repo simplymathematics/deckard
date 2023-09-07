@@ -70,6 +70,7 @@ stages:
             C: 1.0
             _target_: deckard.base.model.ModelInitializer
             kernel: rbf
+            max_iter: 100
             name: sklearn.svm.SVC
             probability: true
             random_state: 0
@@ -91,12 +92,12 @@ stages:
       size: 185102
     - path: output/models/model.pkl
       hash: md5
-      md5: d25bc188783294346b2d35e202ac5ad5
-      size: 15368
+      md5: 8f9bb89ea877a37e005fb9d12d6538a0
+      size: 15185
     - path: output/reports/train/default/score_dict.json
       hash: md5
-      md5: 18a997a60fafeaa72e24a09efefef4cc
-      size: 347
+      md5: 110eccb7dbf05b7c31f7ab2e423b827c
+      size: 349
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
@@ -106,8 +107,8 @@ stages:
       size: 185102
     - path: output/models/model.pkl
       hash: md5
-      md5: 997a5fcff8c4986cd196d31194b1e22a
-      size: 15402
+      md5: 27225f126e831ab39e47b6b9386ab36b
+      size: 15219
     params:
       params.yaml:
         attack:
@@ -158,7 +159,7 @@ stages:
                 C: 1.0
                 _target_: deckard.base.model.ModelInitializer
                 kernel: rbf
-                max_iter: -1
+                max_iter: 100
                 name: sklearn.svm.SVC
                 probability: true
                 random_state: 0
@@ -192,7 +193,7 @@ stages:
               C: 1.0
               _target_: deckard.base.model.ModelInitializer
               kernel: rbf
-              max_iter: -1
+              max_iter: 100
               name: sklearn.svm.SVC
               probability: true
               random_state: 0
@@ -263,7 +264,7 @@ stages:
             C: 1.0
             _target_: deckard.base.model.ModelInitializer
             kernel: rbf
-            max_iter: -1
+            max_iter: 100
             name: sklearn.svm.SVC
             probability: true
             random_state: 0
@@ -281,8 +282,8 @@ stages:
     outs:
     - path: output/reports/attack/default/score_dict.json
       hash: md5
-      md5: e8fea4f241658608b5ebc8a8cb1375ce
-      size: 487
+      md5: cc04fa9f6331853dbc29daa7bcaee11c
+      size: 488
   model_search:
     cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db
       ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
