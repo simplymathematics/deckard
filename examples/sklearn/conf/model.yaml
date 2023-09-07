@@ -20,11 +20,6 @@ hydra:
     storage: sqlite:///model.db
     n_jobs: 1
     params:
-      data.generate.n_features : 20
-      data.sample.train_size : 1000
-      data.sample.test_size : 100
-      data.sample.random_state : 0
-      data.sample.stratify : true
       model.init.C : choice(.00001, .0001, .001, .01, .1, 1, 10, 100, 1000, 10000)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
