@@ -91,7 +91,13 @@ class GCP_Config:
 
     def create_node_pool(self):
         logger.info(f"Creating node pool {self.cluster_name} in region {self.region}")
-        command = f"gcloud container node-pools create {self.cluster_name} --accelerator type={self.gpu_type},count={self.gpu_count},gpu-driver-version={self.gpu_driver_version} --region {self.region} --cluster {self.cluster_name} --machine-type {self.machine_type} --num-nodes {self.num_nodes} --min-nodes {self.min_nodes} --max-nodes {self.max_nodes}"
+        if self.gpu_type is not None:
+            assert (
+                self.gpu_count > 0
+            ), f"Please specify a valid GPU count. Current value: {self.gpu_count}"
+            command = f"gcloud container node-pools create {self.cluster_name} --accelerator type={self.gpu_type},count={self.gpu_count},gpu-driver-version={self.gpu_driver_version} --region {self.region} --cluster {self.cluster_name} --machine-type {self.machine_type} --num-nodes {self.num_nodes} --min-nodes {self.min_nodes} --max-nodes {self.max_nodes}"
+        else:
+            command = f"gcloud container node-pools create {self.cluster_name} --region {self.region} --cluster {self.cluster_name} --machine-type {self.machine_type} --num-nodes {self.num_nodes} --min-nodes {self.min_nodes} --max-nodes {self.max_nodes}"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)

@@ -19,7 +19,6 @@ attack:
         with_std: true
   init:
     _target_: deckard.base.attack.AttackInitializer
-    batch_size: 100
     model:
       _target_: deckard.base.model.Model
       art:

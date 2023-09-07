@@ -4,7 +4,7 @@ from pathlib import Path
 from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
 import yaml
-from ..base.utils import flatten_dict
+from ..base.utils import flatten_dict, unflatten_dict
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,23 @@ def find_optuna_best(
     df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
     if study_csv is not None:
         df.to_csv(study_csv)
-    best_params = flatten_dict(study.best_params)
+    params = flatten_dict(study.best_params)
+    params = unflatten_dict(params)
+    best_params = {}
+    if study_name in params:
+        best_params[study_name] = params[study_name]
+    elif f"+{study_name}" in params:
+        best_params[study_name] = params[f"+{study_name}"]
+    elif f"++{study_name}" in params:
+        best_params[study_name] = params[f"++{study_name}"]
+    else:
+        raise ValueError(f"Study name {study_name} not found in best params.")
+    best_params = flatten_dict(best_params)
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
-        overrides.append(f"++{key}={value}")
+        if not key.startswith("+"):
+            overrides.append(f"++{key}={value}")
     with initialize_config_dir(config_dir=config_folder, version_base="1.3"):
         cfg = compose(config_name=config_name, overrides=overrides)
         cfg = OmegaConf.to_container(cfg, resolve=True)
@@ -48,6 +60,7 @@ def find_optuna_best(
                 params_file = Path(config_folder, f"best_{study_name}.yaml")
             else:
                 params_file = Path(config_folder, f"best_{study_name}.yaml")
+        logger.info(f"Saving best params to {params_file}")
         with open(params_file, "w") as f:
             yaml.dump(params, f)
     return params

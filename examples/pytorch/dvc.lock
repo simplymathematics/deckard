@@ -150,7 +150,6 @@ stages:
                 with_std: true
           init:
             _target_: deckard.base.attack.AttackInitializer
-            batch_size: 100
             model:
               _target_: deckard.base.model.Model
               art:
@@ -345,16 +344,19 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 7b734a30fe436fd122186fe8cb6ae959
+      md5: 9504b7f1972384fc353811f6143e9476
       size: 313766
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 7c7d47e99cdfebb48f888a961f4b9c30
+      size: 21629
     - path: output/reports/attack/default/adv_predictions.json
       md5: 8bfac7d8e89bff0629dffa3e1a3c996f
       size: 21748
     - path: output/reports/attack/default/params.yaml
-      md5: daf26103182da19d13d5b73113c5688c
-      size: 4956
+      md5: 66a5664fcf522558c2aa80366bc702af
+      size: 4937
     - path: output/reports/attack/default/score_dict.json
-      md5: 9bd42e8bf85131beabb023c7983ae34e
+      md5: 86d6e80f6fa1a9a392417d74d7340426
       size: 542
   models:
     cmd: bash models.sh 

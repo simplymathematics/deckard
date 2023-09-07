@@ -5,6 +5,19 @@ The following process requires to have enough qouta in GCP for CPUs and GPUs and
 ## Setup the GKE + GPU
 
 0- In order to setup the GKE (Google Kubernetes Engine), we need to enable require apis. Follow [these intsructions to enable them](https://cloud.google.com/endpoints/docs/openapi/enable-api).
+## Install gcloud on your local machine
+
+First you need to install `gcloud-cli`. In order to setup the GKE (Google Kubernetes Engine), we need to enable require apis. Follow [these intsructions to enable them](https://cloud.google.com/endpoints/docs/openapi/enable-api).
+[Source](https://cloud.google.com/sdk/docs/install)
+```
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+sudo apt-get update && sudo apt-get install google-cloud-cli
+```
+
+
 
 
 1-We then create the cluster called `k8s-cluster`. This cluster will be installed in `europe-west4` in GCP regions.
@@ -113,7 +126,7 @@ gcloud compute instances create filestore \
 
 In the above command, you simply replace you public key and your username to have passwordless SSH to the VM.
 
-Before sshing to the created instance, simply get the [`NFS mount point` from the GCP console](https://console.cloud.google.com/filestore/instances). The `mount point` is "`Filestore instance IP address`:`Filestore instance File share name`", for instance: `10.178.118.130:/vol1`.
+Before sshing to the created instance, simply get the [`NFS mount point` from the GCP console](https://console.cloud.google.com/filestore/instances). The `mount point` is "`Filestore instance IP address`:`Filestore instance File share name`", for instance: `<your ip>:/vol1`.
 
 After it has been created, run the `gcloud compute instances list` command to retrieve the external ip of the created instance `filestore`. Then ssh to the machine and mount the volume by running the followings:
 
