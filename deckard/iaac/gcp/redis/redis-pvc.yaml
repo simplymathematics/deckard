@@ -1,0 +1,11 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: redis-sc
+  resources:
+    requests:
+      storage: 256Gi
