@@ -62,7 +62,7 @@ class GCP_Config:
         logger.info(
             f"Creating cluster {self.cluster_name} in region {self.region} with {self.num_nodes} nodes",
         )
-        command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade --addons=GcpFilestoreCsiDriver"
+        command = f"gcloud container clusters create {self.cluster_name}  --num-nodes {self.num_nodes} --no-enable-autoupgrade --addons=GcpFilestoreCsiDriver"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)
@@ -88,7 +88,7 @@ class GCP_Config:
         logger.info(
             f"Retrieving credentials for cluster {self.cluster_name} in region {self.region}",
         )
-        command = "gcloud container clusters get-credentials {self.cluster_name} --region {self.region}"
+        command = f"gcloud container clusters get-credentials {self.cluster_name}  "
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)
@@ -106,9 +106,9 @@ class GCP_Config:
             command = f"gcloud container node-pools create {self.cluster_name} --region {self.region} --cluster {self.cluster_name} --machine-type {self.machine_type} --num-nodes {self.num_nodes} --min-nodes {self.min_nodes} --max-nodes {self.max_nodes}"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
-        output = subprocess.run(command)
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info(f"{output}")
-        return output
+        return output.stdout
 
     def create_deployment(self):
         logger.info(f"Creating deployment {self.cluster_name} in region {self.region}")
@@ -148,50 +148,16 @@ class GCP_Config:
         logger.info(
             f"Preparing access values in the shared volumee {self.cluster_name} in region {self.region}",
         )
-        # See if filestore exists
-        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
-        command = command.split(" ")
-        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if output.returncode == 0:
-            pass
-        else:
-            command = f"gcloud compute instances create filestore --async --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet"
-            logger.info(f"Running command: {command}")
-            command = command.split(" ")
-            output = subprocess.run(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            logger.info(f"{output}")
-        return output
-
-    def find_ip_of_filestore(self):
-        logger.info(
-            f"Finding the IP address of the filestore {self.cluster_name} in region {self.region}",
-        )
-        command = 'gcloud compute instances list --filter="name=filestore" --format="value(EXTERNAL_IP)"'
+        command = f"gcloud compute instances create filestore --async --image-family={self.image_family} --image-project={self.image_project} --machine-type={self.machine_type} --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring --subnet=default --quiet"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
-        ip_output = subprocess.run(command)
-        logger.info(f"{ip_output}")
-        return ip_output
-
-    def mount_filestore(self, ip):
-        # TODO: Switch the python pathlib library
-        logger.info(
-            f"Mounting the filestore {self.cluster_name} in region {self.region}",
+        output = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        Path(self.mount_directory).mkdir(parents=True, exist_ok=True, mode=0o770)
-        command = f"sudo mount -o rw,intr {ip}:/vol1 {self.mount_directory}"
-        logger.info(f"Running command: {command}")
-        command = command.split(" ")
-        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if output.returncode != 0:
-            raise RuntimeError(f"Error mounting filestore: {output.stderr}")
         logger.info(f"{output}")
-        return output
-
+        return output.stdout
     def __call__(self):
         self.create_cluster()
         self.install_kubectl()
@@ -201,5 +167,4 @@ class GCP_Config:
         self.create_persistent_volume_claim()
         self.deploy_pod()
         self.prepare_access_values()
-        ip_addr = self.find_ip_of_filestore()
-        return ip_addr
+        return None

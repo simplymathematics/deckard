@@ -20,7 +20,4 @@ if __name__ == "__main__":
         params = yaml.load(f, Loader=yaml.FullLoader)
     gcp = GCP_Config(**params)
     logging.basicConfig(level=args.verbosity)
-    ip_addr = gcp()
-    logger.info(f"IP address of the filestore: {ip_addr}")
-    command = f"sudo mount -o rw,intr {ip_addr}:/vol1 <mount_directory>"
-    logger.info(f"Run command: {command} to mount the filestore.")
+    assert gcp() == None, "Error creating cluster"
