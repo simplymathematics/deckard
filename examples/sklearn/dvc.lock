@@ -295,22 +295,40 @@ stages:
       size: 705
     - path: output/reports/attack/default/score_dict.json
       hash: md5
-      md5: a62fe1c9f76a4171c1772410f9a3f456
-      size: 487
+      md5: cc04fa9f6331853dbc29daa7bcaee11c
+      size: 488
     outs:
     - path: model.db
       hash: md5
-      md5: 06f345df85eb278681717365e9bc2f16
-      size: 163840
+      md5: efd35c102e21e44c93d5a37a51ab03c0
+      size: 217088
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
       hash: md5
-      md5: 06f345df85eb278681717365e9bc2f16
-      size: 163840
+      md5: efd35c102e21e44c93d5a37a51ab03c0
+      size: 217088
     outs:
     - path: conf/model/best.yaml
       hash: md5
-      md5: c59826147251b919c00adadee514f74f
-      size: 657
+      md5: d4779834afe3c016e50c19bef9042a57
+      size: 673
+  attack_search:
+    cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db
+      ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
+      ++attack.init.max_iter=10  --multirun --config-name attack.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: b5d0850e20fa8d2fb2bd47c8949ae6a6
+      size: 1568
+    - path: model.db
+      hash: md5
+      md5: efd35c102e21e44c93d5a37a51ab03c0
+      size: 217088
+    outs:
+    - path: attack.db
+      hash: md5
+      md5: b90202724a0b485252b7b942aa461c5f
+      size: 110592

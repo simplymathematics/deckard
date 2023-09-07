@@ -49,6 +49,7 @@ def find_optuna_best(
                 params_file = Path(config_folder, f"best_{study_name}.yaml")
             else:
                 params_file = Path(config_folder, f"best_{study_name}.yaml")
+        logger.info(f"Saving best params to {params_file}")
         with open(params_file, "w") as f:
             yaml.dump(params, f)
     return params
