@@ -33,7 +33,8 @@ def find_optuna_best(
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
-        overrides.append(f"++{key}={value}")
+        if not key.startswith("+"):
+            overrides.append(f"++{key}={value}")
     with initialize_config_dir(config_dir=config_folder, version_base="1.3"):
         cfg = compose(config_name=config_name, overrides=overrides)
         cfg = OmegaConf.to_container(cfg, resolve=True)

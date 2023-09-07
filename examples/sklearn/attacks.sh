@@ -1,7 +1,7 @@
 
 # break 
 # PGD
-bash models.sh ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent ++attack.init.norm=1,2,inf ++attack.init.eps_step=.001,.01,.1,.3,.5,1 ++attack.init.batch_size=100 ++attack.init.eps=.001,.01,.1,.3,.5,1, $@
+bash models.sh ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent ++attack.init.norm=1,2,inf ++attack.init.eps_step=.001,.01,.1,.3,.5,1 ++attack.init.batch_size=100 ++attack.init.eps=.001,.01,.1,.3,.5,1 $@
 
 # # Carlini L0
 # bash models.sh ++attack.init.name=art.attacks.evasion.CarliniL0Method ++attack.init.confidence=1,4,16,64,256 ++attack.init.confidence=1,4,16,64,256 ++attack.init.batch_size=100 $@
