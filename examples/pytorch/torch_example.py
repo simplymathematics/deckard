@@ -1,6 +1,8 @@
 import torch.nn as nn
 from torchvision import models
 
+from torchvision.models import resnet18
+
 __all__ = [
     "ResNet18",
     "ResNet50",

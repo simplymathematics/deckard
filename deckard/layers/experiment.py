@@ -103,7 +103,6 @@ def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo
         results[id_] = score
     return results
 
-
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     dvc_parser = argparse.ArgumentParser()

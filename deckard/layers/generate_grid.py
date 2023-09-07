@@ -10,14 +10,12 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-
 def find_configs_in_folder(conf_dir, regex):
     configs = []
     for path in Path(conf_dir).rglob(regex):
         configs.append(path)
     logger.info(f"Found {len(configs)} configs in {conf_dir}")
     return configs
-
 
 def find_config_folders(conf_dir):
     config_folders = []
