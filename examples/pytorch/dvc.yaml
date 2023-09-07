@@ -37,9 +37,9 @@ stages:
         ##############################################################################
   attacks:
     foreach:
-      - ResNet18
-      - ResNet34
-      - ResNet50
+      # - ResNet18
+      # - ResNet34
+      # - ResNet50
       - ResNet101
       - ResNet152
     do:
@@ -57,9 +57,9 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      - ResNet18.db
-      - ResNet34.db
-      - ResNet50.db
+      # - ResNet18.db
+      # - ResNet34.db
+      # - ResNet50.db
       - ResNet101.db
       - ResNet152.db
       outs:
@@ -68,9 +68,9 @@ stages:
     cmd : python plots.py --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
-      - ResNet18.db
-      - ResNet34.db
-      - ResNet50.db
+      # - ResNet18.db
+      # - ResNet34.db
+      # - ResNet50.db
       - ResNet101.db
       - ResNet152.db
     outs:

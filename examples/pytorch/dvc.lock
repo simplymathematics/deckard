@@ -344,20 +344,17 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 9504b7f1972384fc353811f6143e9476
+      md5: b1497fb3f7d861a2f7d60409a87a56e2
       size: 313766
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 7c7d47e99cdfebb48f888a961f4b9c30
-      size: 21629
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 8bfac7d8e89bff0629dffa3e1a3c996f
-      size: 21748
+      md5: 1005bc23be3cdadb2ff29385db954c62
+      size: 21609
     - path: output/reports/attack/default/params.yaml
       md5: 66a5664fcf522558c2aa80366bc702af
       size: 4937
     - path: output/reports/attack/default/score_dict.json
-      md5: 86d6e80f6fa1a9a392417d74d7340426
-      size: 542
+      md5: 7bf8e030eed14747618bd0526f9ce0ed
+      size: 535
   models:
     cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
