@@ -1,18 +1,20 @@
 import os
 import subprocess
 import logging
-import argparse
 from dataclasses import dataclass
 from pathlib import Path
-import yaml
+
+# import yaml
 
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["GCP_Config"]
+
 logging.basicConfig(level=logging.INFO)
 secret_file = os.environ.get("GCP_SECRET_FILE")
 assert secret_file is not None, "Please set the GCP_SECRET_FILE environment variable"
-secret_file = Path(secret_file).resolve().as_posix()
+secret_file = Path(secret_file).resolve()
 project_name = os.environ.get("GCP_PROJECT_NAME")
 assert project_name is not None, "Please set the GCP_PROJECT_NAME environment variable"
 assert Path(secret_file).exists(), f"File {secret_file} does not exist"
@@ -60,7 +62,7 @@ class GCP_Config:
         logger.info(
             f"Creating cluster {self.cluster_name} in region {self.region} with {self.num_nodes} nodes",
         )
-        command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade"
+        command = f"gcloud container clusters create {self.cluster_name} --region {self.region} --num-nodes {self.num_nodes} --no-enable-autoupgrade --addons=GcpFilestoreCsiDriver"
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(command)
@@ -188,19 +190,4 @@ class GCP_Config:
         self.deploy_pod()
         self.prepare_access_values()
         ip_addr = self.find_ip_of_filestore()
-        self.mount_filestore(ip_addr)
-
-
-if __name__ == "__main__":
-    gcp_parser = argparse.ArgumentParser()
-    gcp_parser.add_argument("--verbosity", type=str, default="INFO")
-    gcp_parser.add_argument("--config_dir", type=str, default="conf")
-    gcp_parser.add_argument("--config_file", type=str, default="default.yaml")
-    gcp_parser.add_argument("--workdir", type=str, default=".")
-    args = gcp_parser.parse_args()
-    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
-    config_file = Path(config_dir, args.config_file).resolve().as_posix()
-    with open(config_file, "r") as f:
-        params = yaml.load(f, Loader=yaml.FullLoader)
-    gcp = GCP_Config(**params)
-    gcp()
+        return ip_addr

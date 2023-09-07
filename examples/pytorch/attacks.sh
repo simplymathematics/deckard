@@ -28,7 +28,7 @@ bash models.sh attack=hsj ++attack.init.name=art.attacks.evasion.ThresholdAttack
 # Carlini L0 Method
 bash models.sh attack=hsj ++attack.init.name=art.attacks.evasion.CarliniL0Method ++attack.init.batch_size=1024 ++attack.init.max_iter=10 ++attack.init.confidence=.1,.9,.99 ++stage=cw0 ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize $@
 
-# Carlini L2 Method
+# # Carlini L2 Method
 bash models.sh attack=hsj ++attack.init.name=art.attacks.evasion.CarliniL2Method ++attack.init.batch_size=1024 ++attack.init.max_iter=10 ++attack.init.confidence=.1,.9,.99 ++stage=cw2 ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize $@
 
 # Carlini LInf Method
