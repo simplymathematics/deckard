@@ -91,4 +91,3 @@ stages:
     - model.db
     outs:
     - attack.db
-

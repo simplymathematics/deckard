@@ -158,6 +158,7 @@ class GCP_Config:
         )
         logger.info(f"{output}")
         return output.stdout
+
     def __call__(self):
         self.create_cluster()
         self.install_kubectl()

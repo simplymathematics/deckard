@@ -61,7 +61,7 @@ def get_files(
     id_ = my_hash(cfg)
     cfg["files"]["_target_"] = "deckard.base.files.FileConfig"
     id_ = my_hash(cfg)
-    cfg['name'] = id_
+    cfg["name"] = id_
     cfg["files"]["name"] = id_
     if stage is not None:
         cfg["files"]["stage"] = stage
