@@ -280,10 +280,14 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
+    - path: output/reports/attack/default/adv_probabilities.json
+      hash: md5
+      md5: 4456666e66f153b50572072e83be3e47
+      size: 425
     - path: output/reports/attack/default/score_dict.json
       hash: md5
-      md5: 1999961946d148fa619652039a32df66
-      size: 481
+      md5: 4b858a5872bfe2aa828a0f064c55f4ea
+      size: 486
   model_search:
     cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db
       ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
@@ -293,27 +297,27 @@ stages:
       hash: md5
       md5: b20bba54353be244dc917518b03ef007
       size: 705
-    - path: output/reports/attack/default/score_dict.json
+    - path: output/reports/attack/default/adv_probabilities.json
       hash: md5
-      md5: 1999961946d148fa619652039a32df66
-      size: 481
+      md5: 4456666e66f153b50572072e83be3e47
+      size: 425
     outs:
     - path: model.db
       hash: md5
-      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
+      md5: c354d3816bc0526c0e94d9fd0a537e72
       size: 217088
   find_best_model:
     cmd: python -m deckard.layers.find_best model.yaml
     deps:
     - path: model.db
       hash: md5
-      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
+      md5: c354d3816bc0526c0e94d9fd0a537e72
       size: 217088
     outs:
     - path: conf/model/best.yaml
       hash: md5
-      md5: d71f5f9733dc8ebf1abeeecb0dd008c7
-      size: 669
+      md5: 9f9bd5f3433134a0bf966456a0d150aa
+      size: 674
   attack_search:
     cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db
       ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
@@ -325,22 +329,22 @@ stages:
       size: 1568
     - path: model.db
       hash: md5
-      md5: 11b0a304601d5d3bb04b2e353f3ccbe4
+      md5: c354d3816bc0526c0e94d9fd0a537e72
       size: 217088
     outs:
     - path: attack.db
       hash: md5
-      md5: 396dc92fd1118aba2df1965609dd08e5
+      md5: dcb34e1932e7b4b7b50dff50ccc582b5
       size: 110592
   find_best_attack:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
     - path: attack.db
       hash: md5
-      md5: 396dc92fd1118aba2df1965609dd08e5
+      md5: dcb34e1932e7b4b7b50dff50ccc582b5
       size: 110592
     outs:
     - path: conf/attack/best.yaml
       hash: md5
-      md5: adb93abede02406a812cf83fbb2bb50b
-      size: 2051
+      md5: e9964377a012776ffccaba4b3e5028fc
+      size: 2053
