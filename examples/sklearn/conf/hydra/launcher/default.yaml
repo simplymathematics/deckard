@@ -1,0 +1,10 @@
+_target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+n_jobs: 6
+prefer : processes
+verbose: 1
+timeout: null
+pre_dispatch: n_jobs
+batch_size: auto
+temp_folder: /tmp/deckard
+max_nbytes: 100000
+mmap_mode: r
