@@ -1,0 +1,38 @@
+defaults:
+    - _self_
+    - data: torch_cifar
+    - model: torch_cifar
+    - attack: default
+    - files: default
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : random
+    - override hydra/launcher : joblib
+_target_ : deckard.base.experiment.Experiment
+optimizers : accuracy
+stage : null
+hydra:
+  run:
+    dir : "./${files.directory}"
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.RandomSampler
+    direction: maximize
+    study_name: model
+    storage: sqlite:///model.db
+    n_jobs: 1
+    n_trials: 80
+    params:
+      ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+      ++model.art.initialize.optimizer.lr: choice(10000, 100, 10, 1, 0.1, 0.01, 0.001, 0.000001)
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 64
+    prefer : processes
+    verbose: 1
+    timeout: 3600
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r

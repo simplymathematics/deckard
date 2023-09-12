@@ -67,9 +67,9 @@ def line_plot(
     plt.gcf().clear()
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue, style=control)
     graph.legend(**legend)
-    if control is not None:
-        assert control_color is not None, "Please specify a control color"
-        graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
+    # if control is not None:
+    #     assert control_color is not None, "Please specify a control color"
+    #     graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
@@ -125,17 +125,17 @@ def calculate_failure_rate(data):
         subset=[
             "accuracy",
             "adv_accuracy",
-            "train_time_per_sample",
-            "adv_fit_time_per_sample",
-            "predict_time_per_sample",
+            "train_time",
+            "adv_fit_time",
+            "predict_time",
         ],
         inplace=True,
     )
     data.loc[:, "failure_rate"] = (
-        (1 - data["accuracy"]) * 100 / data["predict_time_per_sample"]
+        (1 - data["accuracy"]) * 100 / data["predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data["adv_accuracy"]) * 100 / data["adv_fit_time_per_sample"]
+        (1 - data["adv_accuracy"]) * 100 / data["adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
         data["train_time_per_sample"] / data["failure_rate"]
@@ -202,8 +202,12 @@ if __name__ == "__main__":
     data = calculate_failure_rate(data)
     if "Unnamed: 0" in data.columns:
         data.drop("Unnamed: 0", axis=1, inplace=True)
-
-    FOLDER = Path(Path(), args.path)
+    if Path(args.path).absolute().exists():
+        logger.info("Absolute path specified")
+        FOLDER = Path(args.path).absolute()
+    else:
+        logger.info("Relative path specified")
+        FOLDER = Path(Path(), args.path)
     FOLDER.mkdir(parents=True, exist_ok=True)
     data.to_csv(FOLDER / args.output)
     IMAGE_FILETYPE = (
