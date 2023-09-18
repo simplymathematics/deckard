@@ -137,53 +137,49 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
     return df
 
 
-def format_control_parameter(data, control_dict, min_max=True):
-    new_data = pd.DataFrame()
+def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
-    for _, row in tqdm(data.iterrows()):
-        if hasattr(row, "defence_name"):
-            if row.defence_name in ["Control", None, "None", "none", "null", np.nan]:
-                row["def_param"] = np.nan
-                row["def_value"] = np.nan
+    if hasattr(data, "def_gen"):
+        defences = data.def_gen.unique()
+    else:
+        defences = []
+    if hasattr(data, "atk_gen"):
+        attacks = data.atk_gen.unique()
+    else:
+        attacks = []
+    for defence in defences:
+        if defence in ["Control", None, "None", "none", "null", np.nan]:
+            data.loc[data.def_gen == defence, "def_param"] = np.nan
+            data.loc[data.def_gen == defence, "def_value"] = np.nan
+        elif defence in control_dict:
+            param = control_dict[defence]
+            data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
+            if param in data.columns:
+                value = data[data.def_gen == defence][param]
             else:
-                param = control_dict[row.defence_name]
-                row["def_param"] = param.split(".")[-1]
-                value = row[param]
-                row["def_value"] = value
-        if hasattr(row, "attack"):
-            if row.attack_name in ["Control", None, "None", "none", "null", np.nan]:
-                row["atk_param"] = np.nan
-                row["atk_value"] = np.nan
+                value = np.nan
+            data.loc[data.def_gen == defence, "def_value"] = value
+        else:
+            logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
+            data = data[data.def_gen != defence]
+
+    for attack in attacks:
+        if attack in ["Control", None, "None", "none", "null", np.nan]:
+            data.loc[data.atk_gen == attack, "atk_param"] = np.nan
+            data.loc[data.atk_gen == attack, "atk_value"] = np.nan
+        elif attack in control_dict:
+            param = control_dict[attack]
+            data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
+            if param in data.columns:
+                value = data[data.atk_gen == attack][param]
             else:
-                param = control_dict[row.attack_name]
-                row["atk_param"] = param.split(".")[-1]
-                value = row[param]
-                row["atk_value"] = value
-        new_data = pd.concat([new_data, row], axis=1)
-    data = new_data.T
-    del new_data
-
-    if min_max is True:
-        if hasattr(data, "def_gen"):
-            defs = data.def_gen.unique()
+                value = np.nan
+            data.loc[data.atk_gen == attack, "atk_value"] = value
         else:
-            defs = []
-        if hasattr(data, "atk_gen"):
-            atks = data.atk_gen.unique()
-        else:
-            atks = []
-        # Min-max scaling of control parameters
-        for def_ in defs:
-            max_ = data[data.def_gen == def_].def_value.max()
-            min_ = data[data.def_gen == def_].def_value.min()
-            scaled_value = (data[data.def_gen == def_].def_value - min_) / (max_ - min_)
-            data.loc[data.def_gen == def_, "def_value"] = scaled_value
+            logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
+            data = data[data.atk_gen != attack]
 
-        for atk in atks:
-            max_ = data[data.atk_gen == atk].atk_value.max()
-            min_ = data[data.atk_gen == atk].atk_value.min()
-            scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
-            data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
+
     return data
 
 
@@ -212,7 +208,7 @@ def clean_data_for_plotting(
     data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = format_control_parameter(data, control_dict, min_max=True)
+    data = format_control_parameter(data, control_dict)
     logger.info(f"Saving data to {Path(folder) / file}")
     data.to_csv(Path(folder) / "data.csv")
     return data

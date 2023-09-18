@@ -13,7 +13,7 @@ optimizers : accuracy
 stage : null
 hydra:
   run:
-    dir : "./${files.directory}"
+    dir : ./${files.directory}
   sweeper:
     sampler:
       _target_: optuna.samplers.RandomSampler
@@ -21,13 +21,13 @@ hydra:
     study_name: model
     storage: sqlite:///model.db
     n_jobs: 1
-    n_trials: 80
+    n_trials: 100
     params:
       ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
       ++model.art.initialize.optimizer.lr: choice(10000, 100, 10, 1, 0.1, 0.01, 0.001, 0.000001)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 64
+    n_jobs: 10
     prefer : processes
     verbose: 1
     timeout: 3600
