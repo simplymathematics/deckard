@@ -83,7 +83,7 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default and isinstance(default[key], dict) and value is not None:
+        if key in default and isinstance(value, dict) and value is not None:
             default[key] = merge_params(default[key], value)
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))

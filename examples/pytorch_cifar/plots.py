@@ -61,8 +61,7 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    control=None,
-    control_color=None,
+    **kwargs,
 ):
     plt.gcf().clear()
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue)
@@ -124,19 +123,19 @@ def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     data.loc[:, "failure_rate"] = (
-        (1 - data["accuracy"]) * 100 / data["predict_time"]
+        (1 - data.loc[:, "accuracy"]) * 100 / data.loc[:,"predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data["adv_accuracy"]) * 100 / data["adv_fit_time"]
+        (1 - data.loc[:,"adv_accuracy"]) * 100 / data.loc[:,"adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
-        data["train_time"] / data["failure_rate"]
+        data.loc[:,"train_time"] / data.loc[:,"failure_rate"]
     )
     data.loc[:, "training_time_per_adv_failure"] = (
-        data["train_time"] / data["adv_failure_rate"]
+        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
     )
     data.loc[:, "adv_training_time_per_failure"] = (
-        data["train_time"] / data["adv_failure_rate"]
+        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
     )
     return data
 
@@ -206,7 +205,6 @@ if __name__ == "__main__":
         help="Path to the config file",
         default="conf/plots.yaml",
     )
-    parser.add_argument("-d", "--drop_these_if_missing", nargs="+", help="Columns to drop", default=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"])
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     # %%
@@ -215,22 +213,18 @@ if __name__ == "__main__":
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     csv_file = args.file
     data = pd.read_csv(csv_file)
-    data = drop_frames_without_results(data, subset=args.drop_these_if_missing)
+    data = drop_frames_without_results(data, subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"])
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
-    # Drop replicated index column if it exists
     if "Unnamed: 0" in data.columns:
         data.drop("Unnamed: 0", axis=1, inplace=True)
-    # Absolute/relative path handling
     if Path(args.path).absolute().exists():
         logger.info("Absolute path specified")
         FOLDER = Path(args.path).absolute()
     else:
         logger.info("Relative path specified")
         FOLDER = Path(Path(), args.path)
-    # Create folder if it does not exist
     FOLDER.mkdir(parents=True, exist_ok=True)
-    # Saves cleaned data to csv
     data.to_csv(FOLDER / args.output)
     IMAGE_FILETYPE = (
         args.plotfiletype
@@ -246,14 +240,14 @@ if __name__ == "__main__":
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    # Catetory plot
+    # %%
     cat_plot_list = big_dict["cat_plot"]
     i = 0
     for dict_ in cat_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = cat_plot(data, **dict_, folder=FOLDER)
-    # Line plot
+    # %%
     line_plot_list = big_dict["line_plot"]
     for dict_ in line_plot_list:
         i += 1
@@ -261,9 +255,7 @@ if __name__ == "__main__":
         locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
 
         # %%
-    # Scatter plot
-    scatter_plot_list = big_dict["scatter_plot"]
-    for dict_ in scatter_plot_list:
-        i += 1
-        logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = scatter_plot(data, **dict_, folder=FOLDER)
+
+    scatter_plot_dict = big_dict["scatter_plot"]
+
+    graph = scatter_plot(data=data, **scatter_plot_dict, folder=FOLDER)

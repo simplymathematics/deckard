@@ -38,9 +38,9 @@ stages:
   attacks:
     foreach:
       - ResNet18
-      - ResNet34
+      # - ResNet34
       - ResNet50
-      - ResNet101
+      # - ResNet101
       - ResNet152
     do:
       cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name default.yaml
@@ -58,9 +58,9 @@ stages:
       deps:
       - ${files.directory}/${files.reports}/${item}/
       - ResNet18.db
-      - ResNet34.db
+      # - ResNet34.db
       - ResNet50.db
-      - ResNet101.db
+      # - ResNet101.db
       - ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
@@ -69,9 +69,9 @@ stages:
     deps:
       - ${files.directory}/${files.reports}/attack.csv
       - ResNet18.db
-      - ResNet34.db
+      # - ResNet34.db
       - ResNet50.db
-      - ResNet101.db
+      # - ResNet101.db
       - ResNet152.db
     outs:
       - ${files.directory}/plots/
