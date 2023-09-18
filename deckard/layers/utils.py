@@ -110,7 +110,7 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
             cfg = compose(config_name=Path(default_file).stem, overrides=overrides)
         except OverrideParseException:
             raise ValueError(f"Failed to parse overrides: {overrides}")
-        cfg = OmegaConf.to_container(cfg, resolve=True)
+        cfg = OmegaConf.to_container(cfg, resolve=False)
         cfg["_target_"] = "deckard.Experiment"
         id_ = str(my_hash(cfg))
         cfg["name"] = id_
