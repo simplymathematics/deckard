@@ -1,8 +1,3 @@
-# %% [markdown]
-# # Dependencies
-
-# %%
-
 import argparse
 import logging
 from pathlib import Path
@@ -207,7 +202,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
-    # %%
     assert Path(
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
@@ -240,22 +234,21 @@ if __name__ == "__main__":
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    # %%
     cat_plot_list = big_dict["cat_plot"]
     i = 0
     for dict_ in cat_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = cat_plot(data, **dict_, folder=FOLDER)
-    # %%
     line_plot_list = big_dict["line_plot"]
     for dict_ in line_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
 
-        # %%
 
-    scatter_plot_dict = big_dict["scatter_plot"]
-
-    graph = scatter_plot(data=data, **scatter_plot_dict, folder=FOLDER)
+    scatter_plot_list = big_dict["scatter_plot"]
+    for dict_ in scatter_plot_list:
+        i += 1
+        logger.info(f"Rendering graph {i}")
+        locals()[f"graph{i}"] = scatter_plot(data, **dict_, folder=FOLDER)
