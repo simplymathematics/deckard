@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
+config_path = os.environ.get(
+        "DECKARD_CONFIG_PATH",
+        str(Path(Path(), "conf").absolute().as_posix()),
+    )
+assert Path(config_path).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
+config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
+assert Path(config_path, config_name).exists(), f"{Path(config_path, config_name).as_posix()} does not exist. Please specify a config path by running `export DECKARD_DEFAULT_CONFIG=<your.file>`"
+
 
 def get_files(
     cfg,
@@ -83,11 +91,11 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default and isinstance(default[key], dict) and value is not None:
+        if key in default and isinstance(value, dict) and len(value) > 0:
             default[key] = merge_params(default[key], value)
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))
-            and value is not None
+            and len(value) > 0
         ):
             default[key] = value
         elif value is None:
@@ -154,10 +162,12 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         assert isinstance(stage, list), f"args.stage is of type {type(stage)}"
         stages = stage
     if params is None:
+        assert Path(path, "params.yaml").exists(), f"{Path(path, 'params.yaml')} does not exist. Please specify params or run `deckard.layers.parse` to generate params from a hydra-formatted config folder."
         with open(Path(path, "params.yaml"), "r") as f:
             default_params = yaml.load(f, Loader=yaml.FullLoader)
         key_list = []
         for stage in stages:
+            assert Path(path, "dvc.yaml").exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
                     "params"
@@ -233,14 +243,6 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
         path = Path.cwd()
     if working_dir is None:
         working_dir = Path.cwd()
-    with open(Path(working_dir, "dvc.yaml"), "r") as f:
-        dvc = yaml.load(f, Loader=yaml.FullLoader)
-    stage_params = {"stages": {stage: {}}}
-    stage_params["stages"][stage] = dvc["stages"][stage]
-    path.mkdir(exist_ok=True, parents=True)
-    with open(path / "dvc.yaml", "w") as f:
-        yaml.dump(stage_params, f, default_flow_style=False)
-    assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
     with open(Path(path, "params.yaml"), "w") as f:
         yaml.dump(params, f, default_flow_style=False)
     assert Path(
@@ -248,11 +250,10 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     ).exists(), f"File {path/'params.yaml'} does not exist."
     return None
 
-
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
     scorer = cfg.pop("optimizers", None)
-    working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
+    working_dir = Path(config_path).parent
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -272,6 +273,7 @@ def optimise(cfg: DictConfig) -> None:
             score = list(scores.values())[0]
         else:
             raise TypeError(f"Expected str or list, got {type(scorer)}")
+        logger.info(f"Score is : {score}")
     except Exception as e:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
@@ -283,16 +285,13 @@ def optimise(cfg: DictConfig) -> None:
             score = 1e10
         else:
             score = -1e10
+        logger.info(f"Score: {score}")
     return score
 
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-    config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
-    )
-    config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
+    
 
     @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
     def hydra_optimise(cfg: DictConfig) -> float:

@@ -94,7 +94,6 @@ ipython_config.py
 *.json
 *.npz
 *.npy
-examples/pytorch/output/models/model.optimizer.pt
 
 
 # PyTorch Model Checkpoints
@@ -117,13 +116,14 @@ examples/pytorch/output/models/model.optimizer.pt
 # env
 env/
 examples/*/multirun/*
-examples/sklearn/example-study.db
-examples/sklearn/output/.hydra/config.yaml
+
 
 *.hydra
 
 # Example output
 examples/*/output/*
+# !examples/*/outputs/**/dvc.yaml
+# !examples/*/outputs/**/params.yaml
 
 # Python egg metadata
 **/*.egg-info/*
