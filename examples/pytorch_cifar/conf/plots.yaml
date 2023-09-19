@@ -147,13 +147,13 @@ line_plot:
   y_scale: 
   ylabel: Adv. Accuracy
 scatter_plot:
+- file: adv_accuracy_vs_train_time.pdf
   x: train_time_per_sample
   y: adv_failure_rate
   hue: model_name
   xlabel: Training Time Per Sample
   ylabel: Adversarial Failure Rate
   title: Adversarial Failure Rate vs Training Time
-  file: adv_failure_rate_vs_train_time.pdf
   y_scale: log
   x_scale: linear
   legend: 

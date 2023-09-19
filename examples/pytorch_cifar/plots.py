@@ -25,14 +25,12 @@ def cat_plot(
     legend_title,
     file,
     folder,
-    hue_order = None,
     rotation=0,
     set={},
     **kwargs,
 ):
     plt.gcf().clear()
-    data = data.sort_values(by=[hue, x, y])
-    graph = sns.catplot(data=data, x=x, y=y, hue=hue, kind=kind, hue_order = hue_order, **kwargs)
+    graph = sns.catplot(data=data, x=x, y=y, hue=hue, kind=kind, **kwargs)
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
@@ -58,12 +56,10 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order = None,
     **kwargs,
 ):
     plt.gcf().clear()
-    data = data.sort_values(by=[hue, x, y])
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order)
+    graph = sns.lineplot(data=data, x=x, y=y, hue=hue)
     graph.legend(**legend)
     # if control is not None:
     #     assert control_color is not None, "Please specify a control color"
@@ -94,16 +90,12 @@ def scatter_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order = None,
 ):
-    # plt.gcf().clear()
-    data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
         data=data,
         x=x,
         y=y,
         hue=hue,
-        hue_order=hue_order,
     )
     graph.set_yscale(y_scale)
     graph.set_xscale(x_scale)

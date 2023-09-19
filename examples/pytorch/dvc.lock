@@ -356,17 +356,17 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 75905e0fd95bddb6a7a77a3fe5a40eae
+      md5: 7cb4b43454f9798ea052552728be5535
       size: 31517
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 705daec1ae02298071d99279c5a1c0cd
-      size: 2154
+      md5: 6fa49c42a6d07052ed155be54c635e49
+      size: 2162
     - path: output/reports/attack/default/params.yaml
       md5: a15accd2ecf7bcbb5ed47d4b6bf7ed97
       size: 5093
     - path: output/reports/attack/default/score_dict.json
-      md5: 2194644ac065c8f54695942174ad6038
-      size: 531
+      md5: 1e826f977a24134fac3fef63a9b95635
+      size: 528
   models:
     cmd: bash models.sh ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
       --config-name grid.yaml
@@ -521,3 +521,37 @@ stages:
     - path: ResNet101.db
       md5: cab812b983a79b91be312bfc55e03acc
       size: 241664
+  attacks@ResNet34:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
+      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet34.db --config-name default.yaml
+    deps:
+    - path: attacks.sh
+      md5: 4c7b931c1ebbd717c18aea456b49342d
+      size: 3092
+    - path: models.sh
+      md5: 6e85b74c043a1411e8322a2901557bfa
+      size: 1445
+    - path: output/reports/attack/default/score_dict.json
+      md5: 1e826f977a24134fac3fef63a9b95635
+      size: 528
+    outs:
+    - path: ResNet34.db
+      md5: 17d709d4603f98e9d305b9a275f85c14
+      size: 1269760
+  attacks@ResNet50:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
+      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet50.db --config-name default.yaml
+    deps:
+    - path: attacks.sh
+      md5: 4c7b931c1ebbd717c18aea456b49342d
+      size: 3092
+    - path: models.sh
+      md5: 6e85b74c043a1411e8322a2901557bfa
+      size: 1445
+    - path: output/reports/attack/default/score_dict.json
+      md5: 1e826f977a24134fac3fef63a9b95635
+      size: 528
+    outs:
+    - path: ResNet50.db
+      md5: 6adb496925240822f58b015a17a0036d
+      size: 143360
