@@ -12,7 +12,7 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
+__all__ = ["write_stage", "parse_stage", "get_files"]
 
 
 def get_files(
