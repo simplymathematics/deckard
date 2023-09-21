@@ -125,7 +125,7 @@ class ArtPipeline:
         pipeline.pop("model", None)
         for stage in pipeline:
             if isinstance(pipeline[stage], DictConfig):
-                pipeline[stage] = OmegaConf.to_container(pipeline[stage])
+                pipeline[stage] = OmegaConf.to_container(pipeline[stage], resolve=True)
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
             else:
@@ -158,7 +158,10 @@ class ArtPipeline:
     def __call__(self, model: object, library: str = None, data=None) -> BaseEstimator:
         if "initialize" in self.pipeline:
             if isinstance(self.pipeline["initialize"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["initialize"])
+                params = OmegaConf.to_container(
+                    self.pipeline["initialize"],
+                    resolve=True,
+                )
                 name = params.pop("name", None)
                 kwargs = params.pop("kwargs", {})
             elif is_dataclass(self.pipeline["initialize"]):
@@ -186,7 +189,10 @@ class ArtPipeline:
         assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
         if "preprocessor" in self.pipeline:
             if isinstance(self.pipeline["preprocessor"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["preprocessor"])
+                params = OmegaConf.to_container(
+                    self.pipeline["preprocessor"],
+                    resolve=True,
+                )
                 name = params.pop("name", None)
                 sub_kwargs = params.pop("kwargs", {})
                 while "kwargs" in sub_kwargs:
@@ -211,7 +217,10 @@ class ArtPipeline:
             kwargs.update({"preprocessing_defences": pre_def})
         if "postprocessor" in self.pipeline:
             if isinstance(self.pipeline["postprocessor"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["postprocessor"])
+                params = OmegaConf.to_container(
+                    self.pipeline["postprocessor"],
+                    resolve=True,
+                )
                 name = params.pop("name", "_target_")
             elif is_dataclass(self.pipeline["postprocessor"]):
                 params = asdict(self.pipeline["postprocessor"])

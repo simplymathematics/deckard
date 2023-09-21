@@ -814,7 +814,7 @@ class Attack:
             )
         else:
             raise NotImplementedError(f"Attack method {self.method} not implemented.")
-        
+
         return result
 
     def __hash__(self):

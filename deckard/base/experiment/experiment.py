@@ -48,7 +48,7 @@ class Experiment:
         if isinstance(data, dict):
             self.data = Data(**data)
         elif isinstance(data, DictConfig):
-            data_dict = OmegaConf.to_container(data)
+            data_dict = OmegaConf.to_container(data, resolve=True)
             data_dict.update({"_target_": "deckard.base.data.Data"})
             self.data = instantiate(data_dict)
         elif isinstance(data, Data):
@@ -61,7 +61,7 @@ class Experiment:
         if isinstance(model, dict):
             self.model = Model(**model)
         elif isinstance(model, DictConfig):
-            model_dict = OmegaConf.to_container(model)
+            model_dict = OmegaConf.to_container(model, resolve=True)
             self.model = Model(**model_dict)
         elif isinstance(model, Model):
             self.model = model
@@ -73,7 +73,7 @@ class Experiment:
         if isinstance(scorers, dict):
             self.scorers = ScorerDict(**scorers)
         elif isinstance(scorers, DictConfig):
-            scorer_dict = OmegaConf.to_container(scorers)
+            scorer_dict = OmegaConf.to_container(scorers, resolve=True)
             self.scorers = ScorerDict(**scorer_dict)
         elif isinstance(scorers, ScorerDict):
             self.scorers = scorers
@@ -85,7 +85,7 @@ class Experiment:
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
-            file_dict = OmegaConf.to_container(files)
+            file_dict = OmegaConf.to_container(files, resolve=True)
             self.files = FileConfig(**file_dict)
         elif isinstance(files, FileConfig):
             self.files = files
@@ -97,7 +97,7 @@ class Experiment:
         elif isinstance(attack, dict):
             self.attack = Attack(**attack)
         elif isinstance(attack, DictConfig):
-            attack_dict = OmegaConf.to_container(attack)
+            attack_dict = OmegaConf.to_container(attack, resolve=True)
             self.attack = Attack(**attack_dict)
         elif isinstance(attack, Attack):
             self.attack = attack

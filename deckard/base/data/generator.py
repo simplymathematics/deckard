@@ -21,10 +21,26 @@ __all__ = [
 ]
 logger = logging.getLogger(__name__)
 
-SKLEARN_DATASETS = ["classification", "regression", "blobs", "moons", "circles", "biclusters"]
+SKLEARN_DATASETS = [
+    "classification",
+    "regression",
+    "blobs",
+    "moons",
+    "circles",
+    "biclusters",
+]
+
+
 @dataclass
 class SklearnDataGenerator:
-    name: Literal["classification", "regression", "blobs", "moons", "circles", "biclusters"] = "classification"
+    name: Literal[
+        "classification",
+        "regression",
+        "blobs",
+        "moons",
+        "circles",
+        "biclusters",
+    ] = "classification"
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
@@ -54,7 +70,10 @@ class SklearnDataGenerator:
     def __hash__(self):
         return int(my_hash(self), 16)
 
+
 TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes"]
+
+
 @dataclass
 class TorchDataGenerator:
     name: Literal["torch_mnist", "torch_cifar10", "torch_diabetes"] = "torch_mnist"
@@ -95,7 +114,10 @@ class TorchDataGenerator:
     def __hash__(self):
         return int(my_hash(self), 16)
 
-KERAS_DATASETS = ["keras_mnist", "keras_cifar10", "mnist", "cifar10", "diabetes"]   
+
+KERAS_DATASETS = ["keras_mnist", "keras_cifar10", "mnist", "cifar10", "diabetes"]
+
+
 @dataclass
 class KerasDataGenerator:
     name: Literal["mnist", "cifar10", "diabetes"] = "mnist"

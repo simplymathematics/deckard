@@ -179,7 +179,6 @@ def format_control_parameter(data, control_dict):
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
 
-
     return data
 
 

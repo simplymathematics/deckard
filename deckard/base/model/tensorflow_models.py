@@ -78,7 +78,7 @@ class TensorflowV2Initializer:
         loss = kwargs.pop("loss", "categorical_crossentropy")
         optimizer = kwargs.pop("optimizer", "adam")
         if isinstance(optimizer, DictConfig):
-            optimizer = OmegaConf.to_container(optimizer)
+            optimizer = OmegaConf.to_container(optimizer, resolve=True)
         if isinstance(optimizer, dict):
             name = optimizer.pop("name")
             params = {**optimizer}
@@ -91,7 +91,7 @@ class TensorflowV2Initializer:
             )
         optimizer = tf.keras.optimizers.get(name, **params)
         if isinstance(loss, DictConfig):
-            loss = OmegaConf.to_container(loss)
+            loss = OmegaConf.to_container(loss, resolve=True)
         if isinstance(loss, dict):
             name = loss.pop("name")
             params = {**loss}

@@ -250,7 +250,7 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 
 def optimise(cfg: DictConfig) -> None:
-    cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
+    cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     scorer = cfg.pop("optimizers", None)
     working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
     stage = cfg.pop("stage", None)
