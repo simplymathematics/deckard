@@ -25,14 +25,16 @@ def cat_plot(
     legend_title,
     file,
     folder,
-    hue_order = None,
+    hue_order=None,
     rotation=0,
     set={},
     **kwargs,
 ):
     plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
-    graph = sns.catplot(data=data, x=x, y=y, hue=hue, kind=kind, hue_order = hue_order, **kwargs)
+    graph = sns.catplot(
+        data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
+    )
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
@@ -58,16 +60,18 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order = None,
+    hue_order=None,
+    control=None,
+    control_color=None,
     **kwargs,
 ):
     plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order)
+    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
     graph.legend(**legend)
-    # if control is not None:
-    #     assert control_color is not None, "Please specify a control color"
-    #     graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
+    if control is not None:
+        assert control_color is not None, "Please specify a control color"
+        graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
@@ -94,7 +98,8 @@ def scatter_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order = None,
+    hue_order=None,
+    **kwargs,
 ):
     # plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
@@ -104,6 +109,7 @@ def scatter_plot(
         y=y,
         hue=hue,
         hue_order=hue_order,
+        **kwargs,
     )
     graph.set_yscale(y_scale)
     graph.set_xscale(x_scale)
@@ -118,29 +124,35 @@ def scatter_plot(
     plt.gcf().clear()
     return graph
 
-def drop_frames_without_results( data, subset = ["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"]):
+
+def drop_frames_without_results(
+    data,
+    subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"],
+):
     data.dropna(axis=0, subset=subset, inplace=True)
     return data
+
 
 def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     data.loc[:, "failure_rate"] = (
-        (1 - data.loc[:, "accuracy"]) * 100 / data.loc[:,"predict_time"]
+        (1 - data.loc[:, "accuracy"]) * 100 / data.loc[:, "predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data.loc[:,"adv_accuracy"]) * 100 / data.loc[:,"adv_fit_time"]
+        (1 - data.loc[:, "adv_accuracy"]) * 100 / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"failure_rate"]
+        data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     )
     data.loc[:, "training_time_per_adv_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
+        data.loc[:, "train_time"] / data.loc[:, "adv_failure_rate"]
     )
     data.loc[:, "adv_training_time_per_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
+        data.loc[:, "train_time"] / data.loc[:, "adv_failure_rate"]
     )
     return data
+
 
 def min_max_scaling(data):
     if "atk_gen" not in data.columns:
@@ -215,7 +227,16 @@ if __name__ == "__main__":
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     csv_file = args.file
     data = pd.read_csv(csv_file)
-    data = drop_frames_without_results(data, subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"])
+    data = drop_frames_without_results(
+        data,
+        subset=[
+            "accuracy",
+            "adv_accuracy",
+            "train_time",
+            "adv_fit_time",
+            "predict_time",
+        ],
+    )
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
@@ -253,7 +274,6 @@ if __name__ == "__main__":
         i += 1
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
-
 
     scatter_plot_list = big_dict["scatter_plot"]
     for dict_ in scatter_plot_list:
