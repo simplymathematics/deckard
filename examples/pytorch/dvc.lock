@@ -356,17 +356,17 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/attacks/attack.pkl
-      md5: 7b415b0d3b17a4925311a7ee5293786e
+      md5: f6933d3d01f97b4f400414bfaf4b72c2
       size: 31517
     - path: output/reports/attack/default/adv_predictions.json
-      md5: 9ea6237d1248b45bccbe60b634da68fb
-      size: 2154
+      md5: 7142652340b38ec663fd7769eb2baa61
+      size: 2169
     - path: output/reports/attack/default/params.yaml
       md5: a15accd2ecf7bcbb5ed47d4b6bf7ed97
       size: 5093
     - path: output/reports/attack/default/score_dict.json
-      md5: 879e9e986f4f69c7dea121cc78bececb
-      size: 524
+      md5: b92be5957cc92fc91e76d42e654151f9
+      size: 533
   models:
     cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
@@ -540,12 +540,12 @@ stages:
       md5: 6ef2a88669f50dcdc0329e777dd7f9d6
       size: 1235
     - path: output/reports/attack/default/score_dict.json
-      md5: 879e9e986f4f69c7dea121cc78bececb
-      size: 524
+      md5: b92be5957cc92fc91e76d42e654151f9
+      size: 533
     outs:
     - path: ResNet101.db
-      md5: 33b4542eb9688ff88ada0cd81f1f3005
-      size: 1261568
+      md5: 744f187243001db70f63c8161d7f913f
+      size: 1314816
   attacks@ResNet34:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
       ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet34.db --config-name default.yaml

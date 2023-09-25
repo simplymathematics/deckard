@@ -132,14 +132,6 @@ class ModelTrainer:
             tf.config.run_functions_eagerly(True)
         else:
             raise NotImplementedError(f"Training library {library} not implemented")
-        if hasattr(model, "fit_generator"):
-            try:
-                start = process_time_ns()
-                model.fit_generator(data[0], **trainer)
-                end = process_time_ns() - start
-            except Exception as e:
-                logger.error(e)
-                raise e
         try:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)

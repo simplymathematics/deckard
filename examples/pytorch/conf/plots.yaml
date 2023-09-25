@@ -155,7 +155,7 @@ cat_plot:
   - ResNet152
 line_plot:
 - control: 0.98
-  control_color: orange
+  control_color: royalblue
   file: def_param_vs_accuracy.pdf
   hue: def_gen
   legend: {}
@@ -167,13 +167,13 @@ line_plot:
   y_scale: 
   ylabel: Accuracy
   hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - control: 0.1
-  control_color: orange
+  control_color: royalblue
   file: def_param_vs_adv_accuracy.pdf
   hue: def_gen
   legend: {}
@@ -185,13 +185,13 @@ line_plot:
   y_scale: 
   ylabel: Adv. Accuracy
   hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - control: 0.1
-  control_color: orange
+  control_color: royalblue
   file: def_param_vs_adv_failure_rate.pdf
   hue: def_gen
   legend: {}
@@ -203,11 +203,11 @@ line_plot:
   y_scale: log
   ylabel: Adv. Failure Rate
   hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - file: atk_param_vs_accuracy.pdf
   hue: atk_gen
   legend: {}
@@ -219,11 +219,11 @@ line_plot:
   y_scale: 
   ylabel: Adv. Accuracy
   hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+  - FGM
+  - Deep
+  - HSJ
+  - Pixel
+  - Thresh
 scatter_plot:
 - x: train_time_per_sample
   y: adv_failure_rate

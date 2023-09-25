@@ -139,8 +139,14 @@ def calculate_failure_rate(data):
     data.loc[:, "failure_rate"] = (
         (1 - data.loc[:, "accuracy"]) * 100 / data.loc[:, "predict_time"]
     )
+    data.loc[:, "success_rate"] = (
+        data.loc[:, "accuracy"] * 100 / data.loc[:, "predict_time"]
+    )   
     data.loc[:, "adv_failure_rate"] = (
         (1 - data.loc[:, "adv_accuracy"]) * 100 / data.loc[:, "adv_fit_time"]
+    )
+    data.loc[:, "adv_success_rate"] = (
+        data.loc[:, "adv_accuracy"] * 100 / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
         data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
@@ -153,8 +159,16 @@ def calculate_failure_rate(data):
     )
     return data
 
+from paretoset import paretoset
 
-def min_max_scaling(data):
+def pareto_set(data, sense_dict):
+    subset = data.loc[:, sense_dict.keys()]
+    these = paretoset(subset, sense = sense_dict.values())
+    return data.iloc[these, :]
+
+
+
+def min_max_scaling(data, **kwargs):
     if "atk_gen" not in data.columns:
         attacks = []
     else:
@@ -175,6 +189,8 @@ def min_max_scaling(data):
         min_ = data[data.atk_gen == atk].atk_value.min()
         scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
         data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
+    for k,v in kwargs.items():
+        data.loc[:,k] = data.loc[:,k].apply(v)
     return data
 
 
@@ -237,6 +253,24 @@ if __name__ == "__main__":
             "predict_time",
         ],
     )
+    sense_dict ={
+    "accuracy" : "max",
+    # "train_time" : "min",
+    # "predict_time" : "min",
+    # "atk_value" : "diff",
+    # "def_value" : "diff",
+    "data.sample.random_state" : "diff",
+    # "adv_accuracy" : "min",
+    "model_layers" : "diff",
+    # "adv_fit_time" : "min",
+    "atk_param" : "diff",
+    "def_param" : "diff",
+    "atk_gen" : "diff",
+    "def_gen" : "diff",
+    # "model.art.pipeline.initialize.kwargs.optimizer.lr" : "diff",
+    # "adv_failure_rate" : "maximize",
+}
+    data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
