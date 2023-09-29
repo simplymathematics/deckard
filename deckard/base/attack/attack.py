@@ -7,7 +7,7 @@ from copy import deepcopy
 from time import process_time_ns
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
-from art.utils import to_categorical
+from art.utils import to_categorical, compute_success
 from ..data import Data
 from ..model import Model
 from ..utils import my_hash
@@ -136,14 +136,16 @@ class EvasionAttack:
     ):
         time_dict = {}
         results = {}
+        kwargs = deepcopy(self.init.kwargs)
+        scale_max = kwargs.pop("scale_max", 1)
+        targeted = kwargs.pop("targeted", False)
+        ben_samples = data[1][: self.attack_size]
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
-            ben_samples = data[0][: self.attack_size]
+            
             atk = self.init(model=model, attack_size=self.attack_size)
-            kwargs = deepcopy(self.init.kwargs)
-            scale_max = kwargs.pop("scale_max", 1)
-            targeted = kwargs.pop("targeted", False)
+            
             if targeted is True:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
@@ -152,13 +154,17 @@ class EvasionAttack:
                 samples = atk.apply_patch(ben_samples, scale=scale_max)
             else:
                 start = process_time_ns()
-                samples = atk.generate(ben_samples)
+                samples = atk.generate(ben_samples, **kwargs)
             end = process_time_ns()
             time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
                 {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
             )
         results["adv_samples"] = samples
+        try:
+            results['adv_success'] = compute_success(classifier=model, x_clean=ben_samples, labels=data[3][:self.attack_size], x_adv=samples, targeted=False)
+        except TypeError as e:
+            logger.error(f"Failed to compute success rate. Error: {e}")
         if attack_file is not None:
             self.data.save(samples, attack_file)
         if adv_predictions_file is not None and Path(adv_predictions_file).exists():

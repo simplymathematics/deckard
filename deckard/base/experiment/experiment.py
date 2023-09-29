@@ -217,6 +217,9 @@ class Experiment:
             if "time_dict" in adv_results:
                 adv_time_dict = adv_results["time_dict"]
                 score_dict.update(**adv_time_dict)
+            if "adv_success" in adv_results:
+                adv_success = adv_results["adv_success"]
+                score_dict.update({"adv_success": adv_success})
         # #########################################################################
         if self.scorers is not None:
             if "probs" in locals() and "preds" not in locals():
