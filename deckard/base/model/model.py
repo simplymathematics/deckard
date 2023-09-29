@@ -673,39 +673,42 @@ class Model:
     def save(self, model, filename):
         suffix = Path(filename).suffix
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
-        if suffix in [".pickle", ".pkl"]:
-            with open(filename, "wb") as f:
-                pickle.dump(model, f)
-        elif suffix in [".pt", ".pth"]:
-            import torch as t
+        if not Path(filename).exists():
+            if suffix in [".pickle", ".pkl"]:
+                with open(filename, "wb") as f:
+                    pickle.dump(model, f)
+            elif suffix in [".pt", ".pth"]:
+                import torch as t
 
-            while hasattr(model, "model"):
-                model = model.model
-            t.save(model, filename)
-            t.save(
-                model.state_dict(),
-                Path(filename).with_suffix(f".optimizer{suffix}"),
-            )
-        elif suffix in [".h5", ".wt"]:
-            import keras as k
-
-            while hasattr(model, "model"):
-                model = model.model
-            try:
-                k.models.save_model(model, filename)
-            except NotImplementedError as e:
-                logger.warning(e)
-                logger.warning(
-                    f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
+                while hasattr(model, "model"):
+                    model = model.model
+                t.save(model, filename)
+                t.save(
+                    model.state_dict(),
+                    Path(filename).with_suffix(f".optimizer{suffix}"),
                 )
-                model.save_weights(filename)
-        elif suffix in [".tf", "_tf"]:
-            import keras as k
+            elif suffix in [".h5", ".wt"]:
+                import keras as k
 
-            while hasattr(model, "model"):
-                model = model.model
-            k.models.save_model(model, filename, save_format="tf")
+                while hasattr(model, "model"):
+                    model = model.model
+                try:
+                    k.models.save_model(model, filename)
+                except NotImplementedError as e:
+                    logger.warning(e)
+                    logger.warning(
+                        f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
+                    )
+                    model.save_weights(filename)
+            elif suffix in [".tf", "_tf"]:
+                import keras as k
+
+                while hasattr(model, "model"):
+                    model = model.model
+                k.models.save_model(model, filename, save_format="tf")
+            else:
+                raise NotImplementedError(
+                    f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
+                )
         else:
-            raise NotImplementedError(
-                f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
-            )
+            logger.warning(f"File {filename} already exists. Skipping saving.")

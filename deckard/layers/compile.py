@@ -100,8 +100,8 @@ def merge_defences(results: pd.DataFrame):
             def_gen = [str(x).split(".")[-1] for x in defence][0]
             defence = defence[0]
         else:
-            def_gen = None
-            defence = None
+            def_gen = "Control"
+            defence = "Control"
         ############################################################################################################
         if defence != []:
             defences.append(defence)
@@ -148,10 +148,7 @@ def format_control_parameter(data, control_dict):
     else:
         attacks = []
     for defence in defences:
-        if defence in ["Control", None, "None", "none", "null", np.nan]:
-            data.loc[data.def_gen == defence, "def_param"] = np.nan
-            data.loc[data.def_gen == defence, "def_value"] = np.nan
-        elif defence in control_dict:
+        if defence in control_dict:
             param = control_dict[defence]
             data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
             if param in data.columns:
@@ -159,15 +156,13 @@ def format_control_parameter(data, control_dict):
             else:
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
+            control_dict.pop(defence)
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
 
     for attack in attacks:
-        if attack in ["Control", None, "None", "none", "null", np.nan]:
-            data.loc[data.atk_gen == attack, "atk_param"] = np.nan
-            data.loc[data.atk_gen == attack, "atk_value"] = np.nan
-        elif attack in control_dict:
+        if attack in control_dict:
             param = control_dict[attack]
             data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
             if param in data.columns:
@@ -175,10 +170,11 @@ def format_control_parameter(data, control_dict):
             else:
                 value = np.nan
             data.loc[data.atk_gen == attack, "atk_value"] = value
+            control_dict.pop(attack)
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-
+        
     return data
 
 

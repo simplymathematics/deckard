@@ -6,7 +6,7 @@ attacks:
   FastGradientMethod: FGM
   HopSkipJump: HSJ
   PixelAttack: Pixel
-  ProjectGradientDescent: PGD
+  ProjectedGradientDescent: PGD
   ThresholdAttack: Thresh
 defences:
   Control: Control
@@ -28,3 +28,4 @@ params:
   Conf: model.art.pipeline.postprocessor.kwargs.cutoff
   FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
   Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+  Control: model_layers

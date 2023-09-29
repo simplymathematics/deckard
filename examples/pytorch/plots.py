@@ -9,8 +9,8 @@ import yaml
 
 
 logger = logging.getLogger(__name__)
-sns.set_theme(style="whitegrid")
-sns.set_context("paper", font_scale=1.5)
+sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
+
 
 
 def cat_plot(
@@ -22,9 +22,9 @@ def cat_plot(
     titles,
     xlabels,
     ylabels,
-    legend_title,
     file,
     folder,
+    legend_title = None,
     hue_order=None,
     rotation=0,
     set={},
@@ -38,7 +38,10 @@ def cat_plot(
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
-    graph.legend.set_title(title=legend_title)
+    if legend_title is not None:
+        graph.legend.set_title(title=legend_title)
+    else:
+        graph.legend.remove()
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -61,17 +64,12 @@ def line_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    control=None,
-    control_color=None,
     **kwargs,
 ):
     plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
     graph.legend(**legend)
-    if control is not None:
-        assert control_color is not None, "Please specify a control color"
-        graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
@@ -152,10 +150,10 @@ def calculate_failure_rate(data):
         data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     )
     data.loc[:, "training_time_per_adv_failure"] = (
-        data.loc[:, "train_time"] / data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     data.loc[:, "adv_training_time_per_failure"] = (
-        data.loc[:, "train_time"] / data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     return data
 
@@ -255,20 +253,14 @@ if __name__ == "__main__":
     )
     sense_dict ={
     "accuracy" : "max",
-    # "train_time" : "min",
-    # "predict_time" : "min",
-    # "atk_value" : "diff",
-    # "def_value" : "diff",
+    "adv_accuracy" : "min",
     "data.sample.random_state" : "diff",
-    # "adv_accuracy" : "min",
     "model_layers" : "diff",
-    # "adv_fit_time" : "min",
     "atk_param" : "diff",
     "def_param" : "diff",
     "atk_gen" : "diff",
     "def_gen" : "diff",
-    # "model.art.pipeline.initialize.kwargs.optimizer.lr" : "diff",
-    # "adv_failure_rate" : "maximize",
+    "data.sample.random_state" : "diff",
 }
     data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)

@@ -2,7 +2,6 @@ cat_plot:
 - file: adv_accuracy_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
   set:
     yscale: linear
   titles: Adversarial Accuracy vs Defence Type
@@ -20,7 +19,6 @@ cat_plot:
 - file: ben_accuracy_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
   titles: Benign Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
@@ -36,14 +34,13 @@ cat_plot:
 - file: ben_failures_per_train_time_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
   set:
     yscale: log
-  titles: Training Time per Benign Failure vs Defence Type
+  titles: $\bar{C}_{ben.}$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: training_time_per_failure
-  ylabels: Training Time per Ben. Failures
+  ylabels: $\bar{C}_{ben.}$
   rotation : 90
   hue_order:
   - ResNet18
@@ -54,14 +51,13 @@ cat_plot:
 - file: adv_failures_per_train_time_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
   set:
     yscale: log
-  titles:  Training Time per Adversarial Failure vs Defence Type
+  titles:  $\bar{C}_{adv.}$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: training_time_per_adv_failure
-  ylabels: Training time per Adv. Failures
+  ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
   - ResNet18
@@ -75,11 +71,11 @@ cat_plot:
   legend_title: Model Name
   set:
     yscale: log
-  titles:  Training Time per Adversarial Failure vs Attack Type
+  titles:  $\bar{C}_{adv.}$ vs Attack Type
   x: atk_gen
   xlabels: Attack Type
   y: training_time_per_adv_failure
-  ylabels: Training time per Adv. Failures
+  ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
   - ResNet18
@@ -87,31 +83,15 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_accuracy_vs_attack_type.pdf
+- file: adv_failures_per_test_time_vs_defence_type.pdf
   hue: model_name
   kind: boxen
   legend_title: Model Name
-  titles: Adversarial Accuracy vs Attack Type
-  x: atk_gen
-  xlabels: Attack Type
-  y: adv_accuracy
-  ylabels: Adv. Accuracy
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-- file: adv_accuracy_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  titles: Adversarial Accuracy vs Defence Type
+  titles: Adversarial Failure Rate vs Defence Type
   x: def_gen
   xlabels: Defence Type
-  y: adv_accuracy
-  ylabels: Adv. Accuracy
+  y: adv_failure_rate
+  ylabels: Adv. Failure Rate
   rotation : 90
   hue_order:
   - ResNet18
@@ -119,6 +99,22 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
+# - file: adv_accuracy_vs_defence_type.pdf
+#   hue: model_name
+#   kind: boxen
+#   legend_title: Model Name
+#   titles: Adversarial Accuracy vs Defence Type
+#   x: def_gen
+#   xlabels: Defence Type
+#   y: adv_accuracy
+#   ylabels: Adv. Accuracy
+#   rotation : 90
+#   hue_order:
+#   - ResNet18
+#   - ResNet34
+#   - ResNet50
+#   - ResNet101
+#   - ResNet152
 - file: adv_accuracy_vs_attack_type.pdf
   hue: model_name
   kind: boxen
@@ -154,9 +150,7 @@ cat_plot:
   - ResNet101
   - ResNet152
 line_plot:
-- control: 0.98
-  control_color: royalblue
-  file: def_param_vs_accuracy.pdf
+- file: def_param_vs_accuracy.pdf
   hue: def_gen
   legend: {}
   title: Accuracy vs Defence Strength
@@ -172,9 +166,7 @@ line_plot:
   - Gauss-out
   - Conf
   - FSQ
-- control: 0.1
-  control_color: royalblue
-  file: def_param_vs_adv_accuracy.pdf
+- file: def_param_vs_adv_accuracy.pdf
   hue: def_gen
   legend: {}
   title: Adversarial Accuracy vs Defence Strength
@@ -190,9 +182,7 @@ line_plot:
   - Gauss-out
   - Conf
   - FSQ
-- control: 0.1
-  control_color: royalblue
-  file: def_param_vs_adv_failure_rate.pdf
+- file: def_param_vs_adv_failure_rate.pdf
   hue: def_gen
   legend: {}
   title: Adversarial Failure Rate vs Defence Strength
@@ -220,6 +210,7 @@ line_plot:
   ylabel: Adv. Accuracy
   hue_order:
   - FGM
+  - PGD
   - Deep
   - HSJ
   - Pixel
