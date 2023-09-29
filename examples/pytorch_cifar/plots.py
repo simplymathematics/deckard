@@ -9,8 +9,8 @@ import yaml
 
 
 logger = logging.getLogger(__name__)
-sns.set_theme(style="whitegrid")
-sns.set_context("paper", font_scale=1.5)
+sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
+
 
 
 def cat_plot(
@@ -22,19 +22,26 @@ def cat_plot(
     titles,
     xlabels,
     ylabels,
-    legend_title,
     file,
     folder,
+    legend_title = None,
+    hue_order=None,
     rotation=0,
     set={},
     **kwargs,
 ):
     plt.gcf().clear()
-    graph = sns.catplot(data=data, x=x, y=y, hue=hue, kind=kind, **kwargs)
+    data = data.sort_values(by=[hue, x, y])
+    graph = sns.catplot(
+        data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
+    )
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
-    graph.legend.set_title(title=legend_title)
+    if legend_title is not None:
+        graph.legend.set_title(title=legend_title)
+    else:
+        graph.legend.remove()
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -56,14 +63,13 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
+    hue_order=None,
     **kwargs,
 ):
     plt.gcf().clear()
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue)
+    data = data.sort_values(by=[hue, x, y])
+    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
     graph.legend(**legend)
-    # if control is not None:
-    #     assert control_color is not None, "Please specify a control color"
-    #     graph.add_line(plt.axhline(y=control, color=control_color, linestyle="-"))
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
@@ -90,12 +96,18 @@ def scatter_plot(
     y_scale=None,
     x_scale=None,
     legend={},
+    hue_order=None,
+    **kwargs,
 ):
+    # plt.gcf().clear()
+    data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
         data=data,
         x=x,
         y=y,
         hue=hue,
+        hue_order=hue_order,
+        **kwargs,
     )
     graph.set_yscale(y_scale)
     graph.set_xscale(x_scale)
@@ -110,31 +122,51 @@ def scatter_plot(
     plt.gcf().clear()
     return graph
 
-def drop_frames_without_results( data, subset = ["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"]):
+
+def drop_frames_without_results(
+    data,
+    subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"],
+):
     data.dropna(axis=0, subset=subset, inplace=True)
     return data
+
 
 def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     data.loc[:, "failure_rate"] = (
-        (1 - data.loc[:, "accuracy"]) * 100 / data.loc[:,"predict_time"]
+        (1 - data.loc[:, "accuracy"])/ data.loc[:, "predict_time_per_sample"]
     )
+    data.loc[:, "success_rate"] = (
+        data.loc[:, "accuracy"] * 100 / data.loc[:, "predict_time_per_sample"]
+    )   
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data.loc[:,"adv_accuracy"]) * 100 / data.loc[:,"adv_fit_time"]
+        (1 - data.loc[:, "adv_accuracy"]) * 100 / data.loc[:, "adv_fit_time"]
+    )
+    data.loc[:, "adv_success_rate"] = (
+        data.loc[:, "adv_accuracy"] * 100 / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "failure_rate"]
     )
     data.loc[:, "training_time_per_adv_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     data.loc[:, "adv_training_time_per_failure"] = (
-        data.loc[:,"train_time"] / data.loc[:,"adv_failure_rate"]
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     return data
 
-def min_max_scaling(data):
+from paretoset import paretoset
+
+def pareto_set(data, sense_dict):
+    subset = data.loc[:, sense_dict.keys()]
+    these = paretoset(subset, sense = sense_dict.values())
+    return data.iloc[these, :]
+
+
+
+def min_max_scaling(data, **kwargs):
     if "atk_gen" not in data.columns:
         attacks = []
     else:
@@ -155,6 +187,8 @@ def min_max_scaling(data):
         min_ = data[data.atk_gen == atk].atk_value.min()
         scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
         data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
+    for k,v in kwargs.items():
+        data.loc[:,k] = data.loc[:,k].apply(v)
     return data
 
 
@@ -207,7 +241,35 @@ if __name__ == "__main__":
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     csv_file = args.file
     data = pd.read_csv(csv_file)
-    data = drop_frames_without_results(data, subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"])
+    data = drop_frames_without_results(
+        data,
+        subset=[
+            "accuracy",
+            "adv_accuracy",
+            "train_time",
+            "adv_fit_time",
+            "predict_time",
+        ],
+    )
+    sense_dict ={
+    "accuracy" : "max",
+    # "train_time" : "min",
+    # "predict_time" : "min",
+    # "atk_value" : "diff",
+    "adv_accuracy" : "min",
+    # "def_value" : "diff",
+    "data.sample.random_state" : "diff",
+    # "adv_accuracy" : "min",
+    "model_layers" : "diff",
+    # "adv_fit_time" : "min",
+    "atk_param" : "diff",
+    "def_param" : "diff",
+    "atk_gen" : "diff",
+    "def_gen" : "diff",
+    # "model.art.pipeline.initialize.kwargs.optimizer.lr" : "diff",
+    # "adv_failure_rate" : "maximize",
+}
+    data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
@@ -245,7 +307,6 @@ if __name__ == "__main__":
         i += 1
         logger.info(f"Rendering graph {i}")
         locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
-
 
     scatter_plot_list = big_dict["scatter_plot"]
     for dict_ in scatter_plot_list:

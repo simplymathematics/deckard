@@ -224,7 +224,7 @@ scatter_plot:
   title: Adversarial Failure Rate vs Training Time
   file: adv_failure_rate_vs_train_time.pdf
   y_scale: log
-  x_scale: log
+  x_scale: linear
   legend: 
     title: Model Name
   hue_order:

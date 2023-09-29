@@ -33,13 +33,12 @@ stages:
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
-
         ##############################################################################
   attacks:
     foreach:
-      - ResNet18
+      # - ResNet18
       # - ResNet34
-      - ResNet50
+      # - ResNet50
       # - ResNet101
       - ResNet152
     do:
@@ -47,7 +46,9 @@ stages:
       deps:
       - models.sh
       - attacks.sh
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+      - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
       outs:
       - ${item}.db
   compile:
@@ -57,9 +58,9 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      - ResNet18.db
+      # - ResNet18.db
       # - ResNet34.db
-      - ResNet50.db
+      # - ResNet50.db
       # - ResNet101.db
       - ResNet152.db
       outs:
@@ -68,10 +69,36 @@ stages:
     cmd : python plots.py --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
-      - ResNet18.db
-      # - ResNet34.db
-      - ResNet50.db
-      # - ResNet101.db
-      - ResNet152.db
+    metrics:
+      - ${files.directory}/plots/data.csv
+    plots:
+      - ${files.directory}/plots/adv_accuracy_vs_attack_type.pdf
+      - ${files.directory}/plots/adv_accuracy_vs_defence_type.pdf
+      - ${files.directory}/plots/adv_failure_rate_vs_train_time.pdf
+      - ${files.directory}/plots/adv_failures_per_test_time_vs_defence_type.pdf
+      - ${files.directory}/plots/adv_failures_per_train_time_vs_attack_type.pdf
+      - ${files.directory}/plots/adv_failures_per_train_time_vs_defence_type.pdf
+      - ${files.directory}/plots/atk_param_vs_accuracy.pdf
+      - ${files.directory}/plots/ben_accuracy_vs_defence_type.pdf
+      - ${files.directory}/plots/ben_failure_rate_vs_defence_type.pdf
+      - ${files.directory}/plots/ben_failures_per_train_time_vs_defence_type.pdf
+      - ${files.directory}/plots/def_param_vs_accuracy.pdf
+      - ${files.directory}/plots/def_param_vs_adv_accuracy.pdf
+      - ${files.directory}/plots/def_param_vs_adv_failure_rate.pdf
+  afr:
+    cmd: python afr.py
+    deps:
+      - ${files.directory}/plots/data.csv
+    plots:
+      - ${files.directory}/plots/weibull_aft.pdf
+      - ${files.directory}/plots/weibull_partial_effects.pdf
+      - ${files.directory}/plots/cox_partial_effects.pdf
+      - ${files.directory}/plots/cox_aft.pdf
+      - ${files.directory}/plots/log_logistic_aft.pdf
+      - ${files.directory}/plots/log_logistic_partial_effects.pdf
+      - ${files.directory}/plots/log_normal_aft.pdf
+      - ${files.directory}/plots/log_normal_partial_effects.pdf
+    metrics:
+      - ${files.directory}/plots/aft_comparison.csv
     outs:
-      - ${files.directory}/plots/
+      - ${files.directory}/plots/aft_comparison.tex
