@@ -6,27 +6,32 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 
-from sklearn.preprocessing import  StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 
-
 from paretoset import paretoset
-from lifelines import WeibullAFTFitter, LogNormalAFTFitter, LogLogisticAFTFitter, CoxPHFitter
+from lifelines import (
+    WeibullAFTFitter,
+    LogNormalAFTFitter,
+    LogLogisticAFTFitter,
+    CoxPHFitter,
+)
 from plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
-import matplotlib 
-import argparse
+import matplotlib
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
 # %%
-font = {'family' : 'Times New Roman',
-        'weight' : 'bold',
-        'size'   : 22}
+font = {
+    "family": "Times New Roman",
+    "weight": "bold",
+    "size": 22,
+}
 
-matplotlib.rc('font', **font)
+matplotlib.rc("font", **font)
 
 # %%
 FOLDER = Path("output/plots/")
@@ -39,23 +44,34 @@ data.atk_value.replace("", 0, inplace=True)
 data = drop_frames_without_results(data)
 data = calculate_failure_rate(data)
 data = min_max_scaling(data)
-data.dropna(axis=0, subset=['atk_value', 'atk_param'], inplace=True)
-data.dropna(axis=0, subset=['def_value', 'def_param'], inplace=True)
+data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
+data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
 # data=data[data['def_gen'] == 'Gauss-in']
 # data=data[data['atk_gen'] == 'HSJ']
 
 print(
-    "Adversarial Accuracy:", "\n",
-    "ResNet152:", data[data['model_layers'] == 152].adv_accuracy.mean(skipna=True), "\n",
-    "Resnet101:", data[data['model_layers'] == 101].adv_accuracy.mean(skipna=True), "\n",
-    "Resnet50:", data[data['model_layers'] == 50].adv_accuracy.mean(skipna=True), "\n",
-    "Resnet34:", data[data['model_layers'] == 34].adv_accuracy.mean(skipna=True), "\n",
-    "Resnet18:", data[data['model_layers'] == 18].adv_accuracy.mean(skipna=True), "\n",
+    "Adversarial Accuracy:",
+    "\n",
+    "ResNet152:",
+    data[data["model_layers"] == 152].adv_accuracy.mean(skipna=True),
+    "\n",
+    "Resnet101:",
+    data[data["model_layers"] == 101].adv_accuracy.mean(skipna=True),
+    "\n",
+    "Resnet50:",
+    data[data["model_layers"] == 50].adv_accuracy.mean(skipna=True),
+    "\n",
+    "Resnet34:",
+    data[data["model_layers"] == 34].adv_accuracy.mean(skipna=True),
+    "\n",
+    "Resnet18:",
+    data[data["model_layers"] == 18].adv_accuracy.mean(skipna=True),
+    "\n",
 )
 
 
-
 # %%
+
 
 def plot_aft(
     df,
@@ -100,6 +116,7 @@ def plot_aft(
     plt.show()
     return ax, aft
 
+
 def plot_partial_effects(
     file,
     aft,
@@ -110,12 +127,14 @@ def plot_partial_effects(
     ylabel="Failure rate",
     legend_kwargs={"loc": "upper left"},
     replacement_dict={},
-    cmap='coolwarm',
-    **kwargs,     
-     ):
+    cmap="coolwarm",
+    **kwargs,
+):
     plt.gcf().clear()
     # kwargs.pop("replacement_dict")
-    pareto = aft.plot_partial_effects_on_outcome(covariate_array, values_array, cmap=cmap, **kwargs)
+    pareto = aft.plot_partial_effects_on_outcome(
+        covariate_array, values_array, cmap=cmap, **kwargs
+    )
     labels = pareto.get_yticklabels()
     labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
@@ -130,38 +149,45 @@ def plot_partial_effects(
     logger.info(f"Saved graph to {FOLDER / file}")
     return pareto
 
+
 def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
-    scores = {'train_score': train_score, 'test_score': test_score}
+    scores = {"train_score": train_score, "test_score": test_score}
     plt.show()
-    return  scores
+    return scores
 
 
 def clean_data_for_aft(
-    data, kwarg_list, target="adv_failure_rate"
+    data,
+    kwarg_list,
+    target="adv_failure_rate",
 ):
     subset = data.copy()
-    assert target in subset, f"Target {target} not in dataframe with columns {subset.columns}"
-    
+    assert (
+        target in subset
+    ), f"Target {target} not in dataframe with columns {subset.columns}"
+
     cleaned = pd.DataFrame()
     kwarg_list.append(target)
     for kwarg in kwarg_list:
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
-    
-    
+
     # if "accuracy" in cleaned.columns:
     #     cleaned = cleaned[~cleaned[cleaned['accuracy'] != 1e10]]
     #     cleaned = cleaned[~cleaned[cleaned['accuracy'] != -1e10]]
     # if "adv_accuracy" in cleaned.columns:
     #     cleaned = cleaned[cleaned[cleaned['adv_accuracy'] != 1e10]]
     #     cleaned = cleaned[cleaned[cleaned['adv_accuracy'] != -1e10]]
-    cleaned.dropna(inplace=True, how='any', axis=0)
+    cleaned.dropna(inplace=True, how="any", axis=0)
     y = cleaned[target]
-    assert target in cleaned, f"Target {target} not in dataframe with columns {cleaned.columns}"
+    assert (
+        target in cleaned
+    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     return cleaned, y, data
+
 
 # %%
 
@@ -179,7 +205,6 @@ kwarg_list = [
     "adv_fit_time",
     # "atk_param",
     # "def_param",
-    
     "model.art.pipeline.initialize.kwargs.optimizer.lr",
     # "def_gen",
     # "atk_gen",
@@ -196,11 +221,13 @@ data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * 100
 data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * 100
 target = "adv_failures"
 duration_col = "adv_fit_time"
-cleaned, y, data = clean_data_for_aft(data, kwarg_list,  target=target)
-X_train, X_test, y_train, y_test = train_test_split(cleaned, y,  test_size=0.2, random_state=42)
-assert target in cleaned, f"Target {target} not in dataframe with columns {cleaned.columns}"
-
-
+cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
+X_train, X_test, y_train, y_test = train_test_split(
+    cleaned, y, test_size=0.2, random_state=42
+)
+assert (
+    target in cleaned
+), f"Target {target} not in dataframe with columns {cleaned.columns}"
 
 
 # %%
@@ -256,17 +283,17 @@ weibull_dict = {
     "adv_failure_rate: lambda_": "Adv. Failure Rate",
     "failure_rate: lambda_": "Ben. Failure Rate",
     "model_layers: lambda_": "No. of Layers",
-    "model.art.pipeline.initialize.kwargs.optimizer.lr: lambda_" : "Learning Rate",
-    "def_gen" : "Defence",
+    "model.art.pipeline.initialize.kwargs.optimizer.lr: lambda_": "Learning Rate",
+    "def_gen": "Defence",
 }
 
 weibull_afr, wft = plot_aft(
     X_train,
-    file = "weibull_aft.pdf",
-    event_col = target,
-    duration_col = duration_col,
-    title = "Weibull AFR Model",
-    mtype = "weibull",
+    file="weibull_aft.pdf",
+    event_col=target,
+    duration_col=duration_col,
+    title="Weibull AFR Model",
+    mtype="weibull",
     replacement_dict=weibull_dict,
 )
 wft.print_summary()
@@ -282,16 +309,19 @@ pareto_dict = {
     "model_layers=152": "152",
 }
 pareto_weibull = plot_partial_effects(
-    file = "weibull_partial_effects.pdf", 
-    aft = wft, 
-    covariate_array="model_layers", 
-    values_array=[18, 34, 50, 101, 152], 
-    title="Partial Effects of No. of Layers on Failure Rate for Weibull AFR", 
-    replacement_dict=pareto_dict, 
+    file="weibull_partial_effects.pdf",
+    aft=wft,
+    covariate_array="model_layers",
+    values_array=[18, 34, 50, 101, 152],
+    title="Partial Effects of No. of Layers on Failure Rate for Weibull AFR",
+    replacement_dict=pareto_dict,
     ylabel="% Chance of Survival",
     xlabel="Time $T$ (seconds)",
-    legend_kwargs={"title" : "No. of Layers", "labels" : ["18", "34", "50", "101", "152"]},
-    )
+    legend_kwargs={
+        "title": "No. of Layers",
+        "labels": ["18", "34", "50", "101", "152"],
+    },
+)
 
 # weibull_accuracy = plot_partial_effects(
 #     file = "weibull_partial_effect_accuracy.pdf",
@@ -304,48 +334,50 @@ pareto_weibull = plot_partial_effects(
 #     xlabel="Time $T$ (seconds)",
 #     legend = {"title" : "Benign Accuracy"},
 #     )
-    
-    
+
 
 # %%
 
 cox_dict = {
     "adv_failure_rate": "Adv. Failure Rate",
-    "def_value" : "Defence Strength",
-    "data.sample.random_state" : "Random State",
-    "train_time" : "Training Time",
-    "model_layers" : "No. of Layers",
-    "model.art.pipeline.initialize.kwargs.optimizer.lr" : "Learning Rate",
-    "adv_accuracy" : "Adv. Accuracy",
-    "adv_fit_time" : "Adv. Fit Time",
-    "adv_log_loss" : "Adv. Log Loss",
-    "predict_time" : "Inference Time",
-    "accuracy" : "Ben. Accuracy",
-    "failure_rate" : "Ben. Failure Rate",
-    "atk_value" : "Attack Strength",
+    "def_value": "Defence Strength",
+    "data.sample.random_state": "Random State",
+    "train_time": "Training Time",
+    "model_layers": "No. of Layers",
+    "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
+    "adv_accuracy": "Adv. Accuracy",
+    "adv_fit_time": "Adv. Fit Time",
+    "adv_log_loss": "Adv. Log Loss",
+    "predict_time": "Inference Time",
+    "accuracy": "Ben. Accuracy",
+    "failure_rate": "Ben. Failure Rate",
+    "atk_value": "Attack Strength",
 }
 
 cox_afr, cft = plot_aft(
     X_train,
-    file = "cox_aft.pdf",
-    event_col = target,
-    duration_col = duration_col,
-    title = "Cox AFR Model",
-    mtype = "cox",
+    file="cox_aft.pdf",
+    event_col=target,
+    duration_col=duration_col,
+    title="Cox AFR Model",
+    mtype="cox",
     replacement_dict=cox_dict,
 )
 cox_scores = score_model(cft, X_train, X_test)
 cft.print_summary()
 cox_partial = plot_partial_effects(
-    file = "cox_partial_effects.pdf",
-    aft = cft,
-    covariate_array = "model_layers",
-    values_array = [18, 34, 50, 101, 152],
+    file="cox_partial_effects.pdf",
+    aft=cft,
+    covariate_array="model_layers",
+    values_array=[18, 34, 50, 101, 152],
     replacement_dict=cox_dict,
     title="Survival Time for Cox AFR",
     ylabel="% Chance of Survival",
     xlabel="Time $T$ (seconds)",
-    legend_kwargs={"title" : "No. of Layers", "labels" : ["18", "34", "50", "101", "152"]},
+    legend_kwargs={
+        "title": "No. of Layers",
+        "labels": ["18", "34", "50", "101", "152"],
+    },
 )
 
 # %%
@@ -358,14 +390,14 @@ log_normal_dict = {
     "predict_time: mu_": "Inference Time",
     "adv_fit_time: mu_": "Adv. Fit Time",
     "model_layers: mu_": "No. of Layers",
-    "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_" : "Learning Rate",
+    "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate",
     "data.sample.random_state: mu_": "Random State",
     "adv_log_loss: mu_": "Adv. Log Loss",
     "adv_accuracy: mu_": "Adv. Accuracy",
     "accuracy: mu_": "Ben. Accuracy",
     "adv_failure_rate: mu_": "Adv. Failure Rate",
-    "def_gen" : "Defence",
-    "learning_rate: mu_" : "Learning Rate",
+    "def_gen": "Defence",
+    "learning_rate: mu_": "Learning Rate",
 }
 
 log_normal_graph, lnt = plot_aft(
@@ -380,15 +412,18 @@ log_normal_graph, lnt = plot_aft(
 lnt_scores = score_model(lnt, X_train, X_test)
 lnt.print_summary()
 lnt_partial = plot_partial_effects(
-    file = "log_normal_partial_effects.pdf",
-    aft = lnt,
-    covariate_array = "model_layers",
-    values_array = [18, 34, 50, 101, 152],
+    file="log_normal_partial_effects.pdf",
+    aft=lnt,
+    covariate_array="model_layers",
+    values_array=[18, 34, 50, 101, 152],
     replacement_dict=log_normal_dict,
     title="Survival Time for Log-Normal AFR",
     ylabel="% Chance of Survival",
     xlabel="Time $T$ (seconds)",
-    legend_kwargs={"title" : "No. of Layers", "labels" : ["18", "34", "50", "101", "152"]},
+    legend_kwargs={
+        "title": "No. of Layers",
+        "labels": ["18", "34", "50", "101", "152"],
+    },
 )
 
 # %%
@@ -405,10 +440,9 @@ log_logistic_dict = {
     "accuracy: alpha_": "Ben. Accuracy",
     "adv_fit_time: alpha_": "Adv. Fit Time",
     "model_layers: alpha_": "No. of Layers",
-    "model.art.pipeline.initialize.kwargs.optimizer.lr" : "Learning Rate",
+    "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
     "adv_failure_rate: alpha_": "Adv. Failure Rate",
-    "alpha_" : "",
-
+    "alpha_": "",
 }
 
 log_logistic_graph, llt = plot_aft(
@@ -424,16 +458,18 @@ llt.print_summary()
 llt_scores = score_model(llt, X_train, X_test)
 print(llt_scores)
 llt_partial = plot_partial_effects(
-    file = "log_logistic_partial_effects.pdf",
-    aft = llt,
-    covariate_array = "model_layers",
-    values_array = [18, 34, 50, 101, 152],
+    file="log_logistic_partial_effects.pdf",
+    aft=llt,
+    covariate_array="model_layers",
+    values_array=[18, 34, 50, 101, 152],
     replacement_dict=log_logistic_dict,
     title="Survival Time for Log-Logistic AFR",
     ylabel="% Chance of Survival",
     xlabel="Time $T$ (seconds)",
-    legend_kwargs={"title" : "No. of Layers", "labels" : ["18", "34", "50", "101", "152"]},
-       
+    legend_kwargs={
+        "title": "No. of Layers",
+        "labels": ["18", "34", "50", "101", "152"],
+    },
 )
 
 # %%
@@ -456,18 +492,27 @@ score_list = [
 aft_data = pd.DataFrame()
 aft_data.index.name = "Model"
 aft_data.index = aft_dict.keys()
-aft_data["AIC"] = [x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values() ]
+aft_data["AIC"] = [
+    x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+]
 aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
-aft_data["BIC"] = [x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()]
-aft_data['Train LL'] = [x['train_score'] for x in score_list]
-aft_data['Test LL'] = [x['test_score'] for x in score_list]
-aft_data['Mean ST'] = [x.predict_expectation(X_train).mean() for x in aft_dict.values()]
-aft_data['Median ST'] = [x.predict_median(X_train).median() for x in aft_dict.values()]
+aft_data["BIC"] = [
+    x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+]
+aft_data["Train LL"] = [x["train_score"] for x in score_list]
+aft_data["Test LL"] = [x["test_score"] for x in score_list]
+aft_data["Mean ST"] = [x.predict_expectation(X_train).mean() for x in aft_dict.values()]
+aft_data["Median ST"] = [x.predict_median(X_train).median() for x in aft_dict.values()]
 aft_data = aft_data.round(2)
 aft_data.to_csv(FOLDER / "aft_comparison.csv")
 logger.info(f"Saved AFT comparison to {FOLDER / 'aft_comparison.csv'}")
-aft_data = aft_data.round(2,)
-aft_data.to_latex(FOLDER / "aft_comparison.tex",  float_format="%.2f", label = "tab:mnist", caption="Comparison of AFR Models on the MNIST dataset.")
+aft_data = aft_data.round(2)
+aft_data.to_latex(
+    FOLDER / "aft_comparison.tex",
+    float_format="%.2f",
+    label="tab:mnist",
+    caption="Comparison of AFR Models on the MNIST dataset.",
+)
 aft_data
 
 
@@ -475,12 +520,9 @@ aft_data
 # data['Survival Time'] = 1 / (data['adv_failure_rate'])
 # true_mean = np.mean(data['adv_failure_rate'] * data['predict_time'])
 # true_median = np.median(data['adv_failure_rate'] * data['predict_time'])
-success_rate = data['adv_failure_rate']
-success_time = success_rate * data['predict_time']
+success_rate = data["adv_failure_rate"]
+success_time = success_rate * data["predict_time"]
 true_mean = np.mean(success_time)
 true_median = np.median(success_time)
 print(f"True Mean: {true_mean}")
 print(f"True Median: {true_median}")
-
-
-

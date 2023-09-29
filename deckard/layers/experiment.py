@@ -25,7 +25,7 @@ def get_dvc_stage_params(
     params_file="params.yaml",
     pipeline_file="dvc.yaml",
     directory=".",
-    name = None,
+    name=None,
 ):
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",

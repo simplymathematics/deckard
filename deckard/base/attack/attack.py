@@ -143,9 +143,9 @@ class EvasionAttack:
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
-            
+
             atk = self.init(model=model, attack_size=self.attack_size)
-            
+
             if targeted is True:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
@@ -162,7 +162,13 @@ class EvasionAttack:
             )
         results["adv_samples"] = samples
         try:
-            results['adv_success'] = compute_success(classifier=model, x_clean=ben_samples, labels=data[3][:self.attack_size], x_adv=samples, targeted=False)
+            results["adv_success"] = compute_success(
+                classifier=model,
+                x_clean=ben_samples,
+                labels=data[3][: self.attack_size],
+                x_adv=samples,
+                targeted=False,
+            )
         except TypeError as e:
             logger.error(f"Failed to compute success rate. Error: {e}")
         if attack_file is not None:

@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
-
 def cat_plot(
     data,
     x,
@@ -24,7 +23,7 @@ def cat_plot(
     ylabels,
     file,
     folder,
-    legend_title = None,
+    legend_title=None,
     hue_order=None,
     rotation=0,
     set={},
@@ -139,7 +138,7 @@ def calculate_failure_rate(data):
     )
     data.loc[:, "success_rate"] = (
         data.loc[:, "accuracy"] * 100 / data.loc[:, "predict_time"]
-    )   
+    )
     data.loc[:, "adv_failure_rate"] = (
         (1 - data.loc[:, "adv_accuracy"]) * 100 / data.loc[:, "adv_fit_time"]
     )
@@ -157,13 +156,14 @@ def calculate_failure_rate(data):
     )
     return data
 
+
 from paretoset import paretoset
+
 
 def pareto_set(data, sense_dict):
     subset = data.loc[:, sense_dict.keys()]
-    these = paretoset(subset, sense = sense_dict.values())
+    these = paretoset(subset, sense=sense_dict.values())
     return data.iloc[these, :]
-
 
 
 def min_max_scaling(data, **kwargs):
@@ -187,8 +187,8 @@ def min_max_scaling(data, **kwargs):
         min_ = data[data.atk_gen == atk].atk_value.min()
         scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
         data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
-    for k,v in kwargs.items():
-        data.loc[:,k] = data.loc[:,k].apply(v)
+    for k, v in kwargs.items():
+        data.loc[:, k] = data.loc[:, k].apply(v)
     return data
 
 
@@ -251,17 +251,17 @@ if __name__ == "__main__":
             "predict_time",
         ],
     )
-    sense_dict ={
-    "accuracy" : "max",
-    "adv_accuracy" : "min",
-    "data.sample.random_state" : "diff",
-    "model_layers" : "diff",
-    "atk_param" : "diff",
-    "def_param" : "diff",
-    "atk_gen" : "diff",
-    "def_gen" : "diff",
-    "data.sample.random_state" : "diff",
-}
+    sense_dict = {
+        "accuracy": "max",
+        "adv_accuracy": "min",
+        "data.sample.random_state": "diff",
+        "model_layers": "diff",
+        "atk_param": "diff",
+        "def_param": "diff",
+        "atk_gen": "diff",
+        "def_gen": "diff",
+        "data.sample.random_state": "diff",
+    }
     data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
