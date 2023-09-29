@@ -1,0 +1,4 @@
+init.name : art.attacks.evasion.ProjectedGradientDescent
+init.max_iter : choice(10)
+init.batch_size : choice(1024)
+init.th : choice(1,4,16,64,256)

@@ -1,0 +1,35 @@
+defaults:
+    - _self_
+    - data: torch_mnist
+    - model: torch_mnist
+    - attack: default
+    - files: default
+    - scorers: default
+    - stage : null
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : grid
+    - override hydra/launcher : joblib
+_target_ : deckard.base.experiment.Experiment
+optimizers : accuracy
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.GridSampler
+    direction: maximize
+    study_name: model
+    storage: sqlite:///model.db
+    n_jobs: 1
+    params:
+      ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+      ++model.art.initialize.optimizer.lr: choice(10000, 100, 10, 1, 0.1, 0.01, 0.001, 0.000001)
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 10
+    prefer : processes
+    verbose: 1
+    timeout: null
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r
