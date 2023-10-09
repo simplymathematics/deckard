@@ -462,31 +462,40 @@ stages:
       md5: 9c9bc0aab00251ca5e9bd210366bc055
       size: 1339392
     - path: output/reports/attack/
-      md5: b02916ecb3056906c2f5293ff7989271.dir
-      size: 21892376057
-      nfiles: 52821
+      md5: 639f99ca4725ce7b72afe921ec04c56d.dir
+      size: 21892372967
+      nfiles: 52819
     outs:
     - path: output/reports/attack.csv
-      md5: ee495ac7761566f86facc46215695fae
-      size: 34597566
+      md5: dd2d965986d4b3cc1583730d92caf151
+      size: 34597178
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
     deps:
-    - path: attack.db
-      md5: c9f920c7233802e9c46e4051c2da78e6
-      size: 307200
-    - path: model.db
-      md5: d1eac324650402da6e3de1aebe0e3b3c
-      size: 237568
+    - path: ResNet101.db
+      md5: 744f187243001db70f63c8161d7f913f
+      size: 1314816
+    - path: ResNet152.db
+      md5: e0fcb3876ec636b12d7dc9e71b9d1e1c
+      size: 1314816
+    - path: ResNet18.db
+      md5: aa69b1818219c139f8e33ac205771ec1
+      size: 110592
+    - path: ResNet34.db
+      md5: e4d151b9800a1255a0143368057cb146
+      size: 1339392
+    - path: ResNet50.db
+      md5: 9c9bc0aab00251ca5e9bd210366bc055
+      size: 1339392
     - path: output/reports/train/
-      md5: bb02cab436e3969d65066c5058939207.dir
-      size: 395685799
-      nfiles: 655
+      md5: 098781f04bdba3498c00a157e3e45826.dir
+      size: 403646689
+      nfiles: 640
     outs:
     - path: output/reports/train.csv
-      md5: 922fa64743aa481feb79213a056c816e
-      size: 363649
+      md5: 152c61d1ae1a58e89c03c1351d5bf406
+      size: 411488
   attacks@ResNet152:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet152
       ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet152.db --config-name
@@ -506,10 +515,13 @@ stages:
       md5: e0fcb3876ec636b12d7dc9e71b9d1e1c
       size: 1314816
   plot:
-    cmd: python plots.py --path output/plots/ --file output/reports/attack.csv
+    cmd: python -m deckard.layers.plots --path output/plots/ --file output/reports/attack.csv
     deps:
     - path: ResNet101.db
       md5: 744f187243001db70f63c8161d7f913f
+      size: 1314816
+    - path: ResNet152.db
+      md5: e0fcb3876ec636b12d7dc9e71b9d1e1c
       size: 1314816
     - path: ResNet18.db
       md5: aa69b1818219c139f8e33ac205771ec1
@@ -521,13 +533,12 @@ stages:
       md5: 9c9bc0aab00251ca5e9bd210366bc055
       size: 1339392
     - path: output/reports/attack.csv
-      md5: ee495ac7761566f86facc46215695fae
-      size: 34597566
+      md5: dd2d965986d4b3cc1583730d92caf151
+      size: 34597178
     outs:
-    - path: output/plots/
-      md5: 1c5b6ac91813c03346b4ba4073fe6393.dir
-      size: 5642718
-      nfiles: 14
+    - path: output/plots/data.csv
+      md5: 1c7613836c312443c60d082beedad07a
+      size: 5271552
   attacks@ResNet101:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
       ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet101.db --config-name
@@ -580,3 +591,49 @@ stages:
     - path: ResNet50.db
       md5: 9c9bc0aab00251ca5e9bd210366bc055
       size: 1339392
+  afr:
+    cmd: python -m deckard.layers.afr --dataset mnist
+    deps:
+    - path: output/plots/data.csv
+      md5: 1c7613836c312443c60d082beedad07a
+      size: 5271552
+    outs:
+    - path: output/plots/aft_comparison.csv
+      md5: a6f73c9391f954e99589a821212ad21c
+      size: 188
+    - path: output/plots/aft_comparison.tex
+      md5: cce0d126a79add14d7ff788533686bde
+      size: 413
+    - path: output/plots/cox_aft.pdf
+      md5: b76444e45979116a99351d5a7ba8f077
+      size: 31142
+    - path: output/plots/cox_partial_effects.pdf
+      md5: 19b5cf8862a73ec6d61b906422ffd4d7
+      size: 42272
+    - path: output/plots/log_logistic_aft.pdf
+      md5: d942647f45fcd634c3c83111930feb2e
+      size: 34244
+    - path: output/plots/log_logistic_partial_effects.pdf
+      md5: 4824409000ca32f6b98dd74725162fbc
+      size: 30378
+    - path: output/plots/log_normal_aft.pdf
+      md5: 3637064ee8589436adbf0c8cfaf319e2
+      size: 34412
+    - path: output/plots/log_normal_partial_effects.pdf
+      md5: d81620b4263ce48f527b37acfa24d7f3
+      size: 31085
+    - path: output/plots/weibull_aft.pdf
+      md5: a5faa8ed7d552e661044082591932ece
+      size: 32250
+    - path: output/plots/weibull_partial_effects.pdf
+      md5: 65e320a974b0d727696ec5d22b31ed2f
+      size: 30796
+  copy_results:
+    cmd: cp -r output/plots/* ~/ml_afr/mnist/
+    deps:
+    - path: output/plots/aft_comparison.csv
+      md5: a6f73c9391f954e99589a821212ad21c
+      size: 188
+    - path: output/plots/data.csv
+      md5: 1c7613836c312443c60d082beedad07a
+      size: 5271552

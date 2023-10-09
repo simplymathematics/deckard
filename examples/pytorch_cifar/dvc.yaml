@@ -1,5 +1,5 @@
 stages:
-  train:
+  train: # The Experiment layers are prototypes for the Optimizer layers
     cmd: python -m deckard.layers.experiment train
     params:
       - data
@@ -16,7 +16,7 @@ stages:
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-  attack:
+  attack: # The Experiment layers are prototypes for the Optimizer layers
     cmd: python -m deckard.layers.experiment attack
     params:
       - data
@@ -34,14 +34,27 @@ stages:
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
         ##############################################################################
-  attacks:
+  models: # This is a loop over the ResNet models
     foreach:
-      # - ResNet18
-      # - ResNet34
-      # - ResNet50
-      # - ResNet101
+      - ResNet18
+      - ResNet34
+      - ResNet50
+      - ResNet101
       - ResNet152
-    do:
+    do: # This script configures each defence
+      cmd: bash models.sh ++model.init.name=torch_example.${item} ++stage=train ++hydra.sweeper.study=${item} --config-name default.yaml
+      deps:
+      - models.sh
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+  attacks: # This is a loop over the ResNet models
+    foreach:
+      - ResNet18
+      - ResNet34
+      - ResNet50
+      - ResNet101
+      - ResNet152
+    do: # This script configures each attack and calls models.sh which configures each defence
       cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name default.yaml
       deps:
       - models.sh
@@ -51,22 +64,22 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
       outs:
       - ${item}.db
-  compile:
+  compile: # 
     foreach:
       - attack
     do:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      # - ResNet18.db
-      # - ResNet34.db
-      # - ResNet50.db
-      # - ResNet101.db
+      - ResNet18.db
+      - ResNet34.db
+      - ResNet50.db
+      - ResNet101.db
       - ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   plot:
-    cmd : python plots.py --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
     metrics:
@@ -86,7 +99,7 @@ stages:
       - ${files.directory}/plots/def_param_vs_adv_accuracy.pdf
       - ${files.directory}/plots/def_param_vs_adv_failure_rate.pdf
   afr:
-    cmd: python afr.py
+    cmd: python -m deckard.layers.afr --dataset cifar
     deps:
       - ${files.directory}/plots/data.csv
     plots:
@@ -102,3 +115,8 @@ stages:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
       - ${files.directory}/plots/aft_comparison.tex
+  copy_results:
+    cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
+    deps:
+      - ${files.directory}/plots/data.csv
+      - ${files.directory}/plots/aft_comparison.csv

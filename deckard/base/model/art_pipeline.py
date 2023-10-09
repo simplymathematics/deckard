@@ -249,5 +249,6 @@ class ArtPipeline:
             config.update(**sub_kwargs)
             model = obj(model)
         if "trainer" in self.pipeline:
+            name, sub_kwargs = self.pipeline["trainer"]()
             raise NotImplementedError("Training Defense not implemented yet")
         return model
