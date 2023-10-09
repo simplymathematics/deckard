@@ -39,7 +39,7 @@ def configure(cfg: DictConfig, trial: Trial) -> None:
                 [[0, 2 ^ bit_depth - 1]],
             )
         elif preprocessor.strip() == "art.defences.preprocessor.GaussianAugmentation":
-            sigma = trial.suggest_loguniform(
+            _ = trial.suggest_loguniform(
                 "model.art.pipeline.preprocessor.defences.GaussianAugmentation.sigma",
                 0.1,
                 10,
@@ -56,7 +56,7 @@ def configure(cfg: DictConfig, trial: Trial) -> None:
             raise ValueError(f"Unknown preprocessor {preprocessor}")
     if postprocessor is not None:
         if postprocessor.strip() == "art.defences.postprocessor.HighConfidence":
-            threshold = trial.suggest_int(
+            _ = trial.suggest_int(
                 "model.art.pipeline.preprocessor.defences.HighConfidence.threshold",
                 1,
             )
@@ -69,7 +69,7 @@ def configure(cfg: DictConfig, trial: Trial) -> None:
                 [[0, 255]],
             )
         elif postprocessor.strip() == "art.defences.postprocessor.GaussianNoise":
-            sigma = trial.suggest_loguniform(
+            _ = trial.suggest_loguniform(
                 "model.art.pipeline.preprocessor.defences.GaussianNoise.sigma",
                 0.1,
                 10,

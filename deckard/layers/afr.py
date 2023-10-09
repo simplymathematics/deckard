@@ -258,14 +258,14 @@ if "__main__" == __name__:
 
     weibull_dict = {
         "Intercept: rho_": "$\\rho$",
-        "Intercept: lambda_": "$\lambda$",
+        "Intercept: lambda_": "$\lambda$",  # noqa W605
         "data.sample.random_state: lambda_": "Random State",
         "def_value: lambda_": "Defence Strength",
         "atk_value: lambda_": "Attack Strength",
         "train_time: lambda_": "$t_{train}$",
         "predict_time: lambda_": "$t_{predict}$",
-        "adv_accuracy: lambda_": "$\lambda_{adv.}$",
-        "accuracy: lambda_": "$\lambda_{ben.}$",
+        "adv_accuracy: lambda_": "$\lambda_{adv.}$",  # noqa W605
+        "accuracy: lambda_": "$\lambda_{ben.}$",  # noqa W605
         "adv_fit_time: lambda_": "$t_{attack}$",
         "adv_log_loss: lambda_": "Adv. Log Loss",
         "adv_failure_rate: lambda_": "$h_{adv.}(t,;\\theta)$",
@@ -315,11 +315,11 @@ if "__main__" == __name__:
         "train_time": "$t_{train}$",
         "model_layers": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-        "adv_accuracy": "$\lambda_{adv.}$",
+        "adv_accuracy": "$\lambda_{adv.}$",  # noqa W605
         "adv_fit_time": "$t_{attack}$",
         "adv_log_loss": "Adv. Log Loss",
         "predict_time": "$t_{predict}$",
-        "accuracy": "$\lambda_{ben.}$",
+        "accuracy": "$\lambda_{ben.}$",  # noqa W605
         "failure_rate": "$h_{ben.}(t,;\\theta)$",
         "atk_value": "Attack Strength",
     }
@@ -355,8 +355,8 @@ if "__main__" == __name__:
     )
 
     log_normal_dict = {
-        "Intercept: sigma_": "$\sigma$",
-        "Intercept: mu_": "$\mu$",
+        "Intercept: sigma_": "$\sigma$",  # noqa W605
+        "Intercept: mu_": "$\mu$",  # noqa W605
         "def_value: mu_": "Defence Strength",
         "atk_value: mu_": "Attack Strength",
         "train_time: mu_": "$t_{train}$",
@@ -366,8 +366,8 @@ if "__main__" == __name__:
         "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate",
         "data.sample.random_state: mu_": "Random State",
         "adv_log_loss: mu_": "Adv. Log Loss",
-        "adv_accuracy: mu_": "$\lambda_{adv.}$",
-        "accuracy: mu_": "$\lambda_{ben.}$",
+        "adv_accuracy: mu_": "$\lambda_{adv.}$",  # noqa W605
+        "accuracy: mu_": "$\lambda_{ben.}$",  # noqa W605
         "adv_failure_rate: mu_": "$h_{adv}(t,;\\theta)$",
         "def_gen": "Defence",
         "learning_rate: mu_": "Learning Rate",
@@ -405,12 +405,12 @@ if "__main__" == __name__:
         "atk_value: alpha_": "Attack Strength",
         "train_time: alpha_": "$t_{train}$",
         "predict_time: alpha_": "$t_{predict}$",
-        "adv_accuracy: alpha_": "$\lambda_{adv.}$",
-        "accuracy: alpha_": "$\lambda_{ben.}$",
+        "adv_accuracy: alpha_": "$\lambda_{adv.}$",  # noqa W605
+        "accuracy: alpha_": "$\lambda_{ben.}$",  # noqa W605
         "adv_fit_time: alpha_": "$t_{attack}$",
         "model_layers: alpha_": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-        "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$",
+        "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$",  # noqa W605
         "alpha_": "",
     }
 

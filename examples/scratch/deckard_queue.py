@@ -2,7 +2,6 @@ import logging
 import argparse
 import yaml
 from os import environ
-from dvc.api import params_show
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

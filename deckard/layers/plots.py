@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-
+from paretoset import paretoset
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -166,9 +166,6 @@ def calculate_failure_rate(data):
         data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     return data
-
-
-from paretoset import paretoset
 
 
 def pareto_set(data, sense_dict):
