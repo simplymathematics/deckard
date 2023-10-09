@@ -98,7 +98,7 @@ def scatter_plot(
     hue_order=None,
     **kwargs,
 ):
-    
+
     # plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
@@ -117,7 +117,7 @@ def scatter_plot(
     graph.set_title(title)
     graph.get_figure().tight_layout()
     graph.get_figure().savefig(Path(folder) / file)
-    
+
     logger.info(f"Saved graph to {Path(folder) / file}")
     plt.gcf().clear()
     return graph
@@ -137,16 +137,24 @@ def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     data.loc[:, "failure_rate"] = (
-        (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"] / data.loc[:, "predict_time"]
+        (1 - data.loc[:, "accuracy"])
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "predict_time"]
     )
     data.loc[:, "success_rate"] = (
-        data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"] / data.loc[:, "predict_time"]
+        data.loc[:, "accuracy"]
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data.loc[:, "adv_accuracy"]) * data.loc[:, "attack.attack_size"] / data.loc[:, "adv_fit_time"]
+        (1 - data.loc[:, "adv_accuracy"])
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "adv_success_rate"] = (
-        data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"] / data.loc[:, "adv_fit_time"]
+        data.loc[:, "adv_accuracy"]
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "training_time_per_failure"] = (
         data.loc[:, "train_time"] / data.loc[:, "failure_rate"]

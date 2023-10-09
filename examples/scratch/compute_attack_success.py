@@ -9,7 +9,8 @@ from dvc.api import params_show, read
 
 logger = logging.getLogger(__name__)
 
-def read_data_file(file: str, target = None):
+
+def read_data_file(file: str, target=None):
     filetype = Path(file).suffix
     if filetype == ".csv":
         data = pd.read_csv(file)
@@ -18,13 +19,14 @@ def read_data_file(file: str, target = None):
     elif filetype == ".json":
         with open(file, "r") as f:
             data = json.load(f)
-        data = pd.DataFrame(data, index = range(len(data)))
+        data = pd.DataFrame(data, index=range(len(data)))
     else:
         raise ValueError(f"Unknown file type: {filetype}")
     # to numpy
     data = data.to_numpy()
     logger.info(f"Loaded data from {file} with shape {data.shape}")
     return data
+
 
 def write_data_file(data, file: str):
     filetype = Path(file).suffix
@@ -44,29 +46,45 @@ def write_data_file(data, file: str):
         raise ValueError(f"Unknown file type: {filetype}")
     return None
 
+
 if __name__ == "__main__":
-    attack_success_parser = argparse.ArgumentParser(description="Compute attack success")
+    attack_success_parser = argparse.ArgumentParser(
+        description="Compute attack success"
+    )
     attack_success_parser.add_argument(
         "--log-level",
         default="INFO",
         help="Logging level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     )
-    attack_success_parser.add_argument("-b", "--ben_predictions_file", help="Full path to the predictions file", required=True,)
-    attack_success_parser.add_argument("-a", "--adv_predictions_file", help="Full path to the labels file", required=True,)
-    attack_success_parser.add_argument("-l", "--labels_file", help="Full path to the predictions file", required=True,)
+    attack_success_parser.add_argument(
+        "-b",
+        "--ben_predictions_file",
+        help="Full path to the predictions file",
+        required=True,
+    )
+    attack_success_parser.add_argument(
+        "-a",
+        "--adv_predictions_file",
+        help="Full path to the labels file",
+        required=True,
+    )
+    attack_success_parser.add_argument(
+        "-l", "--labels_file", help="Full path to the predictions file", required=True
+    )
     attack_success_parser.add_argument(
         "-i",
         "--input_score_file",
-        default = None,
+        default=None,
         required=True,
     )
-    attack_success_parser.add_argument("-o", "--output_score_file", help="Full path to the labels file", required=True,)
+    attack_success_parser.add_argument(
+        "-o", "--output_score_file", help="Full path to the labels file", required=True
+    )
     args = attack_success_parser.parse_args()
-    
+
     logging.basicConfig(level=args.log_level)
-    
-    
+
     # labels = read_data_file(args.labels_file)
     # nb_classes = len(np.unique(labels))
     # ben_pred = read_data_file(args.ben_predictions_file)
@@ -86,5 +104,3 @@ if __name__ == "__main__":
     # new.update(**score_dict)
     # with open(args.output_score_file, "w") as f:
     #     json.dump(new, f)
-    
-    
