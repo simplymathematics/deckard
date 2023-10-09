@@ -1,4 +1,3 @@
-params:
-  art.postprocessor.name : [art.defences.postprocessor.HighConfidence]
-  art.postprocessor.cutoff : [.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99]
-  art.postprocessor.apply_fit : [True, False]
+art.postprocessor.name : [art.defences.postprocessor.HighConfidence]
+art.postprocessor.cutoff : [.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99]
+art.postprocessor.apply_fit : [True, False]
