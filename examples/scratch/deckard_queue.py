@@ -49,6 +49,7 @@ if __name__ == "__main__":
     args = queue_parser.parse_args()
     # Set logging level
     logging.basicConfig(level=args.log_level)
+
     # Load Default Configuration
     def load_config(config_file):
         with open(config_file, "r") as f:
@@ -72,7 +73,7 @@ if __name__ == "__main__":
             new_config = default_config.copy()
             new_config["hydra"]["sweeper"]["params"].update(params)
             logger.info(
-                f"New configuration: {new_config['hydra']['sweeper']['params']}"
+                f"New configuration: {new_config['hydra']['sweeper']['params']}",
             )
         else:
             new_config = default_config
@@ -93,7 +94,8 @@ if __name__ == "__main__":
             param_name = param_names[j]
             j += 1
             new_config = add_overrides_from_params_file(
-                params_file=params_file, default_config=default_config
+                params_file=params_file,
+                default_config=default_config,
             )
             if conf_name == "default":
                 study_name = f"{param_name}"

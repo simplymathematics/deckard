@@ -1,11 +1,8 @@
 import logging
 import argparse
 from pathlib import Path
-from art.utils import compute_accuracy, to_categorical
 import pandas as pd
 import json
-import numpy as np
-from dvc.api import params_show, read
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +46,7 @@ def write_data_file(data, file: str):
 
 if __name__ == "__main__":
     attack_success_parser = argparse.ArgumentParser(
-        description="Compute attack success"
+        description="Compute attack success",
     )
     attack_success_parser.add_argument(
         "--log-level",
@@ -70,7 +67,10 @@ if __name__ == "__main__":
         required=True,
     )
     attack_success_parser.add_argument(
-        "-l", "--labels_file", help="Full path to the predictions file", required=True
+        "-l",
+        "--labels_file",
+        help="Full path to the predictions file",
+        required=True,
     )
     attack_success_parser.add_argument(
         "-i",
@@ -79,7 +79,10 @@ if __name__ == "__main__":
         required=True,
     )
     attack_success_parser.add_argument(
-        "-o", "--output_score_file", help="Full path to the labels file", required=True
+        "-o",
+        "--output_score_file",
+        help="Full path to the labels file",
+        required=True,
     )
     args = attack_success_parser.parse_args()
 

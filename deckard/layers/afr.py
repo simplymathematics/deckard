@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -11,12 +10,13 @@ from lifelines import (
     LogLogisticAFTFitter,
     CoxPHFitter,
 )
-from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
 import matplotlib
 from pathlib import Path
 import logging
 import yaml
 import argparse
+from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,29 +57,6 @@ if "__main__" == __name__:
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
         :, "attack.attack_size"
     ]
-
-    # data=data[data['def_gen'] == 'Gauss-in']
-    # data=data[data['atk_gen'] == 'HSJ']
-
-    print(
-        "Adversarial Accuracy:",
-        "\n",
-        "ResNet152:",
-        data[data["model_layers"] == 152].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet101:",
-        data[data["model_layers"] == 101].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet50:",
-        data[data["model_layers"] == 50].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet34:",
-        data[data["model_layers"] == 34].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet18:",
-        data[data["model_layers"] == 18].adv_accuracy.mean(skipna=True),
-        "\n",
-    )
 
     def plot_aft(
         df,
@@ -168,7 +145,7 @@ if "__main__" == __name__:
 
     def make_afr_table(score_list, aft_dict, dataset):
         assert len(score_list) == len(
-            aft_dict
+            aft_dict,
         ), "Length of score list and aft dict must be equal"
         aft_data = pd.DataFrame()
         aft_data.index.name = "Model"
@@ -235,7 +212,12 @@ if "__main__" == __name__:
         return cleaned, y, data
 
     def split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     ):
         cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
         X_train, X_test, y_train, y_test = train_test_split(
@@ -266,7 +248,12 @@ if "__main__" == __name__:
     ]
 
     X_train, X_test, y_train, y_test = split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     )
 
     weibull_dict = {
