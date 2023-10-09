@@ -1,0 +1,168 @@
+attack:
+  _target_: deckard.base.attack.Attack
+  attack_size: 10
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      n_features: 20
+      n_samples: 1100
+      name: classification
+      random_state: 0
+    sample:
+      random_state: 0
+      stratify: true
+      test_size: 1000
+      train_size: 100
+    sklearn_pipeline:
+      preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: true
+        with_std: true
+  init:
+    model:
+      _target_: deckard.base.model.Model
+      art:
+        _target_: deckard.base.model.art_pipeline.ArtPipeline
+        initialize: null
+        library: sklearn-svc
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          n_features: 20
+          n_samples: 1100
+          name: classification
+          random_state: 0
+        sample:
+          random_state: 0
+          stratify: true
+          test_size: 1000
+          train_size: 100
+        sklearn_pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: true
+            with_std: true
+      init:
+        C: 1.0
+        _target_: deckard.base.model.ModelInitializer
+        kernel: rbf
+        max_iter: 100
+        name: sklearn.svm.SVC
+        probability: true
+        random_state: 0
+      library: sklearn-svc
+    name: art.attacks.evasion.HopSkipJump
+  method: evasion
+  model:
+    _target_: deckard.base.model.Model
+    art:
+      _target_: deckard.base.model.art_pipeline.ArtPipeline
+      initialize: null
+      library: sklearn-svc
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        n_features: 20
+        n_samples: 1100
+        name: classification
+        random_state: 0
+      sample:
+        random_state: 0
+        stratify: true
+        test_size: 1000
+        train_size: 100
+      sklearn_pipeline:
+        preprocessor:
+          name: sklearn.preprocessing.StandardScaler
+          with_mean: true
+          with_std: true
+    init:
+      C: 1.0
+      _target_: deckard.base.model.ModelInitializer
+      kernel: rbf
+      max_iter: 100
+      name: sklearn.svm.SVC
+      probability: true
+      random_state: 0
+    library: sklearn-svc
+data:
+  _target_: deckard.base.data.Data
+  generate:
+    n_features: 20
+    n_samples: 1100
+    name: classification
+    random_state: 0
+  sample:
+    random_state: 0
+    stratify: true
+    test_size: 1000
+    train_size: 100
+  sklearn_pipeline:
+    preprocessor:
+      name: sklearn.preprocessing.StandardScaler
+      with_mean: true
+      with_std: true
+files:
+  _target_: deckard.base.files.FileConfig
+  adv_predictions_file: adv_predictions.json
+  adv_probabilities_file: adv_probabilities.json
+  attack_dir: attacks
+  attack_file: attack
+  attack_type: .pkl
+  data_dir: data
+  data_file: data
+  data_type: .pkl
+  directory: output
+  model_dir: models
+  model_file: model
+  model_type: .pkl
+  name: default
+  params_file: params.yaml
+  predictions_file: predictions.json
+  probabilities_file: probabilities.json
+  reports: reports
+  score_dict_file: score_dict.json
+  test_labels_file: test_labels.json
+  train_labels_file: train_labels.json
+model:
+  _target_: deckard.base.model.Model
+  art:
+    _target_: deckard.base.model.art_pipeline.ArtPipeline
+    initialize: null
+    library: sklearn-svc
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      n_features: 20
+      n_samples: 1100
+      name: classification
+      random_state: 0
+    sample:
+      random_state: 0
+      stratify: true
+      test_size: 1000
+      train_size: 100
+    sklearn_pipeline:
+      preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: true
+        with_std: true
+  init:
+    C: 1.0
+    _target_: deckard.base.model.ModelInitializer
+    kernel: rbf
+    max_iter: 100
+    name: sklearn.svm.SVC
+    probability: true
+    random_state: 0
+  library: sklearn-svc
+scorers:
+  _target_: deckard.base.scorer.ScorerDict
+  accuracy:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: maximize
+    name: sklearn.metrics.accuracy_score
+  log_loss:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: minimize
+    name: sklearn.metrics.log_loss

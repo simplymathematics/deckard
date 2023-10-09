@@ -1,0 +1,125 @@
+stages:
+  attack:
+    cmd: python -m deckard.layers.experiment --stage attack
+    deps:
+    - ${files.data_file}
+    - ${files.reports}/train/${files.path}/${files.params_file}
+    - ${files.reports}/train/${files.path}/${files.predictions_file}
+    metrics:
+    - ${files.reports}/attack/${files.path}/${files.score_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.time_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_score_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_time_dict_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_predictions_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_probabilities_file}
+    outs:
+    - ${files.reports}/attack/${files.path}/${files.params_file}
+    - ${files.reports}/attack/${files.path}/${files.attack_samples_file}
+    - ${files.reports}/attack/${files.path}/${files.predictions_file}
+    - ${files.reports}/attack/${files.path}/${files.probabilities_file}
+    params:
+    - data
+    - model.init
+    - files
+    - scorers
+    - attack
+  generate_data:
+    cmd: python -m deckard.layers.experiment --stage generate_data
+    deps:
+    - params.yaml
+    metrics:
+    - ${files.reports}/generate_data/${files.path}/${files.ground_truth_file}
+    outs:
+    - ${files.data_file}
+    params:
+    - data
+    - files
+  train:
+    cmd: python -m deckard.layers.experiment --stage train
+    deps:
+      - ${files.data_file}
+    metrics:
+      - ${files.reports}/train/${files.path}/${files.score_dict_file}
+      - ${files.reports}/train/${files.path}/${files.time_dict_file}
+      - ${files.reports}/train/${files.path}/${files.predictions_file}
+      - ${files.reports}/train/${files.path}/${files.probabilities_file}
+    outs:
+      - ${files.reports}/train/${files.path}/${files.params_file}
+    params:
+      - data
+      - model.init
+      - files
+      - scorers
+  models:
+    cmd: bash experiments.sh
+    outs:
+      - logs/models/
+      - ${files.reports}/models/
+    params:
+      - data
+      - model.init
+      - files
+      - scorers
+    deps:
+      - ${files.reports}/train/
+  compile_results:
+    cmd:
+      python find_best.py --output_folder best_models --kwargs "data.sample.train_size=1000" "data.generate.n_features=100" --report_folder "reports/model_queue" --results_file "plots/model_results.csv" --scorer_minimize False --control_for "model.init.kernel" --exclude sigmoid --stage models
+    outs:
+      - best_models/
+    metrics:
+      - plots/model_results.csv
+    deps:
+      - ${files.reports}/models/
+  attacks:
+    cmd: bash attacks.sh
+    outs:
+      - logs/attacks/
+      - ${files.reports}/attacks/
+    deps:
+      - best_models/
+    params:
+      - data
+      - model.init
+      - files
+      - attack
+      - scorers
+  compile_attacks:
+    cmd:
+      python find_best.py --output_folder best_attacks --kwargs "attack.init.max_iter=10" --report_folder "reports/attack" --results_file "plots/attack_results.csv" --scorer_minimize True --exclude sigmoid --stage attacks
+    metrics:
+      - plots/attack_results.csv
+    deps:
+      - ${files.reports}/attacks/
+    outs:
+      - best_attacks/
+  retrain:
+      cmd : python retrain.py
+      deps:
+        - ${files.reports}/models/
+        - ${files.reports}/attacks/
+        - best_models/
+        - best_attacks/
+      outs:
+        - retrain/
+      metrics:
+        - plots/before_retrain_confidence.csv
+        - plots/after_retrain_confidence.csv
+  plots:
+      cmd : python plots.py
+      deps :
+        - plots/after_retrain_confidence.csv
+        - plots/attack_results.csv
+        - plots/before_retrain_confidence.csv
+        - plots/model_results.csv
+      plots :
+        - plots/accuracy_vs_attack_parameters.pdf
+        - plots/accuracy_vs_features.pdf
+        - plots/accuracy_vs_samples.pdf
+        - plots/confidence_vs_attack_parameters.pdf
+        - plots/fit_time_vs_attack_parameters.pdf
+        - plots/fit_time_vs_features.pdf
+        - plots/fit_time_vs_samples.pdf
+        - plots/retrain_accuracy.pdf
+        - plots/retrain_confidence_vs_attack_parameters.pdf
+        - plots/retrain_time.pdf

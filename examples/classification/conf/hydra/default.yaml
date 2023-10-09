@@ -1,0 +1,7 @@
+defaults:
+- run : default
+- launcher : default
+- sweeper : default
+- override sweeper : optuna
+- override sweeper/sampler : grid
+- override launcher : joblib
