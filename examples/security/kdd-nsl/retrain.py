@@ -21,6 +21,8 @@ from hydra.utils import instantiate
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
+
+
 def parse_folder(
     folder,
     exclude=[
@@ -63,6 +65,7 @@ def flatten_results(results):
         tmp = pd.json_normalize(results[col])
         new_results = pd.concat([new_results, tmp], axis=1)
     return new_results
+
 
 def parse_results(result_dir, flatten=True):
     """
@@ -130,6 +133,8 @@ def unflatten_results(df, sep=".") -> List[dict]:
                 parsed_row = set_for_keys(parsed_row, keys, val)
         result.append(parsed_row)
     return result
+
+
 def retrain_loop(
     clf,
     X_train,
@@ -248,16 +253,16 @@ for col in results.columns:
 # subset = subset[subset["data.generate.kwargs.n_features"] == 100]
 with open("conf/model/best_rbf.yaml", "r") as f:
     best_rbf = yaml.safe_load(f)
-best_rbf['init'].pop("_target_", None)
-best_rbf['init'].pop("name", None)
+best_rbf["init"].pop("_target_", None)
+best_rbf["init"].pop("name", None)
 with open("conf/model/best_poly.yaml", "r") as f:
     best_poly = yaml.safe_load(f)
-best_poly['init'].pop("_target_", None)
-best_poly['init'].pop("name", None)
+best_poly["init"].pop("_target_", None)
+best_poly["init"].pop("name", None)
 with open("conf/model/best_linear.yaml", "r") as f:
     best_lin = yaml.safe_load(f)
-best_lin['init'].pop("_target_", None)
-best_lin['init'].pop("name", None)
+best_lin["init"].pop("_target_", None)
+best_lin["init"].pop("name", None)
 rbf_model = SVC(**best_rbf["init"])
 # Poly
 poly_model = SVC(**best_poly["init"])
@@ -267,7 +272,7 @@ linear_model = SVC(**best_lin["init"])
 with open("conf/data/attack.yaml", "r") as f:
     data = yaml.safe_load(f)
 data = instantiate(data)
-X_train, X_test, y_train,  y_test = data()
+X_train, X_test, y_train, y_test = data()
 # Fit Models
 rbf_model.fit(X_train, y_train)
 poly_model.fit(X_train, y_train)
@@ -301,12 +306,16 @@ for model in art_models:
     for folder in tqdm(os.listdir("output/reports/attack")):
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
-            with open(Path("output/reports/attack", folder, "adv_probabilities.json"), "r") as f:
+            with open(
+                Path("output/reports/attack", folder, "adv_probabilities.json"), "r"
+            ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
             false_confidence = y_test[: len(probs)] - probs[:, 1]
             avg_prob = np.mean(false_confidence)
-            with open(Path("output/reports/attack", folder, "score_dict.json"), "r") as f:
+            with open(
+                Path("output/reports/attack", folder, "score_dict.json"), "r"
+            ) as f:
                 try:
                     scores = json.load(f)
                 except:  # noqa E722
@@ -314,7 +323,9 @@ for model in art_models:
             if "False Confidence" in scores:
                 del scores["False Confidence"]
             scores[f"False Confidence before retraining {name.capitalize()}"] = avg_prob
-            with open(Path("output/reports/attack", folder, "score_dict.json"), "w") as f:
+            with open(
+                Path("output/reports/attack", folder, "score_dict.json"), "w"
+            ) as f:
                 json.dump(scores, f)
             yaml_file = Path("output/reports/attack", folder, "params.yaml")
             json_file = Path("output/reports/attack", folder, "params.json")
@@ -328,8 +339,8 @@ for model in art_models:
                     params = json.load(f)
             else:
                 raise ValueError(f"No params file found for {folder}")
-            attack_params = params["attack"]["init"]['kwargs']
-            attack_params.update({"name" : params["attack"]["init"]["name"]})
+            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence"] = avg_prob
             # print(f"Shape of confidence ser: {confidence_ser.shape}")
@@ -373,32 +384,46 @@ for model in art_models:
     for folder in tqdm(os.listdir("output/reports/attack")):
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
-            with open(Path("output/reports/attack", folder, "adv_probabilities.json"), "r") as f:
+            with open(
+                Path("output/reports/attack", folder, "adv_probabilities.json"), "r"
+            ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
             false_confidence = y_test[: len(probs)] - probs[:, 1]
             avg_prob = np.mean(false_confidence)
             pd.DataFrame(probs).to_csv(
-                Path("output/reports/attack", folder, f"probs_after_retraining_{name}.csv"),
+                Path(
+                    "output/reports/attack",
+                    folder,
+                    f"probs_after_retraining_{name}.csv",
+                ),
             )
-            with open(Path("output/reports/attack", folder, "score_dict.json"), "r") as f:
+            with open(
+                Path("output/reports/attack", folder, "score_dict.json"), "r"
+            ) as f:
                 scores = json.load(f)
             if "False Confidence" in scores:
                 del scores["False Confidence"]
             scores[f"False Confidence {name.capitalize()}"] = avg_prob
-            with open(Path("output/reports/attack", folder, "score_dict.json"), "w") as f:
+            with open(
+                Path("output/reports/attack", folder, "score_dict.json"), "w"
+            ) as f:
                 json.dump(scores, f)
             if Path("output/reports/attack", folder, "params.yaml").exists():
-                with open(Path("output/reports/attack", folder, "params.yaml"), "r") as f:
+                with open(
+                    Path("output/reports/attack", folder, "params.yaml"), "r"
+                ) as f:
                     params = yaml.safe_load(f)
             elif Path("output/reports/attack", folder, "params.json").exists():
-                with open(Path("output/reports/attack", folder, "params.json"), "r") as f:
+                with open(
+                    Path("output/reports/attack", folder, "params.json"), "r"
+                ) as f:
                     params = json.load(f)
             else:
                 logger.warning(f"No params file found for {folder}")
                 continue
             attack_params = params["attack"]["init"]["kwargs"]
-            attack_params.update({"name" : params["attack"]["init"]["name"]})
+            attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence After Retraining"] = avg_prob
             attack_ser = pd.Series(attack_params)

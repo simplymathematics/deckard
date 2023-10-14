@@ -49,14 +49,18 @@ def find_optuna_best(
     if params_file is not None:
         if params_file is True:
             if config_subdir is not None:
-                params_file = Path(config_folder, f"{config_subdir}", f"{default_config}.yaml")
+                params_file = Path(
+                    config_folder, f"{config_subdir}", f"{default_config}.yaml"
+                )
                 params = cfg.get(config_subdir)
             else:
                 params_file = Path(config_folder, f"{default_config}.yaml")
                 params = cfg
         else:
             if config_subdir is not None:
-                params_file = Path(config_folder, f"{config_subdir}", f"{params_file}.yaml")
+                params_file = Path(
+                    config_folder, f"{config_subdir}", f"{params_file}.yaml"
+                )
                 params = cfg.get(config_subdir)
             else:
                 params = cfg
@@ -64,7 +68,9 @@ def find_optuna_best(
         params_file.parent.mkdir(parents=True, exist_ok=True)
         with open(params_file.with_suffix(".yaml"), "w") as f:
             yaml.dump(params, f)
-        assert params_file.exists(), f"{params_file.resolve().as_posix()} does not exist."
+        assert (
+            params_file.exists()
+        ), f"{params_file.resolve().as_posix()} does not exist."
     return params
 
 
@@ -86,7 +92,9 @@ if __name__ == "__main__":
     args.config_folder = Path(args.config_folder).resolve().as_posix()
 
     if args.study_type == "optuna":
-        with open(Path(args.config_folder, args.default_config).with_suffix(".yaml"), "r") as f:
+        with open(
+            Path(args.config_folder, args.default_config).with_suffix(".yaml"), "r"
+        ) as f:
             default_params = yaml.load(f, Loader=yaml.FullLoader)
         if "hydra" in default_params:
             hydra_params = default_params.pop("hydra")

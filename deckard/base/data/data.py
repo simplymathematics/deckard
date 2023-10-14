@@ -102,7 +102,9 @@ class Data:
             elif isinstance(result, DataFrame) and self.target is not None:
                 if not isinstance(result, DataFrame):
                     result = DataFrame(result)
-                assert self.target in result, f"Target {self.target} not in data with columns {result.columns}"
+                assert (
+                    self.target in result
+                ), f"Target {self.target} not in data with columns {result.columns}"
                 y = result[self.target]
                 if isinstance(result, DataFrame):
                     X = result.drop(self.target, axis=1)

@@ -98,11 +98,11 @@ class AttackInitializer:
             else:
                 raise e
         except Exception as e:
-                if "has not been fitted correctly" in str(e):
-                    model, _ = self.model.fit(data=data, model=model)
-                    attack = instantiate(config, model)
-                else:
-                    raise e
+            if "has not been fitted correctly" in str(e):
+                model, _ = self.model.fit(data=data, model=model)
+                attack = instantiate(config, model)
+            else:
+                raise e
         return attack
 
 
@@ -155,7 +155,9 @@ class EvasionAttack:
             if "AdversarialPatch" in self.name:
                 start = process_time_ns()
                 patches, _ = atk.generate(ben_samples, **kwargs)
-                samples = atk.apply_patch(ben_samples, scale=scale_max, patch_external=patches)
+                samples = atk.apply_patch(
+                    ben_samples, scale=scale_max, patch_external=patches
+                )
             else:
                 start = process_time_ns()
                 samples = atk.generate(ben_samples, **kwargs)

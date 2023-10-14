@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 # else:
 #     results = parse_results("reports/model_queue/")
 results = pd.read_csv("output/train.csv")
-input_size = results["data.generate.kwargs.n_samples"] * results["data.generate.kwargs.n_features"]
+input_size = (
+    results["data.generate.kwargs.n_samples"]
+    * results["data.generate.kwargs.n_features"]
+)
 results["Kernel"] = results["model.init.kwargs.kernel"].copy()
 results["Features"] = results["data.generate.kwargs.n_features"].copy()
 results["Samples"] = results["data.sample.train_size"].copy()
@@ -56,7 +59,7 @@ graph1.set_xlabel("Number of Samples")
 graph1.set_ylabel("Accuracy")
 graph1.set_xscale("log")
 graph1.get_figure().tight_layout()
-graph1.set(xlim=(10,1e6))
+graph1.set(xlim=(10, 1e6))
 graph1.get_figure().savefig("plots/accuracy_vs_samples.pdf")
 plt.gcf().clear()
 
@@ -100,7 +103,7 @@ graph4 = sns.lineplot(
 )
 graph4.set_xlabel("Number of Samples")
 graph4.set_ylabel("Training Time")
-graph4.set(yscale="log", xscale="log", xlim=(10,1e6))
+graph4.set(yscale="log", xscale="log", xlim=(10, 1e6))
 graph4.legend(title="Kernel")
 graph4.get_figure().tight_layout()
 graph4.get_figure().savefig("plots/train_time_vs_samples.pdf")

@@ -139,7 +139,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
 
 def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
-    
+
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
     else:
@@ -148,7 +148,7 @@ def format_control_parameter(data, control_dict):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
-    
+
     for defence in defences:
         if defence in control_dict:
             param = control_dict[defence]

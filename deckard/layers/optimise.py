@@ -84,7 +84,7 @@ def merge_params(default, params) -> dict:
     """
     for key, value in params.items():
         if key in default and isinstance(value, dict) and value is not None:
-            default[key] = merge_params(default[key], value)    
+            default[key] = merge_params(default[key], value)
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))
             and value is not None
@@ -157,7 +157,8 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         with open(Path(path, "params.yaml"), "r") as f:
             default_params = yaml.load(f, Loader=yaml.FullLoader)
         default_params = OmegaConf.to_container(
-            OmegaConf.create(default_params), resolve=True,
+            OmegaConf.create(default_params),
+            resolve=True,
         )
         key_list = []
         for stage in stages:
@@ -172,7 +173,8 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         with open(Path(params), "r") as f:
             params = yaml.load(f, Loader=yaml.FullLoader)
         params = OmegaConf.to_container(
-            OmegaConf.create(params), resolve=True,
+            OmegaConf.create(params),
+            resolve=True,
         )
         assert isinstance(
             params,
