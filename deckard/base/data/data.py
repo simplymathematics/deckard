@@ -113,7 +113,8 @@ class Data:
                 result = self.sample(X, y)
             else:
                 assert len(result) == 4
-        result = self.sklearn_pipeline(*result)
+        if self.sklearn_pipeline is not None:
+            result = self.sklearn_pipeline(*result)
         return result
 
     def load(self, filename) -> DataFrame:
