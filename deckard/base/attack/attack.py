@@ -147,7 +147,6 @@ class EvasionAttack:
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
-
             atk = self.init(model=model, attack_size=self.attack_size)
 
             if targeted is True:

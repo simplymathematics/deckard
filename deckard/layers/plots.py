@@ -98,7 +98,6 @@ def scatter_plot(
     hue_order=None,
     **kwargs,
 ):
-
     # plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
