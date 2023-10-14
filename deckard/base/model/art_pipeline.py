@@ -249,6 +249,24 @@ class ArtPipeline:
             config.update(**sub_kwargs)
             model = obj(model)
         if "trainer" in self.pipeline:
-            name, sub_kwargs = self.pipeline["trainer"]()
+            # name, sub_kwargs = self.pipeline["trainer"]()
+            # assert "attack" in sub_kwargs, "Attack must be specified if the adversarial training defence is chosen."
+            # attack = sub_kwargs.pop("attack")
+            # if isinstance(attack, DictConfig):
+            #     attack = OmegaConf.to_container(attack, resolve=True)
+            #     attack = instantiate(attack)
+            # elif is_dataclass(attack):
+            #     attack = asdict(attack)
+            #     attack['_target_'] = attack.pop('name')
+            #     attack = instantiate(attack, model)
+            # elif isinstance(attack, dict):
+            #     attack['_target_'] = attack.pop('name')
+            #     attack = instantiate(attack, model)
+            # else:
+            #     assert "art.attacks" in str(type(attack)), f"Attack must be an art attack. Got {type(attack)}"
+            # if name == "art.defences.trainer.AdversarialTrainer":
+            #     from art.defences.trainer.adversarial_trainer import AdversarialTrainer
+            #     model = AdversarialTrainer(classifier=model, attacks = attack, **sub_kwargs)
+            # else:
             raise NotImplementedError("Training Defense not implemented yet")
         return model

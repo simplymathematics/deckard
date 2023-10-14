@@ -21,6 +21,8 @@ def find_optuna_best(
     config_subdir=None,
     direction=None,
 ):
+    logger.info(f"Study name: {study_name}")
+    logger.info(f"Storage name: {storage_name}")
     study = optuna.create_study(
         study_name=study_name,
         storage=storage_name,
@@ -30,14 +32,17 @@ def find_optuna_best(
     df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
     if study_csv is not None:
         df.to_csv(study_csv)
-    params = flatten_dict(study.best_params)
-    best_params = unflatten_dict(params)
-    best_params = flatten_dict(best_params)
+    best_params = flatten_dict(study.best_params)
+    more_params = flatten_dict(study.best_trial.user_attrs)
+    even_more_params = flatten_dict(study.best_trial.system_attrs)
+    logger.debug(f"Best params: {best_params}")
+    logger.debug(f"Best user params: {more_params}")
+    logger.debug(f"Best system params: {even_more_params}")
+    best_params = {**more_params, **best_params}
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
-        if not key.startswith("+"):
-            overrides.append(f"++{key}={value}")
+        overrides.append(f"{key}={value}")
     with initialize_config_dir(config_dir=config_folder, version_base="1.3"):
         cfg = compose(config_name=default_config, overrides=overrides)
         cfg = OmegaConf.to_container(cfg, resolve=False)

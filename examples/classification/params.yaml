@@ -46,12 +46,12 @@ attack:
         C: 1.0
         _target_: deckard.base.model.ModelInitializer
         kernel: rbf
-        max_iter: 100
+        max_iter: 10
         name: sklearn.svm.SVC
         probability: true
         random_state: 0
       library: sklearn-svc
-    name: art.attacks.evasion.HopSkipJump
+    name: art.attacks.evasion.ProjectedGradientDescent
   method: evasion
   model:
     _target_: deckard.base.model.Model
@@ -80,7 +80,7 @@ attack:
       C: 1.0
       _target_: deckard.base.model.ModelInitializer
       kernel: rbf
-      max_iter: 100
+      max_iter: 10
       name: sklearn.svm.SVC
       probability: true
       random_state: 0
@@ -102,6 +102,7 @@ data:
       name: sklearn.preprocessing.StandardScaler
       with_mean: true
       with_std: true
+direction: maximize
 files:
   _target_: deckard.base.files.FileConfig
   adv_predictions_file: adv_predictions.json
@@ -151,11 +152,12 @@ model:
     C: 1.0
     _target_: deckard.base.model.ModelInitializer
     kernel: rbf
-    max_iter: 100
+    max_iter: 10
     name: sklearn.svm.SVC
     probability: true
     random_state: 0
   library: sklearn-svc
+optimizers: accuracy
 scorers:
   _target_: deckard.base.scorer.ScorerDict
   accuracy:

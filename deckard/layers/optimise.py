@@ -84,12 +84,12 @@ def merge_params(default, params) -> dict:
     """
     for key, value in params.items():
         if key in default and isinstance(value, dict) and value is not None:
-            default[key] = merge_params(default[key], value)
+            default[key] = merge_params(default[key], value)    
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))
             and value is not None
         ):
-            default[key] = value
+            default.update({key: value})
         elif value is None:
             continue
         else:
@@ -156,6 +156,9 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     if params is None:
         with open(Path(path, "params.yaml"), "r") as f:
             default_params = yaml.load(f, Loader=yaml.FullLoader)
+        default_params = OmegaConf.to_container(
+            OmegaConf.create(default_params), resolve=True,
+        )
         key_list = []
         for stage in stages:
             with open(Path(path, "dvc.yaml"), "r") as f:
@@ -168,6 +171,9 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
         with open(Path(params), "r") as f:
             params = yaml.load(f, Loader=yaml.FullLoader)
+        params = OmegaConf.to_container(
+            OmegaConf.create(params), resolve=True,
+        )
         assert isinstance(
             params,
             dict,
@@ -238,9 +244,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     stage_params = {"stages": {stage: {}}}
     stage_params["stages"][stage] = dvc["stages"][stage]
     path.mkdir(exist_ok=True, parents=True)
-    with open(path / "dvc.yaml", "w") as f:
-        yaml.dump(stage_params, f, default_flow_style=False)
-    assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
+    # with open(path / "dvc.yaml", "w") as f:
+    #     yaml.dump(stage_params, f, default_flow_style=False)
+    # assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
     with open(Path(path, "params.yaml"), "w") as f:
         yaml.dump(params, f, default_flow_style=False)
     assert Path(

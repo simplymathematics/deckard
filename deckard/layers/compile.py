@@ -185,8 +185,6 @@ def clean_data_for_plotting(
     def_gen_dict,
     atk_gen_dict,
     control_dict,
-    file,
-    folder,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -199,15 +197,15 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
-    data["model_name"] = data["model.init.name"].str.split(".").str[-1]
-    data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    if "model.init.name" in data.columns:
+        data["model_name"] = data["model.init.name"].str.split(".").str[-1]
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     # Rename columns that end in '.1' by removing the '.1'
     data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict)
-    logger.info(f"Saving data to {Path(folder) / file}")
-    data.to_csv(Path(folder) / "data.csv")
+    data.columns = data.columns.str.replace(" ", "")
     return data
 
 
@@ -265,8 +263,6 @@ if __name__ == "__main__":
         def_gen_dict,
         atk_gen_dict,
         control_dict,
-        results_file,
-        report_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(

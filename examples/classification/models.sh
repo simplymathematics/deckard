@@ -1,6 +1,6 @@
 # N_FEATURES=( 10 100 1000 10000 10000 100000 1000000)
 # TRAIN_SIZES=( 10 100 1000 )
-TRAIN_SIZES=( 10000 )
+TRAIN_SIZES=( 1000  )
 N_FEATURES=( 100 )
 N_SAMPLES=( 1010000 )
 TOTAL=$(( ${#N_FEATURES[@]} * ${#N_SAMPLES[@]} * ${#TRAIN_SIZES[@]} ))
@@ -19,7 +19,7 @@ for train_size in ${TRAIN_SIZES[@]}; do
             ++data.generate.n_features=$n_features \
             ++data.generate.n_samples=$n_samples \
             ++data.sample.train_size=$train_size \
-            model.init.kernel=linear \
+            ++model.init.kernel=linear \
             model.init.C=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
             ++hydra.sweeper.study_name=linear_${n_features}_${train_size} "$@" --multirun \
             # Keeps a log of the output for each experiment
@@ -30,7 +30,7 @@ for train_size in ${TRAIN_SIZES[@]}; do
             ++data.generate.n_features=$n_features \
             ++data.generate.n_samples=$n_samples \
             ++data.sample.train_size=$train_size \
-            model.init.kernel=rbf \
+            ++model.init.kernel=rbf \
             +model.init.gamma=scale \
             model.init.C=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
             +model.init.coef0=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
@@ -42,7 +42,7 @@ for train_size in ${TRAIN_SIZES[@]}; do
             ++data.generate.n_features=$n_features \
             ++data.generate.n_samples=$n_samples \
             ++data.sample.train_size=$train_size \
-            model.init.kernel=poly \
+            ++model.init.kernel=poly \
             +model.init.degree=1,2,3,4,5 \
             +model.init.gamma=scale \
             +model.init.coef0=.0001,.001,.01,.1,1,10,100,1000,10000,10000  \

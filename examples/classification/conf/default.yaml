@@ -7,9 +7,9 @@ defaults:
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/launcher : joblib
+direction: maximize
+optimizers : accuracy
 hydra:
-  run:
-    dir : "./${files.directory}"
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler

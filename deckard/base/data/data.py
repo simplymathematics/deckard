@@ -99,8 +99,7 @@ class Data:
             result = self.load(self.name)
             if isinstance(result, list) and len(result) == 2:
                 result = self.sample(*result)
-            else:
-                assert self.target is not None, "Target is not specified"
+            elif isinstance(result, DataFrame) and self.target is not None:
                 if not isinstance(result, DataFrame):
                     result = DataFrame(result)
                 assert self.target in result, f"Target {self.target} not in data with columns {result.columns}"
@@ -110,8 +109,8 @@ class Data:
                 else:
                     X = result[~self.target]
                 result = self.sample(X, y)
-            
-            assert len(result) == 4
+            else:
+                assert len(result) == 4
         result = self.sklearn_pipeline(*result)
         return result
 
