@@ -11,8 +11,6 @@ defaults:
 optimizers : accuracy
 direction : maximize
 hydra:
-  run:
-    dir : "./${files.directory}"
   sweeper:
     sampler:
       _target_: optuna.samplers.GridSampler

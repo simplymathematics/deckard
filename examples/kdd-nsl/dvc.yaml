@@ -45,9 +45,6 @@ stages:
       - logs/models/: # Each feature/sample/train size combination log is stored in a separate file
           cache: true
           persist: true
-      # - ${files.directory}/${files.reports}/train/: # Each feature/sample/train size combination experiment is stored in a separate folder 
-      #     cache: true
-      #     persist: true
     params: # These are the parameters that are passed to the prototype stage
       - data
       - model
@@ -56,7 +53,7 @@ stages:
     deps:
       - params.yaml
       - conf/model.yaml
-      - models.sh
+      - other_data.sh
       # - conf/model/
   compile_models:
     cmd:
@@ -118,37 +115,37 @@ stages:
         - ${files.directory}/train.csv
         - attack.db
         - logs/models/
-  # retrain:
-  #     cmd : python retrain.py
-  #     deps:
-  #       - ${files.directory}/models/
-  #       - ${files.directory}/attacks/
-  #       - conf/attack/best_linear.yaml
-  #       - conf/attack/best_rbf.yaml
-  #       - conf/attack/best_poly.yaml
-  #       - conf/model/best_linear.yaml
-  #       - conf/model/best_rbf.yaml
-  #       - conf/model/best_poly.yaml
-  #     outs:
-  #       - retrain/
-  #     metrics:
-  #       - plots/before_retrain_confidence.csv
-  #       - plots/after_retrain_confidence.csv
+  retrain:
+      cmd : python retrain.py
+      deps:
+        - ${files.directory}/models/
+        - ${files.directory}/attacks/
+        - conf/attack/best_linear.yaml
+        - conf/attack/best_rbf.yaml
+        - conf/attack/best_poly.yaml
+        - conf/model/best_linear.yaml
+        - conf/model/best_rbf.yaml
+        - conf/model/best_poly.yaml
+      outs:
+        - retrain/
+      metrics:
+        - plots/before_retrain_confidence.csv
+        - plots/after_retrain_confidence.csv
   plots:
       cmd : python plots.py
       deps :
         - plots/after_retrain_confidence.csv
-        - plots/attack_results.csv
+        - output/attack.csv
         - plots/before_retrain_confidence.csv
-        - plots/model_results.csv
+        - output/train.csv
       plots :
         - plots/accuracy_vs_attack_parameters.pdf
-        - plots/accuracy_vs_features.pdf
-        - plots/accuracy_vs_samples.pdf
+        # - plots/accuracy_vs_features.pdf
+        # - plots/accuracy_vs_samples.pdf
         - plots/confidence_vs_attack_parameters.pdf
-        - plots/fit_time_vs_attack_parameters.pdf
-        - plots/fit_time_vs_features.pdf
-        - plots/fit_time_vs_samples.pdf
+        - plots/train_time_vs_attack_parameters.pdf
+        # - plots/train_time_vs_features.pdf
+        # - plots/train_time_vs_samples.pdf
         - plots/retrain_accuracy.pdf
         - plots/retrain_confidence_vs_attack_parameters.pdf
         - plots/retrain_time.pdf

@@ -8,8 +8,6 @@ defaults:
     - override hydra/sweeper : optuna
     - override hydra/launcher : joblib
 hydra:
-  run:
-    dir : "./${files.directory}"
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
