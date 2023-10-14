@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import pickle
@@ -310,14 +309,16 @@ for model in art_models:
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
             with open(
-                Path("output/reports/attack", folder, "adv_probabilities.json"), "r"
+                Path("output/reports/attack", folder, "adv_probabilities.json"),
+                "r",
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
             false_confidence = y_test[: len(probs)] - probs[:, 1]
             avg_prob = np.mean(false_confidence)
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "r"
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "r",
             ) as f:
                 try:
                     scores = json.load(f)
@@ -327,7 +328,8 @@ for model in art_models:
                 del scores["False Confidence"]
             scores[f"False Confidence before retraining {name.capitalize()}"] = avg_prob
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "w"
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "w",
             ) as f:
                 json.dump(scores, f)
             yaml_file = Path("output/reports/attack", folder, "params.yaml")
@@ -388,7 +390,8 @@ for model in art_models:
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
             with open(
-                Path("output/reports/attack", folder, "adv_probabilities.json"), "r"
+                Path("output/reports/attack", folder, "adv_probabilities.json"),
+                "r",
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
@@ -402,24 +405,28 @@ for model in art_models:
                 ),
             )
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "r"
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "r",
             ) as f:
                 scores = json.load(f)
             if "False Confidence" in scores:
                 del scores["False Confidence"]
             scores[f"False Confidence {name.capitalize()}"] = avg_prob
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "w"
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "w",
             ) as f:
                 json.dump(scores, f)
             if Path("output/reports/attack", folder, "params.yaml").exists():
                 with open(
-                    Path("output/reports/attack", folder, "params.yaml"), "r"
+                    Path("output/reports/attack", folder, "params.yaml"),
+                    "r",
                 ) as f:
                     params = yaml.safe_load(f)
             elif Path("output/reports/attack", folder, "params.json").exists():
                 with open(
-                    Path("output/reports/attack", folder, "params.json"), "r"
+                    Path("output/reports/attack", folder, "params.json"),
+                    "r",
                 ) as f:
                     params = json.load(f)
             else:

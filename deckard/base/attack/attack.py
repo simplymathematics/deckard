@@ -156,7 +156,9 @@ class EvasionAttack:
                 start = process_time_ns()
                 patches, _ = atk.generate(ben_samples, **kwargs)
                 samples = atk.apply_patch(
-                    ben_samples, scale=scale_max, patch_external=patches
+                    ben_samples,
+                    scale=scale_max,
+                    patch_external=patches,
                 )
             else:
                 start = process_time_ns()

@@ -3,7 +3,6 @@ import seaborn as sns
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-import matplotlib.pyplot as plt
 import logging
 
 sns.set_style("whitegrid")
