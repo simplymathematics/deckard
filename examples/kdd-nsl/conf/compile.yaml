@@ -1,0 +1,8 @@
+attacks:
+  ProjectedGradientDescent: PGD
+  null : null
+defences:
+  Control: Control
+params:
+  Control: model.init.kwargs.kernel
+  PGD: attack.init.kwargs.eps
