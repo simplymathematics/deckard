@@ -1,0 +1,106 @@
+data:
+  name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+  sample:
+    random_state: 0
+    shuffle: true
+    stratify: true
+    test_size: 1000
+    time_series: false
+    train_size: ''
+  sklearn_pipeline:
+    pipeline:
+      encoder:
+        kwargs:
+          handle_unknown: use_encoded_value
+          unknown_value: -1
+        name: sklearn.preprocessing.OrdinalEncoder
+      preprocessor:
+        kwargs:
+          with_mean: true
+          with_std: true
+        name: sklearn.preprocessing.StandardScaler
+  target: label
+files:
+  data_dir: data
+  files:
+    adv_predictions_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/adv_predictions.json
+    adv_probabilities_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/adv_probabilities.json
+    attack_file: models/attacks/attack.pkl
+    data_file: models/data/3215b3a3af8e08a80db4f8db75618bd6.pkl
+    model_file: models/models/0485643e48405264a3521847baef977c.pkl
+    params_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/params.yaml
+    predictions_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/predictions.json
+    probabilities_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/probabilities.json
+    score_dict_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/score_dict.json
+    test_labels_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/test_labels.json
+    train_labels_file: models/reports/train/b9efb7eaf85fdd217e9c3849e918eab5/train_labels.json
+  model_dir: models
+  name: b9efb7eaf85fdd217e9c3849e918eab5
+  reports: reports
+  stage: train
+kwargs:
+  direction: maximize
+model:
+  art:
+    library: sklearn-svc
+    name: 9b86c9b0cfb8d5e872a0126c0611580a
+    pipeline:
+      initialize:
+        kwargs: {}
+        name: initialize
+  data:
+    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 1000
+      time_series: false
+      train_size: ''
+    sklearn_pipeline:
+      pipeline:
+        encoder:
+          kwargs:
+            handle_unknown: use_encoded_value
+            unknown_value: -1
+          name: sklearn.preprocessing.OrdinalEncoder
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+    target: label
+  init:
+    kwargs:
+      C: 0.01
+      coef0: 0.1
+      degree: 2
+      gamma: scale
+      kernel: poly
+      max_iter: 10
+      probability: true
+      random_state: 0
+    name: sklearn.svm.SVC
+  library: sklearn-svc
+  name: 759b8c59e7d1bc2ca5cdabd0cf5d4582
+  trainer:
+    kwargs: {}
+name: b9efb7eaf85fdd217e9c3849e918eab5
+scorers:
+  scorers:
+    accuracy:
+      alias: accuracy_score
+      args:
+      - y_true
+      - y_pred
+      direction: maximize
+      name: sklearn.metrics.accuracy_score
+      params: {}
+    log_loss:
+      alias: log_loss
+      args:
+      - y_true
+      - y_pred
+      direction: minimize
+      name: sklearn.metrics.log_loss
+      params: {}

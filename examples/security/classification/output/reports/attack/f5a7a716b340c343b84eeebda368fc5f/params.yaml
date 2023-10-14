@@ -1,0 +1,236 @@
+attack:
+  attack_size: 100
+  data:
+    generate:
+      kwargs:
+        n_features: 100
+        n_informative: 99
+        n_redundant: 0
+        n_repeated: 0
+        n_samples: 11100
+        random_state: 0
+      name: classification
+    name: a64858fac5ed02f8fc79116d3cdf6c22
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 1000
+      time_series: false
+      train_size: 10000
+    sklearn_pipeline:
+      pipeline:
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+  init:
+    kwargs:
+      batch_size: 50
+      eps: 0.5
+      eps_step: 1
+      max_iter: 10
+      norm: 1
+    model:
+      art:
+        library: sklearn-svc
+        name: 37e40fba19cda476dad12a95c79baf44
+        pipeline: {}
+      data:
+        generate:
+          kwargs:
+            n_features: 100
+            n_informative: 99
+            n_redundant: 0
+            n_repeated: 0
+            n_samples: 11100
+            random_state: 0
+          name: classification
+        name: a64858fac5ed02f8fc79116d3cdf6c22
+        sample:
+          random_state: 0
+          shuffle: true
+          stratify: true
+          test_size: 1000
+          time_series: false
+          train_size: 10000
+        sklearn_pipeline:
+          pipeline:
+            preprocessor:
+              kwargs:
+                with_mean: true
+                with_std: true
+              name: sklearn.preprocessing.StandardScaler
+      init:
+        kwargs:
+          kwargs:
+            C: 0.001
+            kernel: linear
+            max_iter: 10
+            probability: true
+            random_state: 0
+        name: sklearn.svm.SVC
+      library: sklearn-svc
+      name: 66528d318bd7cfc7b1ab7e6f233b17e6
+      trainer:
+        kwargs:
+          kwargs: {}
+    name: art.attacks.evasion.ProjectedGradientDescent
+  kwargs: {}
+  method: evasion
+  model:
+    art:
+      library: sklearn-svc
+      name: 9b86c9b0cfb8d5e872a0126c0611580a
+      pipeline:
+        initialize:
+          kwargs: {}
+          name: initialize
+    data:
+      generate:
+        kwargs:
+          n_features: 100
+          n_informative: 99
+          n_redundant: 0
+          n_repeated: 0
+          n_samples: 11100
+          random_state: 0
+        name: classification
+      name: a64858fac5ed02f8fc79116d3cdf6c22
+      sample:
+        random_state: 0
+        shuffle: true
+        stratify: true
+        test_size: 1000
+        time_series: false
+        train_size: 10000
+      sklearn_pipeline:
+        pipeline:
+          preprocessor:
+            kwargs:
+              with_mean: true
+              with_std: true
+            name: sklearn.preprocessing.StandardScaler
+    init:
+      kwargs:
+        C: 0.001
+        kernel: linear
+        max_iter: 10
+        probability: true
+        random_state: 0
+      name: sklearn.svm.SVC
+    library: sklearn-svc
+    name: 27857f11e234ec6587e9ab699619368f
+    trainer:
+      kwargs: {}
+  name: 38579dfb39e79ad44de95e995613d1fe
+data:
+  generate:
+    kwargs:
+      n_features: 100
+      n_informative: 99
+      n_redundant: 0
+      n_repeated: 0
+      n_samples: 11100
+      random_state: 0
+    name: classification
+  name: a64858fac5ed02f8fc79116d3cdf6c22
+  sample:
+    random_state: 0
+    shuffle: true
+    stratify: true
+    test_size: 1000
+    time_series: false
+    train_size: 10000
+  sklearn_pipeline:
+    pipeline:
+      preprocessor:
+        kwargs:
+          with_mean: true
+          with_std: true
+        name: sklearn.preprocessing.StandardScaler
+files:
+  data_dir: data
+  files:
+    adv_predictions_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/adv_predictions.json
+    adv_probabilities_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/adv_probabilities.json
+    attack_file: output/attacks/8ff8664ee7ad2da87d55433db70f0b1b.pkl
+    data_file: output/data/a858116080834fd47b74ae783316fef9.pkl
+    model_file: output/models/0eec5c638c50302a2616e3884d711254.pkl
+    params_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/params.yaml
+    predictions_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/predictions.json
+    probabilities_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/probabilities.json
+    score_dict_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/score_dict.json
+    test_labels_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/test_labels.json
+    train_labels_file: output/reports/attack/f5a7a716b340c343b84eeebda368fc5f/train_labels.json
+  model_dir: models
+  name: f5a7a716b340c343b84eeebda368fc5f
+  reports: reports
+  stage: attack
+kwargs:
+  direction: minimize
+model:
+  art:
+    library: sklearn-svc
+    name: 9b86c9b0cfb8d5e872a0126c0611580a
+    pipeline:
+      initialize:
+        kwargs: {}
+        name: initialize
+  data:
+    generate:
+      kwargs:
+        n_features: 100
+        n_informative: 99
+        n_redundant: 0
+        n_repeated: 0
+        n_samples: 11100
+        random_state: 0
+      name: classification
+    name: a64858fac5ed02f8fc79116d3cdf6c22
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 1000
+      time_series: false
+      train_size: 10000
+    sklearn_pipeline:
+      pipeline:
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+  init:
+    kwargs:
+      C: 0.001
+      kernel: linear
+      max_iter: 10
+      probability: true
+      random_state: 0
+    name: sklearn.svm.SVC
+  library: sklearn-svc
+  name: 27857f11e234ec6587e9ab699619368f
+  trainer:
+    kwargs: {}
+name: f5a7a716b340c343b84eeebda368fc5f
+scorers:
+  scorers:
+    accuracy:
+      alias: accuracy_score
+      args:
+      - y_true
+      - y_pred
+      direction: maximize
+      name: sklearn.metrics.accuracy_score
+      params: {}
+    log_loss:
+      alias: log_loss
+      args:
+      - y_true
+      - y_pred
+      direction: minimize
+      name: sklearn.metrics.log_loss
+      params: {}

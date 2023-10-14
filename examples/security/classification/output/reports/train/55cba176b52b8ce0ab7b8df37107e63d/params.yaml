@@ -1,0 +1,103 @@
+data:
+  generate:
+    kwargs:
+      n_features: 10
+      n_samples: 1010000
+      random_state: 0
+    name: classification
+  name: 764d34f2d7b2544174db30270e130e83
+  sample:
+    random_state: 0
+    shuffle: true
+    stratify: true
+    test_size: 1000
+    time_series: false
+    train_size: 10
+  sklearn_pipeline:
+    pipeline:
+      preprocessor:
+        kwargs:
+          with_mean: true
+          with_std: true
+        name: sklearn.preprocessing.StandardScaler
+files:
+  data_dir: data
+  files:
+    adv_predictions_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/adv_predictions.json
+    adv_probabilities_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/adv_probabilities.json
+    attack_file: output/attacks/attack.pkl
+    data_file: output/data/8f0214d99fc0fe3490630e9e13ff5b6c.pkl
+    model_file: output/models/edfcd1bc4121d2543e682455ee2c82f0.pkl
+    params_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/params.yaml
+    predictions_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/predictions.json
+    probabilities_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/probabilities.json
+    score_dict_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/score_dict.json
+    test_labels_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/test_labels.json
+    train_labels_file: output/reports/train/55cba176b52b8ce0ab7b8df37107e63d/train_labels.json
+  model_dir: models
+  name: 55cba176b52b8ce0ab7b8df37107e63d
+  reports: reports
+  stage: train
+kwargs:
+  direction: maximize
+model:
+  art:
+    library: sklearn-svc
+    name: 9b86c9b0cfb8d5e872a0126c0611580a
+    pipeline:
+      initialize:
+        kwargs: {}
+        name: initialize
+  data:
+    generate:
+      kwargs:
+        n_features: 10
+        n_samples: 1010000
+        random_state: 0
+      name: classification
+    name: 764d34f2d7b2544174db30270e130e83
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 1000
+      time_series: false
+      train_size: 10
+    sklearn_pipeline:
+      pipeline:
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+  init:
+    kwargs:
+      C: 100
+      kernel: linear
+      max_iter: 10
+      probability: true
+      random_state: 0
+    name: sklearn.svm.SVC
+  library: sklearn-svc
+  name: ec0d661ca3897485fd5aace0e465597d
+  trainer:
+    kwargs: {}
+name: 55cba176b52b8ce0ab7b8df37107e63d
+scorers:
+  scorers:
+    accuracy:
+      alias: accuracy_score
+      args:
+      - y_true
+      - y_pred
+      direction: maximize
+      name: sklearn.metrics.accuracy_score
+      params: {}
+    log_loss:
+      alias: log_loss
+      args:
+      - y_true
+      - y_pred
+      direction: minimize
+      name: sklearn.metrics.log_loss
+      params: {}

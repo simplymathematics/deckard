@@ -1,0 +1,4 @@
+name: optuna
+best_params:
+  model.init.C: 0.1
+best_value: 0.745

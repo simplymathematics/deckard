@@ -1,0 +1,14 @@
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    metrics:
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
+    outs:
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+    params:
+    - data
+    - model
+    - files
+    - scorers

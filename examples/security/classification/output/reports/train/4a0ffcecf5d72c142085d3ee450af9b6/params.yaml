@@ -1,0 +1,227 @@
+attack:
+  attack_size: 10
+  data:
+    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 0.2
+      time_series: false
+      train_size: 0.8
+    sklearn_pipeline:
+      pipeline:
+        encoder:
+          kwargs:
+            handle_unknown: ignore
+            sparse: false
+          name: sklearn.preprocessing.OneHotEncoder
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+    target: label
+  init:
+    kwargs: {}
+    model:
+      art:
+        library: sklearn-svc
+        name: 37e40fba19cda476dad12a95c79baf44
+        pipeline: {}
+      data:
+        name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+        sample:
+          random_state: 0
+          shuffle: true
+          stratify: true
+          test_size: 0.2
+          time_series: false
+          train_size: 0.8
+        sklearn_pipeline:
+          pipeline:
+            encoder:
+              kwargs:
+                handle_unknown: ignore
+                sparse: false
+              name: sklearn.preprocessing.OneHotEncoder
+            preprocessor:
+              kwargs:
+                with_mean: true
+                with_std: true
+              name: sklearn.preprocessing.StandardScaler
+        target: label
+      init:
+        kwargs:
+          kwargs:
+            C: 1.0
+            kernel: rbf
+            max_iter: 10
+            probability: true
+            random_state: 0
+        name: sklearn.svm.SVC
+      library: sklearn-svc
+      name: 253171c8fbfdc2625fe7ee98386b57db
+      trainer:
+        kwargs:
+          kwargs: {}
+    name: art.attacks.evasion.HopSkipJump
+  kwargs: {}
+  method: evasion
+  model:
+    art:
+      library: sklearn-svc
+      name: 9b86c9b0cfb8d5e872a0126c0611580a
+      pipeline:
+        initialize:
+          kwargs: {}
+          name: initialize
+    data:
+      name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+      sample:
+        random_state: 0
+        shuffle: true
+        stratify: true
+        test_size: 0.2
+        time_series: false
+        train_size: 0.8
+      sklearn_pipeline:
+        pipeline:
+          encoder:
+            kwargs:
+              handle_unknown: ignore
+              sparse: false
+            name: sklearn.preprocessing.OneHotEncoder
+          preprocessor:
+            kwargs:
+              with_mean: true
+              with_std: true
+            name: sklearn.preprocessing.StandardScaler
+      target: label
+    init:
+      kwargs:
+        C: 1.0
+        kernel: rbf
+        max_iter: 10
+        probability: true
+        random_state: 0
+      name: sklearn.svm.SVC
+    library: sklearn-svc
+    name: 29970b61a2e8f9c08d02ce5c21fcb20b
+    trainer:
+      kwargs: {}
+  name: c48f3b8e63385e866731aaa803c06776
+data:
+  generate:
+    kwargs:
+      n_features: 20
+      n_samples: 1100
+      random_state: 0
+    name: classification
+  name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+  sample:
+    random_state: 0
+    shuffle: true
+    stratify: true
+    test_size: 0.2
+    time_series: false
+    train_size: 0.8
+  sklearn_pipeline:
+    pipeline:
+      encoder:
+        kwargs:
+          handle_unknown: ignore
+          sparse: false
+        name: sklearn.preprocessing.OneHotEncoder
+      preprocessor:
+        kwargs:
+          with_mean: true
+          with_std: true
+        name: sklearn.preprocessing.StandardScaler
+  target: label
+files:
+  data_dir: data
+  files:
+    adv_predictions_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/adv_predictions.json
+    adv_probabilities_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/adv_probabilities.json
+    attack_file: output/attacks/b0dbd6b9ffce3957ff44d85bc4bf620a.pkl
+    data_file: output/data/5f3dc8b47eaaffa8b6d5d3f8296d2de8.pkl
+    model_file: output/models/17dd2599534253c240a74baffdd03273.pkl
+    params_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/params.yaml
+    predictions_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/predictions.json
+    probabilities_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/probabilities.json
+    score_dict_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/score_dict.json
+    test_labels_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/test_labels.json
+    train_labels_file: output/reports/train/4a0ffcecf5d72c142085d3ee450af9b6/train_labels.json
+  model_dir: models
+  name: 4a0ffcecf5d72c142085d3ee450af9b6
+  reports: reports
+  stage: train
+kwargs: {}
+model:
+  art:
+    library: sklearn-svc
+    name: 9b86c9b0cfb8d5e872a0126c0611580a
+    pipeline:
+      initialize:
+        kwargs: {}
+        name: initialize
+  data:
+    generate:
+      kwargs:
+        n_features: 20
+        n_samples: 1100
+        random_state: 0
+      name: classification
+    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+    sample:
+      random_state: 0
+      shuffle: true
+      stratify: true
+      test_size: 0.2
+      time_series: false
+      train_size: 0.8
+    sklearn_pipeline:
+      pipeline:
+        encoder:
+          kwargs:
+            handle_unknown: ignore
+            sparse: false
+          name: sklearn.preprocessing.OneHotEncoder
+        preprocessor:
+          kwargs:
+            with_mean: true
+            with_std: true
+          name: sklearn.preprocessing.StandardScaler
+    target: label
+  init:
+    kwargs:
+      C: 1.0
+      kernel: rbf
+      max_iter: 10
+      probability: true
+      random_state: 0
+    name: sklearn.svm.SVC
+  library: sklearn-svc
+  name: 8f2ca3159ecefb60740f8fc10b8fb6a4
+  trainer:
+    kwargs: {}
+name: 4a0ffcecf5d72c142085d3ee450af9b6
+scorers:
+  scorers:
+    accuracy:
+      alias: accuracy_score
+      args:
+      - y_true
+      - y_pred
+      direction: maximize
+      name: sklearn.metrics.accuracy_score
+      params: {}
+    log_loss:
+      alias: log_loss
+      args:
+      - y_true
+      - y_pred
+      direction: minimize
+      name: sklearn.metrics.log_loss
+      params: {}

@@ -1,0 +1,6 @@
+name: optuna
+best_params:
+  +model.init.coef0: 0.01
+  +model.init.degree: 1
+  model.init.C: 100
+best_value: 0.557
