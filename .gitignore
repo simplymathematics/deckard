@@ -130,5 +130,4 @@ examples/*/output/*
 **/*.egg-info
 deckard/deckard.egg-info/*
 
-*attack_log.txt
-*model_log.txt
+*log.txt
