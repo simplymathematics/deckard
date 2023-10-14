@@ -92,4 +92,4 @@ class SklearnDataPipeline:
             else:
                 X_train = transformer.fit(X_train).transform(X_train)
                 X_test = transformer.transform(X_test)
-        return X_train, X_test, y_train, y_test
+        return [X_train, X_test, y_train, y_test]

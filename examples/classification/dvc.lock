@@ -1,0 +1,629 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            n_features: 20
+            n_samples: 1100
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 1000
+            train_size: 100
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pkl
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            initialize:
+            library: sklearn-svc
+          data: ${data}
+          init:
+            C: 1.0
+            _target_: deckard.base.model.ModelInitializer
+            kernel: rbf
+            max_iter: 10
+            name: sklearn.svm.SVC
+            probability: true
+            random_state: 0
+          library: sklearn-svc
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/reports/train/default/params.yaml
+      hash: md5
+      md5: d4e0a34b2b15765ca71fa5ecaf7e3826
+      size: 2100
+    - path: output/reports/train/default/predictions.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/train/default/probabilities.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/train/default/score_dict.json
+      hash: md5
+      md5: b0708f21e769603fd7bcda7f0ce9b9dd
+      size: 355
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - path: output/reports/train/default/params.yaml
+      hash: md5
+      md5: d4e0a34b2b15765ca71fa5ecaf7e3826
+      size: 2100
+    - path: output/reports/train/default/predictions.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/train/default/probabilities.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/train/default/score_dict.json
+      hash: md5
+      md5: b0708f21e769603fd7bcda7f0ce9b9dd
+      size: 355
+    params:
+      params.yaml:
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data: ${data}
+          init:
+            model: ${model}
+            name: art.attacks.evasion.ProjectedGradientDescent
+          method: evasion
+          model: ${model}
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            n_features: 20
+            n_samples: 1100
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 1000
+            train_size: 100
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pkl
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            initialize:
+            library: sklearn-svc
+          data: ${data}
+          init:
+            C: 1.0
+            _target_: deckard.base.model.ModelInitializer
+            kernel: rbf
+            max_iter: 10
+            name: sklearn.svm.SVC
+            probability: true
+            random_state: 0
+          library: sklearn-svc
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/attacks/attack.pkl
+      hash: md5
+      md5: bbce7d8f6ca5653f7cb6a6dd5f974582
+      size: 952
+    - path: output/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: 2ad26f915f08b13757e052dda7146c7d
+      size: 427
+    - path: output/reports/attack/default/adv_probabilities.json
+      hash: md5
+      md5: 2ad26f915f08b13757e052dda7146c7d
+      size: 427
+    - path: output/reports/attack/default/params.yaml
+      hash: md5
+      md5: 5be65828d59c309890bae9649e491dba
+      size: 5010
+    - path: output/reports/attack/default/predictions.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/attack/default/probabilities.json
+      hash: md5
+      md5: 1bfeaf1fa0cb4e90604169e61dc95892
+      size: 42667
+    - path: output/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 53014285cc5719c85ae534242660b228
+      size: 581
+  models:
+    cmd: bash models.sh +stage=train --config-name=model.yaml
+    deps:
+    - path: conf/model.yaml
+      hash: md5
+      md5: daaa0663d05972a5b8645c35d364da88
+      size: 990
+    - path: models.sh
+      hash: md5
+      md5: 62ba40f661a78745a3f6a6b2748ab5ea
+      size: 2967
+    - path: output/reports/train/default/params.yaml
+      hash: md5
+      md5: d4e0a34b2b15765ca71fa5ecaf7e3826
+      size: 2100
+    - path: params.yaml
+      hash: md5
+      md5: 96386b553b09cde769f5d7784db43b9a
+      size: 1804
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            n_features: 20
+            n_samples: 1100
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 1000
+            train_size: 100
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pkl
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            initialize:
+            library: sklearn-svc
+          data: ${data}
+          init:
+            C: 1.0
+            _target_: deckard.base.model.ModelInitializer
+            kernel: rbf
+            max_iter: 10
+            name: sklearn.svm.SVC
+            probability: true
+            random_state: 0
+          library: sklearn-svc
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+  compile_models:
+    cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
+      output/train.csv
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/reports/train/
+      hash: md5
+      md5: 7664c228456825f67dc1343d680dc23b.dir
+      size: 4275212383
+      nfiles: 7517
+    outs:
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+  find_best_model@rbf:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model
+      --params_file best_rbf --study_name=rbf_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/model/best_rbf.yaml
+      hash: md5
+      md5: f213864712f88d12667e195e9bee8310
+      size: 328
+  find_best_model@linear:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model
+      --params_file best_linear --study_name=linear_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/model/best_linear.yaml
+      hash: md5
+      md5: 5f4c8becd800d6f6b9fe01c7c78ecac7
+      size: 329
+  find_best_model@poly:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model
+      --params_file best_poly --study_name=poly_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/model/best_poly.yaml
+      hash: md5
+      md5: 9ffbcdac2b9ca989ee6099a1c22946ba
+      size: 328
+  attacks:
+    cmd: bash attacks.sh ++stage=attack  --config-name=attack.yaml
+    deps:
+    - path: conf/model/best_linear.yaml
+      hash: md5
+      md5: 5f4c8becd800d6f6b9fe01c7c78ecac7
+      size: 329
+    - path: conf/model/best_poly.yaml
+      hash: md5
+      md5: 9ffbcdac2b9ca989ee6099a1c22946ba
+      size: 328
+    - path: conf/model/best_rbf.yaml
+      hash: md5
+      md5: f213864712f88d12667e195e9bee8310
+      size: 328
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: attack.db
+      hash: md5
+      md5: 8c98b86efe4e9aaf8a420edf03e32803
+      size: 466944
+    - path: logs/attacks/
+      hash: md5
+      md5: 8d7590472039d0efbea4210491ee5440.dir
+      size: 3625817
+      nfiles: 3
+  compile_attacks:
+    cmd: python -m deckard.layers.compile --report_folder output/reports/attack/ --results_file
+      output/attack.csv
+    deps:
+    - path: attack.db
+      hash: md5
+      md5: 8c98b86efe4e9aaf8a420edf03e32803
+      size: 466944
+    - path: logs/attacks/
+      hash: md5
+      md5: 8d7590472039d0efbea4210491ee5440.dir
+      size: 3625817
+      nfiles: 3
+    - path: output/reports/attack/
+      hash: md5
+      md5: 413dec4ee12c0dbd64343bd0bc221b4b.dir
+      size: 30272123
+      nfiles: 2415
+    outs:
+    - path: output/attack.csv
+      hash: md5
+      md5: 51c3f2ca216fe98169c192956c3d448a
+      size: 745826
+  find_best_attack@linear:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack
+      --params_file best_linear --study_name=linear_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/attack/best_linear.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+  find_best_attack@rbf:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack
+      --params_file best_rbf --study_name=rbf_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/attack/best_rbf.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+  find_best_attack@poly:
+    cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack
+      --params_file best_poly --study_name=poly_100_10000  --default_config model.yaml
+    deps:
+    - path: logs/models/
+      hash: md5
+      md5: b5204e3b5172d9080caf38c719c86536.dir
+      size: 4719104
+      nfiles: 51
+    - path: model.db
+      hash: md5
+      md5: 21aefda7997c5f31484f8d161ecb2138
+      size: 352256
+    - path: output/train.csv
+      hash: md5
+      md5: a0261aa2216ef56ff024dab0da7e9ff3
+      size: 2720482
+    outs:
+    - path: conf/attack/best_poly.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+  other_data_train@kdd_nsl:
+    cmd: DATASET_NAME=kdd_nsl bash other_data.sh data=kdd_nsl +stage=train --config-name=model.yaml
+    deps:
+    - path: conf/model.yaml
+      hash: md5
+      md5: daaa0663d05972a5b8645c35d364da88
+      size: 990
+    - path: other_data.sh
+      hash: md5
+      md5: 6ebecf100cc02847ad31901bebb2ee5a
+      size: 2759
+    - path: output/reports/train/default/params.yaml
+      hash: md5
+      md5: d4e0a34b2b15765ca71fa5ecaf7e3826
+      size: 2100
+    outs:
+    - path: kdd_nsl.db
+      hash: md5
+      md5: 06933f8fc0a1feca0944c131b6a3854b
+      size: 348160
+    - path: kdd_nsl/
+      hash: md5
+      md5: 9076c4e55fd1058e7446588d99930d58.dir
+      size: 39137423
+      nfiles: 1072
+    - path: logs/kdd_nsl/
+      hash: md5
+      md5: e7c227947468122b62f891c0d54e0c54.dir
+      size: 1314288
+      nfiles: 12
+  retrain:
+    cmd: python retrain.py
+    deps:
+    - path: conf/attack/best_linear.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+    - path: conf/attack/best_poly.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+    - path: conf/attack/best_rbf.yaml
+      hash: md5
+      md5: 7ff95c46b1c2d0dc489fae3f1db40005
+      size: 9
+    - path: conf/model/best_linear.yaml
+      hash: md5
+      md5: cd69a0189843e6474613ea33e96bb29b
+      size: 327
+    - path: conf/model/best_poly.yaml
+      hash: md5
+      md5: cd69a0189843e6474613ea33e96bb29b
+      size: 327
+    - path: conf/model/best_rbf.yaml
+      hash: md5
+      md5: cd69a0189843e6474613ea33e96bb29b
+      size: 327
+    - path: output/attacks/
+      hash: md5
+      md5: 00cf0085d338326da6d1738058368c49.dir
+      size: 1159530
+      nfiles: 240
+    - path: output/models/
+      hash: md5
+      md5: 484d472b0b10beae09f796a1a0ceac57.dir
+      size: 2880142
+      nfiles: 169
+    outs:
+    - path: plots/after_retrain_confidence.csv
+      hash: md5
+      md5: 4b2ab48e7315673d763502691ec4f7b2
+      size: 539162
+    - path: plots/before_retrain_confidence.csv
+      hash: md5
+      md5: 044f0f9851895662dfb01de5254c6b00
+      size: 527699
+    - path: retrain/
+      hash: md5
+      md5: 10e29a3b73fa5ac496881378f5b66463.dir
+      size: 193686
+      nfiles: 12
+  plots:
+    cmd: python plots.py
+    deps:
+    - path: plots/after_retrain_confidence.csv
+      hash: md5
+      md5: 9d3b1fdeb33b7479703f4c47bb5a8687
+      size: 365818
+    - path: plots/before_retrain_confidence.csv
+      hash: md5
+      md5: 9d3b1fdeb33b7479703f4c47bb5a8687
+      size: 365818
+    outs:
+    - path: plots/accuracy_vs_attack_parameters.eps
+      hash: md5
+      md5: 38680ac0fd6d0983b46eec3d5adcae03
+      size: 34747
+    - path: plots/accuracy_vs_features.eps
+      hash: md5
+      md5: e641a4efda42a2d647ffe33d3a397ec2
+      size: 24914
+    - path: plots/accuracy_vs_samples.eps
+      hash: md5
+      md5: 7a967461c9b8159b7b5bdbb69f15f350
+      size: 21284

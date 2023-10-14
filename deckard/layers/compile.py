@@ -64,7 +64,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             if file.parent.name not in results:
                 results[file.parent.name] = {}
             results[file.parent.name][file.stem] = file
-    return results
+    df = pd.DataFrame(results).T
+    return df
 
 
 def merge_defences(results: pd.DataFrame):
@@ -129,8 +130,7 @@ def merge_attacks(results: pd.DataFrame):
 
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"]):
-    dict_ = parse_folder(folder, files=files)
-    df = pd.DataFrame(dict_).T
+    df = parse_folder(folder, files=files)
     df = flatten_results(df)
     df = merge_defences(df)
     df = merge_attacks(df)
@@ -139,6 +139,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
 
 def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
+    
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
     else:
@@ -147,6 +148,7 @@ def format_control_parameter(data, control_dict):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
+    
     for defence in defences:
         if defence in control_dict:
             param = control_dict[defence]

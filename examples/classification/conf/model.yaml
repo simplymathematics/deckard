@@ -8,6 +8,8 @@ defaults:
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
+optimizers : accuracy
+direction : maximize
 hydra:
   run:
     dir : "./${files.directory}"
@@ -15,7 +17,7 @@ hydra:
     sampler:
       _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    direction: maximize
+    direction: ${direction}
     study_name: model
     storage: sqlite:///model.db
     n_jobs: 1

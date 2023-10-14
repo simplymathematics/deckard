@@ -127,7 +127,7 @@ def save_params_file(
     config_dir = str(Path(Path(), config_dir).absolute().as_posix())
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         cfg = compose(config_name=config_file, overrides=overrides)
-        params = OmegaConf.to_container(cfg, resolve=True)
+        params = OmegaConf.to_container(cfg, resolve=False)
         with open(params_file, "w") as f:
             yaml.dump(params, f)
         logger.info(f"Saved params file to {params_file}")

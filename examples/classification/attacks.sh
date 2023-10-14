@@ -1,7 +1,32 @@
+#!/bin/bash
 
-# break 
+MODEL_CONFIGS=$(ls conf/model/best_*.yaml)
+CONFIG_NAMES=$(ls conf/model/best_*.yaml | cut -d'/' -f3 | cut -d'.' -f1)
+TOTAL=$(( ${#CONFIG_NAMES[@]} ))
+i=$(( 0 ))
+mkdir -p logs/attacks/
+for model_config in $CONFIG_NAMES; do
+    i=$(( i + 1 ))
+    if [ $model_config == "default" ]; then
+        continue
+    fi
+    echo "Running model $model_config. Number $i of $TOTAL" >> attack_log.txt
+    HYDRA_FULL_ERROR=1 python -m deckard.layers.optimise \
+    ++stage=attack \
+    ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent \
+    ++attack.init.norm=1,2,inf \
+    ++attack.init.eps_step=.001,.01,.1,.3,.5,1 \
+    ++attack.init.batch_size=1,10,50,100 \
+    ++attack.init.eps=.001,.01,.1,.3,.5,1 \
+    ++attack.init.max_iter=1,10,100,1000 \
+    ++hydra.sweeper.study_name=$model_config \
+    model=$model_config $@ --multirun >> logs/attacks/$model_config.log
+    echo "Successfully completed model $model_config. Number $i of $TOTAL" >> attack_log.txt
+done
+
+# Other attacks listed below
 # PGD
-bash models.sh ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent ++attack.init.norm=1,2,inf ++attack.init.eps_step=.001,.01,.1,.3,.5,1 ++attack.init.batch_size=100 ++attack.init.eps=.001,.01,.1,.3,.5,1 $@
+# bash models.sh ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent ++attack.init.norm=1,2,inf ++attack.init.eps_step=.001,.01,.1,.3,.5,1 ++attack.init.batch_size=1,10,50,100 ++attack.init.eps=.001,.01,.1,.3,.5,1 $@
 
 # # Carlini L0
 # bash models.sh ++attack.init.name=art.attacks.evasion.CarliniL0Method ++attack.init.confidence=1,4,16,64,256 ++attack.init.confidence=1,4,16,64,256 ++attack.init.batch_size=100 $@

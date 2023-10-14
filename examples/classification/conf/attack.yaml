@@ -1,7 +1,7 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: default
+    - data: attack
     - model: default
     - attack : hsj
     - files: default
@@ -9,6 +9,8 @@ defaults:
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
+optimizers: adv_accuracy
+direction : minimize
 hydra:
   run:
     dir : "./${files.directory}"
@@ -16,13 +18,11 @@ hydra:
     sampler:
       _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    direction: minimize
+    direction: ${direction}
     study_name: attack
     storage: sqlite:///attack.db
-    n_trials: 1
     n_jobs: 1
     params:
-      # model.init.C : choice(.00001, .0001, .001, .01, .1, 1, 10, 100, 1000, 10000)
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 32

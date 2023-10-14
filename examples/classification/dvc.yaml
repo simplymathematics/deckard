@@ -1,105 +1,135 @@
 stages:
-  attack:
-    cmd: python -m deckard.layers.experiment --stage attack
+  attack: # Prototype stage
+    cmd: python -m deckard.layers.experiment attack
     deps:
-    - ${files.data_file}
-    - ${files.reports}/train/${files.path}/${files.params_file}
-    - ${files.reports}/train/${files.path}/${files.predictions_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type} #optionally, store the data
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
     metrics:
-    - ${files.reports}/attack/${files.path}/${files.score_dict_file}
-    - ${files.reports}/attack/${files.path}/${files.time_dict_file}
-    - ${files.reports}/attack/${files.path}/${files.attack_score_dict_file}
-    - ${files.reports}/attack/${files.path}/${files.attack_time_dict_file}
-    - ${files.reports}/attack/${files.path}/${files.attack_predictions_file}
-    - ${files.reports}/attack/${files.path}/${files.attack_probabilities_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
     outs:
-    - ${files.reports}/attack/${files.path}/${files.params_file}
-    - ${files.reports}/attack/${files.path}/${files.attack_samples_file}
-    - ${files.reports}/attack/${files.path}/${files.predictions_file}
-    - ${files.reports}/attack/${files.path}/${files.probabilities_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
+    - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.probabilities_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
     params:
     - data
-    - model.init
+    - model
     - files
     - scorers
     - attack
-  generate_data:
-    cmd: python -m deckard.layers.experiment --stage generate_data
-    deps:
-    - params.yaml
+  train: # Prototype stage
+    cmd: python -m deckard.layers.experiment train
     metrics:
-    - ${files.reports}/generate_data/${files.path}/${files.ground_truth_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
     outs:
-    - ${files.data_file}
-    params:
-    - data
-    - files
-  train:
-    cmd: python -m deckard.layers.experiment --stage train
-    deps:
-      - ${files.data_file}
-    metrics:
-      - ${files.reports}/train/${files.path}/${files.score_dict_file}
-      - ${files.reports}/train/${files.path}/${files.time_dict_file}
-      - ${files.reports}/train/${files.path}/${files.predictions_file}
-      - ${files.reports}/train/${files.path}/${files.probabilities_file}
-    outs:
-      - ${files.reports}/train/${files.path}/${files.params_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     params:
       - data
-      - model.init
+      - model
       - files
       - scorers
-  models:
-    cmd: bash experiments.sh
+  models: # Grid search stage
+    cmd: bash models.sh +stage=train --config-name=model.yaml # specifies the prototype stage, file to be used
     outs:
-      - logs/models/
-      - ${files.reports}/models/
-    params:
+      - model.db: # This allows to run this section piecewise, adding features or samples inside models.sh which are then stored in the .db
+          cache: true
+          persist: true
+      - logs/models/: # Each feature/sample/train size combination log is stored in a separate file
+          cache: true
+          persist: true
+      # - ${files.directory}/${files.reports}/train/: # Each feature/sample/train size combination experiment is stored in a separate folder 
+      #     cache: true
+      #     persist: true
+    params: # These are the parameters that are passed to the prototype stage
       - data
-      - model.init
+      - model
       - files
       - scorers
     deps:
-      - ${files.reports}/train/
-  compile_results:
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      - params.yaml
+      - conf/model.yaml
+      - models.sh
+      # - conf/model/
+  compile_models:
     cmd:
-      python find_best.py --output_folder best_models --kwargs "data.sample.train_size=1000" "data.generate.n_features=100" --report_folder "reports/model_queue" --results_file "plots/model_results.csv" --scorer_minimize False --control_for "model.init.kernel" --exclude sigmoid --stage models
+      python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/train/ --results_file ${files.directory}/train.csv
     outs:
-      - best_models/
-    metrics:
-      - plots/model_results.csv
+      - ${files.directory}/train.csv
     deps:
-      - ${files.reports}/models/
+      - ${files.directory}/${files.reports}/train/ # Each feature/sample/train size combination experiment is stored in a separate folder 
+      - model.db
+      - logs/models/
+  find_best_model:
+    foreach:
+      - linear
+      - rbf
+      - poly
+    do:
+      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model --params_file best_${item} --study_name=${item}_100_10000  --default_config model.yaml
+      outs:
+        - conf/model/best_${item}.yaml
+      deps:
+        - ${files.directory}/train.csv
+        - model.db
+        - logs/models/
   attacks:
-    cmd: bash attacks.sh
+    cmd: bash attacks.sh ++stage=attack  --config-name=attack.yaml 
     outs:
-      - logs/attacks/
-      - ${files.reports}/attacks/
+      - logs/attacks/:
+          cache: true
+          persist: true
+      - attack.db:
+          cache: true
+          persist: true
     deps:
-      - best_models/
-    params:
-      - data
-      - model.init
-      - files
-      - attack
-      - scorers
+      - ${files.directory}/train.csv
+      - model.db
+      - logs/models/
+      - conf/model/best_linear.yaml
+      - conf/model/best_rbf.yaml
+      - conf/model/best_poly.yaml
   compile_attacks:
     cmd:
-      python find_best.py --output_folder best_attacks --kwargs "attack.init.max_iter=10" --report_folder "reports/attack" --results_file "plots/attack_results.csv" --scorer_minimize True --exclude sigmoid --stage attacks
-    metrics:
-      - plots/attack_results.csv
-    deps:
-      - ${files.reports}/attacks/
+      python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/attack/ --results_file ${files.directory}/attack.csv
     outs:
-      - best_attacks/
+      - ${files.directory}/attack.csv
+    deps:
+      - ${files.directory}/${files.reports}/attack/ # Each feature/sample/train size combination experiment is stored in a separate folder 
+      - attack.db
+      - logs/attacks/
+  find_best_attack:
+    foreach:
+      - linear
+      - rbf
+      - poly
+    do:
+      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack --params_file best_${item} --study_name=${item}_100_10000  --default_config model.yaml
+      outs:
+        - conf/attack/best_${item}.yaml
+      deps:
+        - ${files.directory}/train.csv
+        - model.db
+        - logs/models/
   retrain:
       cmd : python retrain.py
       deps:
-        - ${files.reports}/models/
-        - ${files.reports}/attacks/
-        - best_models/
-        - best_attacks/
+        - ${files.directory}/models/
+        - ${files.directory}/attacks/
+        - conf/attack/best_linear.yaml
+        - conf/attack/best_rbf.yaml
+        - conf/attack/best_poly.yaml
+        - conf/model/best_linear.yaml
+        - conf/model/best_rbf.yaml
+        - conf/model/best_poly.yaml
       outs:
         - retrain/
       metrics:
@@ -109,17 +139,17 @@ stages:
       cmd : python plots.py
       deps :
         - plots/after_retrain_confidence.csv
-        - plots/attack_results.csv
+        # - plots/attack_results.csv
         - plots/before_retrain_confidence.csv
-        - plots/model_results.csv
+        # - plots/model_results.csv
       plots :
-        - plots/accuracy_vs_attack_parameters.pdf
-        - plots/accuracy_vs_features.pdf
-        - plots/accuracy_vs_samples.pdf
-        - plots/confidence_vs_attack_parameters.pdf
-        - plots/fit_time_vs_attack_parameters.pdf
-        - plots/fit_time_vs_features.pdf
-        - plots/fit_time_vs_samples.pdf
-        - plots/retrain_accuracy.pdf
-        - plots/retrain_confidence_vs_attack_parameters.pdf
-        - plots/retrain_time.pdf
+        - plots/accuracy_vs_attack_parameters.eps
+        - plots/accuracy_vs_features.eps
+        - plots/accuracy_vs_samples.eps
+        # - plots/confidence_vs_attack_parameters.eps
+        # - plots/fit_time_vs_attack_parameters.eps
+        # - plots/fit_time_vs_features.eps
+        # - plots/fit_time_vs_samples.eps
+        # - plots/retrain_accuracy.eps
+        # - plots/retrain_confidence_vs_attack_parameters.eps
+        # - plots/retrain_time.eps
