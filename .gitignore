@@ -94,7 +94,6 @@ ipython_config.py
 *.json
 *.npz
 *.npy
-examples/pytorch/output/models/model.optimizer.pt
 
 
 # PyTorch Model Checkpoints
@@ -129,3 +128,6 @@ examples/*/output/*
 **/*.egg-info/*
 **/*.egg-info
 deckard/deckard.egg-info/*
+
+*log.txt
+examples/*/*/*/*/*/params.yaml

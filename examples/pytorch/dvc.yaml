@@ -1,4 +1,6 @@
 stages:
+  install:
+    cmd: python -m pip install ../deckard
   train:
     cmd: python -m deckard.layers.experiment train
     params:
@@ -11,15 +13,15 @@ stages:
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
       - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
     cmd: python -m deckard.layers.experiment attack
     params:
-      - data.generate
+      - data
       - model
       - attack
       - scorers
@@ -36,22 +38,23 @@ stages:
 
         ##############################################################################
   attacks:
-    foreach:
+    foreach: # This is a loop over the ResNet models
       - ResNet18
       - ResNet34
       - ResNet50
       - ResNet101
       - ResNet152
     do:
-      cmd: bash attacks.sh ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name grid.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name default.yaml
       deps:
-      - models.sh
-      - attacks.sh
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+      - models.sh # This script configures each defence
+      - attacks.sh # This script configures each attack
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       outs:
-      - ${item}.db
+      - ${item}.db # This outputs a database file for each model
   compile:
-    foreach:
+    foreach: # iterates through each stage
+      # - train 
       - attack
     do:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
@@ -65,7 +68,7 @@ stages:
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   plot:
-    cmd : python plots.py --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
       - ResNet18.db
@@ -74,4 +77,26 @@ stages:
       - ResNet101.db
       - ResNet152.db
     outs:
-      - ${files.directory}/plots/
+      - ${files.directory}/plots/data.csv
+  afr:
+    cmd: python -m deckard.layers.afr --dataset mnist
+    deps:
+      - ${files.directory}/plots/data.csv
+    plots:
+      - ${files.directory}/plots/weibull_aft.pdf
+      - ${files.directory}/plots/weibull_partial_effects.pdf
+      - ${files.directory}/plots/cox_partial_effects.pdf
+      - ${files.directory}/plots/cox_aft.pdf
+      - ${files.directory}/plots/log_logistic_aft.pdf
+      - ${files.directory}/plots/log_logistic_partial_effects.pdf
+      - ${files.directory}/plots/log_normal_aft.pdf
+      - ${files.directory}/plots/log_normal_partial_effects.pdf
+    metrics:
+      - ${files.directory}/plots/aft_comparison.csv
+    outs:
+      - ${files.directory}/plots/aft_comparison.tex
+  copy_results:
+      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+      deps:
+        - ${files.directory}/plots/data.csv
+        - ${files.directory}/plots/aft_comparison.csv

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from pandas import DataFrame, read_csv, read_excel
+from pandas import DataFrame, read_csv, read_excel, Series
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -97,14 +97,24 @@ class Data:
                 assert len(result) == 4, f"Data is not generated: {self.name}"
         else:
             result = self.load(self.name)
-            if len(result) == 1:
-                assert self.target is not None, "Target is not specified"
-                y = result[self.target]
-                X = result.drop(self.target, axis=1)
-                result = self.sample(X, y)
-            if len(result) == 2:
+            if isinstance(result, list) and len(result) == 2:
                 result = self.sample(*result)
-            assert len(result) == 4
+            elif isinstance(result, DataFrame) and self.target is not None:
+                if not isinstance(result, DataFrame):
+                    result = DataFrame(result)
+                assert (
+                    self.target in result
+                ), f"Target {self.target} not in data with columns {result.columns}"
+                y = result[self.target]
+                if isinstance(result, DataFrame):
+                    X = result.drop(self.target, axis=1)
+                else:
+                    X = result[~self.target]
+                result = self.sample(X, y)
+            else:
+                assert len(result) == 4
+        if self.sklearn_pipeline is not None:
+            result = self.sklearn_pipeline(*result)
         return result
 
     def load(self, filename) -> DataFrame:
@@ -118,8 +128,7 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename)
-            data = data.to_numpy()
+            data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
@@ -141,6 +150,8 @@ class Data:
             if suffix in [".json"]:
                 if isinstance(data, DataFrame):
                     data = data.to_dict(orient="records")
+                elif isinstance(data, Series):
+                    data = data.to_dict()
                 elif isinstance(data, np.ndarray):
                     data = data.tolist()
                 with open(filename, "w") as f:

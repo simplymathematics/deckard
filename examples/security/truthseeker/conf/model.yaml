@@ -1,0 +1,36 @@
+defaults:
+    # - _target_ : deckard.base.experiment.Experiment
+    - _self_
+    - data: kdd_nsl
+    - model: default
+    - files: default
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : grid
+    - override hydra/launcher : joblib
+optimizers : accuracy
+direction : maximize
+hydra:
+  run:
+    dir : "./${files.directory}"
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.GridSampler
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction: ${direction}
+    study_name: model
+    storage: sqlite:///model.db
+    n_jobs: 1
+    params:
+      model.init.C : choice(.00001, .0001, .001, .01, .1, 1, 10, 100, 1000, 10000)
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 32
+    prefer : processes
+    verbose: 1
+    timeout: null
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r

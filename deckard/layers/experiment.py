@@ -25,6 +25,7 @@ def get_dvc_stage_params(
     params_file="params.yaml",
     pipeline_file="dvc.yaml",
     directory=".",
+    name=None,
 ):
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
@@ -37,6 +38,8 @@ def get_dvc_stage_params(
     params["files"] = dict(unflattened_files.get("files", unflattened_files))
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
     params["files"]["stage"] = stage
+    if name is not None:
+        params["files"]["name"] = name
     return params
 
 

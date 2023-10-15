@@ -1,0 +1,5 @@
+init.name : art.attacks.evasion.DeepFool
+init.max_iter : choice(10)
+init.batch_size : choice(1024)
+init.nb_grads : choice(10,100,1000)
+init.eps: choice(0.01, 0.03, 0.3, 0.1, 1.0)

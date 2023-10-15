@@ -1,0 +1,643 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            initialize:
+              clip_values:
+              - 0.0
+              - 1.0
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 1
+          library: pytorch
+          trainer:
+            batch_size: 1024
+            nb_epoch: 20
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: 16fb83628a4bec9578bb07eafb755a17
+      size: 44780845
+    - path: output/models/model.pt
+      md5: 6ff1e2aaf46e5345daa8585da20c396e
+      size: 44785941
+    - path: output/reports/train/default/params.yaml
+      md5: a1492ca3e3164f2042aac087463d7e44
+      size: 2216
+    - path: output/reports/train/default/predictions.json
+      md5: 032236b5d3202b115ce5af6e4b815e80
+      size: 2885232
+    - path: output/reports/train/default/score_dict.json
+      md5: b4fa892280b14ff5fa3e96db737ec843
+      size: 404
+    - path: output/reports/train/default/test_labels.json
+      md5: f26b1ad6bd01a70de4290c6ae713e2c7
+      size: 728000
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.pt
+      md5: 6ff1e2aaf46e5345daa8585da20c396e
+      size: 44785941
+    params:
+      params.yaml:
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.attack.AttackInitializer
+            model:
+              _target_: deckard.base.model.Model
+              art:
+                _target_: deckard.base.model.art_pipeline.ArtPipeline
+                data:
+                  _target_: deckard.base.data.Data
+                  generate:
+                    _target_: deckard.base.data.generator.DataGenerator
+                    name: torch_mnist
+                  sample:
+                    _target_: deckard.base.data.sampler.SklearnDataSampler
+                    random_state: 0
+                    stratify: true
+                  sklearn_pipeline:
+                    _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                    preprocessor:
+                      name: sklearn.preprocessing.StandardScaler
+                      with_mean: true
+                      with_std: true
+                initialize:
+                  clip_values:
+                  - 0.0
+                  - 1.0
+                  criterion:
+                    name: torch.nn.CrossEntropyLoss
+                  optimizer:
+                    lr: 0.01
+                    momentum: 0.9
+                    name: torch.optim.SGD
+                library: pytorch
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
+                sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
+                  random_state: 0
+                  stratify: true
+                sklearn_pipeline:
+                  _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              init:
+                _target_: deckard.base.model.ModelInitializer
+                name: torch_example.ResNet18
+                num_channels: 1
+              library: pytorch
+              trainer:
+                batch_size: 1024
+                nb_epoch: 20
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            _target_: deckard.base.model.Model
+            art:
+              _target_: deckard.base.model.art_pipeline.ArtPipeline
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
+                sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
+                  random_state: 0
+                  stratify: true
+                sklearn_pipeline:
+                  _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              initialize:
+                clip_values:
+                - 0.0
+                - 1.0
+                criterion:
+                  name: torch.nn.CrossEntropyLoss
+                optimizer:
+                  lr: 0.01
+                  momentum: 0.9
+                  name: torch.optim.SGD
+              library: pytorch
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            init:
+              _target_: deckard.base.model.ModelInitializer
+              name: torch_example.ResNet18
+              num_channels: 1
+            library: pytorch
+            trainer:
+              batch_size: 1024
+              nb_epoch: 20
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            initialize:
+              clip_values:
+              - 0.0
+              - 1.0
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 1
+          library: pytorch
+          trainer:
+            batch_size: 1024
+            nb_epoch: 20
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/attacks/attack.pkl
+      md5: 86a99f5485617d9551cf4ab2537bcf71
+      size: 31517
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 86ad134d231dd601e62bb9602bff1e43
+      size: 2130
+    - path: output/reports/attack/default/params.yaml
+      md5: a15accd2ecf7bcbb5ed47d4b6bf7ed97
+      size: 5093
+    - path: output/reports/attack/default/score_dict.json
+      md5: 47d61818fd41d8dd4b9059211d326017
+      size: 557
+  model_grid@default:
+    cmd: python deckard_queue.py model_grid
+    deps:
+    - path: output/attacks/attack.pkl
+      md5: c001d33074f3dca76203b94c1ac38ea8
+      size: 31517
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: 77a4e3f202d2d6a3579751824d5bc4c3
+      size: 44780845
+    - path: output/models/model.pt
+      md5: 4c42fce7077bd8a93c206ef3104438c5
+      size: 44786389
+    params:
+      conf/grid/model/default.yaml: {}
+  model_grid@confidence:
+    cmd: python deckard_queue.py model_grid
+    deps:
+    - path: output/attacks/attack.pkl
+      md5: 92682782c5aa078296c5717c1037e0e3
+      size: 31517
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: 77a4e3f202d2d6a3579751824d5bc4c3
+      size: 44780845
+    - path: output/models/model.pt
+      md5: 4c42fce7077bd8a93c206ef3104438c5
+      size: 44786389
+    params:
+      conf/grid/model/confidence.yaml:
+        art.postprocessor.apply_fit:
+        - true
+        - false
+        art.postprocessor.cutoff:
+        - 0.1
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
+        - 0.7
+        - 0.8
+        - 0.9
+        - 0.95
+        - 0.99
+        art.postprocessor.name:
+        - art.defences.postprocessor.HighConfidence
+  model_grid@conf/grid/model/confidence.yaml:
+    cmd: python deckard_queue.py model_grid -p conf/grid/model/confidence.yaml -o
+      conf/queue/model_grid/conf/grid/model/confidence.yaml
+    deps:
+    - path: output/attacks/attack.pkl
+      md5: f6933d3d01f97b4f400414bfaf4b72c2
+      size: 31517
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: 77a4e3f202d2d6a3579751824d5bc4c3
+      size: 44780845
+    - path: output/models/model.pt
+      md5: 4c42fce7077bd8a93c206ef3104438c5
+      size: 44786389
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 9cc77a4c4b49a5ebce86cdad50df386b
+      size: 2146
+    - path: output/reports/attack/default/params.yaml
+      md5: a15accd2ecf7bcbb5ed47d4b6bf7ed97
+      size: 5093
+    params:
+      conf/grid/model/confidence.yaml:
+        art.postprocessor.apply_fit:
+        - true
+        - false
+        art.postprocessor.cutoff:
+        - 0.1
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
+        - 0.7
+        - 0.8
+        - 0.9
+        - 0.95
+        - 0.99
+        art.postprocessor.name:
+        - art.defences.postprocessor.HighConfidence
+  model_grid@conf/grid/model/default.yaml:
+    cmd: python deckard_queue.py model_grid -p conf/grid/model/default.yaml -o conf/queue/model_grid/conf/grid/model/default.yaml
+    deps:
+    - path: output/attacks/attack.pkl
+      md5: f6933d3d01f97b4f400414bfaf4b72c2
+      size: 31517
+    - path: output/data/data.pkl
+      md5: de934a5f5157970e5f30b8f3f1856a68
+      size: 222320311
+    - path: output/models/model.optimizer.pt
+      md5: 77a4e3f202d2d6a3579751824d5bc4c3
+      size: 44780845
+    - path: output/models/model.pt
+      md5: 4c42fce7077bd8a93c206ef3104438c5
+      size: 44786389
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 9cc77a4c4b49a5ebce86cdad50df386b
+      size: 2146
+    - path: output/reports/attack/default/params.yaml
+      md5: a15accd2ecf7bcbb5ed47d4b6bf7ed97
+      size: 5093
+    params:
+      conf/grid/model/default.yaml: {}
+  evaluate:
+    cmd: python compute_attack_success.py --adv_predictions_file output/reports/attack/default/adv_predictions.json
+      --ben_predictions_file output/reports/train/default/predictions.json --input_score_file
+      output/reports/train/default/score_dict.json --labels_file output/reports/train/default/test_labels.json
+      --output_score_file output/reports/attack/default/attack_score_dict.json
+    deps:
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 86ad134d231dd601e62bb9602bff1e43
+      size: 2130
+    - path: output/reports/train/default/predictions.json
+      md5: 032236b5d3202b115ce5af6e4b815e80
+      size: 2885232
+    - path: output/reports/train/default/score_dict.json
+      md5: b4fa892280b14ff5fa3e96db737ec843
+      size: 404
+    - path: output/reports/train/default/test_labels.json
+      md5: f26b1ad6bd01a70de4290c6ae713e2c7
+      size: 728000
+    params:
+      params.yaml:
+        evaluate:
+          adv_predictions_file: output/reports/attack/default/adv_predictions.json
+          ben_predictions_file: output/reports/train/default/predictions.json
+          input_score_file: output/reports/train/default/score_dict.json
+          labels_file: output/reports/train/default/test_labels.json
+          output_score_file: output/reports/attack/default/attack_score_dict.json
+    outs:
+    - path: output/reports/attack/default/attack_score_dict.json
+      md5: 2ba40a17e1037b15e09e15da0dd179f0
+      size: 467
+  generate_model_grid@default:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/default.yaml -p conf/grid/model/default.yaml
+    deps:
+    - path: conf/default.yaml
+      md5: b5dd11071bc24bee7e98cc7f9f0e6678
+      size: 998
+    - path: conf/grid/model/default.yaml
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    outs:
+    - path: conf/queue/default.yaml
+      md5: d5245de151fc5641fc4c822a348ba34d
+      size: 980
+  generate_model_grid@confidence:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/default.yaml -p conf/grid/model/confidence.yaml
+    deps:
+    - path: conf/default.yaml
+      md5: b5dd11071bc24bee7e98cc7f9f0e6678
+      size: 998
+    - path: conf/grid/model/confidence.yaml
+      md5: be8c31c60ad9c1deb05db9d3ffc3c0cb
+      size: 187
+    outs:
+    - path: conf/queue/confidence.yaml
+      md5: af80e3b005023f6bd5411909d2d963ee
+      size: 1262
+  generate_attack_grid@pgd:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/queue/default.yaml conf/queue/confidence.yaml
+      -p conf/grid/attack/pgd.yaml
+    deps:
+    - path: conf/queue/confidence.yaml
+      md5: aeef28cdb4e18c076c9004ba07dc2c6e
+      size: 1291
+    - path: conf/queue/default.yaml
+      md5: d5245de151fc5641fc4c822a348ba34d
+      size: 980
+    outs:
+    - path: conf/queue/confidence_pgd.yaml
+      md5: 1418340a4413f94f6559c01c10b2bf93
+      size: 1602
+    - path: conf/queue/pgd.yaml
+      md5: f62febe9193586cde62332a1b24e8368
+      size: 1283
+  generate_attack_grid@fgm:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/queue/default.yaml conf/queue/confidence.yaml
+      -p conf/grid/attack/fgm.yaml
+    deps:
+    - path: conf/queue/confidence.yaml
+      md5: aeef28cdb4e18c076c9004ba07dc2c6e
+      size: 1291
+    - path: conf/queue/default.yaml
+      md5: d5245de151fc5641fc4c822a348ba34d
+      size: 980
+    outs:
+    - path: conf/queue/confidence_fgm.yaml
+      md5: d2f4493c23428652bdf233910bdcc666
+      size: 1528
+    - path: conf/queue/fgm.yaml
+      md5: 3bb176d6730ed2a490776168894fc61a
+      size: 1209
+  generate_defence_grid@confidence:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/default.yaml -p conf/grid/model/confidence.yaml
+    deps:
+    - path: conf/default.yaml
+      md5: b5dd11071bc24bee7e98cc7f9f0e6678
+      size: 998
+    - path: conf/grid/model/confidence.yaml
+      md5: be8c31c60ad9c1deb05db9d3ffc3c0cb
+      size: 187
+    outs:
+    - path: conf/queue/confidence.yaml
+      md5: aeef28cdb4e18c076c9004ba07dc2c6e
+      size: 1291
+  generate_defence_grid@default:
+    cmd: python deckard_queue.py -o conf/queue/ -c conf/default.yaml -p conf/grid/model/default.yaml
+    deps:
+    - path: conf/default.yaml
+      md5: b5dd11071bc24bee7e98cc7f9f0e6678
+      size: 998
+    - path: conf/grid/model/default.yaml
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    outs:
+    - path: conf/queue/default.yaml
+      md5: d5245de151fc5641fc4c822a348ba34d
+      size: 980
+  optimise:
+    cmd: python -m deckard.layers.optimise +stage=train --multirun
+    deps:
+    - path: output/reports/attack/default/attack_score_dict.json
+      md5: 2ba40a17e1037b15e09e15da0dd179f0
+      size: 467
+    params:
+      conf/default.yaml:
+        hydra:
+          run:
+            dir: ${files.directory}/hydra
+          sweep:
+            dir: ${files.directory}/${files.reports}/${stage}/queue/
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+            storage: sqlite:///model.db
+            study_name: ${stage}
+            n_trials: 5
+            n_jobs: 1
+            params:
+              ++model.art.initialize.optimizer.lr: tag(log, interval(1e-5, 1e3))
+            direction: ${direction}
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 32
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: n_jobs
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: model.db
+      md5: 28256a9f67322787f8902be881f25aeb
+      size: 110592

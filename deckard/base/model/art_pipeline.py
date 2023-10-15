@@ -125,7 +125,7 @@ class ArtPipeline:
         pipeline.pop("model", None)
         for stage in pipeline:
             if isinstance(pipeline[stage], DictConfig):
-                pipeline[stage] = OmegaConf.to_container(pipeline[stage])
+                pipeline[stage] = OmegaConf.to_container(pipeline[stage], resolve=True)
             elif is_dataclass(pipeline[stage]):
                 pipeline[stage] = asdict(pipeline[stage])
             else:
@@ -158,7 +158,10 @@ class ArtPipeline:
     def __call__(self, model: object, library: str = None, data=None) -> BaseEstimator:
         if "initialize" in self.pipeline:
             if isinstance(self.pipeline["initialize"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["initialize"])
+                params = OmegaConf.to_container(
+                    self.pipeline["initialize"],
+                    resolve=True,
+                )
                 name = params.pop("name", None)
                 kwargs = params.pop("kwargs", {})
             elif is_dataclass(self.pipeline["initialize"]):
@@ -186,7 +189,10 @@ class ArtPipeline:
         assert len(data) == 4, f"data must be a tuple of length 4. Got {data}"
         if "preprocessor" in self.pipeline:
             if isinstance(self.pipeline["preprocessor"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["preprocessor"])
+                params = OmegaConf.to_container(
+                    self.pipeline["preprocessor"],
+                    resolve=True,
+                )
                 name = params.pop("name", None)
                 sub_kwargs = params.pop("kwargs", {})
                 while "kwargs" in sub_kwargs:
@@ -211,7 +217,10 @@ class ArtPipeline:
             kwargs.update({"preprocessing_defences": pre_def})
         if "postprocessor" in self.pipeline:
             if isinstance(self.pipeline["postprocessor"], DictConfig):
-                params = OmegaConf.to_container(self.pipeline["postprocessor"])
+                params = OmegaConf.to_container(
+                    self.pipeline["postprocessor"],
+                    resolve=True,
+                )
                 name = params.pop("name", "_target_")
             elif is_dataclass(self.pipeline["postprocessor"]):
                 params = asdict(self.pipeline["postprocessor"])
@@ -240,5 +249,24 @@ class ArtPipeline:
             config.update(**sub_kwargs)
             model = obj(model)
         if "trainer" in self.pipeline:
+            # name, sub_kwargs = self.pipeline["trainer"]()
+            # assert "attack" in sub_kwargs, "Attack must be specified if the adversarial training defence is chosen."
+            # attack = sub_kwargs.pop("attack")
+            # if isinstance(attack, DictConfig):
+            #     attack = OmegaConf.to_container(attack, resolve=True)
+            #     attack = instantiate(attack)
+            # elif is_dataclass(attack):
+            #     attack = asdict(attack)
+            #     attack['_target_'] = attack.pop('name')
+            #     attack = instantiate(attack, model)
+            # elif isinstance(attack, dict):
+            #     attack['_target_'] = attack.pop('name')
+            #     attack = instantiate(attack, model)
+            # else:
+            #     assert "art.attacks" in str(type(attack)), f"Attack must be an art attack. Got {type(attack)}"
+            # if name == "art.defences.trainer.AdversarialTrainer":
+            #     from art.defences.trainer.adversarial_trainer import AdversarialTrainer
+            #     model = AdversarialTrainer(classifier=model, attacks = attack, **sub_kwargs)
+            # else:
             raise NotImplementedError("Training Defense not implemented yet")
         return model
