@@ -5,7 +5,9 @@ RUN apt-get install -y python3 python3-distutils python3-pip ffmpeg libavcodec-e
 RUN python3 -m pip install nvidia-pyindex nvidia-cuda-runtime-cu11 
 RUN git clone https://github.com/simplymathematics/deckard.git
 WORKDIR /deckard
-RUN python3 -m pip install --editable .[pytorch_image]
+RUN python3 -m pip install --editable .[torchvision,torch,tensorflow]
+RUN python3 -m pip install pytest
 RUN git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
 RUN cd adversarial-robustness-toolbox && python3 -m pip install .
 RUN apt install python-is-python3
+RUN pytest test 
