@@ -3,13 +3,15 @@
 		{
 			"path": "."
 		},
-
+		{
+			"path": "../../../Home/staff/cmeyers/.art"
+		}
 	],
 	"settings": {
 		"python.testing.pytestEnabled": true,
     	"python.testing.pytestPath": "${workspaceFolder}/deckard/test/",
 		"python.envFile": "${workspaceFolder}/.env",
 		"yaml.schemas": {
-			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json": 	["dvc.yaml"]	}
+			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json":		}
 	}
 }

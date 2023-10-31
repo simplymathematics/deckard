@@ -1,8 +1,0 @@
-name: optuna
-best_params:
-  ++attack.init.batch_size: 1
-  ++attack.init.eps: 0.5
-  ++attack.init.eps_step: 1
-  ++attack.init.max_iter: 1000
-  ++attack.init.norm: 1
-best_value: 0.2

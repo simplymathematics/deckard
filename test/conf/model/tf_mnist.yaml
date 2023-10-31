@@ -9,6 +9,13 @@ data:
         stratify: True
         train_size : .01
         test_size : .01
+    sklearn_pipeline:
+        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+        preprocessor:
+
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: True
+            with_std: True
 init:
     _target_: deckard.base.model.ModelInitializer
     name : tfv2_example.TFNet

@@ -44,7 +44,7 @@ class SklearnDataPipeline:
         pipe.update(**kwargs)
         for stage in pipe:
             if isinstance(pipe[stage], DictConfig):
-                pipe[stage] = OmegaConf.to_container(pipe[stage], resolve=True)
+                pipe[stage] = OmegaConf.to_container(pipe[stage])
                 name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
                 pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
             elif is_dataclass(pipe[stage]):
@@ -92,4 +92,4 @@ class SklearnDataPipeline:
             else:
                 X_train = transformer.fit(X_train).transform(X_train)
                 X_test = transformer.transform(X_test)
-        return [X_train, X_test, y_train, y_test]
+        return X_train, X_test, y_train, y_test

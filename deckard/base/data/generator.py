@@ -11,7 +11,7 @@ from typing import Literal
 from dataclasses import dataclass, field
 from ..utils import my_hash
 import numpy as np
-from art.utils import load_mnist, load_cifar10, load_diabetes
+from art.utils import load_mnist, load_cifar10
 
 __all__ = [
     "SklearnDataGenerator",
@@ -21,26 +21,10 @@ __all__ = [
 ]
 logger = logging.getLogger(__name__)
 
-SKLEARN_DATASETS = [
-    "classification",
-    "regression",
-    "blobs",
-    "moons",
-    "circles",
-    "biclusters",
-]
-
 
 @dataclass
 class SklearnDataGenerator:
-    name: Literal[
-        "classification",
-        "regression",
-        "blobs",
-        "moons",
-        "circles",
-        "biclusters",
-    ] = "classification"
+    name: Literal["classification", "regression"] = "classification"
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
@@ -71,12 +55,9 @@ class SklearnDataGenerator:
         return int(my_hash(self), 16)
 
 
-TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes"]
-
-
 @dataclass
 class TorchDataGenerator:
-    name: Literal["torch_mnist", "torch_cifar10", "torch_diabetes"] = "torch_mnist"
+    name: Literal["torch_mnist", "torch_cifar10"] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)
 
@@ -103,10 +84,6 @@ class TorchDataGenerator:
             X_test = np.transpose(X_test, (0, 3, 1, 2)).astype(np.float32)
             X = np.concatenate((X_train, X_test))
             y = np.concatenate((y_train, y_test))
-        elif self.name == "torch_diabetes":
-            (X_train, y_train), (X_test, y_test), _, _ = load_diabetes()
-            X = np.concatenate((X_train, X_test))
-            y = np.concatenate((y_train, y_test))
         else:
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]
@@ -115,12 +92,9 @@ class TorchDataGenerator:
         return int(my_hash(self), 16)
 
 
-KERAS_DATASETS = ["keras_mnist", "keras_cifar10", "mnist", "cifar10", "diabetes"]
-
-
 @dataclass
 class KerasDataGenerator:
-    name: Literal["mnist", "cifar10", "diabetes"] = "mnist"
+    name: Literal["mnist", "cifar10"] = "mnist"
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
@@ -137,10 +111,6 @@ class KerasDataGenerator:
             y = np.concatenate((y_train, y_test))
         elif "mnist" in self.name:
             (X_train, y_train), (X_test, y_test), _, _ = load_mnist()
-            X = np.concatenate((X_train, X_test))
-            y = np.concatenate((y_train, y_test))
-        elif "diabetes" in self.name:
-            (X_train, y_train), (X_test, y_test), _, _ = load_diabetes()
             X = np.concatenate((X_train, X_test))
             y = np.concatenate((y_train, y_test))
         else:
@@ -161,11 +131,11 @@ class DataGenerator:
         self.kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
     def __call__(self):
-        if self.name in SKLEARN_DATASETS:
+        if self.name in ["classification", "regression"]:
             return SklearnDataGenerator(self.name, **self.kwargs)()
-        elif self.name in TORCH_DATASETS:
+        elif self.name in ["torch_mnist", "torch_cifar10"]:
             return TorchDataGenerator(self.name, **self.kwargs)()
-        elif self.name in KERAS_DATASETS:
+        elif self.name in ["keras_mnist", "keras_cifar10", "mnist", "cifar10"]:
             return KerasDataGenerator(self.name, **self.kwargs)()
         else:
             raise ValueError(f"Invalid name {self.name}. Please choose from ")

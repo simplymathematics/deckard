@@ -1,5 +1,0 @@
-labels_file : ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
-ben_predictions_file : ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
-adv_predictions_file : ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-input_score_file : ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-output_score_file : ${files.directory}/${files.reports}/attack/${files.name}/attack_${files.score_dict_file}

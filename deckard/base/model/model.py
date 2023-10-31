@@ -295,7 +295,7 @@ class Model:
             assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         elif isinstance(model, (str, Path)):
             model = self.load(model)
-        elif hasattr(model, ("fit", "fit_generator")):
+        elif hasattr(model, "fit"):
             assert hasattr(model, "predict") or hasattr(
                 model,
                 "predict_proba",
@@ -673,42 +673,39 @@ class Model:
     def save(self, model, filename):
         suffix = Path(filename).suffix
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
-        if not Path(filename).exists():
-            if suffix in [".pickle", ".pkl"]:
-                with open(filename, "wb") as f:
-                    pickle.dump(model, f)
-            elif suffix in [".pt", ".pth"]:
-                import torch as t
+        if suffix in [".pickle", ".pkl"]:
+            with open(filename, "wb") as f:
+                pickle.dump(model, f)
+        elif suffix in [".pt", ".pth"]:
+            import torch as t
 
-                while hasattr(model, "model"):
-                    model = model.model
-                t.save(model, filename)
-                t.save(
-                    model.state_dict(),
-                    Path(filename).with_suffix(f".optimizer{suffix}"),
+            while hasattr(model, "model"):
+                model = model.model
+            t.save(model, filename)
+            t.save(
+                model.state_dict(),
+                Path(filename).with_suffix(f".optimizer{suffix}"),
+            )
+        elif suffix in [".h5", ".wt"]:
+            import keras as k
+
+            while hasattr(model, "model"):
+                model = model.model
+            try:
+                k.models.save_model(model, filename)
+            except NotImplementedError as e:
+                logger.warning(e)
+                logger.warning(
+                    f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
                 )
-            elif suffix in [".h5", ".wt"]:
-                import keras as k
+                model.save_weights(filename)
+        elif suffix in [".tf", "_tf"]:
+            import keras as k
 
-                while hasattr(model, "model"):
-                    model = model.model
-                try:
-                    k.models.save_model(model, filename)
-                except NotImplementedError as e:
-                    logger.warning(e)
-                    logger.warning(
-                        f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
-                    )
-                    model.save_weights(filename)
-            elif suffix in [".tf", "_tf"]:
-                import keras as k
-
-                while hasattr(model, "model"):
-                    model = model.model
-                k.models.save_model(model, filename, save_format="tf")
-            else:
-                raise NotImplementedError(
-                    f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
-                )
+            while hasattr(model, "model"):
+                model = model.model
+            k.models.save_model(model, filename, save_format="tf")
         else:
-            logger.warning(f"File {filename} already exists. Skipping saving.")
+            raise NotImplementedError(
+                f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
+            )
