@@ -130,4 +130,5 @@ examples/*/output/*
 deckard/deckard.egg-info/*
 
 *log.txt
-examples/*/*/*/*/*/params.yaml
+examples/**/params.yaml
+examples/**/multirun/*

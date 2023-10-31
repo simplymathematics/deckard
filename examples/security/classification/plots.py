@@ -58,7 +58,7 @@ graph1.set_ylabel("Accuracy")
 graph1.set_xscale("log")
 graph1.get_figure().tight_layout()
 graph1.set(xlim=(10, 1e6))
-graph1.get_figure().savefig("plots/accuracy_vs_samples.pdf")
+graph1.get_figure().savefig("plots/accuracy_vs_samples.eps")
 plt.gcf().clear()
 
 graph2 = sns.lineplot(
@@ -73,7 +73,7 @@ graph2.set_ylabel("Accuracy")
 graph2.set_xscale("log")
 graph2.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 graph2.get_figure().tight_layout()
-graph2.get_figure().savefig("plots/accuracy_vs_features.pdf")
+graph2.get_figure().savefig("plots/accuracy_vs_features.eps")
 plt.gcf().clear()
 
 
@@ -89,7 +89,7 @@ graph3.set_ylabel("Training Time")
 graph3.set(yscale="log", xscale="log")
 graph3.legend(title="Kernel")
 graph3.get_figure().tight_layout()
-graph3.get_figure().savefig("plots/train_time_vs_features.pdf")
+graph3.get_figure().savefig("plots/train_time_vs_features.eps")
 plt.gcf().clear()
 
 graph4 = sns.lineplot(
@@ -104,7 +104,7 @@ graph4.set_ylabel("Training Time")
 graph4.set(yscale="log", xscale="log", xlim=(10, 1e6))
 graph4.legend(title="Kernel")
 graph4.get_figure().tight_layout()
-graph4.get_figure().savefig("plots/train_time_vs_samples.pdf")
+graph4.get_figure().savefig("plots/train_time_vs_samples.eps")
 plt.gcf().clear()
 
 fig, ax = plt.subplots(2, 2)
@@ -153,7 +153,7 @@ graph8 = sns.lineplot(
 graph8.set(xscale="log", xlabel="Batch Size", ylabel="Accuracy")
 graph6.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout()
-fig.savefig("plots/accuracy_vs_attack_parameters.pdf")
+fig.savefig("plots/accuracy_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 fig, ax = plt.subplots(2, 2)
@@ -202,7 +202,7 @@ graph12 = sns.lineplot(
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="Attack Time")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/train_time_vs_attack_parameters.pdf")
+fig.savefig("plots/train_time_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 retrain_df = pd.DataFrame()
@@ -239,7 +239,7 @@ retrain.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel
 retrain.set_xlabel("Retraining Epochs")
 retrain.set_ylabel("Accuracy")
 retrain.get_figure().tight_layout()
-retrain.get_figure().savefig("plots/retrain_accuracy.pdf")
+retrain.get_figure().savefig("plots/retrain_accuracy.eps")
 plt.gcf().clear()
 
 retrain_df["ben_time"] = retrain_df["ben_time"] * retrain_df["train_size"] * 10
@@ -265,7 +265,7 @@ retrain.set_xlabel("Retraining Epochs")
 retrain.set_ylabel("Time")
 retrain.set_yscale("log")
 retrain.get_figure().tight_layout()
-retrain.get_figure().savefig("plots/retrain_time.pdf")
+retrain.get_figure().savefig("plots/retrain_time.eps")
 plt.gcf().clear()
 
 confidence_df = pd.read_csv("plots/before_retrain_confidence.csv")
@@ -315,7 +315,7 @@ graph12 = sns.lineplot(
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="False Confidence")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/confidence_vs_attack_parameters.pdf")
+fig.savefig("plots/confidence_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 confdence_df = pd.read_csv("plots/after_retrain_confidence.csv")
@@ -366,5 +366,5 @@ graph12 = sns.lineplot(
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="False Confidence")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/retrain_confidence_vs_attack_parameters.pdf")
+fig.savefig("plots/retrain_confidence_vs_attack_parameters.eps")
 plt.gcf().clear()
