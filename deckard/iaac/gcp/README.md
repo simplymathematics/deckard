@@ -109,6 +109,14 @@ You can simply take a look at `pod.yaml` file for defining a pod. Just to check,
 kubectl apply -f ./IaaC/gcp/pod.yaml
 ```
 
+## Install Kepler and monitoring tools
+Kepler is the module that collects the power consumption per container/namespace/node and stores them in Prometheus:
+```bash
+kubectl apply --server-side -f ./IaaC/gcp/prometheus/setup
+kubectl apply -f ./IaaC/gcp/prometheus/
+kubectl apply -f ./IaaC/gcp/kepler/deployment.yaml
+```
+
 ## Prepare the access values in the shared volume (optional):
 First of all we need to create a vm by running:
 ```
