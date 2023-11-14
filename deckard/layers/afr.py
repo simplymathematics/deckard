@@ -21,7 +21,6 @@ from .plots import calculate_failure_rate, drop_frames_without_results, min_max_
 logger = logging.getLogger(__name__)
 
 if "__main__" == __name__:
-
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument("--target", type=str, default="adv_failures")
     afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
@@ -51,8 +50,15 @@ if "__main__" == __name__:
     data = min_max_scaling(data)
     data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
     data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_success"])
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"])
+    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
+    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
+
     def plot_aft(
         df,
         file,

@@ -59,8 +59,6 @@ class AttackInitializer:
         for thing in pop_list:
             kwargs.pop(thing, None)
         logger.info(f"Initializing attack {name} with parameters {kwargs}")
-        self.data = data
-        self.model = model
         if "x_train" in kwargs:
             assert (
                 data is not None
@@ -97,6 +95,12 @@ class AttackInitializer:
         except TypeError as e:
             if "verbose" in str(e):
                 config.pop("verbose", None)
+                attack = instantiate(config, model)
+            else:
+                raise e
+        except Exception as e:
+            if "has not been fitted correctly" in str(e):
+                model, _ = self.model.fit(data=data, model=model)
                 attack = instantiate(config, model)
             else:
                 raise e
@@ -144,15 +148,18 @@ class EvasionAttack:
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
-
             atk = self.init(model=model, attack_size=self.attack_size)
 
             if targeted is True:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
                 start = process_time_ns()
-                patches, masks = atk.generate(ben_samples, **kwargs)
-                samples = atk.apply_patch(ben_samples, scale=scale_max)
+                patches, _ = atk.generate(ben_samples, **kwargs)
+                samples = atk.apply_patch(
+                    ben_samples,
+                    scale=scale_max,
+                    patch_external=patches,
+                )
             else:
                 start = process_time_ns()
                 samples = atk.generate(ben_samples, **kwargs)
@@ -168,7 +175,7 @@ class EvasionAttack:
                 x_clean=ben_samples,
                 labels=data[3][: self.attack_size],
                 x_adv=samples,
-                targeted=False,
+                targeted=self.kwargs.pop("targeted", False),
             )
         except TypeError as e:
             logger.error(f"Failed to compute success rate. Error: {e}")

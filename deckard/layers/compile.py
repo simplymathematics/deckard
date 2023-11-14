@@ -68,7 +68,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             if file.parent.name not in results:
                 results[file.parent.name] = {}
             results[file.parent.name][file.stem] = file
-    return results
+    df = pd.DataFrame(results).T
+    return df
 
 
 def merge_defences(results: pd.DataFrame):
@@ -133,8 +134,7 @@ def merge_attacks(results: pd.DataFrame):
 
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"]):
-    dict_ = parse_folder(folder, files=files)
-    df = pd.DataFrame(dict_).T
+    df = parse_folder(folder, files=files)
     df = flatten_results(df)
     df = merge_defences(df)
     df = merge_attacks(df)
@@ -143,6 +143,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
 
 def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
+
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
     else:
@@ -151,6 +152,7 @@ def format_control_parameter(data, control_dict):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
+
     for defence in defences:
         if defence in control_dict:
             param = control_dict[defence]
@@ -200,8 +202,10 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
+    # Removes the path and to the model object and leaves the name of the model
     data["model_name"] = data["model.init.name"].str.split(".").str[-1]
-    data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    if data["model.init.name"].str.contains("Net").any():
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)

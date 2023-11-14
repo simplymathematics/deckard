@@ -85,10 +85,13 @@ def merge_params(default, params) -> dict:
     for key, value in params.items():
         if key in default and isinstance(value, dict) and value is not None:
             default[key] = merge_params(default[key], value)
-        elif isinstance(value, (list, tuple, int, float, str, bool)) and value is not None:
-            default[key] = value
-        elif key in default and value is None:
-            continue
+        elif (
+            isinstance(value, (list, tuple, int, float, str, bool, dict))
+            and value is not None
+        ):
+            default.update({key: value})
+        elif value is None:
+            default.update({key : {}})
         else:
             logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
@@ -233,9 +236,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     stage_params = {"stages": {stage: {}}}
     stage_params["stages"][stage] = dvc["stages"][stage]
     path.mkdir(exist_ok=True, parents=True)
-    with open(path / "dvc.yaml", "w") as f:
-        yaml.dump(stage_params, f, default_flow_style=False)
-    assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
+    # with open(path / "dvc.yaml", "w") as f:
+    #     yaml.dump(stage_params, f, default_flow_style=False)
+    # assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
     with open(Path(path, "params.yaml"), "w") as f:
         yaml.dump(params, f, default_flow_style=False)
     assert Path(

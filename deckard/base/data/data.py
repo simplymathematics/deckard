@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from pandas import DataFrame, read_csv, read_excel
+from pandas import DataFrame, read_csv, read_excel, Series
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -121,8 +121,7 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename)
-            data = data.to_numpy()
+            data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
@@ -144,6 +143,8 @@ class Data:
             if suffix in [".json"]:
                 if isinstance(data, DataFrame):
                     data = data.to_dict(orient="records")
+                elif isinstance(data, Series):
+                    data = data.to_dict()
                 elif isinstance(data, np.ndarray):
                     data = data.tolist()
                 with open(filename, "w") as f:
