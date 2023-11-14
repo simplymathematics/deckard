@@ -1,7 +1,0 @@
-defaults:
-- params : default
-_target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-direction: minimize
-study_name: attack
-storage: sqlite:///attack.db
-n_jobs: 1

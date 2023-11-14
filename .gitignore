@@ -136,3 +136,9 @@ deckard/deckard.egg-info/*
 
 # Compressed Data Files
 *.tar.gz
+
+
+# Example output files
+examples/**/params.yaml
+examples/**/multirun/*
+*log.txt
