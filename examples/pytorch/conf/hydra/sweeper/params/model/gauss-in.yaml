@@ -1,5 +1,0 @@
-defence:
-  art.preprocessor.name : art.defences.preprocessor.GaussianAugmentation
-  art.preprocessor.clip_values : ${art.initialize.clip_values}
-  art.preprocessor.sigma : [.01, .1, .2, .3, .5, 1]
-  art.preprocessor.ratio : [.1, .5, 1]

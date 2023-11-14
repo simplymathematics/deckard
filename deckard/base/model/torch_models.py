@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
-
+from random import randint
 import numpy as np
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
@@ -25,9 +25,8 @@ torch_dict = {**classifier_dict, **regressor_dict}
 supported_models = list(torch_dict.keys())
 
 __all__ = ["TorchInitializer", "TorchCriterion", "TorchOptimizer"]
-dataclass
 
-
+@dataclass
 class TorchCriterion:
     name: str
     kwargs: Union[dict, None] = field(default_factory=dict)
@@ -92,15 +91,9 @@ class TorchInitializer:
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(self, data, model, library, **kwargs):
-        import torch
-
         self.data = data
         self.model = model
         self.library = library
-        self.device = kwargs.pop(
-            "device",
-            "cuda" if torch.cuda.is_available() else "cpu",
-        )
         while "kwargs" in kwargs:
             new_kwargs = kwargs.pop("kwargs", {})
             kwargs.update(**new_kwargs)
@@ -113,8 +106,9 @@ class TorchInitializer:
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
         import torch
-
-        if "art" in str(type(model)) and hasattr(model, "model"):
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        devices = range(torch.cuda.device_count())
+        if str(type(model)).startswith("art.") and hasattr(model, "model"):
             model = model.model
         if "optimizer" in kwargs:
             optimizer = TorchOptimizer(**kwargs.pop("optimizer"))(model)
@@ -135,10 +129,21 @@ class TorchInitializer:
                 kwargs.update({"nb_classes": len(np.unique(data[2]))})
             else:
                 kwargs.update({"nb_classes": data[2].shape[1]})
-        if hasattr(model, "to"):
-            model.to(self.device)
-        elif hasattr(model, "model") and hasattr(model.model, "to"):
-            model.model.to(self.device)
+        try:
+            if hasattr(model, "to"):
+                model.to(device)
+            elif hasattr(model, "model") and hasattr(model.model, "to"):
+                model.model.to(device)
+        except Exception as e:
+            if "CUDA out of memory" in str(e) and len(devices) > 0:
+                device_number = devices[randint(0, len(devices) - 1)]
+                device = f"cuda:{device_number}"
+                logger.info(f"Out of memory error. Trying device {device}")
+                model.to(device)
+                for datum in data:
+                    datum.to(device)
+            else:
+                raise e
         if library in torch_dict:
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)

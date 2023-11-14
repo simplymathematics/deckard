@@ -125,7 +125,7 @@ def scatter_plot(
 
 def drop_frames_without_results(
     data,
-    subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time"],
+    subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time", "adv_success"],
 ):
     logger.info(f"Dropping frames without results for {subset}")
     data.dropna(axis=0, subset=subset, inplace=True)
@@ -147,12 +147,12 @@ def calculate_failure_rate(data):
         / data.loc[:, "predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data.loc[:, "adv_accuracy"])
+        (1 - data.loc[:, "adv_success"])
         * data.loc[:, "attack.attack_size"]
         / data.loc[:, "adv_fit_time"]
     )
     data.loc[:, "adv_success_rate"] = (
-        data.loc[:, "adv_accuracy"]
+        data.loc[:, "adv_success"]
         * data.loc[:, "attack.attack_size"]
         / data.loc[:, "adv_fit_time"]
     )
@@ -169,8 +169,14 @@ def calculate_failure_rate(data):
 
 
 def pareto_set(data, sense_dict):
-    subset = data.loc[:, sense_dict.keys()]
-    these = paretoset(subset, sense=sense_dict.values())
+    new_sense_dict = {}
+    for k,v in sense_dict.items():
+        if k in data.columns:
+            new_sense_dict[k] = v
+        else:
+            pass
+    subset = data.loc[:, new_sense_dict.keys()]
+    these = paretoset(subset, sense=new_sense_dict.values())
     return data.iloc[these, :]
 
 
@@ -247,13 +253,12 @@ if __name__ == "__main__":
     assert Path(
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
-    csv_file = args.file
-    data = pd.read_csv(csv_file)
+    data = pd.read_csv(args.file)
     data = drop_frames_without_results(
         data,
         subset=[
             "accuracy",
-            "adv_accuracy",
+            "adv_success",
             "train_time",
             "adv_fit_time",
             "predict_time",
@@ -261,11 +266,11 @@ if __name__ == "__main__":
     )
     sense_dict = {
         "accuracy": "max",
-        "adv_accuracy": "min",
-        "data.sample.random_state": "diff",
+        "adv_accuracy": "max",
+        "adv_success": "min",
         "model_layers": "diff",
-        "atk_param": "diff",
-        "def_param": "diff",
+        # "atk_param": "diff",
+        # "def_param": "diff",
         "atk_gen": "diff",
         "def_gen": "diff",
         "data.sample.random_state": "diff",
@@ -275,13 +280,15 @@ if __name__ == "__main__":
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
         data.drop("Unnamed: 0", axis=1, inplace=True)
-    if Path(args.path).absolute().exists():
+    if Path(args.path).absolute() == Path(args.path):
         logger.info("Absolute path specified")
         FOLDER = Path(args.path).absolute()
     else:
         logger.info("Relative path specified")
         FOLDER = Path(Path(), args.path)
+    logger.info(f"Creating folder {FOLDER}")
     FOLDER.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Saving data to {FOLDER / args.output}")
     data.to_csv(FOLDER / args.output)
     IMAGE_FILETYPE = (
         args.plotfiletype
@@ -302,15 +309,15 @@ if __name__ == "__main__":
     for dict_ in cat_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = cat_plot(data, **dict_, folder=FOLDER)
+        cat_plot(data, **dict_, folder=FOLDER)
     line_plot_list = big_dict["line_plot"]
     for dict_ in line_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = line_plot(data, **dict_, folder=FOLDER)
+        line_plot(data, **dict_, folder=FOLDER)
 
     scatter_plot_list = big_dict["scatter_plot"]
     for dict_ in scatter_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
-        locals()[f"graph{i}"] = scatter_plot(data, **dict_, folder=FOLDER)
+        scatter_plot(data, **dict_, folder=FOLDER)

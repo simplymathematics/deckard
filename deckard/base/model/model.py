@@ -14,6 +14,7 @@ from ..utils import my_hash, factory
 from .art_pipeline import ArtPipeline
 
 from .sklearn_pipeline import SklearnModelPipeline
+from random import randint  
 
 __all__ = ["Model"]
 logger = logging.getLogger(__name__)
@@ -118,14 +119,8 @@ class ModelTrainer:
         if library == "sklearn" or library is None:
             pass
         elif library in ["torch", "pytorch"]:
-            import torch
-
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            X_train, X_test, y_train, y_test = data
-            X_train = torch.FloatTensor(X_train).to(device)
-            X_test = torch.FloatTensor(X_test).to(device)
-            y_train = torch.LongTensor(y_train).to(device)
-            y_test = torch.LongTensor(y_test).to(device)
+            pass
+           
         elif library in ["tensorflow", "tf"]:
             import tensorflow as tf
 
@@ -277,9 +272,9 @@ class Model:
     ):
         result_dict = {}
         if isinstance(data, Data):
-            data = data.initialize()
+            data = data.initialize(data_file)
         elif isinstance(data, type(None)):
-            data = self.data.initialize()
+            data = self.data.initialize(data_file)
         elif isinstance(data, (str, Path)):
             data = self.load(data)
         assert isinstance(
@@ -334,7 +329,7 @@ class Model:
                 time_dict.update(**fit_time_dict)
                 result_dict["model"] = model
                 result_dict["data"] = data
-                result_dict["time_dict"].update(**fit_time_dict)
+                result_dict["time_dict"].update(**time_dict)
             elif Path(model_file).exists():
                 model = self.load(model_file)
                 result_dict["model"] = model
@@ -417,9 +412,9 @@ class Model:
                     time_dict = old_time_dict
                 self.data.save(time_dict, time_dict_file)
                 result_dict["time_dict"] = time_dict
-        if data_file is not None:
+        if data_file is not None and not Path(data_file).exists():
             self.data.save(data, data_file)
-        if model_file is not None:
+        if model_file is not None and not Path(model_file).exists():
             self.save(model, model_file)
         return result_dict
 
@@ -434,14 +429,14 @@ class Model:
             tuple: The data and model as Data and Model objects.
         """
         if isinstance(data, Data):
-            data = data.initialize()
+            data = data.initialize(data)
         elif isinstance(data, (str, Path)):
             data = self.data(data)
         elif isinstance(data, type(None)):
-            data = self.data.initialize()
+            data = self.data.initialize(data)
         assert isinstance(
             data,
-            (type(None), list),
+            (list),
         ), f"Data {data} is not a list. It is of type {type(data)}."
         if isinstance(model, (str, Path)) and Path(model).exists():
             model = self.load(model)
@@ -463,10 +458,10 @@ class Model:
                     model = self.init()
                 else:
                     raise e
-            if self.art is not None:
-                model = self.art(model=model, data=data)
-            else:
-                pass
+        if self.art is not None:
+            model = self.art(model=model, data=data)
+        else:
+            pass
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         return data, model
 
@@ -476,20 +471,19 @@ class Model:
         :type data: tuple
         :return: The fitted model and the average time per sample.
         """
-        if isinstance(data, Data):
-            data = data.initialize()
-        elif isinstance(data, (str, Path)):
-            data = self.data(data)
-        assert isinstance(data, (type(None), list)), f"Data {data} is not a tuple."
-        if isinstance(model, Model):
-            data, model = model.initialize(data)
-        elif isinstance(model, (str, Path)):
-            model = self.load(model)
+        assert isinstance(data, list), f"Data {data} is not a list."
+        assert len(data) == 4, "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
+        assert len(data[0]) == len(data[2]), "X_train and y_train must have the same length."
+        assert len(data[1]) == len(data[3]), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
-        model, time_dict = self.trainer(data, model)
-        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
-        if model_file is not None:
-            self.save(model, model_file)
+        if Path(model_file).exists():
+            model = self.load(model_file)
+            time_dict = {}
+        else:
+            assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+            model, time_dict = self.trainer(data, model, library=self.library)
+            if model_file is not None:
+                self.save(model, model_file)
         return model, time_dict
 
     def predict(self, data=None, model=None, predictions_file=None):
@@ -498,23 +492,12 @@ class Model:
         :type model: object
         :param data: The data to predict on.
         """
-        if isinstance(data, Data):
-            data = data.initialize()
-        elif isinstance(data, (str, Path)):
-            data = self.data(data)
-        elif isinstance(data, type(None)):
-            data = self.data.initialize()
-        assert isinstance(data, (type(None), list)), f"Data {data} is not a tuple."
-        if isinstance(model, (Model)):
-            data, model = model.initialize(data)
-        elif isinstance(model, (str, Path)):
-            model = self.load(model)
-        elif isinstance(model, type(None)):
-            data, model = self.initialize(data)
-        assert hasattr(
-            model,
-            "predict",
-        ), f"Model {model} does not have a predict method."
+        assert isinstance(data, list), f"Data {data} is not a list."
+        assert len(data) == 4, "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
+        assert len(data[0]) == len(data[2]), "X_train and y_train must have the same length."
+        assert len(data[1]) == len(data[3]), "X_test and y_test must have the same length."
+        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        assert hasattr(model, "predict"), f"Model {model} does not have a predict method."
         try:
             start = process_time_ns()
             predictions = model.predict(data[1])
@@ -553,18 +536,11 @@ class Model:
         :type data: tuple
         :return: The predictions and the average time per sample.
         """
-        if isinstance(data, Data):
-            data = data.initialize()
-        elif isinstance(data, type(None)):
-            data = self.data.initialize()
-        elif isinstance(data, (str, Path)):
-            data = self.data(data)
-        else:
-            assert isinstance(data, list), f"Data {data} is not a list."
-        if isinstance(model, Model):
-            data, model = model.initialize(data)
-        elif isinstance(model, (str, Path)):
-            model = self.load(model)
+        assert isinstance(data, list), f"Data {data} is not a list."
+        assert len(data) == 4, "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
+        assert len(data[0]) == len(data[2]), "X_train and y_train must have the same length."
+        assert len(data[1]) == len(data[3]), "X_test and y_test must have the same length."
+        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         if (
             str("art") in str(type(model))
             and "sklearn" in str(type(model))
@@ -600,15 +576,11 @@ class Model:
         :type data: tuple
         :return: The predictions and the average time per sample.
         """
-        if isinstance(data, Data):
-            data = data.initialize()
-        elif isinstance(data, (str, Path)):
-            data = self.data(data)
-        assert isinstance(data, (type(None), list)), f"Data {data} is not a tuple."
-        if isinstance(model, Model):
-            data, model = model.initialize(data)
-        elif isinstance(model, (str, Path)):
-            model = self.load(model)
+        assert isinstance(data, list), f"Data {data} is not a list."
+        assert len(data) == 4, "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
+        assert len(data[0]) == len(data[2]), "X_train and y_train must have the same length."
+        assert len(data[1]) == len(data[3]), "X_test and y_test must have the same length."
+        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         if str("art") in str(type(model)) and (
             hasattr(model.model, "predict_log_proba")
             or hasattr(model.model, "predict_proba")
@@ -711,4 +683,4 @@ class Model:
                     f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
                 )
         else:
-            logger.warning(f"File {filename} already exists. Skipping saving.")
+            logger.warning(f"File {filename} already exists. Will not overwrite.")

@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train
+    cmd: python -m deckard.layers.experiment train --config_file cifar
     params:
       params.yaml:
         data:
@@ -25,7 +25,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: cifar
           model_dir: models
           model_file: model
           model_type: .pt
@@ -53,7 +53,7 @@ stages:
             initialize:
               clip_values:
               - 0.0
-              - 1.0
+              - 255.0
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -81,7 +81,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -93,32 +93,32 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/data/data.pkl
+    - path: cifar/data/data.pkl
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
-    - path: output/models/model.optimizer.pt
-      md5: f5b6422f339473318808616c7fb926c4
+    - path: cifar/models/model.optimizer.pt
+      md5: 86884b532b711a567d5a544d3ad693d3
       size: 44805933
-    - path: output/models/model.pt
-      md5: c7a6c14dc3dc96868cb9f3b93d7d31ba
+    - path: cifar/models/model.pt
+      md5: 5c3af8f99e01afbc493b3f57dbf09c1d
       size: 44811029
-    - path: output/reports/train/default/params.yaml
-      md5: 320abf8eddbae67cd6873f8d1e3bba81
-      size: 2174
-    - path: output/reports/train/default/predictions.json
-      md5: ed5c6a014bf8fc8ee4aadacc3c5cb07c
-      size: 2437716
-    - path: output/reports/train/default/score_dict.json
-      md5: 368af71ad6cf7bf06b64ffeb109a2da9
-      size: 412
+    - path: cifar/reports/train/default/params.yaml
+      md5: f18b8df67e934151c2d59117666c2ee3
+      size: 2172
+    - path: cifar/reports/train/default/predictions.json
+      md5: 16cb8eef7a76e00b58036b252c84e6e7
+      size: 2439927
+    - path: cifar/reports/train/default/score_dict.json
+      md5: bc21cb437fafee94057df96be84566d7
+      size: 405
   attack:
-    cmd: python -m deckard.layers.experiment attack
+    cmd: python -m deckard.layers.experiment attack --config_file cifar
     deps:
-    - path: output/data/data.pkl
+    - path: cifar/data/data.pkl
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
-    - path: output/models/model.pt
-      md5: c7a6c14dc3dc96868cb9f3b93d7d31ba
+    - path: cifar/models/model.pt
+      md5: 5c3af8f99e01afbc493b3f57dbf09c1d
       size: 44811029
     params:
       params.yaml:
@@ -158,7 +158,7 @@ stages:
                 initialize:
                   clip_values:
                   - 0.0
-                  - 1.0
+                  - 255.0
                   criterion:
                     name: torch.nn.CrossEntropyLoss
                   optimizer:
@@ -186,7 +186,7 @@ stages:
               library: pytorch
               trainer:
                 batch_size: 1024
-                nb_epoch: 20
+                nb_epoch: 100
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -208,7 +208,7 @@ stages:
               initialize:
                 clip_values:
                 - 0.0
-                - 1.0
+                - 255.0
                 criterion:
                   name: torch.nn.CrossEntropyLoss
                 optimizer:
@@ -236,7 +236,7 @@ stages:
             library: pytorch
             trainer:
               batch_size: 1024
-              nb_epoch: 20
+              nb_epoch: 100
         data:
           _target_: deckard.base.data.Data
           generate:
@@ -258,7 +258,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: cifar
           model_dir: models
           model_file: model
           model_type: .pt
@@ -286,7 +286,7 @@ stages:
             initialize:
               clip_values:
               - 0.0
-              - 1.0
+              - 255.0
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -314,7 +314,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -326,18 +326,18 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/attacks/attack.pkl
-      md5: e57b871f32a1a8b7de497f6e5de4ebf1
+    - path: cifar/attacks/attack.pkl
+      md5: 1763dcf2dd4b821ea2a9309e1df63805
       size: 123046
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 0a097842037186d905fb2fd7ec4072d9
-      size: 2125
-    - path: output/reports/attack/default/params.yaml
-      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
-      size: 5175
-    - path: output/reports/attack/default/score_dict.json
-      md5: f5cc403e9e3fafd09cd985d86b3c80a5
-      size: 549
+    - path: cifar/reports/attack/default/adv_predictions.json
+      md5: 5add137290da41324a28055f45ce97b7
+      size: 2160
+    - path: cifar/reports/attack/default/params.yaml
+      md5: 835365f5be5d0a922541f050fc78ac79
+      size: 5178
+    - path: cifar/reports/attack/default/score_dict.json
+      md5: 904a964ee783155dbef6416c197695e0
+      size: 557
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet18.db --config-name default.yaml

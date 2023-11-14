@@ -1,8 +1,6 @@
 stages:
-  install:
-    cmd: python -m pip install ../deckard
   train:
-    cmd: python -m deckard.layers.experiment train
+    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
     params:
       - data
       - model
@@ -12,14 +10,14 @@ stages:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack
+    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
     params:
       - data
       - model
@@ -29,7 +27,7 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -37,6 +35,23 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
+  # models: # This is a loop over the ResNet models
+  #   foreach:
+  #     - ResNet18
+  #     # - ResNet34
+  #     # - ResNet50
+  #     # - ResNet101
+  #     # - ResNet152
+  #   do: # This script configures eazch defence
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name mnist.yaml 
+  #     deps:
+  #     - models.sh
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+  #     outs:
+  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
+  #         cache: True
+  #         persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18
@@ -45,13 +60,16 @@ stages:
       - ResNet101
       - ResNet152
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} ++stage=attack ++hydra.sweeper.storage=sqlite:///${item}.db --config-name default.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name mnist.yaml
       deps:
       - models.sh # This script configures each defence
       - attacks.sh # This script configures each attack
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+      # - ${files.directory}/${files.reports}/train/${item}.db
       outs:
-      - ${item}.db # This outputs a database file for each model
+      - ${files.directory}/${files.reports}/attack/${item}.db: # This outputs a database file for each model
+          cache: True
+          persist: True
   compile:
     foreach: # iterates through each stage
       # - train 
@@ -60,26 +78,26 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
       deps:
       - ${files.directory}/${files.reports}/${item}/
-      - ResNet18.db
-      - ResNet34.db
-      - ResNet50.db
-      - ResNet101.db
-      - ResNet152.db
+      - ${files.directory}/${files.reports}/${item}/ResNet18.db
+      - ${files.directory}/${files.reports}/${item}/ResNet34.db
+      - ${files.directory}/${files.reports}/${item}/ResNet50.db
+      - ${files.directory}/${files.reports}/${item}/ResNet101.db
+      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   plot:
-    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
-      - ResNet18.db
-      - ResNet34.db
-      - ResNet50.db
-      - ResNet101.db
-      - ResNet152.db
+      - ${files.directory}/${files.reports}/attack/ResNet18.db
+      - ${files.directory}/${files.reports}/attack/ResNet34.db
+      - ${files.directory}/${files.reports}/attack/ResNet50.db
+      - ${files.directory}/${files.reports}/attack/ResNet101.db
+      - ${files.directory}/${files.reports}/attack/ResNet152.db
     outs:
       - ${files.directory}/plots/data.csv
   afr:
-    cmd: python -m deckard.layers.afr --dataset mnist
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --file ${files.directory}/plots/data.csv
     deps:
       - ${files.directory}/plots/data.csv
     plots:

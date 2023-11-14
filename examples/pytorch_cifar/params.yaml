@@ -35,7 +35,7 @@ attack:
         initialize:
           clip_values:
           - 0.0
-          - 1.0
+          - 255.0
           criterion:
             name: torch.nn.CrossEntropyLoss
           optimizer:
@@ -63,7 +63,7 @@ attack:
       library: pytorch
       trainer:
         batch_size: 1024
-        nb_epoch: 20
+        nb_epoch: 100
     name: art.attacks.evasion.HopSkipJump
   method: evasion
   model:
@@ -85,7 +85,7 @@ attack:
       initialize:
         clip_values:
         - 0.0
-        - 1.0
+        - 255.0
         criterion:
           name: torch.nn.CrossEntropyLoss
         optimizer:
@@ -113,7 +113,7 @@ attack:
     library: pytorch
     trainer:
       batch_size: 1024
-      nb_epoch: 20
+      nb_epoch: 100
 data:
   _target_: deckard.base.data.Data
   generate:
@@ -135,7 +135,7 @@ files:
   data_dir: data
   data_file: data
   data_type: .pkl
-  directory: output
+  directory: cifar
   model_dir: models
   model_file: model
   model_type: .pt
@@ -163,7 +163,7 @@ model:
     initialize:
       clip_values:
       - 0.0
-      - 1.0
+      - 255.0
       criterion:
         name: torch.nn.CrossEntropyLoss
       optimizer:
@@ -191,7 +191,7 @@ model:
   library: pytorch
   trainer:
     batch_size: 1024
-    nb_epoch: 20
+    nb_epoch: 100
 optimizers: accuracy
 scorers:
   _target_: deckard.base.scorer.ScorerDict
