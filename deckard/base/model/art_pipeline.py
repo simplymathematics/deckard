@@ -122,7 +122,7 @@ class ArtPipeline:
     def __init__(self, library, name: str = None, **kwargs):
         self.library = library
         pipeline = deepcopy(kwargs.pop("pipeline", {}))
-        pipeline.update(kwargs)
+        pipeline.update(**kwargs)
         pipeline.pop("data", None)
         pipeline.pop("model", None)
         for stage in pipeline:
@@ -175,9 +175,9 @@ class ArtPipeline:
                 params = self.pipeline["initialize"]
                 name = params.pop("name", None)
                 kwargs = params.pop("kwargs", {})
-
         else:
-            raise ValueError("Art Pipeline must have an initialize stage")
+            name = None
+            kwargs = {}
         pre_def = []
         post_def = []
         if data is None:

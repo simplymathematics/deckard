@@ -124,7 +124,8 @@ class TensorflowV2Initializer:
             input_shape = data[0][0].shape
             kwargs.update({"input_shape": input_shape})
         if "train_step" not in kwargs:
-            raise "train_step must be specified in kwargs"
+            assert hasattr(model, "train_step"), "Model must have train_step attribute"
+            train_step = model.train_step
         else:
             train_step = kwargs.pop("train_step")
             train_step = factory(name=train_step.pop("name"), **train_step)

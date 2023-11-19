@@ -11,8 +11,7 @@ from sklearn.exceptions import NotFittedError
 from ..data import Data
 from ..utils import my_hash, factory
 
-from .art_pipeline import ArtPipeline, all_models
-
+from .art_pipeline import ArtPipeline, all_models, sklearn_dict, torch_dict, tensorflow_dict, keras_dict
 from .sklearn_pipeline import SklearnModelPipeline
 
 __all__ = ["Model"]
@@ -115,12 +114,14 @@ class ModelTrainer:
         logger.info(f"Training model {model} with fit params: {self.kwargs}")
 
         trainer = self.kwargs
-        if library == "sklearn" or library is None:
+        if library in sklearn_dict.keys():
             pass
-        elif library in ["torch", "pytorch"]:
+        elif library in torch_dict.keys():
+            pass
+        elif library in keras_dict.keys():
             pass
 
-        elif library in ["tensorflow", "tf"]:
+        elif library in tensorflow_dict.keys():
             import tensorflow as tf
 
             tf.config.run_functions_eagerly(True)
@@ -194,11 +195,21 @@ class Model:
         name: str = None,
         **kwargs,
     ):
-        self.data = data
+        if isinstance(data, Data):
+            self.data = data
+        elif isinstance(data, dict):
+            self.data = Data(**data)
+        elif isinstance(data, DictConfig):
+            data_dict = OmegaConf.to_container(data, resolve=True)
+            self.data = Data(**data_dict)
+        else:
+            raise ValueError(
+                f"Data {data} is not a dictionary or Data object. It is of type {type(data)}",
+            )
         if isinstance(init, ModelInitializer):
             self.init = init
-        # elif isinstance(init, dict):
-        #     self.init = ModelInitializer(**init)
+        elif isinstance(init, dict):
+            self.init = ModelInitializer(**init)
         elif isinstance(init, DictConfig):
             init_dict = OmegaConf.to_container(init, resolve=True)
             self.init = ModelInitializer(**init_dict)
@@ -482,7 +493,7 @@ class Model:
             data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
-        if Path(model_file).exists():
+        if model_file is not None and Path(model_file).exists():
             model = self.load(model_file)
             time_dict = {}
         else:
