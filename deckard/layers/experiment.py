@@ -8,7 +8,6 @@ import yaml
 import argparse
 from copy import deepcopy
 from ..base.utils import unflatten_dict
-from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
 
