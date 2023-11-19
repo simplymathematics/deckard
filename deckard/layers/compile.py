@@ -53,8 +53,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
                 try:
                     dict_ = json.load(f)
                 except json.decoder.JSONDecodeError as e:
-                   raise e
-                    
+                    raise e
+
         elif suffix == ".yaml":
             with open(file, "r") as f:
                 dict_ = yaml.safe_load(f)
@@ -211,7 +211,7 @@ def clean_data_for_plotting(
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict)
     logger.info(f"Saving data to {file}")
-    data.to_csv( file)
+    data.to_csv(file)
     return data
 
 

@@ -78,7 +78,9 @@ TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar
 
 @dataclass
 class TorchDataGenerator:
-    name: Literal["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100"] = "torch_mnist"
+    name: Literal[
+        "torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100"
+    ] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)
 
@@ -116,12 +118,24 @@ class TorchDataGenerator:
             except:
                 raise ImportError("Please install torchvision to use CIFAR100")
             if self.path is None:
-                raise ValueError(f"path attribute must be specified for dataset: {self.name}.")
+                raise ValueError(
+                    f"path attribute must be specified for dataset: {self.name}."
+                )
             original_filename = Path(self.path, self.name, f"{self.name}.npz")
             Path(original_filename.parent).mkdir(parents=True, exist_ok=True)
             if not original_filename.exists():
-                train_set = CIFAR100(Path(self.path, self.name), train=True, download=True, transform=transforms.ToTensor())
-                test_set =  CIFAR100(Path(self.path, self.name), train=False, download=True, transform=transforms.ToTensor())
+                train_set = CIFAR100(
+                    Path(self.path, self.name),
+                    train=True,
+                    download=True,
+                    transform=transforms.ToTensor(),
+                )
+                test_set = CIFAR100(
+                    Path(self.path, self.name),
+                    train=False,
+                    download=True,
+                    transform=transforms.ToTensor(),
+                )
                 # lambda function to turn each image, label into an np.array
                 X_ = lambda x: np.array(x[0])
                 y_ = lambda x: np.array(x[1])
@@ -138,7 +152,7 @@ class TorchDataGenerator:
                 dict_ = np.load(original_filename.as_posix())
                 X = dict_["X"]
                 y = dict_["y"]
-                
+
         else:
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]

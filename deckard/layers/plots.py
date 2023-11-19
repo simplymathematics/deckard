@@ -124,7 +124,14 @@ def scatter_plot(
 
 def drop_frames_without_results(
     data,
-    subset=["accuracy", "adv_accuracy", "train_time", "adv_fit_time", "predict_time", "adv_success"],
+    subset=[
+        "accuracy",
+        "adv_accuracy",
+        "train_time",
+        "adv_fit_time",
+        "predict_time",
+        "adv_success",
+    ],
 ):
     logger.info(f"Dropping frames without results for {subset}")
     data.dropna(axis=0, subset=subset, inplace=True)
@@ -169,7 +176,7 @@ def calculate_failure_rate(data):
 
 def pareto_set(data, sense_dict):
     new_sense_dict = {}
-    for k,v in sense_dict.items():
+    for k, v in sense_dict.items():
         if k in data.columns:
             new_sense_dict[k] = v
         else:

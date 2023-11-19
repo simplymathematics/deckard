@@ -91,7 +91,7 @@ def merge_params(default, params) -> dict:
         ):
             default.update({key: value})
         elif value is None:
-            default.update({key : {}})
+            default.update({key: {}})
         else:
             logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
@@ -200,23 +200,23 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         for stage in stages:
             pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
             if "deps" in pipe:
-                dep_list =[x.split(":")[0] for x in  pipe["deps"]]
+                dep_list = [x.split(":")[0] for x in pipe["deps"]]
                 file_list.extend(dep_list)
             if "outs" in pipe:
-                out_list = [x.split(":")[0] for x in pipe['outs']]
+                out_list = [x.split(":")[0] for x in pipe["outs"]]
                 file_list.extend(out_list)
             if "metrics" in pipe:
-                metric_list = [x.split(":")[0] for x in pipe['metrics']]
+                metric_list = [x.split(":")[0] for x in pipe["metrics"]]
                 file_list.extend(metric_list)
     file_string = str(file_list)
-    files = params['files']
+    files = params["files"]
     file_list = list(files.keys())
     for key in file_list:
-        template_string = "${files."+ key + "}"
+        template_string = "${files." + key + "}"
         if template_string in file_string:
             pass
         else:
-            params['files'].pop(key)
+            params["files"].pop(key)
     params = get_files(params, stage)
     return params
 
