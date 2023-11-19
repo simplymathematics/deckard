@@ -6,9 +6,11 @@ import pickle
 import numpy as np
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
+from omegaconf import OmegaConf
 from art.utils import to_categorical
 from deckard.base.scorer import ScorerConfig, ScorerDict
 import os
+import json
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
@@ -25,13 +27,18 @@ class testScorerDict(unittest.TestCase):
             version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
-        self.cfg = cfg
+        self.cfg = OmegaConf.to_container(cfg, resolve=True)
         self.scorers = instantiate(config=self.cfg)
         self.directory = mkdtemp()
         self.file = Path(
             self.directory,
             self.score_dict_file + self.score_dict_type,
         ).as_posix()
+        temp = mkdtemp()
+        true_file = "true.pkl"
+        preds_file = "preds.pkl"
+        self.preds_file = Path(self.directory, preds_file).as_posix()
+        self.true_file = Path(self.directory, true_file).as_posix()
 
     def test_init(self):
         self.assertIsInstance(self.scorers, ScorerDict)
@@ -49,11 +56,32 @@ class testScorerDict(unittest.TestCase):
         for scorer in self.scorers:
             self.assertIsInstance(scorer[0], str)
             self.assertIsInstance(scorer[1], ScorerConfig)
+    
+    def test_len(self):
+        self.cfg.pop("_target_", None)
+        self.assertEqual(len(self.scorers), len(self.cfg))
+        
+    def test_getitem(self):
+        scorer = self.scorers["accuracy"]
+        self.assertIsInstance(scorer, ScorerConfig)
+        self.assertEqual(scorer.alias, "accuracy_score")
+        self.assertEqual(scorer.name, "sklearn.metrics.accuracy_score")
+        self.assertEqual(scorer.direction, "maximize")
+        self.assertEqual(scorer.args, ["y_true", "y_pred"])
 
     def test_call(self):
         y_pred = np.random.randint(0, 2, size=(100,))
         y_true = np.random.randint(0, 2, size=(100,))
-        score_dict = self.scorers(y_pred, y_true, score_dict_file=self.file)
+        y_pred = to_categorical(y_pred)
+        y_true = to_categorical(y_true)
+        with open(self.preds_file, "wb") as f:
+            pickle.dump(y_pred, f)
+        with open(self.true_file, "wb") as f:
+            pickle.dump(y_true, f)
+        score_dict = {}
+        with open(Path(self.file).with_suffix(".json"), "w") as f:
+            json.dump(score_dict, f)
+        score_dict = self.scorers(y_pred, y_true, score_dict_file=self.file, labels_file=self.true_file, predictions_file=self.preds_file)
         for scorer in self.scorers:
             self.assertTrue(scorer[0] in score_dict)
         self.assertTrue(Path(self.file).exists())
@@ -131,6 +159,7 @@ class testScorerConfig(unittest.TestCase):
                 self.assertLessEqual(s, 1)
         else:
             raise ValueError("Score must be either a float or a list/tuple of floats")
+    
 
     def test_call(self):
         y_pred = np.random.randint(0, 2, size=(100,))
@@ -174,14 +203,47 @@ with initialize_config_dir(
     cfg = compose(config_name=model_config_file)
 model_cfg = cfg
 
+class testScorerDictWithArgs(testScorerDict):
+    config_dir = Path(this_dir, "../../conf/scorers").resolve().as_posix()
+    config_file = "args.yaml"
+    score_dict_type = ".pkl"
+    score_dict_file = "score_dict"
 
-# class testComputeSuccess(testScorerConfig):
-#     name: str = "art.utils.compute_success"
-#     alias: str = "compute_success"
 
-#     params: dict = {
-#         "args" : [model_cfg, "x_clean", "labels", "x_adv"],
-#         "targeted" : False,
-#         "batch_size" : 10
-#     },
-#     direction : str = "maximize"
+class testScorerDictfromDict(testScorerDict):
+
+    def setUp(self):
+        self.cfg = {
+            "accuracy" : {
+                "name": "sklearn.metrics.accuracy_score",
+                "alias": "accuracy_score",
+                "args": ["y_true", "y_pred"],
+                "params": {},
+                "direction": "maximize",
+            },
+            "log_loss" : {
+                "name": "sklearn.metrics.log_loss",
+                "alias": "log_loss",
+                "args": ["y_true", "y_pred"],
+                "params": {},
+                "direction": "minimize",
+            },
+        }
+        self.scorers = ScorerDict(**self.cfg)
+        self.directory = mkdtemp()
+        self.file = Path(
+            self.directory,
+            self.score_dict_file + self.score_dict_type,
+        ).as_posix()
+        temp = mkdtemp()
+        true_file = "true.pkl"
+        preds_file = "preds.pkl"
+        self.preds_file = Path(self.directory, preds_file).as_posix()
+        self.true_file = Path(self.directory, true_file).as_posix()
+
+
+# class testScorerDictErrors(testScorerDict):
+#     config_dir = Path(this_dir, "../../conf/scorers").resolve().as_posix()
+#     config_file = "errors.yaml"
+#     score_dict_type = ".pkl"
+#     score_dict_file = "score_dict"
