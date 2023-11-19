@@ -137,7 +137,7 @@ class TorchInitializer:
             elif hasattr(model, "model") and hasattr(model.model, "to"):
                 model.model.to(device)
         except Exception as e:
-            if "CUDA out of memory" in str(e) and len(devices) > 0:
+            if "CUDA out of memory" in str(e) and len(devices) > 0 and device != "cpu":
                 device_number = devices[randint(0, len(devices) - 1)]
                 device = f"cuda:{device_number}"
                 logger.info(f"Out of memory error. Trying device {device}")
@@ -146,7 +146,7 @@ class TorchInitializer:
                     datum.to(device)
             else:
                 raise e
-        if library in torch_dict:
+        if library in torch_dict and not isinstance(model, torch_dict[library]):
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)
         else:

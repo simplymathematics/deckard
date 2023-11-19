@@ -67,11 +67,11 @@ class ArtInitializer:
         data = self.data
         model = self.model
         kwargs = self.kwargs
-        if "torch" in str(library):
+        if "torch" in str(library) and not isinstance(model, tuple(torch_dict.values())):
             model = TorchInitializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif "keras" in str(library):
+        elif "keras" in str(library) and not isinstance(model, tuple(keras_dict.values())):
             try:
                 model = KerasInitializer(
                     data=data, model=model, library=library, **kwargs
@@ -88,18 +88,20 @@ class ArtInitializer:
                     )()
                 else:
                     raise e
-        elif "sklearn" in str(library) or library is None:
+        elif "sklearn" in str(library) or library is None and not isinstance(model, tuple(sklearn_dict.values())):
             model = SklearnModelInitializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif library in ["tf2", "tensorflowv2", "tensorflow", "tf", "tfv2"]:
+        elif library in ["tf2", "tensorflowv2", "tensorflow", "tf", "tfv2"] and not isinstance(model, tuple(tensorflow_dict.values())):
             model = TensorflowV2Initializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif library in ["tf1", "tensorflowv1", "tfv1"]:
+        elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(model, tuple(tensorflow_dict.values())):
             model = TensorflowV1Initializer(
                 data=data, model=model, library=library, **kwargs
             )()
+        elif library in supported_models and isinstance(model, tuple(all_models.values())):
+            pass
         else:
             raise ValueError(
                 f"library must be one of {supported_models}. Got {library}",

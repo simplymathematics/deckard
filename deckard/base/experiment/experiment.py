@@ -139,6 +139,8 @@ class Experiment:
         results = {}
         results["score_dict_file"] = score_dict
         #########################################################################
+        # Load or generate data
+        #########################################################################
         data_files = {
             "data_file": files.get("data_file", None),
             "train_labels_file": files.get("train_labels_file", None),
@@ -147,6 +149,8 @@ class Experiment:
             # TODO data_score_file
         }
         data = self.data(**data_files)
+        #########################################################################
+        # Load or train model
         #########################################################################
         if self.model is not None:
             model_files = {
@@ -186,6 +190,8 @@ class Experiment:
         else:
             preds = data[2]
         ##########################################################################
+        # Load or run attack
+        ##########################################################################
         if self.attack is not None:
             adv_results = self.attack(
                 data,
@@ -216,7 +222,9 @@ class Experiment:
             if "adv_success" in adv_results:
                 adv_success = adv_results["adv_success"]
                 score_dict.update({"adv_success": adv_success})
-        # #########################################################################
+        ##########################################################################
+        # Score results
+        #########################################################################
         if self.scorers is not None:
             if "probs" in locals() and "preds" not in locals():
                 preds = probs
@@ -262,6 +270,7 @@ class Experiment:
             raise ValueError("Scorer is None. Please specify a scorer.")
         #########################################################################
         # Returns score if scorer is not None, otherwise returns status
+        #########################################################################
         if self.optimizers is not None and self.optimizers != []:
             if not isinstance(self.optimizers, list):
                 self.optimizers = [self.optimizers]

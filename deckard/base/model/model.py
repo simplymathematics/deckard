@@ -11,7 +11,7 @@ from sklearn.exceptions import NotFittedError
 from ..data import Data
 from ..utils import my_hash, factory
 
-from .art_pipeline import ArtPipeline
+from .art_pipeline import ArtPipeline, all_models
 
 from .sklearn_pipeline import SklearnModelPipeline
 
@@ -197,8 +197,8 @@ class Model:
         self.data = data
         if isinstance(init, ModelInitializer):
             self.init = init
-        elif isinstance(init, dict):
-            self.init = ModelInitializer(**init)
+        # elif isinstance(init, dict):
+        #     self.init = ModelInitializer(**init)
         elif isinstance(init, DictConfig):
             init_dict = OmegaConf.to_container(init, resolve=True)
             self.init = ModelInitializer(**init_dict)
@@ -457,11 +457,12 @@ class Model:
                     model = self.init()
                 else:
                     raise e
-        if self.art is not None:
+        if self.art is not None and not isinstance(model, tuple(all_models.values())):
             model = self.art(model=model, data=data)
-        else:
+        elif isinstance(model, tuple(all_models.values())):
             pass
-        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        else:
+            assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         return data, model
 
     def fit(self, data, model, model_file=None):
