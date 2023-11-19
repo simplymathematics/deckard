@@ -50,7 +50,11 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             results[folder] = {}
         if suffix == ".json":
             with open(file, "r") as f:
-                dict_ = json.load(f)
+                try:
+                    dict_ = json.load(f)
+                except json.decoder.JSONDecodeError as e:
+                    raise e
+
         elif suffix == ".yaml":
             with open(file, "r") as f:
                 dict_ = yaml.safe_load(f)
@@ -64,7 +68,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             if file.parent.name not in results:
                 results[file.parent.name] = {}
             results[file.parent.name][file.stem] = file
-    return results
+    df = pd.DataFrame(results).T
+    return df
 
 
 def merge_defences(results: pd.DataFrame):
@@ -100,8 +105,8 @@ def merge_defences(results: pd.DataFrame):
             def_gen = [str(x).split(".")[-1] for x in defence][0]
             defence = defence[0]
         else:
-            def_gen = None
-            defence = None
+            def_gen = "Control"
+            defence = "Control"
         ############################################################################################################
         if defence != []:
             defences.append(defence)
@@ -129,8 +134,7 @@ def merge_attacks(results: pd.DataFrame):
 
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"]):
-    dict_ = parse_folder(folder, files=files)
-    df = pd.DataFrame(dict_).T
+    df = parse_folder(folder, files=files)
     df = flatten_results(df)
     df = merge_defences(df)
     df = merge_attacks(df)
@@ -139,6 +143,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"]):
 
 def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
+
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
     else:
@@ -147,11 +152,9 @@ def format_control_parameter(data, control_dict):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
+
     for defence in defences:
-        if defence in ["Control", None, "None", "none", "null", np.nan]:
-            data.loc[data.def_gen == defence, "def_param"] = np.nan
-            data.loc[data.def_gen == defence, "def_value"] = np.nan
-        elif defence in control_dict:
+        if defence in control_dict:
             param = control_dict[defence]
             data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
             if param in data.columns:
@@ -159,15 +162,13 @@ def format_control_parameter(data, control_dict):
             else:
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
+            control_dict.pop(defence)
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
 
     for attack in attacks:
-        if attack in ["Control", None, "None", "none", "null", np.nan]:
-            data.loc[data.atk_gen == attack, "atk_param"] = np.nan
-            data.loc[data.atk_gen == attack, "atk_value"] = np.nan
-        elif attack in control_dict:
+        if attack in control_dict:
             param = control_dict[attack]
             data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
             if param in data.columns:
@@ -175,10 +176,10 @@ def format_control_parameter(data, control_dict):
             else:
                 value = np.nan
             data.loc[data.atk_gen == attack, "atk_value"] = value
+            control_dict.pop(attack)
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-
 
     return data
 
@@ -189,7 +190,6 @@ def clean_data_for_plotting(
     atk_gen_dict,
     control_dict,
     file,
-    folder,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -202,15 +202,16 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
+    # Removes the path and to the model object and leaves the name of the model
     data["model_name"] = data["model.init.name"].str.split(".").str[-1]
-    data["model_layers"] = data["model_name"].str.split("Net").str[-1]
-    # Rename columns that end in '.1' by removing the '.1'
-    data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
+    if data["model.init.name"].str.contains("Net").any():
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict)
-    logger.info(f"Saving data to {Path(folder) / file}")
-    data.to_csv(Path(folder) / "data.csv")
+    logger.info(f"Saving data to {file}")
+    data.to_csv(file)
     return data
 
 
@@ -269,7 +270,6 @@ if __name__ == "__main__":
         atk_gen_dict,
         control_dict,
         results_file,
-        report_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(

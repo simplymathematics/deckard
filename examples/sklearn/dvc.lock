@@ -87,28 +87,23 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/data/data.pkl
-      hash: md5
-      md5: af3fa729fa7f76213685ca4e51b80bb2
+      md5: eeabc07006294278801a3906f7016b20
       size: 185102
     - path: output/models/model.pkl
-      hash: md5
-      md5: 8f9bb89ea877a37e005fb9d12d6538a0
-      size: 15185
+      md5: 38622dfa7ae717dc7c3a6cc03e2d50b7
+      size: 15127
     - path: output/reports/train/default/score_dict.json
-      hash: md5
-      md5: 110eccb7dbf05b7c31f7ab2e423b827c
-      size: 349
+      md5: 87f0187a3ec41a7c8c9d833e9802176d
+      size: 360
   attack:
     cmd: python -m deckard.layers.experiment attack
     deps:
     - path: output/data/data.pkl
-      hash: md5
-      md5: af3fa729fa7f76213685ca4e51b80bb2
+      md5: eeabc07006294278801a3906f7016b20
       size: 185102
     - path: output/models/model.pkl
-      hash: md5
-      md5: 27225f126e831ab39e47b6b9386ab36b
-      size: 15219
+      md5: ed99f68f7ba45834cbfd8c421f82bbd5
+      size: 15161
     params:
       params.yaml:
         attack:
@@ -281,70 +276,58 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: output/reports/attack/default/adv_probabilities.json
-      hash: md5
-      md5: 4456666e66f153b50572072e83be3e47
+      md5: cf883c677f52a409a225403c739a8071
       size: 425
     - path: output/reports/attack/default/score_dict.json
-      hash: md5
-      md5: 4b858a5872bfe2aa828a0f064c55f4ea
-      size: 486
+      md5: c30aaee4adbf17fbb8321dea3820c8e7
+      size: 497
   model_search:
     cmd: bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db
       ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize
       --multirun --config-name model.yaml
     deps:
     - path: models.sh
-      hash: md5
-      md5: b20bba54353be244dc917518b03ef007
-      size: 705
+      md5: d55d675913cb8191df958508131e037c
+      size: 706
     - path: output/reports/attack/default/adv_probabilities.json
-      hash: md5
-      md5: 4456666e66f153b50572072e83be3e47
+      md5: cf883c677f52a409a225403c739a8071
       size: 425
     outs:
     - path: model.db
-      hash: md5
-      md5: c354d3816bc0526c0e94d9fd0a537e72
-      size: 217088
-  find_best_model:
-    cmd: python -m deckard.layers.find_best model.yaml
-    deps:
-    - path: model.db
-      hash: md5
-      md5: c354d3816bc0526c0e94d9fd0a537e72
-      size: 217088
-    outs:
-    - path: conf/model/best.yaml
-      hash: md5
-      md5: 9f9bd5f3433134a0bf966456a0d150aa
-      size: 674
+      md5: 733a4cde935d29efa111c08a04b461c6
+      size: 196608
   attack_search:
     cmd: bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db
       ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize
       ++attack.init.max_iter=10  --multirun --config-name attack.yaml
     deps:
     - path: attacks.sh
-      hash: md5
       md5: b5d0850e20fa8d2fb2bd47c8949ae6a6
       size: 1568
     - path: model.db
-      hash: md5
-      md5: c354d3816bc0526c0e94d9fd0a537e72
-      size: 217088
+      md5: 733a4cde935d29efa111c08a04b461c6
+      size: 196608
     outs:
     - path: attack.db
-      hash: md5
-      md5: dcb34e1932e7b4b7b50dff50ccc582b5
+      md5: b2dccd713e52e96b9c14c1577427d254
       size: 110592
   find_best_attack:
     cmd: python -m deckard.layers.find_best attack.yaml
     deps:
     - path: attack.db
-      hash: md5
-      md5: dcb34e1932e7b4b7b50dff50ccc582b5
+      md5: b2dccd713e52e96b9c14c1577427d254
       size: 110592
     outs:
     - path: conf/attack/best.yaml
-      hash: md5
-      md5: e9964377a012776ffccaba4b3e5028fc
-      size: 2053
+      md5: e5ce5da0238f760f0b3c2b080426c8af
+      size: 2051
+  find_best_model:
+    cmd: python -m deckard.layers.find_best model.yaml
+    deps:
+    - path: model.db
+      md5: 733a4cde935d29efa111c08a04b461c6
+      size: 196608
+    outs:
+    - path: conf/model/best.yaml
+      md5: 91f75c74812095e67b31619e7b1c5542
+      size: 672

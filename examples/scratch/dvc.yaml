@@ -1,0 +1,61 @@
+# vars:
+#   - conf/default.yaml:hydra
+stages:
+  train:
+    cmd : python -m deckard.layers.experiment train
+    params:
+      - data
+      - model
+      - scorers
+      - files
+    outs:
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file}
+    metrics:
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    params:
+      - data
+      - model
+      - attack
+      - scorers
+      - files
+    outs:
+      - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
+    deps:
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    metrics:
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+  evaluate:
+    cmd: python compute_attack_success.py ${evaluate}
+    deps:
+      - ${evaluate.input_score_file}
+      - ${evaluate.labels_file}
+      - ${evaluate.ben_predictions_file}
+      - ${evaluate.adv_predictions_file}
+    metrics:
+      - ${evaluate.output_score_file}
+    params:
+      - evaluate
+  optimise:
+    cmd: python -m deckard.layers.optimise +stage=train --multirun
+    deps:
+      - ${evaluate.output_score_file}
+    outs:
+      - model.db
+    params:
+      - conf/default.yaml:
+        - hydra
+  find_best_learning_rate:
+    cmd: python -m deckard.layers.find_best default.yaml
+    deps:
+      - model.db

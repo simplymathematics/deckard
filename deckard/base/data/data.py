@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from pandas import DataFrame, read_csv, read_excel
+from pandas import DataFrame, read_csv, read_excel, Series
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -85,26 +85,29 @@ class Data:
         """Get the hash of the data object."""
         return int(my_hash(self), 16)
 
-    def initialize(self):
+    def initialize(self, filename=None):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
         :return: X_train, X_test, y_train, y_test
         """
-        if self.generate is not None:
-            result = self.generate()
-            if len(result) == 2:
-                result = self.sample(*result)
-            else:
-                assert len(result) == 4, f"Data is not generated: {self.name}"
+        if filename is not None and Path(filename).exists():
+            result = self.load(filename)
         else:
-            result = self.load(self.name)
-            if len(result) == 1:
-                assert self.target is not None, "Target is not specified"
-                y = result[self.target]
-                X = result.drop(self.target, axis=1)
-                result = self.sample(X, y)
-            if len(result) == 2:
-                result = self.sample(*result)
-            assert len(result) == 4
+            if self.generate is not None:
+                result = self.generate()
+                if len(result) == 2:
+                    result = self.sample(*result)
+                else:
+                    assert len(result) == 4, f"Data is not generated: {self.name}"
+            else:
+                result = self.load(self.name)
+                if len(result) == 1:
+                    assert self.target is not None, "Target is not specified"
+                    y = result[self.target]
+                    X = result.drop(self.target, axis=1)
+                    result = self.sample(X, y)
+                if len(result) == 2:
+                    result = self.sample(*result)
+                assert len(result) == 4
         return result
 
     def load(self, filename) -> DataFrame:
@@ -118,8 +121,7 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename)
-            data = data.to_numpy()
+            data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
@@ -141,6 +143,8 @@ class Data:
             if suffix in [".json"]:
                 if isinstance(data, DataFrame):
                     data = data.to_dict(orient="records")
+                elif isinstance(data, Series):
+                    data = data.to_dict()
                 elif isinstance(data, np.ndarray):
                     data = data.tolist()
                 with open(filename, "w") as f:
@@ -171,7 +175,7 @@ class Data:
             data = self.load(data_file)
             assert len(data) == 4, f"Some data is missing: {self.name}"
         else:
-            data = self.initialize()
+            data = self.initialize(filename=data_file)
             assert len(data) == 4, f"Some data is missing: {self.name}"
             data_file = self.save(data, data_file)
         result_dict["data"] = data

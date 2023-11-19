@@ -6,14 +6,13 @@ import yaml
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 import hydra
-from string import Template
 from ..base.utils import my_hash, unflatten_dict
 from ..base.experiment import Experiment
 from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
+__all__ = ["write_stage", "parse_stage", "get_files"]
 
 
 def get_files(
@@ -224,7 +223,13 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     return params
 
 
-def write_stage(params: dict, stage: str, id_:str, path=None, working_dir=None) -> None:
+def write_stage(
+    params: dict,
+    stage: str,
+    id_: str,
+    path=None,
+    working_dir=None,
+) -> None:
     """
     Write params to dvc.yaml
     :param params: Params to write to dvc.yaml
@@ -253,7 +258,7 @@ def write_stage(params: dict, stage: str, id_:str, path=None, working_dir=None) 
 
 
 def prepare_experiment_folder(cfg: DictConfig) -> None:
-    cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
+    cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     scorer = cfg.pop("optimizers", None)
     working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
     stage = cfg.pop("stage", None)
@@ -266,8 +271,7 @@ def prepare_experiment_folder(cfg: DictConfig) -> None:
     id_ = Path(files["score_dict_file"]).parent.name
     write_stage(cfg, stage, path=folder, working_dir=working_dir, id_=id_)
     return exp, scorer, direction, folder, id_
-    
-    
+
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
@@ -283,8 +287,13 @@ if __name__ == "__main__":
         assert isinstance(exp, Experiment), f"Expected Experiment, got {type(exp)}."
         assert isinstance(scorer, (str, list)), f"Expected list, got {type(scorer)}."
         assert isinstance(direction, str), f"Expected str, got {type(direction)}."
-        assert direction in ['minimize', 'maximize'], f"Expected 'minimize' or 'maximize', got {direction}."
-        assert Path(folder).exists(), f"Folder {folder} does not exist for experiment {id_}."
+        assert direction in [
+            "minimize",
+            "maximize",
+        ], f"Expected 'minimize' or 'maximize', got {direction}."
+        assert Path(
+            folder,
+        ).exists(), f"Folder {folder} does not exist for experiment {id_}."
         return 0
 
     hydra_prepare()

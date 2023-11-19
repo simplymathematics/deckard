@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
 from copy import deepcopy
+from omegaconf import DictConfig
 import numpy as np
 import pandas as pd
 import yaml
@@ -69,7 +70,7 @@ class FileConfig:
         self.directory = directory
         self.name = name
         self.stage = stage
-        self.files = self._set_filenames(**files)
+        self.files = files
         logger.debug(f"FileConfig init: {self.files}")
 
     def __call__(self):
@@ -78,11 +79,14 @@ class FileConfig:
 
     def get_filenames(self):
         files = deepcopy(self.files)
+        files = self._set_filenames(**files)
         return files
 
     def _set_filenames(self, **kwargs):
         name = kwargs.pop("name", self.name)
         stage = kwargs.pop("stage", self.stage)
+        if isinstance(stage, DictConfig):
+            stage = list(stage.keys())[0]
         if hasattr(self, "files"):
             kwargs.update(self.files)
         files = dict(kwargs)
@@ -270,12 +274,6 @@ class FileConfig:
                 pass
             elif isinstance(contents, dict):
                 contents = to_dict(contents)
-            # elif isinstance(contents, (torch.Tensor, torch.nn.Module)):
-            #     raise NotImplementedError(f"Saving {type(contents)} to json is not supported.")
-            # elif isinstance(contents, (tf.keras.Model, tf.keras.layers.Layer)):
-            #     raise NotImplementedError(f"Saving {type(contents)} to json is not supported.")
-            # elif isinstance(contents, (tf.Tensor, tf.Variable)):
-            #     raise NotImplementedError(f"Saving {type(contents)} to json is not supported.")
             else:
                 raise ValueError(
                     f"Contents of type {type(contents)} cannot be saved to json.",

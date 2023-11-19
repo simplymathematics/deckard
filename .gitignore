@@ -116,16 +116,29 @@ ipython_config.py
 # env
 env/
 examples/*/multirun/*
-
+# examples/*/output/.hydra/config.yaml
+# examples/*/*/reports/*/*/dvc.yaml
+# examples/*/*/reports/*/*/params.yaml
+# examples/*/*/plots/
 
 *.hydra
 
 # Example output
-examples/*/output/*
-# !examples/*/outputs/**/dvc.yaml
-# !examples/*/outputs/**/params.yaml
+examples/*/*/data
+examples/*/*/models
+examples/*/*/attacks
+examples/*/*/reports
 
 # Python egg metadata
 **/*.egg-info/*
 **/*.egg-info
 deckard/deckard.egg-info/*
+
+# Compressed Data Files
+*.tar.gz
+
+
+# Example output files
+examples/**/params.yaml
+examples/**/multirun/*
+*log.txt

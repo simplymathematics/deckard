@@ -8,7 +8,7 @@ from art.estimators.classification import (
 )
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
-
+from ..utils import factory
 logger = logging.getLogger(__name__)
 
 
@@ -78,7 +78,7 @@ class TensorflowV2Initializer:
         loss = kwargs.pop("loss", "categorical_crossentropy")
         optimizer = kwargs.pop("optimizer", "adam")
         if isinstance(optimizer, DictConfig):
-            optimizer = OmegaConf.to_container(optimizer)
+            optimizer = OmegaConf.to_container(optimizer, resolve=True)
         if isinstance(optimizer, dict):
             name = optimizer.pop("name")
             params = {**optimizer}
@@ -91,7 +91,7 @@ class TensorflowV2Initializer:
             )
         optimizer = tf.keras.optimizers.get(name, **params)
         if isinstance(loss, DictConfig):
-            loss = OmegaConf.to_container(loss)
+            loss = OmegaConf.to_container(loss, resolve=True)
         if isinstance(loss, dict):
             name = loss.pop("name")
             params = {**loss}
@@ -123,12 +123,16 @@ class TensorflowV2Initializer:
         if "input_shape" not in kwargs:
             input_shape = data[0][0].shape
             kwargs.update({"input_shape": input_shape})
-        if library in tensorflow_dict:
+        if "train_step" not in kwargs:
+            raise "train_step must be specified in kwargs"
+        else:
+            train_step = kwargs.pop("train_step")
+            train_step = factory(name=train_step.pop("name"), **train_step)
+        if library in tensorflow_dict and not isinstance(model, tuple(tensorflow_dict.values())):
             est = tensorflow_dict[library]
-            if "library" in kwargs:
-                kwargs.pop("library")
-            assert hasattr(model, "train_step")
-            model = est(model, **kwargs, train_step=model.train_step)
+            model = est(model, **kwargs, train_step=train_step)
+        elif isinstance(model, tuple(tensorflow_dict.values())):
+            pass
         else:
             raise ValueError(
                 f"library must be one of {tensorflow_models}. Got {library}",

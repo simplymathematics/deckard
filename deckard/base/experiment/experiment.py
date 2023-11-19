@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-import yaml
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
@@ -14,7 +13,6 @@ from ..data import Data
 from ..files import FileConfig
 from ..model import Model
 from ..scorer import ScorerDict
-from ..utils import to_dict
 from ..utils.hashing import my_hash
 
 __all__ = ["Experiment"]
@@ -48,7 +46,7 @@ class Experiment:
         if isinstance(data, dict):
             self.data = Data(**data)
         elif isinstance(data, DictConfig):
-            data_dict = OmegaConf.to_container(data)
+            data_dict = OmegaConf.to_container(data, resolve=True)
             data_dict.update({"_target_": "deckard.base.data.Data"})
             self.data = instantiate(data_dict)
         elif isinstance(data, Data):
@@ -61,7 +59,7 @@ class Experiment:
         if isinstance(model, dict):
             self.model = Model(**model)
         elif isinstance(model, DictConfig):
-            model_dict = OmegaConf.to_container(model)
+            model_dict = OmegaConf.to_container(model, resolve=True)
             self.model = Model(**model_dict)
         elif isinstance(model, Model):
             self.model = model
@@ -73,7 +71,7 @@ class Experiment:
         if isinstance(scorers, dict):
             self.scorers = ScorerDict(**scorers)
         elif isinstance(scorers, DictConfig):
-            scorer_dict = OmegaConf.to_container(scorers)
+            scorer_dict = OmegaConf.to_container(scorers, resolve=True)
             self.scorers = ScorerDict(**scorer_dict)
         elif isinstance(scorers, ScorerDict):
             self.scorers = scorers
@@ -85,7 +83,7 @@ class Experiment:
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
-            file_dict = OmegaConf.to_container(files)
+            file_dict = OmegaConf.to_container(files, resolve=True)
             self.files = FileConfig(**file_dict)
         elif isinstance(files, FileConfig):
             self.files = files
@@ -97,7 +95,7 @@ class Experiment:
         elif isinstance(attack, dict):
             self.attack = Attack(**attack)
         elif isinstance(attack, DictConfig):
-            attack_dict = OmegaConf.to_container(attack)
+            attack_dict = OmegaConf.to_container(attack, resolve=True)
             self.attack = Attack(**attack_dict)
         elif isinstance(attack, Attack):
             self.attack = attack
@@ -126,9 +124,7 @@ class Experiment:
         old_hash = my_hash(self)
         # Setup files, data, and model
         files = deepcopy(self.files).get_filenames()
-        # Save params file
-        if "params_file" in files and files["params_file"] is not None:
-            self.save_params_file()
+
         # Check status of files
         assert (
             "score_dict_file" in files
@@ -143,6 +139,8 @@ class Experiment:
         results = {}
         results["score_dict_file"] = score_dict
         #########################################################################
+        # Load or generate data
+        #########################################################################
         data_files = {
             "data_file": files.get("data_file", None),
             "train_labels_file": files.get("train_labels_file", None),
@@ -151,6 +149,8 @@ class Experiment:
             # TODO data_score_file
         }
         data = self.data(**data_files)
+        #########################################################################
+        # Load or train model
         #########################################################################
         if self.model is not None:
             model_files = {
@@ -190,6 +190,8 @@ class Experiment:
         else:
             preds = data[2]
         ##########################################################################
+        # Load or run attack
+        ##########################################################################
         if self.attack is not None:
             adv_results = self.attack(
                 data,
@@ -217,7 +219,12 @@ class Experiment:
             if "time_dict" in adv_results:
                 adv_time_dict = adv_results["time_dict"]
                 score_dict.update(**adv_time_dict)
-        # #########################################################################
+            if "adv_success" in adv_results:
+                adv_success = adv_results["adv_success"]
+                score_dict.update({"adv_success": adv_success})
+        ##########################################################################
+        # Score results
+        #########################################################################
         if self.scorers is not None:
             if "probs" in locals() and "preds" not in locals():
                 preds = probs
@@ -263,6 +270,7 @@ class Experiment:
             raise ValueError("Scorer is None. Please specify a scorer.")
         #########################################################################
         # Returns score if scorer is not None, otherwise returns status
+        #########################################################################
         if self.optimizers is not None and self.optimizers != []:
             if not isinstance(self.optimizers, list):
                 self.optimizers = [self.optimizers]
@@ -303,11 +311,3 @@ class Experiment:
 
     def get_name(self):
         return self.name
-
-    def save_params_file(self):
-        files = self.files.get_filenames()
-        params_file = files["params_file"]
-        Path(params_file).parent.mkdir(parents=True, exist_ok=True)
-        params = to_dict(self)
-        with open(params_file, "w") as f:
-            yaml.dump(params, f)
