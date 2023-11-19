@@ -21,7 +21,6 @@ for train_size in ${TRAIN_SIZES[@]}; do
             ++model.init.kernel=linear \
             model.init.C=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
             ++hydra.sweeper.study_name=linear_${n_features}_${train_size} "$@" --multirun \
-            # Keeps a log of the output for each experiment
             >| logs/models/linear_features-${n_features}_samples-${n_samples}_train-${train_size}.log
             echo "Linear Kernel Done" >> log.txt
             # Runs the poly kernel
