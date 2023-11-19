@@ -27,17 +27,18 @@ def get_dvc_stage_params(
     directory=".",
     name=None,
 ):
+    
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
     )
-    params = dvc.api.params_show(params_file, stages=stage, repo=directory)
-    if "_target_" not in params:
-        params.update({"_target_": "deckard.base.experiment.Experiment"})
+    params = dvc.api.params_show(stages=stage)
+    params.update({"_target_": "deckard.base.experiment.Experiment"})
     files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
     unflattened_files = unflatten_dict(files)
     params["files"] = dict(unflattened_files.get("files", unflattened_files))
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
     params["files"]["stage"] = stage
+    params['stage']=stage
     if name is not None:
         params["files"]["name"] = name
     return params
@@ -61,12 +62,10 @@ def run_stage(
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
-    new_params_file = files.pop("score_dict_file", None)
-    if new_params_file is not None:
-        new_params_file = Path(new_params_file).with_name(params_file).as_posix()
-        Path(new_params_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(new_params_file, "w") as f:
-            yaml.dump(params, f)
+    params_file = Path(files['score_dict_file']).with_name("params.yaml").as_posix()
+    Path(params_file).parent.mkdir(exist_ok=True, parents=True)
+    with Path(params_file).open("w") as f:
+        yaml.dump(params, f)
     score = exp()
     return id_, score
 
@@ -118,12 +117,12 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--config_file", type=str, default="default")
     dvc_parser.add_argument("--workdir", type=str, default=".")
     args = dvc_parser.parse_args()
-    config_dir = Path(Path(), args.config_dir).resolve().as_posix()
-    save_params_file(
-        config_dir=config_dir,
-        config_file=args.config_file,
-        params_file=args.params_file,
-    )
+    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
+    # save_params_file(
+    #     config_dir=config_dir,
+    #     config_file=args.config_file,
+    #     params_file=args.params_file,
+    # )
     logging.basicConfig(
         level=args.verbosity,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

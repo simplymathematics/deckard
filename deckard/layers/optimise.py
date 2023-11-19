@@ -91,7 +91,7 @@ def merge_params(default, params) -> dict:
         ):
             default.update({key: value})
         elif value is None:
-            continue
+            default.update({key : {}})
         else:
             logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
@@ -153,13 +153,37 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         assert isinstance(stage, list), f"args.stage is of type {type(stage)}"
         stages = stage
-    if params is None:
-        with open(Path(path, "params.yaml"), "r") as f:
-            default_params = yaml.load(f, Loader=yaml.FullLoader)
-        default_params = OmegaConf.to_container(
-            OmegaConf.create(default_params),
-            resolve=True,
-        )
+    # if params is None:
+    #     with open(Path(path, "params.yaml"), "r") as f:
+    #         default_params = yaml.load(f, Loader=yaml.FullLoader)
+    #     key_list = []
+    #     for stage in stages:
+    #         with open(Path(path, "dvc.yaml"), "r") as f:
+    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
+    #                 "params"
+    #             ]
+    #         key_list.extend(new_keys)
+    #     params = read_subset_of_params(key_list, params)
+    #     params = merge_params(default_params, params)
+    # elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
+    #     with open(Path(params), "r") as f:
+    #         params = yaml.load(f, Loader=yaml.FullLoader)
+    #     assert isinstance(
+    #         params,
+    #         dict,
+    #     ), f"Params in file {params} must be a dict. It is a {type(params)}."
+    #     key_list = []
+    #     for stage in stages:
+    #         with open(Path(path, "dvc.yaml"), "r") as f:
+    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
+    #                 "params"
+    #             ]
+    #         key_list.extend(new_keys)
+    #     with open(Path(path, "params.yaml"), "r") as f:
+    #         all_params = yaml.load(f, Loader=yaml.FullLoader)
+    #     default_params = read_subset_of_params(key_list, all_params)
+    #     params = merge_params(default_params, params)
+    if isinstance(params, dict):
         key_list = []
         for stage in stages:
             with open(Path(path, "dvc.yaml"), "r") as f:
@@ -167,67 +191,33 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
                     "params"
                 ]
             key_list.extend(new_keys)
-        params = read_subset_of_params(key_list, params)
-        params = merge_params(default_params, params)
-    elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
-        with open(Path(params), "r") as f:
-            params = yaml.load(f, Loader=yaml.FullLoader)
-        params = OmegaConf.to_container(
-            OmegaConf.create(params),
-            resolve=True,
-        )
-        assert isinstance(
-            params,
-            dict,
-        ), f"Params in file {params} must be a dict. It is a {type(params)}."
-        key_list = []
-        for stage in stages:
-            with open(Path(path, "dvc.yaml"), "r") as f:
-                new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-                    "params"
-                ]
-            key_list.extend(new_keys)
-        with open(Path(path, "params.yaml"), "r") as f:
-            all_params = yaml.load(f, Loader=yaml.FullLoader)
-        default_params = read_subset_of_params(key_list, all_params)
-        params = merge_params(default_params, params)
-    elif isinstance(params, dict):
-        key_list = []
-        for stage in stages:
-            with open(Path(path, "dvc.yaml"), "r") as f:
-                new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-                    "params"
-                ]
-            key_list.extend(new_keys)
-        with open(Path(path, "params.yaml"), "r") as f:
-            all_params = yaml.load(f, Loader=yaml.FullLoader)
-        default_params = read_subset_of_params(key_list, all_params)
-        params = merge_params(default_params, params)
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
-    assert isinstance(
-        params,
-        dict,
-    ), f"Params must be a dict. It is type {type(params)}."
+    params = read_subset_of_params(key_list, params)
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
-        key_list = []
+        file_list = []
         for stage in stages:
             pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
             if "deps" in pipe:
-                key_list.extend(pipe["deps"])
+                dep_list =[x.split(":")[0] for x in  pipe["deps"]]
+                file_list.extend(dep_list)
             if "outs" in pipe:
-                key_list.extend(pipe["outs"])
+                out_list = [x.split(":")[0] for x in pipe['outs']]
+                file_list.extend(out_list)
             if "metrics" in pipe:
-                key_list.extend(pipe["metrics"])
-    with open(Path(path, "params.yaml"), "r") as f:
-        all_params = yaml.load(f, Loader=yaml.FullLoader)
-    files = {}
-    for filename, file in all_params["files"].items():
-        if filename in str(key_list):
-            files[filename] = file
-    files["_target_"] = "deckard.base.files.FileConfig"
-    params = get_files(params, stage=stages[-1])
+                metric_list = [x.split(":")[0] for x in pipe['metrics']]
+                file_list.extend(metric_list)
+    file_string = str(file_list)
+    files = params['files']
+    file_list = list(files.keys())
+    for key in file_list:
+        template_string = "${files."+ key + "}"
+        if template_string in file_string:
+            pass
+        else:
+            params['files'].pop(key)
+    params = get_files(params, stage)
     return params
 
 

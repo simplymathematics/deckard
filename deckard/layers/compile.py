@@ -50,7 +50,11 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             results[folder] = {}
         if suffix == ".json":
             with open(file, "r") as f:
-                dict_ = json.load(f)
+                try:
+                    dict_ = json.load(f)
+                except json.decoder.JSONDecodeError as e:
+                   raise e
+                    
         elif suffix == ".yaml":
             with open(file, "r") as f:
                 dict_ = yaml.safe_load(f)
@@ -185,6 +189,7 @@ def clean_data_for_plotting(
     def_gen_dict,
     atk_gen_dict,
     control_dict,
+    file,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -197,15 +202,16 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
-    if "model.init.name" in data.columns:
-        data["model_name"] = data["model.init.name"].str.split(".").str[-1]
+    # Removes the path and to the model object and leaves the name of the model
+    data["model_name"] = data["model.init.name"].str.split(".").str[-1]
+    if data["model.init.name"].str.contains("Net").any():
         data["model_layers"] = data["model_name"].str.split("Net").str[-1]
-    # Rename columns that end in '.1' by removing the '.1'
-    data.columns.rename(lambda x: x[:-2] if x.endswith(".1") else x, inplace=True)
+    data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict)
-    data.columns = data.columns.str.replace(" ", "")
+    logger.info(f"Saving data to {file}")
+    data.to_csv( file)
     return data
 
 
@@ -263,6 +269,7 @@ if __name__ == "__main__":
         def_gen_dict,
         atk_gen_dict,
         control_dict,
+        results_file,
     )
     report_file = save_results(results, results_file)
     assert Path(

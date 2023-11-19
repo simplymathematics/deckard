@@ -126,9 +126,7 @@ class Experiment:
         old_hash = my_hash(self)
         # Setup files, data, and model
         files = deepcopy(self.files).get_filenames()
-        # Save params file
-        if "params_file" in files and files["params_file"] is not None:
-            self.save_params_file()
+
         # Check status of files
         assert (
             "score_dict_file" in files
@@ -307,10 +305,3 @@ class Experiment:
     def get_name(self):
         return self.name
 
-    def save_params_file(self):
-        files = self.files.get_filenames()
-        params_file = files["params_file"]
-        Path(params_file).parent.mkdir(parents=True, exist_ok=True)
-        params = to_dict(self)
-        with open(params_file, "w") as f:
-            yaml.dump(params, f)

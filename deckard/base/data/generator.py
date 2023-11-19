@@ -1,4 +1,9 @@
 import logging
+
+from typing import Literal
+from dataclasses import dataclass, field
+from pathlib import Path
+import numpy as np
 from sklearn.datasets import (
     make_classification,
     make_regression,
@@ -7,11 +12,8 @@ from sklearn.datasets import (
     make_circles,
     make_biclusters,
 )
-from typing import Literal
-from dataclasses import dataclass, field
+from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
 from ..utils import my_hash
-import numpy as np
-from art.utils import load_mnist, load_cifar10, load_diabetes
 
 __all__ = [
     "SklearnDataGenerator",
@@ -71,12 +73,12 @@ class SklearnDataGenerator:
         return int(my_hash(self), 16)
 
 
-TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes"]
+TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100"]
 
 
 @dataclass
 class TorchDataGenerator:
-    name: Literal["torch_mnist", "torch_cifar10", "torch_diabetes"] = "torch_mnist"
+    name: Literal["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100"] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)
 
@@ -107,6 +109,36 @@ class TorchDataGenerator:
             (X_train, y_train), (X_test, y_test), _, _ = load_diabetes()
             X = np.concatenate((X_train, X_test))
             y = np.concatenate((y_train, y_test))
+        elif self.name == "torch_cifar100":
+            try:
+                from torchvision.datasets import CIFAR100
+                from torchvision import transforms
+            except:
+                raise ImportError("Please install torchvision to use CIFAR100")
+            if self.path is None:
+                raise ValueError(f"path attribute must be specified for dataset: {self.name}.")
+            original_filename = Path(self.path, self.name, f"{self.name}.npz")
+            Path(original_filename.parent).mkdir(parents=True, exist_ok=True)
+            if not original_filename.exists():
+                train_set = CIFAR100(Path(self.path, self.name), train=True, download=True, transform=transforms.ToTensor())
+                test_set =  CIFAR100(Path(self.path, self.name), train=False, download=True, transform=transforms.ToTensor())
+                # lambda function to turn each image, label into an np.array
+                X_ = lambda x: np.array(x[0])
+                y_ = lambda x: np.array(x[1])
+                X_train = np.array(list(map(X_, train_set)))
+                y_train = np.array(list(map(y_, train_set)))
+                X_test = np.array(list(map(X_, test_set)))
+                y_test = np.array(list(map(y_, test_set)))
+                y_train = to_categorical(y_train, 100)
+                y_test = to_categorical(y_test, 100)
+                X = np.concatenate((X_train, X_test))
+                y = np.concatenate((y_train, y_test))
+                np.savez(file=original_filename.as_posix(), X=X, y=y)
+            else:
+                dict_ = np.load(original_filename.as_posix())
+                X = dict_["X"]
+                y = dict_["y"]
+                
         else:
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]

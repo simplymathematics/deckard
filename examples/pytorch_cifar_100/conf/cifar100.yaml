@@ -1,0 +1,44 @@
+defaults:
+    - _self_
+    - data: torch_cifar100
+    - model: torch_cifar100
+    - attack: default
+    - files: cifar100
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : grid
+    - override hydra/launcher : joblib
+stage : '???'
+direction : "maximize"
+_target_ : deckard.base.experiment.Experiment
+optimizers : accuracy
+hydra:
+  run:
+    dir: ${files.directory}/${files.reports}/${stage}/logs
+  sweep:
+    dir: ${files.directory}/${stage}/${model.init.name}
+    subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.GridSampler
+    direction: ${direction}
+    study_name: control
+    storage: sqlite:///model.db
+    n_jobs: ${hydra.launcher.n_jobs}
+    n_trials : 32
+    params:
+      ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+      ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
+      ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 8
+    prefer : processes
+    verbose: 10
+    timeout: null
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r

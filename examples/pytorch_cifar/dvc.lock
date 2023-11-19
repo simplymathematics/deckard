@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train
+    cmd: python -m deckard.layers.experiment train --config_file cifar10.yaml
     params:
       params.yaml:
         data:
@@ -25,7 +25,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: cifar
           model_dir: models
           model_file: model
           model_type: .pt
@@ -53,7 +53,7 @@ stages:
             initialize:
               clip_values:
               - 0.0
-              - 1.0
+              - 255.0
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -81,7 +81,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -93,32 +93,34 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/data/data.pkl
+    - path: cifar/data/data.pkl
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
-    - path: output/models/model.optimizer.pt
-      md5: f5b6422f339473318808616c7fb926c4
+    - path: cifar/models/model.optimizer.pt
+      hash: md5
+      md5: 09f978b389dbce742b1a8731b81913b0
       size: 44805933
-    - path: output/models/model.pt
-      md5: c7a6c14dc3dc96868cb9f3b93d7d31ba
+    - path: cifar/models/model.pt
+      hash: md5
+      md5: 7b6a070a946d4f5fcc79ac17de88296e
       size: 44811029
-    - path: output/reports/train/default/params.yaml
-      md5: 320abf8eddbae67cd6873f8d1e3bba81
-      size: 2174
-    - path: output/reports/train/default/predictions.json
-      md5: ed5c6a014bf8fc8ee4aadacc3c5cb07c
-      size: 2437716
-    - path: output/reports/train/default/score_dict.json
-      md5: 368af71ad6cf7bf06b64ffeb109a2da9
-      size: 412
+    - path: cifar/reports/train/default/predictions.json
+      hash: md5
+      md5: c0a3cdf07b36af7ef9084ab0e2030fcc
+      size: 2435001
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 665f7680184855a05db884355132024c
+      size: 397
   attack:
-    cmd: python -m deckard.layers.experiment attack
+    cmd: python -m deckard.layers.experiment attack --config_file cifar10.yaml
     deps:
-    - path: output/data/data.pkl
+    - path: cifar/data/data.pkl
       md5: 6503fed5d4e6cc1163898c0ab6a863dd
       size: 739680311
-    - path: output/models/model.pt
-      md5: c7a6c14dc3dc96868cb9f3b93d7d31ba
+    - path: cifar/models/model.pt
+      hash: md5
+      md5: 7b6a070a946d4f5fcc79ac17de88296e
       size: 44811029
     params:
       params.yaml:
@@ -158,7 +160,7 @@ stages:
                 initialize:
                   clip_values:
                   - 0.0
-                  - 1.0
+                  - 255.0
                   criterion:
                     name: torch.nn.CrossEntropyLoss
                   optimizer:
@@ -186,7 +188,7 @@ stages:
               library: pytorch
               trainer:
                 batch_size: 1024
-                nb_epoch: 20
+                nb_epoch: 100
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -208,7 +210,7 @@ stages:
               initialize:
                 clip_values:
                 - 0.0
-                - 1.0
+                - 255.0
                 criterion:
                   name: torch.nn.CrossEntropyLoss
                 optimizer:
@@ -236,7 +238,7 @@ stages:
             library: pytorch
             trainer:
               batch_size: 1024
-              nb_epoch: 20
+              nb_epoch: 100
         data:
           _target_: deckard.base.data.Data
           generate:
@@ -258,7 +260,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: cifar
           model_dir: models
           model_file: model
           model_type: .pt
@@ -286,7 +288,7 @@ stages:
             initialize:
               clip_values:
               - 0.0
-              - 1.0
+              - 255.0
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -314,7 +316,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -326,87 +328,84 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/attacks/attack.pkl
-      md5: e57b871f32a1a8b7de497f6e5de4ebf1
+    - path: cifar/attacks/attack.pkl
+      hash: md5
+      md5: 7af56fed692b7c502bf7431adc68a3d0
       size: 123046
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 0a097842037186d905fb2fd7ec4072d9
-      size: 2125
-    - path: output/reports/attack/default/params.yaml
-      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
-      size: 5175
-    - path: output/reports/attack/default/score_dict.json
-      md5: f5cc403e9e3fafd09cd985d86b3c80a5
-      size: 549
+    - path: cifar/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: 7860bb5575e86ce8df3240e01abc930d
+      size: 2099
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
-      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet18.db --config-name default.yaml
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet18.db
+      --config-name cifar10.yaml
     deps:
     - path: attacks.sh
-      md5: 6b79f7071f855be0ea09ad5602215c35
-      size: 2746
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
     - path: models.sh
-      md5: 9386478ad9795b80ec8ebc4abf1dbc81
-      size: 1221
-    - path: output/attacks/attack.pkl
-      md5: 8d7c09d7bf7c7d759648942a99880c3f
-      size: 123046
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: fb5dee98575e0d67e0ab051cc0182ecf
-      size: 2145
-    - path: output/reports/attack/default/params.yaml
-      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
-      size: 5175
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
     outs:
-    - path: ResNet18.db
-      md5: 5de89603f1f440df03669e79e0a7b414
-      size: 360448
+    - path: cifar/reports/attack/ResNet18.db
+      hash: md5
+      md5: cb2a1edd44e08358b52d5ab5b6232aa5
+      size: 1212416
   attacks@ResNet34:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
-      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet34.db --config-name default.yaml
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet34.db
+      --config-name cifar10.yaml
     deps:
     - path: attacks.sh
-      md5: 18b363f1e2d0622c372e07116bed4fd8
-      size: 2731
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
     - path: models.sh
-      md5: 9386478ad9795b80ec8ebc4abf1dbc81
-      size: 1221
-    - path: output/attacks/attack.pkl
-      md5: e57b871f32a1a8b7de497f6e5de4ebf1
-      size: 123046
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 0a097842037186d905fb2fd7ec4072d9
-      size: 2125
-    - path: output/reports/attack/default/params.yaml
-      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
-      size: 5175
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
     outs:
-    - path: ResNet34.db
-      md5: 946c9a1a88d7caaa6af3679a343cc770
-      size: 1290240
+    - path: cifar/reports/attack/ResNet34.db
+      hash: md5
+      md5: c19b84776f8a6f99705c5f6bbd2a28c6
+      size: 819200
   attacks@ResNet50:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
-      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet50.db --config-name default.yaml
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet50.db
+      --config-name cifar10.yaml
     deps:
     - path: attacks.sh
-      md5: 6dd27be960da7b3e34c0281143ca30ba
-      size: 2742
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
     - path: models.sh
-      md5: 9386478ad9795b80ec8ebc4abf1dbc81
-      size: 1221
-    - path: output/attacks/attack.pkl
-      md5: 6b7117801434d91c71e870a3922eea7e
-      size: 123046
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 39344f99a210e0ecbcaa16e54cec9d4b
-      size: 2147
-    - path: output/reports/attack/default/params.yaml
-      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
-      size: 5175
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
     outs:
-    - path: ResNet50.db
-      md5: 1e3b638560b7ee5e73c674d0e1eb0421
-      size: 446464
+    - path: cifar/reports/attack/ResNet50.db
+      hash: md5
+      md5: e44f2b22e7d876571148078c180842ea
+      size: 819200
   attacks@ResNet101:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
       ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet101.db --config-name

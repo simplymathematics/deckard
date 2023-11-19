@@ -8,6 +8,7 @@ from time import process_time_ns
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from art.utils import to_categorical, compute_success
+from random import randint
 from ..data import Data
 from ..model import Model
 from ..utils import my_hash
@@ -336,16 +337,25 @@ class PoisoningAttack:
                     if "expected scalar type Long" in str(e):
                         # if hasattr(y_train, "type"):
                         import torch
-
-                        device = torch.device(
-                            "cuda" if torch.cuda.is_available() else "cpu",
-                        )
+                        if torch.cuda.is_available():
+                            number_of_devices = torch.cuda.device_count()
+                            device_number = randint(0, number_of_devices - 1)
+                            device = f"cuda:{device_number}"
+                        else:
+                            device = torch.device("cpu")
+                        if hasattr(model, "to"):
+                            model.to(self.device)
+                        elif hasattr(model, "model") and hasattr(model.model, "to"):
+                            model.model.to(self.device)
+                        else:
+                            raise RuntimeError("Cannot move model to device.")
                         y_train = torch.tensor(y_train, device=device)
                         y_trigger = torch.tensor(y_trigger, device=device)
                         x_train = torch.tensor(x_train, device=device)
                         x_trigger = torch.tensor(x_trigger, device=device)
                         y_trigger = y_trigger.to(torch.long)
                         y_trigger = y_trigger.to(torch.long)
+                        atk = self.init(model=model, data=data, attack_size=self.attack_size)
                         start = process_time_ns()
                         samples, _ = atk.poison(
                             x_trigger=x_trigger,

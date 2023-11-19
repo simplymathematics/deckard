@@ -62,7 +62,7 @@ class SklearnModelPipelineStage:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, stage_name, **kwargs):
-        logger.info(
+        logger.debug(
             f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
         )
         self.name = name
@@ -73,7 +73,7 @@ class SklearnModelPipelineStage:
         return int(my_hash(self), 16)
 
     def __call__(self, model):
-        logger.info(
+        logger.debug(
             f"Calling SklearnModelPipelineStage with name={self.name} and kwargs={self.kwargs}",
         )
         name = self.name
@@ -107,7 +107,7 @@ class SklearnModelPipeline:
     pipeline: Dict[str, SklearnModelPipelineStage] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
-        logger.info(f"Instantiating {self.__class__.__name__} with kwargs={kwargs}")
+        logger.debug(f"Instantiating {self.__class__.__name__} with kwargs={kwargs}")
         pipe = {}
         while "kwargs" in kwargs:
             pipe.update(**kwargs.pop("kwargs"))
@@ -232,7 +232,7 @@ class SklearnModelInitializer:
             self.pipeline = None
 
     def __call__(self):
-        logger.info(f"Initializing model {self.model} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.model} with kwargs {self.kwargs}")
         data = self.data
         model = self.model
         library = self.library
