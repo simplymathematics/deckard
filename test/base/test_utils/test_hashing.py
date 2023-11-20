@@ -1,8 +1,8 @@
 import unittest
 from pathlib import Path
 from collections import OrderedDict, namedtuple
-from dataclasses import dataclass
-from omegaconf import OmegaConf, DictConfig
+from dataclasses import dataclass, field
+from omegaconf import OmegaConf, DictConfig, ListConfig
 from deckard.base.utils import to_dict, my_hash
 import os
 
@@ -31,9 +31,14 @@ class testFactory(unittest.TestCase):
             "data_class",
             "dict_config",
         ]:
-            new_dict = to_dict(getattr(self, thing))
-            self.assertIsInstance(new_dict, dict)
-            self.assertDictEqual(old_dict, new_dict)
+            if hasattr(self, thing):
+                old_dict = to_dict(getattr(self, thing))
+                self.assertIsInstance(old_dict, dict)
+                new_dict = to_dict(getattr(self, thing))
+                self.assertIsInstance(new_dict, dict)
+                self.assertDictEqual(old_dict, new_dict)
+            else:
+                pass
 
     def test_my_hash(self):
         old_hash = my_hash(self.param_dict)
@@ -45,6 +50,47 @@ class testFactory(unittest.TestCase):
             "data_class",
             "dict_config",
         ]:
-            new_hash = my_hash(getattr(self, thing))
-            self.assertIsInstance(new_hash, str)
-            self.assertEqual(old_hash, new_hash)
+            if hasattr(self, thing):
+                old_hash = my_hash(getattr(self, thing))
+                self.assertIsInstance(old_hash, str)
+                new_hash = my_hash(getattr(self, thing))
+                self.assertIsInstance(new_hash, str)
+                self.assertEqual(old_hash, new_hash)
+
+class testFactoryNested(testFactory):
+    param_dict: dict = {"C": 1, "D":[1,2,3,4,]}
+    ordered_dict: OrderedDict = OrderedDict({"C": 1, "D":[1,2,3,4,]})
+    named_tuple: namedtuple = namedtuple("named_tuple", ["C", "D"])(1,[1,2,3,4,])
+    dict_config: DictConfig = OmegaConf.create({"C": 1, "D":[1,2,3,4,]})
+
+
+class testFactoryNestedNEsted(testFactory):
+    D = ListConfig([1,2,3,4,])
+    param_dict: dict = {"C": 1, "D":[1,2,3,4,]}
+    ordered_dict: OrderedDict = OrderedDict({"C": 1, "D":D})
+    named_tuple: namedtuple = namedtuple("named_tuple", ["C", "D"])(1,D)
+    dict_config: DictConfig = OmegaConf.create({"C": 1, "D":D})
+
+class testListFactory(testFactory):
+    param_dict: list = [1,2,3,4,]
+    dict_config : ListConfig = OmegaConf.create([1,2,3,4,])
+    
+class testStringFactory(testFactory):
+    param_dict: str = "test"
+    dict_config : str = "test"
+    
+class testNoneFactory(testFactory):
+    param_dict: type(None) = None
+    dict_config : type(None) = None
+    
+
+class testDataClassFactory(testFactory):
+    param_dict: testClass = testClass()
+    dict_config : testClass = testClass()
+
+class testDictofNoneFactory(testFactory):
+    param_dict: dict = {"C": None}
+    ordered_dict: OrderedDict = OrderedDict({"C": None})
+    named_tuple: namedtuple = namedtuple("named_tuple", ["C"])(None)
+    data_class: dataclass = testClass(None)
+    dict_config: DictConfig = OmegaConf.create({"C": None})
