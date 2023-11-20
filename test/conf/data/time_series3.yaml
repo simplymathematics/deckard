@@ -9,8 +9,8 @@ sample:
     # _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
     stratify: True
-    train_size : 100
-    test_size : 1000
+    train_size : .8
+    test_size : null
     time_series: True
 sklearn_pipeline:
     # _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline

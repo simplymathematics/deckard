@@ -28,7 +28,7 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def test_init(self):
         self.assertTrue(isinstance(self.model.init.pipeline, SklearnModelPipeline))
-
+        
     def test_call(self):
         _, model = self.model.initialize()
         self.assertTrue(hasattr(model, "steps"))

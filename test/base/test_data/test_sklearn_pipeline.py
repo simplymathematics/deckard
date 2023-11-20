@@ -65,6 +65,13 @@ class testSklearnDataPipeline(unittest.TestCase):
         hash_after_call = hash(new_data.sklearn_pipeline)
         self.assertEqual(old_hash, hash_after_call)
 
+    def test_len(self):
+        self.assertIsInstance(len(self.data.sklearn_pipeline), int)
+    
+    def test_getitem(self):
+        for stage in self.data.sklearn_pipeline:
+            self.assertIsInstance(self.data.sklearn_pipeline[stage], SklearnDataPipelineStage)
+    
     def tearDown(self) -> None:
         pass
 
