@@ -14,7 +14,7 @@ class testClass:
     C: int = 1
 
 
-class testFactory(unittest.TestCase):
+class testHashing(unittest.TestCase):
     param_dict: dict = {"C": 1}
     ordered_dict: OrderedDict = OrderedDict({"C": 1})
     named_tuple: namedtuple = namedtuple("named_tuple", ["C"])(1)
@@ -57,38 +57,38 @@ class testFactory(unittest.TestCase):
                 self.assertIsInstance(new_hash, str)
                 self.assertEqual(old_hash, new_hash)
 
-class testFactoryNested(testFactory):
+class testHashingNested(testHashing):
     param_dict: dict = {"C": 1, "D":[1,2,3,4,]}
     ordered_dict: OrderedDict = OrderedDict({"C": 1, "D":[1,2,3,4,]})
     named_tuple: namedtuple = namedtuple("named_tuple", ["C", "D"])(1,[1,2,3,4,])
     dict_config: DictConfig = OmegaConf.create({"C": 1, "D":[1,2,3,4,]})
 
 
-class testFactoryNestedNEsted(testFactory):
+class testHashingNestedNested(testHashing):
     D = ListConfig([1,2,3,4,])
     param_dict: dict = {"C": 1, "D":[1,2,3,4,]}
     ordered_dict: OrderedDict = OrderedDict({"C": 1, "D":D})
     named_tuple: namedtuple = namedtuple("named_tuple", ["C", "D"])(1,D)
     dict_config: DictConfig = OmegaConf.create({"C": 1, "D":D})
 
-class testListFactory(testFactory):
+class testListHashing(testHashing):
     param_dict: list = [1,2,3,4,]
     dict_config : ListConfig = OmegaConf.create([1,2,3,4,])
     
-class testStringFactory(testFactory):
+class testStringHashing(testHashing):
     param_dict: str = "test"
     dict_config : str = "test"
     
-class testNoneFactory(testFactory):
+class testNoneHashing(testHashing):
     param_dict: type(None) = None
     dict_config : type(None) = None
     
 
-class testDataClassFactory(testFactory):
+class testDataClassHashing(testHashing):
     param_dict: testClass = testClass()
     dict_config : testClass = testClass()
 
-class testDictofNoneFactory(testFactory):
+class testDictofNoneHashing(testHashing):
     param_dict: dict = {"C": None}
     ordered_dict: OrderedDict = OrderedDict({"C": None})
     named_tuple: namedtuple = namedtuple("named_tuple", ["C"])(None)
