@@ -56,7 +56,8 @@ def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> obj
     logger.debug("initialising {} with params {}".format(class_name, kwargs))
     try:
         obj = cls(*args, **kwargs)
-    except Exception as e: # pragma: no cover # noqa E722 
+    except Exception as e: # pragma: no cover # noqa E722
+        logger.warning(f"Failed to instantiate {cls} with args: ~{args}~ and kwargs ~{kwargs}~")
         raise e
     return obj
 
