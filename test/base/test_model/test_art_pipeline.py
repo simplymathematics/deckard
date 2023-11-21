@@ -6,7 +6,7 @@ import os
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 
-from deckard.base.model.art_pipeline import ArtPipeline, ArtPipelineStage
+from deckard.base.model.art_pipeline import ArtPipeline
 
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
@@ -28,6 +28,9 @@ class testArtPipeline(unittest.TestCase):
 
     def test_init(self):
         self.assertTrue(isinstance(self.model.art, ArtPipeline))
+
+    def test_len(self):
+        self.assertIsInstance(len(self.model.art), int)
 
     def test_call(self):
         data, model = self.model.initialize()

@@ -25,5 +25,9 @@ library : tensorflow
 art:
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
     library : tensorflow
-    initialize:
-        preprocessing :
+    preprocessor:
+        name : art.defences.preprocessor.GaussianAugmentation
+        sigma : 1
+    postprocessor: 
+        name : art.defences.postprocessor.GaussianNoise
+        scale : 1
