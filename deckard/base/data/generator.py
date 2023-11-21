@@ -10,7 +10,6 @@ from sklearn.datasets import (
     make_blobs,
     make_moons,
     make_circles,
-    make_biclusters,
 )
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
 from ..utils import my_hash
@@ -29,7 +28,6 @@ SKLEARN_DATASETS = [
     "blobs",
     "moons",
     "circles",
-    "biclusters",
 ]
 
 
@@ -63,9 +61,7 @@ class SklearnDataGenerator:
             X, y = make_moons(**self.kwargs)
         elif self.name in "circles":
             X, y = make_circles(**self.kwargs)
-        elif self.name in "biclusters":
-            X, y = make_biclusters(**self.kwargs)
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]
 
@@ -118,9 +114,9 @@ class TorchDataGenerator:
             try:
                 from torchvision.datasets import CIFAR100
                 from torchvision import transforms
-            except ImportError:
+            except ImportError: # pragma: no cover
                 raise ImportError("Please install torchvision to use CIFAR100")
-            if self.path is None:
+            if self.path is None: # pragma: no cover
                 raise ValueError(
                     f"path attribute must be specified for dataset: {self.name}.",
                 )
@@ -159,8 +155,7 @@ class TorchDataGenerator:
                 dict_ = np.load(original_filename.as_posix())
                 X = dict_["X"]
                 y = dict_["y"]
-
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]
 
@@ -196,7 +191,7 @@ class KerasDataGenerator:
             (X_train, y_train), (X_test, y_test), _, _ = load_diabetes()
             X = np.concatenate((X_train, X_test))
             y = np.concatenate((y_train, y_test))
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]
 
@@ -220,7 +215,7 @@ class DataGenerator:
             return TorchDataGenerator(self.name, **self.kwargs)()
         elif self.name in KERAS_DATASETS:
             return KerasDataGenerator(self.name, **self.kwargs)()
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Invalid name {self.name}. Please choose from ")
 
     def __hash__(self):

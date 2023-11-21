@@ -1,15 +1,15 @@
 _target_: deckard.base.data.Data
 generate:
     # _target_: deckard.base.data.generator.DataGenerator
-    name: classification
+    name: biclusters
     random_state : 0
-    n_samples : 101000
-    n_features : 20
+    shape : [1, 100]
+    n_clusters : 2
 sample:
     # _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
-    stratify: True
-    train_size : 100
+    stratify: False
+    train_size : .8
     test_size : 1000
 sklearn_pipeline:
     # _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
