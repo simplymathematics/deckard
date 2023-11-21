@@ -28,7 +28,7 @@ __all__ = ["TorchInitializer", "TorchCriterion", "TorchOptimizer"]
 
 @dataclass
 class TorchCriterion:
-    name: str
+    name: str 
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
@@ -88,19 +88,10 @@ class TorchInitializer:
         kwargs = deepcopy(self.kwargs)
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
-        import torch
-        if "optimizer" in kwargs:
-            optimizer = TorchOptimizer(**kwargs.pop("optimizer"))(model)
-            kwargs.update({"optimizer": optimizer})
-        else:
-            optimizer = torch.optim.Adam(model.parameters())
-            kwargs.update({"optimizer": optimizer})
-        if "criterion" in kwargs:
-            criterion = TorchCriterion(**kwargs.pop("criterion"))()
-            kwargs.update({"loss": criterion})
-        else:
-            criterion = torch.nn.CrossEntropyLoss()
-            kwargs.update({"loss": criterion})
+        optimizer = TorchOptimizer(**kwargs.pop("optimizer", {"name" : "torch.optim.Adam"} ))(model)
+        kwargs.update({"optimizer": optimizer})
+        criterion = TorchCriterion(**kwargs.pop("criterion", {"name" : "torch.nn.CrossEntropyLoss"}))()
+        kwargs.update({"loss": criterion})
         if "input_shape" not in kwargs:
             kwargs.update({"input_shape": data[0].shape[1:]})
         if "nb_classes" not in kwargs:
