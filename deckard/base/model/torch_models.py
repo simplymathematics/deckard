@@ -5,8 +5,8 @@ from typing import Union
 import pandas as pd
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
+from art.utils import to_categorical
 from hydra.utils import instantiate
-
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +96,9 @@ class TorchInitializer:
             kwargs.update({"input_shape": data[0].shape[1:]})
         if "nb_classes" not in kwargs:
             if len(data[2].shape) == 1: # pragma: no cover
-                kwargs.update({"nb_classes": pd.DataFrame(data[2]).nunique()})
-            else:
-                kwargs.update({"nb_classes": data[2].shape[1]})
+                data[2] = to_categorical(data[2])
+                data[3] = to_categorical(data[3])
+            kwargs.update({"nb_classes": data[2].shape[1]})
         if library in torch_dict and not isinstance(model, torch_dict[library]):
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)

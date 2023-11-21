@@ -133,7 +133,8 @@ class TensorflowV2Initializer:
             est = tensorflow_dict[library]
             model = est(model, **kwargs, train_step=train_step)
         elif isinstance(model, tuple(tensorflow_dict.values())):
-            pass
+            est = model.model
+            model = est(model, **kwargs, train_step=train_step)
         else:
             raise ValueError(
                 f"library must be one of {tensorflow_models}. Got {library}",

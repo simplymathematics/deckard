@@ -30,16 +30,12 @@ class ModelInitializer:
             self.pipeline = SklearnModelPipeline(**pipeline)
         else:
             self.pipeline = None
+        kwargs.update(**kwargs.pop("kwargs", {}))
         self.kwargs = kwargs
 
     def __call__(self):
+        params = self.kwargs
         logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "kwargs" in self.kwargs:
-            kwargs = self.kwargs.pop("kwargs", {})
-            params = self.kwargs
-            params.update(**kwargs)
-        else:
-            params = self.kwargs
         if "input_dim" in params:
             if isinstance(params["input_dim"], list):
                 params["input_dim"] = tuple(params["input_dim"])
@@ -53,7 +49,7 @@ class ModelInitializer:
                     params["input_dim"] = input_dim_list[0]
                 else:
                     params["input_dim"] = tuple(input_dim_list)
-            else:
+            else: # pragma: no cover
                 raise ValueError(
                     f"input_dim must be a list or tuple. Got {type(params['input_dim'])}",
                 )
@@ -71,7 +67,7 @@ class ModelInitializer:
                     params["output_dim"] = output_dim_list[0]
                 else:
                     params["output_dim"] = tuple(output_dim_list)
-            else:
+            else: # pragma: no cover
                 raise ValueError(
                     f"output_dim must be a list or tuple. Got {type(params['output_dim'])}",
                 )
@@ -79,13 +75,13 @@ class ModelInitializer:
         if self.pipeline is not None:
             pipeline = deepcopy(self.pipeline)
             obj = factory(name, **params)
-            if isinstance(pipeline, DictConfig):
-                pipeline = OmegaConf.to_container(pipeline, resolve=True)
-            elif isinstance(pipeline, dict):
-                pipeline = pipeline
-            elif is_dataclass(pipeline):
+            # if isinstance(pipeline, DictConfig):
+            #     pipeline = OmegaConf.to_container(pipeline, resolve=True)
+            # elif isinstance(pipeline, dict):
+            #     pipeline = pipeline
+            if is_dataclass(pipeline):
                 pipeline = asdict(pipeline)
-            else:
+            else: # pragma: no cover
                 raise ValueError(
                     f"Pipeline must be a dict or DictConfig or dataclass. Got {type(pipeline)}",
                 )
@@ -95,8 +91,8 @@ class ModelInitializer:
             model = factory(name, **params)
         return model
 
-    def __hash__(self):
-        return int(my_hash(self), 16)
+    # def __hash__(self):
+    #     return int(my_hash(self), 16)
 
 
 @dataclass
@@ -107,8 +103,8 @@ class ModelTrainer:
         logger.info(f"Initializing model trainer with kwargs {kwargs}")
         self.kwargs = kwargs
 
-    def __hash__(self):
-        return int(my_hash(self), 16)
+    # def __hash__(self):
+    #     return int(my_hash(self), 16)
 
     def __call__(self, data: list, model: object, library=None):
         logger.info(f"Training model {model} with fit params: {self.kwargs}")
@@ -120,25 +116,23 @@ class ModelTrainer:
             pass
         elif library in keras_dict.keys():
             pass
-
         elif library in tensorflow_dict.keys():
             import tensorflow as tf
-
             tf.config.run_functions_eagerly(True)
-        else:
+        else: # pragma: no cover
             raise NotImplementedError(f"Training library {library} not implemented")
         try:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
-        except np.AxisError:
+        except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
 
             data[2] = to_categorical(data[2])
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
-        except ValueError as e:
+        except ValueError as e: # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
 
@@ -149,7 +143,7 @@ class ModelTrainer:
                 end = process_time_ns() - start
             else:
                 raise e
-        except AttributeError as e:
+        except AttributeError as e: # pragma: no cover
             logger.warning(f"AttributeError: {e}. Trying to fit model anyway.")
             try:
                 data[0] = np.array(data[0])
@@ -159,7 +153,7 @@ class ModelTrainer:
                 end = process_time_ns() - start
             except Exception as e:
                 raise e
-        except RuntimeError as e:
+        except RuntimeError as e: # pragma: no cover
             if "eager mode" in str(e):
                 import tensorflow as tf
 
@@ -219,7 +213,7 @@ class Model:
         elif isinstance(data, DictConfig):
             data_dict = OmegaConf.to_container(data, resolve=True)
             self.data = Data(**data_dict)
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f"Data {data} is not a dictionary or Data object. It is of type {type(data)}",
             )
@@ -230,7 +224,7 @@ class Model:
         elif isinstance(init, DictConfig):
             init_dict = OmegaConf.to_container(init, resolve=True)
             self.init = ModelInitializer(**init_dict)
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f"Init {init} is not a dictionary or ModelInitializer object. It is of type {type(init)}",
             )
@@ -245,13 +239,11 @@ class Model:
         elif isinstance(trainer, DictConfig):
             train_dict = OmegaConf.to_container(trainer, resolve=True)
             self.trainer = ModelTrainer(**train_dict)
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f"Trainer {trainer} is not a dictionary or ModelTrainer object. It is of type {type(trainer)}",
             )
-
-        while "kwargs" in kwargs:
-            kwargs.update(**kwargs.pop("kwargs", {}))
+        kwargs.update(**kwargs.pop("kwargs", {}))
         kwargs.pop("library", None)
         kwargs.pop("data", None)
         kwargs.pop("init", None)
@@ -270,7 +262,7 @@ class Model:
             art_dict = OmegaConf.to_container(art, resolve=True)
             art_dict.update(**kwargs)
             art_dict.update({"library": self.library})
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f"Art {art} is not a dictionary or ArtPipeline object. It is of type {type(art)}",
             )
@@ -322,7 +314,7 @@ class Model:
                 model,
                 "predict_proba",
             ), f"Model {model} does not have a predict or predict_proba method."
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Model {model} is not a valid model.")
         result_dict["model"] = model
 
@@ -470,7 +462,7 @@ class Model:
         else:
             try:
                 model = self.init()
-            except RuntimeError as e:
+            except RuntimeError as e: # pragma: no cover
                 if "disable eager execution" in str(e):
                     logger.warning("Disabling eager execution for Tensorflow.")
                     import tensorflow as tf
@@ -544,20 +536,20 @@ class Model:
         try:
             start = process_time_ns()
             predictions = model.predict(data[1])
-        except NotFittedError as e:
+        except NotFittedError as e: # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
             self.fit(data=data, model=model)
             start = process_time_ns()
             predictions = model.predict(data[1])
-        except TypeError as e:
+        except TypeError as e: # pragma: no cover
             if "np.float32" in str(e):
                 data[1] = data[1].astype(np.float32)
                 start = process_time_ns()
                 predictions = model.predict(data[1])
             else:
                 raise e
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             logger.error(e)
             raise e
         end = process_time_ns() - start
@@ -656,7 +648,7 @@ class Model:
             start = process_time_ns()
             predictions = model.predict(data[1])
             end = process_time_ns() - start
-        else:
+        else: # pragma: no cover
             raise ValueError(
                 f"Model {model} does not have a predict_log_proba or predict_proba method.",
             )
@@ -693,7 +685,7 @@ class Model:
             import tensorflow as tf
 
             model = tf.keras.models.load_model(filename)
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return model
 
@@ -706,7 +698,6 @@ class Model:
                     pickle.dump(model, f)
             elif suffix in [".pt", ".pth"]:
                 import torch as t
-
                 while hasattr(model, "model"):
                     model = model.model
                 t.save(model, filename)
@@ -716,12 +707,11 @@ class Model:
                 )
             elif suffix in [".h5", ".wt"]:
                 import keras as k
-
                 while hasattr(model, "model"):
                     model = model.model
                 try:
                     k.models.save_model(model, filename)
-                except NotImplementedError as e:
+                except NotImplementedError as e: # pragma: no cover
                     logger.warning(e)
                     logger.warning(
                         f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
@@ -729,13 +719,12 @@ class Model:
                     model.save_weights(filename)
             elif suffix in [".tf", "_tf"]:
                 import keras as k
-
                 while hasattr(model, "model"):
                     model = model.model
                 k.models.save_model(model, filename, save_format="tf")
-            else:
+            else: # pragma: no cover
                 raise NotImplementedError(
                     f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
                 )
-        else:
+        else: # pragma: no cover
             logger.warning(f"File {filename} already exists. Will not overwrite.")

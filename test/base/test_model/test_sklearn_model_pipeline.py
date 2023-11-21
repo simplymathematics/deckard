@@ -6,7 +6,7 @@ import os
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 
-from deckard.base.model.sklearn_pipeline import SklearnModelPipeline
+from deckard.base.model.sklearn_pipeline import SklearnModelPipeline, SklearnModelPipelineStage
 
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
@@ -47,3 +47,8 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def tearDown(self) -> None:
         rmtree(self.dir)
+
+
+class testsSklearnModelPipelinefromDict(testSklearnModelPipeline):
+    config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
+    config_file = "pipeline2.yaml"

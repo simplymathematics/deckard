@@ -125,13 +125,14 @@ class ArtPipeline:
         for stage in pipeline:
             if isinstance(pipeline[stage], DictConfig):
                 pipeline[stage] = OmegaConf.to_container(pipeline[stage], resolve=True)
-            assert isinstance(pipeline[stage], dict), f"Pipeline stage must be a dict. Got {type(pipeline[stage])}"
-            while "kwargs" in pipeline[stage]:
-                pipeline[stage].update(**pipeline[stage].pop("kwargs"))
-            name = pipeline[stage].pop("name", stage)
-            params = pipeline[stage]
-            params.pop("name", None)
-            pipeline[stage] = ArtPipelineStage(name, **params)
+            if isinstance(pipeline[stage], dict):
+                pipeline[stage].update(**pipeline[stage].pop("kwargs", {}))
+                name = pipeline[stage].pop("name", stage)
+                params = pipeline[stage]
+                params.pop("name", None)
+                pipeline[stage] = ArtPipelineStage(name, **params)
+            elif isinstance(pipeline[stage], type(None)):
+                pipeline[stage] = ArtPipelineStage(name=stage)
         self.pipeline = pipeline
         self.name = kwargs.pop("name", my_hash(vars(self)))
 
