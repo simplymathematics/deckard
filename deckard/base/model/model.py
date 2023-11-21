@@ -167,6 +167,23 @@ class ModelTrainer:
                 start = process_time_ns()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
+            elif "should be the same" in str(e).lower():
+                import torch
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                data[0] = torch.from_numpy(data[0])
+                data[1] = torch.from_numpy(data[1])
+                data[0] = torch.Tensor.float(data[0])
+                data[1] = torch.Tensor.float(data[1])
+                data[0].to(device)
+                data[2] = torch.from_numpy(data[2])
+                data[3] = torch.from_numpy(data[3])
+                data[2] = torch.Tensor.float(data[2])
+                data[3] = torch.Tensor.float(data[3])
+                data[2].to(device)
+                model.model.to(device) if hasattr(model, "model") else model.to(device)
+                start = process_time_ns()
+                model.fit(data[0], data[2], **trainer)
+                end = process_time_ns() - start
             else:
                 raise e
         time_dict = {

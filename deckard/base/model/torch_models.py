@@ -2,8 +2,7 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
-from random import randint
-import numpy as np
+import pandas as pd
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 from hydra.utils import instantiate
@@ -38,13 +37,7 @@ class TorchCriterion:
 
     def __call__(self):
         logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "kwargs" in self.kwargs:
-            kwargs = self.kwargs.pop("kwargs", {})
-            params = self.kwargs
-            params.pop("name", None)
-            params.update(**kwargs)
-        else:
-            params = self.kwargs
+        params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}
         dict_.update(**params)
@@ -63,21 +56,13 @@ class TorchOptimizer:
 
     def __call__(self, model):
         logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "kwargs" in self.kwargs:
-            kwargs = self.kwargs.pop("kwargs", {})
-            params = self.kwargs
-            params.pop("name", None)
-            params.update(**kwargs)
-        else:
-            params = self.kwargs
+        params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}
         dict_.update(**params)
         if hasattr(model, "parameters"):
             dict_.update({"params": model.parameters()})
-        elif hasattr(model, "model") and hasattr(model.model, "parameters"):
-            dict_.update({"params": model.model.parameters()})
-        else:
+        else: # pragma: no cover
             raise ValueError(f"Model {model} has no parameters attribute.")
         obj = instantiate(dict_)
         return obj
@@ -95,9 +80,6 @@ class TorchInitializer:
         self.data = data
         self.model = model
         self.library = library
-        while "kwargs" in kwargs:
-            new_kwargs = kwargs.pop("kwargs", {})
-            kwargs.update(**new_kwargs)
         self.kwargs = kwargs
 
     def __call__(self):
@@ -107,11 +89,6 @@ class TorchInitializer:
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
         import torch
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        devices = range(torch.cuda.device_count())
-        if str(type(model)).startswith("art.") and hasattr(model, "model"):
-            model = model.model
         if "optimizer" in kwargs:
             optimizer = TorchOptimizer(**kwargs.pop("optimizer"))(model)
             kwargs.update({"optimizer": optimizer})
@@ -127,28 +104,13 @@ class TorchInitializer:
         if "input_shape" not in kwargs:
             kwargs.update({"input_shape": data[0].shape[1:]})
         if "nb_classes" not in kwargs:
-            if len(data[2].shape) == 1:
-                kwargs.update({"nb_classes": len(np.unique(data[2]))})
+            if len(data[2].shape) == 1: # pragma: no cover
+                kwargs.update({"nb_classes": pd.DataFrame(data[2]).nunique()})
             else:
                 kwargs.update({"nb_classes": data[2].shape[1]})
-        try:
-            if hasattr(model, "to"):
-                model.to(device)
-            elif hasattr(model, "model") and hasattr(model.model, "to"):
-                model.model.to(device)
-        except Exception as e:
-            if "CUDA out of memory" in str(e) and len(devices) > 0 and device != "cpu":
-                device_number = devices[randint(0, len(devices) - 1)]
-                device = f"cuda:{device_number}"
-                logger.info(f"Out of memory error. Trying device {device}")
-                model.to(device)
-                for datum in data:
-                    datum.to(device)
-            else:
-                raise e
         if library in torch_dict and not isinstance(model, torch_dict[library]):
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)
-        else:
+        else: # pragma: no cover
             raise NotImplementedError(f"Library {library} not implemented")
         return model

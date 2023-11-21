@@ -1,0 +1,18 @@
+data:
+    _target_: deckard.base.data.Data
+    generate:
+        name : torch_mnist
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name: torch_example.MNISTNet
+_target_: deckard.base.model.Model
+trainer:
+    nb_epoch: 1
+    batch_size: 1024
+library : torch
+art:
+    library : torch
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    initialize:
+        name : torch_example.MNISTNet
+        nb_classes: 10
