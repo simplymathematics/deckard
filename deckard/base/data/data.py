@@ -144,11 +144,11 @@ class Data:
                 elif isinstance(data, list):
                     new_data = []
                     for datum in data:
-                        assert isinstance(datum, (np.ndarray))
-                        new_data.append(datum.tolist())
+                        if isinstance(datum, (np.ndarray)):
+                            new_data.append(datum.tolist())
                     data = new_data
                     del new_data
-                elif isinstance(data, dict):
+                elif isinstance(data, (dict, int, float, str, bool)):
                     pass
                 else: # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")

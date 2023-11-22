@@ -287,7 +287,7 @@ class Model:
         predictions_file=None,
         probabilities_file=None,
         time_dict_file=None,
-        loss_file=None,
+        losses_file=None,
     ):
         result_dict = {}
         if isinstance(data, Data):
@@ -324,8 +324,8 @@ class Model:
         if probabilities_file is not None and Path(probabilities_file).exists():
             probs = self.data.load(probabilities_file)
             result_dict["probabilities"] = probs
-        if loss_file is not None and Path(loss_file).exists():
-            loss = self.data.load(loss_file)
+        if losses_file is not None and Path(losses_file).exists():
+            loss = self.data.load(losses_file)
             result_dict["loss"] = loss
         if time_dict_file is not None and Path(time_dict_file).exists():
             time_dict = self.data.load(time_dict_file)
@@ -333,7 +333,7 @@ class Model:
             predictions_file,
             probabilities_file,
             time_dict_file,
-            loss_file,
+            losses_file,
             model_file,
         ].count(None) != 5:
             time_dict = locals().get("time_dict", {})
@@ -403,26 +403,26 @@ class Model:
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
             # Predicting loss
-            if loss_file is not None:
+            if losses_file is not None:
                 loss, loss_time_dict = self.predict_log_loss(
                     data=data,
                     model=model,
-                    loss_file=loss_file,
+                    losses_file=losses_file,
                 )
                 time_dict.update(**loss_time_dict)
-                result_dict["loss"] = loss
+                result_dict["losses"] = loss
                 result_dict["time_dict"].update(**loss_time_dict)
-            elif loss_file is not None and Path(loss_file).exists():
-                loss = self.data.load(loss_file)
-                result_dict["loss"] = loss
+            elif losses_file is not None and Path(losses_file).exists():
+                loss = self.data.load(losses_file)
+                result_dict["losses"] = loss
             else:
                 loss, loss_time_dict = self.predict_log_loss(
                     data=data,
                     model=model,
-                    loss_file=loss_file,
+                    losses_file=losses_file,
                 )
                 time_dict.update(**loss_time_dict)
-                result_dict["loss"] = loss
+                result_dict["losses"] = loss
                 result_dict["time_dict"].update(**loss_time_dict)
             if time_dict_file is not None:
                 if Path(time_dict_file).exists():
@@ -609,7 +609,7 @@ class Model:
             },
         )
 
-    def predict_log_loss(self, data, model, loss_file=None):
+    def predict_log_loss(self, data, model, losses_file=None):
         """Predicts on the data and returns the average time per sample.
         :param model: The model to use for prediction.
         :type model: object
@@ -652,8 +652,8 @@ class Model:
             raise ValueError(
                 f"Model {model} does not have a predict_log_proba or predict_proba method.",
             )
-        if loss_file is not None:
-            self.data.save(predictions, loss_file)
+        if losses_file is not None:
+            self.data.save(predictions, losses_file)
         return (
             predictions,
             {

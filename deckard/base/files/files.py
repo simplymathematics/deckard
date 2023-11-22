@@ -135,13 +135,10 @@ class FileConfig:
             #     continue
             # elif "_dir" in kwarg:
             #     continue
-            # elif "reports" == kwarg:
-            #     continue
+            elif "report_dir" == kwarg:
+                continue
             else:
-                suffix = Path(name).suffix
-                stem = Path(name).stem
-                name = stem + suffix
-                new_path = Path(path, name + suffix)
+                new_path = Path(path, name)
                 full_path = str(Path(new_path).as_posix())
                 new_files[kwarg] = full_path
                 new_files[kwarg] = str(new_path.as_posix())

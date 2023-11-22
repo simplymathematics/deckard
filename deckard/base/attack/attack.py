@@ -168,7 +168,7 @@ class EvasionAttack:
             time_dict.update(
                 {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
             )
-        results["adv_samples"] = samples
+        results["adv_samples"] = np.array(samples)
         try:
             results["adv_success"] = compute_success(
                 classifier=model,
@@ -183,15 +183,15 @@ class EvasionAttack:
             self.data.save(samples, attack_file)
         if adv_predictions_file is not None and Path(adv_predictions_file).exists():
             adv_predictions = self.data.load(adv_predictions_file)
-            results["adv_predictions"] = adv_predictions
+            results["adv_predictions"] = np.array(adv_predictions)
         else:
             adv_predictions = model.predict(samples)
-            results["adv_predictions"] = adv_predictions
+            results["adv_predictions"] = np.array(adv_predictions)
         if adv_predictions_file is not None:
             self.data.save(adv_predictions, adv_predictions_file)
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
             adv_probabilities = self.data.load(adv_probabilities_file)
-            results["adv_probabilities"] = adv_probabilities
+            results["adv_probabilities"] = np.array(adv_probabilities)
         else:
             if hasattr(self.model, "model") and hasattr(
                 self.model.model,
@@ -229,13 +229,13 @@ class EvasionAttack:
                         / (len(samples) * 1e9),
                     },
                 )
-            results["adv_probabilities"] = adv_probabilities
+            results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
 
         if adv_losses_file is not None and Path(adv_losses_file).exists():
             adv_loss = self.data.load(adv_losses_file)
-            results["adv_loss"] = adv_loss
+            results["adv_losses"] = np.array(adv_loss)
         elif adv_losses_file is not None:
             assert hasattr(
                 model,
@@ -249,7 +249,7 @@ class EvasionAttack:
                 preds = model.predict(samples[: self.attack_size])
                 adv_loss = log_loss(data[3][: self.attack_size], preds)
             self.data.save(adv_loss, adv_losses_file)
-            results["adv_loss"] = adv_loss
+            results["adv_losses"] = np.array(adv_loss)
         if len(time_dict) > 0:
             results["time_dict"] = time_dict
         return results
@@ -375,7 +375,7 @@ class PoisoningAttack:
             time_dict.update(
                 {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
             )
-        results["adv_samples"] = samples
+        results["adv_samples"] = np.array(samples)
         results["time_dict"] = time_dict
         if attack_file is not None:
             self.data.save(samples, attack_file)
@@ -383,7 +383,7 @@ class PoisoningAttack:
             adv_predictions = self.data.load(adv_predictions_file)
         else:
             adv_predictions = model.predict(samples)
-        results["adv_predictions"] = adv_predictions
+        results["adv_predictions"] = np.array(adv_predictions)
         if adv_predictions_file is not None:
             self.data.save(adv_predictions, adv_predictions_file)
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
@@ -425,7 +425,7 @@ class PoisoningAttack:
                         / (len(samples) * 1e9),
                     },
                 )
-        results["adv_probabilities"] = adv_probabilities
+        results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
 
@@ -437,10 +437,11 @@ class PoisoningAttack:
                 "compute_loss",
             ), "Model does not have compute_loss method."
             adv_loss = model.compute_loss(samples, data[3][: self.attack_size])
+            adv_loss = np.array(adv_loss)
             self.data.save(adv_loss, adv_losses_file)
         else:
             adv_loss = None
-        results["adv_loss"] = adv_loss
+        results["adv_losses"] = np.array(adv_loss)
         results["time_dict"] = time_dict
         return results
 
@@ -545,7 +546,7 @@ class InferenceAttack:
                 {"adv_fit_time_per_sample": (end - start) / (self.attack_size * 1e9)},
             )
         results["time_dict"] = time_dict
-        results["adv_predictions"] = preds
+        results["adv_predictions"] = np.array(preds)
         results["time_dict"] = time_dict
         if adv_predictions_file is not None:
             self.data.save(preds, adv_predictions_file)
@@ -644,7 +645,7 @@ class ExtractionAttack:
                 {"adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9)},
             )
         results["time_dict"] = time_dict
-        results["adv_predictions"] = preds
+        results["adv_predictions"] = np.array(preds)
 
         # Get probabilities from adversarial model
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
@@ -654,7 +655,7 @@ class ExtractionAttack:
                 probs = attacked_model.predict_proba(data[1][: self.attack_size])
             else:
                 probs = preds
-        results["adv_probabilities"] = probs
+        results["adv_probabilities"] = np.array(probs)
         # Get loss from adversarial model
 
         if adv_losses_file is not None and Path(adv_losses_file).exists():
@@ -669,7 +670,7 @@ class ExtractionAttack:
                 from sklearn.metrics import log_loss
 
                 loss = log_loss(data[3][: self.attack_size], preds)
-        results["adv_loss"] = loss
+        results["adv_losses"] = np.array(loss)
 
         # Save files
         if adv_predictions_file is not None:

@@ -22,19 +22,6 @@ model:
         library : sklearn
         pipeline:
             initialize:
-                _target_ : deckard.base.model.art_pipeline.ArtPipelineStage
-attack:
-    data : ${data}
-    model : ${model}
-    init:
-        name: art.attacks.evasion.HopSkipJump
-        batch_size : 64
-        max_iter : 10
-        max_eval : 10
-        init_eval : 10
-        model: ${model}
-    attack_size : 10
-    method : evasion
 files:
     _target_: deckard.base.files.FileConfig
     data_dir : data
