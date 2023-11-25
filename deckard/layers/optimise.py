@@ -20,7 +20,8 @@ config_path = os.environ.get(
     )
 assert Path(config_path).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
-assert Path(config_path, config_name).exists(), f"{Path(config_path, config_name).as_posix()} does not exist. Please specify a config path by running `export DECKARD_DEFAULT_CONFIG=<your.file>`"
+full_path = Path(config_path, config_name).as_posix()
+assert Path(full_path).exists(), f"{full_path} does not exist. Please specify a config path by running `export DECKARD_DEFAULT_CONFIG=<your.file>`"
 
 
 def get_files(
@@ -257,6 +258,7 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
+    raise_exception = cfg.pop("raise_exception", False)
     scorer = cfg.pop("optimizers", None)
     working_dir = Path(config_path).parent
     stage = cfg.pop("stage", None)
@@ -291,6 +293,8 @@ def optimise(cfg: DictConfig) -> None:
         else:
             score = -1e10
         logger.info(f"Score: {score}")
+        if raise_exception:
+            raise e
     return score
 
 

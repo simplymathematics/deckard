@@ -1,0 +1,7 @@
+name: optuna
+best_params:
+  ++attack.init.eps: 0.01
+  ++attack.init.eps_step: 0.003
+  ++attack.init.norm: 1
+  ++model.art.initialize.optimizer.lr: 0.0837374458054687
+best_value: 0.29

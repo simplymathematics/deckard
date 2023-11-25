@@ -4,6 +4,6 @@ _target_ : deckard.base.attack.Attack
 init:
     model: ${model}
     _target_: deckard.base.attack.AttackInitializer
-    name: art.attacks.evasion.HopSkipJump
+    name: art.attacks.evasion.FastGradientMethod
 attack_size : 10
 method : evasion

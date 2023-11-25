@@ -76,7 +76,7 @@ class ScorerConfig:
             result = call(config, *args, **kwargs)
 
         except InstantiationException as e: #pragma: no cover
-            if "continuous-multioutput" in str(e):
+            if "continuous-multioutput" in str(e) or "multiclass-multioutput" in str(e):
                 new_args = []
                 for arg in args:
                     if hasattr(arg, "shape"):
