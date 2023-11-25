@@ -9,4 +9,5 @@ RUN python3 -m pip install --editable .[torch,torchvision,tensorflow]
 RUN python3 -m pip install pytest
 RUN git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
 RUN cd adversarial-robustness-toolbox && python3 -m pip install .
-RUN apt install python-is-python3
+RUN apt install python-is-python3 
+RUN apt install screen
