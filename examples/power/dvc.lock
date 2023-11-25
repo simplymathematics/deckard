@@ -113,19 +113,19 @@ stages:
       size: 635489
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: c4f031acf1fadb149eab0c099120add9
-      size: 44779117
+      md5: e59d322dfc529eb122757d5ae7296f30
+      size: 44779566
     - path: mnist/models/model.pt
       hash: md5
-      md5: 3c68756c169a9e76251fba1c980812fd
-      size: 44784213
+      md5: 074d2d5c705b521d785435daa385dca3
+      size: 44785474
     - path: mnist/reports/train/default/predictions.json
       hash: md5
-      md5: 36c847c78da92ef28682427777fdbd82
-      size: 21393
+      md5: 6ec634a10c8d622e08f24f4cd42e0321
+      size: 21195
     - path: mnist/reports/train/default/score_dict.json
       hash: md5
-      md5: da0b3a514159d008a38fc47aec358446
+      md5: dd888d6f81ce2caf914ce7f138ab3254
       size: 345
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
@@ -136,8 +136,8 @@ stages:
       size: 635489
     - path: mnist/models/model.pt
       hash: md5
-      md5: 3c68756c169a9e76251fba1c980812fd
-      size: 44784213
+      md5: 074d2d5c705b521d785435daa385dca3
+      size: 44785474
     params:
       params.yaml:
         attack:
@@ -219,7 +219,7 @@ stages:
               trainer:
                 batch_size: 1024
                 nb_epoch: 1
-            name: art.attacks.evasion.HopSkipJump
+            name: art.attacks.evasion.FastGradientMethod
           method: evasion
           model:
             _target_: deckard.base.model.Model
@@ -383,16 +383,16 @@ stages:
     outs:
     - path: mnist/attacks/attack.pkl
       hash: md5
-      md5: d9f780d228dfc0a7d10ec87544c2f21b
+      md5: c7fa6504624021688d4f773adea34f6f
       size: 31517
     - path: mnist/reports/attack/default/adv_predictions.json
       hash: md5
-      md5: ea355e028304f6fc6c0b6c21847355e1
-      size: 2128
+      md5: 6fdee6d0c74fd29417d346113c2c26ff
+      size: 2124
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: 576000b39900ff17c854b12990cdaf57
-      size: 502
+      md5: fede2f60c3f7f4e2906fef933bec8fca
+      size: 432
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet18.db
@@ -415,3 +415,38 @@ stages:
       hash: md5
       md5: f95524164e99ab1e36ac701ff2b3eb3f
       size: 131072
+  install_deckard:
+    cmd: python -m pip install -e ../../ && python -m pip install torch torchvision
+    deps:
+    - path: ../../setup.py
+      hash: md5
+      md5: df6acc4b15670c55b1aa9f23f1cc892f
+      size: 4886
+    outs:
+    - path: ../../deckard.egg-info
+      hash: md5
+      md5: 244a42d703838a2a3ffeb80ea7415b3f.dir
+      size: 13515
+      nfiles: 5
+  install_torch:
+    cmd: python -m pip install torch torchvision
+  parse_params:
+    cmd: python -m deckard.layers.parse --config_file mnist.yaml
+    deps:
+    - path: conf/
+      hash: md5
+      md5: fe0f04e3ae07d49692ed95770ee0ad30.dir
+      size: 122038
+      nfiles: 17
+    outs:
+    - path: params.yaml
+      hash: md5
+      md5: 957f64f33bec09a2b135fb641f494a50
+      size: 7103
+  install_redis:
+    cmd: bash redis.sh
+    outs:
+    - path: .bashrc
+      hash: md5
+      md5: 088676c495eacf10a7b51ebf17c9012c
+      size: 40

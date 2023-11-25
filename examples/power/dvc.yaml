@@ -1,4 +1,26 @@
 stages:
+  install_deckard:
+    cmd: python -m pip install -e ../../ && python -m pip install torch torchvision
+    deps:
+      - ../../setup.py
+    outs:
+      - ../../deckard.egg-info:
+          cache: False
+          persist: True
+  # install_redis:
+  #   cmd: bash redis.sh
+  #   outs: 
+  #     - .bashrc
+  #   # params:
+  #   #  - oc.
+  parse_params:
+    cmd: python -m deckard.layers.parse --config_file mnist.yaml
+    deps:
+      - conf/
+    outs:
+      - params.yaml:
+          cache: True
+          persist: True
   train:
     cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
     params:
@@ -35,23 +57,23 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  # models: # This is a loop over the ResNet models
-  #   foreach:
-  #     - ResNet18
-  #     # - ResNet34
-  #     # - ResNet50
-  #     # - ResNet101
-  #     # - ResNet152
-  #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name mnist.yaml 
-  #     deps:
-  #     - models.sh
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-  #     outs:
-  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
-  #         cache: True
-  #         persist: True
+  models: # This is a loop over the ResNet models
+    foreach:
+      - ResNet18
+      # - ResNet34
+      # - ResNet50
+      # - ResNet101
+      # - ResNet152
+    do: # This script configures eazch defence
+      cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name mnist.yaml 
+      deps:
+      - models.sh
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      outs:
+      - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
+          cache: True
+          persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18

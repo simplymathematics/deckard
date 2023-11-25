@@ -9,33 +9,39 @@ defaults:
     - override hydra/sweeper/sampler : tpe
     - override hydra/launcher : rq
 stage : '???'
-direction : "maximize"
-optimizers: accuracy
+direction : 
+  - maximize
+  - minimize
+  - minimize
+optimizers: 
+   - accuracy
+   - train_time
+   - predict_time
 _target_ : deckard.base.experiment.Experiment
 hydra:
-  run:
-    dir: ${files.directory}/${files.reports}/${stage}/logs
-  sweep:
-    dir: ${files.directory}/${stage}/${model.init.name}
-    subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
+  # run:
+  #   dir: ${files.directory}/${files.reports}/${stage}/logs
+  # sweep:
+  #   dir: ${files.directory}/${stage}/${model.init.name}
+  #   subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     study_name: ${model.init.name}
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 123
+      seed: ${data.sample.random_state}
       consider_prior: true
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: false
-      n_startup_trials: 1 # default: 10
-      n_ei_candidates: 1 # default: 24
-      multivariate: false
+      n_startup_trials: 10 # default: 10
+      n_ei_candidates: 100 # default: 24
+      multivariate: true
       warn_independent_sampling: true
     params:
-      # ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+      ++data.sample.random_state: int(interval(0, 9))
       ++model.art.initialize.optimizer.lr: interval(0.0001, 1)
-      # ++model.trainer.nb_epoch: tag(int, interval(1, 100))
-      # ++model.trainer.batch_size: tag(int, interval(10, 10000))
+      ++model.trainer.nb_epoch: int(interval(1, 100))
+      ++model.trainer.batch_size: int(interval(10, 10000))
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
   launcher:
@@ -44,20 +50,20 @@ hydra:
     enqueue:
       job_timeout: null
       ttl: null
-      result_ttl: null
-      failure_ttl: null
+      result_ttl: 1s
+      failure_ttl: 1h
       at_front: false
       job_id: null
       description: null
     queue: default 
     redis:
-      host: redis-10262.c322.us-east-1-2.ec2.cloud.redislabs.com
-      port: 10262
-      db: Charlie-free-db
-      # password: ${oc.env:REDIS_PASSWORD,null}
-      # ssl: ${oc.env:REDIS_SSL,False}
-      # ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null
-      # mock: ${oc.env:REDIS_MOCK,False}
+      host: localhost
+      port: ${oc.env:REDIS_PORT,6379}
+      db: ${oc.env:REDIS_DB,0}
+      password: ${oc.env:REDIS_PASSWORD,D3vAQY9y4YdwhV}
+      ssl: ${oc.env:REDIS_SSL,False}
+      ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null}
+      mock: ${oc.env:REDIS_MOCK,False}
     stop_after_enqueue: false
     wait_polling: 1.0
 raise_exception: True

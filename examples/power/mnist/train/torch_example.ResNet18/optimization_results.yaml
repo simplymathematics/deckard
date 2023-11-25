@@ -1,4 +1,0 @@
-name: optuna
-best_params:
-  ++model.art.initialize.optimizer.lr: 0.3293078760666145
-best_value: 0.18
