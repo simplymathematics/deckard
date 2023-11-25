@@ -16,12 +16,11 @@ __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
 config_path = os.environ.get(
         "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
+        str(Path(Path.cwd(), "conf").absolute().as_posix()),
     )
 assert Path(config_path).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
 full_path = Path(config_path, config_name).as_posix()
-assert Path(full_path).exists(), f"{full_path} does not exist. Please specify a config path by running `export DECKARD_DEFAULT_CONFIG=<your.file>`"
 
 
 def get_files(

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import argparse
+import os
 from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
@@ -27,3 +28,5 @@ if __name__ == "__main__":
         )
         is None
     )
+    os.environ['DECKARD_DEFAULT_CONFIG'] = args.config_file
+    os.environ['DECKARD_CONFIG_PATH'] = args.config_dir
