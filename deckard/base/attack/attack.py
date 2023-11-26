@@ -164,10 +164,17 @@ class EvasionAttack:
                 start = process_time_ns()
                 samples = atk.generate(ben_samples, **kwargs)
             end = process_time_ns()
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time" : start / 1e9,
+                    "adv_fit_stop_time" : end / 1e9,
+                },
             )
+            device = model.device if hasattr(model, "device") else "cpu"
+            time_dict.update({"device" : device})
+            
         results["adv_samples"] = np.array(samples)
         try:
             results["adv_success"] = compute_success(
@@ -200,35 +207,25 @@ class EvasionAttack:
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             try:
                 start = process_time_ns()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
+
             except AttributeError:
                 start = process_time_ns()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
+            time_dict.update(
+                {
+                    "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_predict_time": (end - start) / 1e9,
+                    "adv_predict_start_time" : start / 1e9,
+                    "adv_predict_stop_time" : end / 1e9,
+                },
+            )
+            device = model.device if hasattr(model, "device") else "cpu"
+            time_dict.update({"device" : device})
             results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
@@ -371,10 +368,16 @@ class PoisoningAttack:
                     else:
                         raise e
                 end = process_time_ns()
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time" : start / 1e9,
+                    "adv_fit_stop_time" : end / 1e9,
+                },
             )
+            device = model.device if hasattr(model, "device") else "cpu"
+            time_dict.update({"device" : device})
         results["adv_samples"] = np.array(samples)
         results["time_dict"] = time_dict
         if attack_file is not None:
@@ -396,35 +399,24 @@ class PoisoningAttack:
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             try:
                 start = process_time_ns()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             except AttributeError:
                 start = process_time_ns()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
+        time_dict.update(
+            {
+                "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
+                "adv_predict_time": (end - start) / 1e9,
+                "adv_predict_start_time" : start / 1e9,
+                "adv_predict_stop_time" : end / 1e9,
+            },
+        )
+        device = model.device if hasattr(model, "device") else "cpu"
+        time_dict.update({"device" : device})
         results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
@@ -525,13 +517,7 @@ class InferenceAttack:
                 start = process_time_ns()
                 atk.fit(x=x_train, y=y_train, test_x=x_test, test_y=y_test, **fit)
                 end = process_time_ns()
-                time_dict.update({"adv_fit_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_fit_time_per_sample": (end - start)
-                        / (self.attack_size * 1e9),
-                    },
-                )
+                
                 x_train = data[0][: self.attack_size]
                 y_train = data[2][: self.attack_size]
                 x_test = data[1][: self.attack_size]
@@ -541,10 +527,16 @@ class InferenceAttack:
                 end = process_time_ns()
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (self.attack_size * 1e9)},
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time" : start / 1e9,
+                    "adv_fit_stop_time" : end / 1e9,
+                },
             )
+            device = model.device if hasattr(model, "device") else "cpu"
+            time_dict.update({"device" : device})
         results["time_dict"] = time_dict
         results["adv_predictions"] = np.array(preds)
         results["time_dict"] = time_dict
@@ -621,13 +613,16 @@ class ExtractionAttack:
                     **kwargs,
                 )
                 end = process_time_ns()
-                time_dict.update({"adv_fit_time": (end - start) / 1e9})
                 time_dict.update(
                     {
-                        "adv_fit_time_per_sample": (end - start)
-                        / (self.attack_size * 1e9),
+                        "adv_fit_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                        "adv_fit_time": (end - start) / 1e9,
+                        "adv_fit_start_time" : start / 1e9,
+                        "adv_fit_stop_time" : end / 1e9,
                     },
                 )
+                device = model.device if hasattr(model, "device") else "cpu"
+                time_dict.update({"device" : device})
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
         else:
@@ -640,10 +635,16 @@ class ExtractionAttack:
             start = process_time_ns()
             preds = attacked_model.predict(data[1][: self.attack_size])
             end = process_time_ns()
-            time_dict.update({"adv_predict_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9)},
+                {
+                    "adv_predict_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                    "adv_predict_time": (end - start) / 1e9,
+                    "adv_predict_start_time" : start / 1e9,
+                    "adv_predict_stop_time" : end / 1e9,
+                },
             )
+            device = model.device if hasattr(model, "device") else "cpu"
+            time_dict.update({"device" : device})
         results["time_dict"] = time_dict
         results["adv_predictions"] = np.array(preds)
 
