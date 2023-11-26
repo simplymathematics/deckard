@@ -39,7 +39,7 @@ hydra:
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: false
-      n_startup_trials: 10# default: 10
+      n_startup_trials: 10 # default: 10
       n_startup_trials:  24 # default: 24
       multivariate: true
       warn_independent_sampling: true
