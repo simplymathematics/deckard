@@ -425,13 +425,13 @@ stages:
     deps:
     - path: ../../setup.py
       hash: md5
-      md5: df6acc4b15670c55b1aa9f23f1cc892f
-      size: 4886
+      md5: 457e169a0cb8c12179af5b246b5e6546
+      size: 5077
     outs:
     - path: ../../deckard.egg-info
       hash: md5
-      md5: 8c0912e644d7243c260961631a0da14f.dir
-      size: 6202
+      md5: 1b20d0b3a04c6d02a0da758d5a9a4614.dir
+      size: 6619
       nfiles: 5
   install_torch:
     cmd: python -m pip install torch torchvision
@@ -440,14 +440,14 @@ stages:
     deps:
     - path: conf/
       hash: md5
-      md5: 171c70170a4d7cbdf5e3de1a663ca093.dir
-      size: 124847
-      nfiles: 21
+      md5: f3112794df933bec79db19b25eee354a.dir
+      size: 139416
+      nfiles: 46
     outs:
     - path: params.yaml
       hash: md5
-      md5: 421a8c108a0f0ed875eaf34c7c403028
-      size: 7294
+      md5: 0f3e594f9af58eddb8d5b5c0a5c5b5fc
+      size: 6917
   install_redis:
     cmd: bash redis.sh
     outs:
