@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: deckard
+  name: nvidia-tesla-p100-cifar10
 spec:
   containers:
   - name: deckard
