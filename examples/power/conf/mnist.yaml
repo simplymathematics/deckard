@@ -40,17 +40,18 @@ hydra:
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: false
-      n_startup_trials: 1 # default: 10
-      n_ei_candidates: 1 # default: 24
+      n_startup_trials: 10 # default: 10
+      n_ei_candidates: 24 # default: 24
       multivariate: true
       warn_independent_sampling: true
+    n_trials : 100
     params:
       ++data.sample.random_state: int(range(0, 1))
       ++model.art.initialize.optimizer.lr: range(0.0001, 1)
       ++model.trainer.nb_epoch: int(range(1, 50))
       ++model.trainer.batch_size: int(range(10, 10000))
       ++attack.init.eps : range(0.01, 1.0)
-      ++attack.init.eps_step : ${eval:'(.1)*${attack.init.eps}'}
+      ++attack.init.eps_step : ${eval:'(.01)*${attack.init.eps}'}
       ++attack.init.batch_size: int(range(10,10000))
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
