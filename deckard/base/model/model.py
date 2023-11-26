@@ -115,7 +115,7 @@ class ModelTrainer:
 
     def __call__(self, data: list, model: object, library=None):
         logger.info(f"Training model {model} with fit params: {self.kwargs}")
-
+        device = str(model.device) if hasattr(model, "device") else "cpu"
         trainer = self.kwargs
         if library in sklearn_dict.keys():
             pass
@@ -132,7 +132,6 @@ class ModelTrainer:
         try:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
-            device = str(model.device) if hasattr(model, "device") else "cpu"
             end = process_time_ns() - start
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
@@ -548,10 +547,10 @@ class Model:
             model,
             "predict",
         ), f"Model {model} does not have a predict method."
+        device = str(model.device) if hasattr(model, "device") else "cpu"
         try:
             start = process_time_ns()
             predictions = model.predict(data[1])
-            device = str(model.device) if hasattr(model, "device") else "cpu"
         except NotFittedError as e:  # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
