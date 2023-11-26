@@ -40,11 +40,7 @@ Running `dvc repro` in that folder will reproduce the experiment outlined in the
 └── test : test suite  
  
 
-###
-
 To build the package (optional and is a very rough draft):
-
-```
 
 
 After adding it to your path, you can then run it as a module:
