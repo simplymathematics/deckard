@@ -1,0 +1,13 @@
+data:
+    generate:
+        name : torch_mnist
+init:
+    name: torch_example.MNISTNet
+_target_: deckard.base.model.Model
+trainer: 
+library : torch
+art:
+    library : torch
+    initialize:
+        name : torch_example.MNISTNet
+        nb_classes: 10

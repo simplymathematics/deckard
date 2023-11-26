@@ -1,0 +1,58 @@
+data:
+    generate:
+        name: classification
+        random_state : 0
+        n_samples : 2000
+        n_features : 20
+    sample:
+        # _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state : 0
+        stratify: True
+        train_size : 100
+        test_size : 1000
+model:
+    data: ${data}
+    library : sklearn
+    init:
+        name : sklearn.svm.SVC
+        kernel: rbf
+        C : 1.0
+        probability: true
+    art:
+        library : sklearn
+        pipeline:
+            initialize:
+files:
+    _target_: deckard.base.files.FileConfig
+    data_dir : data
+    model_dir : model
+    attack_dir : attack
+    report_dir : report
+    directory : ???
+    data_file : data.pkl
+    model_file : model.pkl
+    attack_file : attack.pkl
+    score_dict_file : score_dict.json
+    predictions_file : predictions.json
+    probabilities_file : probabilities.json
+    losses_file : losses.json
+    adv_predictions_file : adv_predictions.json
+    adv_probabilities_file : adv_probabilities.json
+    adv_losses_file : adv_losses.json
+    name : evasion
+scorers:
+    _target_: deckard.base.scorer.ScorerDict
+    accuracy:
+        name: sklearn.metrics.accuracy_score
+        direction: maximize
+        normalize: True
+    log_loss:
+        name: sklearn.metrics.log_loss
+        direction: minimize
+        normalize: True
+_target_: deckard.base.experiment.Experiment
+optimizers: 
+    - accuracy
+    - train_time
+
+    

@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 import argparse
+import os
+from omegaconf import OmegaConf
 from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
@@ -18,6 +20,7 @@ if __name__ == "__main__":
     args = hydra_parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     config_dir = Path(Path(), args.config_dir).resolve().as_posix()
+    OmegaConf.register_new_resolver("eval", eval)
     assert (
         save_params_file(
             config_dir=config_dir,
@@ -27,3 +30,5 @@ if __name__ == "__main__":
         )
         is None
     )
+    os.environ["DECKARD_DEFAULT_CONFIG"] = args.config_file
+    os.environ["DECKARD_CONFIG_PATH"] = args.config_dir

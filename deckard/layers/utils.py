@@ -105,6 +105,7 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
     logger.info(f"Running experiment in config_dir: {config_dir}")
     logger.info(f"Running experiment with config_name: {file}")
     config_dir = Path(Path(), config_dir).resolve().as_posix()
+    OmegaConf.register_new_resolver("eval", eval)
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         try:
             cfg = compose(config_name=Path(default_file).stem, overrides=overrides)

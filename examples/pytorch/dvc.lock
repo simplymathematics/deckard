@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train
+    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
     params:
       params.yaml:
         data:
@@ -28,7 +28,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: mnist
           model_dir: models
           model_file: model
           model_type: .pt
@@ -58,8 +58,8 @@ stages:
                   with_std: true
             initialize:
               clip_values:
-              - 0.0
-              - 1.0
+              - 0
+              - 255
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -89,7 +89,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -101,38 +101,40 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/data/data.pkl
+    - path: mnist/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
-    - path: output/models/model.optimizer.pt
-      md5: da778ab9ca244100045790051485e60f
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: 1316143c68da44c95cc0294482ba8a50
       size: 44780845
-    - path: output/models/model.pt
-      md5: 71c48241b81b18b3b60afc8a3f10f25a
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 0c750c2da34962313084b05ceb424aa2
       size: 44785941
-    - path: output/reports/train/default/params.yaml
-      md5: eedabd38cbbfce21b879b647497174da
-      size: 2148
-    - path: output/reports/train/default/predictions.json
-      md5: b4d5926c71a4b54076b566a73e7af54b
-      size: 2881449
-    - path: output/reports/train/default/score_dict.json
-      md5: 51249137fa5081d7eff95624f3d1fa1f
-      size: 410
+    - path: mnist/reports/train/default/predictions.json
+      hash: md5
+      md5: 1396b6032cbd1e76ace82789dcf54861
+      size: 2883588
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: 45631341a862aa88bfffbde78d099c6d
+      size: 411
   attack:
-    cmd: python -m deckard.layers.experiment attack
+    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
     deps:
-    - path: output/data/data.pkl
+    - path: mnist/data/data.pkl
       md5: de934a5f5157970e5f30b8f3f1856a68
       size: 222320311
-    - path: output/models/model.pt
-      md5: dc00c8994b407de0e23e96df50b46425
-      size: 44786389
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 0c750c2da34962313084b05ceb424aa2
+      size: 44785941
     params:
       params.yaml:
         attack:
           _target_: deckard.base.attack.Attack
-          attack_size: 100
+          attack_size: 10
           data:
             _target_: deckard.base.data.Data
             generate:
@@ -171,8 +173,8 @@ stages:
                       with_std: true
                 initialize:
                   clip_values:
-                  - 0.0
-                  - 1.0
+                  - 0
+                  - 255
                   criterion:
                     name: torch.nn.CrossEntropyLoss
                   optimizer:
@@ -202,7 +204,7 @@ stages:
               library: pytorch
               trainer:
                 batch_size: 1024
-                nb_epoch: 20
+                nb_epoch: 100
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -226,8 +228,8 @@ stages:
                     with_std: true
               initialize:
                 clip_values:
-                - 0.0
-                - 1.0
+                - 0
+                - 255
                 criterion:
                   name: torch.nn.CrossEntropyLoss
                 optimizer:
@@ -257,10 +259,22 @@ stages:
             library: pytorch
             trainer:
               batch_size: 1024
-              nb_epoch: 20
-        data.generate:
-          _target_: deckard.base.data.generator.DataGenerator
-          name: torch_mnist
+              nb_epoch: 100
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
         files:
           _target_: deckard.base.files.FileConfig
           adv_predictions_file: adv_predictions.json
@@ -270,7 +284,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: output
+          directory: mnist
           model_dir: models
           model_file: model
           model_type: .pt
@@ -300,8 +314,8 @@ stages:
                   with_std: true
             initialize:
               clip_values:
-              - 0.0
-              - 1.0
+              - 0
+              - 255
               criterion:
                 name: torch.nn.CrossEntropyLoss
               optimizer:
@@ -331,7 +345,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 20
+            nb_epoch: 100
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -343,18 +357,18 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/attacks/attack.pkl
-      md5: b1497fb3f7d861a2f7d60409a87a56e2
-      size: 313766
-    - path: output/reports/attack/default/adv_predictions.json
-      md5: 1005bc23be3cdadb2ff29385db954c62
-      size: 21609
-    - path: output/reports/attack/default/params.yaml
-      md5: 66a5664fcf522558c2aa80366bc702af
-      size: 4937
-    - path: output/reports/attack/default/score_dict.json
-      md5: 7bf8e030eed14747618bd0526f9ce0ed
-      size: 535
+    - path: mnist/attacks/attack.pkl
+      hash: md5
+      md5: e1047df78f629f7267cfa7ef869f19f5
+      size: 31517
+    - path: mnist/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: 2ab54c7713532e6e1303e5653c9e14f3
+      size: 2194
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
   models:
     cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
@@ -434,75 +448,314 @@ stages:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
       output/reports/attack.csv
     deps:
-    - path: ResNet152.db
-      md5: d86a693a86ec196fcd4887013acde398
-      size: 434176
+    - path: ResNet101.db
+      md5: c47414423a51a4b866be6ce8312cb97e
+      size: 561152
+    - path: ResNet18.db
+      md5: 2ae52c7b342b46ac01c79f06bfdc6c38
+      size: 2768896
+    - path: ResNet34.db
+      md5: 6a5795cbb9d977cdaadf365a6ac76a0a
+      size: 983040
+    - path: ResNet50.db
+      md5: 7e215d670119b0703c3d97d86e28e117
+      size: 561152
     - path: output/reports/attack/
-      md5: 0ea96d75e1d41ddf1e4e856260d3d327.dir
-      size: 8695142484
-      nfiles: 17939
+      md5: a76eb881be1813685bf988cf8dbe7a52.dir
+      size: 5109780242
+      nfiles: 10514
     outs:
     - path: output/reports/attack.csv
-      md5: 1d31d2bc679e668fc31e323a444c84fd
-      size: 13006598
+      md5: 69c87ac633b8abae15d65852c79ea89c
+      size: 6309975
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
     deps:
-    - path: attack.db
-      md5: c9f920c7233802e9c46e4051c2da78e6
-      size: 307200
-    - path: model.db
-      md5: d1eac324650402da6e3de1aebe0e3b3c
-      size: 237568
+    - path: ResNet101.db
+      md5: 744f187243001db70f63c8161d7f913f
+      size: 1314816
+    - path: ResNet152.db
+      md5: e0fcb3876ec636b12d7dc9e71b9d1e1c
+      size: 1314816
+    - path: ResNet18.db
+      md5: aa69b1818219c139f8e33ac205771ec1
+      size: 110592
+    - path: ResNet34.db
+      md5: e4d151b9800a1255a0143368057cb146
+      size: 1339392
+    - path: ResNet50.db
+      md5: 9c9bc0aab00251ca5e9bd210366bc055
+      size: 1339392
     - path: output/reports/train/
-      md5: bb02cab436e3969d65066c5058939207.dir
-      size: 395685799
-      nfiles: 655
+      md5: 098781f04bdba3498c00a157e3e45826.dir
+      size: 403646689
+      nfiles: 640
     outs:
     - path: output/reports/train.csv
-      md5: 922fa64743aa481feb79213a056c816e
-      size: 363649
+      md5: 152c61d1ae1a58e89c03c1351d5bf406
+      size: 411488
   attacks@ResNet152:
-    cmd: bash attacks.sh ++model.init.name=torch_example.ResNet152 ++stage=attack
-      ++hydra.sweeper.storage=sqlite:///ResNet152.db --config-name grid.yaml
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet152
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet152.db
+      --config-name mnist.yaml
     deps:
     - path: attacks.sh
-      md5: 6a6a91d037b4ce29f84009d9b1161d4f
-      size: 3034
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
     - path: models.sh
-      md5: 76fbee55cb5f90913d0863df9debd357
-      size: 1299
-    - path: output/reports/attack/default/score_dict.json
-      md5: 35d505c81867c9c50d74780c19d6f7e7
-      size: 539
+      hash: md5
+      md5: 1937e58bedac027034aea7d4a5712407
+      size: 1380
     outs:
-    - path: ResNet152.db
-      md5: d86a693a86ec196fcd4887013acde398
-      size: 434176
+    - path: mnist/reports/attack/ResNet152.db
+      hash: md5
+      md5: afb6f3d2616446226012b3ff1143086a
+      size: 462848
   plot:
-    cmd: python plots.py --path output/plots/ --file output/reports/attack.csv
+    cmd: python -m deckard.layers.plots --path output/plots/ --file output/reports/attack.csv
     deps:
     - path: ResNet101.db
-      md5: 00e8859421e45d77c36d2a39ea5deaa5
-      size: 466944
+      md5: c47414423a51a4b866be6ce8312cb97e
+      size: 561152
     - path: ResNet152.db
-      md5: d86a693a86ec196fcd4887013acde398
-      size: 434176
+      md5: 690f931bf696f8e5f1e044fa7b335411
+      size: 425984
     - path: ResNet18.db
-      md5: 3d304e014200ae926dec63521b6eeca0
-      size: 1499136
+      md5: 2ae52c7b342b46ac01c79f06bfdc6c38
+      size: 2768896
     - path: ResNet34.db
-      md5: 7bf834e39f0367deddd36074e8f69d47
-      size: 1400832
+      md5: 6a5795cbb9d977cdaadf365a6ac76a0a
+      size: 983040
     - path: ResNet50.db
-      md5: 771e206f2ab932ae2978783214290c41
-      size: 110592
+      md5: 7e215d670119b0703c3d97d86e28e117
+      size: 561152
     - path: output/reports/attack.csv
-      md5: 1d31d2bc679e668fc31e323a444c84fd
-      size: 13006598
+      md5: 69c87ac633b8abae15d65852c79ea89c
+      size: 6309975
     outs:
-    - path: output/plots/
-      md5: ad60dde37b7ad40574c2e2a3e391224d.dir
-      size: 8442674
-      nfiles: 13
+    - path: output/plots/data.csv
+      md5: 8283c78e358db5d4ce19e5d44b6e735e
+      size: 2185730
+  attacks@ResNet101:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet101.db
+      --config-name mnist.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
+    - path: models.sh
+      hash: md5
+      md5: 1937e58bedac027034aea7d4a5712407
+      size: 1380
+    outs:
+    - path: mnist/reports/attack/ResNet101.db
+      hash: md5
+      md5: 600452804d96c8b8483c3f8da01130c4
+      size: 462848
+  attacks@ResNet34:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet34.db
+      --config-name mnist.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
+    - path: models.sh
+      hash: md5
+      md5: 1937e58bedac027034aea7d4a5712407
+      size: 1380
+    outs:
+    - path: mnist/reports/attack/ResNet34.db
+      hash: md5
+      md5: 9244c6545aa2d39680b601311b446b7d
+      size: 1593344
+  attacks@ResNet50:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet50.db
+      --config-name mnist.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
+    - path: models.sh
+      hash: md5
+      md5: 1937e58bedac027034aea7d4a5712407
+      size: 1380
+    outs:
+    - path: mnist/reports/attack/ResNet50.db
+      hash: md5
+      md5: d9ee221b942b56d9bb720e022e05bf4b
+      size: 462848
+  afr:
+    cmd: python -m deckard.layers.afr --dataset mnist
+    deps:
+    - path: output/plots/data.csv
+      md5: 8283c78e358db5d4ce19e5d44b6e735e
+      size: 2185730
+    outs:
+    - path: output/plots/aft_comparison.csv
+      md5: a72d5fbf5c21b5055e6bc20a0e48c6aa
+      size: 178
+    - path: output/plots/aft_comparison.tex
+      md5: e53edcb94e353f2e03324d1c02673332
+      size: 401
+    - path: output/plots/cox_aft.pdf
+      md5: 6b5fd449d724cf097eea5d8569dda3f0
+      size: 30712
+    - path: output/plots/cox_partial_effects.pdf
+      md5: a434a352ea874a5c188f76ef8456dbdf
+      size: 28132
+    - path: output/plots/log_logistic_aft.pdf
+      md5: 6b1e524a7b7c2da913e4c9346115167c
+      size: 33524
+    - path: output/plots/log_logistic_partial_effects.pdf
+      md5: f3c5ccbbb5129cbffe6b38f70d655245
+      size: 29147
+    - path: output/plots/log_normal_aft.pdf
+      md5: c0b1f808746c28b5b352ca425c6d2d33
+      size: 34017
+    - path: output/plots/log_normal_partial_effects.pdf
+      md5: 1c67a22e51019ceeb39573ea21b4a7ba
+      size: 29844
+    - path: output/plots/weibull_aft.pdf
+      md5: 4b8119d87bd201bea0fa9955e3f3481d
+      size: 32175
+    - path: output/plots/weibull_partial_effects.pdf
+      md5: 4b1433467ad94132bde9003c9faaed10
+      size: 29359
+  copy_results:
+    cmd: cp -r output/plots/* ~/ml_afr/mnist/
+    deps:
+    - path: output/plots/aft_comparison.csv
+      md5: a72d5fbf5c21b5055e6bc20a0e48c6aa
+      size: 178
+    - path: output/plots/data.csv
+      md5: 8283c78e358db5d4ce19e5d44b6e735e
+      size: 2185730
+  attacks@ResNet18:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet18.db
+      --config-name mnist.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
+      size: 472
+    - path: models.sh
+      hash: md5
+      md5: 1937e58bedac027034aea7d4a5712407
+      size: 1380
+    outs:
+    - path: mnist/reports/attack/ResNet18.db
+      hash: md5
+      md5: 2b4e2a2ac1cdd015cf469496a9861088
+      size: 999424
+  models@ResNet50:
+    cmd: bash models.sh ++model.init.name=torch_example.ResNet50 stage=train ++hydra.sweeper.storage=sqlite:///mnist/reports/train/ResNet50.db
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: cc914518d5c8fdab1e7ec43c7db63a3b
+      size: 44780845
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 0508fa68d600b39cd8ce1dad0152fba3
+      size: 44785941
+    - path: models.sh
+      md5: e5079ede85d4f9b286984e507a157af4
+      size: 1371
+    outs:
+    - path: mnist/reports/train/ResNet50.db
+      hash: md5
+      md5: 957e39666f06c9e8e207a9f98bc569b5
+      size: 913408
+  models@ResNet18:
+    cmd: bash models.sh ++model.init.name=torch_example.ResNet18 stage=train ++hydra.sweeper.storage=sqlite:///mnist/reports/train/ResNet18.db
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: f4e28adc9c0d30180eca422da2dd00e3
+      size: 44780845
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 53a2d89abb350e2601f35f36b95f6095
+      size: 44785941
+    - path: models.sh
+      hash: md5
+      md5: cd5b2760310df71a36a2ea26021477b4
+      size: 1366
+    outs:
+    - path: mnist/reports/train/ResNet18.db
+      hash: md5
+      md5: 225273e0494668fa42bc6f69fb29d392
+      size: 901120
+  models@ResNet34:
+    cmd: bash models.sh ++model.init.name=torch_example.ResNet34 stage=train ++hydra.sweeper.storage=sqlite:///mnist/reports/train/ResNet34.db
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: cc914518d5c8fdab1e7ec43c7db63a3b
+      size: 44780845
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 0508fa68d600b39cd8ce1dad0152fba3
+      size: 44785941
+    - path: models.sh
+      hash: md5
+      md5: e5079ede85d4f9b286984e507a157af4
+      size: 1371
+    outs:
+    - path: mnist/reports/train/ResNet34.db
+      hash: md5
+      md5: af60ce478f27cda303ebd34c63cf05d3
+      size: 913408
+  models@ResNet101:
+    cmd: bash models.sh ++model.init.name=torch_example.ResNet101 stage=train ++hydra.sweeper.storage=sqlite:///mnist/reports/train/ResNet101.db
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: cc914518d5c8fdab1e7ec43c7db63a3b
+      size: 44780845
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 0508fa68d600b39cd8ce1dad0152fba3
+      size: 44785941
+    - path: models.sh
+      hash: md5
+      md5: cd5b2760310df71a36a2ea26021477b4
+      size: 1366
+    outs:
+    - path: mnist/reports/train/ResNet101.db
+      hash: md5
+      md5: a8e178cba49addf77bac3b27e974ce8c
+      size: 917504

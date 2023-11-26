@@ -1,0 +1,198 @@
+name: optuna
+solutions:
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 72
+    ++model.trainer.batch_size: 6032
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 5453
+  values:
+  - 0.09
+  - 16191002500.0
+  - 202496300.0
+  - 0.07
+  - 1.5970579
+  - 0.2567236
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 65
+    ++model.trainer.batch_size: 4381
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 8919
+  values:
+  - 0.09
+  - 15576419100.0
+  - 212521900.0
+  - 0.07
+  - 1.686744
+  - 0.1941442
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 60
+    ++model.trainer.batch_size: 5436
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 4272
+  values:
+  - 0.09
+  - 15355428000.0
+  - 199412700.0
+  - 0.1
+  - 1.9881419
+  - 0.1924052
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 89
+    ++model.trainer.batch_size: 9609
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 3885
+  values:
+  - 0.13
+  - 15566144400.0
+  - 186406200.0
+  - 0.1
+  - 1.5605767
+  - 0.2238553
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 57
+    ++model.trainer.batch_size: 9207
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 768
+  values:
+  - 0.12
+  - 15457630400.0
+  - 208470100.0
+  - 0.1
+  - 1.5746003
+  - 0.1935967
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 47
+    ++model.trainer.batch_size: 7729
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 1258
+  values:
+  - 0.13
+  - 15770705800.0
+  - 200726400.0
+  - 0.12
+  - 1.5869763
+  - 0.1937882
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 95
+    ++model.trainer.batch_size: 5215
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 4186
+  values:
+  - 0.07
+  - 15546558500.0
+  - 221618200.0
+  - 0.09
+  - 1.6315451
+  - 0.2556823
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 84
+    ++model.trainer.batch_size: 3565
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 5493
+  values:
+  - 0.1
+  - 15605900800.0
+  - 216817200.0
+  - 0.13
+  - 1.7074055
+  - 0.1922862
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 14
+    ++model.trainer.batch_size: 3226
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 3694
+  values:
+  - 0.11
+  - 15908505000.0
+  - 198622800.0
+  - 0.13
+  - 1.5845013
+  - 0.223282
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 86
+    ++model.trainer.batch_size: 6061
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 2150
+  values:
+  - 0.08
+  - 15959433400.0
+  - 189523100.0
+  - 0.1
+  - 1.5776716
+  - 0.1923722
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 51
+    ++model.trainer.batch_size: 9428
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 1296
+  values:
+  - 0.14
+  - 15580803900.0
+  - 267569400.0
+  - 0.11
+  - 1.6531644
+  - 0.221908
+- params:
+    ++data.sample.random_state: 1
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 28
+    ++model.trainer.batch_size: 6968
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 481
+  values:
+  - 0.08
+  - 15483985500.0
+  - 205661300.0
+  - 0.1
+  - 1.6540843
+  - 0.2547964
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 46
+    ++model.trainer.batch_size: 8907
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 4445
+  values:
+  - 0.08
+  - 15557539700.0
+  - 238184900.0
+  - 0.08
+  - 1.6043485
+  - 0.2529451
+- params:
+    ++data.sample.random_state: 0
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 51
+    ++model.trainer.batch_size: 8468
+    ++attack.init.eps: 0.01
+    ++attack.init.batch_size: 7514
+  values:
+  - 0.17
+  - 15626399800.0
+  - 221487300.0
+  - 0.14
+  - 1.6802734
+  - 0.2241953

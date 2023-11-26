@@ -6,15 +6,11 @@ from omegaconf import DictConfig, OmegaConf, ListConfig
 import numpy as np
 import json
 from pathlib import Path
-import pandas as pd
 import logging
 from copy import deepcopy
 import pickle
 from art.utils import to_categorical
 
-from ..data import Data
-from ..model import Model
-from ..attack import Attack
 from ..utils import my_hash
 
 logger = logging.getLogger(__name__)
@@ -46,26 +42,6 @@ class ScorerConfig:
         args = args if args is not None else ["y_pred", "y_true"]
         params.update(**kwargs.pop("params", {}))
         self.direction = direction
-        if "args" in kwargs:
-            new_args = kwargs.pop("args")
-            if isinstance(new_args, dict):
-                for v in new_args.values():
-                    if v not in args:
-                        args.append(v)
-            elif isinstance(new_args, DictConfig):
-                new_args = OmegaConf.to_container(new_args, resolve=True)
-                for v in new_args.values():
-                    if v not in args:
-                        args.append(v)
-            elif isinstance(new_args, list):
-                for v in new_args:
-                    if v not in args:
-                        args.append(v)
-            elif isinstance(new_args, ListConfig):
-                new_args = OmegaConf.to_container(new_args, resolve=True)
-                for v in new_args:
-                    if v not in args:
-                        args.append(v)
         self.args = args
         self.params = kwargs
         self.direction = direction
@@ -87,40 +63,16 @@ class ScorerConfig:
                 new_args.append(dep)
             elif arg in ["labels", "y_true", "ground_truth"]:
                 new_args.append(ind)
-            elif isinstance(arg, str) and Path(arg).exists():
-                arg = self.load(arg)
-                new_args.append(arg)
-            elif isinstance(arg, list):
-                new_args.append(np.array(arg))
-            elif isinstance(arg, ListConfig):
-                arg = OmegaConf.to_container(arg, resolve=True)
-                new_args.extend(arg)
-            elif isinstance(arg, dict):
-                arg = OmegaConf.to_container(arg, resolve=True)
-                new_args.append(arg)
-            elif isinstance(arg, DictConfig):
-                arg = OmegaConf.to_container(arg, resolve=True)
-                new_args.append(arg)
-            else:
+            else:  # pragma: no cover
                 raise TypeError(f"Unknown type {type(arg)} for arg {arg}")
         args = new_args
         config = {"_target_": self.name}
         config.update(kwargs)
-        while "params" in config:
-            config.update(**config.pop("params"))
-        while "kwargs" in config:
-            config.update(**config.pop("kwargs"))
-        new_args = []
-        for arg in args:
-            if isinstance(arg, str) and Path(arg).exists():
-                arg = self.load(arg)
-            new_args.append(arg)
-        args = new_args
         try:
             result = call(config, *args, **kwargs)
 
-        except InstantiationException as e:
-            if "continuous-multioutput" in str(e):
+        except InstantiationException as e:  # pragma: no cover
+            if "continuous-multioutput" in str(e) or "multiclass-multioutput" in str(e):
                 new_args = []
                 for arg in args:
                     if hasattr(arg, "shape"):
@@ -157,52 +109,9 @@ class ScorerConfig:
                 raise e
         return result
 
-    def __call__(self, *args, **kwargs) -> float:
-        new_args = []
-        for arg in args:
-            if isinstance(arg, str) and Path(arg).exists():
-                arg = self.load(arg)
-            elif isinstance(arg, np.ndarray):
-                pass
-            elif isinstance(arg, pd.DataFrame):
-                arg = arg.values
-            elif isinstance(arg, pd.Series):
-                arg = arg.values
-            elif isinstance(arg, list):
-                arg = np.array(arg)
-            elif isinstance(DictConfig):
-                arg = OmegaConf.to_container(arg, resolve=True)
-                kwargs.update(**arg)
-            elif isinstance(arg, dict):
-                kwargs.update(**arg)
-            elif isinstance(arg, ListConfig):
-                arg = OmegaConf.to_container(arg, resolve=True)
-            elif isinstance(arg, Data):
-                arg = arg()
-            elif isinstance(arg, Model):
-                _, arg = arg.initialize()
-            elif isinstance(arg, Attack):
-                raise NotImplementedError("Attacks are not supported yet")
-            new_args.append(arg)
-        args = new_args
-        score = self.score(*args, **kwargs)
+    def __call__(self, *args) -> float:
+        score = self.score(*args)
         return score
-
-    def read(self, filename):
-        suffix = Path(filename).suffix
-        if suffix in [".json"]:
-            with open(filename, "r") as f:
-                data = json.load(f)
-        elif suffix in [".csv"]:
-            data = pd.read_csv(filename)
-        elif suffix in [".xlsx"]:
-            data = pd.read_excel(filename)
-        elif suffix in [".pkl", ".pickle"]:
-            with open(filename, "rb") as f:
-                data = pickle.load(f)
-        else:
-            raise ValueError(f"Unknown file type {suffix}")
-        return data
 
 
 @dataclass
@@ -220,7 +129,7 @@ class ScorerDict:
                 v = ScorerConfig(**v)
             elif isinstance(v, ScorerConfig):
                 pass
-            else:
+            else:  # pragma: no cover
                 raise TypeError(f"Unknown type {type(v)} for scorer {k}")
             self.scorers[k] = v
 
@@ -237,9 +146,10 @@ class ScorerDict:
             if filetype in [".json"]:
                 with open(filename, "r") as f:
                     scores = json.load(f)
-            elif filetype in [".csv"]:
-                scores = pd.read_csv(filename).to_dict()
-            else:
+            elif filetype in [".pkl", ".pickle"]:
+                with open(filename, "rb") as f:
+                    scores = pickle.load(f)
+            else:  # pragma: no cover
                 raise NotImplementedError("Filetype not supported: {}".format(filetype))
         else:
             scores = {}
@@ -249,12 +159,7 @@ class ScorerDict:
         self, *args, score_dict_file=None, labels_file=None, predictions_file=None
     ):
         new_scores = {}
-        i = 0
-        for arg in args:
-            if hasattr(arg, "shape"):
-                logger.debug(f"arg {i} has shape {arg.shape}")
-            else:
-                logger.debug(f"arg {i} has type {type(arg)}")
+        args = list(args)
         if score_dict_file is not None and Path(score_dict_file).exists():
             scores = self.load(score_dict_file)
         else:
@@ -293,9 +198,9 @@ class ScorerDict:
         if filetype in [".json"]:
             with open(full_path, "w") as f:
                 json.dump(results, f)
-        elif filetype in [".csv"]:
-            df = pd.DataFrame(results)
-            df.to_csv(full_path, index=False)
-        else:
+        elif filetype in [".pkl", ".pickle"]:
+            with open(full_path, "wb") as f:
+                pickle.dump(results, f)
+        else:  # pragma: no cover
             raise ValueError(f"filetype {filetype} not supported for saving score_dict")
         return full_path

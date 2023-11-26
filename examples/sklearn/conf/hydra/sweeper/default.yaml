@@ -1,8 +1,0 @@
-defaults:
-- sampler: default
-_target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-direction: maximize
-study_name: model
-storage: sqlite:///model.db
-n_trials: 100
-n_jobs: 1

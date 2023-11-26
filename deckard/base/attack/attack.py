@@ -7,7 +7,8 @@ from copy import deepcopy
 from time import process_time_ns
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
-from art.utils import to_categorical
+from art.utils import to_categorical, compute_success
+from random import randint
 from ..data import Data
 from ..model import Model
 from ..utils import my_hash
@@ -58,8 +59,6 @@ class AttackInitializer:
         for thing in pop_list:
             kwargs.pop(thing, None)
         logger.info(f"Initializing attack {name} with parameters {kwargs}")
-        self.data = data
-        self.model = model
         if "x_train" in kwargs:
             assert (
                 data is not None
@@ -92,15 +91,16 @@ class AttackInitializer:
             logger.info("Attempting black-box attack.")
             config = {"_target_": name}
             config.update(**kwargs)
-            attack = instantiate(config)
+            attack = instantiate(config, model)
         except TypeError as e:
             if "verbose" in str(e):
                 config.pop("verbose", None)
-                attack = instantiate(config)
+                attack = instantiate(config, model)
+            else:
+                raise e
         except Exception as e:
-            if "estimator" or "classifier" in str(e):
-                logger.warning(f"Black-box attack failed with error: {e}")
-                logger.info("Attempting white-box attack.")
+            if "has not been fitted correctly" in str(e):
+                model, _ = self.model.fit(data=data, model=model)
                 attack = instantiate(config, model)
             else:
                 raise e
@@ -141,41 +141,64 @@ class EvasionAttack:
     ):
         time_dict = {}
         results = {}
+        kwargs = deepcopy(self.init.kwargs)
+        scale_max = kwargs.pop("scale_max", 1)
+        targeted = kwargs.pop("targeted", False)
+        ben_samples = data[1][: self.attack_size]
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
-            ben_samples = data[0][: self.attack_size]
-            start = process_time_ns()
             atk = self.init(model=model, attack_size=self.attack_size)
-            kwargs = deepcopy(self.init.kwargs)
-            scale_max = kwargs.pop("scale_max", 1)
-            targeted = kwargs.pop("targeted", False)
+
             if targeted is True:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
-                patches, masks = atk.generate(ben_samples, **kwargs)
-                samples = atk.apply_patch(ben_samples, scale=scale_max)
-            else:
-                samples = atk.generate(ben_samples)
-                end = process_time_ns()
-                time_dict.update({"adv_fit_time": (end - start) / 1e9})
-                time_dict.update(
-                    {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
+                start = process_time_ns()
+                patches, _ = atk.generate(ben_samples, **kwargs)
+                samples = atk.apply_patch(
+                    ben_samples,
+                    scale=scale_max,
+                    patch_external=patches,
                 )
-        results["adv_samples"] = samples
+            else:
+                start = process_time_ns()
+                samples = atk.generate(ben_samples, **kwargs)
+            end = process_time_ns()
+            time_dict.update(
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time": start,
+                    "adv_fit_stop_time": end,
+                },
+            )
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device": device})
+
+        results["adv_samples"] = np.array(samples)
+        try:
+            results["adv_success"] = compute_success(
+                classifier=model,
+                x_clean=ben_samples,
+                labels=data[3][: self.attack_size],
+                x_adv=samples,
+                targeted=self.kwargs.pop("targeted", False),
+            )
+        except TypeError as e:
+            logger.error(f"Failed to compute success rate. Error: {e}")
         if attack_file is not None:
             self.data.save(samples, attack_file)
         if adv_predictions_file is not None and Path(adv_predictions_file).exists():
             adv_predictions = self.data.load(adv_predictions_file)
-            results["adv_predictions"] = adv_predictions
+            results["adv_predictions"] = np.array(adv_predictions)
         else:
             adv_predictions = model.predict(samples)
-            results["adv_predictions"] = adv_predictions
+            results["adv_predictions"] = np.array(adv_predictions)
         if adv_predictions_file is not None:
             self.data.save(adv_predictions, adv_predictions_file)
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
             adv_probabilities = self.data.load(adv_probabilities_file)
-            results["adv_probabilities"] = adv_probabilities
+            results["adv_probabilities"] = np.array(adv_probabilities)
         else:
             if hasattr(self.model, "model") and hasattr(
                 self.model.model,
@@ -184,42 +207,32 @@ class EvasionAttack:
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             try:
                 start = process_time_ns()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
+
             except AttributeError:
                 start = process_time_ns()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
-            results["adv_probabilities"] = adv_probabilities
+            time_dict.update(
+                {
+                    "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_predict_time": (end - start) / 1e9,
+                    "adv_predict_start_time": start,
+                    "adv_predict_stop_time": end,
+                },
+            )
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_predict_device": device})
+            results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
 
         if adv_losses_file is not None and Path(adv_losses_file).exists():
             adv_loss = self.data.load(adv_losses_file)
-            results["adv_loss"] = adv_loss
+            results["adv_losses"] = np.array(adv_loss)
         elif adv_losses_file is not None:
             assert hasattr(
                 model,
@@ -233,9 +246,9 @@ class EvasionAttack:
                 preds = model.predict(samples[: self.attack_size])
                 adv_loss = log_loss(data[3][: self.attack_size], preds)
             self.data.save(adv_loss, adv_losses_file)
-            results["adv_loss"] = adv_loss
-        results["time_dict"] = time_dict
-
+            results["adv_losses"] = np.array(adv_loss)
+        if len(time_dict) > 0:
+            results["time_dict"] = time_dict
         return results
 
 
@@ -322,15 +335,30 @@ class PoisoningAttack:
                         # if hasattr(y_train, "type"):
                         import torch
 
-                        device = torch.device(
-                            "cuda" if torch.cuda.is_available() else "cpu",
-                        )
+                        if torch.cuda.is_available():
+                            number_of_devices = torch.cuda.device_count()
+                            device_number = randint(0, number_of_devices - 1)
+                            device = f"cuda:{device_number}"
+                        else:
+                            device = torch.device("cpu")
+                        if hasattr(model, "to"):
+                            model.to(self.device)
+                        elif hasattr(model, "model") and hasattr(model.model, "to"):
+                            model.model.to(self.device)
+                        else:
+                            raise RuntimeError("Cannot move model to device.")
                         y_train = torch.tensor(y_train, device=device)
                         y_trigger = torch.tensor(y_trigger, device=device)
                         x_train = torch.tensor(x_train, device=device)
                         x_trigger = torch.tensor(x_trigger, device=device)
                         y_trigger = y_trigger.to(torch.long)
                         y_trigger = y_trigger.to(torch.long)
+                        atk = self.init(
+                            model=model,
+                            data=data,
+                            attack_size=self.attack_size,
+                        )
+                        start = process_time_ns()
                         samples, _ = atk.poison(
                             x_trigger=x_trigger,
                             y_trigger=y_trigger,
@@ -340,11 +368,17 @@ class PoisoningAttack:
                     else:
                         raise e
                 end = process_time_ns()
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9)},
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time": start,
+                    "adv_fit_stop_time": end,
+                },
             )
-        results["adv_samples"] = samples
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device": device})
+        results["adv_samples"] = np.array(samples)
         results["time_dict"] = time_dict
         if attack_file is not None:
             self.data.save(samples, attack_file)
@@ -352,7 +386,7 @@ class PoisoningAttack:
             adv_predictions = self.data.load(adv_predictions_file)
         else:
             adv_predictions = model.predict(samples)
-        results["adv_predictions"] = adv_predictions
+        results["adv_predictions"] = np.array(adv_predictions)
         if adv_predictions_file is not None:
             self.data.save(adv_predictions, adv_predictions_file)
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
@@ -365,36 +399,25 @@ class PoisoningAttack:
                 start = process_time_ns()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             try:
                 start = process_time_ns()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
             except AttributeError:
                 start = process_time_ns()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
-                time_dict.update({"adv_predict_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_predict_time_per_sample": (end - start)
-                        / (len(samples) * 1e9),
-                    },
-                )
-        results["adv_probabilities"] = adv_probabilities
+        time_dict.update(
+            {
+                "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
+                "adv_predict_time": (end - start) / 1e9,
+                "adv_predict_start_time": start,
+                "adv_predict_stop_time": end,
+            },
+        )
+        device = str(model.device) if hasattr(model, "device") else "cpu"
+        time_dict.update({"adv_predict_device": device})
+        results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
 
@@ -406,10 +429,11 @@ class PoisoningAttack:
                 "compute_loss",
             ), "Model does not have compute_loss method."
             adv_loss = model.compute_loss(samples, data[3][: self.attack_size])
+            adv_loss = np.array(adv_loss)
             self.data.save(adv_loss, adv_losses_file)
         else:
             adv_loss = None
-        results["adv_loss"] = adv_loss
+        results["adv_losses"] = np.array(adv_loss)
         results["time_dict"] = time_dict
         return results
 
@@ -493,13 +517,7 @@ class InferenceAttack:
                 start = process_time_ns()
                 atk.fit(x=x_train, y=y_train, test_x=x_test, test_y=y_test, **fit)
                 end = process_time_ns()
-                time_dict.update({"adv_fit_time": (end - start) / 1e9})
-                time_dict.update(
-                    {
-                        "adv_fit_time_per_sample": (end - start)
-                        / (self.attack_size * 1e9),
-                    },
-                )
+
                 x_train = data[0][: self.attack_size]
                 y_train = data[2][: self.attack_size]
                 x_test = data[1][: self.attack_size]
@@ -509,12 +527,18 @@ class InferenceAttack:
                 end = process_time_ns()
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
-            time_dict.update({"adv_fit_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_fit_time_per_sample": (end - start) / (self.attack_size * 1e9)},
+                {
+                    "adv_fit_time_per_sample": (end - start) / (len(preds) * 1e9),
+                    "adv_fit_time": (end - start) / 1e9,
+                    "adv_fit_start_time": start,
+                    "adv_fit_stop_time": end,
+                },
             )
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device": device})
         results["time_dict"] = time_dict
-        results["adv_predictions"] = preds
+        results["adv_predictions"] = np.array(preds)
         results["time_dict"] = time_dict
         if adv_predictions_file is not None:
             self.data.save(preds, adv_predictions_file)
@@ -589,13 +613,17 @@ class ExtractionAttack:
                     **kwargs,
                 )
                 end = process_time_ns()
-                time_dict.update({"adv_fit_time": (end - start) / 1e9})
                 time_dict.update(
                     {
                         "adv_fit_time_per_sample": (end - start)
                         / (self.attack_size * 1e9),
+                        "adv_fit_time": (end - start) / 1e9,
+                        "adv_fit_start_time": start,
+                        "adv_fit_stop_time": end,
                     },
                 )
+                device = str(model.device) if hasattr(model, "device") else "cpu"
+                time_dict.update({"adv_fit_device": device})
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
         else:
@@ -608,12 +636,18 @@ class ExtractionAttack:
             start = process_time_ns()
             preds = attacked_model.predict(data[1][: self.attack_size])
             end = process_time_ns()
-            time_dict.update({"adv_predict_time": (end - start) / 1e9})
             time_dict.update(
-                {"adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9)},
+                {
+                    "adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9),
+                    "adv_predict_time": (end - start) / 1e9,
+                    "adv_predict_start_time": start,
+                    "adv_predict_stop_time": end,
+                },
             )
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_predict_device": device})
         results["time_dict"] = time_dict
-        results["adv_predictions"] = preds
+        results["adv_predictions"] = np.array(preds)
 
         # Get probabilities from adversarial model
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
@@ -623,7 +657,7 @@ class ExtractionAttack:
                 probs = attacked_model.predict_proba(data[1][: self.attack_size])
             else:
                 probs = preds
-        results["adv_probabilities"] = probs
+        results["adv_probabilities"] = np.array(probs)
         # Get loss from adversarial model
 
         if adv_losses_file is not None and Path(adv_losses_file).exists():
@@ -638,7 +672,7 @@ class ExtractionAttack:
                 from sklearn.metrics import log_loss
 
                 loss = log_loss(data[3][: self.attack_size], preds)
-        results["adv_loss"] = loss
+        results["adv_losses"] = np.array(loss)
 
         # Save files
         if adv_predictions_file is not None:
@@ -722,7 +756,7 @@ class Attack:
         self.method = method
         self.attack_size = attack_size
         if isinstance(kwargs, DictConfig):
-            kwargs = OmegaConf.to_container(kwargs)
+            kwargs = OmegaConf.to_container(kwargs, resolve=True)
         elif isinstance(kwargs, dict):
             pass
         else:
@@ -817,6 +851,7 @@ class Attack:
             )
         else:
             raise NotImplementedError(f"Attack method {self.method} not implemented.")
+
         return result
 
     def __hash__(self):

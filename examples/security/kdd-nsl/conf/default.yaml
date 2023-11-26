@@ -1,0 +1,39 @@
+defaults:
+    - _self_
+    - data: default
+    - model: default
+    - attack: hsj
+    - files: default
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/launcher : joblib
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      # seed: 123
+      consider_prior: true
+      prior_weight: 1.0
+      consider_magic_clip: true
+      consider_endpoints: false
+      n_startup_trials: 10
+      n_ei_candidates: 24
+      multivariate: false
+      warn_independent_sampling: true
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction: maximize
+    study_name: model
+    storage: sqlite:///model.db
+    n_trials: 100
+    n_jobs: 1
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 6
+    prefer : processes
+    verbose: 1
+    timeout: null
+    pre_dispatch: n_jobs
+    batch_size: auto
+    temp_folder: /tmp/deckard
+    max_nbytes: 100000
+    mmap_mode: r

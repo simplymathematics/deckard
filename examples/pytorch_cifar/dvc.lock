@@ -1,0 +1,578 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train --config_file cifar10.yaml
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            name: torch_cifar10
+          sample:
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: cifar
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                name: torch_cifar10
+              sample:
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            initialize:
+              clip_values:
+              - 0.0
+              - 255.0
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              name: torch_cifar10
+            sample:
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 3
+            num_classes: 10
+          library: pytorch
+          trainer:
+            batch_size: 1024
+            nb_epoch: 100
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: cifar/data/data.pkl
+      md5: 6503fed5d4e6cc1163898c0ab6a863dd
+      size: 739680311
+    - path: cifar/models/model.optimizer.pt
+      hash: md5
+      md5: 09f978b389dbce742b1a8731b81913b0
+      size: 44805933
+    - path: cifar/models/model.pt
+      hash: md5
+      md5: 7b6a070a946d4f5fcc79ac17de88296e
+      size: 44811029
+    - path: cifar/reports/train/default/predictions.json
+      hash: md5
+      md5: c0a3cdf07b36af7ef9084ab0e2030fcc
+      size: 2435001
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 665f7680184855a05db884355132024c
+      size: 397
+  attack:
+    cmd: python -m deckard.layers.experiment attack --config_file cifar10.yaml
+    deps:
+    - path: cifar/data/data.pkl
+      md5: 6503fed5d4e6cc1163898c0ab6a863dd
+      size: 739680311
+    - path: cifar/models/model.pt
+      hash: md5
+      md5: 7b6a070a946d4f5fcc79ac17de88296e
+      size: 44811029
+    params:
+      params.yaml:
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              name: torch_cifar10
+            sample:
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.attack.AttackInitializer
+            model:
+              _target_: deckard.base.model.Model
+              art:
+                _target_: deckard.base.model.art_pipeline.ArtPipeline
+                data:
+                  _target_: deckard.base.data.Data
+                  generate:
+                    name: torch_cifar10
+                  sample:
+                    random_state: 0
+                    stratify: true
+                  sklearn_pipeline:
+                    preprocessor:
+                      name: sklearn.preprocessing.StandardScaler
+                      with_mean: true
+                      with_std: true
+                initialize:
+                  clip_values:
+                  - 0.0
+                  - 255.0
+                  criterion:
+                    name: torch.nn.CrossEntropyLoss
+                  optimizer:
+                    lr: 0.01
+                    momentum: 0.9
+                    name: torch.optim.SGD
+                library: pytorch
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  name: torch_cifar10
+                sample:
+                  random_state: 0
+                  stratify: true
+                sklearn_pipeline:
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              init:
+                _target_: deckard.base.model.ModelInitializer
+                name: torch_example.ResNet18
+                num_channels: 3
+                num_classes: 10
+              library: pytorch
+              trainer:
+                batch_size: 1024
+                nb_epoch: 100
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            _target_: deckard.base.model.Model
+            art:
+              _target_: deckard.base.model.art_pipeline.ArtPipeline
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  name: torch_cifar10
+                sample:
+                  random_state: 0
+                  stratify: true
+                sklearn_pipeline:
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              initialize:
+                clip_values:
+                - 0.0
+                - 255.0
+                criterion:
+                  name: torch.nn.CrossEntropyLoss
+                optimizer:
+                  lr: 0.01
+                  momentum: 0.9
+                  name: torch.optim.SGD
+              library: pytorch
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                name: torch_cifar10
+              sample:
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            init:
+              _target_: deckard.base.model.ModelInitializer
+              name: torch_example.ResNet18
+              num_channels: 3
+              num_classes: 10
+            library: pytorch
+            trainer:
+              batch_size: 1024
+              nb_epoch: 100
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            name: torch_cifar10
+          sample:
+            random_state: 0
+            stratify: true
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: cifar
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                name: torch_cifar10
+              sample:
+                random_state: 0
+                stratify: true
+              sklearn_pipeline:
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            initialize:
+              clip_values:
+              - 0.0
+              - 255.0
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              name: torch_cifar10
+            sample:
+              random_state: 0
+              stratify: true
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 3
+            num_classes: 10
+          library: pytorch
+          trainer:
+            batch_size: 1024
+            nb_epoch: 100
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: cifar/attacks/attack.pkl
+      hash: md5
+      md5: 7af56fed692b7c502bf7431adc68a3d0
+      size: 123046
+    - path: cifar/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: 7860bb5575e86ce8df3240e01abc930d
+      size: 2099
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
+  attacks@ResNet18:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet18.db
+      --config-name cifar10.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
+    - path: models.sh
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
+    outs:
+    - path: cifar/reports/attack/ResNet18.db
+      hash: md5
+      md5: cb2a1edd44e08358b52d5ab5b6232aa5
+      size: 1212416
+  attacks@ResNet34:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet34.db
+      --config-name cifar10.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
+    - path: models.sh
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
+    outs:
+    - path: cifar/reports/attack/ResNet34.db
+      hash: md5
+      md5: c19b84776f8a6f99705c5f6bbd2a28c6
+      size: 819200
+  attacks@ResNet50:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet50.db
+      --config-name cifar10.yaml
+    deps:
+    - path: attacks.sh
+      hash: md5
+      md5: 963c858a322d7a4990a92a25d5684c57
+      size: 2907
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d3213b13fda99e50a582440a9752f827
+      size: 558
+    - path: models.sh
+      hash: md5
+      md5: 02a4961b4afe7ba84c41e9ad49c30c83
+      size: 2760
+    outs:
+    - path: cifar/reports/attack/ResNet50.db
+      hash: md5
+      md5: e44f2b22e7d876571148078c180842ea
+      size: 819200
+  attacks@ResNet101:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
+      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet101.db --config-name
+      default.yaml
+    deps:
+    - path: attacks.sh
+      md5: 18b363f1e2d0622c372e07116bed4fd8
+      size: 2731
+    - path: models.sh
+      md5: 9386478ad9795b80ec8ebc4abf1dbc81
+      size: 1221
+    - path: output/attacks/attack.pkl
+      md5: e57b871f32a1a8b7de497f6e5de4ebf1
+      size: 123046
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 0a097842037186d905fb2fd7ec4072d9
+      size: 2125
+    - path: output/reports/attack/default/params.yaml
+      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
+      size: 5175
+    outs:
+    - path: ResNet101.db
+      md5: 076f51ae8bc6f487920baee046c1a930
+      size: 1282048
+  attacks@ResNet152:
+    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet152
+      ++stage=attack ++hydra.sweeper.storage=sqlite:///ResNet152.db --config-name
+      default.yaml
+    deps:
+    - path: attacks.sh
+      md5: da51ec626ca4fa915be37e944ac5218b
+      size: 2745
+    - path: models.sh
+      md5: 9386478ad9795b80ec8ebc4abf1dbc81
+      size: 1221
+    - path: output/attacks/attack.pkl
+      md5: aab66fe871d14945003859fa44125c75
+      size: 123046
+    - path: output/reports/attack/default/adv_predictions.json
+      md5: 61d687b977e8c7e9404e69a690b244dd
+      size: 2154
+    - path: output/reports/attack/default/params.yaml
+      md5: 5177666d7f2e1e55ccad8ab4b735ffc7
+      size: 5175
+    outs:
+    - path: ResNet152.db
+      md5: 143435750b3f57d1a1280d412df74e0b
+      size: 638976
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
+      output/reports/attack.csv
+    deps:
+    - path: ResNet101.db
+      md5: 076f51ae8bc6f487920baee046c1a930
+      size: 1282048
+    - path: ResNet152.db
+      md5: 143435750b3f57d1a1280d412df74e0b
+      size: 638976
+    - path: ResNet18.db
+      md5: ff0eb78d052a31f3710336a21e81601e
+      size: 110592
+    - path: ResNet34.db
+      md5: 946c9a1a88d7caaa6af3679a343cc770
+      size: 1290240
+    - path: ResNet50.db
+      md5: 1e3b638560b7ee5e73c674d0e1eb0421
+      size: 446464
+    - path: output/reports/attack/
+      md5: e9c9c2d886498cd61644b8780106edf3.dir
+      size: 9928248484
+      nfiles: 30111
+    outs:
+    - path: output/reports/attack.csv
+      md5: 4ff19338677ca0ae0d766354a77fa4c8
+      size: 18272588
+  plot:
+    cmd: python -m deckard.layers.plots --path output/plots/ --file output/reports/attack.csv
+    deps:
+    - path: output/reports/attack.csv
+      md5: 4ff19338677ca0ae0d766354a77fa4c8
+      size: 18272588
+    outs:
+    - path: output/plots/adv_accuracy_vs_attack_type.pdf
+      md5: 8352f085dde6740b1c87a38bd2a87516
+      size: 34926
+    - path: output/plots/adv_accuracy_vs_defence_type.pdf
+      md5: db4aeb461e389047e05eeef7408c5266
+      size: 28996
+    - path: output/plots/adv_failure_rate_vs_train_time.pdf
+      md5: a71510ed101d113855d2f9d9ed000393
+      size: 42293
+    - path: output/plots/adv_failures_per_test_time_vs_defence_type.pdf
+      md5: 05872213e13a2b0d71f2b6876f769c45
+      size: 35029
+    - path: output/plots/adv_failures_per_train_time_vs_attack_type.pdf
+      md5: cfbd9e3d4ff3acf690409cc1af22cbee
+      size: 39001
+    - path: output/plots/adv_failures_per_train_time_vs_defence_type.pdf
+      md5: b267b951ccc797ccd0bb88e1b359fb6c
+      size: 32071
+    - path: output/plots/atk_param_vs_accuracy.pdf
+      md5: 8fc619749560fd1be8ac91d04af75203
+      size: 24819
+    - path: output/plots/ben_accuracy_vs_defence_type.pdf
+      md5: 2b8f3b735b4eec3572734048dfb859d4
+      size: 30297
+    - path: output/plots/ben_failure_rate_vs_defence_type.pdf
+      md5: d2110a2ffdbaa984fe4eb0470dea5c32
+      size: 36994
+    - path: output/plots/ben_failures_per_train_time_vs_defence_type.pdf
+      md5: 3aee46faf5a24cd7e0fe3a7053e0f3a2
+      size: 31693
+    - path: output/plots/data.csv
+      md5: 1a5ba962d3fc11adcde869712cae4c73
+      size: 5018537
+    - path: output/plots/def_param_vs_accuracy.pdf
+      md5: 8e1eea047988b58adafa0919d9674f1a
+      size: 22770
+    - path: output/plots/def_param_vs_adv_accuracy.pdf
+      md5: aa888fef90099ec3b4866bf0cc22686e
+      size: 22765
+    - path: output/plots/def_param_vs_adv_failure_rate.pdf
+      md5: 30a15ed503ec93e3b34e69d1af6473e5
+      size: 21905
+  afr:
+    cmd: python -m deckard.layers.afr --dataset cifar
+    deps:
+    - path: output/plots/data.csv
+      md5: 1a5ba962d3fc11adcde869712cae4c73
+      size: 5018537
+    outs:
+    - path: output/plots/aft_comparison.csv
+      md5: 7e07c42f2d7c3f3d6a4f49a7823ee62f
+      size: 191
+    - path: output/plots/aft_comparison.tex
+      md5: c9bf05dced494a1e69aa23534540902e
+      size: 416
+    - path: output/plots/cox_aft.pdf
+      md5: 08ba7bf48594f94cc66ceccba7b38939
+      size: 31502
+    - path: output/plots/cox_partial_effects.pdf
+      md5: 7f7a310fbde6ee46749632023f6b0015
+      size: 46475
+    - path: output/plots/log_logistic_aft.pdf
+      md5: e21d6c4176804a522022461b02ab7e20
+      size: 34160
+    - path: output/plots/log_logistic_partial_effects.pdf
+      md5: 800456e5361a2cab4a36533fbe149f97
+      size: 30412
+    - path: output/plots/log_normal_aft.pdf
+      md5: a6c08cd4cea95e707ed21b35c3d450e8
+      size: 34314
+    - path: output/plots/log_normal_partial_effects.pdf
+      md5: 7f8cf2863b9f4a959848675c6c1e8817
+      size: 31071
+    - path: output/plots/weibull_aft.pdf
+      md5: 3f3a04df96a120e3a878ece4365df8d6
+      size: 32480
+    - path: output/plots/weibull_partial_effects.pdf
+      md5: 45e3c5680ca070186224dda2141db4d8
+      size: 30790
+  copy_results:
+    cmd: cp -r output/plots/* ~/ml_afr/cifar/
+    deps:
+    - path: output/plots/aft_comparison.csv
+      md5: 7e07c42f2d7c3f3d6a4f49a7823ee62f
+      size: 191
+    - path: output/plots/data.csv
+      md5: 1a5ba962d3fc11adcde869712cae4c73
+      size: 5018537

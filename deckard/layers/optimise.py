@@ -12,7 +12,19 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
+OmegaConf.register_new_resolver("eval", eval)
+
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
+
+config_path = os.environ.get(
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path.cwd(), "conf").absolute().as_posix()),
+)
+assert Path(
+    config_path,
+).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
+config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
+full_path = Path(config_path, config_name).as_posix()
 
 
 def get_files(
@@ -83,15 +95,15 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default and isinstance(default[key], dict) and value is not None:
+        if key in default and isinstance(value, dict) and len(value) > 0:
             default[key] = merge_params(default[key], value)
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))
-            and value is not None
+            and len(value) > 0
         ):
-            default[key] = value
+            default.update({key: value})
         elif value is None:
-            continue
+            default.update({key: {}})
         else:
             logger.warning(f"Key {key} not found in default params. Skipping.")
     return default
@@ -153,73 +165,75 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         assert isinstance(stage, list), f"args.stage is of type {type(stage)}"
         stages = stage
-    if params is None:
-        with open(Path(path, "params.yaml"), "r") as f:
-            default_params = yaml.load(f, Loader=yaml.FullLoader)
+    # if params is None:
+    #     with open(Path(path, "params.yaml"), "r") as f:
+    #         default_params = yaml.load(f, Loader=yaml.FullLoader)
+    #     key_list = []
+    #     for stage in stages:
+    #         with open(Path(path, "dvc.yaml"), "r") as f:
+    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
+    #                 "params"
+    #             ]
+    #         key_list.extend(new_keys)
+    #     params = read_subset_of_params(key_list, params)
+    #     params = merge_params(default_params, params)
+    # elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
+    #     with open(Path(params), "r") as f:
+    #         params = yaml.load(f, Loader=yaml.FullLoader)
+    #     assert isinstance(
+    #         params,
+    #         dict,
+    #     ), f"Params in file {params} must be a dict. It is a {type(params)}."
+    #     key_list = []
+    #     for stage in stages:
+    #         with open(Path(path, "dvc.yaml"), "r") as f:
+    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
+    #                 "params"
+    #             ]
+    #         key_list.extend(new_keys)
+    #     with open(Path(path, "params.yaml"), "r") as f:
+    #         all_params = yaml.load(f, Loader=yaml.FullLoader)
+    #     default_params = read_subset_of_params(key_list, all_params)
+    #     params = merge_params(default_params, params)
+    if isinstance(params, dict):
         key_list = []
         for stage in stages:
+            assert Path(
+                path,
+                "dvc.yaml",
+            ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
                     "params"
                 ]
             key_list.extend(new_keys)
-        params = read_subset_of_params(key_list, params)
-        params = merge_params(default_params, params)
-    elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
-        with open(Path(params), "r") as f:
-            params = yaml.load(f, Loader=yaml.FullLoader)
-        assert isinstance(
-            params,
-            dict,
-        ), f"Params in file {params} must be a dict. It is a {type(params)}."
-        key_list = []
-        for stage in stages:
-            with open(Path(path, "dvc.yaml"), "r") as f:
-                new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-                    "params"
-                ]
-            key_list.extend(new_keys)
-        with open(Path(path, "params.yaml"), "r") as f:
-            all_params = yaml.load(f, Loader=yaml.FullLoader)
-        default_params = read_subset_of_params(key_list, all_params)
-        params = merge_params(default_params, params)
-    elif isinstance(params, dict):
-        key_list = []
-        for stage in stages:
-            with open(Path(path, "dvc.yaml"), "r") as f:
-                new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-                    "params"
-                ]
-            key_list.extend(new_keys)
-        with open(Path(path, "params.yaml"), "r") as f:
-            all_params = yaml.load(f, Loader=yaml.FullLoader)
-        default_params = read_subset_of_params(key_list, all_params)
-        params = merge_params(default_params, params)
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
-    assert isinstance(
-        params,
-        dict,
-    ), f"Params must be a dict. It is type {type(params)}."
+    params = read_subset_of_params(key_list, params)
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
-        key_list = []
+        file_list = []
         for stage in stages:
             pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
             if "deps" in pipe:
-                key_list.extend(pipe["deps"])
+                dep_list = [x.split(":")[0] for x in pipe["deps"]]
+                file_list.extend(dep_list)
             if "outs" in pipe:
-                key_list.extend(pipe["outs"])
+                out_list = [x.split(":")[0] for x in pipe["outs"]]
+                file_list.extend(out_list)
             if "metrics" in pipe:
-                key_list.extend(pipe["metrics"])
-    with open(Path(path, "params.yaml"), "r") as f:
-        all_params = yaml.load(f, Loader=yaml.FullLoader)
-    files = {}
-    for filename, file in all_params["files"].items():
-        if filename in str(key_list):
-            files[filename] = file
-    files["_target_"] = "deckard.base.files.FileConfig"
-    params = get_files(params, stage=stages[-1])
+                metric_list = [x.split(":")[0] for x in pipe["metrics"]]
+                file_list.extend(metric_list)
+    file_string = str(file_list)
+    files = params["files"]
+    file_list = list(files.keys())
+    for key in file_list:
+        template_string = "${files." + key + "}"
+        if template_string in file_string:
+            pass
+        else:
+            params["files"].pop(key)
+    params = get_files(params, stage)
     return params
 
 
@@ -238,9 +252,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     stage_params = {"stages": {stage: {}}}
     stage_params["stages"][stage] = dvc["stages"][stage]
     path.mkdir(exist_ok=True, parents=True)
-    with open(path / "dvc.yaml", "w") as f:
-        yaml.dump(stage_params, f, default_flow_style=False)
-    assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
+    # with open(path / "dvc.yaml", "w") as f:
+    #     yaml.dump(stage_params, f, default_flow_style=False)
+    # assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
     with open(Path(path, "params.yaml"), "w") as f:
         yaml.dump(params, f, default_flow_style=False)
     assert Path(
@@ -251,8 +265,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
+    raise_exception = cfg.pop("raise_exception", False)
     scorer = cfg.pop("optimizers", None)
-    working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
+    working_dir = Path(config_path).parent
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -261,7 +276,8 @@ def optimise(cfg: DictConfig) -> None:
     Path(folder).mkdir(exist_ok=True, parents=True)
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
-    direction = cfg.pop("direction", "minimize")
+    direction = cfg.get("direction", "minimize")
+    direction = [direction] if not isinstance(direction, list) else direction
     try:
         scores = exp()
         if isinstance(scorer, str):
@@ -272,6 +288,7 @@ def optimise(cfg: DictConfig) -> None:
             score = list(scores.values())[0]
         else:
             raise TypeError(f"Expected str or list, got {type(scorer)}")
+        logger.info(f"Score is : {score}")
     except Exception as e:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
@@ -280,19 +297,17 @@ def optimise(cfg: DictConfig) -> None:
             f.write(str(e))
             f.write(traceback.format_exc())
         if direction == "minimize":
-            score = 1e10
+            score = [1e10] * len(direction)
         else:
-            score = -1e10
-    return score
+            score = [-1e10] * len(direction)
+        logger.info(f"Score: {score}")
+        if raise_exception:
+            raise e
+    return tuple(score)
 
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-    config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
-    )
-    config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
 
     @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
     def hydra_optimise(cfg: DictConfig) -> float:
