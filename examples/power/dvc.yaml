@@ -28,6 +28,7 @@ stages:
       - model
       - scorers
       - files
+      - device_id
     # outs:
       # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -46,6 +47,7 @@ stages:
       - attack
       - scorers
       - files
+      - device_id
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}

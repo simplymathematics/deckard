@@ -40,11 +40,11 @@ def run_submodule(submodule, args):
             return 0
 
 
-def parse_and_repro(args, default_config="default.yaml"):
+def parse_and_repro(args, default_config="default.yaml", config_dir="conf"):
     if len(args) == 0:
         assert (
             save_params_file(
-                config_dir=Path(Path(), "conf"),
+                config_dir=Path(Path(), config_dir) if not Path(config_dir).is_absolute() else Path(config_dir),
                 config_file=default_config,
             )
             is None
@@ -84,6 +84,7 @@ if __name__ == "__main__":
         type=str,
         help="default hydra configuration file that you would like to reproduce with dvc repro.",
     )
+    parser.add_argument("--config_dir", type=str, default="conf")
     parser.add_argument("other_args", type=str, nargs="*")
     args = parser.parse_args()
     submodule = args.submodule
@@ -98,6 +99,6 @@ if __name__ == "__main__":
     else:
         other_args = []
     if submodule is None:
-        assert parse_and_repro(other_args, args.config_file) == 0
+        assert parse_and_repro(other_args, args.config_file, config_dir=args.config_dir) == 0
     else:
         assert run_submodule(submodule, other_args) == 0

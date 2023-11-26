@@ -190,7 +190,7 @@ class ModelTrainer:
             else:
                 raise e
         time_dict = {
-            "train_time": end,
+            "train_time": (start - end) / 1e9,
             "train_time_per_sample": end / (len(data[0]) * 1e9),
             "train_time_start": start,
             "train_time_end": end,
