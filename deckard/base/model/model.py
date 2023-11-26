@@ -11,7 +11,14 @@ from sklearn.exceptions import NotFittedError
 from ..data import Data
 from ..utils import my_hash, factory
 
-from .art_pipeline import ArtPipeline, all_models, sklearn_dict, torch_dict, tensorflow_dict, keras_dict
+from .art_pipeline import (
+    ArtPipeline,
+    all_models,
+    sklearn_dict,
+    torch_dict,
+    tensorflow_dict,
+    keras_dict,
+)
 from .sklearn_pipeline import SklearnModelPipeline
 
 __all__ = ["Model"]
@@ -49,7 +56,7 @@ class ModelInitializer:
                     params["input_dim"] = input_dim_list[0]
                 else:
                     params["input_dim"] = tuple(input_dim_list)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise ValueError(
                     f"input_dim must be a list or tuple. Got {type(params['input_dim'])}",
                 )
@@ -67,7 +74,7 @@ class ModelInitializer:
                     params["output_dim"] = output_dim_list[0]
                 else:
                     params["output_dim"] = tuple(output_dim_list)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise ValueError(
                     f"output_dim must be a list or tuple. Got {type(params['output_dim'])}",
                 )
@@ -81,7 +88,7 @@ class ModelInitializer:
             #     pipeline = pipeline
             if is_dataclass(pipeline):
                 pipeline = asdict(pipeline)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise ValueError(
                     f"Pipeline must be a dict or DictConfig or dataclass. Got {type(pipeline)}",
                 )
@@ -118,8 +125,9 @@ class ModelTrainer:
             pass
         elif library in tensorflow_dict.keys():
             import tensorflow as tf
+
             tf.config.run_functions_eagerly(True)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise NotImplementedError(f"Training library {library} not implemented")
         try:
             start = process_time_ns()
@@ -133,7 +141,7 @@ class ModelTrainer:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
-        except ValueError as e: # pragma: no cover
+        except ValueError as e:  # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
 
@@ -144,7 +152,7 @@ class ModelTrainer:
                 end = process_time_ns() - start
             else:
                 raise e
-        except AttributeError as e: # pragma: no cover
+        except AttributeError as e:  # pragma: no cover
             logger.warning(f"AttributeError: {e}. Trying to fit model anyway.")
             try:
                 data[0] = np.array(data[0])
@@ -154,15 +162,17 @@ class ModelTrainer:
                 end = process_time_ns() - start
             except Exception as e:
                 raise e
-        except RuntimeError as e: # pragma: no cover
+        except RuntimeError as e:  # pragma: no cover
             if "eager mode" in str(e):
                 import tensorflow as tf
+
                 tf.config.run_functions_eagerly(True)
                 start = process_time_ns()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
             elif "should be the same" in str(e).lower():
                 import torch
+
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])
@@ -183,11 +193,11 @@ class ModelTrainer:
         time_dict = {
             "train_time": end,
             "train_time_per_sample": end / (len(data[0]) * 1e9),
-            "train_time_start" : start ,
-            "train_time_end" : end,
-            "train_device" : device,
+            "train_time_start": start,
+            "train_time_end": end,
+            "train_device": device,
         }
-        
+
         return model, time_dict
 
 
@@ -217,7 +227,7 @@ class Model:
         elif isinstance(data, DictConfig):
             data_dict = OmegaConf.to_container(data, resolve=True)
             self.data = Data(**data_dict)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"Data {data} is not a dictionary or Data object. It is of type {type(data)}",
             )
@@ -228,7 +238,7 @@ class Model:
         elif isinstance(init, DictConfig):
             init_dict = OmegaConf.to_container(init, resolve=True)
             self.init = ModelInitializer(**init_dict)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"Init {init} is not a dictionary or ModelInitializer object. It is of type {type(init)}",
             )
@@ -243,7 +253,7 @@ class Model:
         elif isinstance(trainer, DictConfig):
             train_dict = OmegaConf.to_container(trainer, resolve=True)
             self.trainer = ModelTrainer(**train_dict)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"Trainer {trainer} is not a dictionary or ModelTrainer object. It is of type {type(trainer)}",
             )
@@ -266,7 +276,7 @@ class Model:
             art_dict = OmegaConf.to_container(art, resolve=True)
             art_dict.update(**kwargs)
             art_dict.update({"library": self.library})
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"Art {art} is not a dictionary or ArtPipeline object. It is of type {type(art)}",
             )
@@ -318,7 +328,7 @@ class Model:
                 model,
                 "predict_proba",
             ), f"Model {model} does not have a predict or predict_proba method."
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"Model {model} is not a valid model.")
         result_dict["model"] = model
 
@@ -431,7 +441,7 @@ class Model:
             if time_dict_file is not None:
                 if Path(time_dict_file).exists():
                     old_time_dict = self.data.load(time_dict_file)
-                    
+
                     old_time_dict.update(**result_dict["time_dict"])
                     time_dict = old_time_dict
                 self.data.save(time_dict, time_dict_file)
@@ -467,7 +477,7 @@ class Model:
         else:
             try:
                 model = self.init()
-            except RuntimeError as e: # pragma: no cover
+            except RuntimeError as e:  # pragma: no cover
                 if "disable eager execution" in str(e):
                     logger.warning("Disabling eager execution for Tensorflow.")
                     import tensorflow as tf
@@ -542,20 +552,20 @@ class Model:
             start = process_time_ns()
             predictions = model.predict(data[1])
             device = str(model.device) if hasattr(model, "device") else "cpu"
-        except NotFittedError as e: # pragma: no cover
+        except NotFittedError as e:  # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
             self.fit(data=data, model=model)
             start = process_time_ns()
             predictions = model.predict(data[1])
-        except TypeError as e: # pragma: no cover
+        except TypeError as e:  # pragma: no cover
             if "np.float32" in str(e):
                 data[1] = data[1].astype(np.float32)
                 start = process_time_ns()
                 predictions = model.predict(data[1])
             else:
                 raise e
-        except Exception as e: # pragma: no cover
+        except Exception as e:  # pragma: no cover
             logger.error(e)
             raise e
         end = process_time_ns() - start
@@ -566,9 +576,9 @@ class Model:
             {
                 "predict_time": end,
                 "predict_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_start_time" : start ,
-                "predict_stop_time" : end,
-                "predict_device" : device,
+                "predict_start_time": start,
+                "predict_stop_time": end,
+                "predict_device": device,
             },
         )
 
@@ -616,10 +626,9 @@ class Model:
             {
                 "predict_proba_time": end,
                 "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_proba_start_time" : start ,
-                "predict_proba_stop_time" : end,
-                "predict_proba_device" : device,
-
+                "predict_proba_start_time": start,
+                "predict_proba_stop_time": end,
+                "predict_proba_device": device,
             },
         )
 
@@ -663,7 +672,7 @@ class Model:
             start = process_time_ns()
             predictions = model.predict(data[1])
             end = process_time_ns() - start
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"Model {model} does not have a predict_log_proba or predict_proba method.",
             )
@@ -674,9 +683,9 @@ class Model:
             {
                 "predict_log_proba_time": end,
                 "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_log_proba_start_time" : start ,
-                "predict_log_proba_stop_time" : end,
-                "predict_log_device" : device,
+                "predict_log_proba_start_time": start,
+                "predict_log_proba_stop_time": end,
+                "predict_log_device": device,
             },
         )
 
@@ -703,7 +712,7 @@ class Model:
             import tensorflow as tf
 
             model = tf.keras.models.load_model(filename)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return model
 
@@ -716,6 +725,7 @@ class Model:
                     pickle.dump(model, f)
             elif suffix in [".pt", ".pth"]:
                 import torch as t
+
                 while hasattr(model, "model"):
                     model = model.model
                 t.save(model, filename)
@@ -725,11 +735,12 @@ class Model:
                 )
             elif suffix in [".h5", ".wt"]:
                 import keras as k
+
                 while hasattr(model, "model"):
                     model = model.model
                 try:
                     k.models.save_model(model, filename)
-                except NotImplementedError as e: # pragma: no cover
+                except NotImplementedError as e:  # pragma: no cover
                     logger.warning(e)
                     logger.warning(
                         f"Saving model to {suffix} is not implemented. Using model.save_weights instead.",
@@ -737,12 +748,13 @@ class Model:
                     model.save_weights(filename)
             elif suffix in [".tf", "_tf"]:
                 import keras as k
+
                 while hasattr(model, "model"):
                     model = model.model
                 k.models.save_model(model, filename, save_format="tf")
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise NotImplementedError(
                     f"Saving model to {suffix} is not implemented. You can add support for your model by adding a new method to the class {self.__class__.__name__} in {__file__}",
                 )
-        else: # pragma: no cover
+        else:  # pragma: no cover
             logger.warning(f"File {filename} already exists. Will not overwrite.")

@@ -6,7 +6,10 @@ import os
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 
-from deckard.base.model.sklearn_pipeline import SklearnModelPipeline, SklearnModelPipelineStage
+from deckard.base.model.sklearn_pipeline import (
+    SklearnModelPipeline,
+    SklearnModelPipelineStage,
+)
 
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
@@ -28,7 +31,7 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def test_init(self):
         self.assertTrue(isinstance(self.model.init.pipeline, SklearnModelPipeline))
-        
+
     def test_call(self):
         _, model = self.model.initialize()
         self.assertTrue(hasattr(model, "steps"))

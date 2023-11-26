@@ -56,8 +56,10 @@ def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> obj
     logger.debug("initialising {} with params {}".format(class_name, kwargs))
     try:
         obj = cls(*args, **kwargs)
-    except Exception as e: # pragma: no cover # noqa E722
-        logger.warning(f"Failed to instantiate {cls} with args: ~{args}~ and kwargs ~{kwargs}~")
+    except Exception as e:  # pragma: no cover # noqa E722
+        logger.warning(
+            f"Failed to instantiate {cls} with args: ~{args}~ and kwargs ~{kwargs}~"
+        )
         raise e
     return obj
 
@@ -105,7 +107,7 @@ def make_grid(dictionary: list) -> list:
             elif isinstance(v, list):
                 logger.debug(f"{v} is a list.")
                 dictionary[k] = v
-            else: #pragma: no cover
+            else:  # pragma: no cover
                 dictionary[k] = [v]
         keys = dictionary.keys()
         combinations = product(*dictionary.values())

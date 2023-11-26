@@ -72,12 +72,14 @@ class testSklearnData(unittest.TestCase):
         self.assertTrue(Path(data_file).exists())
         self.data.save(data, data_file)
         self.assertTrue(Path(data_file).exists())
-        
+
     def test_save(self):
         data_file = Path(self.directory, self.data_file + self.data_type).as_posix()
         train_labels_file = Path(data_file).with_suffix(".csv").as_posix()
         test_labels_file = Path(data_file).with_suffix(".json").as_posix()
-        data = self.data(train_labels_file=train_labels_file, test_labels_file=test_labels_file)
+        data = self.data(
+            train_labels_file=train_labels_file, test_labels_file=test_labels_file
+        )
         score_dict = {"test_score": 0.5}
         score_series = Series(score_dict)
         score_df = DataFrame(score_dict, index=[0])
@@ -87,12 +89,12 @@ class testSklearnData(unittest.TestCase):
         self.assertTrue(Path(data_file).exists())
         self.data.save(score_df, data_file)
         self.assertTrue(Path(data_file).exists())
-    
+
     def test_load_from_disk(self):
         data_file = Path(self.directory, self.data_file + self.data_type).as_posix()
         data = self.data(data_file)
         self.assertTrue(Path(data_file).exists())
-        data = self.data(data_file = data_file)
+        data = self.data(data_file=data_file)
         self.assertIsInstance(data, list)
         self.assertEqual(len(data), 4)
         data = self.data.initialize(filename=data_file)

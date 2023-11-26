@@ -36,7 +36,7 @@ class testFiles(unittest.TestCase):
         self.files()
         after_call = hash(self.files)
         self.assertEqual(old_hash, after_call)
-        
+
     def test_check_status(self):
         files = self.files()
         file = list(files.values())[0]
@@ -57,14 +57,17 @@ class testFiles(unittest.TestCase):
 class SklearnTestFiles(testFiles):
     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
     config_file = "sklearn.yaml"
-    
+
+
 class TorchTestFiles(testFiles):
     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
     config_file = "torch.yaml"
-    
+
+
 class KerasTestFiles(testFiles):
     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
     config_file = "keras.yaml"
+
 
 class TensorflowTestFiles(testFiles):
     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()

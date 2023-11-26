@@ -28,7 +28,7 @@ __all__ = ["TorchInitializer", "TorchCriterion", "TorchOptimizer"]
 
 @dataclass
 class TorchCriterion:
-    name: str 
+    name: str
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
@@ -62,7 +62,7 @@ class TorchOptimizer:
         dict_.update(**params)
         if hasattr(model, "parameters"):
             dict_.update({"params": model.parameters()})
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"Model {model} has no parameters attribute.")
         obj = instantiate(dict_)
         return obj
@@ -88,20 +88,24 @@ class TorchInitializer:
         kwargs = deepcopy(self.kwargs)
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
-        optimizer = TorchOptimizer(**kwargs.pop("optimizer", {"name" : "torch.optim.Adam"} ))(model)
+        optimizer = TorchOptimizer(
+            **kwargs.pop("optimizer", {"name": "torch.optim.Adam"})
+        )(model)
         kwargs.update({"optimizer": optimizer})
-        criterion = TorchCriterion(**kwargs.pop("criterion", {"name" : "torch.nn.CrossEntropyLoss"}))()
+        criterion = TorchCriterion(
+            **kwargs.pop("criterion", {"name": "torch.nn.CrossEntropyLoss"})
+        )()
         kwargs.update({"loss": criterion})
         if "input_shape" not in kwargs:
             kwargs.update({"input_shape": data[0].shape[1:]})
         if "nb_classes" not in kwargs:
-            if len(data[2].shape) == 1: # pragma: no cover
+            if len(data[2].shape) == 1:  # pragma: no cover
                 data[2] = to_categorical(data[2])
                 data[3] = to_categorical(data[3])
             kwargs.update({"nb_classes": data[2].shape[1]})
         if library in torch_dict and not isinstance(model, torch_dict[library]):
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise NotImplementedError(f"Library {library} not implemented")
         return model

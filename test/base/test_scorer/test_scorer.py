@@ -56,11 +56,11 @@ class testScorerDict(unittest.TestCase):
         for scorer in self.scorers:
             self.assertIsInstance(scorer[0], str)
             self.assertIsInstance(scorer[1], ScorerConfig)
-    
+
     def test_len(self):
         self.cfg.pop("_target_", None)
         self.assertEqual(len(self.scorers), len(self.cfg))
-        
+
     def test_getitem(self):
         scorer = self.scorers["accuracy"]
         self.assertIsInstance(scorer, ScorerConfig)
@@ -81,7 +81,13 @@ class testScorerDict(unittest.TestCase):
         score_dict = {}
         with open(Path(self.file).with_suffix(".json"), "w") as f:
             json.dump(score_dict, f)
-        score_dict = self.scorers(y_pred, y_true, score_dict_file=self.file, labels_file=self.true_file, predictions_file=self.preds_file)
+        score_dict = self.scorers(
+            y_pred,
+            y_true,
+            score_dict_file=self.file,
+            labels_file=self.true_file,
+            predictions_file=self.preds_file,
+        )
         for scorer in self.scorers:
             self.assertTrue(scorer[0] in score_dict)
         self.assertTrue(Path(self.file).exists())
@@ -159,7 +165,6 @@ class testScorerConfig(unittest.TestCase):
                 self.assertLessEqual(s, 1)
         else:
             raise ValueError("Score must be either a float or a list/tuple of floats")
-    
 
     def test_call(self):
         y_pred = np.random.randint(0, 2, size=(100,))
@@ -203,6 +208,7 @@ with initialize_config_dir(
     cfg = compose(config_name=model_config_file)
 model_cfg = cfg
 
+
 class testScorerDictWithArgs(testScorerDict):
     config_dir = Path(this_dir, "../../conf/scorers").resolve().as_posix()
     config_file = "args.yaml"
@@ -211,17 +217,16 @@ class testScorerDictWithArgs(testScorerDict):
 
 
 class testScorerDictfromDict(testScorerDict):
-
     def setUp(self):
         self.cfg = {
-            "accuracy" : {
+            "accuracy": {
                 "name": "sklearn.metrics.accuracy_score",
                 "alias": "accuracy_score",
                 "args": ["y_true", "y_pred"],
                 "params": {},
                 "direction": "maximize",
             },
-            "log_loss" : {
+            "log_loss": {
                 "name": "sklearn.metrics.log_loss",
                 "alias": "log_loss",
                 "args": ["y_true", "y_pred"],

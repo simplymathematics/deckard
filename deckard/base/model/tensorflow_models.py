@@ -9,6 +9,7 @@ from art.estimators.classification import (
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
 from ..utils import factory
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,7 +130,9 @@ class TensorflowV2Initializer:
         else:
             train_step = kwargs.pop("train_step")
             train_step = factory(name=train_step.pop("name"), **train_step)
-        if library in tensorflow_dict and not isinstance(model, tuple(tensorflow_dict.values())):
+        if library in tensorflow_dict and not isinstance(
+            model, tuple(tensorflow_dict.values())
+        ):
             est = tensorflow_dict[library]
             model = est(model, **kwargs, train_step=train_step)
         elif isinstance(model, tuple(tensorflow_dict.values())):

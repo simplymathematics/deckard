@@ -51,7 +51,7 @@ class Experiment:
             self.data = instantiate(data_dict)
         elif isinstance(data, Data):
             self.data = data
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError("data must be a dict, DictConfig, or Data object.")
         assert isinstance(self.data, Data), f"data is {type(self.data)}"
         # if isinstance(model, dict):
@@ -61,9 +61,9 @@ class Experiment:
             self.model = Model(**model_dict)
         elif isinstance(model, Model):
             self.model = model
-        elif isinstance(model, type(None)): # For experiments without models
+        elif isinstance(model, type(None)):  # For experiments without models
             self.model = None
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError("model must be a dict, DictConfig, or Model object.")
         assert isinstance(self.model, (Model, type(None)))
         if isinstance(scorers, dict):
@@ -155,7 +155,7 @@ class Experiment:
                 "predictions_file": files.get("predictions_file", None),
                 "probabilities_file": files.get("probabilities_file", None),
                 "time_dict_file": files.get("score_dict_file", None),
-                "losses_file" : files.get("losses_file", None),
+                "losses_file": files.get("losses_file", None),
                 # TODO train_score_file
                 # TODO test_score_file
             }
@@ -183,7 +183,7 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        else: # For experiments without models
+        else:  # For experiments without models
             preds = data[2]
         ##########################################################################
         # Load or run attack
@@ -229,7 +229,7 @@ class Experiment:
                 if self.model is not None:
                     preds = preds[: len(ground_truth)]
                     ground_truth = ground_truth[: len(preds)]
-                else: # For dexperiments without models
+                else:  # For dexperiments without models
                     preds = data[0][: len(ground_truth)]
                     ground_truth = data[1][: len(preds)]
                 logger.debug(f" len(preds) : {len(preds)}")
@@ -258,7 +258,11 @@ class Experiment:
         # Returns score if scorer is not None, otherwise returns status
         #########################################################################
         if self.optimizers is not None and self.optimizers != []:
-            self.optimizers = [self.optimizers] if not isinstance(self.optimizers, (list, ListConfig)) else self.optimizers
+            self.optimizers = (
+                [self.optimizers]
+                if not isinstance(self.optimizers, (list, ListConfig))
+                else self.optimizers
+            )
             scores = {}
             for scorer in self.optimizers:
                 try:

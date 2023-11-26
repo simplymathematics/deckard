@@ -4,7 +4,6 @@ import os
 import numpy as np
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
-from tempfile import mkdtemp
 from shutil import rmtree
 
 from deckard.base.data.generator import (
@@ -23,6 +22,7 @@ config_file = "classification.yaml"
 class testDataGenerator(unittest.TestCase):
     config_dir = Path(this_dir, "../../conf/data").resolve().as_posix()
     config_file = "classification.yaml"
+
     def setUp(self):
         with initialize_config_dir(
             config_dir=Path(self.config_dir).resolve().as_posix(),
@@ -58,14 +58,18 @@ class testDataGenerator(unittest.TestCase):
 class testDataGeneratorSklearn(testDataGenerator):
     config_file = "regression.yaml"
 
+
 class testDataGeneratorTorch(testDataGenerator):
     config_file = "torch_mnist.yaml"
-    
+
+
 class testDataGeneratorKeras(testDataGenerator):
     config_file = "keras_mnist.yaml"
-    
+
+
 class testDataGeneratorTensorflow(testDataGenerator):
     config_file = "tensorflow_mnist.yaml"
+
 
 class testSklearnDataGenerator(unittest.TestCase):
     def setUp(self):
@@ -101,7 +105,7 @@ class testSklearnDataGenerator(unittest.TestCase):
 class testTorchDataGenerator(unittest.TestCase):
     def setUp(self):
         self.names = ["torch_mnist", "torch_cifar", "torch_diabetes", "torch_cifar100"]
-        self.dir = Path(Path.cwd(), "tmp" ).resolve().as_posix()
+        self.dir = Path(Path.cwd(), "tmp").resolve().as_posix()
         Path(self.dir).mkdir(parents=True, exist_ok=True)
 
     def test_init(self):
@@ -121,7 +125,9 @@ class testTorchDataGenerator(unittest.TestCase):
     def test_call(self):
         for name in self.names:
             data = TorchDataGenerator(name=name, path=self.dir)()
-            data = TorchDataGenerator(name=name, path=self.dir)() # Test it again to make sure download only happens once
+            data = TorchDataGenerator(
+                name=name, path=self.dir
+            )()  # Test it again to make sure download only happens once
             self.assertIsInstance(data, list)
             self.assertIsInstance(data[0], np.ndarray)
             self.assertIsInstance(data[1], np.ndarray)
@@ -130,15 +136,14 @@ class testTorchDataGenerator(unittest.TestCase):
 
     def tearDown(self) -> None:
         rmtree(self.dir)
-        
+
 
 class testKerasDataGenerator(unittest.TestCase):
-        
     def setUp(self):
         self.names = ["keras_mnist", "keras_cifar10", "mnist", "cifar10", "diabetes"]
-        self.dir = Path(Path.cwd(), "tmp" ).resolve().as_posix()
+        self.dir = Path(Path.cwd(), "tmp").resolve().as_posix()
         Path(self.dir).mkdir(parents=True, exist_ok=True)
-    
+
     def test_init(self):
         for name in self.names:
             data = KerasDataGenerator(name=name, path=self.dir)
@@ -164,4 +169,3 @@ class testKerasDataGenerator(unittest.TestCase):
 
     def tearDown(self) -> None:
         rmtree(self.dir)
-        

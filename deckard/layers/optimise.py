@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
 config_path = os.environ.get(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path.cwd(), "conf").absolute().as_posix()),
-    )
-assert Path(config_path).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path.cwd(), "conf").absolute().as_posix()),
+)
+assert Path(
+    config_path
+).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
 full_path = Path(config_path, config_name).as_posix()
 
@@ -194,7 +196,9 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     if isinstance(params, dict):
         key_list = []
         for stage in stages:
-            assert Path(path, "dvc.yaml").exists(), f"{Path(path, 'dvc.yaml')} does not exist."
+            assert Path(
+                path, "dvc.yaml"
+            ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
                     "params"
@@ -255,6 +259,7 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     ).exists(), f"File {path/'params.yaml'} does not exist."
     return None
 
+
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     raise_exception = cfg.pop("raise_exception", False)
@@ -299,7 +304,6 @@ def optimise(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-    
 
     @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
     def hydra_optimise(cfg: DictConfig) -> float:

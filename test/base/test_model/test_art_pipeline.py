@@ -55,9 +55,6 @@ class testArtPipeline(unittest.TestCase):
         rmtree(self.dir)
 
 
-
-
-
 class testTorchArtPipeline(testArtPipeline):
     name: str = "initialize"
     library: str = "torch"

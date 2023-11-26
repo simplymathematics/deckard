@@ -1,0 +1,5 @@
+mnist/
+cifar/
+cifar100/
+multirun/
+*.rdb

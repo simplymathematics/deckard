@@ -67,11 +67,13 @@ class testSklearnDataPipeline(unittest.TestCase):
 
     def test_len(self):
         self.assertIsInstance(len(self.data.sklearn_pipeline), int)
-    
+
     def test_getitem(self):
         for stage in self.data.sklearn_pipeline:
-            self.assertIsInstance(self.data.sklearn_pipeline[stage], SklearnDataPipelineStage)
-    
+            self.assertIsInstance(
+                self.data.sklearn_pipeline[stage], SklearnDataPipelineStage
+            )
+
     def tearDown(self) -> None:
         pass
 

@@ -17,7 +17,6 @@ class testExperiment(unittest.TestCase):
     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
     config_file = "evasion.yaml"
 
-
     def setUp(self):
         with initialize_config_dir(
             config_dir=Path(self.config_dir).resolve().as_posix(),
@@ -26,7 +25,7 @@ class testExperiment(unittest.TestCase):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg
         self.dir = mkdtemp()
-        self.cfg['files']['directory'] = self.dir
+        self.cfg["files"]["directory"] = self.dir
         self.exp = instantiate(config=self.cfg)
 
     def test_init(self):
@@ -39,26 +38,25 @@ class testExperiment(unittest.TestCase):
         new_exp = instantiate(config=new_cfg)
         new_hash = hash(new_exp)
         self.assertEqual(old_hash, new_hash)
-    
+
     def test_call(self):
         files = self.exp.files()
         self.assertTrue(isinstance(files, dict))
         scores = self.exp()
         self.assertTrue(isinstance(scores, dict))
-        
 
     def tearDown(self) -> None:
         rmtree(self.dir)
 
 
 class testWithoutAttack(testExperiment):
-# TODO: Fix this class
+    # TODO: Fix this class
     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
     config_file = "no_attack.yaml"
 
 
 class testPoisoningAttack(testExperiment):
-# TODO: Fix this class
+    # TODO: Fix this class
     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
     config_file = "poisoning.yaml"
 
@@ -83,10 +81,10 @@ def convert_to_dict(cfg):
                 cfg[k] = convert_to_dict(v)
     return cfg
 
+
 class testExperimentReRun(testExperiment):
     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
     config_file = "evasion.yaml"
-
 
     def setUp(self):
         with initialize_config_dir(
@@ -97,7 +95,7 @@ class testExperimentReRun(testExperiment):
         cfg = OmegaConf.to_container(cfg, resolve=True)
         self.cfg = cfg
         self.dir = mkdtemp()
-        self.cfg['files']['directory'] = self.dir
+        self.cfg["files"]["directory"] = self.dir
         self.exp = instantiate(config=self.cfg)
 
     def test_init(self):
@@ -110,19 +108,19 @@ class testExperimentReRun(testExperiment):
         new_exp = instantiate(config=new_cfg)
         new_hash = hash(new_exp)
         self.assertEqual(old_hash, new_hash)
-    
+
     def test_call(self):
         files = self.exp.files()
         self.assertTrue(isinstance(files, dict))
         scores = self.exp()
         self.assertTrue(isinstance(scores, dict))
-        
+
     def test_rerun(self):
         files = self.exp.files()
         self.exp()
         self.exp()
         for file in files:
             self.assertTrue(Path(files[file]).exists() or Path(files[file]).is_dir())
-        
+
     def tearDown(self) -> None:
         rmtree(self.dir)

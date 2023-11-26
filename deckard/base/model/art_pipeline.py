@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Dict, Union
 from art.estimators import BaseEstimator
 from hydra.utils import instantiate
@@ -38,8 +38,6 @@ class ArtPipelineStage:
         self.kwargs = kwargs
 
 
-
-
 @dataclass
 class ArtInitializer:
     library: str = None
@@ -56,17 +54,20 @@ class ArtInitializer:
         self.model = model
         self.kwargs = kwargs
 
-
     def __call__(self):
         library = self.library
         data = self.data
         model = self.model
         kwargs = self.kwargs
-        if "torch" in str(library) and not isinstance(model, tuple(torch_dict.values())):
+        if "torch" in str(library) and not isinstance(
+            model, tuple(torch_dict.values())
+        ):
             model = TorchInitializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif "keras" in str(library) and not isinstance(model, tuple(keras_dict.values())): # pragma: no cover
+        elif "keras" in str(library) and not isinstance(
+            model, tuple(keras_dict.values())
+        ):  # pragma: no cover
             raise NotImplementedError("Keras not implemented yet")
             # try:
             #     model = KerasInitializer(
@@ -84,22 +85,36 @@ class ArtInitializer:
             #         )()
             #     else:
             #         raise e
-        elif "sklearn" in str(library) or library is None and not isinstance(model, tuple(sklearn_dict.values())):
+        elif (
+            "sklearn" in str(library)
+            or library is None
+            and not isinstance(model, tuple(sklearn_dict.values()))
+        ):
             model = SklearnModelInitializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif library in ["tf2", "tensorflowv2", "tensorflow", "tf", "tfv2"] and not isinstance(model, tuple(tensorflow_dict.values())):
+        elif library in [
+            "tf2",
+            "tensorflowv2",
+            "tensorflow",
+            "tf",
+            "tfv2",
+        ] and not isinstance(model, tuple(tensorflow_dict.values())):
             model = TensorflowV2Initializer(
                 data=data, model=model, library=library, **kwargs
             )()
-        elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(model, tuple(tensorflow_dict.values())): # pragma: no cover
+        elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(
+            model, tuple(tensorflow_dict.values())
+        ):  # pragma: no cover
             raise NotImplementedError("Tensorflow V1 not implemented yet")
             # model = TensorflowV1Initializer(
             #     data=data, model=model, library=library, **kwargs
             # )()
-        elif library in supported_models and isinstance(model, tuple(all_models.values())):
+        elif library in supported_models and isinstance(
+            model, tuple(all_models.values())
+        ):
             pass
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(
                 f"library must be one of {supported_models}. Got {library}",
             )
@@ -142,8 +157,7 @@ class ArtPipeline:
     def __hash__(self):
         return int(my_hash(self), 16)
 
-
-    def __call__(self, model: object, data:list) -> BaseEstimator:
+    def __call__(self, model: object, data: list) -> BaseEstimator:
         if "initialize" in self.pipeline:
             params = asdict(self.pipeline["initialize"])
             name = params.pop("name", None)
@@ -180,7 +194,7 @@ class ArtPipeline:
             post_def.append(obj)
             kwargs.update({"postprocessing_defences": post_def})
         model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
-        if "transformer" in self.pipeline: # pragma: no cover
+        if "transformer" in self.pipeline:  # pragma: no cover
             raise NotImplementedError("Transformation defences not implemented yet")
             # name, sub_kwargs = self.pipeline["transformer"]()
             # config = {
@@ -188,7 +202,7 @@ class ArtPipeline:
             # }
             # config.update(**sub_kwargs)
             # model = obj(model)
-        if "trainer" in self.pipeline: # pragma: no cover
+        if "trainer" in self.pipeline:  # pragma: no cover
             # name, sub_kwargs = self.pipeline["trainer"]()
             # assert "attack" in sub_kwargs, "Attack must be specified if the adversarial training defence is chosen."
             # attack = sub_kwargs.pop("attack")

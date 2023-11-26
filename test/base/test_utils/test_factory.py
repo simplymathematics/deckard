@@ -38,7 +38,7 @@ class testFactory(unittest.TestCase):
         else:
             obj = factory(self.name, **self.params)
         assert isinstance(obj, object)
-            
+
     def test_unflatten_dict(self):
         flat_dict = flatten_dict(self.param_dict)
         unflat_dict = unflatten_dict(flat_dict)
@@ -46,18 +46,19 @@ class testFactory(unittest.TestCase):
         self.assertEqual(len(unflat_dict), 1)
         self.assertEqual(len(unflat_dict["model"]["init"]), 2)
 
+
 class testListFactory(testFactory):
     name: str = "sklearn.linear_model.LogisticRegression"
     super_cls: type = BaseEstimator
     params: dict = {"C": 1}
-    grid: dict = [ {"C": [1, 2,]}, {"C": [3]},]
+    grid: dict = [{"C": [1, 2]}, {"C": [3]}]
     param_dict: dict = {"model": {"init": {"name": name, "params": params}}}
     param_list: list = [{"model.init.name": name, "model.init.params": params}]
 
+
 class testNestedListFactory(testFactory):
-    name : str = "sklearn.linear_model.LogisticRegression"
+    name: str = "sklearn.linear_model.LogisticRegression"
     params: dict = {"C": 1}
-    grid: dict = [{"model": {"init": {"name": name, "params": [1,2,3]}}}]
+    grid: dict = [{"model": {"init": {"name": name, "params": [1, 2, 3]}}}]
     param_dict: dict = {"model": {"init": {"name": name, "params": params}}}
     param_list: list = [{"model.init.name": name, "model.init.params": params}]
-                  

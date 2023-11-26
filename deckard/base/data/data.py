@@ -105,7 +105,9 @@ class Data:
             result = [X, y]
         if len(result) == 2:
             result = self.sample(*result)
-        assert len(result) == 4, f"Data is not generated: {self.name} {result}. Length: {len(result)},"
+        assert (
+            len(result) == 4
+        ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
         return result
 
     def load(self, filename) -> DataFrame:
@@ -123,7 +125,7 @@ class Data:
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return data
 
@@ -150,17 +152,19 @@ class Data:
                     del new_data
                 elif isinstance(data, (dict, int, float, str, bool)):
                     pass
-                else: # pragma: no cover
+                else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 with open(filename, "w") as f:
                     json.dump(data, f)
             elif suffix in [".csv"]:
-                assert isinstance(data, (Series, DataFrame, dict, np.ndarray)), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
+                assert isinstance(
+                    data, (Series, DataFrame, dict, np.ndarray)
+                ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
                 DataFrame(data).to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
                     pickle.dump(data, f)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise ValueError(f"Unknown file type {type(suffix)} for {suffix}")
             assert Path(filename).exists()
 

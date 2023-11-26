@@ -2,7 +2,7 @@ import logging
 from typing import Union
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
-from dataclasses import dataclass, asdict, field, is_dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 from ..utils import my_hash
 

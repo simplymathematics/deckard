@@ -48,7 +48,7 @@ def to_dict(obj: Union[dict, OrderedDict, NamedTuple]) -> dict:
         sorted_keys = range(len(obj))
         sorted_values = obj
         obj = OrderedDict(zip(sorted_keys, sorted_values))
-    else: #pragma: no cover
+    else:  # pragma: no cover
         raise ValueError(
             f"obj must be a Dict, namedtuple or OrderedDict. It is {type(obj)}",
         )
@@ -60,7 +60,7 @@ def to_dict(obj: Union[dict, OrderedDict, NamedTuple]) -> dict:
                 new[key] = obj[key]
             else:
                 new[key] = to_dict(obj[key])
-        except Exception as e: #pragma: no cover
+        except Exception as e:  # pragma: no cover
             logger.error(f"Error while converting {key} to dict")
             logger.error(f"obj[key] = {obj[key]}")
             logger.error(f"type(obj[key]) = {type(obj[key])}")

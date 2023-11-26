@@ -67,7 +67,7 @@ class ScorerConfig:
                 new_args.append(dep)
             elif arg in ["labels", "y_true", "ground_truth"]:
                 new_args.append(ind)
-            else: #pragma: no cover
+            else:  # pragma: no cover
                 raise TypeError(f"Unknown type {type(arg)} for arg {arg}")
         args = new_args
         config = {"_target_": self.name}
@@ -75,7 +75,7 @@ class ScorerConfig:
         try:
             result = call(config, *args, **kwargs)
 
-        except InstantiationException as e: #pragma: no cover
+        except InstantiationException as e:  # pragma: no cover
             if "continuous-multioutput" in str(e) or "multiclass-multioutput" in str(e):
                 new_args = []
                 for arg in args:
@@ -118,7 +118,6 @@ class ScorerConfig:
         return score
 
 
-
 @dataclass
 class ScorerDict:
     scorers: Dict[str, ScorerConfig] = field(default_factory=dict)
@@ -134,7 +133,7 @@ class ScorerDict:
                 v = ScorerConfig(**v)
             elif isinstance(v, ScorerConfig):
                 pass
-            else: #pragma: no cover
+            else:  # pragma: no cover
                 raise TypeError(f"Unknown type {type(v)} for scorer {k}")
             self.scorers[k] = v
 
@@ -154,14 +153,15 @@ class ScorerDict:
             elif filetype in [".pkl", ".pickle"]:
                 with open(filename, "rb") as f:
                     scores = pickle.load(f)
-            else: #pragma: no cover
+            else:  # pragma: no cover
                 raise NotImplementedError("Filetype not supported: {}".format(filetype))
         else:
             scores = {}
         return scores
 
     def __call__(
-        self, *args, score_dict_file=None, labels_file=None, predictions_file=None):
+        self, *args, score_dict_file=None, labels_file=None, predictions_file=None
+    ):
         new_scores = {}
         args = list(args)
         i = 0
@@ -206,6 +206,6 @@ class ScorerDict:
         elif filetype in [".pkl", ".pickle"]:
             with open(full_path, "wb") as f:
                 pickle.dump(results, f)
-        else: #pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"filetype {filetype} not supported for saving score_dict")
         return full_path
