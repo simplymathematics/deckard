@@ -16,6 +16,7 @@ if "__init__" in layer_list:
     layer_list.remove("__init__")
 layer_list.append(None)
 
+
 def run_submodule(submodule, args):
     if len(args) == 0:
         cmd = f"python -m deckard.layers.{submodule}"
@@ -39,9 +40,15 @@ def run_submodule(submodule, args):
             return 0
 
 
-def parse_and_repro(args, default_config = "default.yaml"):
+def parse_and_repro(args, default_config="default.yaml"):
     if len(args) == 0:
-        assert save_params_file(config_dir=Path(Path(), "conf"), config_file = default_config) is None
+        assert (
+            save_params_file(
+                config_dir=Path(Path(), "conf"),
+                config_file=default_config,
+            )
+            is None
+        )
         assert Path(Path(), "params.yaml").exists()
     else:
         cmd = f"python -m deckard.layers.parse {args} --config_file {default_config}"
@@ -72,12 +79,18 @@ if __name__ == "__main__":
         type=str,
         help=f"Submodule to run. Choices: {layer_list}",
     )
-    parser.add_argument("--config_file", type=str, help="default hydra configuration file that you would like to reproduce with dvc repro.")
+    parser.add_argument(
+        "--config_file",
+        type=str,
+        help="default hydra configuration file that you would like to reproduce with dvc repro.",
+    )
     parser.add_argument("other_args", type=str, nargs="*")
     args = parser.parse_args()
     submodule = args.submodule
     if submodule is not None:
-        assert args.config_file is None, "config_file and submodule cannot be specified at the same time"
+        assert (
+            args.config_file is None
+        ), "config_file and submodule cannot be specified at the same time"
     if submodule not in layer_list and submodule is not None:
         raise ValueError(f"Submodule {submodule} not found. Choices: {layer_list}")
     if len(args.other_args) > 0:

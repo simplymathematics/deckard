@@ -198,11 +198,13 @@ class KerasDataGenerator:
     def __hash__(self):
         return int(my_hash(self), 16)
 
+
 ALL_DATASETS = []
 ALL_DATASETS.extend(SKLEARN_DATASETS)
 ALL_DATASETS.extend(TORCH_DATASETS)
 ALL_DATASETS.extend(SKLEARN_DATASETS)
 ALL_DATASETS.extend(KERAS_DATASETS)
+
 
 @dataclass
 class DataGenerator:
@@ -221,6 +223,9 @@ class DataGenerator:
         elif self.name in KERAS_DATASETS:
             return KerasDataGenerator(self.name, **self.kwargs)()
         else:  # pragma: no cover
-            raise ValueError(f"Invalid name {self.name}. Please choose from {ALL_DATASETS}")
+            raise ValueError(
+                f"Invalid name {self.name}. Please choose from {ALL_DATASETS}",
+            )
+
     def __hash__(self):
         return int(my_hash(self), 16)
