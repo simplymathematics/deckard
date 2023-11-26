@@ -7,7 +7,7 @@ defaults:
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : tpe
-    - override hydra/launcher : rq
+    # - override hydra/launcher : rq
 stage : '???'
 direction : 
   - maximize
@@ -33,37 +33,37 @@ hydra:
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: false
-      n_startup_trials: 10 # default: 10
-      n_ei_candidates: 100 # default: 24
+      n_startup_trials: 1 # default: 10
+      n_ei_candidates: 1 # default: 24
       multivariate: true
       warn_independent_sampling: true
     params:
-      ++data.sample.random_state: int(interval(0, 9))
-      ++model.art.initialize.optimizer.lr: interval(0.0001, 1)
-      ++model.trainer.nb_epoch: int(interval(1, 100))
-      ++model.trainer.batch_size: int(interval(10, 10000))
+      ++data.sample.random_state: int(interval(0, 1))
+      # ++model.art.initialize.optimizer.lr: interval(0.0001, 1)
+      # ++model.trainer.nb_epoch: int(interval(1, 100))
+      # ++model.trainer.batch_size: int(interval(10, 10000))
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
-  launcher:
-    # @package hydra.launcher
-    _target_: hydra_plugins.hydra_rq_launcher.rq_launcher.RQLauncher
-    enqueue:
-      job_timeout: null
-      ttl: null
-      result_ttl: 1s
-      failure_ttl: 1h
-      at_front: false
-      job_id: null
-      description: null
-    queue: default 
-    redis:
-      host: localhost
-      port: ${oc.env:REDIS_PORT,6379}
-      db: ${oc.env:REDIS_DB,0}
-      password: ${oc.env:REDIS_PASSWORD,D3vAQY9y4YdwhV}
-      ssl: ${oc.env:REDIS_SSL,False}
-      ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null}
-      mock: ${oc.env:REDIS_MOCK,False}
-    stop_after_enqueue: false
-    wait_polling: 1.0
-raise_exception: True
+#   launcher:
+#     # @package hydra.launcher
+#     _target_: hydra_plugins.hydra_rq_launcher.rq_launcher.RQLauncher
+#     enqueue:
+#       job_timeout: 3600s
+#       ttl: null
+#       result_ttl: 1s
+#       failure_ttl: 1h
+#       at_front: false
+#       job_id: null
+#       description: null
+#     queue: default 
+#     redis:
+#       host: localhost
+#       port: ${oc.env:REDIS_PORT,6379}
+#       db: ${oc.env:REDIS_DB,0}
+#       password: ${oc.env:REDIS_PASSWORD,D3vAQY9y4YdwhV}
+#       ssl: ${oc.env:REDIS_SSL,False}
+#       ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null}
+#       mock: ${oc.env:REDIS_MOCK,False}
+#     stop_after_enqueue: false
+#     wait_polling: 1.0
+# raise_exception: True

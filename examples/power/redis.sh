@@ -9,16 +9,16 @@ if [ ! -f .bashrc ]; then
         echo "Please choose a port. Default is 6379."
         read REDIS_PORT
         echo "\$REDIS_PORT set as env var, \$REDIS_PORT."
-        echo "alias REDIS_PORT=$REDIS_PORT" >> .bashrc
+        echo "export REDIS_PORT=$REDIS_PORT" >> .bashrc
     else
-        echo "alias REDIS_PORT=$REDIS_PORT" >> .bashrc
+        echo "export REDIS_PORT=$REDIS_PORT" >> .bashrc
     fi
     if [[ ! -z "$REDIS_PASSWORD" ]]; then 
         echo "Please set a password"
         read REDIS_PASSWORD
-        echo "alias REDIS_PASSWORD=$REDIS_PASSWORD" >> .bashrc
+        echo "export REDIS_PASSWORD=$REDIS_PASSWORD" >> .bashrc
     else
-        echo "alias REDIS_PASSWORD=$REDIS_PASSWORD" >> .bashrc
+        echo "export REDIS_PASSWORD=$REDIS_PASSWORD" >> .bashrc
     fi
 fi
 source .bashrc

@@ -113,20 +113,20 @@ stages:
       size: 635489
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: e59d322dfc529eb122757d5ae7296f30
+      md5: 643608609ace175b549066ba07ee4390
       size: 44779566
     - path: mnist/models/model.pt
       hash: md5
-      md5: 074d2d5c705b521d785435daa385dca3
+      md5: be37e6179fa2d5924a82433c04efca7c
       size: 44785474
     - path: mnist/reports/train/default/predictions.json
       hash: md5
-      md5: 6ec634a10c8d622e08f24f4cd42e0321
-      size: 21195
+      md5: 24a3f6694415da2553acca79ae12417a
+      size: 21285
     - path: mnist/reports/train/default/score_dict.json
       hash: md5
-      md5: dd888d6f81ce2caf914ce7f138ab3254
-      size: 345
+      md5: 9b91f21314d795e5e38e631604bca755
+      size: 346
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
     deps:
@@ -136,7 +136,7 @@ stages:
       size: 635489
     - path: mnist/models/model.pt
       hash: md5
-      md5: 074d2d5c705b521d785435daa385dca3
+      md5: be37e6179fa2d5924a82433c04efca7c
       size: 44785474
     params:
       params.yaml:
@@ -383,16 +383,16 @@ stages:
     outs:
     - path: mnist/attacks/attack.pkl
       hash: md5
-      md5: c7fa6504624021688d4f773adea34f6f
+      md5: ebe5cf9e33d5ba67cc4182e6ee72244d
       size: 31517
     - path: mnist/reports/attack/default/adv_predictions.json
       hash: md5
-      md5: 6fdee6d0c74fd29417d346113c2c26ff
-      size: 2124
+      md5: 5875ad5b3c6cbcf6ba6c1497952e06f9
+      size: 2115
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: fede2f60c3f7f4e2906fef933bec8fca
-      size: 432
+      md5: 46b20422790e5af7c9b051eb87c6ba15
+      size: 431
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet18.db
@@ -435,14 +435,14 @@ stages:
     deps:
     - path: conf/
       hash: md5
-      md5: fe0f04e3ae07d49692ed95770ee0ad30.dir
-      size: 122038
+      md5: 6d772ed339df835c2b5a69d210c41edc.dir
+      size: 122090
       nfiles: 17
     outs:
     - path: params.yaml
       hash: md5
-      md5: 957f64f33bec09a2b135fb641f494a50
-      size: 7103
+      md5: 659c169e14fe27f2d081b7200363b4f0
+      size: 7081
   install_redis:
     cmd: bash redis.sh
     outs:
