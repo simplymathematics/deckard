@@ -29,6 +29,7 @@ class Experiment:
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
     optimizers: Union[list, None] = field(default_factory=list)
+    device_id: str = "cpu"
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
@@ -37,6 +38,7 @@ class Experiment:
         model: Model,
         scorers: ScorerDict,
         files: list,
+        device_id: str = "cpu",
         attack: Attack = None,
         name=None,
         stage=None,
@@ -100,6 +102,7 @@ class Experiment:
         else:  # pragma: no cover
             raise ValueError("attack must be a dict, DictConfig, or Attack object.")
         assert isinstance(self.attack, (Attack, type(None)))
+        self.device_id = device_id
         self.stage = stage
         self.optimizers = optimizers
         self.kwargs = kwargs
@@ -251,6 +254,7 @@ class Experiment:
                     old_score_dict = self.data.load(files["score_dict_file"])
                     old_score_dict.update(**score_dict)
                     score_dict = old_score_dict
+                score_dict.update({"device_id": self.device_id})
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
