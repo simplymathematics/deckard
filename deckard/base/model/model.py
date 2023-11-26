@@ -573,8 +573,8 @@ class Model:
         return (
             predictions,
             {
-                "predict_time": end,
-                "predict_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_time": (start - end) / 1e9,
+                "predict_time_per_sample": start - end / (len(data[0]) * 1e9),
                 "predict_start_time": start,
                 "predict_stop_time": end,
                 "predict_device": device,
@@ -623,7 +623,7 @@ class Model:
         return (
             predictions,
             {
-                "predict_proba_time": end,
+                "predict_proba_time": (start - end) / 1e9,
                 "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
                 "predict_proba_start_time": start,
                 "predict_proba_stop_time": end,
@@ -680,7 +680,7 @@ class Model:
         return (
             predictions,
             {
-                "predict_log_proba_time": end,
+                "predict_log_proba_time": (start - end) / 1e9,
                 "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
                 "predict_log_proba_start_time": start,
                 "predict_log_proba_stop_time": end,
