@@ -1,9 +1,8 @@
 # #!/bin/bash
 
 # # This script is used to generate the attacks for the example.
-
 # Fast Gradient Method
-bash models.sh attack=default ++attack.init.name=art.attacks.evasion.FastGradientMethod ++attack.init.eps=.001,.01,.1,.5,1 ++attack.init.norm=inf,1,2 ++attack.init.eps_step=.001,.003,.01 ++attack.init.batch_size=1024 stage=attack  ++hydra.sweeper.study_name=fgm ++direction=maximize $@
+bash models.sh attack=default ++attack.init.name=art.attacks.evasion.FastGradientMethod ++attack.init.eps="range(0.0001, 1)" ++attack.init.eps_step="int(range(1,100))" ++attack.init.batch_size="int(range(10,10000))" stage=attack  ++hydra.sweeper.study_name=fgm ++direction=maximize $@
 
 # # Projected Gradient Descent
 # bash models.sh attack=default ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent ++attack.init.eps=.001,.01,.1,.5,1 ++attack.init.norm=inf,1,2 ++attack.init.eps_step=.001,.003,.01 ++attack.init.batch_size=1024 ++attack.init.max_iter=10 stage=attack ++hydra.sweeper.study_name=pgd ++direction=maximize $@

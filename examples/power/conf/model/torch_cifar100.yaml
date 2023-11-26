@@ -3,8 +3,9 @@ defaults:
 data:  ${data}
 init:
     _target_: deckard.base.model.ModelInitializer
-    num_channels : 1
     name : torch_example.ResNet18
+    num_channels: 3
+    num_classes: 100
 _target_: deckard.base.model.Model
 trainer:
     nb_epoch: 1

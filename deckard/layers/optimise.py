@@ -12,6 +12,8 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
+OmegaConf.register_new_resolver("eval", eval)
+
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
 config_path = os.environ.get(
@@ -275,6 +277,7 @@ def optimise(cfg: DictConfig) -> None:
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
     direction = cfg.get("direction", "minimize")
+    direction = [direction] if not isinstance(direction, list) else direction
     try:
         scores = exp()
         if isinstance(scorer, str):
@@ -294,13 +297,13 @@ def optimise(cfg: DictConfig) -> None:
             f.write(str(e))
             f.write(traceback.format_exc())
         if direction == "minimize":
-            score = 1e10
+            score = [1e10] * len(direction)
         else:
-            score = -1e10
+            score = [-1e10] * len(direction)
         logger.info(f"Score: {score}")
         if raise_exception:
             raise e
-    return score
+    return tuple(score)
 
 
 if __name__ == "__main__":

@@ -6,13 +6,24 @@ defaults:
     - files: cifar100
     - scorers: default
     - override hydra/sweeper : optuna
-    - override hydra/sweeper/sampler : grid
-    - override hydra/launcher : joblib
+    - override hydra/sweeper/sampler : tpe
+    # - override hydra/launcher : rq
 stage : '???'
-direction : [maximize, minimize]
-optimizers : [accuracy, train_time]
+direction : 
+  - maximize
+  - minimize
+  - minimize
+  - minimize
+  - minimize
+  - minimize
+optimizers: 
+   - accuracy
+   - train_time
+   - predict_time
+   - adv_accuracy
+   - adv_fit_time
+   - adv_predict_time
 _target_ : deckard.base.experiment.Experiment
-optimizers : accuracy
 hydra:
   run:
     dir: ${files.directory}/${files.reports}/${stage}/logs
@@ -20,32 +31,25 @@ hydra:
     dir: ${files.directory}/${stage}/${model.init.name}
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
+    study_name: ${model.init.name}
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 123
+      seed: ${data.sample.random_state}
       consider_prior: true
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: false
-      n_startup_trials: 1 # default : 10
-      n_ei_candidates: 1 # default : 24
+      n_startup_trials: 1 # default: 10
+      n_ei_candidates: 1 # default: 24
       multivariate: true
       warn_independent_sampling: true
+    params:
+      ++data.sample.random_state: int(range(0, 1))
+      ++model.art.initialize.optimizer.lr: range(0.0001, 1)
+      ++model.trainer.nb_epoch: int(range(1, 100))
+      ++model.trainer.batch_size: int(range(10, 10000))
+      ++attack.init.eps : range(0.01, 1.0)
+      ++attack.init.eps_step : ${eval:'(.1)*${attack.init.eps}'}
+      ++attack.init.batch_size: int(range(10,10000))
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    direction: minimize
-    storage: null
-    study_name: sphere
-    n_trials: 3
-    n_jobs: 1
-    max_failure_rate: 0.0
-  launcher:
-    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 1
-    prefer : processes
-    verbose: 10
-    timeout: null
-    pre_dispatch: n_jobs
-    batch_size: auto
-    temp_folder: /tmp/deckard
-    max_nbytes: 100000
-    mmap_mode: r
+    direction: ${direction}

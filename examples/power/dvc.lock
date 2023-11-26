@@ -1,14 +1,15 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment train --config_file cifar100.yaml
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
           generate:
             _target_: deckard.base.data.generator.DataGenerator
-            name: torch_mnist
+            name: torch_cifar100
+            path: original_data/
           sample:
             _target_: deckard.base.data.sampler.SklearnDataSampler
             random_state: 0
@@ -30,7 +31,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: mnist
+          directory: cifar100
           model_dir: models
           model_file: model
           model_type: .pt
@@ -47,7 +48,8 @@ stages:
               _target_: deckard.base.data.Data
               generate:
                 _target_: deckard.base.data.generator.DataGenerator
-                name: torch_mnist
+                name: torch_cifar100
+                path: original_data/
               sample:
                 _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
@@ -75,7 +77,8 @@ stages:
             _target_: deckard.base.data.Data
             generate:
               _target_: deckard.base.data.generator.DataGenerator
-              name: torch_mnist
+              name: torch_cifar100
+              path: original_data/
             sample:
               _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
@@ -91,7 +94,8 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             name: torch_example.ResNet18
-            num_channels: 1
+            num_channels: 3
+            num_classes: 100
           library: pytorch
           trainer:
             batch_size: 1024
@@ -107,37 +111,17 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: mnist/data/data.pkl
+    - path: cifar100/reports/train/default/score_dict.json
       hash: md5
-      md5: 165a2c2fc0af6a07838b6c6715d79d53
-      size: 635489
-    - path: mnist/models/model.optimizer.pt
-      hash: md5
-      md5: 29e60f76d896a4cb2ae141264afa3586
-      size: 44779566
-    - path: mnist/models/model.pt
-      hash: md5
-      md5: 055a65526e9d4feece430f78fb549d4a
-      size: 44785474
-    - path: mnist/reports/train/default/predictions.json
-      hash: md5
-      md5: 2cab4a7f987c28757fad5c462cdc14f9
-      size: 21544
-    - path: mnist/reports/train/default/score_dict.json
-      hash: md5
-      md5: 515d75d97903f835ccca85813b3990b4
-      size: 751
+      md5: 0d7b5dc69390c3934014592f0ca69754
+      size: 752
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     deps:
-    - path: mnist/data/data.pkl
+    - path: params.yaml
       hash: md5
-      md5: 165a2c2fc0af6a07838b6c6715d79d53
-      size: 635489
-    - path: mnist/models/model.pt
-      hash: md5
-      md5: 055a65526e9d4feece430f78fb549d4a
-      size: 44785474
+      md5: 3d21fe2d291f5b25fa57e440ddaa9d5e
+      size: 7525
     params:
       params.yaml:
         attack:
@@ -147,7 +131,8 @@ stages:
             _target_: deckard.base.data.Data
             generate:
               _target_: deckard.base.data.generator.DataGenerator
-              name: torch_mnist
+              name: torch_cifar100
+              path: original_data/
             sample:
               _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
@@ -162,6 +147,8 @@ stages:
                 with_std: true
           init:
             _target_: deckard.base.attack.AttackInitializer
+            eps: 0.99
+            eps_step: 0.099
             model:
               _target_: deckard.base.model.Model
               art:
@@ -170,7 +157,8 @@ stages:
                   _target_: deckard.base.data.Data
                   generate:
                     _target_: deckard.base.data.generator.DataGenerator
-                    name: torch_mnist
+                    name: torch_cifar100
+                    path: original_data/
                   sample:
                     _target_: deckard.base.data.sampler.SklearnDataSampler
                     random_state: 0
@@ -198,7 +186,8 @@ stages:
                 _target_: deckard.base.data.Data
                 generate:
                   _target_: deckard.base.data.generator.DataGenerator
-                  name: torch_mnist
+                  name: torch_cifar100
+                  path: original_data/
                 sample:
                   _target_: deckard.base.data.sampler.SklearnDataSampler
                   random_state: 0
@@ -214,7 +203,8 @@ stages:
               init:
                 _target_: deckard.base.model.ModelInitializer
                 name: torch_example.ResNet18
-                num_channels: 1
+                num_channels: 3
+                num_classes: 100
               library: pytorch
               trainer:
                 batch_size: 1024
@@ -229,7 +219,8 @@ stages:
                 _target_: deckard.base.data.Data
                 generate:
                   _target_: deckard.base.data.generator.DataGenerator
-                  name: torch_mnist
+                  name: torch_cifar100
+                  path: original_data/
                 sample:
                   _target_: deckard.base.data.sampler.SklearnDataSampler
                   random_state: 0
@@ -257,7 +248,8 @@ stages:
               _target_: deckard.base.data.Data
               generate:
                 _target_: deckard.base.data.generator.DataGenerator
-                name: torch_mnist
+                name: torch_cifar100
+                path: original_data/
               sample:
                 _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
@@ -273,7 +265,8 @@ stages:
             init:
               _target_: deckard.base.model.ModelInitializer
               name: torch_example.ResNet18
-              num_channels: 1
+              num_channels: 3
+              num_classes: 100
             library: pytorch
             trainer:
               batch_size: 1024
@@ -282,7 +275,8 @@ stages:
           _target_: deckard.base.data.Data
           generate:
             _target_: deckard.base.data.generator.DataGenerator
-            name: torch_mnist
+            name: torch_cifar100
+            path: original_data/
           sample:
             _target_: deckard.base.data.sampler.SklearnDataSampler
             random_state: 0
@@ -304,7 +298,7 @@ stages:
           data_dir: data
           data_file: data
           data_type: .pkl
-          directory: mnist
+          directory: cifar100
           model_dir: models
           model_file: model
           model_type: .pt
@@ -321,7 +315,8 @@ stages:
               _target_: deckard.base.data.Data
               generate:
                 _target_: deckard.base.data.generator.DataGenerator
-                name: torch_mnist
+                name: torch_cifar100
+                path: original_data/
               sample:
                 _target_: deckard.base.data.sampler.SklearnDataSampler
                 random_state: 0
@@ -349,7 +344,8 @@ stages:
             _target_: deckard.base.data.Data
             generate:
               _target_: deckard.base.data.generator.DataGenerator
-              name: torch_mnist
+              name: torch_cifar100
+              path: original_data/
             sample:
               _target_: deckard.base.data.sampler.SklearnDataSampler
               random_state: 0
@@ -365,7 +361,8 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             name: torch_example.ResNet18
-            num_channels: 1
+            num_channels: 3
+            num_classes: 100
           library: pytorch
           trainer:
             batch_size: 1024
@@ -381,18 +378,34 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: mnist/attacks/attack.pkl
+    - path: cifar100/attacks/attack.pkl
       hash: md5
-      md5: fbe883f07d1f9fa7adb6da63a90b3023
-      size: 31517
-    - path: mnist/reports/attack/default/adv_predictions.json
+      md5: 9ba2fe1196bcbf2379946652865ace9b
+      size: 123046
+    - path: cifar100/data/data.pkl
       hash: md5
-      md5: 1276447c3f7d2d75c179b1cebc594fcd
-      size: 2150
-    - path: mnist/reports/attack/default/score_dict.json
+      md5: 594841554582ca2a77c0a73c7e8842cb
+      size: 2537889
+    - path: cifar100/models/model.optimizer.pt
       hash: md5
-      md5: 8c36262a87aeb6e3040210ff76f16ed6
-      size: 856
+      md5: 56e67611c3cc7e9c416c91cc6a6b2640
+      size: 44989358
+    - path: cifar100/models/model.pt
+      hash: md5
+      md5: 7a728af7fb0ca90e720cb5d25fee89af
+      size: 44995266
+    - path: cifar100/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: c3a0272213db04f9dbbb2c509abfe597
+      size: 20979
+    - path: cifar100/reports/attack/default/predictions.json
+      hash: md5
+      md5: 3b039c0276e39808bab5b4363e26a062
+      size: 214402
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 44d2a553a36ce676b9a1a445345bd88c
+      size: 1168
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/ResNet18.db
@@ -432,18 +445,18 @@ stages:
   install_torch:
     cmd: python -m pip install torch torchvision
   parse_params:
-    cmd: python -m deckard.layers.parse --config_file mnist.yaml
+    cmd: python -m deckard.layers.parse --config_file cifar100.yaml
     deps:
     - path: conf/
       hash: md5
-      md5: fd07e44dd58faf6f39dbbbc2e25244df.dir
-      size: 122165
-      nfiles: 17
+      md5: 8344c81b7bbf726ade0803d83eac19c6.dir
+      size: 124687
+      nfiles: 21
     outs:
     - path: params.yaml
       hash: md5
-      md5: 659c169e14fe27f2d081b7200363b4f0
-      size: 7081
+      md5: 3d21fe2d291f5b25fa57e440ddaa9d5e
+      size: 7525
   install_redis:
     cmd: bash redis.sh
     outs:
@@ -478,43 +491,35 @@ stages:
     deps:
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: 29e60f76d896a4cb2ae141264afa3586
+      md5: 4c2b10c966d0d7b40563303215d2171e
       size: 44779566
     - path: mnist/models/model.pt
       hash: md5
-      md5: 055a65526e9d4feece430f78fb549d4a
+      md5: 7c8df9f88ecbb0ced92c30674818d4bd
       size: 44785474
     - path: models.sh
       hash: md5
-      md5: 1937e58bedac027034aea7d4a5712407
-      size: 1380
+      md5: 6b985d4aeb1e8c170cda9752974a664c
+      size: 208
     outs:
     - path: mnist/reports/train/mnist.db
       hash: md5
-      md5: ba3124eb8c5f349c3f3ead40addf243f
-      size: 110592
+      md5: 663076070c6766ac69d497c0934591ab
+      size: 122880
   attacks@mnist:
-    cmd: bash attacks.sh ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/mnist.db
-      ++direction="[maximize,minimize,minimize]" ++optimizers="[adv_accuracy,adv_fit_time,adv_predict_time]"
-      --config-name mnist.yaml
+    cmd: python -m deckard.layers.optimise  $@ --multirun ++attack.attack_size=100
+      stage=attack ++hydra.sweeper.storage=sqlite:///mnist/reports/attack/mnist.db  --config-name
+      mnist.yaml
     deps:
-    - path: attacks.sh
-      hash: md5
-      md5: 0e9c2eaa696b28e79478fc38cea8806c
-      size: 2931
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: 8c36262a87aeb6e3040210ff76f16ed6
-      size: 856
-    - path: models.sh
-      hash: md5
-      md5: 1937e58bedac027034aea7d4a5712407
-      size: 1380
+      md5: a856df313ca8316d37f6ffad821d1fc9
+      size: 1168
     outs:
     - path: mnist/reports/attack/mnist.db
       hash: md5
-      md5: 6eb630e8fda03e569bb354779c00f2a6
-      size: 131072
+      md5: 16a0df62da4de50ebe7a6c50a0e5ddca
+      size: 147456
   compile@attack:
     cmd: python -m deckard.layers.compile --report_folder mnist/reports/attack --results_file
       mnist/reports/attack.csv
@@ -533,3 +538,31 @@ stages:
       hash: md5
       md5: 7b9597518294657eaf40254e114e5f8e
       size: 85745
+  attacks@cifar10:
+    cmd: python -m deckard.layers.optimise  $@ --multirun ++attack.attack_size=100
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar10/reports/attack/cifar10.db  --config-name
+      cifar10.yaml
+    deps:
+    - path: cifar10/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 01600d66887a27d7c7efc29a43725f9c
+      size: 1166
+    outs:
+    - path: cifar10/reports/attack/cifar10.db
+      hash: md5
+      md5: a95d6074e3866d68514adf70034d1fde
+      size: 135168
+  attacks@cifar100:
+    cmd: python -m deckard.layers.optimise  $@ --multirun ++attack.attack_size=100
+      stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/cifar100.db  --config-name
+      cifar100.yaml
+    deps:
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 44d2a553a36ce676b9a1a445345bd88c
+      size: 1168
+    outs:
+    - path: cifar100/reports/attack/cifar100.db
+      hash: md5
+      md5: 8dba184e770eac33523ffeccd55580d6
+      size: 135168

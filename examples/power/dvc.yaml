@@ -28,13 +28,13 @@ stages:
       - model
       - scorers
       - files
-    outs:
-      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+    # outs:
+      # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
       # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
@@ -49,37 +49,23 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
-    deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}  # logit outputs for our model
+    deps:
+        - params.yaml
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
-
-        ##############################################################################
-  models: # This is a loop over the ResNet models
-    foreach:
-      - mnist
-    do: # This script configures eazch defence
-      cmd: bash models.sh  stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name ${item}.yaml 
-      deps:
-      - models.sh
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      outs:
-      - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
-          cache: True
-          persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
-      - mnist
+      - ${files.directory}
+      # - cifar
+      # - cifar100
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db ++direction="[maximize,minimize,minimize]" ++optimizers="[adv_accuracy,adv_fit_time,adv_predict_time]" --config-name ${item}.yaml
+      cmd: python -m deckard.layers.optimise  $@ --multirun ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db  --config-name ${item}.yaml
       deps:
-      - models.sh # This script configures each defence
-      - attacks.sh # This script configures each attack
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
-      # - ${files.directory}/${files.reports}/train/${item}.db
+      - ${item}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       outs:
       - ${files.directory}/${files.reports}/attack/${item}.db: # This outputs a database file for each model
           cache: True
