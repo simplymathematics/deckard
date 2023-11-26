@@ -124,6 +124,7 @@ class ModelTrainer:
         try:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
+            device = model.device if hasattr(model, "device") else "cpu"
             end = process_time_ns() - start
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
@@ -156,7 +157,6 @@ class ModelTrainer:
         except RuntimeError as e: # pragma: no cover
             if "eager mode" in str(e):
                 import tensorflow as tf
-
                 tf.config.run_functions_eagerly(True)
                 start = process_time_ns()
                 model.fit(data[0], data[2], **trainer)
@@ -183,7 +183,11 @@ class ModelTrainer:
         time_dict = {
             "train_time": end / 1e9,
             "train_time_per_sample": end / (len(data[0]) * 1e9),
+            "train_time_start" : start / 1e9,
+            "train_time_end" : end / 1e9,
+            "train_device" : device,
         }
+        
         return model, time_dict
 
 
@@ -536,6 +540,7 @@ class Model:
         try:
             start = process_time_ns()
             predictions = model.predict(data[1])
+            device = model.device if hasattr(model, "device") else "cpu"
         except NotFittedError as e: # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
@@ -560,6 +565,9 @@ class Model:
             {
                 "predict_time": end / 1e9,
                 "predict_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_start_time" : start / 1e9,
+                "predict_stop_time" : end / 1e9,
+                "predict_device" : device,
             },
         )
 
@@ -582,6 +590,7 @@ class Model:
             data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        device = model.device if hasattr(model, "device") else "cpu"
         if (
             str("art") in str(type(model))
             and "sklearn" in str(type(model))
@@ -606,6 +615,10 @@ class Model:
             {
                 "predict_proba_time": end / 1e9,
                 "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_proba_start_time" : start / 1e9,
+                "predict_proba_stop_time" : end / 1e9,
+                "predict_proba_device" : device,
+
             },
         )
 
@@ -628,6 +641,7 @@ class Model:
             data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        device = model.device if hasattr(model, "device") else "cpu"
         if str("art") in str(type(model)) and (
             hasattr(model.model, "predict_log_proba")
             or hasattr(model.model, "predict_proba")
@@ -659,6 +673,9 @@ class Model:
             {
                 "predict_log_proba_time": end / 1e9,
                 "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_log_proba_start_time" : start / 1e9,
+                "predict_log_proba_stop_time" : end / 1e9,
+                "predict_log_device" : device,
             },
         )
 
