@@ -615,7 +615,8 @@ class ExtractionAttack:
                 end = process_time_ns()
                 time_dict.update(
                     {
-                        "adv_fit_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                        "adv_fit_time_per_sample": (end - start)
+                        / (self.attack_size * 1e9),
                         "adv_fit_time": (end - start) / 1e9,
                         "adv_fit_start_time": start,
                         "adv_fit_stop_time": end,

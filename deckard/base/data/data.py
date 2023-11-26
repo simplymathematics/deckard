@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from pandas import DataFrame, read_csv, read_excel, Series
+from pandas import DataFrame, read_csv, Series
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -158,7 +158,8 @@ class Data:
                     json.dump(data, f)
             elif suffix in [".csv"]:
                 assert isinstance(
-                    data, (Series, DataFrame, dict, np.ndarray)
+                    data,
+                    (Series, DataFrame, dict, np.ndarray),
                 ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
                 DataFrame(data).to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:

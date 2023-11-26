@@ -71,7 +71,8 @@ class testSklearnDataPipeline(unittest.TestCase):
     def test_getitem(self):
         for stage in self.data.sklearn_pipeline:
             self.assertIsInstance(
-                self.data.sklearn_pipeline[stage], SklearnDataPipelineStage
+                self.data.sklearn_pipeline[stage],
+                SklearnDataPipelineStage,
             )
 
     def tearDown(self) -> None:

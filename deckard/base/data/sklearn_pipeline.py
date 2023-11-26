@@ -1,6 +1,6 @@
 import logging
 from typing import Union
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 from hydra.utils import instantiate
 from dataclasses import dataclass, field
 from copy import deepcopy

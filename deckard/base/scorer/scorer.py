@@ -6,15 +6,11 @@ from omegaconf import DictConfig, OmegaConf, ListConfig
 import numpy as np
 import json
 from pathlib import Path
-import pandas as pd
 import logging
 from copy import deepcopy
 import pickle
 from art.utils import to_categorical
 
-from ..data import Data
-from ..model import Model
-from ..attack import Attack
 from ..utils import my_hash
 
 logger = logging.getLogger(__name__)
@@ -164,7 +160,6 @@ class ScorerDict:
     ):
         new_scores = {}
         args = list(args)
-        i = 0
         if score_dict_file is not None and Path(score_dict_file).exists():
             scores = self.load(score_dict_file)
         else:

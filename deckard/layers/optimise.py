@@ -19,7 +19,7 @@ config_path = os.environ.get(
     str(Path(Path.cwd(), "conf").absolute().as_posix()),
 )
 assert Path(
-    config_path
+    config_path,
 ).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
 full_path = Path(config_path, config_name).as_posix()
@@ -197,7 +197,8 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         key_list = []
         for stage in stages:
             assert Path(
-                path, "dvc.yaml"
+                path,
+                "dvc.yaml",
             ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][

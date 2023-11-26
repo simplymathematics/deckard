@@ -8,7 +8,6 @@ from hydra.utils import instantiate
 
 from deckard.base.model.sklearn_pipeline import (
     SklearnModelPipeline,
-    SklearnModelPipelineStage,
 )
 
 

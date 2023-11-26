@@ -34,7 +34,6 @@ class testScorerDict(unittest.TestCase):
             self.directory,
             self.score_dict_file + self.score_dict_type,
         ).as_posix()
-        temp = mkdtemp()
         true_file = "true.pkl"
         preds_file = "preds.pkl"
         self.preds_file = Path(self.directory, preds_file).as_posix()
@@ -240,7 +239,6 @@ class testScorerDictfromDict(testScorerDict):
             self.directory,
             self.score_dict_file + self.score_dict_type,
         ).as_posix()
-        temp = mkdtemp()
         true_file = "true.pkl"
         preds_file = "preds.pkl"
         self.preds_file = Path(self.directory, preds_file).as_posix()

@@ -107,7 +107,7 @@ class testTorchModel(testModel):
     config_file = "torch_mnist.yaml"
 
 
-class testTorchModel(testModel):
+class testTorchModelfromDict(testModel):
     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
     config_file = "torch_defaults.yaml"
 
