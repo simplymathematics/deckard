@@ -1,0 +1,251 @@
+_target_: deckard.base.experiment.Experiment
+attack:
+  _target_: deckard.base.attack.Attack
+  attack_size: 10
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      _target_: deckard.base.data.generator.DataGenerator
+      name: torch_mnist
+    sample:
+      _target_: deckard.base.data.sampler.SklearnDataSampler
+      random_state: 0
+      stratify: true
+      test_size: 100
+      train_size: 100
+    sklearn_pipeline:
+      _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+      preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: true
+        with_std: true
+  init:
+    _target_: deckard.base.attack.AttackInitializer
+    model:
+      _target_: deckard.base.model.Model
+      art:
+        _target_: deckard.base.model.art_pipeline.ArtPipeline
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+            test_size: 100
+            train_size: 100
+          sklearn_pipeline:
+            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        initialize:
+          clip_values:
+          - 0
+          - 255
+          criterion:
+            name: torch.nn.CrossEntropyLoss
+          optimizer:
+            lr: 0.01
+            momentum: 0.9
+            name: torch.optim.SGD
+        library: pytorch
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          _target_: deckard.base.data.generator.DataGenerator
+          name: torch_mnist
+        sample:
+          _target_: deckard.base.data.sampler.SklearnDataSampler
+          random_state: 0
+          stratify: true
+          test_size: 100
+          train_size: 100
+        sklearn_pipeline:
+          _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: true
+            with_std: true
+      init:
+        _target_: deckard.base.model.ModelInitializer
+        name: torch_example.ResNet18
+        num_channels: 1
+      library: pytorch
+      trainer:
+        batch_size: 1024
+        nb_epoch: 1
+    name: art.attacks.evasion.FastGradientMethod
+  method: evasion
+  model:
+    _target_: deckard.base.model.Model
+    art:
+      _target_: deckard.base.model.art_pipeline.ArtPipeline
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          _target_: deckard.base.data.generator.DataGenerator
+          name: torch_mnist
+        sample:
+          _target_: deckard.base.data.sampler.SklearnDataSampler
+          random_state: 0
+          stratify: true
+          test_size: 100
+          train_size: 100
+        sklearn_pipeline:
+          _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: true
+            with_std: true
+      initialize:
+        clip_values:
+        - 0
+        - 255
+        criterion:
+          name: torch.nn.CrossEntropyLoss
+        optimizer:
+          lr: 0.01
+          momentum: 0.9
+          name: torch.optim.SGD
+      library: pytorch
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        _target_: deckard.base.data.generator.DataGenerator
+        name: torch_mnist
+      sample:
+        _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state: 0
+        stratify: true
+        test_size: 100
+        train_size: 100
+      sklearn_pipeline:
+        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+        preprocessor:
+          name: sklearn.preprocessing.StandardScaler
+          with_mean: true
+          with_std: true
+    init:
+      _target_: deckard.base.model.ModelInitializer
+      name: torch_example.ResNet18
+      num_channels: 1
+    library: pytorch
+    trainer:
+      batch_size: 1024
+      nb_epoch: 1
+data:
+  _target_: deckard.base.data.Data
+  generate:
+    _target_: deckard.base.data.generator.DataGenerator
+    name: torch_mnist
+  sample:
+    _target_: deckard.base.data.sampler.SklearnDataSampler
+    random_state: 0
+    stratify: true
+    test_size: 100
+    train_size: 100
+  sklearn_pipeline:
+    _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+    preprocessor:
+      name: sklearn.preprocessing.StandardScaler
+      with_mean: true
+      with_std: true
+direction:
+- maximize
+- minimize
+- minimize
+files:
+  _target_: deckard.base.files.FileConfig
+  adv_predictions_file: adv_predictions.json
+  attack_dir: attacks
+  attack_file: attack
+  attack_type: .pkl
+  data_dir: data
+  data_file: data
+  data_type: .pkl
+  directory: mnist
+  model_dir: models
+  model_file: model
+  model_type: .pt
+  name: default
+  params_file: params.yaml
+  predictions_file: predictions.json
+  reports: reports
+  score_dict_file: score_dict.json
+model:
+  _target_: deckard.base.model.Model
+  art:
+    _target_: deckard.base.model.art_pipeline.ArtPipeline
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        _target_: deckard.base.data.generator.DataGenerator
+        name: torch_mnist
+      sample:
+        _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state: 0
+        stratify: true
+        test_size: 100
+        train_size: 100
+      sklearn_pipeline:
+        _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+        preprocessor:
+          name: sklearn.preprocessing.StandardScaler
+          with_mean: true
+          with_std: true
+    initialize:
+      clip_values:
+      - 0
+      - 255
+      criterion:
+        name: torch.nn.CrossEntropyLoss
+      optimizer:
+        lr: 0.01
+        momentum: 0.9
+        name: torch.optim.SGD
+    library: pytorch
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      _target_: deckard.base.data.generator.DataGenerator
+      name: torch_mnist
+    sample:
+      _target_: deckard.base.data.sampler.SklearnDataSampler
+      random_state: 0
+      stratify: true
+      test_size: 100
+      train_size: 100
+    sklearn_pipeline:
+      _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+      preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: true
+        with_std: true
+  init:
+    _target_: deckard.base.model.ModelInitializer
+    name: torch_example.ResNet18
+    num_channels: 1
+  library: pytorch
+  trainer:
+    batch_size: 1024
+    nb_epoch: 1
+optimizers:
+- accuracy
+- train_time
+- predict_time
+raise_exception: true
+scorers:
+  _target_: deckard.base.scorer.ScorerDict
+  accuracy:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: maximize
+    name: sklearn.metrics.accuracy_score
+  log_loss:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: minimize
+    name: sklearn.metrics.log_loss
+stage: ???
