@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: deckard
+spec:
+  containers:
+  - name: deckard
+    image: ghcr.io/simplymathematics/deckard:main
+    imagePullPolicy: Always
+    workingDir: /deckard/examples/power/
+    args: ["python", "-m", "deckard", "--config_file", "cifa100.yaml"]
+    env:
+    - name: DECKARD_DEVICE
+      value: "cpu"
+    # - name: REDIS_HOST
+    #   value: "redis"
+    # - name: REDIS_PORT
+    #   value: "6379"
+    # - name: REDIS_DB
+    #   value: "0"
+    # - name: REDIS_PASSWORD
+    #   value: ""
+    volumeMounts:
+        - mountPath: /deckard/
+          name: mypvc
+  volumes:
+  - name: mypvc
+    persistentVolumeClaim:
+      claimName: podpvc
