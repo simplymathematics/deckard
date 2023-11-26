@@ -168,12 +168,12 @@ class EvasionAttack:
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time" : start / 1e9,
-                    "adv_fit_stop_time" : end / 1e9,
+                    "adv_fit_start_time" : start,
+                    "adv_fit_stop_time" : end,
                 },
             )
-            device = model.device if hasattr(model, "device") else "cpu"
-            time_dict.update({"device" : device})
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device" : device})
             
         results["adv_samples"] = np.array(samples)
         try:
@@ -220,12 +220,12 @@ class EvasionAttack:
                 {
                     "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
-                    "adv_predict_start_time" : start / 1e9,
-                    "adv_predict_stop_time" : end / 1e9,
+                    "adv_predict_start_time" : start,
+                    "adv_predict_stop_time" : end,
                 },
             )
-            device = model.device if hasattr(model, "device") else "cpu"
-            time_dict.update({"device" : device})
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_predict_device" : device})
             results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
@@ -372,12 +372,12 @@ class PoisoningAttack:
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time" : start / 1e9,
-                    "adv_fit_stop_time" : end / 1e9,
+                    "adv_fit_start_time" : start,
+                    "adv_fit_stop_time" : end,
                 },
             )
-            device = model.device if hasattr(model, "device") else "cpu"
-            time_dict.update({"device" : device})
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device" : device})
         results["adv_samples"] = np.array(samples)
         results["time_dict"] = time_dict
         if attack_file is not None:
@@ -411,12 +411,12 @@ class PoisoningAttack:
             {
                 "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                 "adv_predict_time": (end - start) / 1e9,
-                "adv_predict_start_time" : start / 1e9,
-                "adv_predict_stop_time" : end / 1e9,
+                "adv_predict_start_time" : start,
+                "adv_predict_stop_time" : end,
             },
         )
-        device = model.device if hasattr(model, "device") else "cpu"
-        time_dict.update({"device" : device})
+        device = str(model.device) if hasattr(model, "device") else "cpu"
+        time_dict.update({"adv_predict_device" : device})
         results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
@@ -529,14 +529,14 @@ class InferenceAttack:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
             time_dict.update(
                 {
-                    "adv_fit_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                    "adv_fit_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time" : start / 1e9,
-                    "adv_fit_stop_time" : end / 1e9,
+                    "adv_fit_start_time" : start,
+                    "adv_fit_stop_time" : end,
                 },
             )
-            device = model.device if hasattr(model, "device") else "cpu"
-            time_dict.update({"device" : device})
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_fit_device" : device})
         results["time_dict"] = time_dict
         results["adv_predictions"] = np.array(preds)
         results["time_dict"] = time_dict
@@ -617,12 +617,12 @@ class ExtractionAttack:
                     {
                         "adv_fit_time_per_sample": (end - start) / (len(x_train) * 1e9),
                         "adv_fit_time": (end - start) / 1e9,
-                        "adv_fit_start_time" : start / 1e9,
-                        "adv_fit_stop_time" : end / 1e9,
+                        "adv_fit_start_time" : start,
+                        "adv_fit_stop_time" : end,
                     },
                 )
-                device = model.device if hasattr(model, "device") else "cpu"
-                time_dict.update({"device" : device})
+                device = str(model.device) if hasattr(model, "device") else "cpu"
+                time_dict.update({"adv_fit_device" : device})
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
         else:
@@ -637,14 +637,14 @@ class ExtractionAttack:
             end = process_time_ns()
             time_dict.update(
                 {
-                    "adv_predict_time_per_sample": (end - start) / (len(x_train) * 1e9),
+                    "adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
-                    "adv_predict_start_time" : start / 1e9,
-                    "adv_predict_stop_time" : end / 1e9,
+                    "adv_predict_start_time" : start,
+                    "adv_predict_stop_time" : end,
                 },
             )
-            device = model.device if hasattr(model, "device") else "cpu"
-            time_dict.update({"device" : device})
+            device = str(model.device) if hasattr(model, "device") else "cpu"
+            time_dict.update({"adv_predict_device" : device})
         results["time_dict"] = time_dict
         results["adv_predictions"] = np.array(preds)
 

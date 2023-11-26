@@ -124,7 +124,7 @@ class ModelTrainer:
         try:
             start = process_time_ns()
             model.fit(data[0], data[2], **trainer)
-            device = model.device if hasattr(model, "device") else "cpu"
+            device = str(model.device) if hasattr(model, "device") else "cpu"
             end = process_time_ns() - start
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
@@ -181,10 +181,10 @@ class ModelTrainer:
             else:
                 raise e
         time_dict = {
-            "train_time": end / 1e9,
+            "train_time": end,
             "train_time_per_sample": end / (len(data[0]) * 1e9),
-            "train_time_start" : start / 1e9,
-            "train_time_end" : end / 1e9,
+            "train_time_start" : start ,
+            "train_time_end" : end,
             "train_device" : device,
         }
         
@@ -431,6 +431,7 @@ class Model:
             if time_dict_file is not None:
                 if Path(time_dict_file).exists():
                     old_time_dict = self.data.load(time_dict_file)
+                    
                     old_time_dict.update(**result_dict["time_dict"])
                     time_dict = old_time_dict
                 self.data.save(time_dict, time_dict_file)
@@ -540,7 +541,7 @@ class Model:
         try:
             start = process_time_ns()
             predictions = model.predict(data[1])
-            device = model.device if hasattr(model, "device") else "cpu"
+            device = str(model.device) if hasattr(model, "device") else "cpu"
         except NotFittedError as e: # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
@@ -563,10 +564,10 @@ class Model:
         return (
             predictions,
             {
-                "predict_time": end / 1e9,
+                "predict_time": end,
                 "predict_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_start_time" : start / 1e9,
-                "predict_stop_time" : end / 1e9,
+                "predict_start_time" : start ,
+                "predict_stop_time" : end,
                 "predict_device" : device,
             },
         )
@@ -590,7 +591,7 @@ class Model:
             data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
-        device = model.device if hasattr(model, "device") else "cpu"
+        device = str(model.device) if hasattr(model, "device") else "cpu"
         if (
             str("art") in str(type(model))
             and "sklearn" in str(type(model))
@@ -613,10 +614,10 @@ class Model:
         return (
             predictions,
             {
-                "predict_proba_time": end / 1e9,
+                "predict_proba_time": end,
                 "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_proba_start_time" : start / 1e9,
-                "predict_proba_stop_time" : end / 1e9,
+                "predict_proba_start_time" : start ,
+                "predict_proba_stop_time" : end,
                 "predict_proba_device" : device,
 
             },
@@ -641,7 +642,7 @@ class Model:
             data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
-        device = model.device if hasattr(model, "device") else "cpu"
+        device = str(model.device) if hasattr(model, "device") else "cpu"
         if str("art") in str(type(model)) and (
             hasattr(model.model, "predict_log_proba")
             or hasattr(model.model, "predict_proba")
@@ -671,10 +672,10 @@ class Model:
         return (
             predictions,
             {
-                "predict_log_proba_time": end / 1e9,
+                "predict_log_proba_time": end,
                 "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
-                "predict_log_proba_start_time" : start / 1e9,
-                "predict_log_proba_stop_time" : end / 1e9,
+                "predict_log_proba_start_time" : start ,
+                "predict_log_proba_stop_time" : end,
                 "predict_log_device" : device,
             },
         )
