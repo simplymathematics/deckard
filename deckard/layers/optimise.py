@@ -268,7 +268,7 @@ def optimise(cfg: DictConfig) -> None:
     Path(folder).mkdir(exist_ok=True, parents=True)
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
-    direction = cfg.pop("direction", "minimize")
+    direction = cfg.get("direction", "minimize")
     try:
         scores = exp()
         if isinstance(scorer, str):
