@@ -14,7 +14,7 @@ stages:
   #   # params:
   #   #  - oc.
   parse_params:
-    cmd: python -m deckard.layers.parse --config_file mnist.yaml
+    cmd: python -m deckard.layers.parse --config_file ${files.directory}.yaml
     deps:
       - conf/
     outs:
@@ -22,7 +22,7 @@ stages:
           cache: True
           persist: True
   train:
-    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment train --config_file ${files.directory}.yaml
     params:
       - data
       - model
@@ -39,7 +39,7 @@ stages:
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment attack --config_file ${files.directory}.yaml
     params:
       - data
       - model
@@ -59,13 +59,9 @@ stages:
         ##############################################################################
   models: # This is a loop over the ResNet models
     foreach:
-      - ResNet18
-      # - ResNet34
-      # - ResNet50
-      # - ResNet101
-      # - ResNet152
+      - mnist
     do: # This script configures eazch defence
-      cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name mnist.yaml 
+      cmd: bash models.sh  stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name ${item}.yaml 
       deps:
       - models.sh
       - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -76,13 +72,9 @@ stages:
           persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
-      - ResNet18
-      #- ResNet34
-      #- ResNet50
-      #- ResNet101
-      #- ResNet152
+      - mnist
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name mnist.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db ++direction="[maximize,minimize,minimize]" ++optimizers="[adv_accuracy,adv_fit_time,adv_predict_time]" --config-name ${item}.yaml
       deps:
       - models.sh # This script configures each defence
       - attacks.sh # This script configures each attack
@@ -92,51 +84,43 @@ stages:
       - ${files.directory}/${files.reports}/attack/${item}.db: # This outputs a database file for each model
           cache: True
           persist: True
-  compile:
-    foreach: # iterates through each stage
-      # - train 
-      - attack
-    do:
-      cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
-      deps:
-      - ${files.directory}/${files.reports}/${item}/
-      - ${files.directory}/${files.reports}/${item}/ResNet18.db
-      - ${files.directory}/${files.reports}/${item}/ResNet34.db
-      - ${files.directory}/${files.reports}/${item}/ResNet50.db
-      - ${files.directory}/${files.reports}/${item}/ResNet101.db
-      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
-      outs:
-      - ${files.directory}/${files.reports}/${item}.csv
-  plot:
-    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
-    deps:
-      - ${files.directory}/${files.reports}/attack.csv
-      - ${files.directory}/${files.reports}/attack/ResNet18.db
-      - ${files.directory}/${files.reports}/attack/ResNet34.db
-      - ${files.directory}/${files.reports}/attack/ResNet50.db
-      - ${files.directory}/${files.reports}/attack/ResNet101.db
-      - ${files.directory}/${files.reports}/attack/ResNet152.db
-    outs:
-      - ${files.directory}/plots/data.csv
-  afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --file ${files.directory}/plots/data.csv
-    deps:
-      - ${files.directory}/plots/data.csv
-    plots:
-      - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_partial_effects.pdf
-      - ${files.directory}/plots/cox_partial_effects.pdf
-      - ${files.directory}/plots/cox_aft.pdf
-      - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_partial_effects.pdf
-      - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_partial_effects.pdf
-    metrics:
-      - ${files.directory}/plots/aft_comparison.csv
-    outs:
-      - ${files.directory}/plots/aft_comparison.tex
-  copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
-      deps:
-        - ${files.directory}/plots/data.csv
-        - ${files.directory}/plots/aft_comparison.csv
+  # compile:
+  #   foreach: # iterates through each stage
+  #     # - train 
+  #     - attack
+  #   do:
+  #     cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${item} --results_file ${files.directory}/${files.reports}/${item}.csv
+  #     deps:
+  #     - ${files.directory}/${files.reports}/${item}/
+  #     - ${files.directory}/${files.reports}/${item}/mnist.db
+  #     outs:
+  #     - ${files.directory}/${files.reports}/${item}.csv
+  # plot:
+  #   cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
+  #   deps:
+  #     - ${files.directory}/${files.reports}/attack.csv
+  #     - ${files.directory}/${files.reports}/attack/mnist.db
+  #   outs:
+  #     - ${files.directory}/plots/data.csv
+  # afr:
+  #   cmd: python -m deckard.layers.afr --dataset ${files.directory} --file ${files.directory}/plots/data.csv
+  #   deps:
+  #     - ${files.directory}/plots/data.csv
+  #   plots:
+  #     - ${files.directory}/plots/weibull_aft.pdf
+  #     - ${files.directory}/plots/weibull_partial_effects.pdf
+  #     - ${files.directory}/plots/cox_partial_effects.pdf
+  #     - ${files.directory}/plots/cox_aft.pdf
+  #     - ${files.directory}/plots/log_logistic_aft.pdf
+  #     - ${files.directory}/plots/log_logistic_partial_effects.pdf
+  #     - ${files.directory}/plots/log_normal_aft.pdf
+  #     - ${files.directory}/plots/log_normal_partial_effects.pdf
+  #   metrics:
+  #     - ${files.directory}/plots/aft_comparison.csv
+  #   outs:
+  #     - ${files.directory}/plots/aft_comparison.tex
+  # copy_results:
+  #     cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+  #     deps:
+  #       - ${files.directory}/plots/data.csv
+  #       - ${files.directory}/plots/aft_comparison.csv

@@ -31,58 +31,58 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_failures_per_train_time_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  set:
-    yscale: log
-  titles: $\bar{C}_{ben.}$ vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: training_time_per_failure
-  ylabels: $\bar{C}_{ben.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-- file: adv_failures_per_train_time_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  set:
-    yscale: log
-  titles:  $\bar{C}_{adv.}$ vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: training_time_per_adv_failure
-  ylabels: $\bar{C}_{adv.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-- file: adv_failures_per_train_time_vs_attack_type.pdf
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  set:
-    yscale: log
-  titles:  $\bar{C}_{adv.}$ vs Attack Type
-  x: atk_gen
-  xlabels: Attack Type
-  y: training_time_per_adv_failure
-  ylabels: $\bar{C}_{adv.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+# - file: ben_failures_per_train_time_vs_defence_type.pdf
+#   hue: model_name
+#   kind: boxen
+#   set:
+#     yscale: log
+#   titles: $\bar{C}_{ben.}$ vs Defence Type
+#   x: def_gen
+#   xlabels: Defence Type
+#   y: training_time_per_failure
+#   ylabels: $\bar{C}_{ben.}$
+#   rotation : 90
+#   hue_order:
+#   - ResNet18
+#   - ResNet34
+#   - ResNet50
+#   - ResNet101
+#   - ResNet152
+# - file: adv_failures_per_train_time_vs_defence_type.pdf
+#   hue: model_name
+#   kind: boxen
+#   set:
+#     yscale: log
+#   titles:  $\bar{C}_{adv.}$ vs Defence Type
+#   x: def_gen
+#   xlabels: Defence Type
+#   y: training_time_per_adv_failure
+#   ylabels: $\bar{C}_{adv.}$
+#   rotation : 90
+#   hue_order:
+#   - ResNet18
+#   - ResNet34
+#   - ResNet50
+#   - ResNet101
+#   - ResNet152
+# - file: adv_failures_per_train_time_vs_attack_type.pdf
+#   hue: model_name
+#   kind: boxen
+#   legend_title: Model Name
+#   set:
+#     yscale: log
+#   titles:  $\bar{C}_{adv.}$ vs Attack Type
+#   x: atk_gen
+#   xlabels: Attack Type
+#   y: training_time_per_adv_failure
+#   ylabels: $\bar{C}_{adv.}$
+#   rotation : 90
+#   hue_order:
+#   - ResNet18
+#   - ResNet34
+#   - ResNet50
+#   - ResNet101
+#   - ResNet152
 - file: adv_failures_per_test_time_vs_defence_type.pdf
   hue: model_name
   kind: boxen
