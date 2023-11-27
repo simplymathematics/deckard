@@ -46,5 +46,6 @@ To build the package (optional and is a very rough draft):
 After adding it to your path, you can then run it as a module:
 
 ```
-python -m deckard --config_name mnist.yaml --config_folder examples/power
+cd examples/power
+python -m deckard --config_name mnist.yaml 
 ```
