@@ -61,7 +61,7 @@ class FileConfig:
         self.data_type = data_type
         self.model_type = model_type
         self.attack_type = attack_type
-        self.directory = directory if directory is not None else Path.cwd()
+        self.directory = Path(directory).as_posix() if Path(directory).is_absolute() else Path(Path(), directory).as_posix()
         self.name = name
         self.stage = stage
         self.files = files

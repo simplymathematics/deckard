@@ -27,9 +27,9 @@ optimizers:
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/${stage}/logs
+    dir: ${files.directory}/${files.reports}/${stage}/logs/${data.generate.name}
   sweep:
-    dir: ${files.directory}/${stage}/${model.init.name}
+    dir: ${files.directory}/${stage}//${data.generate.name}
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     study_name: ${model.init.name}
