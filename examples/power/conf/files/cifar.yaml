@@ -3,7 +3,7 @@ reports: reports
 data_dir: data
 model_dir: models
 attack_dir: attacks
-directory: cifar10
+directory: /result/
 score_dict_file: score_dict.json
 data_file : data
 model_file : model
