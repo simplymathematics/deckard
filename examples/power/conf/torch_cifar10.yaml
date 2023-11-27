@@ -26,9 +26,9 @@ optimizers:
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/${stage}/logs
+    dir: ${files.directory}/${files.reports}/${stage}/logs/${data.generate.name}
   sweep:
-    dir: ${files.directory}/${stage}/${model.init.name}
+    dir: ${files.directory}/${stage}/${data.generate.name}
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     study_name: ${model.init.name}
@@ -40,7 +40,7 @@ hydra:
       consider_magic_clip: true
       consider_endpoints: false
       n_startup_trials: 10 # default: 10
-      n_startup_trials:  24 # default: 24
+      n_ei_candidates: 24 # default: 24
       multivariate: true
       warn_independent_sampling: true
     n_trials : 100

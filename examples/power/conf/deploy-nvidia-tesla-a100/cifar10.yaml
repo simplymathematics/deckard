@@ -8,7 +8,7 @@ spec:
     image: ghcr.io/simplymathematics/deckard:main
     imagePullPolicy: Always
     workingDir: /deckard/examples/power/
-    args: ["python", "-m", "deckard", "--config_file", "cifar10.yaml"]
+    args: ["python", "-m", "deckard", "--config_file", "torch_cifar10.yaml"]
     env:
     - name: DECKARD_DEVICE
       value: nvidia-tesla-a100
