@@ -9,6 +9,64 @@ metadata:
     sustainable-computing.io/app: kepler
   name: kepler
 ---
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    sustainable-computing.io/app: kepler
+  name: prometheus-k8s
+  namespace: kepler
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    sustainable-computing.io/app: kepler
+  name: prometheus-k8s
+  namespace: kepler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-k8s
+subjects:
+- kind: ServiceAccount
+  name: prometheus-k8s
+  namespace: monitoring
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -60,16 +118,17 @@ data:
   ENABLE_GPU: "true"
   ENABLE_PROCESS_METRICS: "false"
   ENABLE_QAT: "false"
-  EXPOSE_CGROUP_METRICS: "false"
+  EXPOSE_CGROUP_METRICS: "true"
   EXPOSE_HW_COUNTER_METRICS: "true"
   EXPOSE_IRQ_COUNTER_METRICS: "true"
-  EXPOSE_KUBELET_METRICS: "false"
+  EXPOSE_KUBELET_METRICS: "true"
   KEPLER_LOG_LEVEL: "1"
   KEPLER_NAMESPACE: kepler
   METRIC_PATH: /metrics
   MODEL_CONFIG: |
     CONTAINER_COMPONENTS_ESTIMATOR=false
-  PROMETHEUS_SCRAPE_INTERVAL: 30s
+    PROMETHEUS_SCRAPE_INTERVAL: 5s
+    CONTAINER_COMPONENTS_INIT_URL=https://raw.githubusercontent.com/sustainable-computing-io/kepler-model-server/main/tests/test_models/DynComponentModelWeight/CgroupOnly/ScikitMixed/ScikitMixed.json
   REDFISH_PROBE_INTERVAL_IN_SECONDS: "60"
   REDFISH_SKIP_SSL_VERIFY: "true"
 kind: ConfigMap
@@ -134,8 +193,7 @@ spec:
     spec:
       containers:
       - args:
-        - /usr/bin/kepler -v=1 -kernel-source-dir=/usr/share/kepler/kernel_sources
-          -redfish-cred-file-path=/etc/redfish/redfish.csv
+        - /usr/bin/kepler -v=1
         command:
         - /bin/sh
         - -c
@@ -193,6 +251,10 @@ spec:
       tolerations:
       - effect: NoSchedule
         key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        operator: "Equal"
+        value: present
+        key: nvidia.com/gpu
       volumes:
       - hostPath:
           path: /lib/modules
@@ -216,3 +278,33 @@ spec:
       - name: redfish
         secret:
           secretName: redfish-4kh9d7bc7m
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: kepler-exporter
+    sustainable-computing.io/app: kepler
+  name: kepler-exporter
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 3s
+    port: http
+    relabelings:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: instance
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector:
+    matchNames:
+    - kepler
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: kepler-exporter

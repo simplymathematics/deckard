@@ -11,9 +11,9 @@ metadata:
   namespace: monitoring
 spec:
   endpoints:
-  - interval: 30s
+  - interval: 5s
     port: web
-  - interval: 30s
+  - interval: 5s
     port: reloader-web
   selector:
     matchLabels:
