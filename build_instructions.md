@@ -1,3 +1,7 @@
+
+To build the package (optional and is a very rough draft):
+
+```
 ######################################
 # Ubuntu 22.04, 20.04
 sudo apt update
@@ -17,3 +21,4 @@ python3 -m pip install -e deckard/
 python3 -m pip install pyinstaller
 python3 -m pip install -u numba pip setuptools
 cd deckard && pyinstaller --onefile deckard.py -n deckard
+```
