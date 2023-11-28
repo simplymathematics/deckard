@@ -154,7 +154,6 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epoc
 
 
 def format_control_parameter(data, control_dict):
-def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
 
     if hasattr(data, "def_gen"):
@@ -176,7 +175,6 @@ def format_control_parameter(data, control_dict):
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
             control_dict.pop(defence)
-                value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
             control_dict.pop(defence)
         else:
@@ -222,6 +220,7 @@ def clean_data_for_plotting(
     atk_gen_dict,
     control_dict,
     file,
+    folder,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -240,17 +239,11 @@ def clean_data_for_plotting(
     if data["model.init.name"].str.contains("Net").any():
         data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     data = data.loc[:, ~data.columns.str.endswith(".1")]
-    if data["model.init.name"].str.contains("Net").any():
-        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
-    data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = format_control_parameter(data, control_dict)
-    logger.info(f"Saving data to {file}")
-    # data.to_csv( file)
-    data = format_control_parameter(data, control_dict)
-    logger.info(f"Saving data to {file}")
-    data.to_csv(file)
+    data = format_control_parameter(data, control_dict, min_max=True)
+    logger.info(f"Saving data to {Path(folder) / file}")
+    data.to_csv(Path(folder) / "data.csv")
     return data
 
 
@@ -284,6 +277,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
+    parser.add_argument("--results_folder", type=str, default="results")
     parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
@@ -298,6 +292,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
+    results_folder = args.results_folder
     results = parse_results(report_folder, default_epochs=args.default_epochs)
     with open(Path(Path(), args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -310,6 +305,7 @@ if __name__ == "__main__":
         atk_gen_dict,
         control_dict,
         results_file,
+        results_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(

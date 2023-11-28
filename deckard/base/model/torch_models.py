@@ -2,8 +2,6 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
-from random import randint
-import numpy as np
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 from art.utils import to_categorical
