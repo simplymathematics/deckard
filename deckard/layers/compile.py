@@ -62,17 +62,17 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
             raise ValueError(f"File type {suffix} not supported.")
         results[folder]["stage"] = stage
         results[folder].update(dict_)
-    all_files = Path(folder).glob("**/*")
-    for file in all_files:
-        if file not in path_gen:
-            if file.parent.name not in results:
-                results[file.parent.name] = {}
-            results[file.parent.name][file.stem] = file
+        all_files = Path(folder).glob("**/*")
+        for file in all_files:
+            if file not in path_gen:
+                if file.parent.name not in results:
+                    results[file.parent.name] = {}
+                results[file.parent.name][file.stem] = file
     df = pd.DataFrame(results).T
     return df
 
 
-def merge_defences(results: pd.DataFrame):
+def merge_defences(results: pd.DataFrame, default_epochs=20):
     defences = []
     def_gens = []
     for _, entry in results.iterrows():
@@ -97,6 +97,8 @@ def merge_defences(results: pd.DataFrame):
             and entry["model.art.pipeline.trainer.name"] not in nones
         ):
             defence.append(entry["model.art.pipeline.trainer.name"])
+        if ("model.init.nb_epoch" in entry and entry["model.init.nb_epoch"] != default_epochs):
+            defence.append(entry["model.init.nb_epoch"])
         ############################################################################################################
         if len(defence) > 1:
             def_gen = [str(x).split(".")[-1] for x in defence]
@@ -133,10 +135,10 @@ def merge_attacks(results: pd.DataFrame):
     return results
 
 
-def parse_results(folder, files=["score_dict.json", "params.yaml"]):
+def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
     df = parse_folder(folder, files=files)
     df = flatten_results(df)
-    df = merge_defences(df)
+    df = merge_defences(df, default_epochs=default_epochs)
     df = merge_attacks(df)
     return df
 
@@ -211,7 +213,7 @@ def clean_data_for_plotting(
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = format_control_parameter(data, control_dict)
     logger.info(f"Saving data to {file}")
-    data.to_csv( file)
+    # data.to_csv( file)
     return data
 
 
@@ -248,6 +250,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
+    parser.add_argument("--default_epochs", type=int, default=20)
     parser.add_argument(
         "--kwargs",
         type=list,
@@ -258,7 +261,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    results = parse_results(report_folder)
+    results = parse_results(report_folder, default_epochs=args.default_epochs)
     with open(Path(Path(), args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
     def_gen_dict = big_dict["defences"]

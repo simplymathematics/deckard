@@ -98,20 +98,20 @@ stages:
       size: 739680311
     - path: cifar/models/model.optimizer.pt
       hash: md5
-      md5: 09f978b389dbce742b1a8731b81913b0
+      md5: e7f811b9879af3e82c339327ebbda4e3
       size: 44805933
     - path: cifar/models/model.pt
       hash: md5
-      md5: 7b6a070a946d4f5fcc79ac17de88296e
+      md5: 451eaf13b09e9c9df7eddedfd7597c91
       size: 44811029
     - path: cifar/reports/train/default/predictions.json
       hash: md5
-      md5: c0a3cdf07b36af7ef9084ab0e2030fcc
-      size: 2435001
+      md5: d260d0626de24848c45e2b4ccc091e28
+      size: 2439901
     - path: cifar/reports/train/default/score_dict.json
       hash: md5
-      md5: 665f7680184855a05db884355132024c
-      size: 397
+      md5: a7d27eb11ba150347b705d90fe2c52d4
+      size: 408
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file cifar10.yaml
     deps:
@@ -120,7 +120,7 @@ stages:
       size: 739680311
     - path: cifar/models/model.pt
       hash: md5
-      md5: 7b6a070a946d4f5fcc79ac17de88296e
+      md5: 451eaf13b09e9c9df7eddedfd7597c91
       size: 44811029
     params:
       params.yaml:
@@ -330,16 +330,16 @@ stages:
     outs:
     - path: cifar/attacks/attack.pkl
       hash: md5
-      md5: 7af56fed692b7c502bf7431adc68a3d0
+      md5: 166ad9c95ddf728a437514ab201b7818
       size: 123046
     - path: cifar/reports/attack/default/adv_predictions.json
       hash: md5
-      md5: 7860bb5575e86ce8df3240e01abc930d
-      size: 2099
+      md5: 7b935916e2afee6a7c6e3647de882c59
+      size: 2126
     - path: cifar/reports/attack/default/score_dict.json
       hash: md5
-      md5: d3213b13fda99e50a582440a9752f827
-      size: 558
+      md5: 372c2d735838be9121b207cbe8739f41
+      size: 468
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet18.db
@@ -351,8 +351,8 @@ stages:
       size: 2907
     - path: cifar/reports/attack/default/score_dict.json
       hash: md5
-      md5: d3213b13fda99e50a582440a9752f827
-      size: 558
+      md5: 372c2d735838be9121b207cbe8739f41
+      size: 468
     - path: models.sh
       hash: md5
       md5: 02a4961b4afe7ba84c41e9ad49c30c83
@@ -360,8 +360,8 @@ stages:
     outs:
     - path: cifar/reports/attack/ResNet18.db
       hash: md5
-      md5: cb2a1edd44e08358b52d5ab5b6232aa5
-      size: 1212416
+      md5: 8e9fc2e0821e82193a8d50cab6fd2dd9
+      size: 819200
   attacks@ResNet34:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar/reports/attack/ResNet34.db
@@ -373,8 +373,8 @@ stages:
       size: 2907
     - path: cifar/reports/attack/default/score_dict.json
       hash: md5
-      md5: d3213b13fda99e50a582440a9752f827
-      size: 558
+      md5: 372c2d735838be9121b207cbe8739f41
+      size: 468
     - path: models.sh
       hash: md5
       md5: 02a4961b4afe7ba84c41e9ad49c30c83
@@ -382,7 +382,7 @@ stages:
     outs:
     - path: cifar/reports/attack/ResNet34.db
       hash: md5
-      md5: c19b84776f8a6f99705c5f6bbd2a28c6
+      md5: 8da0c0cc1f20f5a492e730ffa54b573a
       size: 819200
   attacks@ResNet50:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50

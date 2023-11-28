@@ -20,6 +20,188 @@ from .plots import calculate_failure_rate, drop_frames_without_results, min_max_
 
 logger = logging.getLogger(__name__)
 
+
+
+def plot_aft(
+    df,
+    file,
+    event_col,
+    duration_col,
+    title,
+    mtype,
+    xlabel=None,
+    ylabel=None,
+    replacement_dict={},
+    **kwargs,
+):
+    if mtype == "weibull":
+        aft = WeibullAFTFitter(**kwargs)
+    elif mtype == "log_normal":
+        aft = LogNormalAFTFitter(**kwargs)
+    elif mtype == "log_logistic":
+        aft = LogLogisticAFTFitter(**kwargs)
+    elif mtype == "cox":
+        aft = CoxPHFitter(**kwargs)
+    assert (
+        duration_col in df.columns
+    ), f"Column {duration_col} not in dataframe with columns {df.columns}"
+    if event_col is not None:
+        assert (
+            event_col in df.columns
+        ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    plt.gcf().clear()
+    aft.fit(df, duration_col=duration_col, event_col=event_col)
+    ax = aft.plot()
+    labels = ax.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    ax.set_yticklabels(labels)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.get_figure().tight_layout()
+    ax.get_figure().savefig(FOLDER / file)
+    logger.info(f"Saved graph to {FOLDER / file}")
+    plt.show()
+    plt.gcf().clear()
+    return ax, aft
+
+def plot_partial_effects(
+    aft,
+    covariate_array,
+    values_array,
+    title=None,
+    file="partial_effects.pdf",
+    xlabel="Covariate",
+    ylabel="Failure rate",
+    legend_kwargs={"loc": "upper left"},
+    replacement_dict={},
+    cmap="coolwarm",
+    **kwargs,
+):
+    plt.gcf().clear()
+    # kwargs.pop("replacement_dict")
+    pareto = aft.plot_partial_effects_on_outcome(
+        covariate_array, values_array, cmap=cmap, **kwargs
+    )
+    labels = pareto.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    pareto.set_yticklabels(labels)
+    pareto.legend(**legend_kwargs)
+    pareto.set_ylabel(ylabel)
+    pareto.set_xlabel(xlabel)
+    pareto.set_title(title)
+    pareto.get_figure().tight_layout()
+    pareto.get_figure().savefig(FOLDER / file)
+    logger.info(f"Saved graph to {FOLDER / file}")
+    plt.gcf().clear()
+    return pareto
+
+def score_model(aft, train, test):
+    train_score = aft.score(train)
+    test_score = aft.score(test)
+    scores = {"train_score": train_score, "test_score": test_score}
+    plt.show()
+    return scores
+
+def make_afr_table(score_list, aft_dict, dataset):
+    assert len(score_list) == len(
+        aft_dict,
+    ), "Length of score list and aft dict must be equal"
+    aft_data = pd.DataFrame()
+    aft_data.index.name = "Model"
+    aft_data.index = aft_dict.keys()
+    aft_data["AIC"] = [
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
+        for x in aft_dict.values()
+    ]
+    aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
+    aft_data["BIC"] = [
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
+        for x in aft_dict.values()
+    ]
+    # aft_data["Train LL"] = [x["train_score"] for x in score_list]
+    # aft_data["Test LL"] = [x["test_score"] for x in score_list]
+    aft_data["Mean $S(t;\\theta)$"] = [
+        x.predict_expectation(X_train).mean() for x in aft_dict.values()
+    ]
+    aft_data["Median $S(t;\\theta)$"] = [
+        x.predict_median(X_train).median() for x in aft_dict.values()
+    ]
+    aft_data = aft_data.round(2)
+    aft_data.to_csv(FOLDER / "aft_comparison.csv")
+    logger.info(f"Saved AFT comparison to {FOLDER / 'aft_comparison.csv'}")
+    aft_data = aft_data.round(2)
+    aft_data.fillna("--", inplace=True)
+    aft_data.to_latex(
+        FOLDER / "aft_comparison.tex",
+        float_format="%.2f",
+        label=f"tab:{dataset}",
+        caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+    )
+
+    print(yaml.dump(aft_data.to_dict(), default_flow_style=False, indent=4))
+    return aft_data
+
+def clean_data_for_aft(
+    data,
+    kwarg_list,
+    target="adv_failure_rate",
+):
+    subset = data.copy()
+    assert (
+        target in subset
+    ), f"Target {target} not in dataframe with columns {subset.columns}"
+
+    cleaned = pd.DataFrame()
+    kwarg_list.append(target)
+    for kwarg in kwarg_list:
+        cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
+    cols = cleaned.columns
+    cleaned = pd.DataFrame(subset, columns=cols)
+    if "accuracy" in cleaned.columns:
+        cleaned = cleaned[cleaned["accuracy"] != 1e10]
+        cleaned = cleaned[cleaned["accuracy"] != -1e10]
+    if "adv_accuracy" in cleaned.columns:
+        cleaned = cleaned[cleaned["adv_accuracy"] != 1e10]
+        cleaned = cleaned[cleaned["adv_accuracy"] != -1e10]
+    cleaned.dropna(inplace=True, how="any", axis=0)
+    y = cleaned[target]
+    del cleaned[target]
+    assert (
+        target in cleaned
+    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
+    return cleaned, y, data
+
+def split_data_for_aft(
+    data,
+    target,
+    duration_col,
+    kwarg_list,
+    test_size=0.2,
+    random_state=42,
+):
+    cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
+    X_train, X_test, y_train, y_test = train_test_split(
+        cleaned,
+        y,
+        test_size=test_size,
+        random_state=random_state,
+    )
+    assert (
+        target in cleaned
+    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
+    assert (
+        duration_col in cleaned
+    ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
+    return X_train, X_test, y_train, y_test
+
+    
+
+
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument("--target", type=str, default="adv_failures")
@@ -32,13 +214,7 @@ if "__main__" == __name__:
     duration_col = afr_args.duration_col
     dataset = afr_args.dataset
 
-    font = {
-        "family": "Times New Roman",
-        "weight": "bold",
-        "size": 22,
-    }
-
-    matplotlib.rc("font", **font)
+   
     FOLDER = Path(afr_args.plots_folder)
     data = pd.read_csv(afr_args.file, index_col=0)
     data.columns = data.columns.str.strip()
@@ -58,184 +234,7 @@ if "__main__" == __name__:
         :,
         "attack.attack_size",
     ]
-
-    def plot_aft(
-        df,
-        file,
-        event_col,
-        duration_col,
-        title,
-        mtype,
-        xlabel=None,
-        ylabel=None,
-        replacement_dict={},
-        **kwargs,
-    ):
-        if mtype == "weibull":
-            aft = WeibullAFTFitter(**kwargs)
-        elif mtype == "log_normal":
-            aft = LogNormalAFTFitter(**kwargs)
-        elif mtype == "log_logistic":
-            aft = LogLogisticAFTFitter(**kwargs)
-        elif mtype == "cox":
-            aft = CoxPHFitter(**kwargs)
-        assert (
-            duration_col in df.columns
-        ), f"Column {duration_col} not in dataframe with columns {df.columns}"
-        if event_col is not None:
-            assert (
-                event_col in df.columns
-            ), f"Column {event_col} not in dataframe with columns {df.columns}"
-        plt.gcf().clear()
-        aft.fit(df, duration_col=duration_col, event_col=event_col)
-        ax = aft.plot()
-        labels = ax.get_yticklabels()
-        labels = [label.get_text() for label in labels]
-        for k, v in replacement_dict.items():
-            labels = [label.replace(k, v) for label in labels]
-        ax.set_yticklabels(labels)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        ax.get_figure().tight_layout()
-        ax.get_figure().savefig(FOLDER / file)
-        logger.info(f"Saved graph to {FOLDER / file}")
-        plt.show()
-        plt.gcf().clear()
-        return ax, aft
-
-    def plot_partial_effects(
-        aft,
-        covariate_array,
-        values_array,
-        title=None,
-        file="partial_effects.pdf",
-        xlabel="Covariate",
-        ylabel="Failure rate",
-        legend_kwargs={"loc": "upper left"},
-        replacement_dict={},
-        cmap="coolwarm",
-        **kwargs,
-    ):
-        plt.gcf().clear()
-        # kwargs.pop("replacement_dict")
-        pareto = aft.plot_partial_effects_on_outcome(
-            covariate_array, values_array, cmap=cmap, **kwargs
-        )
-        labels = pareto.get_yticklabels()
-        labels = [label.get_text() for label in labels]
-        for k, v in replacement_dict.items():
-            labels = [label.replace(k, v) for label in labels]
-        pareto.set_yticklabels(labels)
-        pareto.legend(**legend_kwargs)
-        pareto.set_ylabel(ylabel)
-        pareto.set_xlabel(xlabel)
-        pareto.set_title(title)
-        pareto.get_figure().tight_layout()
-        pareto.get_figure().savefig(FOLDER / file)
-        logger.info(f"Saved graph to {FOLDER / file}")
-        plt.gcf().clear()
-        return pareto
-
-    def score_model(aft, train, test):
-        train_score = aft.score(train)
-        test_score = aft.score(test)
-        scores = {"train_score": train_score, "test_score": test_score}
-        plt.show()
-        return scores
-
-    def make_afr_table(score_list, aft_dict, dataset):
-        assert len(score_list) == len(
-            aft_dict,
-        ), "Length of score list and aft dict must be equal"
-        aft_data = pd.DataFrame()
-        aft_data.index.name = "Model"
-        aft_data.index = aft_dict.keys()
-        aft_data["AIC"] = [
-            x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-            for x in aft_dict.values()
-        ]
-        aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
-        aft_data["BIC"] = [
-            x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-            for x in aft_dict.values()
-        ]
-        # aft_data["Train LL"] = [x["train_score"] for x in score_list]
-        # aft_data["Test LL"] = [x["test_score"] for x in score_list]
-        aft_data["Mean $S(t;\\theta)$"] = [
-            x.predict_expectation(X_train).mean() for x in aft_dict.values()
-        ]
-        aft_data["Median $S(t;\\theta)$"] = [
-            x.predict_median(X_train).median() for x in aft_dict.values()
-        ]
-        aft_data = aft_data.round(2)
-        aft_data.to_csv(FOLDER / "aft_comparison.csv")
-        logger.info(f"Saved AFT comparison to {FOLDER / 'aft_comparison.csv'}")
-        aft_data = aft_data.round(2)
-        aft_data.fillna("--", inplace=True)
-        aft_data.to_latex(
-            FOLDER / "aft_comparison.tex",
-            float_format="%.2f",
-            label=f"tab:{dataset}",
-            caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
-        )
-
-        print(yaml.dump(aft_data.to_dict(), default_flow_style=False, indent=4))
-        return aft_data
-
-    def clean_data_for_aft(
-        data,
-        kwarg_list,
-        target="adv_failure_rate",
-    ):
-        subset = data.copy()
-        assert (
-            target in subset
-        ), f"Target {target} not in dataframe with columns {subset.columns}"
-
-        cleaned = pd.DataFrame()
-        kwarg_list.append(target)
-        for kwarg in kwarg_list:
-            cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
-        cols = cleaned.columns
-        cleaned = pd.DataFrame(subset, columns=cols)
-        if "accuracy" in cleaned.columns:
-            cleaned = cleaned[cleaned["accuracy"] != 1e10]
-            cleaned = cleaned[cleaned["accuracy"] != -1e10]
-        if "adv_accuracy" in cleaned.columns:
-            cleaned = cleaned[cleaned["adv_accuracy"] != 1e10]
-            cleaned = cleaned[cleaned["adv_accuracy"] != -1e10]
-        cleaned.dropna(inplace=True, how="any", axis=0)
-        y = cleaned[target]
-        del cleaned[target]
-        assert (
-            target in cleaned
-        ), f"Target {target} not in dataframe with columns {cleaned.columns}"
-        return cleaned, y, data
-
-    def split_data_for_aft(
-        data,
-        target,
-        duration_col,
-        kwarg_list,
-        test_size=0.2,
-        random_state=42,
-    ):
-        cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
-        X_train, X_test, y_train, y_test = train_test_split(
-            cleaned,
-            y,
-            test_size=test_size,
-            random_state=random_state,
-        )
-        assert (
-            target in cleaned
-        ), f"Target {target} not in dataframe with columns {cleaned.columns}"
-        assert (
-            duration_col in cleaned
-        ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
-        return X_train, X_test, y_train, y_test
-
+    
     kwarg_list = [
         "accuracy",
         "train_time",
@@ -257,6 +256,7 @@ if "__main__" == __name__:
         test_size=0.2,
         random_state=42,
     )
+
 
     weibull_dict = {
         "Intercept: rho_": "$\\rho$",

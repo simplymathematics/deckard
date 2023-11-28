@@ -55,10 +55,10 @@ stages:
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18
-      #- ResNet34
-      #- ResNet50
-      #- ResNet101
-      #- ResNet152
+      - ResNet34
+      - ResNet50
+      - ResNet101
+      - ResNet152
     do:
       cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name mnist.yaml
       deps:

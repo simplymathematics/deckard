@@ -106,20 +106,20 @@ stages:
       size: 222320311
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: 1316143c68da44c95cc0294482ba8a50
+      md5: 1e527d70896a4a05a2d6ac103382cd50
       size: 44780845
     - path: mnist/models/model.pt
       hash: md5
-      md5: 0c750c2da34962313084b05ceb424aa2
+      md5: f01e051c7b7dfa20eca3fe1caab0b25e
       size: 44785941
     - path: mnist/reports/train/default/predictions.json
       hash: md5
-      md5: 1396b6032cbd1e76ace82789dcf54861
-      size: 2883588
+      md5: 1e2cf0100bb5f0a42182021e12b00dd9
+      size: 2882749
     - path: mnist/reports/train/default/score_dict.json
       hash: md5
-      md5: 45631341a862aa88bfffbde78d099c6d
-      size: 411
+      md5: ebe552d99842320709ca466da6d3092c
+      size: 410
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
     deps:
@@ -128,7 +128,7 @@ stages:
       size: 222320311
     - path: mnist/models/model.pt
       hash: md5
-      md5: 0c750c2da34962313084b05ceb424aa2
+      md5: f01e051c7b7dfa20eca3fe1caab0b25e
       size: 44785941
     params:
       params.yaml:
@@ -359,16 +359,16 @@ stages:
     outs:
     - path: mnist/attacks/attack.pkl
       hash: md5
-      md5: e1047df78f629f7267cfa7ef869f19f5
+      md5: dfae95e05b35dc8c6bdabd2b5c13a54f
       size: 31517
     - path: mnist/reports/attack/default/adv_predictions.json
       hash: md5
-      md5: 2ab54c7713532e6e1303e5653c9e14f3
-      size: 2194
+      md5: 8ee95327d4f44692f4753e183090d669
+      size: 2162
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
-      size: 472
+      md5: b11f759014274f38b082f200820c5544
+      size: 474
   models:
     cmd: bash models.sh 
       ++model.init.name=torch_example.ResNet18,torch_example.ResNet34,torch_example.ResNet50
@@ -445,29 +445,35 @@ stages:
       md5: 36ffafc8cb80eb6fbed190be9d420ef7
       size: 3674355
   compile@attack:
-    cmd: python -m deckard.layers.compile --report_folder output/reports/attack --results_file
-      output/reports/attack.csv
+    cmd: python -m deckard.layers.compile --report_folder mnist/reports/attack --results_file
+      mnist/reports/attack.csv
     deps:
-    - path: ResNet101.db
-      md5: c47414423a51a4b866be6ce8312cb97e
-      size: 561152
-    - path: ResNet18.db
-      md5: 2ae52c7b342b46ac01c79f06bfdc6c38
-      size: 2768896
-    - path: ResNet34.db
-      md5: 6a5795cbb9d977cdaadf365a6ac76a0a
-      size: 983040
-    - path: ResNet50.db
-      md5: 7e215d670119b0703c3d97d86e28e117
-      size: 561152
-    - path: output/reports/attack/
-      md5: a76eb881be1813685bf988cf8dbe7a52.dir
-      size: 5109780242
-      nfiles: 10514
+    - path: mnist/reports/attack/
+      hash: md5
+      md5: 72220a80b6e0a4c6f9ca707c985761c5.dir
+      size: 63191244
+      nfiles: 8010
+    - path: mnist/reports/attack/ResNet101.db
+      hash: md5
+      md5: 600452804d96c8b8483c3f8da01130c4
+      size: 462848
+    - path: mnist/reports/attack/ResNet18.db
+      hash: md5
+      md5: 920b0ed178ec504c0d7990777862283f
+      size: 1363968
+    - path: mnist/reports/attack/ResNet34.db
+      hash: md5
+      md5: 3f56dd2ea0783a56a2a9e3eaaad88c21
+      size: 1945600
+    - path: mnist/reports/attack/ResNet50.db
+      hash: md5
+      md5: d9ee221b942b56d9bb720e022e05bf4b
+      size: 462848
     outs:
-    - path: output/reports/attack.csv
-      md5: 69c87ac633b8abae15d65852c79ea89c
-      size: 6309975
+    - path: mnist/reports/attack.csv
+      hash: md5
+      md5: 95476c59ee7966ee3458a873c0a89b7d
+      size: 8506622
   compile@train:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train --results_file
       output/reports/train.csv
@@ -665,8 +671,8 @@ stages:
       size: 2907
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: a7b1ec550fe1eeb7c5b16c0f36b28ff8
-      size: 472
+      md5: b11f759014274f38b082f200820c5544
+      size: 474
     - path: models.sh
       hash: md5
       md5: 1937e58bedac027034aea7d4a5712407
@@ -674,8 +680,8 @@ stages:
     outs:
     - path: mnist/reports/attack/ResNet18.db
       hash: md5
-      md5: 2b4e2a2ac1cdd015cf469496a9861088
-      size: 999424
+      md5: 920b0ed178ec504c0d7990777862283f
+      size: 1363968
   models@ResNet50:
     cmd: bash models.sh ++model.init.name=torch_example.ResNet50 stage=train ++hydra.sweeper.storage=sqlite:///mnist/reports/train/ResNet50.db
       --config-name mnist.yaml

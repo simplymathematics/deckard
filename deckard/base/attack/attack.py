@@ -175,7 +175,7 @@ class EvasionAttack:
                 x_clean=ben_samples,
                 labels=data[3][: self.attack_size],
                 x_adv=samples,
-                targeted=self.kwargs.pop("targeted", False),
+                targeted=targeted,
             )
         except TypeError as e:
             logger.error(f"Failed to compute success rate. Error: {e}")
