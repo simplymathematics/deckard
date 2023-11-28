@@ -26,7 +26,6 @@ def get_dvc_stage_params(
     directory=".",
     name=None,
 ):
-
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
     )
