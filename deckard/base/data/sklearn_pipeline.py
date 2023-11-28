@@ -68,9 +68,6 @@ class SklearnDataPipeline:
         for stage in pipeline:
             transformer = pipeline[stage]
             X_train, X_test, y_train, y_test = transformer(
-                X_train,
-                X_test,
-                y_train,
-                y_test,
+                X_train, X_test, y_train, y_test,
             )
         return [X_train, X_test, y_train, y_test]

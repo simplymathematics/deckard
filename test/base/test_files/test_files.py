@@ -16,8 +16,7 @@ class testFiles(unittest.TestCase):
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(),
-            version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg

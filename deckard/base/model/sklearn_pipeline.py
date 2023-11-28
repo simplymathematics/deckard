@@ -83,21 +83,18 @@ class SklearnModelPipelineStage:
             kwargs.update(**kwargs.pop("kwargs"))
         if "art." in str(type(model)):
             assert isinstance(
-                model.model,
-                BaseEstimator,
+                model.model, BaseEstimator,
             ), f"model must be a sklearn estimator. Got {type(model.model)}"
         else:
             assert isinstance(
-                model,
-                BaseEstimator,
+                model, BaseEstimator,
             ), f"model must be a sklearn estimator. Got {type(model)}"
         if not isinstance(model, Pipeline):
             model = Pipeline([("model", model)])
         else:
             model.steps.insert(-2, [stage_name, model])
         assert isinstance(
-            model,
-            Pipeline,
+            model, Pipeline,
         ), f"model must be a sklearn pipeline. Got {type(model)}"
         return model
 
@@ -123,8 +120,7 @@ class SklearnModelPipeline:
                 pipe[stage] = asdict(pipe[stage])
             else:
                 assert hasattr(
-                    pipe[stage],
-                    "transform",
+                    pipe[stage], "transform",
                 ), f"Pipeline stage must be a SklearnModelPipelineStage, dict, or have a transform method. Got {type(pipe[stage])}"
             if isinstance(pipe[stage], dict):
                 params = deepcopy(pipe[stage])
@@ -132,8 +128,7 @@ class SklearnModelPipeline:
                 pipe[stage] = SklearnModelPipelineStage(params, stage_name=stage_name)
             elif hasattr(pipe[stage], "transform"):
                 assert hasattr(
-                    pipe[stage],
-                    "fit",
+                    pipe[stage], "fit",
                 ), f"Pipeline stage must have a fit method. Got {type(pipe[stage])}"
             else:
                 raise ValueError(
@@ -179,19 +174,16 @@ class SklearnModelPipeline:
             elif hasattr(stage, "fit"):
                 if "art." in str(type(model)):
                     assert isinstance(
-                        model.model,
-                        BaseEstimator,
+                        model.model, BaseEstimator,
                     ), f"model must be a sklearn estimator. Got {type(model.model)}"
                 else:
                     assert isinstance(
-                        model,
-                        BaseEstimator,
+                        model, BaseEstimator,
                     ), f"model must be a sklearn estimator. Got {type(model)}"
                 if not isinstance(model, Pipeline) and "art." not in str(type(model)):
                     model = Pipeline([("model", model)])
                 elif "art." in str(type(model)) and not isinstance(
-                    model.model,
-                    Pipeline,
+                    model.model, Pipeline,
                 ):
                     model.model = Pipeline([("model", model.model)])
                 elif "art." in str(type(model)) and isinstance(model.model, Pipeline):
@@ -200,13 +192,11 @@ class SklearnModelPipeline:
                     model.steps.insert(-2, [stage, model])
                 if "art." not in str(type(model)):
                     assert isinstance(
-                        model,
-                        Pipeline,
+                        model, Pipeline,
                     ), f"model must be a sklearn pipeline. Got {type(model)}"
                 else:
                     assert isinstance(
-                        model.model,
-                        Pipeline,
+                        model.model, Pipeline,
                     ), f"model must be a sklearn pipeline. Got {type(model)}"
         return model
 
@@ -263,8 +253,7 @@ class SklearnModelInitializer:
         if self.pipeline is not None:
             obj = self.pipeline(model)
             assert isinstance(
-                obj,
-                BaseEstimator,
+                obj, BaseEstimator,
             ), f"model must be a sklearn estimator. Got {type(model)}"
         else:
             obj = model
@@ -299,8 +288,7 @@ class SklearnModelInitializer:
         else:
             raise ValueError(f"library must be one of {sklearn_models}. Got {library}")
         assert hasattr(
-            model,
-            "fit",
+            model, "fit",
         ), f"model must have a fit method. Got type {type(model)}"
         return model
 

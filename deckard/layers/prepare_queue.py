@@ -16,8 +16,7 @@ __all__ = ["write_stage", "parse_stage", "get_files"]
 
 
 def get_files(
-    cfg,
-    stage,
+    cfg, stage,
 ):
     """
     Gets the file names from
@@ -169,8 +168,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         with open(Path(params), "r") as f:
             params = yaml.load(f, Loader=yaml.FullLoader)
         assert isinstance(
-            params,
-            dict,
+            params, dict,
         ), f"Params in file {params} must be a dict. It is a {type(params)}."
         key_list = []
         for stage in stages:
@@ -198,8 +196,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
     assert isinstance(
-        params,
-        dict,
+        params, dict,
     ), f"Params must be a dict. It is type {type(params)}."
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
@@ -224,11 +221,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
 
 
 def write_stage(
-    params: dict,
-    stage: str,
-    id_: str,
-    path=None,
-    working_dir=None,
+    params: dict, stage: str, id_: str, path=None, working_dir=None,
 ) -> None:
     """
     Write params to dvc.yaml
@@ -276,8 +269,7 @@ def prepare_experiment_folder(cfg: DictConfig) -> None:
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
+        "DECKARD_CONFIG_PATH", str(Path(Path(), "conf").absolute().as_posix()),
     )
     config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
 

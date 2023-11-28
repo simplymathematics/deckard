@@ -101,12 +101,7 @@ def scatter_plot(
     # plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
-        data=data,
-        x=x,
-        y=y,
-        hue=hue,
-        hue_order=hue_order,
-        **kwargs,
+        data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs,
     )
     graph.set_yscale(y_scale)
     graph.set_xscale(x_scale)
@@ -215,44 +210,22 @@ def min_max_scaling(data, **kwargs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        help="Path to the plot folder",
-        required=True,
+        "-p", "--path", type=str, help="Path to the plot folder", required=True,
     )
     parser.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        help="Data file to read from",
-        required=True,
+        "-f", "--file", type=str, help="Data file to read from", required=True,
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        help="Output file name",
-        default="data.csv",
+        "-o", "--output", type=str, help="Output file name", default="data.csv",
     )
     parser.add_argument(
-        "-t",
-        "--plotfiletype",
-        type=str,
-        help="Filetype of the plots",
-        default=".pdf",
+        "-t", "--plotfiletype", type=str, help="Filetype of the plots", default=".pdf",
     )
     parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
+        "-v", "--verbosity", default="INFO", help="Increase output verbosity",
     )
     parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="conf/plots.yaml",
+        "-c", "--config", help="Path to the config file", default="conf/plots.yaml",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)

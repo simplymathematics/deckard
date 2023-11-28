@@ -215,12 +215,7 @@ def format_control_parameter(data, control_dict):
 
 
 def clean_data_for_plotting(
-    data,
-    def_gen_dict,
-    atk_gen_dict,
-    control_dict,
-    file,
-    folder,
+    data, def_gen_dict, atk_gen_dict, control_dict, file, folder,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -283,10 +278,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument("--default_epochs", type=int, default=20)
     parser.add_argument(
-        "--kwargs",
-        type=list,
-        default=None,
-        nargs="*",
+        "--kwargs", type=list, default=None, nargs="*",
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
@@ -300,12 +292,7 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
     results = clean_data_for_plotting(
-        results,
-        def_gen_dict,
-        atk_gen_dict,
-        control_dict,
-        results_file,
-        results_folder,
+        results, def_gen_dict, atk_gen_dict, control_dict, results_file, results_folder,
     )
     report_file = save_results(results, results_file)
     assert Path(

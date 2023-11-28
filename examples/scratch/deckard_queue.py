@@ -28,10 +28,7 @@ if __name__ == "__main__":
         nargs="+",
     )
     queue_parser.add_argument(
-        "--params_file",
-        "-p",
-        default=[],
-        nargs="+",
+        "--params_file", "-p", default=[], nargs="+",
     )
     queue_parser.add_argument(
         "--output_file",
@@ -93,8 +90,7 @@ if __name__ == "__main__":
             param_name = param_names[j]
             j += 1
             new_config = add_overrides_from_params_file(
-                params_file=params_file,
-                default_config=default_config,
+                params_file=params_file, default_config=default_config,
             )
             if conf_name == "default":
                 study_name = f"{param_name}"

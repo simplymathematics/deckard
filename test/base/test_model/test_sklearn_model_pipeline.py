@@ -6,9 +6,7 @@ import os
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 
-from deckard.base.model.sklearn_pipeline import (
-    SklearnModelPipeline,
-)
+from deckard.base.model.sklearn_pipeline import SklearnModelPipeline
 
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
@@ -20,8 +18,7 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(),
-            version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg

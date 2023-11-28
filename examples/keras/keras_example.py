@@ -44,8 +44,6 @@ class MNISTNet:
 
     def __call__(self):
         self.model.compile(
-            optimizer=self.optimizer,
-            loss=self.loss,
-            metrics=self.metrics,
+            optimizer=self.optimizer, loss=self.loss, metrics=self.metrics,
         )
         return self.model
