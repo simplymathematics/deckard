@@ -2,6 +2,7 @@ _target_: deckard.base.data.Data
 generate:
     _target_: deckard.base.data.generator.DataGenerator
     name: torch_cifar100
+    path: original_data/
 sample:
     _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
