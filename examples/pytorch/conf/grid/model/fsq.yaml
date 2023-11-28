@@ -1,3 +1,0 @@
-art.preprocessor.name : [art.defences.preprocessor.FeatureSqueezing]
-art.preprocessor.clip_values : [[0, 1]]
-art.preprocessor.bit_depth : [1, 2, 4, 8, 16, 32, 64]
