@@ -6,7 +6,7 @@ from typing import Union
 
 import numpy as np
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf, ListConfig
+from omegaconf import DictConfig, OmegaConf
 
 from ..attack import Attack
 from ..data import Data

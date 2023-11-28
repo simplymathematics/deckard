@@ -42,7 +42,7 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     :return: Pandas dataframe with the results
     """
     folder = Path(folder)
-    
+
     logger.debug(f"Parsing folder {folder}...")
     path_gen = []
     for file in files:
@@ -58,6 +58,7 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     df = pd.DataFrame(results).T
     return df
 
+
 def add_file(folder, path_gen, results):
     all_files = Path(folder).glob("**/*")
     for file in all_files:
@@ -66,6 +67,7 @@ def add_file(folder, path_gen, results):
                 results[file.parent.name] = {}
             results[file.parent.name][file.stem] = file
     return results
+
 
 def read_file(file, results):
     suffix = file.suffix
@@ -164,7 +166,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epoc
     return df
 
 
-def format_control_parameter(data, control_dict, min_max = True):
+def format_control_parameter(data, control_dict, min_max=True):
     logger.info("Formatting control parameters...")
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
@@ -186,7 +188,7 @@ def format_control_parameter(data, control_dict, min_max = True):
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
             control_dict.pop(defence)
-            
+
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
@@ -211,7 +213,7 @@ def format_control_parameter(data, control_dict, min_max = True):
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-        
+
         # if min_max is True:
         #     atk_min = data[data.atk_gen == attack].atk_value.min()
         #     atk_max = data[data.atk_gen == attack].atk_value.max()
@@ -308,7 +310,7 @@ if __name__ == "__main__":
         atk_gen_dict,
         control_dict,
     )
-    report_file = save_results(results, results_file, results_folder,)
+    report_file = save_results(results, results_file, results_folder)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

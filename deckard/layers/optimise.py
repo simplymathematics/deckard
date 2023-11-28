@@ -281,7 +281,7 @@ def optimise(cfg: DictConfig) -> None:
     optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
     try:
         scores = exp()
-        score = [v for k,v in scores.items() if k in optimizers]
+        score = [v for k, v in scores.items() if k in optimizers]
         logger.info(f"Score is : {score}")
     except Exception as e:
         logger.warning(
