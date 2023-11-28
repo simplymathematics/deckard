@@ -17,7 +17,8 @@ OmegaConf.register_new_resolver("eval", eval)
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
 config_path = os.environ.get(
-    "DECKARD_CONFIG_PATH", str(Path(Path.cwd(), "conf").absolute().as_posix()),
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path.cwd(), "conf").absolute().as_posix()),
 )
 assert Path(
     config_path,
@@ -27,7 +28,8 @@ full_path = Path(config_path, config_name).as_posix()
 
 
 def get_files(
-    cfg, stage,
+    cfg,
+    stage,
 ):
     """
     Gets the file names from
@@ -197,7 +199,8 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         key_list = []
         for stage in stages:
             assert Path(
-                path, "dvc.yaml",
+                path,
+                "dvc.yaml",
             ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][

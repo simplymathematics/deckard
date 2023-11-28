@@ -23,14 +23,16 @@ class testScorerDict(unittest.TestCase):
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(),
+            version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = OmegaConf.to_container(cfg, resolve=True)
         self.scorers = instantiate(config=self.cfg)
         self.directory = mkdtemp()
         self.file = Path(
-            self.directory, self.score_dict_file + self.score_dict_type,
+            self.directory,
+            self.score_dict_file + self.score_dict_type,
         ).as_posix()
         true_file = "true.pkl"
         preds_file = "preds.pkl"
@@ -199,7 +201,8 @@ class testComputeAccuracy(testScorerConfig):
 model_config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
 model_config_file = "classification.yaml"
 with initialize_config_dir(
-    config_dir=Path(model_config_dir).resolve().as_posix(), version_base="1.3",
+    config_dir=Path(model_config_dir).resolve().as_posix(),
+    version_base="1.3",
 ):
     cfg = compose(config_name=model_config_file)
 model_cfg = cfg
@@ -233,7 +236,8 @@ class testScorerDictfromDict(testScorerDict):
         self.scorers = ScorerDict(**self.cfg)
         self.directory = mkdtemp()
         self.file = Path(
-            self.directory, self.score_dict_file + self.score_dict_type,
+            self.directory,
+            self.score_dict_file + self.score_dict_type,
         ).as_posix()
         true_file = "true.pkl"
         preds_file = "preds.pkl"

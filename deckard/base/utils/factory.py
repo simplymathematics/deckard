@@ -43,13 +43,15 @@ def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> obj
         raise e
     module = import_module(module_name)
     assert hasattr(module, class_name), "class {} is not in {}".format(
-        class_name, module_name,
+        class_name,
+        module_name,
     )
     logger.debug("reading class {} from module {}".format(class_name, module_name))
     cls = getattr(module, class_name)
     if super_cls is not None:
         assert issubclass(cls, super_cls), "class {} should inherit from {}".format(
-            class_name, super_cls.__name__,
+            class_name,
+            super_cls.__name__,
         )
     logger.debug("initialising {} with params {}".format(class_name, kwargs))
     try:
@@ -91,7 +93,8 @@ def make_grid(dictionary: list) -> list:
     big = []
     if not isinstance(dictionary, list):
         assert isinstance(
-            dictionary, dict,
+            dictionary,
+            dict,
         ), f"dictionary must be a list or dict, not {type(dictionary)}"
         dict_list = [dictionary]
     else:

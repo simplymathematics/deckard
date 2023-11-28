@@ -135,7 +135,14 @@ def unflatten_results(df, sep=".") -> List[dict]:
 
 
 def retrain_loop(
-    clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs,
+    clf,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    atk,
+    attack_size,
+    epochs,
 ) -> tuple:
     i = 0
     results = []
@@ -195,12 +202,20 @@ def retrain_loop(
         # Some Logging
         print(
             "Epoch: {} - Benign Time: {} - Benign Score: {} - Adversarial Time: {} - Adversarial Score: {}".format(
-                i, ben_time, ben_score, adv_time, adv_score,
+                i,
+                ben_time,
+                ben_score,
+                adv_time,
+                adv_score,
             ),
         )
         logger.info(
             "Epoch: {} - Benign Time: {} - Benign Score: {} - Adversarial Time: {} - Adversarial Score: {}".format(
-                i, ben_time, ben_score, adv_time, adv_score,
+                i,
+                ben_time,
+                ben_score,
+                adv_time,
+                adv_score,
             ),
         )
     results = pd.DataFrame(results)
@@ -291,14 +306,16 @@ for model in art_models:
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
             with open(
-                Path("output/reports/attack", folder, "adv_probabilities.json"), "r",
+                Path("output/reports/attack", folder, "adv_probabilities.json"),
+                "r",
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
             false_confidence = y_test[: len(probs)] - probs[:, 1]
             avg_prob = np.mean(false_confidence)
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "r",
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "r",
             ) as f:
                 try:
                     scores = json.load(f)
@@ -308,7 +325,8 @@ for model in art_models:
                 del scores["False Confidence"]
             scores[f"False Confidence before retraining {name.capitalize()}"] = avg_prob
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "w",
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "w",
             ) as f:
                 json.dump(scores, f)
             yaml_file = Path("output/reports/attack", folder, "params.yaml")
@@ -346,7 +364,14 @@ for model in art_models:
     print(f"Training Model {i} of {len(models)}")
     if not Path("retrain", name, f"{epochs}.pkl").exists():
         results, outputs = retrain_loop(
-            model, X_train, y_train, X_test, y_test, atk, epochs=epochs, attack_size=50,
+            model,
+            X_train,
+            y_train,
+            X_test,
+            y_test,
+            atk,
+            epochs=epochs,
+            attack_size=50,
         )
         save_results_and_outputs(results, outputs, path=f"retrain/{name}/")
         Path("retrain", name).mkdir(parents=True, exist_ok=True)
@@ -362,7 +387,8 @@ for model in art_models:
         confidence_ser = pd.Series()
         if Path("output/reports/attack", folder, "adv_probabilities.json").exists():
             with open(
-                Path("output/reports/attack", folder, "adv_probabilities.json"), "r",
+                Path("output/reports/attack", folder, "adv_probabilities.json"),
+                "r",
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
@@ -376,24 +402,28 @@ for model in art_models:
                 ),
             )
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "r",
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "r",
             ) as f:
                 scores = json.load(f)
             if "False Confidence" in scores:
                 del scores["False Confidence"]
             scores[f"False Confidence {name.capitalize()}"] = avg_prob
             with open(
-                Path("output/reports/attack", folder, "score_dict.json"), "w",
+                Path("output/reports/attack", folder, "score_dict.json"),
+                "w",
             ) as f:
                 json.dump(scores, f)
             if Path("output/reports/attack", folder, "params.yaml").exists():
                 with open(
-                    Path("output/reports/attack", folder, "params.yaml"), "r",
+                    Path("output/reports/attack", folder, "params.yaml"),
+                    "r",
                 ) as f:
                     params = yaml.safe_load(f)
             elif Path("output/reports/attack", folder, "params.json").exists():
                 with open(
-                    Path("output/reports/attack", folder, "params.json"), "r",
+                    Path("output/reports/attack", folder, "params.json"),
+                    "r",
                 ) as f:
                     params = json.load(f)
             else:

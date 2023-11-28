@@ -51,10 +51,12 @@ if "__main__" == __name__:
     data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
     data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :, "attack.attack_size",
+        :,
+        "attack.attack_size",
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :, "attack.attack_size",
+        :,
+        "attack.attack_size",
     ]
 
     def plot_aft(
@@ -182,7 +184,9 @@ if "__main__" == __name__:
         return aft_data
 
     def clean_data_for_aft(
-        data, kwarg_list, target="adv_failure_rate",
+        data,
+        kwarg_list,
+        target="adv_failure_rate",
     ):
         subset = data.copy()
         assert (
@@ -210,11 +214,19 @@ if "__main__" == __name__:
         return cleaned, y, data
 
     def split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42,
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     ):
         cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
         X_train, X_test, y_train, y_test = train_test_split(
-            cleaned, y, test_size=test_size, random_state=random_state,
+            cleaned,
+            y,
+            test_size=test_size,
+            random_state=random_state,
         )
         assert (
             target in cleaned
@@ -238,7 +250,12 @@ if "__main__" == __name__:
     ]
 
     X_train, X_test, y_train, y_test = split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42,
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     )
 
     weibull_dict = {
@@ -287,7 +304,7 @@ if "__main__" == __name__:
         },
     }
 
-    weibull_layers = plot_partial_effects(aft=wft, **weibull_partial_dict_layers,)
+    weibull_layers = plot_partial_effects(aft=wft, **weibull_partial_dict_layers)
     wft_scores = score_model(wft, X_train, X_test)
 
     # cox_replacement_dict = {
