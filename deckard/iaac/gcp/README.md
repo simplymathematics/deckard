@@ -23,7 +23,7 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
 1-We then create the cluster called `k8s-cluster`. This cluster will be installed in `europe-west4` in GCP regions.
 ```
 gcloud container clusters create k8s-cluster \
-    --zone europe-west4-a --num-nodes 1 --no-enable-autoupgrade
+    --zone europe-west4-a --num-nodes 3 --no-enable-autoupgrade --addons=GcpFilestoreCsiDriver
 ```
 
 2- In order to manage the Kubernetes cluster we need to [install `kubectl`](https://kubernetes.io/docs/tasks/tools/#kubectl).
