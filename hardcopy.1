@@ -1,0 +1,24 @@
+    model, time_dict = self.trainer(data, model, library=self.library)
+  File "/home/cmeyers/deckard/deckard/base/model/model.py", line 132, in __call_
+_
+    model.fit(data[0], data[2], **trainer)
+  File "/home/cmeyers/anaconda3/lib/python3.8/site-packages/art/estimators/class
+ification/classifier.py", line 73, in replacement_function
+    return fdict[func_name](self, *args, **kwargs)
+  File "/home/cmeyers/anaconda3/lib/python3.8/site-packages/art/estimators/class
+ification/pytorch.py", line 456, in fit
+    loss.backward()
+  File "/home/cmeyers/anaconda3/lib/python3.8/site-packages/torch/_tensor.py", l
+ine 363, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph, inputs=i
+nputs)
+  File "/home/cmeyers/anaconda3/lib/python3.8/site-packages/torch/autograd/__ini
+t__.py", line 173, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run
+ the backward pass
+KeyboardInterrupt
+ERROR: failed to reproduce 'attacks@ResNet34': failed to run: bash attacks.sh ++
+attack.attack_size=100 ++model.init.name=torch_example.ResNet34 stage=attack ++h
+ydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet34.db --config-name
+ cifar100.yaml, exited with -2
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch_cifar_100$
