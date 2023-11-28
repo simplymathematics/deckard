@@ -304,4 +304,3 @@ class Experiment:
 
     def get_name(self):
         return self.name
-

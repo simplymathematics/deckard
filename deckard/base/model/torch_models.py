@@ -26,6 +26,7 @@ supported_models = list(torch_dict.keys())
 
 __all__ = ["TorchInitializer", "TorchCriterion", "TorchOptimizer"]
 
+
 @dataclass
 class TorchCriterion:
     name: str
@@ -106,6 +107,7 @@ class TorchInitializer:
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
         import torch
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
         devices = range(torch.cuda.device_count())
         if str(type(model)).startswith("art.") and hasattr(model, "model"):

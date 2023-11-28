@@ -337,6 +337,7 @@ class PoisoningAttack:
                     if "expected scalar type Long" in str(e):
                         # if hasattr(y_train, "type"):
                         import torch
+
                         if torch.cuda.is_available():
                             number_of_devices = torch.cuda.device_count()
                             device_number = randint(0, number_of_devices - 1)
@@ -355,7 +356,9 @@ class PoisoningAttack:
                         x_trigger = torch.tensor(x_trigger, device=device)
                         y_trigger = y_trigger.to(torch.long)
                         y_trigger = y_trigger.to(torch.long)
-                        atk = self.init(model=model, data=data, attack_size=self.attack_size)
+                        atk = self.init(
+                            model=model, data=data, attack_size=self.attack_size
+                        )
                         start = process_time_ns()
                         samples, _ = atk.poison(
                             x_trigger=x_trigger,

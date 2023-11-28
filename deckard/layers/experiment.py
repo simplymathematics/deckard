@@ -27,7 +27,7 @@ def get_dvc_stage_params(
     directory=".",
     name=None,
 ):
-    
+
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
     )
@@ -38,7 +38,7 @@ def get_dvc_stage_params(
     params["files"] = dict(unflattened_files.get("files", unflattened_files))
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
     params["files"]["stage"] = stage
-    params['stage']=stage
+    params["stage"] = stage
     if name is not None:
         params["files"]["name"] = name
     return params
@@ -62,7 +62,7 @@ def run_stage(
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
-    params_file = Path(files['score_dict_file']).with_name("params.yaml").as_posix()
+    params_file = Path(files["score_dict_file"]).with_name("params.yaml").as_posix()
     Path(params_file).parent.mkdir(exist_ok=True, parents=True)
     with Path(params_file).open("w") as f:
         yaml.dump(params, f)

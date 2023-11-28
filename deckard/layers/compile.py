@@ -53,8 +53,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
                 try:
                     dict_ = json.load(f)
                 except json.decoder.JSONDecodeError as e:
-                   raise e
-                    
+                    raise e
+
         elif suffix == ".yaml":
             with open(file, "r") as f:
                 dict_ = yaml.safe_load(f)
@@ -97,7 +97,10 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             and entry["model.art.pipeline.trainer.name"] not in nones
         ):
             defence.append(entry["model.art.pipeline.trainer.name"])
-        if ("model.init.nb_epoch" in entry and entry["model.init.nb_epoch"] != default_epochs):
+        if (
+            "model.init.nb_epoch" in entry
+            and entry["model.init.nb_epoch"] != default_epochs
+        ):
             defence.append(entry["model.init.nb_epoch"])
         ############################################################################################################
         if len(defence) > 1:
