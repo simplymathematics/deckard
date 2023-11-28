@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:12.0.0-runtime-ubuntu20.04
 RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt-get install -y python3 python3-distutils python3-pip ffmpeg libavcodec-extra vim git
