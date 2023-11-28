@@ -54,9 +54,9 @@ stages:
   #         persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
-      - ResNet18
-      - ResNet34
-      - ResNet50
+      # - ResNet18
+      # - ResNet34
+      # - ResNet50
       - ResNet101
       - ResNet152
     do:
