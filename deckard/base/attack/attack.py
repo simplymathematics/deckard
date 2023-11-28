@@ -357,7 +357,9 @@ class PoisoningAttack:
                         y_trigger = y_trigger.to(torch.long)
                         y_trigger = y_trigger.to(torch.long)
                         atk = self.init(
-                            model=model, data=data, attack_size=self.attack_size
+                            model=model,
+                            data=data,
+                            attack_size=self.attack_size,
                         )
                         start = process_time_ns()
                         samples, _ = atk.poison(

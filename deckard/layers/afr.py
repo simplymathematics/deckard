@@ -10,7 +10,6 @@ from lifelines import (
     LogLogisticAFTFitter,
     CoxPHFitter,
 )
-import matplotlib
 from pathlib import Path
 import logging
 import yaml

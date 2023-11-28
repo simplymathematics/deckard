@@ -79,7 +79,10 @@ TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar
 @dataclass
 class TorchDataGenerator:
     name: Literal[
-        "torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100"
+        "torch_mnist",
+        "torch_cifar10",
+        "torch_diabetes",
+        "torch_cifar100",
     ] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)
@@ -115,11 +118,11 @@ class TorchDataGenerator:
             try:
                 from torchvision.datasets import CIFAR100
                 from torchvision import transforms
-            except:
+            except ImportError:
                 raise ImportError("Please install torchvision to use CIFAR100")
             if self.path is None:
                 raise ValueError(
-                    f"path attribute must be specified for dataset: {self.name}."
+                    f"path attribute must be specified for dataset: {self.name}.",
                 )
             original_filename = Path(self.path, self.name, f"{self.name}.npz")
             Path(original_filename.parent).mkdir(parents=True, exist_ok=True)
@@ -137,8 +140,8 @@ class TorchDataGenerator:
                     transform=transforms.ToTensor(),
                 )
                 # lambda function to turn each image, label into an np.array
-                X_ = lambda x: np.array(x[0])
-                y_ = lambda x: np.array(x[1])
+                X_ = lambda x: np.array(x[0])  # noqa E731
+                y_ = lambda x: np.array(x[1])  # noqa E731
                 X_train = np.array(list(map(X_, train_set)))
                 y_train = np.array(list(map(y_, train_set)))
                 X_test = np.array(list(map(X_, test_set)))

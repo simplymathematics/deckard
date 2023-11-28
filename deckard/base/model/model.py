@@ -475,10 +475,10 @@ class Model:
             len(data) == 4
         ), "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
         assert len(data[0]) == len(
-            data[2]
+            data[2],
         ), "X_train and y_train must have the same length."
         assert len(data[1]) == len(
-            data[3]
+            data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         if Path(model_file).exists():
@@ -502,14 +502,15 @@ class Model:
             len(data) == 4
         ), "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
         assert len(data[0]) == len(
-            data[2]
+            data[2],
         ), "X_train and y_train must have the same length."
         assert len(data[1]) == len(
-            data[3]
+            data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         assert hasattr(
-            model, "predict"
+            model,
+            "predict",
         ), f"Model {model} does not have a predict method."
         try:
             start = process_time_ns()
@@ -554,10 +555,10 @@ class Model:
             len(data) == 4
         ), "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
         assert len(data[0]) == len(
-            data[2]
+            data[2],
         ), "X_train and y_train must have the same length."
         assert len(data[1]) == len(
-            data[3]
+            data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         if (
@@ -600,10 +601,10 @@ class Model:
             len(data) == 4
         ), "Data must be a list containing X_train, X_test, y_train, y_test (i.e. 4 elements)."
         assert len(data[0]) == len(
-            data[2]
+            data[2],
         ), "X_train and y_train must have the same length."
         assert len(data[1]) == len(
-            data[3]
+            data[3],
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         if str("art") in str(type(model)) and (

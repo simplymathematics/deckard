@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-import yaml
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
@@ -14,7 +13,6 @@ from ..data import Data
 from ..files import FileConfig
 from ..model import Model
 from ..scorer import ScorerDict
-from ..utils import to_dict
 from ..utils.hashing import my_hash
 
 __all__ = ["Experiment"]
