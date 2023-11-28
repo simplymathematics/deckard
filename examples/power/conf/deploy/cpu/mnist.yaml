@@ -21,7 +21,7 @@ spec:
     # - name: REDIS_PASSWORD
     #   value: ""
     volumeMounts:
-        - mountPath: /deckard/
+        - mountPath: /result/
           name: mypvc
   volumes:
   - name: mypvc

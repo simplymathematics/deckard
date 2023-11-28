@@ -56,10 +56,10 @@ stages:
           cache : false
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}:
           cache : false
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}:
-          cache : false
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}:
-          cache : false
+      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}:
+      #     cache : false
+      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}:
+      #     cache : false
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}:  # logit outputs for our model
           cache : false 
     deps:
