@@ -1,0 +1,57 @@
+defaults:
+    - _self_
+    - data: torch_cifar100
+    - model: torch_cifar100
+    - attack: default
+    - files: cifar100
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : tpe
+    # - override hydra/launcher : rq
+device_id : ${oc.env:DECKARD_DEVICE,cpu}
+stage : '???'
+direction : 
+  - maximize
+  - minimize
+  - minimize
+  - minimize
+  - minimize
+  - minimize
+optimizers: 
+   - accuracy
+   - train_time
+   - predict_proba_time
+   - adv_accuracy
+   - adv_fit_time
+   - adv_predict_time
+_target_ : deckard.base.experiment.Experiment
+hydra:
+  run:
+    dir: ${files.directory}/${files.reports}/${stage}/logs/${data.generate.name}
+  sweep:
+    dir: ${files.directory}/${stage}//${data.generate.name}
+    subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    study_name: ${model.init.name}
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      seed: ${data.sample.random_state}
+      consider_prior: true
+      prior_weight: 1.0
+      consider_magic_clip: true
+      consider_endpoints: false
+      n_startup_trials: 10 # default: 10
+      n_ei_candidates: 24 # default: 24
+      multivariate: true
+      warn_independent_sampling: true
+    n_trials : 100    
+    params:
+      ++data.sample.random_state: int(range(0, 1))
+      ++model.art.initialize.optimizer.lr: range(0.0001, 1)
+      ++model.trainer.nb_epoch: int(range(1, 50))
+      ++model.trainer.batch_size: int(range(10, 10000))
+      ++attack.init.eps : range(0.01, 1.0)
+      ++attack.init.eps_step : ${eval:'(.01)*${attack.init.eps}'}
+      ++attack.init.batch_size: int(range(10,10000))
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction: ${direction}

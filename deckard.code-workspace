@@ -11,5 +11,18 @@
 		"python.envFile": "${workspaceFolder}/.env",
 		"yaml.schemas": {
 			"https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json": 	["dvc.yaml"]	}
-	}
+	},
+	"customizations": {
+		"vscode": {
+		  "extensions": [
+			"ms-python.python",
+			"ms-toolsai.jupyter",
+		  ]
+		}
+	  },
+	"features": {
+		"ghcr.io/devcontainers/features/nvidia-cuda:1": {
+		  "installCudnn": true
+		}
+	},
 }

@@ -10,9 +10,9 @@ __all__ = [
 
 
 class LogisticRegression(nn.Module):
-    def __init__(self, input_dim, output_dim, dtype="torch.FloatTensor", device="cpu"):
+    def __init__(self, input_dim, output_dim, dtype="torch.FloatTensor"):
         self.dtype = dtype
-        self.device = device
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
 

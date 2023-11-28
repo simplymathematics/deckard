@@ -12,7 +12,19 @@ from .utils import deckard_nones
 
 logger = logging.getLogger(__name__)
 
+OmegaConf.register_new_resolver("eval", eval)
+
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
+
+config_path = os.environ.get(
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path.cwd(), "conf").absolute().as_posix()),
+)
+assert Path(
+    config_path,
+).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
+config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
+full_path = Path(config_path, config_name).as_posix()
 
 
 def get_files(
@@ -83,11 +95,11 @@ def merge_params(default, params) -> dict:
     :return: Merged params
     """
     for key, value in params.items():
-        if key in default and isinstance(value, dict) and value is not None:
+        if key in default and isinstance(value, dict) and len(value) > 0:
             default[key] = merge_params(default[key], value)
         elif (
             isinstance(value, (list, tuple, int, float, str, bool, dict))
-            and value is not None
+            and len(value) > 0
         ):
             default.update({key: value})
         elif value is None:
@@ -186,6 +198,10 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     if isinstance(params, dict):
         key_list = []
         for stage in stages:
+            assert Path(
+                path,
+                "dvc.yaml",
+            ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
                 new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
                     "params"
@@ -200,13 +216,13 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         for stage in stages:
             pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
             if "deps" in pipe:
-                dep_list = [x.split(":")[0] for x in pipe["deps"]]
+                dep_list = [str(x).split(":")[0] for x in pipe["deps"]]
                 file_list.extend(dep_list)
             if "outs" in pipe:
-                out_list = [x.split(":")[0] for x in pipe["outs"]]
+                out_list = [str(x).split(":")[0] for x in pipe["outs"]]
                 file_list.extend(out_list)
             if "metrics" in pipe:
-                metric_list = [x.split(":")[0] for x in pipe["metrics"]]
+                metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
                 file_list.extend(metric_list)
     file_string = str(file_list)
     files = params["files"]
@@ -249,8 +265,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
+    raise_exception = cfg.pop("raise_exception", False)
     scorer = cfg.pop("optimizers", None)
-    working_dir = cfg.pop("working_dir", Path().resolve().as_posix())
+    working_dir = Path(config_path).parent
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -259,7 +276,8 @@ def optimise(cfg: DictConfig) -> None:
     Path(folder).mkdir(exist_ok=True, parents=True)
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
-    direction = cfg.pop("direction", "minimize")
+    direction = cfg.get("direction", "minimize")
+    direction = [direction] if not isinstance(direction, list) else direction
     try:
         scores = exp()
         if isinstance(scorer, str):
@@ -270,6 +288,7 @@ def optimise(cfg: DictConfig) -> None:
             score = list(scores.values())[0]
         else:
             raise TypeError(f"Expected str or list, got {type(scorer)}")
+        logger.info(f"Score is : {score}")
     except Exception as e:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
@@ -278,19 +297,17 @@ def optimise(cfg: DictConfig) -> None:
             f.write(str(e))
             f.write(traceback.format_exc())
         if direction == "minimize":
-            score = 1e10
+            score = [1e10] * len(direction)
         else:
-            score = -1e10
-    return score
+            score = [-1e10] * len(direction)
+        logger.info(f"Score: {score}")
+        if raise_exception:
+            raise e
+    return tuple(score)
 
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-    config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
-    )
-    config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
 
     @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
     def hydra_optimise(cfg: DictConfig) -> float:

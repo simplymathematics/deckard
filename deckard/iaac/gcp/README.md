@@ -23,7 +23,7 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
 1-We then create the cluster called `k8s-cluster`. This cluster will be installed in `europe-west4` in GCP regions.
 ```
 gcloud container clusters create k8s-cluster \
-    --region europe-west4 --num-nodes 1 --no-enable-autoupgrade
+    --zone europe-west4-a --num-nodes 1 --no-enable-autoupgrade
 ```
 
 2- In order to manage the Kubernetes cluster we need to [install `kubectl`](https://kubernetes.io/docs/tasks/tools/#kubectl).
@@ -31,7 +31,7 @@ gcloud container clusters create k8s-cluster \
 3- Then run the following command to get the credentials:
 ```
 gcloud container clusters get-credentials k8s-cluster \
-    --region europe-west4
+    --zone europe-west4-a
 ```
 
 After this step you should now be able to access kubernetes cluster, give it a try by simply running the following:
@@ -50,7 +50,7 @@ gke-k8s-cluster-default-pool-feae82f2-zfsj    Ready    <none>   5m   v1.27.3-gke
 ```
 gcloud container node-pools create k8s-node-pool \
   --accelerator type=nvidia-tesla-v100,count=1,gpu-driver-version=default \
-  --region europe-west4 --cluster k8s-cluster \
+  --zone europe-west4-a --cluster k8s-cluster \
   --machine-type n1-standard-2		\
   --num-nodes 1 \
    --min-nodes 1 \
@@ -107,6 +107,14 @@ And it also should have the following volumes to enable the shared storage:
 You can simply take a look at `pod.yaml` file for defining a pod. Just to check, deploy the sample pod by running:
 ```
 kubectl apply -f ./IaaC/gcp/pod.yaml
+```
+
+## Install Kepler and monitoring tools
+Kepler is the module that collects the power consumption per container/namespace/node and stores them in Prometheus:
+```bash
+kubectl apply --server-side -f ./IaaC/gcp/prometheus/setup
+kubectl apply -f ./IaaC/gcp/prometheus/
+kubectl apply -f ./IaaC/gcp/kepler/deployment.yaml
 ```
 
 ## Prepare the access values in the shared volume (optional):

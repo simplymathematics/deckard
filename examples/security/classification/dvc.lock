@@ -329,8 +329,8 @@ stages:
       size: 950
     - path: models.sh
       hash: md5
-      md5: 034c94712f10de83e562ffa58ba204f9
-      size: 2974
+      md5: 45472713dfccf0cd62509e7d62e223fa
+      size: 5807
     - path: output/reports/train/default/params.yaml
       hash: md5
       md5: d4e0a34b2b15765ca71fa5ecaf7e3826
@@ -425,53 +425,53 @@ stages:
     outs:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
   compile_models:
     cmd: python -m deckard.layers.compile --report_folder output/reports/train/ --results_file
       output/train.csv
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/reports/train/
       hash: md5
-      md5: 58131db53b5c1975bc969ee083a14602.dir
-      size: 87802
-      nfiles: 5
+      md5: fae483c6435daa9d29c947f2bce41511.dir
+      size: 512957700
+      nfiles: 9852
     outs:
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
   find_best_model@rbf:
     cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model
       --params_file best_rbf --study_name=rbf_100_10000  --default_config model.yaml
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/model/best_rbf.yaml
       hash: md5
@@ -483,17 +483,17 @@ stages:
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/model/best_linear.yaml
       hash: md5
@@ -505,17 +505,17 @@ stages:
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/model/best_poly.yaml
       hash: md5
@@ -538,26 +538,26 @@ stages:
       size: 357
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: attack.db
       hash: md5
-      md5: c67caa2e3ab1e72e19f441f93472cab8
-      size: 2236416
+      md5: 79ab050e04b70e212f1be85f09a974ef
+      size: 2334720
     - path: logs/attacks/
       hash: md5
-      md5: 8012d759b75d0670b7f4db74037aa13a.dir
-      size: 19145346
+      md5: 4eabc469a5a951cd423da83bbd47c264.dir
+      size: 926809
       nfiles: 3
   compile_attacks:
     cmd: python -m deckard.layers.compile --report_folder output/reports/attack/ --results_file
@@ -565,40 +565,40 @@ stages:
     deps:
     - path: attack.db
       hash: md5
-      md5: c67caa2e3ab1e72e19f441f93472cab8
-      size: 2236416
+      md5: 79ab050e04b70e212f1be85f09a974ef
+      size: 2334720
     - path: logs/attacks/
       hash: md5
-      md5: 8012d759b75d0670b7f4db74037aa13a.dir
-      size: 19145346
+      md5: 4eabc469a5a951cd423da83bbd47c264.dir
+      size: 926809
       nfiles: 3
     - path: output/reports/attack/
       hash: md5
-      md5: 1130569bbd62ca77a62f12313fb38aa0.dir
-      size: 91788
-      nfiles: 7
+      md5: f610f016b9a97c37ff59de361311e5b1.dir
+      size: 7978562
+      nfiles: 486
     outs:
     - path: output/attack.csv
       hash: md5
-      md5: b8ea071d580c07f2ea03c74a02947c6e
-      size: 7276
+      md5: f89e17affa7e38b4955ea3edc4661f9c
+      size: 188715
   find_best_attack@linear:
     cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack
       --params_file best_linear --study_name=best_linear  --default_config attack.yaml
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/attack/best_linear.yaml
       hash: md5
@@ -610,17 +610,17 @@ stages:
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/attack/best_rbf.yaml
       hash: md5
@@ -632,17 +632,17 @@ stages:
     deps:
     - path: logs/models/
       hash: md5
-      md5: 24d1439cc3939aca8c9df30d84731c58.dir
-      size: 4940033
+      md5: d9c5585db1b343a23229a2fb5e77cbef.dir
+      size: 4828874
       nfiles: 60
     - path: model.db
       hash: md5
-      md5: fc090255a8e51f228ef1df5af0109396
-      size: 1949696
+      md5: de6e467e793b2519ea5db993786e263e
+      size: 4870144
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     outs:
     - path: conf/attack/best_poly.yaml
       hash: md5
@@ -707,85 +707,85 @@ stages:
       size: 357
     - path: output/attacks/
       hash: md5
-      md5: ac2eb814d85404eb185c98af5f129ccf.dir
+      md5: 2706070162d082792d7b52629d691d15.dir
       size: 2410072
       nfiles: 61
     - path: output/models/
       hash: md5
-      md5: c98656661f89d049ad99de3948c07c9e.dir
-      size: 54772
-      nfiles: 3
+      md5: c7222ada919037fb45b73e4f6c1f88a2.dir
+      size: 70825596
+      nfiles: 1244
     outs:
     - path: plots/after_retrain_confidence.csv
       hash: md5
-      md5: 85b6c20f3db9f521dc19697f1804b1de
-      size: 18008
+      md5: 8838aabe00dcca60ae5c5681174bfc7f
+      size: 18011
     - path: plots/before_retrain_confidence.csv
       hash: md5
-      md5: 4cf5f55f22c167803b9e8965d28d13c5
-      size: 17991
+      md5: edc0f782bfd97743823318d6b14d5d14
+      size: 17994
     - path: retrain/
       hash: md5
-      md5: 4d533cad670b054775f1ad0ddb241370.dir
-      size: 176885
+      md5: 062d1374edb8e366a1c65308fa4fdfbc.dir
+      size: 176883
       nfiles: 12
   plots:
     cmd: python plots.py
     deps:
     - path: output/attack.csv
       hash: md5
-      md5: feef3638a92cb9ec2fe9c361f0ac8aee
-      size: 204088
+      md5: f89e17affa7e38b4955ea3edc4661f9c
+      size: 188715
     - path: output/train.csv
       hash: md5
-      md5: 7c371b2f23b54ae5917d60d68b1c53ba
-      size: 3238
+      md5: a048280df159bb5ee1ce118d0d3cfd14
+      size: 3559023
     - path: plots/after_retrain_confidence.csv
       hash: md5
-      md5: 85b6c20f3db9f521dc19697f1804b1de
-      size: 18008
+      md5: 8838aabe00dcca60ae5c5681174bfc7f
+      size: 18011
     - path: plots/before_retrain_confidence.csv
       hash: md5
-      md5: 4cf5f55f22c167803b9e8965d28d13c5
-      size: 17991
+      md5: edc0f782bfd97743823318d6b14d5d14
+      size: 17994
     outs:
     - path: plots/accuracy_vs_attack_parameters.eps
       hash: md5
-      md5: 3d2dd3aac0d156e1fd9c33e36af4ba8d
-      size: 41230
+      md5: 62ba219171d53a6d7bee9adaaa5dcae2
+      size: 41249
     - path: plots/accuracy_vs_features.eps
       hash: md5
-      md5: fd4589a083f49c1867c8266f65079042
-      size: 21386
+      md5: 45d51ca30fc0e46849609941fc4cbb53
+      size: 21450
     - path: plots/accuracy_vs_samples.eps
       hash: md5
-      md5: 68cac57cb36da240f16c59de0cd6fab8
-      size: 23933
+      md5: c7bba36d352106cdeee655e01870bdcf
+      size: 23719
     - path: plots/confidence_vs_attack_parameters.eps
       hash: md5
-      md5: 4bed1ae75648072e60b1de618c3a458d
-      size: 41285
+      md5: c2887dfae9cdfbb24d9d15d3655c3c87
+      size: 40822
     - path: plots/retrain_accuracy.eps
       hash: md5
-      md5: 8f31fb8e6bfde27e322e94d3ca403e2d
+      md5: 25d6d1ec08dc127bcd04470ca476d146
       size: 23419
     - path: plots/retrain_confidence_vs_attack_parameters.eps
       hash: md5
-      md5: af27dbbce36fe7118d2ab36e5f5e51d2
-      size: 41304
+      md5: 5a6969fefe91e5c675600e07d8bff580
+      size: 40819
     - path: plots/retrain_time.eps
       hash: md5
-      md5: 173c20ed56ff30f749652814fb6e6b3a
-      size: 20953
+      md5: 2d28bfca3ebb7ef3b7b4fbfb69eb045f
+      size: 20957
     - path: plots/train_time_vs_attack_parameters.eps
       hash: md5
-      md5: f65d32d2dccabac8b992a2f7fe1a029f
-      size: 38831
+      md5: f56d1fc7846df9a1276749a9bd5675e9
+      size: 38521
     - path: plots/train_time_vs_features.eps
       hash: md5
-      md5: f093fffdb45713b11a9a302b7f6765b8
-      size: 17543
+      md5: a3300cdd85533e51ce108c4f141376f6
+      size: 20644
     - path: plots/train_time_vs_samples.eps
       hash: md5
-      md5: c359b1e7c36783d590a57df80ed0dc0a
-      size: 20679
+      md5: 15f3f109c2f09c01edc6bc0e68786ce6
+      size: 24036

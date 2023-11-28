@@ -52,3 +52,23 @@ class testFiles(unittest.TestCase):
 
     def tearDown(self) -> None:
         rmtree(self.directory)
+
+
+class SklearnTestFiles(testFiles):
+    config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
+    config_file = "sklearn.yaml"
+
+
+class TorchTestFiles(testFiles):
+    config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
+    config_file = "torch.yaml"
+
+
+class KerasTestFiles(testFiles):
+    config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
+    config_file = "keras.yaml"
+
+
+class TensorflowTestFiles(testFiles):
+    config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
+    config_file = "tensorflow.yaml"

@@ -55,6 +55,11 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
                 except json.decoder.JSONDecodeError as e:
                     raise e
 
+                try:
+                    dict_ = json.load(f)
+                except json.decoder.JSONDecodeError as e:
+                    raise e
+
         elif suffix == ".yaml":
             with open(file, "r") as f:
                 dict_ = yaml.safe_load(f)
@@ -112,6 +117,8 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
         else:
             def_gen = "Control"
             defence = "Control"
+            def_gen = "Control"
+            defence = "Control"
         ############################################################################################################
         if defence != []:
             defences.append(defence)
@@ -147,6 +154,7 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epoc
 
 
 def format_control_parameter(data, control_dict):
+def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
 
     if hasattr(data, "def_gen"):
@@ -168,6 +176,9 @@ def format_control_parameter(data, control_dict):
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
             control_dict.pop(defence)
+                value = np.nan
+            data.loc[data.def_gen == defence, "def_value"] = value
+            control_dict.pop(defence)
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
@@ -182,7 +193,23 @@ def format_control_parameter(data, control_dict):
                 value = np.nan
             data.loc[data.atk_gen == attack, "atk_value"] = value
             control_dict.pop(attack)
+            logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
+            data = data[data.def_gen != defence]
+
+    for attack in attacks:
+        if attack in control_dict:
+            param = control_dict[attack]
+            data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
+            if param in data.columns:
+                value = data[data.atk_gen == attack][param]
+            else:
+                value = np.nan
+            data.loc[data.atk_gen == attack, "atk_value"] = value
+            control_dict.pop(attack)
         else:
+            logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
+            data = data[data.atk_gen != attack]
+
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
 
@@ -208,7 +235,11 @@ def clean_data_for_plotting(
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
     # Removes the path and to the model object and leaves the name of the model
+    # Removes the path and to the model object and leaves the name of the model
     data["model_name"] = data["model.init.name"].str.split(".").str[-1]
+    if data["model.init.name"].str.contains("Net").any():
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    data = data.loc[:, ~data.columns.str.endswith(".1")]
     if data["model.init.name"].str.contains("Net").any():
         data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     data = data.loc[:, ~data.columns.str.endswith(".1")]
@@ -217,6 +248,9 @@ def clean_data_for_plotting(
     data = format_control_parameter(data, control_dict)
     logger.info(f"Saving data to {file}")
     # data.to_csv( file)
+    data = format_control_parameter(data, control_dict)
+    logger.info(f"Saving data to {file}")
+    data.to_csv(file)
     return data
 
 

@@ -82,3 +82,45 @@ class testTimeSeriesSklearnDataSampler(unittest.TestCase):
 
     def tearDown(self) -> None:
         pass
+
+
+config_file = "time_series2.yaml"
+
+
+class testTimeSeriesSklearnDataSampler2(testTimeSeriesSklearnDataSampler):
+    def setUp(self, config_dir=config_dir, config_file=config_file):
+        with initialize_config_dir(
+            config_dir=Path(config_dir).resolve().as_posix(),
+            version_base="1.3",
+        ):
+            cfg = compose(config_name=config_file)
+        self.cfg = cfg
+        self.data = instantiate(config=self.cfg)
+
+
+config_file = "time_series3.yaml"
+
+
+class testTimeSeriesSklearnDataSampler3(testTimeSeriesSklearnDataSampler):
+    def setUp(self, config_dir=config_dir, config_file=config_file):
+        with initialize_config_dir(
+            config_dir=Path(config_dir).resolve().as_posix(),
+            version_base="1.3",
+        ):
+            cfg = compose(config_name=config_file)
+        self.cfg = cfg
+        self.data = instantiate(config=self.cfg)
+
+
+config_file = "time_series4.yaml"
+
+
+class testTimeSeriesSklearnDataSampler4(testTimeSeriesSklearnDataSampler):
+    def setUp(self, config_dir=config_dir, config_file=config_file):
+        with initialize_config_dir(
+            config_dir=Path(config_dir).resolve().as_posix(),
+            version_base="1.3",
+        ):
+            cfg = compose(config_name=config_file)
+        self.cfg = cfg
+        self.data = instantiate(config=self.cfg)

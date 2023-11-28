@@ -17,7 +17,6 @@ install_requires = [
     "numba",
     "pillow",
     "wheel",
-    "dvc",
     "pandas",
     "pre-commit",
     "PyYAML",
@@ -27,7 +26,9 @@ install_requires = [
     "hydra-core",
     "hydra-optuna-sweeper",
     "hydra-joblib-launcher",
+    "hydra-rq-launcher",
     "sqlalchemy<=1.4.46",
+    "dvc",
 ]
 test_requires = [
     "pytest",
