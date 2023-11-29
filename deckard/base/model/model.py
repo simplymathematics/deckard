@@ -202,8 +202,8 @@ class ModelTrainer:
             else:
                 raise e
         time_dict = {
-            "train_time": (start - end) / 1e9,
-            "train_time_per_sample": end / (len(data[0]) * 1e9),
+            "train_time": (end - start) / 1e9,
+            "train_time_per_sample": (end - start) / (len(data[0]) * 1e9),
             "train_start_time": start_timestamp,
             "train_end_time": end_timestamp,
             "train_device": device,
@@ -589,8 +589,8 @@ class Model:
         return (
             predictions,
             {
-                "predict_time": (start - end) / 1e9,
-                "predict_time_per_sample": (start - end) / (len(data[0]) * 1e9),
+                "predict_time": (end - start) / 1e9,
+                "predict_time_per_sample": (end - start) / (len(data[0]) * 1e9),
                 "predict_start_time": start_timestamp,
                 "predict_stop_time": end_timestamp,
                 "predict_device": device,
@@ -643,8 +643,8 @@ class Model:
         return (
             predictions,
             {
-                "predict_proba_time": (start - end) / 1e9,
-                "predict_proba_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_proba_time": (end - start) / 1e9,
+                "predict_proba_time_per_sample": (end - start) / (len(data[0]) * 1e9),
                 "predict_proba_start_time": start_timestamp,
                 "predict_proba_stop_time": end_timestamp,
                 "predict_proba_device": device,
@@ -706,8 +706,9 @@ class Model:
         return (
             predictions,
             {
-                "predict_log_proba_time": (start - end) / 1e9,
-                "predict_log_proba_time_per_sample": end / (len(data[0]) * 1e9),
+                "predict_log_proba_time": (end - start) / 1e9,
+                "predict_log_proba_time_per_sample": (end - start)
+                / (len(data[0]) * 1e9),
                 "predict_log_proba_start_time": start_timestamp,
                 "predict_log_proba_stop_time": end_timestamp,
                 "predict_log_device": device,
