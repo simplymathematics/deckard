@@ -21,7 +21,6 @@ import argparse
 logger = logging.getLogger(__name__)
 
 if "__main__" == __name__:
-
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument("--target", type=str, default="adv_failures")
     afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
