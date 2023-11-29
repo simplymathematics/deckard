@@ -72,3 +72,7 @@ class KerasTestFiles(testFiles):
 class TensorflowTestFiles(testFiles):
     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
     config_file = "tensorflow.yaml"
+    
+# class TensorflowTestFiles(testFiles):
+#     config_dir = Path(this_dir, "../../conf/files").resolve().as_posix()
+#     config_file = "sklearn_no_model.yaml"
