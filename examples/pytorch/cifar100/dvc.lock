@@ -84,7 +84,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 10
+            nb_epoch: 1
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -99,27 +99,18 @@ stages:
     - path: cifar100/data/data.pkl
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
-    - path: cifar100/models/model.optimizer.pt
-      md5: c13297479b0da6a736dfd1221ba175ac
-      size: 44989261
-    - path: cifar100/models/model.pt
-      md5: d2e61603d2c2e3de37a441351b168efa
-      size: 44998157
     - path: cifar100/reports/train/default/predictions.json
-      md5: d3714b8d6a66fb803936da52650f88ec
-      size: 24412355
+      md5: b77183a81e2ea292115959c7240c76a4
+      size: 24381529
     - path: cifar100/reports/train/default/score_dict.json
-      md5: 07a51c660e5d2a980e6c1fbc3dce0c16
-      size: 842
+      md5: 522fb97dc8effce658539ee9a70251ab
+      size: 831
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     deps:
     - path: cifar100/data/data.pkl
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
-    - path: cifar100/models/model.pt
-      md5: d2e61603d2c2e3de37a441351b168efa
-      size: 44998157
     params:
       params.yaml:
         attack:
@@ -189,7 +180,7 @@ stages:
               library: pytorch
               trainer:
                 batch_size: 1024
-                nb_epoch: 10
+                nb_epoch: 1
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -241,7 +232,7 @@ stages:
             library: pytorch
             trainer:
               batch_size: 1024
-              nb_epoch: 10
+              nb_epoch: 1
         data:
           _target_: deckard.base.data.Data
           generate:
@@ -322,7 +313,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 10
+            nb_epoch: 1
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -335,14 +326,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: cifar100/attacks/attack.pkl
-      md5: b5d92a276b64215cbfbd6dbfb91c0d00
+      md5: 5317760d3c6f266ece07523e98517d46
       size: 123046
     - path: cifar100/reports/attack/default/adv_predictions.json
-      md5: 36f3eb805d4c1d45846c9e6684e2adfe
-      size: 21009
+      md5: 32d4798208a79862f9240dd4159b4754
+      size: 21414
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: ddbabb9810f501b7bd027f511c11d526
-      size: 1111
+      md5: c39c3d51d82359b4908d6fe8271c5850
+      size: 1094
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet18.db
