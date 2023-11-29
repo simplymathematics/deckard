@@ -561,6 +561,8 @@ class Model:
             start = process_time_ns()
             start_timestamp = time()
             predictions = model.predict(data[1])
+            end = process_time_ns() - start
+            end_timestamp = time()
         except NotFittedError as e:  # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")

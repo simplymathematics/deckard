@@ -213,11 +213,13 @@ class EvasionAttack:
                 end = process_time_ns()
             try:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-
+                end_timestamp = time()
             except AttributeError:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
                 end_timestamp = time()
