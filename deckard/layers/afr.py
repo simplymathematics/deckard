@@ -13,7 +13,6 @@ from lifelines import (
 )
 from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
 import matplotlib
-from pathlib import Path
 import logging
 import yaml
 import argparse
@@ -278,16 +277,16 @@ if "__main__" == __name__:
         random_state=42,
     )
 
-    weibull_dict = {
+    weibull_dict = {  # noqa w605
         "Intercept: rho_": "$\\rho$",
-        "Intercept: lambda_": "$\lambda$",
-        "data.sample.random_state: lambda_": "Random State",
+        "Intercept: lambda_": "$\lambda$",  # noqa w605
+        "data.sample.random_state: lambda_": "Random State",  # noqa w605
         "def_value: lambda_": "Defence Strength",
         "atk_value: lambda_": "Attack Strength",
         "train_time: lambda_": "$t_{train}$",
         "predict_time: lambda_": "$t_{predict}$",
-        "adv_accuracy: lambda_": "$\lambda_{adv.}$",
-        "accuracy: lambda_": "$\lambda_{ben.}$",
+        "adv_accuracy: lambda_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: lambda_": "$\lambda_{ben.}$",  # noqa w605
         "adv_fit_time: lambda_": "$t_{attack}$",
         "adv_log_loss: lambda_": "Adv. Log Loss",
         "adv_failure_rate: lambda_": "$h_{adv.}(t,;\\theta)$",
@@ -295,7 +294,7 @@ if "__main__" == __name__:
         "model_layers: lambda_": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr: lambda_": "Learning Rate",
         "def_gen": "Defence",
-    }
+    }  # noqa w605
 
     weibull_plot_dict = {
         "file": "weibull_aft.pdf",
@@ -337,14 +336,14 @@ if "__main__" == __name__:
         "train_time": "$t_{train}$",
         "model_layers": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-        "adv_accuracy": "$\lambda_{adv.}$",
+        "adv_accuracy": "$\lambda_{adv.}$",  # noqa w605
         "adv_fit_time": "$t_{attack}$",
         "adv_log_loss": "Adv. Log Loss",
         "predict_time": "$t_{predict}$",
-        "accuracy": "$\lambda_{ben.}$",
+        "accuracy": "$\lambda_{ben.}$",  # noqa w605
         "failure_rate": "$h_{ben.}(t,;\\theta)$",
         "atk_value": "Attack Strength",
-    }
+    }  # noqa w605
     cox_partial_dict = {
         "file": "cox_partial_effects.pdf",
         "covariate_array": "model_layers",
@@ -377,8 +376,8 @@ if "__main__" == __name__:
     )
 
     log_normal_dict = {
-        "Intercept: sigma_": "$\sigma$",
-        "Intercept: mu_": "$\mu$",
+        "Intercept: sigma_": "$\sigma$",  # noqa w605
+        "Intercept: mu_": "$\mu$",  # noqa w605
         "def_value: mu_": "Defence Strength",
         "atk_value: mu_": "Attack Strength",
         "train_time: mu_": "$t_{train}$",
@@ -388,12 +387,12 @@ if "__main__" == __name__:
         "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate",
         "data.sample.random_state: mu_": "Random State",
         "adv_log_loss: mu_": "Adv. Log Loss",
-        "adv_accuracy: mu_": "$\lambda_{adv.}$",
-        "accuracy: mu_": "$\lambda_{ben.}$",
+        "adv_accuracy: mu_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: mu_": "$\lambda_{ben.}$",  # noqa w605
         "adv_failure_rate: mu_": "$h_{adv}(t,;\\theta)$",
         "def_gen": "Defence",
         "learning_rate: mu_": "Learning Rate",
-    }
+    }  # noqa w605
 
     log_normal_graph, lnt = plot_aft(
         X_train,
@@ -419,16 +418,16 @@ if "__main__" == __name__:
             "labels": ["18", "34", "50", "101", "152"],
         },
     )
-    log_logistic_dict = {
-        "Intercept: beta_": "$\\beta$",
+    log_logistic_dict = {  # noqa w605
+        "Intercept: beta_": "$\\beta$",  # noqa w605
         "Intercept: alpha_": "$\\alpha$",
         "data.sample.random_state: alpha_": "Random State",
         "def_value: alpha_": "Defence Strength",
         "atk_value: alpha_": "Attack Strength",
         "train_time: alpha_": "$t_{train}$",
         "predict_time: alpha_": "$t_{predict}$",
-        "adv_accuracy: alpha_": "$\lambda_{adv.}$",
-        "accuracy: alpha_": "$\lambda_{ben.}$",
+        "adv_accuracy: alpha_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: alpha_": "$\lambda_{ben.}$",  # noqa w605
         "adv_fit_time: alpha_": "$t_{attack}$",
         "model_layers: alpha_": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
