@@ -29,6 +29,8 @@ install_requires = [
     "hydra-rq-launcher",
     "sqlalchemy<=1.4.46",
     "dvc",
+    "paretoset",
+    "lifelines",
 ]
 test_requires = [
     "pytest",

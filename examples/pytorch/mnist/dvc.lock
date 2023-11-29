@@ -1,0 +1,52 @@
+schema: '2.0'
+stages:
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder mnist/reports/attack --results_file
+      mnist/reports/attack.csv
+    deps:
+    - path: mnist/reports/attack/
+      md5: c1191d4aed87840a6035d44b5edfed67.dir
+      size: 63191255
+      nfiles: 8010
+    - path: mnist/reports/attack/ResNet101.db
+      md5: 600452804d96c8b8483c3f8da01130c4
+      size: 462848
+    - path: mnist/reports/attack/ResNet18.db
+      md5: 920b0ed178ec504c0d7990777862283f
+      size: 1363968
+    - path: mnist/reports/attack/ResNet34.db
+      md5: 3f56dd2ea0783a56a2a9e3eaaad88c21
+      size: 1945600
+    - path: mnist/reports/attack/ResNet50.db
+      md5: d9ee221b942b56d9bb720e022e05bf4b
+      size: 462848
+    outs:
+    - path: mnist/reports/attack.csv
+      md5: b6d03ebcc65d652ca2392c7510983fa5
+      size: 9063722
+  plot:
+    cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/attack.csv
+      -o data.csv
+    deps:
+    - path: mnist/reports/attack.csv
+      md5: b6d03ebcc65d652ca2392c7510983fa5
+      size: 9063722
+    - path: mnist/reports/attack/ResNet101.db
+      md5: 600452804d96c8b8483c3f8da01130c4
+      size: 462848
+    - path: mnist/reports/attack/ResNet152.db
+      md5: afb6f3d2616446226012b3ff1143086a
+      size: 462848
+    - path: mnist/reports/attack/ResNet18.db
+      md5: 920b0ed178ec504c0d7990777862283f
+      size: 1363968
+    - path: mnist/reports/attack/ResNet34.db
+      md5: 3f56dd2ea0783a56a2a9e3eaaad88c21
+      size: 1945600
+    - path: mnist/reports/attack/ResNet50.db
+      md5: d9ee221b942b56d9bb720e022e05bf4b
+      size: 462848
+    outs:
+    - path: mnist/plots/data.csv
+      md5: 73aac3fbd8615cc932c5537c7a9b74b4
+      size: 2353615

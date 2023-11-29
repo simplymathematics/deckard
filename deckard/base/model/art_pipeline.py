@@ -62,9 +62,11 @@ class ArtInitializer:
         if "torch" in str(library) and not isinstance(
             model,
             tuple(torch_dict.values()),
-        ):
+        ):  
+            import torch
+            device = "gpu" if torch.cuda.is_available() else "cpu"
             model = TorchInitializer(
-                data=data, model=model, library=library, **kwargs
+                data=data, model=model, library=library, device, **kwargs
             )()
         elif "keras" in str(library) and not isinstance(
             model,
