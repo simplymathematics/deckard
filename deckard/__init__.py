@@ -16,7 +16,7 @@ from .base import ScorerDict as ScorerDict
 # from deckard import layers  # noqa: F401
 
 # Semantic Version
-__version__ = "0.630"
+__version__ = "0.70"
 
 # pylint: disable=C0103
 

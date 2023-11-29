@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import logging
 import os
@@ -26,8 +25,9 @@ def find_config_folders(conf_dir):
     logger.info(f"Found {len(config_folders)} config folders in {conf_dir}")
     return config_folders
 
+
 def load_config(config_path):
-    with open(config_path, 'r') as stream:
+    with open(config_path, "r") as stream:
         try:
             config = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -35,16 +35,18 @@ def load_config(config_path):
     logger.debug(f"Loaded config from {config_path}")
     return config
 
+
 def dict_to_overrides(dictionary):
     new = {}
-    for key,value in dictionary.items():
-        for k,v in value.items():
+    for key, value in dictionary.items():
+        for k, v in value.items():
             new_key = "++" + key + "." + k
             new[new_key] = v
     return new
 
+
 def generate_grid_from_folders(conf_dir, regex):
-    this_dir  = os.getcwd()
+    this_dir = os.getcwd()
     conf_dir = os.path.relpath(conf_dir, this_dir)
     config_folders = find_config_folders(conf_dir)
     big_dict = {}
@@ -61,14 +63,24 @@ def generate_grid_from_folders(conf_dir, regex):
             big_dict[folder_key].append(config)
         layers.append(len(big_dict[folder_key]))
     big_list = make_grid(big_dict)
-    
-    assert len(big_list) == reduce(mul, layers), f"Grid size {len(big_list)} does not match product of layer sizes {reduce(mul, layers)}"
+
+    assert len(big_list) == reduce(
+        mul,
+        layers,
+    ), f"Grid size {len(big_list)} does not match product of layer sizes {reduce(mul, layers)}"
     logger.info(f"Generated grid with {len(big_list)} configs")
     return big_list
 
-def generate_queue( conf_root, grid_dir, regex, queue_folder = "queue", default_file = "default.yaml"):
+
+def generate_queue(
+    conf_root,
+    grid_dir,
+    regex,
+    queue_folder="queue",
+    default_file="default.yaml",
+):
     this_dir = os.getcwd()
-    conf_dir  = os.path.join(this_dir, conf_root, grid_dir)
+    conf_dir = os.path.join(this_dir, conf_root, grid_dir)
     logger.debug(f"Looking for configs in {conf_dir}")
     big_list = generate_grid_from_folders(conf_dir, regex)
     i = 0
@@ -77,19 +89,20 @@ def generate_queue( conf_root, grid_dir, regex, queue_folder = "queue", default_
         path = Path(conf_root, queue_folder)
         name = my_hash(entry)
         path.mkdir(parents=True, exist_ok=True)
-        with open(Path(conf_root, default_file), 'r') as stream:
+        with open(Path(conf_root, default_file), "r") as stream:
             try:
                 default = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 logger.error(exc)
-        default['hydra']['sweeper']['params'] = new
+        default["hydra"]["sweeper"]["params"] = new
         big_list[i] = default
-        with open(Path(path, name + ".yaml"), 'w') as outfile:
+        with open(Path(path, name + ".yaml"), "w") as outfile:
             yaml.dump(big_list[i], outfile, default_flow_style=False)
         assert Path(path, name + ".yaml").exists()
         i += 1
     return big_list
-        
+
+
 conf_root = "conf"
 grid_folder = "grid"
 regex = "*.yaml"

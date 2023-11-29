@@ -46,6 +46,7 @@ attack:
         C: 1.0
         _target_: deckard.base.model.ModelInitializer
         kernel: rbf
+        max_iter: 100
         name: sklearn.svm.SVC
         probability: true
         random_state: 0
@@ -79,6 +80,7 @@ attack:
       C: 1.0
       _target_: deckard.base.model.ModelInitializer
       kernel: rbf
+      max_iter: 100
       name: sklearn.svm.SVC
       probability: true
       random_state: 0
@@ -149,6 +151,7 @@ model:
     C: 1.0
     _target_: deckard.base.model.ModelInitializer
     kernel: rbf
+    max_iter: 100
     name: sklearn.svm.SVC
     probability: true
     random_state: 0

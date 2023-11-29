@@ -39,4 +39,7 @@ conda install -c numba llvmdev
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.1.0/llvm-11.1.0.src.tar.xz
 wget https://github.com/numba/llvmlite
 
-# install llvm from source ?>?>?>?>
+# install llvm from source ??????
+
+# install deckard
+bash setup.sh

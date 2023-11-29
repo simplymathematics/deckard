@@ -1,0 +1,6 @@
+attack:
+  init.name : art.attacks.evasion.HopSkipJump
+  init.batch_size : choice(1, 4, 16, 65, 128)
+  init.max_iter :  choice(1, 10, 100, 1000)
+  init.max_eval : choice(1, 10, 100, 1000)
+  init.init_eval : choice(1, 10, 100, 1000)

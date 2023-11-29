@@ -2,12 +2,10 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
-
-import numpy as np
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
+from art.utils import to_categorical
 from hydra.utils import instantiate
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +23,9 @@ torch_dict = {**classifier_dict, **regressor_dict}
 supported_models = list(torch_dict.keys())
 
 __all__ = ["TorchInitializer", "TorchCriterion", "TorchOptimizer"]
-dataclass
 
 
+@dataclass
 class TorchCriterion:
     name: str
     kwargs: Union[dict, None] = field(default_factory=dict)
@@ -38,13 +36,7 @@ class TorchCriterion:
 
     def __call__(self):
         logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "kwargs" in self.kwargs:
-            kwargs = self.kwargs.pop("kwargs", {})
-            params = self.kwargs
-            params.pop("name", None)
-            params.update(**kwargs)
-        else:
-            params = self.kwargs
+        params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}
         dict_.update(**params)
@@ -63,21 +55,13 @@ class TorchOptimizer:
 
     def __call__(self, model):
         logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "kwargs" in self.kwargs:
-            kwargs = self.kwargs.pop("kwargs", {})
-            params = self.kwargs
-            params.pop("name", None)
-            params.update(**kwargs)
-        else:
-            params = self.kwargs
+        params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}
         dict_.update(**params)
         if hasattr(model, "parameters"):
             dict_.update({"params": model.parameters()})
-        elif hasattr(model, "model") and hasattr(model.model, "parameters"):
-            dict_.update({"params": model.model.parameters()})
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Model {model} has no parameters attribute.")
         obj = instantiate(dict_)
         return obj
@@ -92,18 +76,9 @@ class TorchInitializer:
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(self, data, model, library, **kwargs):
-        import torch
-
         self.data = data
         self.model = model
         self.library = library
-        self.device = kwargs.pop(
-            "device",
-            "cuda" if torch.cuda.is_available() else "cpu",
-        )
-        while "kwargs" in kwargs:
-            new_kwargs = kwargs.pop("kwargs", {})
-            kwargs.update(**new_kwargs)
         self.kwargs = kwargs
 
     def __call__(self):
@@ -112,36 +87,24 @@ class TorchInitializer:
         kwargs = deepcopy(self.kwargs)
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
-        import torch
-
-        if "art" in str(type(model)) and hasattr(model, "model"):
-            model = model.model
-        if "optimizer" in kwargs:
-            optimizer = TorchOptimizer(**kwargs.pop("optimizer"))(model)
-            kwargs.update({"optimizer": optimizer})
-        else:
-            optimizer = torch.optim.Adam(model.parameters())
-            kwargs.update({"optimizer": optimizer})
-        if "criterion" in kwargs:
-            criterion = TorchCriterion(**kwargs.pop("criterion"))()
-            kwargs.update({"loss": criterion})
-        else:
-            criterion = torch.nn.CrossEntropyLoss()
-            kwargs.update({"loss": criterion})
+        optimizer = TorchOptimizer(
+            **kwargs.pop("optimizer", {"name": "torch.optim.Adam"})
+        )(model)
+        kwargs.update({"optimizer": optimizer})
+        criterion = TorchCriterion(
+            **kwargs.pop("criterion", {"name": "torch.nn.CrossEntropyLoss"})
+        )()
+        kwargs.update({"loss": criterion})
         if "input_shape" not in kwargs:
             kwargs.update({"input_shape": data[0].shape[1:]})
         if "nb_classes" not in kwargs:
-            if len(data[2].shape) == 1:
-                kwargs.update({"nb_classes": len(np.unique(data[2]))})
-            else:
-                kwargs.update({"nb_classes": data[2].shape[1]})
-        if hasattr(model, "to"):
-            model.to(self.device)
-        elif hasattr(model, "model") and hasattr(model.model, "to"):
-            model.model.to(self.device)
-        if library in torch_dict:
+            if len(data[2].shape) == 1:  # pragma: no cover
+                data[2] = to_categorical(data[2])
+                data[3] = to_categorical(data[3])
+            kwargs.update({"nb_classes": data[2].shape[1]})
+        if library in torch_dict and not isinstance(model, torch_dict[library]):
             kwargs.pop("library", None)
             model = torch_dict[library](model, **kwargs)
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(f"Library {library} not implemented")
         return model

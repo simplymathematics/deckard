@@ -1,0 +1,35 @@
+data:
+    generate:
+        name: classification
+        random_state : 0
+        n_samples : 2000
+        n_features : 20
+    sample:
+        # _target_: deckard.base.data.sampler.SklearnDataSampler
+        random_state : 0
+        stratify: True
+        train_size : 100
+        test_size : 1000
+model: 
+attack:
+files:
+    data_dir : data
+    model_dir : model
+    attack_dir : attack
+    report_dir : report
+    directory : ???
+    data_file : data.pkl
+    model_file : model.pkl
+    attack_file : attack.pkl
+    score_dict_file : score_dict.json
+    name : evasion
+scorers:
+    mutual_info:
+        name : sklearn.metrics.mutual_info_score
+        direction : maximize
+_target_: deckard.base.experiment.Experiment
+optimizers: 
+    - accuracy
+    - train_time
+
+    

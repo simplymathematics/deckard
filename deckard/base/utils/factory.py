@@ -1,7 +1,8 @@
 import logging
 from itertools import product
+from importlib import import_module
 
-__all__ = ["flatten_dict", "unflatten_dict", "make_grid"]
+__all__ = ["flatten_dict", "unflatten_dict", "make_grid", "factory"]
 logger = logging.getLogger(__name__)
 
 
@@ -26,6 +27,41 @@ def flatten_dict(dictionary: dict, separator: str = ".", prefix: str = ""):
                 logger.debug(f"Adding {val} to {new_key}")
                 flat_dict[new_key] = val
     return flat_dict
+
+
+def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> object:
+    """
+    :param module_class_string: full name of the class to create an object of
+    :param super_cls: expected super class for validity, None if bypass
+    :param kwargs: parameters to pass
+    :return:
+    """
+    try:
+        module_name, class_name = module_class_string.rsplit(".", 1)
+    except Exception as e:  # pragma: no cover
+        logger.warning(f"Invalid module_class_string: {module_class_string}")
+        raise e
+    module = import_module(module_name)
+    assert hasattr(module, class_name), "class {} is not in {}".format(
+        class_name,
+        module_name,
+    )
+    logger.debug("reading class {} from module {}".format(class_name, module_name))
+    cls = getattr(module, class_name)
+    if super_cls is not None:
+        assert issubclass(cls, super_cls), "class {} should inherit from {}".format(
+            class_name,
+            super_cls.__name__,
+        )
+    logger.debug("initialising {} with params {}".format(class_name, kwargs))
+    try:
+        obj = cls(*args, **kwargs)
+    except Exception as e:  # pragma: no cover # noqa E722
+        logger.warning(
+            f"Failed to instantiate {cls} with args: ~{args}~ and kwargs ~{kwargs}~",
+        )
+        raise e
+    return obj
 
 
 def unflatten_dict(dictionary: dict, separator: str = ".") -> dict:
@@ -71,8 +107,7 @@ def make_grid(dictionary: list) -> list:
             elif isinstance(v, list):
                 logger.debug(f"{v} is a list.")
                 dictionary[k] = v
-            else:
-                logger.debug(f"{v} is type {type(v)}")
+            else:  # pragma: no cover
                 dictionary[k] = [v]
         keys = dictionary.keys()
         combinations = product(*dictionary.values())

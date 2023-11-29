@@ -10,9 +10,9 @@ __all__ = [
 
 
 class LogisticRegression(nn.Module):
-    def __init__(self, input_dim, output_dim, dtype="torch.FloatTensor", device="cpu"):
+    def __init__(self, input_dim, output_dim, dtype="torch.FloatTensor"):
         self.dtype = dtype
-        self.device = device
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
 
@@ -331,10 +331,7 @@ def _resnet(arch, block, layers, pretrained, progress, device, **kwargs):
     model = ResNet(block, layers, **kwargs)
     if pretrained:
         # Download the model state_dict from the link: and run your code
-        state_dict = torch.load(
-            "resnet18.pt?dl=0",
-            map_location=device,
-        )
+        state_dict = torch.load("resnet18.pt?dl=0", map_location=device)
         model.load_state_dict(state_dict)
     return model
 

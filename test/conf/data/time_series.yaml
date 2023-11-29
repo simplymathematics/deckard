@@ -3,7 +3,7 @@ generate:
     # _target_: deckard.base.data.generator.DataGenerator
     name: classification
     random_state : 0
-    n_samples : 101000
+    n_samples : 10000
     n_features : 20
 sample:
     # _target_: deckard.base.data.sampler.SklearnDataSampler

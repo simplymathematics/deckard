@@ -13,7 +13,6 @@ this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 
 class testSklearnModelPipeline(unittest.TestCase):
-
     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
     config_file = "pipeline.yaml"
 
@@ -32,7 +31,7 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def test_call(self):
         _, model = self.model.initialize()
-        self.assertTrue(hasattr(model.model, "steps"))
+        self.assertTrue(hasattr(model, "steps"))
 
     def test_hash(self):
         old_hash = hash(self.model.init.pipeline)
@@ -48,3 +47,8 @@ class testSklearnModelPipeline(unittest.TestCase):
 
     def tearDown(self) -> None:
         rmtree(self.dir)
+
+
+class testsSklearnModelPipelinefromDict(testSklearnModelPipeline):
+    config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
+    config_file = "pipeline2.yaml"

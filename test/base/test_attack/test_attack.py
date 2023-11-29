@@ -13,7 +13,6 @@ this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 
 class testAttackInitializer(unittest.TestCase):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "evasion.yaml"
     file = "attack.pkl"
@@ -48,28 +47,24 @@ class testAttackInitializer(unittest.TestCase):
 
 
 class testPoisoningAttackInitializer(testAttackInitializer):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "poisoning.yaml"
     file = "attack.pkl"
 
 
 class testInferenceAttackInitializer(testAttackInitializer):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "inference.yaml"
     file = "attack.pkl"
 
 
 class testExtractionAttackInitializer(testAttackInitializer):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "extraction.yaml"
     file = "attack.pkl"
 
 
 class testAttack(unittest.TestCase):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "evasion.yaml"
     file = "attack.pkl"
@@ -133,14 +128,12 @@ class testAttack(unittest.TestCase):
 
 
 class testInferenceAttack(testAttack):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "inference.yaml"
     file = "attack.pkl"
 
 
 class testExtractionAttack(testAttack):
-
     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
     config_file = "extraction.yaml"
     file = "attack.pkl"

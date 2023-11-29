@@ -2,257 +2,315 @@ import pandas as pd
 from pathlib import Path
 import json
 import logging
-from typing import List
+from tqdm import tqdm
+import yaml
+import numpy as np
+from .utils import deckard_nones as nones
 
 logger = logging.getLogger(__name__)
 
 
-def parse_folder(
-    folder,
-    exclude=[
-        "probabilities",
-        "predictions",
-        "plots",
-        "ground_truth",
-        "adv_predictions",
-        "adv_probabilities",
-        "samples",
-    ],
-) -> pd.DataFrame:
+def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Parse a folder containing json files and return a dataframe with the results, excluding the files in the exclude list.
-    :param folder: Path to folder containing json files
-    :param exclude: List of files to exclude. Default: ['probabilities', 'predictions', 'plots', 'ground_truth'].
+    Args:
+        df (pd.DataFrame): a dataframe with dictionaries as entries in some columns
+
+    Returns:
+        pd.DataFrame: a dataframe with the dictionaries flattened into columns using pd.json_normalize
+    """
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    for col in tqdm(df.columns, desc="Flattening columns"):
+        if isinstance(df[col][0], dict):
+            tmp = pd.json_normalize(df[col])
+            tmp.columns = [f"{col}.{subcol}" for subcol in tmp.columns]
+            tmp.index = df.index
+            df = pd.merge(df, tmp, left_index=True, how="outer", right_index=True)
+            if f"files.{col}_file" in tmp:
+                df[col] = Path(tmp[f"files.{col}_file"]).apply(lambda x: x.stem)
+            else:
+                df[col] = tmp.index
+        else:
+            df = pd.concat([df, df[col]], axis=1)
+    return df
+
+
+def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFrame:
+    """
+    Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
+    :param folder: Path to folder containing files
+    :param files: List of files to parse. Defaults to ["params.yaml", "score_dict.json"]. Other files will be added as columns with hrefs.
     :return: Pandas dataframe with the results
     """
     folder = Path(folder)
-    results = {}
-    results[folder] = {}
+
     logger.debug(f"Parsing folder {folder}...")
-    for file in folder.glob("*.json"):
-        if Path(file).stem in exclude:
-            continue
-        else:
-            with open(file, "r") as f:
-                results[folder][Path(file).stem] = json.load(f)
-    return pd.DataFrame(results).T
+    path_gen = []
+    for file in files:
+        path_gen.extend(folder.glob(f"**/{file}"))
+    path_gen.sort()
+    folder_gen = map(lambda x: x.parent, path_gen)
+    folder_gen = set(folder_gen)
+    results = {}
+    for file in tqdm(path_gen, desc="Parsing Specified files"):
+        results = read_file(file, results)
+    for folder in tqdm(folder_gen, desc="Adding other files to results"):
+        results = add_file(folder, path_gen, results)
+    df = pd.DataFrame(results).T
+    return df
 
 
-def flatten_results(results):
-    """
-    Flatten a dataframe containing json files. So that each json dict entry becomes a column with dot notation (e.g. "key1.subkey1")
-    :param results: Pandas dataframe containing json files
-    """
-    new_results = pd.DataFrame()
-    logger.debug("Flattening results...")
-    for col in results.columns:
-        tmp = pd.json_normalize(results[col])
-        new_results = pd.concat([new_results, tmp], axis=1)
-    return new_results
-
-
-def parse_results(result_dir, flatten=True):
-    """
-    Recursively parse a directory containing json files and return a dataframe with the results.
-    :param result_dir: Path to directory containing json files
-    :param regex: Regex to match folders to parse. Default: "*/*"
-    :param flatten: Whether to flatten the results. Default: True
-    :return: Pandas dataframe with the results
-    """
-    result_dir = Path(result_dir)
-    assert result_dir.is_dir(), f"Result directory {result_dir} does not exist."
-    results = pd.DataFrame()
-    logger.debug("Parsing results...")
-    total = len(list(Path(result_dir).iterdir()))
-    logger.info(f"Parsing {total} folders...")
-    for folder in Path(result_dir).iterdir():
-        tmp = parse_folder(folder)
-        if flatten is True:
-            tmp = flatten_results(tmp)
-        tmp = tmp.loc[:, ~tmp.columns.duplicated()]
-        results = pd.concat([results, tmp])
+def add_file(folder, path_gen, results):
+    all_files = Path(folder).glob("**/*")
+    for file in all_files:
+        if file not in path_gen:
+            if file.parent.name not in results:
+                results[file.parent.name] = {}
+            results[file.parent.name][file.stem] = file
     return results
 
 
-def set_for_keys(my_dict, key_arr, val) -> dict:
-    """
-    Set val at path in my_dict defined by the string (or serializable object) array key_arr.
-    :param my_dict: Dictionary to set value in
-    :param key_arr: Array of keys to set value at
-    :param val: Value to set
-    :return: Dictionary with value set
-    """
-    current = my_dict
-    for i in range(len(key_arr)):
-        key = key_arr[i]
-        if key not in current:
-            if i == len(key_arr) - 1:
-                current[key] = val
-            else:
-                current[key] = {}
-        else:
-            if type(current[key]) is not dict:
-                logger.info(
-                    "Given dictionary is not compatible with key structure requested",
-                )
-                raise ValueError("Dictionary key already occupied")
-        current = current[key]
-    return my_dict
+def read_file(file, results):
+    suffix = file.suffix
+    folder = file.parent.name
+    stage = file.parent.parent.name
+    if folder not in results:
+        results[folder] = {}
+    if suffix == ".json":
+        with open(file, "r") as f:
+            try:
+                dict_ = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                raise e
+    elif suffix == ".yaml":
+        with open(file, "r") as f:
+            dict_ = yaml.safe_load(f)
+    else:
+        raise ValueError(f"File type {suffix} not supported.")
+    results[folder]["stage"] = stage
+    results[folder].update(dict_)
+    return results
 
 
-def unflatten_results(df, sep=".") -> List[dict]:
-    """
-    Unflatten a dataframe with dot notation columns (e.g. "key1.subkey1") into a list of dictionaries.
-    :param df: Pandas dataframe with dot notation columns
-    :param sep: Separator to use. Default: "."
-    :return: List of dictionaries
-    """
-    logger.debug("Unflattening results...")
-    result = []
-    for _, row in df.iterrows():
-        parsed_row = {}
-        for idx, val in row.iteritems():
-            if val == val:
-                keys = idx.split(sep)
-                parsed_row = set_for_keys(parsed_row, keys, val)
-        result.append(parsed_row)
-    return result
-
-
-def find_results(df, kwargs: dict = {}) -> pd.DataFrame:
-    """
-    Finds the results of a dataframe that matches the given kwargs.
-    """
-    logger.debug("Finding best results...")
-    for col in kwargs.keys():
-        logger.info(f"Finding best results for {col} = {kwargs[col]}...")
-        logger.info(f"Shape before: {df.shape}")
-        df = df[df[col] == kwargs[col]]
-        logger.info(f"Shape after: {df.shape}")
-    return df
-
-
-def drop_static_columns(df) -> pd.DataFrame:
-    """
-    Drop columns that contain only one unique value.
-    :param df: Pandas dataframe
-    :return: Pandas dataframe with static columns dropped
-    """
-    logger.debug("Dropping static columns...")
-    for col in df.columns:  # Loop through columns
+def merge_defences(results: pd.DataFrame, default_epochs=20):
+    defences = []
+    def_gens = []
+    for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
+        defence = []
         if (
-            isinstance(df[col].iloc[0], list) and len(df[col].iloc[0]) == 1
-        ):  # Find columns that contain lists of length 1
-            df[col] = df[col].apply(lambda x: x[0])
-        try:
-            if (
-                len(df[col].unique()) == 1
-            ):  # Find unique values in column along with their length and if len is == 1 then it contains same values
-                df.drop([col], axis=1, inplace=True)
-        except:  # noqa E722
-            pass
+            "model.art.pipeline.preprocessor.name" in entry
+            and entry["model.art.pipeline.preprocessor.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.preprocessor.name"])
+        if (
+            "model.art.pipeline.postprocessor.name" in entry
+            and entry["model.art.pipeline.postprocessor.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.postprocessor.name"])
+        if (
+            "model.art.pipeline.transformer.name" in entry
+            and entry["model.art.pipeline.transformer.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.transformer.name"])
+        if (
+            "model.art.pipeline.trainer.name" in entry
+            and entry["model.art.pipeline.trainer.name"] not in nones
+        ):
+            defence.append(entry["model.art.pipeline.trainer.name"])
+        if (
+            "model.init.nb_epoch" in entry
+            and entry["model.init.nb_epoch"] != default_epochs
+        ):
+            defence.append("Epochs")
+        ############################################################################################################
+        if len(defence) > 1:
+            def_gen = [str(x).split(".")[-1] for x in defence]
+            defence = "_".join(defence)
+        elif len(defence) == 1:
+            def_gen = [str(x).split(".")[-1] for x in defence][0]
+            defence = defence[0]
+        else:
+            def_gen = "Control"
+            defence = "Control"
+        ############################################################################################################
+        if defence != []:
+            defences.append(defence)
+            def_gens.append(def_gen)
+        else:
+            defences.append(None)
+            def_gens.append(None)
+    results["defence_name"] = defences
+    results["def_gen"] = def_gens
+    return results
+
+
+def merge_attacks(results: pd.DataFrame):
+    attacks = []
+    for _, entry in tqdm(results.iterrows(), desc="Merging attacks"):
+        if "attack.init.name" in entry and entry["attack.init.name"] not in nones:
+            attack = entry["attack.init.name"]
+        else:
+            attack = None
+        attacks.append(attack)
+    if attacks != [None] * len(attacks):
+        results["attack_name"] = attacks
+        results["atk_gen"] = [str(x).split(".")[-1] for x in attacks]
+    return results
+
+
+def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
+    df = parse_folder(folder, files=files)
+    df = flatten_results(df)
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df = merge_defences(df, default_epochs=default_epochs)
+    df = merge_attacks(df)
     return df
 
 
-def save_results(report_folder, results_file, delete_columns=[]) -> str:
+def format_control_parameter(data, control_dict, min_max=True):
+    logger.info("Formatting control parameters...")
+    if hasattr(data, "def_gen"):
+        defences = data.def_gen.unique()
+    else:
+        defences = []
+    if hasattr(data, "atk_gen"):
+        attacks = data.atk_gen.unique()
+    else:
+        attacks = []
+    if data["model.init.name"].str.contains("Net").any():
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    for defence in defences:
+        if defence in control_dict:
+            param = control_dict[defence]
+            data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
+            if param in data.columns:
+                value = data[data.def_gen == defence][param]
+            else:
+                value = np.nan
+            data.loc[data.def_gen == defence, "def_value"] = value
+            control_dict.pop(defence)
+
+        else:
+            logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
+            data = data[data.def_gen != defence]
+        # if min_max is True:
+        #     def_min = data[data.def_gen == defence].def_value.min()
+        #     def_max = data[data.def_gen == defence].def_value.max()
+        #     data.loc[data.def_gen == defence, "def_value"] = pd.to_numeric(data.loc[data.def_gen == defence, "def_value"], errors='coerce')
+        #     data.loc[data.def_gen == defence, "def_value"] = (
+        #         data[data.def_gen == defence].def_value - def_min
+        #     ) / (def_max - def_min)
+
+    for attack in attacks:
+        if attack in control_dict:
+            param = control_dict[attack]
+            data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
+            if param in data.columns:
+                value = data[data.atk_gen == attack][param]
+            else:
+                value = np.nan
+            data.loc[data.atk_gen == attack, "atk_value"] = value
+            control_dict.pop(attack)
+        else:
+            logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
+            data = data[data.atk_gen != attack]
+
+        # if min_max is True:
+        #     atk_min = data[data.atk_gen == attack].atk_value.min()
+        #     atk_max = data[data.atk_gen == attack].atk_value.max()
+        #     data.loc[data.atk_gen == attack, "atk_value"] = pd.to_numeric(data.loc[data.atk_gen == attack, "atk_value"], errors='coerce')
+        #     data.loc[data.atk_gen == attack, "atk_value"] = (
+        #         data[data.atk_gen == attack].atk_value - atk_min
+        #     ) / (atk_max - atk_min)
+    return data
+
+
+def clean_data_for_plotting(
+    data,
+    def_gen_dict,
+    atk_gen_dict,
+    control_dict,
+):
+    logger.info("Replacing attack and defence names with short names...")
+    if hasattr(data, "def_gen"):
+        data.def_gen.fillna("Control", inplace=True)
+        def_gen = data.def_gen.map(def_gen_dict)
+        data.def_gen = def_gen
+    if hasattr(data, "atk_gen"):
+        atk_gen = data.atk_gen.map(atk_gen_dict)
+        data.atk_gen = atk_gen
+    logger.info("Dropping poorly merged columns...")
+    data.dropna(axis=1, how="all", inplace=True)
+    logger.info("Shortening model names...")
+    # Removes the path and to the model object and leaves the name of the model
+    if hasattr(data, "model.init.name") and len(data["model.init.name"].unique()) > 1:
+        model_names = data["model.init.name"].str.split(".").str[-1]
+        data["model_name"] = model_names
+    data = data.loc[:, ~data.columns.str.endswith(".1")]
+    if hasattr(data, "data.sample.random_state"):
+        logger.info("Replacing data.sample.random_state with random_state...")
+        data["data.sample.random_state"].rename("random_state", inplace=True)
+    data = format_control_parameter(data, control_dict, min_max=True)
+    return data
+
+
+def save_results(results, results_file, results_folder) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
-    logger.info("Compiling results...")
-    results = parse_results(report_folder)
-    for col in delete_columns:
-        try:
-            results.drop(col, axis=1, inplace=True)
-        except KeyError as e:
-            logger.warning(e)
-            logger.warning(f"Column {col} not found in results. Skipping.")
-            pass
-    results.to_csv(results_file)
+    logger.info(f"Saving data to {Path(results_folder) / results_file}")
+    Path(results_folder).mkdir(exist_ok=True, parents=True)
+    suffix = Path(results_folder, results_file).suffix
+    if suffix == ".csv":
+        results.to_csv(results_file)
+    elif suffix == ".xlsx":
+        results.to_excel(results_file)
+    elif suffix == ".html":
+        results.to_html(results_file)
+    elif suffix == ".json":
+        results.to_json(results_file)
+    else:
+        raise ValueError(f"File type {suffix} not supported.")
     assert Path(
         results_file,
     ).exists(), f"Results file {results_file} does not exist. Something went wrong."
-    logger.debug(f"Results saved to {results_file}")
     return results_file
-
-
-def find_best_params(filename, scorer, control_for=None):
-    """ """
-    logger.info("Finding best params...")
-    assert Path(filename).exists(), f"Results file {filename} does not exist."
-    results = pd.read_csv(filename, index_col=0)
-    big_list = results[control_for].unique() if control_for else []
-    if len(big_list) <= 1:
-        best_df = results
-    else:
-        best_df = pd.DataFrame()
-        for params in big_list:
-            results = find_results(results, kwargs={control_for: params})
-            sorted = results.sort_values(by=scorer, ascending=False).head(1)
-            best_df = pd.concat([best_df, sorted])
-            best_df = best_df.reset_index(drop=True)
-    indexes = [Path(x).name for x in best_df["files.path"]]
-    best_df["files.path"] = indexes
-    return best_df
-
-
-def delete_these_columns(df, columns) -> pd.DataFrame:
-    """
-    Delete columns from a dataframe.
-    :param df: dataframe
-    :param columns: list of columns to delete
-    :return: dataframe
-    """
-    for col in columns:
-        logger.info(f"Deleting column {col}...")
-        del df[col]
-    return df
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--report_folder", type=str, default="reports")
     parser.add_argument("--results_file", type=str, default="results.csv")
-    parser.add_argument("--scorer", type=str, default="accuracy")
-    parser.add_argument("--scorer_minimize", type=bool, default=False)
-    parser.add_argument("--default_param_file", type=str, default="params.yaml")
-    parser.add_argument("--output_folder", type=str, default="best_models")
-    parser.add_argument("--control_for", type=str, default=None)
+    parser.add_argument("--report_folder", type=str, default="reports", required=True)
+    parser.add_argument("--results_folder", type=str, default="results")
+    parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
+    parser.add_argument("--default_epochs", type=int, default=20)
     parser.add_argument(
         "--kwargs",
         type=list,
         default=None,
         nargs="*",
     )
-    parser.add_argument("--delete_columns", type=list, nargs="+", default=[])
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    scorer = args.scorer
-    default_param_file = args.default_param_file
-    output_folder = args.output_folder
-    control_for = args.control_for
-    kwargs = {}
-    if args.kwargs is not None and len(args.kwargs > 0):
-        for entry in args.kwargs:
-            entry = "".join(entry)
-            value = entry.split("=")[1]
-            if str(value).isnumeric():
-                if int(value) == float(value):
-                    value = int(value)
-                else:
-                    value = float(value)
-            kwargs[entry.split("=")[0]] = value
-    columns_to_delete = args.delete_columns
-    report_file = save_results(
-        report_folder,
-        results_file,
-        delete_columns=columns_to_delete,
+    results_folder = args.results_folder
+    results = parse_results(report_folder, default_epochs=args.default_epochs)
+    with open(Path(Path(), args.config), "r") as f:
+        big_dict = yaml.load(f, Loader=yaml.FullLoader)
+    def_gen_dict = big_dict["defences"]
+    atk_gen_dict = big_dict["attacks"]
+    control_dict = big_dict["params"]
+    results = clean_data_for_plotting(
+        results,
+        def_gen_dict,
+        atk_gen_dict,
+        control_dict,
     )
+    report_file = save_results(results, results_file, results_folder)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

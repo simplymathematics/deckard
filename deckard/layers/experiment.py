@@ -2,11 +2,11 @@ import logging
 from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
-from hydra import initialize_config_dir, compose
-from omegaconf import OmegaConf
+
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse
+from copy import deepcopy
 from ..base.utils import unflatten_dict
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,6 @@ __all__ = [
     "run_stage",
     "get_stages",
     "run_stages",
-    "save_params_file",
 ]
 
 
@@ -25,17 +24,21 @@ def get_dvc_stage_params(
     params_file="params.yaml",
     pipeline_file="dvc.yaml",
     directory=".",
+    name=None,
 ):
     logger.info(
         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
     )
-    params = dvc.api.params_show(params_file, stages=stage, repo=directory)
+    params = dvc.api.params_show(stages=stage)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
     unflattened_files = unflatten_dict(files)
     params["files"] = dict(unflattened_files.get("files", unflattened_files))
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
     params["files"]["stage"] = stage
+    params["stage"] = stage
+    if name is not None:
+        params["files"]["name"] = name
     return params
 
 
@@ -56,6 +59,11 @@ def run_stage(
     )
     exp = instantiate(params)
     id_ = exp.name
+    files = deepcopy(exp.files())
+    params_file = Path(files["score_dict_file"]).with_name("params.yaml").as_posix()
+    Path(params_file).parent.mkdir(exist_ok=True, parents=True)
+    with Path(params_file).open("w") as f:
+        yaml.dump(params, f)
     score = exp()
     return id_, score
 
@@ -70,7 +78,7 @@ def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
             f"Directory {repo} is not a git repository. Please run `dvc init` in {repo} and try again.",
         )
     if stages is None or stages == []:
-        stages = def_stages
+        raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
     elif isinstance(stages, str):
         stages = [stages]
     else:
@@ -96,19 +104,6 @@ def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo
     return results
 
 
-def save_params_file(
-    config_dir="conf",
-    config_file="default",
-    params_file="params.yaml",
-):
-    config_dir = str(Path(Path(), config_dir).absolute().as_posix())
-    with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
-        cfg = compose(config_name=config_file)
-        params = OmegaConf.to_container(cfg, resolve=True)
-        with open(params_file, "w") as f:
-            yaml.dump(params, f)
-
-
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     dvc_parser = argparse.ArgumentParser()
@@ -120,12 +115,12 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--config_file", type=str, default="default")
     dvc_parser.add_argument("--workdir", type=str, default=".")
     args = dvc_parser.parse_args()
-    config_dir = Path(Path(), args.config_dir).resolve().as_posix()
-    save_params_file(
-        config_dir=config_dir,
-        config_file=args.config_file,
-        params_file=args.params_file,
-    )
+    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
+    # save_params_file(
+    #     config_dir=config_dir,
+    #     config_file=args.config_file,
+    #     params_file=args.params_file,
+    # )
     logging.basicConfig(
         level=args.verbosity,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

@@ -1,0 +1,6 @@
+init.name : art.attacks.evasion.ProjectedGradientDescent
+init.eps : [0.01, 0.03, 0.3, 0.1]
+init.norm : [inf, 1, 2]
+init.eps_step : [0.001, 0.003, 0.01]
+init.batch_size : [1024]
+init.max_iter : [10]

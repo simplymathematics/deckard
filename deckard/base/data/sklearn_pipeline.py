@@ -1,8 +1,8 @@
 import logging
 from typing import Union
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 from hydra.utils import instantiate
-from dataclasses import dataclass, asdict, field, is_dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 from ..utils import my_hash
 
@@ -43,24 +43,9 @@ class SklearnDataPipeline:
         pipe = kwargs.pop("pipeline", {})
         pipe.update(**kwargs)
         for stage in pipe:
-            if isinstance(pipe[stage], DictConfig):
-                pipe[stage] = OmegaConf.to_container(pipe[stage])
-                name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
-                pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
-            elif is_dataclass(pipe[stage]):
-                pipe[stage] = asdict(pipe[stage])
-                name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
-                pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
-            elif isinstance(pipe[stage], dict):
-                name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
-                pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
-            elif isinstance(pipe[stage], SklearnDataPipelineStage):
-                pass
-            else:
-                assert hasattr(
-                    pipe[stage],
-                    "transform",
-                ), f"Pipeline stage must be a SklearnDataPipelineStage, dict, or have a transform methods. Got {type(pipe[stage])}"
+            pipe[stage] = OmegaConf.to_container(pipe[stage], resolve=True)
+            name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
+            pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
         self.pipeline = pipe
 
     def __getitem__(self, key):
@@ -82,14 +67,10 @@ class SklearnDataPipeline:
         pipeline = deepcopy(self.pipeline)
         for stage in pipeline:
             transformer = pipeline[stage]
-            if isinstance(transformer, SklearnDataPipelineStage):
-                X_train, X_test, y_train, y_test = transformer(
-                    X_train,
-                    X_test,
-                    y_train,
-                    y_test,
-                )
-            else:
-                X_train = transformer.fit(X_train).transform(X_train)
-                X_test = transformer.transform(X_test)
-        return X_train, X_test, y_train, y_test
+            X_train, X_test, y_train, y_test = transformer(
+                X_train,
+                X_test,
+                y_train,
+                y_test,
+            )
+        return [X_train, X_test, y_train, y_test]

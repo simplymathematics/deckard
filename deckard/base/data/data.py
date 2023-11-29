@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from pandas import DataFrame, read_csv, read_excel
+from pandas import DataFrame, read_csv, Series
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -85,26 +85,29 @@ class Data:
         """Get the hash of the data object."""
         return int(my_hash(self), 16)
 
-    def initialize(self):
+    def initialize(self, filename=None):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
         :return: X_train, X_test, y_train, y_test
         """
-        if self.generate is not None:
+        if filename is not None and Path(filename).exists():
+            result = self.load(filename)
+            assert len(result) == 4, f"Data is not generated: {self.name}"
+        elif self.generate is not None:
             result = self.generate()
-            if len(result) == 2:
-                result = self.sample(*result)
-            else:
-                assert len(result) == 4, f"Data is not generated: {self.name}"
         else:
             result = self.load(self.name)
-            if len(result) == 1:
-                assert self.target is not None, "Target is not specified"
-                y = result[self.target]
-                X = result.drop(self.target, axis=1)
-                result = self.sample(X, y)
-            if len(result) == 2:
-                result = self.sample(*result)
-            assert len(result) == 4
+        if isinstance(result, DataFrame):
+            assert self.target is not None, "Target is not specified"
+            y = result[self.target]
+            X = result.drop(self.target, axis=1)
+            X = np.array(X)
+            y = np.array(y)
+            result = [X, y]
+        if len(result) == 2:
+            result = self.sample(*result)
+        assert (
+            len(result) == 4
+        ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
         return result
 
     def load(self, filename) -> DataFrame:
@@ -118,14 +121,11 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename)
-            data = data.to_numpy()
+            data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
-        elif suffix in [".xls", ".xlsx"]:
-            data = read_excel(filename)
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return data
 
@@ -139,20 +139,33 @@ class Data:
             suffix = Path(filename).suffix
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
             if suffix in [".json"]:
-                if isinstance(data, DataFrame):
-                    data = data.to_dict(orient="records")
+                if isinstance(data, (Series, DataFrame)):
+                    data = data.to_dict()
                 elif isinstance(data, np.ndarray):
                     data = data.tolist()
+                elif isinstance(data, list):
+                    new_data = []
+                    for datum in data:
+                        if isinstance(datum, (np.ndarray)):
+                            new_data.append(datum.tolist())
+                    data = new_data
+                    del new_data
+                elif isinstance(data, (dict, int, float, str, bool)):
+                    pass
+                else:  # pragma: no cover
+                    raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 with open(filename, "w") as f:
                     json.dump(data, f)
             elif suffix in [".csv"]:
+                assert isinstance(
+                    data,
+                    (Series, DataFrame, dict, np.ndarray),
+                ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
                 DataFrame(data).to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
                     pickle.dump(data, f)
-            elif suffix in [".xls", ".xlsx"]:
-                DataFrame(data).to_excel(filename)
-            else:
+            else:  # pragma: no cover
                 raise ValueError(f"Unknown file type {type(suffix)} for {suffix}")
             assert Path(filename).exists()
 
@@ -171,12 +184,10 @@ class Data:
             data = self.load(data_file)
             assert len(data) == 4, f"Some data is missing: {self.name}"
         else:
-            data = self.initialize()
+            data = self.initialize(filename=data_file)
             assert len(data) == 4, f"Some data is missing: {self.name}"
             data_file = self.save(data, data_file)
         result_dict["data"] = data
-        if data_file is not None:
-            assert Path(data_file).exists()
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
             assert Path(
