@@ -49,10 +49,7 @@ class FileConfig:
         :param kwargs: Additional keyword arguments to be added to the files dictionary.
         :return: A FileConfig object.
         """
-        # self._target_ = "deckard.base.files.FileConfig"
-        needs = [reports, data_dir, model_dir, attack_dir]
-        for need in needs:
-            assert need is not None, f"Need to specify {need}"
+        self._target_ = "deckard.base.files.FileConfig"
         files.update(kwargs)
         self.reports = str(Path(reports).as_posix()) if reports is not None else None
         self.data_dir = str(Path(data_dir).as_posix()) if data_dir is not None else None
