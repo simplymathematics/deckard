@@ -179,6 +179,7 @@ class ModelTrainer:
                 end_timestamp = time()
             elif "should be the same" in str(e).lower():
                 import torch
+
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])

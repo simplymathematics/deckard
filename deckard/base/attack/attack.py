@@ -379,7 +379,7 @@ class PoisoningAttack:
                         end_timestamp = time()
                     else:
                         raise e
-                
+
             time_dict.update(
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
