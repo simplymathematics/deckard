@@ -110,8 +110,6 @@ class ModelTrainer:
         logger.info(f"Initializing model trainer with kwargs {kwargs}")
         self.kwargs = kwargs
 
-    # def __hash__(self):
-    #     return int(my_hash(self), 16)
 
     def __call__(self, data: list, model: object, library=None):
         logger.info(f"Training model {model} with fit params: {self.kwargs}")
@@ -181,7 +179,6 @@ class ModelTrainer:
                 end_timestamp = time()
             elif "should be the same" in str(e).lower():
                 import torch
-
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])

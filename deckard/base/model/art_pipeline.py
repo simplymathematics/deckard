@@ -64,8 +64,13 @@ class ArtInitializer:
             tuple(torch_dict.values()),
         ):
             import torch
-
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
+            if device_type == "gpu":
+                logger.info("Using GPU")
+                logger.info("Model moved to GPU")
+                device = torch.device("cuda")
+                model.to(device)
+                data = [d.to(device) for d in data]
             model = TorchInitializer(
                 data=data,
                 model=model,
