@@ -4,11 +4,9 @@ from tempfile import mkdtemp
 from shutil import rmtree
 import os
 from hydra import initialize_config_dir, compose
-from omegaconf import OmegaConf
 from hydra.utils import instantiate
 from deckard.layers.utils import find_conf_files, get_overrides, compose_experiment, save_params_file
 
-from deckard.base.experiment import Experiment
 
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()

@@ -74,21 +74,17 @@ files:
   adv_predictions_file: adv_predictions.json
   adv_probabilities_file: adv_probabilities.json
   attack_dir: attack
-  attack_file: attack
-  attack_type: .pkl
+  attack_file: attack.pkl
   data_dir: data
-  data_file: data
-  data_type : .pkl
-  directory: output
+  data_file: data.pkl
+  directory: ???
   losses_file: losses.json
   model_dir: model
-  model_file: model
-  model_type: .pkl
+  model_file: model.pkl
   name: evasion
   predictions_file: predictions.json
   probabilities_file: probabilities.json
-  reports: report
-  stage : '???'
+  report_dir: report
   score_dict_file: score_dict.json
 model:
   art:

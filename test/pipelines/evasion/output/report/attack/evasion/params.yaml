@@ -78,7 +78,7 @@ files:
   attack_type: .pkl
   data_dir: data
   data_file: data
-  data_type : .pkl
+  data_type: .pkl
   directory: output
   losses_file: losses.json
   model_dir: model
@@ -88,8 +88,9 @@ files:
   predictions_file: predictions.json
   probabilities_file: probabilities.json
   reports: report
-  stage : '???'
   score_dict_file: score_dict.json
+  stage: &id001
+  - attack
 model:
   art:
     library: sklearn
@@ -111,9 +112,6 @@ model:
     name: sklearn.svm.SVC
     probability: true
   library: sklearn
-optimizers:
-- accuracy
-- train_time
 scorers:
   _target_: deckard.base.scorer.ScorerDict
   accuracy:
@@ -124,3 +122,4 @@ scorers:
     direction: minimize
     name: sklearn.metrics.log_loss
     normalize: true
+stage: *id001

@@ -8,6 +8,7 @@ import yaml
 import argparse
 from copy import deepcopy
 from ..base.utils import unflatten_dict
+from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,9 @@ def get_dvc_stage_params(
     name=None,
 ):
     logger.info(
-        f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
+        f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {Path(directory).resolve().as_posix()}.",
     )
+    stage = [stage] if not isinstance(stage, list) else stage
     params = dvc.api.params_show(stages=stage)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
@@ -69,14 +71,9 @@ def run_stage(
 
 
 def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
-    try:
-        def_stages = list(
-            dvc.api.params_show(pipeline_file, repo=repo)["stages"].keys(),
-        )
-    except NotGitRepository:
-        raise ValueError(
-            f"Directory {repo} is not a git repository. Please run `dvc init` in {repo} and try again.",
-        )
+    with Path(repo, pipeline_file).open("r") as f:
+        pipeline = yaml.safe_load(f)['stages']
+    def_stages = list(pipeline.keys())
     if stages is None or stages == []:
         raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
     elif isinstance(stages, str):
@@ -111,23 +108,29 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--verbosity", type=str, default="INFO")
     dvc_parser.add_argument("--params_file", type=str, default="params.yaml")
     dvc_parser.add_argument("--pipeline_file", type=str, default="dvc.yaml")
-    dvc_parser.add_argument("--config_dir", type=str, default="conf")
+    dvc_parser.add_argument("--config_dir", type=str, default=None)
     dvc_parser.add_argument("--config_file", type=str, default="default")
-    dvc_parser.add_argument("--workdir", type=str, default=".")
+    dvc_parser.add_argument("--dvc_repository", type=str, default=None)
     args = dvc_parser.parse_args()
-    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
-    # save_params_file(
-    #     config_dir=config_dir,
-    #     config_file=args.config_file,
-    #     params_file=args.params_file,
-    # )
+    if args.config_dir is not None:
+        args.config_dir = Path(args.config_dir).resolve().as_posix()
+        assert args.config_file is not None, "Please specify a config file."
+    if args.config_dir is not None and Path(args.config_dir, args.config_file).is_file():
+        save_params_file(
+            config_dir=args.config_dir,
+            config_file=args.config_file,
+            params_file=args.params_file,
+        )
+    else:
+        pass
     logging.basicConfig(
         level=args.verbosity,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    dvc_repository = args.dvc_repository if args.dvc_repository is not None else "."
     results = run_stages(
         stages=args.stage,
         pipeline_file=args.pipeline_file,
         params_file=args.params_file,
-        repo=args.workdir,
+        repo=dvc_repository,
     )

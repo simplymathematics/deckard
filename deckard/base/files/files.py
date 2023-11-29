@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict
 from copy import deepcopy
+from omegaconf import ListConfig
 
 from ..utils import my_hash
 
@@ -72,7 +73,8 @@ class FileConfig:
             else None
         )
         self.name = name if name else None
-        self.stage = stage if stage else None
+        stage = stage if stage else None
+        self.stage = stage[-1] if isinstance(stage, (list, ListConfig)) else stage
         self.files = files if files else {}
         logger.debug(f"FileConfig init: {self.files}")
 
@@ -116,6 +118,9 @@ class FileConfig:
             if attack_dir is not None
             else None
         )
+        print("reports", reports)
+        print("stage", stage)
+        input("Press Enter to continue...")
         if name is None and stage is None:
             path = Path(reports)
         elif name is not None and stage is None:

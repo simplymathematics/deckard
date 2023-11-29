@@ -1,0 +1,233 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      params.yaml:
+        data:
+          generate:
+            n_features: 20
+            n_samples: 2000
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_losses_file: adv_losses.json
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attack
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          losses_file: losses.json
+          model_dir: model
+          model_file: model
+          model_type: .pkl
+          name: evasion
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: report
+          stage: ???
+          score_dict_file: score_dict.json
+        model:
+          art:
+            library: sklearn
+            pipeline:
+              initialize:
+                _target_: deckard.base.model.art_pipeline.ArtPipelineStage
+          data:
+            generate:
+              n_features: 20
+              n_samples: 2000
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+          init:
+            C: 1.0
+            kernel: rbf
+            name: sklearn.svm.SVC
+            probability: true
+          library: sklearn
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          log_loss:
+            direction: minimize
+            name: sklearn.metrics.log_loss
+            normalize: true
+    outs:
+    - path: output/data/data.pkl
+      hash: md5
+      md5: 041e10899ad1a52e1c7afe4b8916efad
+      size: 336313
+    - path: output/model/model.pkl
+      hash: md5
+      md5: a5bfc655087882ec2322526fe6427794
+      size: 74196
+    - path: output/report/train/evasion/predictions.json
+      hash: md5
+      md5: 1c83accb1ad8df240177f5f17f85424b
+      size: 17700
+    - path: output/report/train/evasion/score_dict.json
+      hash: md5
+      md5: 6e1d64d1acf2b879ab27d07b51715de8
+      size: 854
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - path: output/data/data.pkl
+      hash: md5
+      md5: 041e10899ad1a52e1c7afe4b8916efad
+      size: 336313
+    - path: output/model/model.pkl
+      hash: md5
+      md5: a5bfc655087882ec2322526fe6427794
+      size: 74196
+    params:
+      params.yaml:
+        attack:
+          attack_size: 10
+          data:
+            generate:
+              n_features: 20
+              n_samples: 2000
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+          init:
+            batch_size: 64
+            init_eval: 10
+            max_eval: 10
+            max_iter: 10
+            model:
+              art:
+                library: sklearn
+                pipeline:
+                  initialize:
+                    _target_: deckard.base.model.art_pipeline.ArtPipelineStage
+              data:
+                generate:
+                  n_features: 20
+                  n_samples: 2000
+                  name: classification
+                  random_state: 0
+                sample:
+                  random_state: 0
+                  stratify: true
+              init:
+                C: 1.0
+                kernel: rbf
+                name: sklearn.svm.SVC
+                probability: true
+              library: sklearn
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            art:
+              library: sklearn
+              pipeline:
+                initialize:
+                  _target_: deckard.base.model.art_pipeline.ArtPipelineStage
+            data:
+              generate:
+                n_features: 20
+                n_samples: 2000
+                name: classification
+                random_state: 0
+              sample:
+                random_state: 0
+                stratify: true
+            init:
+              C: 1.0
+              kernel: rbf
+              name: sklearn.svm.SVC
+              probability: true
+            library: sklearn
+        data:
+          generate:
+            n_features: 20
+            n_samples: 2000
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_losses_file: adv_losses.json
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attack
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          losses_file: losses.json
+          model_dir: model
+          model_file: model
+          model_type: .pkl
+          name: evasion
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: report
+          stage: ???
+          score_dict_file: score_dict.json
+        model:
+          art:
+            library: sklearn
+            pipeline:
+              initialize:
+                _target_: deckard.base.model.art_pipeline.ArtPipelineStage
+          data:
+            generate:
+              n_features: 20
+              n_samples: 2000
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+          init:
+            C: 1.0
+            kernel: rbf
+            name: sklearn.svm.SVC
+            probability: true
+          library: sklearn
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+            normalize: true
+          log_loss:
+            direction: minimize
+            name: sklearn.metrics.log_loss
+            normalize: true
+    outs:
+    - path: output/attack/attack.pkl
+      hash: md5
+      md5: c45edebdd505e3879d60322f779d4cd0
+      size: 952
+    - path: output/report/attack/evasion/adv_predictions.json
+      hash: md5
+      md5: 7cae7b08d059d1e2e8c1b718fd0ba028
+      size: 421
+    - path: output/report/attack/evasion/score_dict.json
+      hash: md5
+      md5: 9cb7f317bc4f6b2198f6088e25ccefc4
+      size: 1134
