@@ -29,9 +29,9 @@ deckard_nones = [
 
 
 def find_conf_files(
-    config_name,
     config_subdir,
     config_dir,
+    config_name=None,
     config_regex=None,
     default_file=None,
 ):
@@ -50,10 +50,11 @@ def find_conf_files(
         config_dir = Path(Path(), config_dir).resolve().as_posix()
         sub_dir = Path(config_dir, config_subdir)
         files = [default_file]
-    else:
+    else:  # pragma: no cover
         raise ValueError(
             "Must specify either config_name or config_regex or default_file",
         )
+    files = [file.as_posix() for file in files]
     return files
 
 
@@ -67,14 +68,26 @@ def get_overrides(file: str, key: str = None, overrides=None):
             overrides = {
                 entry.split("=")[0]: entry.split("=")[1] for entry in overrides
             }
-        assert isinstance(overrides, dict), f"Expected list, got {type(overrides)}"
-    if key is not None and len(overrides) > 0:
-        overrides.pop(f"{key}.name", None)
-        overrides.pop(f"files.{key}_file", None)
-        overrides[f"++{key}.name"] = Path(file).stem
-        overrides[f"++files.{key}_file"] = Path(file).stem
-        overrides[f"{key}"] = Path(file).stem
-        overrides["++stage"] = key
+        if isinstance(overrides, dict):
+            new_dict = deepcopy(overrides)
+            for k, v in new_dict.items():
+                if k.startswith("++"):
+                    overrides[k] = v
+                elif k.startswith("+"):
+                    overrides[f"++{k[1:]}"] = v
+                elif k.startswith("~~"):
+                    overrides[f"~~{k[2:]}"] = v
+                else:
+                    overrides[f"++{k}"] = v
+
+        # assert isinstance(overrides, dict), f"Expected list, got {type(overrides)}"
+    # if key is not None and len(overrides) > 0:
+    #     overrides.pop(f"{key}.name", None)
+    #     overrides.pop(f"files.{key}_file", None)
+    #     overrides[f"++{key}.name"] = Path(file).stem
+    #     overrides[f"++files.{key}_file"] = Path(file).stem
+    #     overrides[f"{key}"] = Path(file).stem
+    #     overrides["++stage"] = key
     return overrides
 
 
