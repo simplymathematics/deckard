@@ -110,9 +110,6 @@ class ModelTrainer:
         logger.info(f"Initializing model trainer with kwargs {kwargs}")
         self.kwargs = kwargs
 
-    # def __hash__(self):
-    #     return int(my_hash(self), 16)
-
     def __call__(self, data: list, model: object, library=None):
         logger.info(f"Training model {model} with fit params: {self.kwargs}")
         device = str(model.device) if hasattr(model, "device") else "cpu"
