@@ -5,7 +5,7 @@ from typing import Dict, Union
 from art.estimators import BaseEstimator
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
-
+import numpy as np
 from .keras_models import KerasInitializer, keras_dict  # noqa F401
 from .tensorflow_models import (  # noqa F401
     TensorflowV1Initializer,
@@ -71,6 +71,8 @@ class ArtInitializer:
                 logger.info("Model moved to GPU")
                 device = torch.device("cuda")
                 model.to(device)
+                if isinstance(data[0][0], np.ndarray):
+                    data = [torch.from_numpy(d).to(device) for d in data]
                 data = [d.to(device) for d in data]
             model = TorchInitializer(
                 data=data,
