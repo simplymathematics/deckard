@@ -1,4 +1,3 @@
-/output
-/retrain
-/multirun
-/logs
+logs/
+multirun/
+output/

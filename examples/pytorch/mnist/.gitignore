@@ -1,2 +1,5 @@
-mnist/
-20_epochs/
+mnist/*
+.dvc/*
+20_epochs/*
+**/optimization_results.yaml
+*.rdb

@@ -2,7 +2,7 @@ import logging
 import pickle
 from dataclasses import dataclass, field, asdict, is_dataclass
 from pathlib import Path
-from time import process_time_ns
+from time import process_time_ns, time
 from typing import Union, Dict
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from copy import deepcopy
@@ -131,15 +131,19 @@ class ModelTrainer:
             raise NotImplementedError(f"Training library {library} not implemented")
         try:
             start = process_time_ns()
+            start_timestamp = time()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
+            end_timestamp = time()
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
 
             data[2] = to_categorical(data[2])
             start = process_time_ns()
+            start_timestamp = time()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
+            end_timestamp = time()
         except ValueError as e:  # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
@@ -147,8 +151,10 @@ class ModelTrainer:
                 nb_classes = len(np.unique(data[2]))
                 data[2] = to_categorical(data[2], nb_classes=nb_classes)
                 start = process_time_ns()
+                start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
+                end_timestamp = time()
             else:
                 raise e
         except AttributeError as e:  # pragma: no cover
@@ -157,8 +163,10 @@ class ModelTrainer:
                 data[0] = np.array(data[0])
                 data[2] = np.array(data[2])
                 start = process_time_ns()
+                start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
+                end_timestamp = time()
             except Exception as e:
                 raise e
         except RuntimeError as e:  # pragma: no cover
@@ -167,8 +175,10 @@ class ModelTrainer:
 
                 tf.config.run_functions_eagerly(True)
                 start = process_time_ns()
+                start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
+                end_timestamp = time()
             elif "should be the same" in str(e).lower():
                 import torch
 
@@ -185,15 +195,17 @@ class ModelTrainer:
                 data[2].to(device)
                 model.model.to(device) if hasattr(model, "model") else model.to(device)
                 start = process_time_ns()
+                start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns() - start
+                end_timestamp = time()
             else:
                 raise e
         time_dict = {
             "train_time": (end - start) / 1e9,
             "train_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
-            "train_time_start": start,
-            "train_time_end": end,
+            "train_start_time": start_timestamp,
+            "train_end_time": end_timestamp,
             "train_device": device,
         }
 
@@ -550,7 +562,10 @@ class Model:
         device = str(model.device) if hasattr(model, "device") else "cpu"
         try:
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict(data[1])
+            end = process_time_ns() - start
+            end_timestamp = time()
         except NotFittedError as e:  # pragma: no cover
             logger.warning(e)
             logger.warning(f"Model {model} is not fitted. Fitting now.")
@@ -568,6 +583,7 @@ class Model:
             logger.error(e)
             raise e
         end = process_time_ns() - start
+        end_timestamp = time()
         if predictions_file is not None:
             self.data.save(predictions, predictions_file)
         return (
@@ -575,8 +591,8 @@ class Model:
             {
                 "predict_time": (end - start) / 1e9,
                 "predict_time_per_sample": (end - start) / (len(data[0]) * 1e9),
-                "predict_start_time": start,
-                "predict_stop_time": end,
+                "predict_start_time": start_timestamp,
+                "predict_stop_time": end_timestamp,
                 "predict_device": device,
             },
         )
@@ -612,12 +628,16 @@ class Model:
             )
         elif hasattr(model, "predict_proba"):
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict_proba(data[1])
             end = process_time_ns() - start
+            end_timestamp = time()
         else:
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict(data[1])
             end = process_time_ns() - start
+            end_timestamp = time()
         if probabilities_file is not None:
             self.data.save(predictions, probabilities_file)
         return (
@@ -625,8 +645,8 @@ class Model:
             {
                 "predict_proba_time": (end - start) / 1e9,
                 "predict_proba_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
-                "predict_proba_start_time": start,
-                "predict_proba_stop_time": end,
+                "predict_proba_start_time": start_timestamp,
+                "predict_proba_stop_time": end_timestamp,
                 "predict_proba_device": device,
             },
         )
@@ -661,16 +681,22 @@ class Model:
             )
         if hasattr(model, "predict_log_proba"):
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict_log_proba(data[1])
             end = process_time_ns() - start
+            end_timestamp = time()
         elif hasattr(model, "predict_proba"):
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict_proba(data[1])
             end = process_time_ns() - start
+            end_timestamp = time()
         elif hasattr(model, "predict"):
             start = process_time_ns()
+            start_timestamp = time()
             predictions = model.predict(data[1])
             end = process_time_ns() - start
+            end_timestamp = time()
         else:  # pragma: no cover
             raise ValueError(
                 f"Model {model} does not have a predict_log_proba or predict_proba method.",
@@ -682,8 +708,8 @@ class Model:
             {
                 "predict_log_proba_time": (end - start) / 1e9,
                 "predict_log_proba_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
-                "predict_log_proba_start_time": start,
-                "predict_log_proba_stop_time": end,
+                "predict_log_proba_start_time": start_timestamp,
+                "predict_log_proba_stop_time": end_timestamp,
                 "predict_log_device": device,
             },
         )

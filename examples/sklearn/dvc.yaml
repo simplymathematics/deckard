@@ -76,18 +76,13 @@ stages:
     outs:
     - conf/attack/best.yaml
   ##############################################################################
-  # grid search
-  model_search :
-    cmd : bash models.sh +stage=train +optimizers=accuracy ++hydra.sweeper.storage=sqlite:///model.db ++hydra.sweeper.study_name=model ++hydra.sweeper.direction=maximize ++direction=maximize --multirun --config-name model.yaml
-    outs:
-    - model.db
-    deps:
-    - models.sh
-    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
-  attack_search :
-    cmd : bash attacks.sh ++stage=attack ++optimizers=adv_accuracy ++hydra.sweeper.storage=sqlite:///attack.db ++hydra.sweeper.study_name=attack ++hydra.sweeper.direction=minimize ++direction=minimize ++attack.init.max_iter=10  --multirun --config-name attack.yaml
-    deps:
-    - attacks.sh
-    - model.db
-    outs:
-    - attack.db
+  # defend:
+  #   cmd : bash models.sh
+  #   deps:
+  #   - model.db
+  #   outs:
+  #   - multirun
+  # attack-again:
+  #   cmd : bash attacks.sh
+  #   deps:
+  #   - attack.db

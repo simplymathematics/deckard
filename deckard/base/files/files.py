@@ -54,10 +54,14 @@ class FileConfig:
         for need in needs:
             assert need is not None, f"Need to specify {need}"
         files.update(kwargs)
-        self.reports = str(Path(reports).as_posix()) if reports else None
-        self.data_dir = str(Path(data_dir).as_posix()) if data_dir else None
-        self.model_dir = str(Path(model_dir).as_posix()) if model_dir else None
-        self.attack_dir = str(Path(attack_dir).as_posix()) if attack_dir else None
+        self.reports = str(Path(reports).as_posix()) if reports is not None else None
+        self.data_dir = str(Path(data_dir).as_posix()) if data_dir is not None else None
+        self.model_dir = (
+            str(Path(model_dir).as_posix()) if model_dir is not None else None
+        )
+        self.attack_dir = (
+            str(Path(attack_dir).as_posix()) if attack_dir is not None else None
+        )
         self.data_type = data_type if data_type else None
         self.model_type = model_type if model_type else None
         self.attack_type = attack_type if attack_type else None
@@ -99,10 +103,22 @@ class FileConfig:
         data_type = self.data_type
         model_type = self.model_type
         attack_type = self.attack_type
-        reports = str(Path(directory, reports).as_posix()) if reports else None
-        data_dir = str(Path(directory, data_dir).as_posix()) if data_dir else None
-        model_dir = str(Path(directory, model_dir).as_posix()) if model_dir else None
-        attack_dir = str(Path(directory, attack_dir).as_posix()) if attack_dir else None
+        reports = (
+            str(Path(directory, reports).as_posix()) if reports is not None else None
+        )
+        data_dir = (
+            str(Path(directory, data_dir).as_posix()) if data_dir is not None else None
+        )
+        model_dir = (
+            str(Path(directory, model_dir).as_posix())
+            if model_dir is not None
+            else None
+        )
+        attack_dir = (
+            str(Path(directory, attack_dir).as_posix())
+            if attack_dir is not None
+            else None
+        )
         if name is None and stage is None:
             path = Path(reports)
         elif name is not None and stage is None:
@@ -128,18 +144,9 @@ class FileConfig:
                 if new_path.suffix != attack_type:
                     new_path = Path(attack_dir, Path(name).stem + attack_type)
                 new_files[kwarg] = str(new_path.as_posix())
-            # elif "directory" == kwarg:
-            #     new_path = Path(name)
-            #     new_files[kwarg] = str(new_path.as_posix())
-            # elif "name" == kwarg or "stage" == kwarg:
-            #     continue
-            # elif "_type" in kwarg:
-            #     continue
-            # elif "_dir" in kwarg:
-            #     continue
             elif "report_dir" == kwarg:
                 continue
-            else:
+            elif name is not None:
                 new_path = Path(path, name)
                 full_path = str(Path(new_path).as_posix())
                 new_files[kwarg] = full_path

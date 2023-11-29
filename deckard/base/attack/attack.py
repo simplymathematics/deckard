@@ -4,7 +4,7 @@ from typing import Union
 from pathlib import Path
 import logging
 from copy import deepcopy
-from time import process_time_ns
+from time import process_time_ns, time
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from art.utils import to_categorical, compute_success
@@ -154,6 +154,7 @@ class EvasionAttack:
                 kwargs.update({"y": data[2][: self.attack_size]})
             if "AdversarialPatch" in self.name:
                 start = process_time_ns()
+                start_timestamp = time()
                 patches, _ = atk.generate(ben_samples, **kwargs)
                 samples = atk.apply_patch(
                     ben_samples,
@@ -162,14 +163,16 @@ class EvasionAttack:
                 )
             else:
                 start = process_time_ns()
+                start_timestamp = time()
                 samples = atk.generate(ben_samples, **kwargs)
             end = process_time_ns()
+            end_timestamp = time()
             time_dict.update(
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time": start,
-                    "adv_fit_stop_time": end,
+                    "adv_fit_start_time": start_timestamp,
+                    "adv_fit_stop_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -205,23 +208,27 @@ class EvasionAttack:
                 "predict_proba",
             ):
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
             try:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
-
+                end_timestamp = time()
             except AttributeError:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
+                end_timestamp = time()
             time_dict.update(
                 {
                     "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
-                    "adv_predict_start_time": start,
-                    "adv_predict_stop_time": end,
+                    "adv_predict_start_time": start_timestamp,
+                    "adv_predict_stop_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -229,7 +236,6 @@ class EvasionAttack:
             results["adv_probabilities"] = np.array(adv_probabilities)
         if adv_probabilities_file is not None:
             self.data.save(adv_probabilities, adv_probabilities_file)
-
         if adv_losses_file is not None and Path(adv_losses_file).exists():
             adv_loss = self.data.load(adv_losses_file)
             results["adv_losses"] = np.array(adv_loss)
@@ -324,12 +330,15 @@ class PoisoningAttack:
                     )
                 try:
                     start = process_time_ns()
+                    start_timestamp = time()
                     samples, _ = atk.poison(
                         x_trigger=x_trigger,
                         y_trigger=y_trigger,
                         x_train=x_train,
                         y_train=y_train,
                     )
+                    end = process_time_ns()
+                    end_timestamp = time()
                 except RuntimeError as e:
                     if "expected scalar type Long" in str(e):
                         # if hasattr(y_train, "type"):
@@ -359,21 +368,24 @@ class PoisoningAttack:
                             attack_size=self.attack_size,
                         )
                         start = process_time_ns()
+                        start_timestamp = time()
                         samples, _ = atk.poison(
                             x_trigger=x_trigger,
                             y_trigger=y_trigger,
                             x_train=x_train,
                             y_train=y_train,
                         )
+                        end = process_time_ns()
+                        end_timestamp = time()
                     else:
                         raise e
-                end = process_time_ns()
+
             time_dict.update(
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time": start,
-                    "adv_fit_stop_time": end,
+                    "adv_fit_start_time": start_timestamp,
+                    "adv_fit_stop_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -397,22 +409,28 @@ class PoisoningAttack:
                 "predict_proba",
             ):
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.model.predict_proba(samples)
                 end = process_time_ns()
+                end_timestamp = time()
             try:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict_proba(samples)
                 end = process_time_ns()
+                end_timestamp = time()
             except AttributeError:
                 start = process_time_ns()
+                start_timestamp = time()
                 adv_probabilities = model.predict(samples)
                 end = process_time_ns()
+                end_timestamp = time()
         time_dict.update(
             {
                 "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                 "adv_predict_time": (end - start) / 1e9,
-                "adv_predict_start_time": start,
-                "adv_predict_stop_time": end,
+                "adv_predict_start_time": start_timestamp,
+                "adv_predict_stop_time": end_timestamp,
             },
         )
         device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -514,25 +532,24 @@ class InferenceAttack:
             if "MembershipInferenceBlackBox" in self.name:
                 infer = self.kwargs.pop("infer", {})
                 fit = self.kwargs.pop("fit", {})
-                start = process_time_ns()
                 atk.fit(x=x_train, y=y_train, test_x=x_test, test_y=y_test, **fit)
-                end = process_time_ns()
-
                 x_train = data[0][: self.attack_size]
                 y_train = data[2][: self.attack_size]
                 x_test = data[1][: self.attack_size]
                 y_test = data[3][: self.attack_size]
                 start = process_time_ns()
+                start_timestamp = time()
                 preds = atk.infer(x_test, y_test, **infer)
                 end = process_time_ns()
+                end_timestamp = time()
             else:
                 raise NotImplementedError(f"Attack {self.name} not implemented.")
             time_dict.update(
                 {
                     "adv_fit_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
-                    "adv_fit_start_time": start,
-                    "adv_fit_stop_time": end,
+                    "adv_fit_start_time": start_timestamp,
+                    "adv_fit_stop_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -606,6 +623,7 @@ class ExtractionAttack:
                 attack = deepcopy(self.init)
                 attack = attack(model=model, attack_size=self.attack_size)
                 start = process_time_ns()
+                start_timestamp = time()
                 attacked_model = attack.extract(
                     x=data[0][: self.attack_size],
                     y=data[2][: self.attack_size],
@@ -613,13 +631,14 @@ class ExtractionAttack:
                     **kwargs,
                 )
                 end = process_time_ns()
+                end_timestamp = time()
                 time_dict.update(
                     {
                         "adv_fit_time_per_sample": (end - start)
                         / (self.attack_size * 1e9),
                         "adv_fit_time": (end - start) / 1e9,
-                        "adv_fit_start_time": start,
-                        "adv_fit_stop_time": end,
+                        "adv_fit_start_time": start_timestamp,
+                        "adv_fit_stop_time": end_timestamp,
                     },
                 )
                 device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -634,14 +653,16 @@ class ExtractionAttack:
             preds = self.data.load(adv_predictions_file)
         else:
             start = process_time_ns()
+            start_timestamp = time()
             preds = attacked_model.predict(data[1][: self.attack_size])
             end = process_time_ns()
+            end_timestamp = time()
             time_dict.update(
                 {
                     "adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
-                    "adv_predict_start_time": start,
-                    "adv_predict_stop_time": end,
+                    "adv_predict_start_time": start_timestamp,
+                    "adv_predict_stop_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
