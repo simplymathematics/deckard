@@ -5,4 +5,3 @@ optimizer:
     lr : 0.01
     momentum : 0.9
 clip_values : [0, 255]
-device_type : ${oc.env:DECKARD_DEVICE_TYPE,cpu}
