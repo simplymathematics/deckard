@@ -56,8 +56,12 @@ class FileConfig:
         files.update(kwargs)
         self.reports = str(Path(reports).as_posix()) if reports is not None else None
         self.data_dir = str(Path(data_dir).as_posix()) if data_dir is not None else None
-        self.model_dir = str(Path(model_dir).as_posix()) if model_dir is not None else None
-        self.attack_dir = str(Path(attack_dir).as_posix()) if attack_dir is not None else None
+        self.model_dir = (
+            str(Path(model_dir).as_posix()) if model_dir is not None else None
+        )
+        self.attack_dir = (
+            str(Path(attack_dir).as_posix()) if attack_dir is not None else None
+        )
         self.data_type = data_type if data_type else None
         self.model_type = model_type if model_type else None
         self.attack_type = attack_type if attack_type else None
@@ -99,10 +103,22 @@ class FileConfig:
         data_type = self.data_type
         model_type = self.model_type
         attack_type = self.attack_type
-        reports = str(Path(directory, reports).as_posix()) if reports is not None else None
-        data_dir = str(Path(directory, data_dir).as_posix()) if data_dir is not None else None
-        model_dir = str(Path(directory, model_dir).as_posix()) if model_dir is not None else None
-        attack_dir = str(Path(directory, attack_dir).as_posix()) if attack_dir is not None else None
+        reports = (
+            str(Path(directory, reports).as_posix()) if reports is not None else None
+        )
+        data_dir = (
+            str(Path(directory, data_dir).as_posix()) if data_dir is not None else None
+        )
+        model_dir = (
+            str(Path(directory, model_dir).as_posix())
+            if model_dir is not None
+            else None
+        )
+        attack_dir = (
+            str(Path(directory, attack_dir).as_posix())
+            if attack_dir is not None
+            else None
+        )
         if name is None and stage is None:
             path = Path(reports)
         elif name is not None and stage is None:
