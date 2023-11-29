@@ -203,7 +203,7 @@ class ModelTrainer:
                 raise e
         time_dict = {
             "train_time": (end - start) / 1e9,
-            "train_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
+            "train_time_per_sample": (end - start) / (len(data[0]) * 1e9),
             "train_start_time": start_timestamp,
             "train_end_time": end_timestamp,
             "train_device": device,
@@ -644,7 +644,7 @@ class Model:
             predictions,
             {
                 "predict_proba_time": (end - start) / 1e9,
-                "predict_proba_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
+                "predict_proba_time_per_sample": (end - start) / (len(data[0]) * 1e9),
                 "predict_proba_start_time": start_timestamp,
                 "predict_proba_stop_time": end_timestamp,
                 "predict_proba_device": device,
@@ -707,7 +707,8 @@ class Model:
             predictions,
             {
                 "predict_log_proba_time": (end - start) / 1e9,
-                "predict_log_proba_time_per_sample": (end - start)   / (len(data[0]) * 1e9),
+                "predict_log_proba_time_per_sample": (end - start)
+                / (len(data[0]) * 1e9),
                 "predict_log_proba_start_time": start_timestamp,
                 "predict_log_proba_stop_time": end_timestamp,
                 "predict_log_device": device,

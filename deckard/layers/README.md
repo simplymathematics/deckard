@@ -14,5 +14,3 @@
 ├── afr.py: For building accelerated failure rate models
 ├── plots.py: For generating plots using seaborn
 └── watcher.py: Watches a file, transforms the data, and moves it somewhere else via parallelized scp (work in progress).
-
-
