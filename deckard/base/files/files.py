@@ -62,10 +62,14 @@ class FileConfig:
         self.model_type = model_type if model_type else None
         self.attack_type = attack_type if attack_type else None
         self.directory = (
-            Path(directory).as_posix()
-            if Path(directory).is_absolute()
-            else Path(Path(), directory).as_posix()
-        ) if directory else None
+            (
+                Path(directory).as_posix()
+                if Path(directory).is_absolute()
+                else Path(Path(), directory).as_posix()
+            )
+            if directory
+            else None
+        )
         self.name = name if name else None
         self.stage = stage if stage else None
         self.files = files if files else {}

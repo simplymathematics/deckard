@@ -67,6 +67,7 @@ def plot_aft(
     plt.gcf().clear()
     return ax, aft
 
+
 def plot_partial_effects(
     aft,
     covariate_array,
@@ -100,12 +101,14 @@ def plot_partial_effects(
     plt.gcf().clear()
     return pareto
 
+
 def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
     scores = {"train_score": train_score, "test_score": test_score}
     plt.show()
     return scores
+
 
 def make_afr_table(score_list, aft_dict, dataset):
     assert len(score_list) == len(
@@ -115,13 +118,11 @@ def make_afr_table(score_list, aft_dict, dataset):
     aft_data.index.name = "Model"
     aft_data.index = aft_dict.keys()
     aft_data["AIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-        for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
     aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
     aft_data["BIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-        for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
     # aft_data["Train LL"] = [x["train_score"] for x in score_list]
     # aft_data["Test LL"] = [x["test_score"] for x in score_list]
@@ -145,6 +146,7 @@ def make_afr_table(score_list, aft_dict, dataset):
 
     print(yaml.dump(aft_data.to_dict(), default_flow_style=False, indent=4))
     return aft_data
+
 
 def clean_data_for_aft(
     data,
@@ -172,6 +174,7 @@ def clean_data_for_aft(
     y = cleaned[target].copy()
     return cleaned, y, data
 
+
 def split_data_for_aft(
     data,
     target,
@@ -191,7 +194,6 @@ def split_data_for_aft(
         duration_col in cleaned
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
     return X_train, X_test, y_train, y_test
-
 
 
 logger = logging.getLogger(__name__)
@@ -218,7 +220,7 @@ if "__main__" == __name__:
     FOLDER = Path(afr_args.plots_folder)
     data = pd.read_csv(afr_args.file, index_col=0)
     data.columns = data.columns.str.strip()
-    
+
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     data = data.applymap(lambda x: pd.to_numeric(x, errors="coerce"))
     data.def_value.replace("", 0, inplace=True)
@@ -233,12 +235,12 @@ if "__main__" == __name__:
         :,
         "attack.attack_size",
     ]
-    data['adv_failures'] = adv_failures 
-    data['ben_failures'] = ben_failures
+    data["adv_failures"] = adv_failures
+    data["ben_failures"] = ben_failures
     data = drop_frames_without_results(data)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
-    
+
     kwarg_list = [
         "accuracy",
         "train_time",
@@ -262,9 +264,6 @@ if "__main__" == __name__:
         test_size=0.2,
         random_state=42,
     )
-
-    
-   
 
     weibull_dict = {
         "Intercept: rho_": "$\\rho$",
@@ -290,8 +289,6 @@ if "__main__" == __name__:
         "title": "Weibull AFR Model",
         "mtype": "weibull",
     }
-    
-     
 
     weibull_partial_dict_layers = {
         "file": "weibull_partial_effects.pdf",
@@ -305,9 +302,6 @@ if "__main__" == __name__:
             "labels": ["18", "34", "50", "101", "152"],
         },
     }
-
-
-    
 
     weibull_afr, wft = plot_aft(
         X_train,

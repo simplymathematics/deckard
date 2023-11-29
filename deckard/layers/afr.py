@@ -168,7 +168,7 @@ if "__main__" == __name__:
 
     def make_afr_table(score_list, aft_dict, dataset):
         assert len(score_list) == len(
-            aft_dict
+            aft_dict,
         ), "Length of score list and aft dict must be equal"
         aft_data = pd.DataFrame()
         aft_data.index.name = "Model"
@@ -235,7 +235,12 @@ if "__main__" == __name__:
         return cleaned, y, data
 
     def split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     ):
         cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
         X_train, X_test, y_train, y_test = train_test_split(
@@ -266,7 +271,12 @@ if "__main__" == __name__:
     ]
 
     X_train, X_test, y_train, y_test = split_data_for_aft(
-        data, target, duration_col, kwarg_list, test_size=0.2, random_state=42
+        data,
+        target,
+        duration_col,
+        kwarg_list,
+        test_size=0.2,
+        random_state=42,
     )
 
     weibull_dict = {
