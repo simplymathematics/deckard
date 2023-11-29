@@ -3,7 +3,6 @@ from pathlib import Path
 
 from hydra.errors import OverrideParseException
 from omegaconf import OmegaConf
-from copy import deepcopy
 import yaml
 from hydra import initialize_config_dir, compose
 
@@ -70,7 +69,7 @@ def get_overrides(file: str, folder, overrides=None):
     assert isinstance(overrides, list), f"Expected list, got {type(overrides)}"
     new_overrides = []
     for override in overrides:
-        k,v = override.split("=")
+        k, v = override.split("=")
         if k in flat_cfg:
             k = f"++{k}"
         elif k not in flat_cfg and not k.startswith("+"):
@@ -79,7 +78,7 @@ def get_overrides(file: str, folder, overrides=None):
             pass
         new_overrides.append(f"{k}={v}")
     overrides = new_overrides
-    return overrides          
+    return overrides
 
 
 def compose_experiment(file, config_dir, overrides=None, default_file="default.yaml"):
@@ -91,7 +90,7 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         try:
             cfg = compose(config_name=Path(default_file).stem, overrides=overrides)
-        except OverrideParseException: # pragma: no cover
+        except OverrideParseException:  # pragma: no cover
             raise ValueError(f"Failed to parse overrides: {overrides}")
         cfg = OmegaConf.to_container(cfg, resolve=True)
         cfg["_target_"] = "deckard.Experiment"

@@ -3,7 +3,6 @@ from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
 
-from dulwich.errors import NotGitRepository
 import yaml
 import argparse
 from copy import deepcopy
@@ -72,7 +71,7 @@ def run_stage(
 
 def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
     with Path(repo, pipeline_file).open("r") as f:
-        pipeline = yaml.safe_load(f)['stages']
+        pipeline = yaml.safe_load(f)["stages"]
     def_stages = list(pipeline.keys())
     if stages is None or stages == []:
         raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
@@ -115,7 +114,10 @@ if __name__ == "__main__":
     if args.config_dir is not None:
         args.config_dir = Path(args.config_dir).resolve().as_posix()
         assert args.config_file is not None, "Please specify a config file."
-    if args.config_dir is not None and Path(args.config_dir, args.config_file).is_file():
+    if (
+        args.config_dir is not None
+        and Path(args.config_dir, args.config_file).is_file()
+    ):
         save_params_file(
             config_dir=args.config_dir,
             config_file=args.config_file,
