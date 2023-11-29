@@ -266,8 +266,10 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     raise_exception = cfg.pop("raise_exception", False)
-    scorer = cfg.pop("optimizers", None)
     working_dir = Path(config_path).parent
+    direction = cfg.get("direction", "minimize")
+    direction = [direction] if not isinstance(direction, list) else direction
+    optimizers = cfg.get("optimizers")
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -276,18 +278,10 @@ def optimise(cfg: DictConfig) -> None:
     Path(folder).mkdir(exist_ok=True, parents=True)
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
     id_ = Path(files["score_dict_file"]).parent.name
-    direction = cfg.get("direction", "minimize")
-    direction = [direction] if not isinstance(direction, list) else direction
+    optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
     try:
         scores = exp()
-        if isinstance(scorer, str):
-            score = scores[scorer]
-        elif isinstance(scorer, list):
-            score = [scores[s] for s in scorer]
-        elif scorer is None:
-            score = list(scores.values())[0]
-        else:
-            raise TypeError(f"Expected str or list, got {type(scorer)}")
+        score = [v for k, v in scores.items() if k in optimizers]
         logger.info(f"Score is : {score}")
     except Exception as e:
         logger.warning(
@@ -296,14 +290,21 @@ def optimise(cfg: DictConfig) -> None:
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
-        if direction == "minimize":
-            score = [1e10] * len(direction)
-        else:
-            score = [-1e10] * len(direction)
+        fake_scores = []
+        for direction in direction:
+            if direction == "minimize":
+                fake_scores.append(1e10)
+            elif direction == "maximize":
+                fake_scores.append(-1e10)
+            else:
+                raise ValueError(f"Unknown direction {direction}")
+        score = fake_scores
         logger.info(f"Score: {score}")
         if raise_exception:
             raise e
-    return tuple(score)
+    if len(score) == 1:
+        score = score[0]
+    return score
 
 
 if __name__ == "__main__":

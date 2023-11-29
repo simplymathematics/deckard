@@ -63,8 +63,15 @@ class ArtInitializer:
             model,
             tuple(torch_dict.values()),
         ):
+            import torch
+
+            device_type = "gpu" if torch.cuda.is_available() else "cpu"
             model = TorchInitializer(
-                data=data, model=model, library=library, **kwargs
+                data=data,
+                model=model,
+                library=library,
+                device_type=device_type,
+                **kwargs,
             )()
         elif "keras" in str(library) and not isinstance(
             model,

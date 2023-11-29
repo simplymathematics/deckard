@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -10,13 +11,11 @@ from lifelines import (
     LogLogisticAFTFitter,
     CoxPHFitter,
 )
+from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
 import matplotlib
-from pathlib import Path
 import logging
 import yaml
 import argparse
-from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,6 @@ if "__main__" == __name__:
     afr_parser.add_argument("--target", type=str, default="adv_failures")
     afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
     afr_parser.add_argument("--dataset", type=str, default="mnist")
-    afr_parser.add_argument("--plots_folder", type=str, default="mnist/plots")
-    afr_parser.add_argument("--file", type=str, default="mnist/plots/data.csv")
     afr_args = afr_parser.parse_args()
     target = afr_args.target
     duration_col = afr_args.duration_col
@@ -39,8 +36,10 @@ if "__main__" == __name__:
     }
 
     matplotlib.rc("font", **font)
-    FOLDER = Path(afr_args.plots_folder)
-    data = pd.read_csv(afr_args.file, index_col=0)
+
+    FOLDER = Path(f"{afr_args.dataset}/plots/")
+    csv_file = FOLDER / "data.csv"
+    data = pd.read_csv(csv_file, index_col=0)
     data.columns = data.columns.str.strip()
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     data.def_value.replace("", 0, inplace=True)
@@ -51,13 +50,34 @@ if "__main__" == __name__:
     data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
     data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
+        :, "attack.attack_size"
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
+        :, "attack.attack_size"
     ]
+
+    # data=data[data['def_gen'] == 'Gauss-in']
+    # data=data[data['atk_gen'] == 'HSJ']
+
+    print(
+        "Adversarial Accuracy:",
+        "\n",
+        "ResNet152:",
+        data[data["model_layers"] == 152].adv_accuracy.mean(skipna=True),
+        "\n",
+        "Resnet101:",
+        data[data["model_layers"] == 101].adv_accuracy.mean(skipna=True),
+        "\n",
+        "Resnet50:",
+        data[data["model_layers"] == 50].adv_accuracy.mean(skipna=True),
+        "\n",
+        "Resnet34:",
+        data[data["model_layers"] == 34].adv_accuracy.mean(skipna=True),
+        "\n",
+        "Resnet18:",
+        data[data["model_layers"] == 18].adv_accuracy.mean(skipna=True),
+        "\n",
+    )
 
     def plot_aft(
         df,
@@ -207,7 +227,6 @@ if "__main__" == __name__:
             cleaned = cleaned[cleaned["adv_accuracy"] != -1e10]
         cleaned.dropna(inplace=True, how="any", axis=0)
         y = cleaned[target]
-        del cleaned[target]
         assert (
             target in cleaned
         ), f"Target {target} not in dataframe with columns {cleaned.columns}"
@@ -246,7 +265,7 @@ if "__main__" == __name__:
         "adv_failure_rate",
         "model_layers",
         "adv_fit_time",
-        "model.trainer.nb_epoch",
+        # "model.art.pipeline.initialize.kwargs.optimizer.lr",
     ]
 
     X_train, X_test, y_train, y_test = split_data_for_aft(
@@ -258,16 +277,16 @@ if "__main__" == __name__:
         random_state=42,
     )
 
-    weibull_dict = {
+    weibull_dict = {  # noqa w605
         "Intercept: rho_": "$\\rho$",
-        "Intercept: lambda_": "$\lambda$",  # noqa W605
-        "data.sample.random_state: lambda_": "Random State",
+        "Intercept: lambda_": "$\lambda$",  # noqa w605
+        "data.sample.random_state: lambda_": "Random State",  # noqa w605
         "def_value: lambda_": "Defence Strength",
         "atk_value: lambda_": "Attack Strength",
         "train_time: lambda_": "$t_{train}$",
         "predict_time: lambda_": "$t_{predict}$",
-        "adv_accuracy: lambda_": "$\lambda_{adv.}$",  # noqa W605
-        "accuracy: lambda_": "$\lambda_{ben.}$",  # noqa W605
+        "adv_accuracy: lambda_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: lambda_": "$\lambda_{ben.}$",  # noqa w605
         "adv_fit_time: lambda_": "$t_{attack}$",
         "adv_log_loss: lambda_": "Adv. Log Loss",
         "adv_failure_rate: lambda_": "$h_{adv.}(t,;\\theta)$",
@@ -275,7 +294,7 @@ if "__main__" == __name__:
         "model_layers: lambda_": "No. of Layers",
         "model.art.pipeline.initialize.kwargs.optimizer.lr: lambda_": "Learning Rate",
         "def_gen": "Defence",
-    }
+    }  # noqa w605
 
     weibull_plot_dict = {
         "file": "weibull_aft.pdf",
@@ -310,55 +329,55 @@ if "__main__" == __name__:
     )
     wft_scores = score_model(wft, X_train, X_test)
 
-    # cox_replacement_dict = {
-    #     "adv_failure_rate": "$h_{adv}(t,;\\theta)$",
-    #     "def_value": "Defence Strength",
-    #     "data.sample.random_state": "Random State",
-    #     "train_time": "$t_{train}$",
-    #     "model_layers": "No. of Layers",
-    #     "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-    #     "adv_accuracy": "$\lambda_{adv.}$",  # noqa W605
-    #     "adv_fit_time": "$t_{attack}$",
-    #     "adv_log_loss": "Adv. Log Loss",
-    #     "predict_time": "$t_{predict}$",
-    #     "accuracy": "$\lambda_{ben.}$",  # noqa W605
-    #     "failure_rate": "$h_{ben.}(t,;\\theta)$",
-    #     "atk_value": "Attack Strength",
-    # }
-    # cox_partial_dict = {
-    #     "file": "cox_partial_effects.pdf",
-    #     "covariate_array": "model_layers",
-    #     "values_array": [18, 34, 50, 101, 152],
-    #     "replacement_dict": cox_replacement_dict,
-    #     "title": "$S(t)$ for  Cox AFR",
-    #     "ylabel": "Expectation of $S(t)$",
-    #     "xlabel": "Time $T$ (seconds)",
-    #     "legend_kwargs": {
-    #         "title": "No. of Layers",
-    #         "labels": ["18", "34", "50", "101", "152"],
-    #     },
-    # }
-    # cox_plot_dict = {
-    #     "file": "cox_aft.pdf",
-    #     "duration_col": duration_col,
-    #     "title": "Cox AFR Model",
-    #     "mtype": "cox",
-    #     "replacement_dict": cox_replacement_dict,
-    # }
-    # cox_afr, cft = plot_aft(
-    #     df=X_train,
-    #     event_col=target,
-    #     **cox_plot_dict,
-    # )
-    # cox_scores = score_model(cft, X_train, X_test)
-    # cox_partial = plot_partial_effects(
-    #     aft=cft,
-    #     **cox_partial_dict,
-    # )
+    cox_replacement_dict = {
+        "adv_failure_rate": "$h_{adv}(t,;\\theta)$",
+        "def_value": "Defence Strength",
+        "data.sample.random_state": "Random State",
+        "train_time": "$t_{train}$",
+        "model_layers": "No. of Layers",
+        "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
+        "adv_accuracy": "$\lambda_{adv.}$",  # noqa w605
+        "adv_fit_time": "$t_{attack}$",
+        "adv_log_loss": "Adv. Log Loss",
+        "predict_time": "$t_{predict}$",
+        "accuracy": "$\lambda_{ben.}$",  # noqa w605
+        "failure_rate": "$h_{ben.}(t,;\\theta)$",
+        "atk_value": "Attack Strength",
+    }  # noqa w605
+    cox_partial_dict = {
+        "file": "cox_partial_effects.pdf",
+        "covariate_array": "model_layers",
+        "values_array": [18, 34, 50, 101, 152],
+        "replacement_dict": cox_replacement_dict,
+        "title": "$S(t)$ for  Cox AFR",
+        "ylabel": "Expectation of $S(t)$",
+        "xlabel": "Time $T$ (seconds)",
+        "legend_kwargs": {
+            "title": "No. of Layers",
+            "labels": ["18", "34", "50", "101", "152"],
+        },
+    }
+    cox_plot_dict = {
+        "file": "cox_aft.pdf",
+        "duration_col": duration_col,
+        "title": "Cox AFR Model",
+        "mtype": "cox",
+        "replacement_dict": cox_replacement_dict,
+    }
+    cox_afr, cft = plot_aft(
+        df=X_train,
+        event_col=target,
+        **cox_plot_dict,
+    )
+    cox_scores = score_model(cft, X_train, X_test)
+    cox_partial = plot_partial_effects(
+        aft=cft,
+        **cox_partial_dict,
+    )
 
     log_normal_dict = {
-        "Intercept: sigma_": "$\sigma$",  # noqa W605
-        "Intercept: mu_": "$\mu$",  # noqa W605
+        "Intercept: sigma_": "$\sigma$",  # noqa w605
+        "Intercept: mu_": "$\mu$",  # noqa w605
         "def_value: mu_": "Defence Strength",
         "atk_value: mu_": "Attack Strength",
         "train_time: mu_": "$t_{train}$",
@@ -368,12 +387,12 @@ if "__main__" == __name__:
         "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate",
         "data.sample.random_state: mu_": "Random State",
         "adv_log_loss: mu_": "Adv. Log Loss",
-        "adv_accuracy: mu_": "$\lambda_{adv.}$",  # noqa W605
-        "accuracy: mu_": "$\lambda_{ben.}$",  # noqa W605
+        "adv_accuracy: mu_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: mu_": "$\lambda_{ben.}$",  # noqa w605
         "adv_failure_rate: mu_": "$h_{adv}(t,;\\theta)$",
         "def_gen": "Defence",
         "learning_rate: mu_": "Learning Rate",
-    }
+    }  # noqa w605
 
     log_normal_graph, lnt = plot_aft(
         X_train,
@@ -399,20 +418,20 @@ if "__main__" == __name__:
             "labels": ["18", "34", "50", "101", "152"],
         },
     )
-    log_logistic_dict = {
-        "Intercept: beta_": "$\\beta$",
+    log_logistic_dict = {  # noqa w605
+        "Intercept: beta_": "$\\beta$",  # noqa w605
         "Intercept: alpha_": "$\\alpha$",
         "data.sample.random_state: alpha_": "Random State",
         "def_value: alpha_": "Defence Strength",
         "atk_value: alpha_": "Attack Strength",
         "train_time: alpha_": "$t_{train}$",
         "predict_time: alpha_": "$t_{predict}$",
-        "adv_accuracy: alpha_": "$\lambda_{adv.}$",  # noqa W605
-        "accuracy: alpha_": "$\lambda_{ben.}$",  # noqa W605
+        "adv_accuracy: alpha_": "$\lambda_{adv.}$",  # noqa w605
+        "accuracy: alpha_": "$\lambda_{ben.}$",  # noqa w605
         "adv_fit_time: alpha_": "$t_{attack}$",
         "model_layers: alpha_": "No. of Layers",
-        "model.art.pipeline.initialize.kwargs.optimizer.lr:": "Learning Rate",
-        "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$",  # noqa W605
+        "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
+        "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$",
         "alpha_": "",
     }
 

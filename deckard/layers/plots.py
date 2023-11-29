@@ -153,7 +153,7 @@ def calculate_failure_rate(data):
         / data.loc[:, "predict_time"]
     )
     data.loc[:, "adv_failure_rate"] = (
-        (1 - data.loc[:, "adv_success"])
+        (1 - data.loc[:, "adv_accuracy"])
         * data.loc[:, "attack.attack_size"]
         / data.loc[:, "adv_fit_time"]
     )
@@ -264,24 +264,25 @@ if __name__ == "__main__":
         data,
         subset=[
             "accuracy",
-            "adv_success",
+            "adv_accuracy",
             "train_time",
             "adv_fit_time",
             "predict_time",
+            "adv_success",
         ],
     )
-    sense_dict = {
-        "accuracy": "max",
-        "adv_accuracy": "max",
-        "adv_success": "min",
-        "model_layers": "diff",
-        # "atk_param": "diff",
-        # "def_param": "diff",
-        "atk_gen": "diff",
-        "def_gen": "diff",
-        "data.sample.random_state": "diff",
-    }
-    data = pareto_set(data, sense_dict)
+    # sense_dict = {
+    #     "accuracy": "max",
+    #     "adv_accuracy": "max",
+    #     "adv_success": "min",
+    #     "model_layers": "diff",
+    #     "atk_param": "diff",
+    #     "def_param": "diff",
+    #     "atk_gen": "diff",
+    #     "def_gen": "diff",
+    #     "data.sample.random_state": "diff",
+    # }
+    # data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:

@@ -11,7 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
-    for col in df.columns:
+    """
+    Args:
+        df (pd.DataFrame): a dataframe with dictionaries as entries in some columns
+
+    Returns:
+        pd.DataFrame: a dataframe with the dictionaries flattened into columns using pd.json_normalize
+    """
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    for col in tqdm(df.columns, desc="Flattening columns"):
         if isinstance(df[col][0], dict):
             tmp = pd.json_normalize(df[col])
             tmp.columns = [f"{col}.{subcol}" for subcol in tmp.columns]
@@ -34,48 +42,59 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     :return: Pandas dataframe with the results
     """
     folder = Path(folder)
-    results = {}
+
     logger.debug(f"Parsing folder {folder}...")
     path_gen = []
     for file in files:
         path_gen.extend(folder.glob(f"**/{file}"))
     path_gen.sort()
-    indices = []
-    for file in tqdm(path_gen):
-        indices.append(file.parent.name)
-        suffix = file.suffix
-        folder = file.parent.name
-        stage = file.parent.parent.name
-        if folder not in results:
-            results[folder] = {}
-        if suffix == ".json":
-            with open(file, "r") as f:
-                try:
-                    dict_ = json.load(f)
-                except json.decoder.JSONDecodeError as e:
-                    raise e
+    folder_gen = map(lambda x: x.parent, path_gen)
+    folder_gen = set(folder_gen)
+    results = {}
+    for file in tqdm(path_gen, desc="Parsing Specified files"):
+        results = read_file(file, results)
+    for folder in tqdm(folder_gen, desc="Adding other files to results"):
+        results = add_file(folder, path_gen, results)
+    df = pd.DataFrame(results).T
+    return df
 
-        elif suffix == ".yaml":
-            with open(file, "r") as f:
-                dict_ = yaml.safe_load(f)
-        else:
-            raise ValueError(f"File type {suffix} not supported.")
-        results[folder]["stage"] = stage
-        results[folder].update(dict_)
+
+def add_file(folder, path_gen, results):
     all_files = Path(folder).glob("**/*")
     for file in all_files:
         if file not in path_gen:
             if file.parent.name not in results:
                 results[file.parent.name] = {}
             results[file.parent.name][file.stem] = file
-    df = pd.DataFrame(results).T
-    return df
+    return results
 
 
-def merge_defences(results: pd.DataFrame):
+def read_file(file, results):
+    suffix = file.suffix
+    folder = file.parent.name
+    stage = file.parent.parent.name
+    if folder not in results:
+        results[folder] = {}
+    if suffix == ".json":
+        with open(file, "r") as f:
+            try:
+                dict_ = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                raise e
+    elif suffix == ".yaml":
+        with open(file, "r") as f:
+            dict_ = yaml.safe_load(f)
+    else:
+        raise ValueError(f"File type {suffix} not supported.")
+    results[folder]["stage"] = stage
+    results[folder].update(dict_)
+    return results
+
+
+def merge_defences(results: pd.DataFrame, default_epochs=20):
     defences = []
     def_gens = []
-    for _, entry in results.iterrows():
+    for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
         defence = []
         if (
             "model.art.pipeline.preprocessor.name" in entry
@@ -97,6 +116,11 @@ def merge_defences(results: pd.DataFrame):
             and entry["model.art.pipeline.trainer.name"] not in nones
         ):
             defence.append(entry["model.art.pipeline.trainer.name"])
+        if (
+            "model.init.nb_epoch" in entry
+            and entry["model.init.nb_epoch"] != default_epochs
+        ):
+            defence.append("Epochs")
         ############################################################################################################
         if len(defence) > 1:
             def_gen = [str(x).split(".")[-1] for x in defence]
@@ -121,7 +145,7 @@ def merge_defences(results: pd.DataFrame):
 
 def merge_attacks(results: pd.DataFrame):
     attacks = []
-    for _, entry in results.iterrows():
+    for _, entry in tqdm(results.iterrows(), desc="Merging attacks"):
         if "attack.init.name" in entry and entry["attack.init.name"] not in nones:
             attack = entry["attack.init.name"]
         else:
@@ -133,17 +157,17 @@ def merge_attacks(results: pd.DataFrame):
     return results
 
 
-def parse_results(folder, files=["score_dict.json", "params.yaml"]):
+def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
     df = parse_folder(folder, files=files)
     df = flatten_results(df)
-    df = merge_defences(df)
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df = merge_defences(df, default_epochs=default_epochs)
     df = merge_attacks(df)
     return df
 
 
-def format_control_parameter(data, control_dict):
+def format_control_parameter(data, control_dict, min_max=True):
     logger.info("Formatting control parameters...")
-
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
     else:
@@ -152,7 +176,8 @@ def format_control_parameter(data, control_dict):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
-
+    if data["model.init.name"].str.contains("Net").any():
+        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     for defence in defences:
         if defence in control_dict:
             param = control_dict[defence]
@@ -163,9 +188,17 @@ def format_control_parameter(data, control_dict):
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
             control_dict.pop(defence)
+
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
+        # if min_max is True:
+        #     def_min = data[data.def_gen == defence].def_value.min()
+        #     def_max = data[data.def_gen == defence].def_value.max()
+        #     data.loc[data.def_gen == defence, "def_value"] = pd.to_numeric(data.loc[data.def_gen == defence, "def_value"], errors='coerce')
+        #     data.loc[data.def_gen == defence, "def_value"] = (
+        #         data[data.def_gen == defence].def_value - def_min
+        #     ) / (def_max - def_min)
 
     for attack in attacks:
         if attack in control_dict:
@@ -181,6 +214,13 @@ def format_control_parameter(data, control_dict):
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
 
+        # if min_max is True:
+        #     atk_min = data[data.atk_gen == attack].atk_value.min()
+        #     atk_max = data[data.atk_gen == attack].atk_value.max()
+        #     data.loc[data.atk_gen == attack, "atk_value"] = pd.to_numeric(data.loc[data.atk_gen == attack, "atk_value"], errors='coerce')
+        #     data.loc[data.atk_gen == attack, "atk_value"] = (
+        #         data[data.atk_gen == attack].atk_value - atk_min
+        #     ) / (atk_max - atk_min)
     return data
 
 
@@ -189,7 +229,6 @@ def clean_data_for_plotting(
     def_gen_dict,
     atk_gen_dict,
     control_dict,
-    file,
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
@@ -203,25 +242,24 @@ def clean_data_for_plotting(
     data.dropna(axis=1, how="all", inplace=True)
     logger.info("Shortening model names...")
     # Removes the path and to the model object and leaves the name of the model
-    data["model_name"] = data["model.init.name"].str.split(".").str[-1]
-    if data["model.init.name"].str.contains("Net").any():
-        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
+    if hasattr(data, "model.init.name") and len(data["model.init.name"].unique()) > 1:
+        model_names = data["model.init.name"].str.split(".").str[-1]
+        data["model_name"] = model_names
     data = data.loc[:, ~data.columns.str.endswith(".1")]
-    logger.info("Replacing data.sample.random_state with random_state...")
-    data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = format_control_parameter(data, control_dict)
-    logger.info(f"Saving data to {file}")
-    data.to_csv(file)
+    if hasattr(data, "data.sample.random_state"):
+        logger.info("Replacing data.sample.random_state with random_state...")
+        data["data.sample.random_state"].rename("random_state", inplace=True)
+    data = format_control_parameter(data, control_dict, min_max=True)
     return data
 
 
-def save_results(results, results_file) -> str:
+def save_results(results, results_file, results_folder) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
-    logger.info("Compiling results...")
-
-    suffix = Path(results_file).suffix
+    logger.info(f"Saving data to {Path(results_folder) / results_file}")
+    Path(results_folder).mkdir(exist_ok=True, parents=True)
+    suffix = Path(results_folder, results_file).suffix
     if suffix == ".csv":
         results.to_csv(results_file)
     elif suffix == ".xlsx":
@@ -235,7 +273,6 @@ def save_results(results, results_file) -> str:
     assert Path(
         results_file,
     ).exists(), f"Results file {results_file} does not exist. Something went wrong."
-    logger.debug(f"Results saved to {results_file}")
     return results_file
 
 
@@ -245,9 +282,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
+    parser.add_argument("--results_folder", type=str, default="results")
     parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
+    parser.add_argument("--default_epochs", type=int, default=20)
     parser.add_argument(
         "--kwargs",
         type=list,
@@ -258,7 +297,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
-    results = parse_results(report_folder)
+    results_folder = args.results_folder
+    results = parse_results(report_folder, default_epochs=args.default_epochs)
     with open(Path(Path(), args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
     def_gen_dict = big_dict["defences"]
@@ -269,9 +309,8 @@ if __name__ == "__main__":
         def_gen_dict,
         atk_gen_dict,
         control_dict,
-        results_file,
     )
-    report_file = save_results(results, results_file)
+    report_file = save_results(results, results_file, results_folder)
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."

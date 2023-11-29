@@ -55,11 +55,7 @@ def parse_and_repro(args, default_config="default.yaml", config_dir="conf"):
     else:
         cmd = f"python -m deckard.layers.parse {args} --config_file {default_config}"
         # error = f"error parsing command: {cmd} {args}"
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            shell=True,
-        ) as proc:
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True) as proc:
             for line in proc.stdout:
                 print(line.rstrip().decode("utf-8"))
     if Path(Path(), "dvc.yaml").exists():

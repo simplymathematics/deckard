@@ -6,7 +6,7 @@ from typing import Union
 
 import numpy as np
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf, ListConfig
+from omegaconf import DictConfig, OmegaConf
 
 from ..attack import Attack
 from ..data import Data
@@ -258,28 +258,7 @@ class Experiment:
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
-        #########################################################################
-        # Returns score if scorer is not None, otherwise returns status
-        #########################################################################
-        if self.optimizers is not None and self.optimizers != []:
-            self.optimizers = (
-                [self.optimizers]
-                if not isinstance(self.optimizers, (list, ListConfig))
-                else self.optimizers
-            )
-            scores = {}
-            for scorer in self.optimizers:
-                try:
-                    score = score_dict[scorer]
-                except KeyError:  # pragma: no cover
-                    raise KeyError(
-                        f"Scorer {scorer} not found in score_dict. Available self.optimizers: {score_dict.keys()}",
-                    )
-                scores[scorer] = score
-                logger.info(f"Score for id : {self.get_name()} : {scorer}: {score}")
-        else:
-            scores = score_dict
-            logger.info(f"Score for id : {self.get_name()}: {score_dict}")
+        logger.info(f"Score for id : {self.get_name()}: {score_dict}")
         logger.info("Finished running experiment with id: {}".format(self.get_name()))
         new_name = self.get_name()
         assert (
@@ -288,7 +267,7 @@ class Experiment:
         logger.debug(
             f"Experiment deckard hash changed from {old_hash} to {my_hash(self)}.",
         )
-        return scores
+        return score_dict
 
     def _set_name(self):
         if self.files.name is not None:

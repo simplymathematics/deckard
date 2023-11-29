@@ -142,4 +142,3 @@ deckard/deckard.egg-info/*
 examples/**/params.yaml
 examples/**/multirun/*
 *log.txt
-examples/power/mnist/plots/adv_accuracy_vs_attack_type.pdf

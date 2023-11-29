@@ -1,6 +1,7 @@
 N_FEATURES=( 10 100 1000 10000 )
 TRAIN_SIZES=( 10 100 1000 10000 100000 )
 # TRAIN_SIZES=(  1000 10000 100000 1000000  )
+N_FEATURES=( 100 )
 N_SAMPLES=( 1010000 )
 TOTAL=$(( ${#N_FEATURES[@]} * ${#N_SAMPLES[@]} * ${#TRAIN_SIZES[@]} ))
 i=$(( 0 ))
@@ -21,6 +22,7 @@ for train_size in ${TRAIN_SIZES[@]}; do
             ++model.init.kernel=linear \
             model.init.C=.0001,.001,.01,.1,1,10,100,1000,10000,10000 \
             ++hydra.sweeper.study_name=linear_${n_features}_${train_size} "$@" --multirun \
+            # Keeps a log of the output for each experiment
             >| logs/models/linear_features-${n_features}_samples-${n_samples}_train-${train_size}.log
             echo "Linear Kernel Done" >> log.txt
             # Runs the poly kernel

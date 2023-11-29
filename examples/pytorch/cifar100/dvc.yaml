@@ -1,6 +1,6 @@
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment train --config_file cifar100.yaml
     params:
       - data
       - model
@@ -17,7 +17,7 @@ stages:
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
+    cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     params:
       - data
       - model
@@ -43,7 +43,7 @@ stages:
   #     # - ResNet101
   #     # - ResNet152
   #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name mnist.yaml 
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml 
   #     deps:
   #     - models.sh
   #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -54,13 +54,13 @@ stages:
   #         persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
-      - ResNet18
-      #- ResNet34
-      #- ResNet50
-      #- ResNet101
-      #- ResNet152
+      # - ResNet18
+      # - ResNet34
+      # - ResNet50
+      - ResNet101
+      - ResNet152
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name mnist.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name cifar100.yaml
       deps:
       - models.sh # This script configures each defence
       - attacks.sh # This script configures each attack
@@ -90,10 +90,10 @@ stages:
     deps:
       - ${files.directory}/${files.reports}/attack.csv
       - ${files.directory}/${files.reports}/attack/ResNet18.db
-      - ${files.directory}/${files.reports}/attack/ResNet34.db
-      - ${files.directory}/${files.reports}/attack/ResNet50.db
-      - ${files.directory}/${files.reports}/attack/ResNet101.db
-      - ${files.directory}/${files.reports}/attack/ResNet152.db
+      # - ${files.directory}/${files.reports}/attack/ResNet34.db
+      # - ${files.directory}/${files.reports}/attack/ResNet50.db
+      # - ${files.directory}/${files.reports}/attack/ResNet101.db
+      # - ${files.directory}/${files.reports}/attack/ResNet152.db
     outs:
       - ${files.directory}/plots/data.csv
   afr:
@@ -114,7 +114,7 @@ stages:
     outs:
       - ${files.directory}/plots/aft_comparison.tex
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar100/
       deps:
         - ${files.directory}/plots/data.csv
         - ${files.directory}/plots/aft_comparison.csv
