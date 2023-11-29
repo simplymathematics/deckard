@@ -131,8 +131,10 @@ class ModelTrainer:
             raise NotImplementedError(f"Training library {library} not implemented")
         try:
             start = process_time_ns()
+            start_timestamp = time()
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns() - start
+            end_timestamp = time()
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
 
