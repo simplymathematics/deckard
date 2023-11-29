@@ -8,12 +8,9 @@ stages:
       - files
     outs:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
+      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
@@ -27,36 +24,18 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  # models: # This is a loop over the ResNet models
-  #   foreach:
-  #     - ResNet18
-  #     # - ResNet34
-  #     # - ResNet50
-  #     # - ResNet101
-  #     # - ResNet152
-  #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml 
-  #     deps:
-  #     - models.sh
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-  #     outs:
-  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
-  #         cache: True
-  #         persist: True
+
   attacks:
     foreach: # This is a loop over the ResNet models
-      # - ResNet18
-      # - ResNet34
-      # - ResNet50
+      - ResNet18
+      - ResNet34
+      - ResNet50
       - ResNet101
       - ResNet152
     do:
@@ -82,18 +61,13 @@ stages:
       - ${files.directory}/${files.reports}/${item}/ResNet34.db
       - ${files.directory}/${files.reports}/${item}/ResNet50.db
       - ${files.directory}/${files.reports}/${item}/ResNet101.db
-      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
+      - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   plot:
     cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
     deps:
       - ${files.directory}/${files.reports}/attack.csv
-      - ${files.directory}/${files.reports}/attack/ResNet18.db
-      # - ${files.directory}/${files.reports}/attack/ResNet34.db
-      # - ${files.directory}/${files.reports}/attack/ResNet50.db
-      # - ${files.directory}/${files.reports}/attack/ResNet101.db
-      # - ${files.directory}/${files.reports}/attack/ResNet152.db
     outs:
       - ${files.directory}/plots/data.csv
   afr:
