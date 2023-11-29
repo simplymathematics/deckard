@@ -1,16 +1,16 @@
 _target_: deckard.base.files.FileConfig
 reports: reports
 data_dir: data
-model_dir: models
+model_dir: null
 attack_dir: attacks
 directory: /result/mnist/
 score_dict_file: score_dict.json
 data_file : data
-model_file : model
+model_file : null
 attack_file : attack
 attack_type : .pkl
 data_type : .pkl
-model_type : .pt
+model_type : null
 params_file : params.yaml
 # train_labels_file : train_labels.json
 # test_labels_file : test_labels.json

@@ -32,7 +32,7 @@ stages:
           data_file: data
           data_type: .pkl
           directory: mnist
-          model_dir: models
+          model_dir: null
           model_file: model
           model_type: .pt
           name: default
@@ -292,7 +292,7 @@ stages:
           data_file: data
           data_type: .pkl
           directory: mnist
-          model_dir: models
+          model_dir: null
           model_file: model
           model_type: .pt
           name: default
