@@ -1,0 +1,6 @@
+cifar100/*
+.dvc/*
+20_epochs/*
+**/optimization_results.yaml
+*.rdb
+original_data/*
