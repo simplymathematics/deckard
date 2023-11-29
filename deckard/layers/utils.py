@@ -9,7 +9,7 @@ from hydra import initialize_config_dir, compose
 
 
 from numpy import nan
-from ..base.utils import my_hash
+from ..base.utils import my_hash, flatten_dict
 
 logger = logging.getLogger(__name__)
 
@@ -58,63 +58,32 @@ def find_conf_files(
     return files
 
 
-def get_overrides(file: str, key: str = None, overrides=None):
-    if overrides is None:
-        overrides = {}
-    else:
-        if isinstance(overrides, str):
-            overrides = overrides.split(",")
-        if isinstance(overrides, list):
-            overrides = {
-                entry.split("=")[0]: entry.split("=")[1] for entry in overrides
-            }
-        if isinstance(overrides, dict):
-            new_dict = deepcopy(overrides)
-            for k, v in new_dict.items():
-                if k.startswith("++"):
-                    overrides[k] = v
-                elif k.startswith("+"):
-                    overrides[f"++{k[1:]}"] = v
-                elif k.startswith("~~"):
-                    overrides[f"~~{k[2:]}"] = v
-                else:
-                    overrides[f"++{k}"] = v
-
-        # assert isinstance(overrides, dict), f"Expected list, got {type(overrides)}"
-    # if key is not None and len(overrides) > 0:
-    #     overrides.pop(f"{key}.name", None)
-    #     overrides.pop(f"files.{key}_file", None)
-    #     overrides[f"++{key}.name"] = Path(file).stem
-    #     overrides[f"++files.{key}_file"] = Path(file).stem
-    #     overrides[f"{key}"] = Path(file).stem
-    #     overrides["++stage"] = key
-    return overrides
+def get_overrides(file: str, folder, overrides=None):
+    with open(Path(folder, file), "r") as f:
+        old_cfg = yaml.safe_load(f)
+    old_cfg = OmegaConf.create(old_cfg)
+    old_cfg = OmegaConf.to_container(old_cfg, resolve=True)
+    flat_cfg = flatten_dict(old_cfg)
+    overrides = [] if overrides is None else overrides
+    if isinstance(overrides, str):
+        overrides = overrides.split(",")
+    assert isinstance(overrides, list), f"Expected list, got {type(overrides)}"
+    new_overrides = []
+    for override in overrides:
+        k,v = override.split("=")
+        if k in flat_cfg:
+            k = f"++{k}"
+        elif k not in flat_cfg and not k.startswith("+"):
+            k = f"+{k}"
+        else:
+            pass
+        new_overrides.append(f"{k}={v}")
+    overrides = new_overrides
+    return overrides          
 
 
 def compose_experiment(file, config_dir, overrides=None, default_file="default.yaml"):
-    if hasattr(file, "as_posix"):
-        file = file.as_posix()
-    if overrides in [None, "", "None", "none", "NONE", "null", "Null", "NULL"]:
-        overrides = []
-    elif isinstance(overrides, str):
-        overrides = overrides.split(",")
-    if isinstance(overrides, list):
-        pass
-    elif isinstance(overrides, dict):
-        new_dict = deepcopy(overrides)
-        for k, v in new_dict.items():
-            if k.startswith("++"):
-                overrides[k] = v
-            elif k.startswith("+"):
-                overrides[f"++{k[1:]}"] = v
-            elif k.startswith("--"):
-                overrides[f"++{k[2:]}"] = v
-            else:
-                overrides[f"++{k}"] = v
-    else:
-        raise TypeError(f"Expected list or dict, got {type(overrides)}")
-    assert isinstance(file, str), f"Expected str, got {type(file)}"
-    # file = Path(data_conf_dir, file).as_posix()
+    overrides = get_overrides(file=file, folder=config_dir, overrides=overrides)
     logger.info(f"Running experiment in config_dir: {config_dir}")
     logger.info(f"Running experiment with config_name: {file}")
     config_dir = Path(Path(), config_dir).resolve().as_posix()
@@ -122,14 +91,15 @@ def compose_experiment(file, config_dir, overrides=None, default_file="default.y
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         try:
             cfg = compose(config_name=Path(default_file).stem, overrides=overrides)
-        except OverrideParseException:
+        except OverrideParseException: # pragma: no cover
             raise ValueError(f"Failed to parse overrides: {overrides}")
         cfg = OmegaConf.to_container(cfg, resolve=True)
         cfg["_target_"] = "deckard.Experiment"
         id_ = str(my_hash(cfg))
         cfg["name"] = id_
         cfg["files"]["name"] = id_
-        return cfg
+        cfg = OmegaConf.create(cfg)
+    return cfg
 
 
 def save_params_file(

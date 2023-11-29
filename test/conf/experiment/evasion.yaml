@@ -8,8 +8,6 @@ data:
         # _target_: deckard.base.data.sampler.SklearnDataSampler
         random_state : 0
         stratify: True
-        train_size : 100
-        test_size : 1000
 model:
     data: ${data}
     library : sklearn
@@ -41,7 +39,7 @@ files:
     model_dir : model
     attack_dir : attack
     report_dir : report
-    directory : ???
+    directory : '???'
     data_file : data.pkl
     model_file : model.pkl
     attack_file : attack.pkl
