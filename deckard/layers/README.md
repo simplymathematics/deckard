@@ -11,4 +11,8 @@
 ├── parse.py: Dumps the hydra configuration folder to `params.yaml` as specified by the `defaults` list in the hydra configuration file.
 ├── template.html: Draft webpage for each experiment (work in progress)
 ├── utils.py: Handy utilities for the other scripts
+├── afr.py: For building accelerated failure rate models
+├── plots.py: For generating plots using seaborn
 └── watcher.py: Watches a file, transforms the data, and moves it somewhere else via parallelized scp (work in progress).
+
+
