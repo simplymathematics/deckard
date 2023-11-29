@@ -1,4 +1,3 @@
-/kdd_nsl
-/retrain
-/multirun
-/logs
+logs/
+multirun/
+output/

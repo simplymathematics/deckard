@@ -29,7 +29,7 @@ class Experiment:
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
     optimizers: Union[list, None] = field(default_factory=list)
-    device_id: str = "cpu"
+    device_id: str = None
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
@@ -38,7 +38,7 @@ class Experiment:
         model: Model,
         scorers: ScorerDict,
         files: list,
-        device_id: str = "cpu",
+        device_id: str = None,
         attack: Attack = None,
         name=None,
         stage=None,
