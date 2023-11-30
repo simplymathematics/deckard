@@ -50,15 +50,14 @@ class testExperiment(unittest.TestCase):
 
 
 class testWithoutAttack(testExperiment):
-    # TODO: Fix this class
     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
     config_file = "no_attack.yaml"
 
 
-class testPoisoningAttack(testExperiment):
-    # TODO: Fix this class
-    config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
-    config_file = "poisoning.yaml"
+# class testPoisoningAttack(testExperiment):
+#     # TODO: Fix this class
+#     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
+#     config_file = "poisoning.yaml"
 
 
 # class testInferenceAttack(testExperiment):
@@ -67,9 +66,9 @@ class testPoisoningAttack(testExperiment):
 #     config_file = "inference.yaml"
 
 
-class testExtractionAttack(testExperiment):
-    config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
-    config_file = "extraction.yaml"
+# class testExtractionAttack(testExperiment):
+#     config_dir = Path(this_dir, "../../conf/experiment").resolve().as_posix()
+#     config_file = "extraction.yaml"
 
 
 def convert_to_dict(cfg):

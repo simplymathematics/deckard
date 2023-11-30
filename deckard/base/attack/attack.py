@@ -172,7 +172,7 @@ class EvasionAttack:
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
                     "adv_fit_start_time": start_timestamp,
-                    "adv_fit_stop_time": end_timestamp,
+                    "adv_fit_end_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -228,7 +228,7 @@ class EvasionAttack:
                     "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
                     "adv_predict_start_time": start_timestamp,
-                    "adv_predict_stop_time": end_timestamp,
+                    "adv_predict_end_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -385,7 +385,7 @@ class PoisoningAttack:
                     "adv_fit_time_per_sample": (end - start) / (len(samples) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
                     "adv_fit_start_time": start_timestamp,
-                    "adv_fit_stop_time": end_timestamp,
+                    "adv_fit_end_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -430,7 +430,7 @@ class PoisoningAttack:
                 "adv_predict_time_per_sample": (end - start) / (len(samples) * 1e9),
                 "adv_predict_time": (end - start) / 1e9,
                 "adv_predict_start_time": start_timestamp,
-                "adv_predict_stop_time": end_timestamp,
+                "adv_predict_end_time": end_timestamp,
             },
         )
         device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -549,7 +549,7 @@ class InferenceAttack:
                     "adv_fit_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_fit_time": (end - start) / 1e9,
                     "adv_fit_start_time": start_timestamp,
-                    "adv_fit_stop_time": end_timestamp,
+                    "adv_fit_end_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -638,7 +638,7 @@ class ExtractionAttack:
                         / (self.attack_size * 1e9),
                         "adv_fit_time": (end - start) / 1e9,
                         "adv_fit_start_time": start_timestamp,
-                        "adv_fit_stop_time": end_timestamp,
+                        "adv_fit_end_time": end_timestamp,
                     },
                 )
                 device = str(model.device) if hasattr(model, "device") else "cpu"
@@ -662,7 +662,7 @@ class ExtractionAttack:
                     "adv_predict_time_per_sample": (end - start) / (len(preds) * 1e9),
                     "adv_predict_time": (end - start) / 1e9,
                     "adv_predict_start_time": start_timestamp,
-                    "adv_predict_stop_time": end_timestamp,
+                    "adv_predict_end_time": end_timestamp,
                 },
             )
             device = str(model.device) if hasattr(model, "device") else "cpu"

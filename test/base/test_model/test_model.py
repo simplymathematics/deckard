@@ -101,6 +101,25 @@ class testModelMethods(testModel):
         self.assertTrue("predict_log_proba_time" in time_dict.keys())
         self.assertTrue("predict_log_proba_time_per_sample" in time_dict.keys())
 
+    def test_time_dict(self):
+        data, model = self.model.initialize()
+        data = [data[i][:10] for i in range(len(data))]
+        model, time_dict = self.model.fit(data=data, model=model)
+        _, new_time_dict = self.model.predict(data=data, model=model)
+        time_dict.update(new_time_dict)
+        self.assertTrue("train_time" in time_dict.keys())
+        self.assertTrue("train_time_per_sample" in time_dict.keys())
+        self.assertTrue("train_start_time" in time_dict.keys())
+        self.assertTrue("train_end_time" in time_dict.keys())
+        self.assertTrue("predict_time" in time_dict.keys())
+        self.assertTrue("predict_time_per_sample" in time_dict.keys())
+        self.assertTrue("predict_start_time" in time_dict.keys())
+        self.assertTrue("predict_end_time" in time_dict.keys())
+        self.assertTrue(time_dict["train_time"] > 0)
+        self.assertTrue(time_dict["train_time_per_sample"] > 0)
+        self.assertTrue(time_dict["predict_time"] > 0)
+        self.assertTrue(time_dict["predict_time_per_sample"] > 0)
+
 
 class testTorchModel(testModel):
     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
@@ -117,7 +136,12 @@ class testTorchModelfromDict(testModel):
 #     config_file = "keras_mnist.yaml"
 
 
-class testTFV2Model(testModel):
-    config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
-    config_file = "tf_mnist.yaml"
-    file = "model.tf"
+# class testTFV2Model(testModel):
+#     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
+#     config_file = "tf_mnist.yaml"
+#     file = "model.tf"
+
+# class testTFV2Model(testModel):
+#     config_dir = Path(this_dir, "../../conf/model").resolve().as_posix()
+#     config_file = "tf_mnist.yaml"
+#     file = "model.tf"

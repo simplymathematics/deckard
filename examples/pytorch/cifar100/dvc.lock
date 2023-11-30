@@ -84,7 +84,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 1
+            nb_epoch: 10
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -100,11 +100,11 @@ stages:
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
     - path: cifar100/reports/train/default/predictions.json
-      md5: b77183a81e2ea292115959c7240c76a4
-      size: 24381529
+      md5: bb21d60526f3a7d2f8f4f64df504a1f4
+      size: 24415348
     - path: cifar100/reports/train/default/score_dict.json
-      md5: 522fb97dc8effce658539ee9a70251ab
-      size: 831
+      md5: fc2ab064fdf09c12751ed4f72af83bd7
+      size: 901
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     deps:
@@ -180,7 +180,7 @@ stages:
               library: pytorch
               trainer:
                 batch_size: 1024
-                nb_epoch: 1
+                nb_epoch: 10
             name: art.attacks.evasion.HopSkipJump
           method: evasion
           model:
@@ -232,7 +232,7 @@ stages:
             library: pytorch
             trainer:
               batch_size: 1024
-              nb_epoch: 1
+              nb_epoch: 10
         data:
           _target_: deckard.base.data.Data
           generate:
@@ -313,7 +313,7 @@ stages:
           library: pytorch
           trainer:
             batch_size: 1024
-            nb_epoch: 1
+            nb_epoch: 10
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -329,29 +329,29 @@ stages:
       md5: 5317760d3c6f266ece07523e98517d46
       size: 123046
     - path: cifar100/reports/attack/default/adv_predictions.json
-      md5: 32d4798208a79862f9240dd4159b4754
-      size: 21414
+      md5: 321ea49f7061832db3c5142f0ad7b042
+      size: 21395
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: c39c3d51d82359b4908d6fe8271c5850
-      size: 1094
+      md5: e0afe623a549e81ca7d44a65ce362ee2
+      size: 1356
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet18.db
       --config-name cifar100.yaml
     deps:
     - path: attacks.sh
-      md5: 963c858a322d7a4990a92a25d5684c57
-      size: 2907
+      md5: d78e6d6b697480fbccfb58bd791af506
+      size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: f21ab891918c857171941e84dcc1b09a
-      size: 561
+      md5: e0afe623a549e81ca7d44a65ce362ee2
+      size: 1356
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet18.db
-      md5: 89fd1d229465cb1c49d1fd99cacbad33
-      size: 475136
+      md5: 9994f9646c6081e91f5612a772d1cfe0
+      size: 245760
   attacks@ResNet152:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet152
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet152.db
