@@ -39,6 +39,7 @@ model:
                 name : "torch.optim.SGD"
                 lr : 0.01
                 momentum : 0.9
+            nb_classes : ${data.generate.n_classes}
 _target_ : deckard.base.attack.Attack
 init:
     name:  art.attacks.poisoning.GradientMatchingAttack

@@ -67,5 +67,6 @@ kwargs:
                         name : "torch.optim.SGD"
                         lr : 0.01
                         momentum : 0.9
+                    nb_classes : ${data.generate.n_classes}
 attack_size : 10
 method : extraction
