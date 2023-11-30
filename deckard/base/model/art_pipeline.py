@@ -6,6 +6,7 @@ from art.estimators import BaseEstimator
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
+from random import randint
 from .keras_models import KerasInitializer, keras_dict  # noqa F401
 from .tensorflow_models import (  # noqa F401
     TensorflowV1Initializer,
@@ -64,21 +65,22 @@ class ArtInitializer:
             tuple(torch_dict.values()),
         ):
             import torch
-
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
             if device_type == "gpu":
                 logger.info("Using GPU")
                 logger.info("Model moved to GPU")
-                device = torch.device("cuda")
-                model.to(device)
+                number_of_devices = torch.cuda.device_count()
+                num = randint(0, number_of_devices - 1)
+                device = torch.device(f"cuda:{num}")
                 if isinstance(data[0][0], np.ndarray):
                     data = [torch.from_numpy(d).to(device) for d in data]
                 data = [d.to(device) for d in data]
+                model.to(device)
             model = TorchInitializer(
                 data=data,
                 model=model,
                 library=library,
-                device_type=device_type,
+                device_type=device,
                 **kwargs,
             )()
         elif "keras" in str(library) and not isinstance(
