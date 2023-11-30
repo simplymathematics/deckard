@@ -329,11 +329,11 @@ stages:
       md5: a80777574854b5cefe05d26ca2a8ba7c
       size: 123046
     - path: cifar100/reports/attack/default/adv_predictions.json
-      md5: d116bdf64db4874f0681efc5622b007c
-      size: 21393
+      md5: 321ea49f7061832db3c5142f0ad7b042
+      size: 21395
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: 73c82dda7d68f34ea2004e5bde1abd95
-      size: 1327
+      md5: e0afe623a549e81ca7d44a65ce362ee2
+      size: 1356
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet18.db
