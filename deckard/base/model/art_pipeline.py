@@ -69,7 +69,6 @@ class ArtInitializer:
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
             if device_type == "gpu":
                 logger.info("Using GPU")
-                
                 number_of_devices = torch.cuda.device_count()
                 num = randint(0, number_of_devices - 1)
                 device = torch.device(f"cuda:{num}")
