@@ -69,7 +69,6 @@ class ArtInitializer:
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
             if device_type == "gpu":
                 logger.info("Using GPU")
-                logger.info("Model moved to GPU")
                 number_of_devices = torch.cuda.device_count()
                 num = randint(0, number_of_devices - 1)
                 device = torch.device(f"cuda:{num}")
@@ -77,6 +76,7 @@ class ArtInitializer:
                     data = [torch.from_numpy(d).to(device) for d in data]
                 data = [d.to(device) for d in data]
                 model.to(device)
+                logger.info(f"Model moved to GPU: {device}")
             else:
                 device = torch.device("cpu")
             model = TorchInitializer(
