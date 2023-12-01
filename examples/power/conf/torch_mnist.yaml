@@ -25,10 +25,11 @@ hydra:
   run:
     dir: ${files.directory}/${files.reports}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/
+    dir: ${files.directory}/logs/${hydra.sweeper.storage}
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${device_id}_${stage}
+    study_name: ${stage}
+    storage: sqlite:///model.db
     sampler:
       _target_: optuna.samplers.TPESampler
       consider_prior: true
