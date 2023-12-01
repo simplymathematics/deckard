@@ -28,7 +28,7 @@ hydra:
     dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${device_id}_${stage}
+    study_name: ${stage}
     sampler:
       _target_: optuna.samplers.TPESampler
       consider_prior: true
