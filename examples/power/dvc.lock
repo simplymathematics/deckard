@@ -21,7 +21,7 @@ stages:
       params.yaml:
         attack:
           _target_: deckard.base.attack.Attack
-          attack_size: 10
+          attack_size: 100
           data:
             _target_: deckard.base.data.Data
             generate:

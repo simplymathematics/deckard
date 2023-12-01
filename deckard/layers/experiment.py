@@ -25,10 +25,7 @@ def get_dvc_stage_params(
     pipeline_file="dvc.yaml",
     directory=".",
     name=None,
-):
     logger.info(
-        f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
-    )
     params = dvc.api.params_show(stages=stage)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
@@ -41,8 +38,6 @@ def get_dvc_stage_params(
         params["files"]["name"] = name
     return params
 
-
-def run_stage(
     params_file="params.yaml",
     pipeline_file="dvc.yaml",
     directory=".",
