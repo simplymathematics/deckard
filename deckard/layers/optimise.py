@@ -316,8 +316,6 @@ def optimise(cfg: DictConfig) -> None:
         if raise_exception:
             raise e
         scores = fake_scores
-    if len(scores) == 1:
-        scores = scores[0]
     return scores
 
 

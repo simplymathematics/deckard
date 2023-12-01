@@ -13,17 +13,17 @@ stage : '???'
 direction : 
   - maximize
   - minimize
-  # - minimize
-  - maximize
   - minimize
-  # - minimize
+  - minimize
+  - minimize
+  - minimize
 optimizers: 
    - accuracy
    - train_time
-  #  - predict_proba_time
+   - predict_proba_time
    - adv_accuracy
    - adv_fit_time
-  #  - adv_predict_time
+   - adv_predict_time
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
@@ -52,9 +52,10 @@ hydra:
       ++model.trainer.batch_size: int(range(10, 10000))
       ++attack.init.eps : range(0.01, 1.0)
       ++attack.init.eps_step : ${eval:'(.01)*${attack.init.eps}'}
-      ++attack.init.batch_size: ${model.trainer.batch_size}
+      ++attack.init.batch_size: int(range(10,10000))
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
+    
 #   launcher: REDIS QUEUE LAUNCHER
 #     # @package hydra.launcher
 #     _target_: hydra_plugins.hydra_rq_launcher.rq_launcher.RQLauncher
