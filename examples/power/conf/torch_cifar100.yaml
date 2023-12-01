@@ -44,9 +44,9 @@ hydra:
     params:
       ++data.sample.random_state: int(range(0, 1))
       ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 1))
-      ++model.trainer.nb_epoch: int(range(1, 50))
-      ++model.trainer.batch_size: int(range(10, 10000))
-      ++attack.init.eps : range(0.01, 1.0)
+      ++model.trainer.nb_epoch: int(interval(1, 50))
+      ++model.trainer.batch_size: int(interval(1, 10000))
+      ++attack.init.eps : interval(0.01, 1.0)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
 #   launcher: REDIS QUEUE LAUNCHER
