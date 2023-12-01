@@ -13,7 +13,7 @@ stage : '???'
 direction : 
   - maximize
   - minimize
-  - maximize
+  - minimize
   - minimize
 optimizers: 
    - accuracy
