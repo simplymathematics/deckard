@@ -73,7 +73,7 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
     outs:
        # This outputs a database file for each model
-      - $${files.directory}/${data.generate.name}.db.db:
+      - $${files.directory}/${data.generate.name}.db:
           cache: false
           persist: true
   # compile:
