@@ -13,23 +13,19 @@ stage : '???'
 direction : 
   - maximize
   - minimize
-  # - minimize
   - maximize
   - minimize
-  # - minimize
 optimizers: 
    - accuracy
    - train_time
-  #  - predict_proba_time
    - adv_accuracy
    - adv_fit_time
-  #  - adv_predict_time
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/${stage}/logs/${data.generate.name}
+    dir: ${files.directory}/${files.reports}/logs/${stage}/${data.generate.name}
   sweep:
-    dir: ${files.directory}/${stage}//${data.generate.name}
+    dir: ${files.directory}/logs/${stage}/${data.generate.name}/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     study_name: ${model.init.name}
@@ -44,14 +40,35 @@ hydra:
       n_ei_candidates: 24 # default: 24
       multivariate: true
       warn_independent_sampling: true
-    n_trials : 100    
+    n_trials : 100
     params:
       ++data.sample.random_state: int(range(0, 1))
       ++model.art.initialize.optimizer.lr: range(0.0001, 1)
       ++model.trainer.nb_epoch: int(range(1, 50))
       ++model.trainer.batch_size: int(range(10, 10000))
       ++attack.init.eps : range(0.01, 1.0)
-      ++attack.init.eps_step : ${eval:'(.01)*${attack.init.eps}'}
-      ++attack.init.batch_size: ${model.trainer.batch_size}
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
+#   launcher: REDIS QUEUE LAUNCHER
+#     # @package hydra.launcher
+#     _target_: hydra_plugins.hydra_rq_launcher.rq_launcher.RQLauncher
+#     enqueue:
+#       job_timeout: 3600s
+#       ttl: null
+#       result_ttl: 1s
+#       failure_ttl: 1h
+#       at_front: false
+#       job_id: null
+#       description: null
+#     queue: default 
+#     redis:
+#       host: localhost
+#       port: ${oc.env:REDIS_PORT,6379}
+#       db: ${oc.env:REDIS_DB,0}
+#       password: ${oc.env:REDIS_PASSWORD,D3vAQY9y4YdwhV}
+#       ssl: ${oc.env:REDIS_SSL,False}
+#       ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null}
+#       mock: ${oc.env:REDIS_MOCK,False}
+#     stop_after_enqueue: false
+#     wait_polling: 1.0
+# raise_exception: True
