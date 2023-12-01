@@ -75,7 +75,6 @@ stages:
        # This outputs a database file for each model
       - $${files.directory}/${data.generate.name}.db:
           cache: false
-          persist: true
   # compile:
   #   foreach: # iterates through each stage
   #     # - train 
