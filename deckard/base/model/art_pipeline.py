@@ -76,7 +76,7 @@ class ArtInitializer:
                     data = [torch.from_numpy(d).to(device) for d in data]
                 data = [d.to(device) for d in data]
                 model.to(device)
-                logger.info(f"Model moved to GPU: {device}") 
+                logger.info(f"Model moved to GPU: {device}")
             else:
                 device = torch.device("cpu")
             model = TorchInitializer(
