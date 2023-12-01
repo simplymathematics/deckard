@@ -23,12 +23,12 @@ optimizers:
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/logs/${stage}/${data.generate.name}
+    dir: ${files.directory}/${files.reports}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${data.generate.name}/
+    dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${model.init.name}
+    study_name: ${hydra.sweeper.n_trials}
     sampler:
       _target_: optuna.samplers.TPESampler
       seed: ${data.sample.random_state}

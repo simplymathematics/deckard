@@ -23,12 +23,12 @@ optimizers:
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/logs/${stage}/${data.generate.name}
+    dir: ${files.directory}/${files.reports}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${data.generate.name}/
+    dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${model.init.name}
+    study_name: ${hydra.sweeper.n_trials}
     sampler:
       _target_: optuna.samplers.TPESampler
       seed: ${data.sample.random_state}
@@ -42,7 +42,7 @@ hydra:
       warn_independent_sampling: true
     n_trials : 1000
     params:
-      ++data.sample.random_state: int(range(0, 1))
+      ++data.sample.random_state: int(range(0, 10))
       ++model.art.initialize.optimizer.lr: range(0.0001, 1)
       ++model.trainer.nb_epoch: int(range(1, 50))
       ++model.trainer.batch_size: int(range(10, 10000))

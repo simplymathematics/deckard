@@ -1,0 +1,24 @@
+name: optuna
+solutions:
+- params:
+    ++data.sample.random_state: 6
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 36
+    ++model.trainer.batch_size: 6032
+    ++attack.init.eps: 0.01
+  values:
+  - 0.12
+  - 1.599037791
+  - 0.2
+  - 0.045504007
+- params:
+    ++data.sample.random_state: 5
+    ++model.art.initialize.optimizer.lr: 0.0001
+    ++model.trainer.nb_epoch: 22
+    ++model.trainer.batch_size: 6463
+    ++attack.init.eps: 0.01
+  values:
+  - 0.1
+  - 0.119114346
+  - 0.1
+  - 0.023082632
