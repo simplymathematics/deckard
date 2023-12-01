@@ -31,7 +31,6 @@ hydra:
     study_name: ${device_id}_${stage}
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: ${data.sample.random_state}
       consider_prior: true
       prior_weight: 1.0
       consider_magic_clip: true
