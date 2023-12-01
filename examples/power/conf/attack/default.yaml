@@ -6,6 +6,9 @@ init:
     _target_: deckard.base.attack.AttackInitializer
     name: art.attacks.evasion.FastGradientMethod
     eps: .99
-    eps_step : ${eval:'(.1)*${.eps}'}
+    # eps_step : ${eval:'(.1)*${.eps}'}
+    batch_size : ${model.trainer.batch_size}
+    targeted : false
+    minimal : true
 attack_size : 10
 method : evasion
