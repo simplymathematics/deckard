@@ -100,11 +100,11 @@ stages:
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
     - path: cifar100/reports/train/default/predictions.json
-      md5: bb21d60526f3a7d2f8f4f64df504a1f4
-      size: 24415348
+      md5: 406b5670c6fc9741adf82a3922f5d5f2
+      size: 24401460
     - path: cifar100/reports/train/default/score_dict.json
-      md5: fc2ab064fdf09c12751ed4f72af83bd7
-      size: 901
+      md5: 39cfcc1fc0d5bef2dafef2eb0295d934
+      size: 885
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     deps:
@@ -326,7 +326,7 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: cifar100/attacks/attack.pkl
-      md5: 5317760d3c6f266ece07523e98517d46
+      md5: a80777574854b5cefe05d26ca2a8ba7c
       size: 123046
     - path: cifar100/reports/attack/default/adv_predictions.json
       md5: 321ea49f7061832db3c5142f0ad7b042

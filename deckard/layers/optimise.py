@@ -269,7 +269,7 @@ def optimise(cfg: DictConfig) -> None:
     working_dir = Path(config_path).parent
     direction = cfg.get("direction", "minimize")
     direction = [direction] if not isinstance(direction, list) else direction
-    optimizers = cfg.get("optimizers")
+    optimizers = cfg.get("optimizers", None)
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -280,9 +280,22 @@ def optimise(cfg: DictConfig) -> None:
     id_ = Path(files["score_dict_file"]).parent.name
     optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
     try:
-        scores = exp()
-        score = [v for k, v in scores.items() if k in optimizers]
-        logger.info(f"Score is : {score}")
+        score_dict = exp()
+        scores = []
+        i = 0
+        for optimizer in optimizers:
+            if optimizer in score_dict:
+                scores.append(score_dict[optimizer])
+            else:
+                if direction[i] == "minimize":
+                    scores.append(1e10)
+                elif direction[i] == "maximize":
+                    scores.append(-1e10)
+                else:
+                    scores.append(None)
+            i += 1
+        logger.info(f"Optimizers are : {optimizers}")
+        logger.info(f"Score is : {scores}")
     except Exception as e:
         logger.warning(
             f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
@@ -297,14 +310,13 @@ def optimise(cfg: DictConfig) -> None:
             elif direction == "maximize":
                 fake_scores.append(-1e10)
             else:
-                raise ValueError(f"Unknown direction {direction}")
-        score = fake_scores
-        logger.info(f"Score: {score}")
+                fake_scores.append(None)
+        logger.info(f"Optimizers: {optimizers}")
+        logger.info(f"Score: {scores}")
         if raise_exception:
             raise e
-    if len(score) == 1:
-        score = score[0]
-    return score
+        scores = fake_scores
+    return scores
 
 
 if __name__ == "__main__":
