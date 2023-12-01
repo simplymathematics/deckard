@@ -77,6 +77,8 @@ class ArtInitializer:
                     data = [torch.from_numpy(d).to(device) for d in data]
                 data = [d.to(device) for d in data]
                 model.to(device)
+            else:
+                device = torch.device("cpu")
             model = TorchInitializer(
                 data=data,
                 model=model,
