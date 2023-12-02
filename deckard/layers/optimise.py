@@ -311,11 +311,11 @@ def optimise(cfg: DictConfig) -> None:
                 fake_scores.append(-1e10)
             else:
                 fake_scores.append(None)
+        scores = fake_scores
         logger.info(f"Optimizers: {optimizers}")
         logger.info(f"Score: {scores}")
         if raise_exception:
             raise e
-        scores = fake_scores
     if len(scores) == 1:
         scores = scores[0]
     return scores
