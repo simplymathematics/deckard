@@ -28,7 +28,7 @@ hydra:
     dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${stage}
+    study_name: ${stage}_FSQ
     sampler:
       _target_: optuna.samplers.TPESampler
       consider_prior: true
@@ -47,6 +47,7 @@ hydra:
       ++model.trainer.nb_epoch: int(interval(1, 50))
       ++model.trainer.batch_size: int(interval(1, 10000))
       ++attack.init.eps : interval(0.01, 1.0)
+      ++model.art.preprocessor.params.bit_depth: choice(4,8,16,32,64)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
 #   launcher: REDIS QUEUE LAUNCHER

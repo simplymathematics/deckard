@@ -196,6 +196,7 @@ class ArtPipeline:
             params = asdict(self.pipeline["preprocessor"])
             name = params.pop("name", None)
             sub_kwargs = params.pop("kwargs", {})
+            sub_kwargs.update(sub_kwargs.pop("params", {}))
             config = {
                 "_target_": name,
             }
@@ -210,6 +211,7 @@ class ArtPipeline:
                 "_target_": name,
             }
             sub_kwargs = params.pop("kwargs", {})
+            sub_kwargs.update(sub_kwargs.pop("params", {}))
             config = {
                 "_target_": name,
             }

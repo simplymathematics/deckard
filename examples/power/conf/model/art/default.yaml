@@ -1,6 +1,6 @@
 defaults:
   - initialize : default
-  # - preprocessor: fsq
+  - preprocessor: default
   # - postprocessor: confidence
 data : ${..data}
 library : ${..library}
