@@ -1,0 +1,75 @@
+defaults:
+    - _self_
+    - data: torch_cifar
+    - model: torch_cifar
+    - attack: default
+    - files: cifar
+    - scorers: default
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : tpe
+    # - override hydra/launcher : rq
+device_id : ${oc.env:DECKARD_DEVICE,cpu}
+stage : '???'
+direction : 
+  - maximize
+  - minimize
+  - minimize
+  - minimize
+optimizers: 
+   - accuracy
+   - train_time
+   - adv_accuracy
+   - adv_fit_time
+_target_ : deckard.base.experiment.Experiment
+hydra:
+  run:
+    dir: ${files.directory}/${files.reports}/logs/${stage}/
+  sweep:
+    dir: ${files.directory}/logs/
+    subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    study_name: ${stage}_FSQ
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      consider_prior: true
+      prior_weight: 1.0
+      consider_magic_clip: true
+      consider_endpoints: false
+      n_startup_trials: 10 # default: 10
+      n_ei_candidates: 24 # default: 24
+      multivariate: true
+      warn_independent_sampling: true
+    n_trials : 1000
+    n_jobs: 1
+    params:
+      ++data.sample.random_state: int(range(0, 1))
+      ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 1))
+      ++model.trainer.nb_epoch: int(interval(1, 50))
+      ++model.trainer.batch_size:  int(interval(1, 10000))
+      ++attack.init.eps : interval(0.01, 1.0)
+      ++model.art.preprocessor.params.bit_depth: choice(4,8,16,32,64)
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    direction: ${direction}
+#   launcher: REDIS QUEUE LAUNCHER
+#     # @package hydra.launcher
+#     _target_: hydra_plugins.hydra_rq_launcher.rq_launcher.RQLauncher
+#     enqueue:
+#       job_timeout: 3600s
+#       ttl: null
+#       result_ttl: 1s
+#       failure_ttl: 1h
+#       at_front: false
+#       job_id: null
+#       description: null
+#     queue: default 
+#     redis:
+#       host: localhost
+#       port: ${oc.env:REDIS_PORT,6379}
+#       db: ${oc.env:REDIS_DB,0}
+#       password: ${oc.env:REDIS_PASSWORD,D3vAQY9y4YdwhV}
+#       ssl: ${oc.env:REDIS_SSL,False}
+#       ssl_ca_certs: ${oc.env:REDIS_SSL_CA_CERTS,null}
+#       mock: ${oc.env:REDIS_MOCK,False}
+#     stop_after_enqueue: false
+#     wait_polling: 1.0
+# raise_exception: True
