@@ -3,7 +3,7 @@ reports: reports
 data_dir: data
 model_dir: null
 attack_dir: attacks
-directory: /result/bit_depth/cifar/
+directory: /result/bit_depth/mnist/
 score_dict_file: score_dict.json
 data_file : data
 model_file : null
