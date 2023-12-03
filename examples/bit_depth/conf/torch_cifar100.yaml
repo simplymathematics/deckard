@@ -1,9 +1,9 @@
 defaults:
     - _self_
-    - data: torch_cifar
-    - model: torch_cifar
+    - data: torch_cifar100
+    - model: torch_cifar100
     - attack: default
-    - files: cifar
+    - files: cifar100
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : tpe
@@ -23,12 +23,12 @@ optimizers:
 _target_ : deckard.base.experiment.Experiment
 hydra:
   run:
-    dir: ${files.directory}/logs/${device_id}/${stage}/
+    dir: ${files.directory}/${files.reports}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${device_id}/
+    dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
-    study_name: ${stage}
+    study_name: ${stage}_FSQ
     sampler:
       _target_: optuna.samplers.TPESampler
       consider_prior: true
@@ -43,10 +43,11 @@ hydra:
     n_jobs: 1
     params:
       ++data.sample.random_state: int(range(0, 1))
-      ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 1))
-      ++model.trainer.nb_epoch: int(interval(1, 50))
-      ++model.trainer.batch_size:  int(interval(1, 10000))
+      ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 100))
+      ++model.trainer.nb_epoch: tag(log, int(interval(1, 100)))
+      ++model.trainer.batch_size: tag(log, int(interval(1, 10000)))
       ++attack.init.eps : interval(0.01, 1.0)
+      ++model.art.preprocessor.params.bit_depth: choice(4,8,16,32,64)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
 #   launcher: REDIS QUEUE LAUNCHER

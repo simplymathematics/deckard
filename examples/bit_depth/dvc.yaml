@@ -1,0 +1,117 @@
+stages:
+  install_deckard:
+    cmd: python -m pip install -e ../../ && python -m pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/torch_stable.html
+    deps:
+      - ../../setup.py
+    outs:
+      - ../../deckard.egg-info:
+          cache: False
+          persist: True
+  # install_redis:
+  #   cmd: bash redis.sh
+  #   outs: 
+  #     - .bashrc
+  #   # params:
+  #   #  - oc.
+  parse_params:
+    cmd: python -m deckard.layers.parse --config_file ${data.generate.name}.yaml
+    deps:
+      - conf/
+    outs:
+      - params.yaml:
+          cache: True
+          persist: True
+  train:
+    cmd: python -m deckard.layers.experiment train --config_file ${data.generate.name}.yaml
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - device_id
+    # outs:
+      # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
+    metrics:
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}:
+          cache : false
+  attack:
+    cmd: python -m deckard.layers.experiment attack --config_file ${data.generate.name}.yaml
+    params:
+      - data
+      - model
+      - attack
+      - scorers
+      - files
+      - device_id
+    outs:
+      - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}:
+          cache : false
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}:
+          cache : false
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}:
+          cache : false
+      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}:
+      #     cache : false
+      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}:
+      #     cache : false
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}:  # logit outputs for our model
+          cache : false 
+    deps:
+        - params.yaml
+    metrics:
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}:
+          cache: false
+  attacks:
+    cmd: python -m deckard.layers.optimise  --multirun ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${device_id}.db  --config-name ${data.generate.name}.yaml
+    deps:
+      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+    outs:
+       # This outputs a database file for each model
+      - ${files.directory}/${data.generate.name}.db:
+          cache: false
+  # compile:
+  #   foreach: # iterates through each stage
+  #     # - train 
+  #     - attack
+  #   do:
+  #     cmd: python -m deckard.layers.compile --report_folder ${files.directory}/${files.reports}/${data.generate.name} --results_file ${files.directory}/${files.reports}/${data.generate.name}.csv
+  #     deps:
+  #     - ${files.directory}/${files.reports}/${data.generate.name}/
+  #     - ${files.directory}/${files.reports}/${data.generate.name}/mnist.db
+  #     outs:
+  #     - ${files.directory}/${files.reports}/${data.generate.name}.csv
+  # plot:
+  #   cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
+  #   deps:
+  #     - ${files.directory}/${files.reports}/attack.csv
+  #     - ${files.directory}/${files.reports}/attack/mnist.db
+  #   outs:
+  #     - ${files.directory}/plots/data.csv
+  # afr:
+  #   cmd: python -m deckard.layers.afr --dataset ${files.directory} --file ${files.directory}/plots/data.csv
+  #   deps:
+  #     - ${files.directory}/plots/data.csv
+  #   plots:
+  #     - ${files.directory}/plots/weibull_aft.pdf
+  #     - ${files.directory}/plots/weibull_partial_effects.pdf
+  #     - ${files.directory}/plots/cox_partial_effects.pdf
+  #     - ${files.directory}/plots/cox_aft.pdf
+  #     - ${files.directory}/plots/log_logistic_aft.pdf
+  #     - ${files.directory}/plots/log_logistic_partial_effects.pdf
+  #     - ${files.directory}/plots/log_normal_aft.pdf
+  #     - ${files.directory}/plots/log_normal_partial_effects.pdf
+  #   metrics:
+  #     - ${files.directory}/plots/aft_comparison.csv
+  #   outs:
+  #     - ${files.directory}/plots/aft_comparison.tex
+  # copy_results:
+  #     cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+  #     deps:
+  #       - ${files.directory}/plots/data.csv
+  #       - ${files.directory}/plots/aft_comparison.csv
