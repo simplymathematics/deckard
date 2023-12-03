@@ -43,9 +43,9 @@ hydra:
     n_jobs: 1
     params:
       ++data.sample.random_state: int(range(0, 1))
-      ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 1))
-      ++model.trainer.nb_epoch: int(interval(1, 50))
-      ++model.trainer.batch_size: int(interval(1, 10000))
+      ++model.art.initialize.optimizer.lr: tag(log, interval(0.000001, 100))
+      ++model.trainer.nb_epoch: tag(log, int(interval(1, 100)))
+      ++model.trainer.batch_size: tag(log, int(interval(1, 10000)))
       ++attack.init.eps : interval(0.01, 1.0)
       ++model.art.preprocessor.params.bit_depth: choice(4,8,16,32,64)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
