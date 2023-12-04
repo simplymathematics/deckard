@@ -4,3 +4,4 @@ cifar100/
 multirun/
 original_data/
 *.rdb
+mnist-backup/

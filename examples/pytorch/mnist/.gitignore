@@ -1,4 +1,5 @@
 mnist/*
+mnist-backup/*
 .dvc/*
 20_epochs/*
 **/optimization_results.yaml
