@@ -124,7 +124,7 @@ examples/*/multirun/*
 *.hydra
 
 # Example output
-examples/*/*/data
+# examples/*/*/data
 examples/*/*/models
 examples/*/*/attacks
 examples/*/*/reports
