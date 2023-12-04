@@ -56,6 +56,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     for folder in tqdm(folder_gen, desc="Adding other files to results"):
         results = add_file(folder, path_gen, results)
     df = pd.DataFrame(results).T
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df.columns = df.columns.str.strip()
     return df
 
 
@@ -138,6 +140,8 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
         else:
             defences.append(None)
             def_gens.append(None)
+    if "ResNet" in str(results["model.init.name"].unique()):
+        results.loc[:, 'model_layers'] = results.loc[: , 'model.init.name'].str.split('ResNet').str[-1]
     results["defence_name"] = defences
     results["def_gen"] = def_gens
     return results
@@ -160,7 +164,7 @@ def merge_attacks(results: pd.DataFrame):
 def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
     df = parse_folder(folder, files=files)
     df = flatten_results(df)
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    
     df = merge_defences(df, default_epochs=default_epochs)
     df = merge_attacks(df)
     return df
@@ -184,6 +188,7 @@ def format_control_parameter(data, control_dict, min_max=True):
             data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
             if param in data.columns:
                 value = data[data.def_gen == defence][param]
+                value = pd.to_numeric(value, errors="coerce")
             else:
                 value = np.nan
             data.loc[data.def_gen == defence, "def_value"] = value
@@ -206,6 +211,7 @@ def format_control_parameter(data, control_dict, min_max=True):
             data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
             if param in data.columns:
                 value = data[data.atk_gen == attack][param]
+                value = pd.to_numeric(value, errors="coerce")
             else:
                 value = np.nan
             data.loc[data.atk_gen == attack, "atk_value"] = value
