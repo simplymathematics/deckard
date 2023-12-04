@@ -125,3 +125,4 @@ deckard/deckard.egg-info/*
 *.tar.gz
 
 *log.txt
+*.hydra
