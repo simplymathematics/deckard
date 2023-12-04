@@ -25,7 +25,7 @@ hydra:
   run:
     dir: ${files.directory}/${files.reports}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${hydra.sweeper.storage}
+    dir: ${files.directory}/logs/${device_id}
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     study_name: ${stage}_FSQ
