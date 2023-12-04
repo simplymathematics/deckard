@@ -1,0 +1,15 @@
+_target_: deckard.base.data.Data
+generate:
+    _target_: deckard.base.data.generator.DataGenerator
+    name: torch_cifar100
+    path: original_data/
+sample:
+    _target_: deckard.base.data.sampler.SklearnDataSampler
+    random_state : 0
+    stratify: True
+sklearn_pipeline:
+    _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
+    preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: True
+        with_std: True
