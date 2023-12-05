@@ -268,7 +268,6 @@ if __name__ == "__main__":
             "train_time",
             "adv_fit_time",
             "predict_time",
-            "adv_success",
         ],
     )
     # sense_dict = {
