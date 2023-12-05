@@ -152,7 +152,6 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             def_gen = [str(x).split(".")[-1] for x in defence]
             defence = "_".join(defence)
             def_gen = defence
-            
         elif len(defence) == 1:
             def_gen = defence[0].split(".")[-1]
             defence = defence[0].split(".")[-1]
@@ -164,8 +163,8 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             defences.append(defence)
             def_gens.append(def_gen)
         else:
-            defences.append(None)
-            def_gens.append(None)
+            defences.append("Control")
+            def_gens.append("Control")
     results["defence_name"] = defences
     results["def_gen"] = def_gens
     results['epochs'] = epochs
@@ -199,12 +198,10 @@ def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epoc
         model_names = df["model.init.name"].str.split(".").str[-1]
         df["model_name"] = model_names
         df['model_layers'] = [str(x).split("Net")[-1] for x in model_names]
-    df = merge_defences(df, default_epochs=default_epochs)
-    df = merge_attacks(df)
     return df
 
 
-def format_control_parameter(data, control_dict, min_max=True):
+def format_control_parameter(data, control_dict):
     logger.info("Formatting control parameters...")
     if hasattr(data, "def_gen"):
         defences = data.def_gen.unique()
@@ -229,14 +226,6 @@ def format_control_parameter(data, control_dict, min_max=True):
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
-        # if min_max is True:
-        #     def_min = data[data.def_gen == defence].def_value.min()
-        #     def_max = data[data.def_gen == defence].def_value.max()
-        #     data.loc[data.def_gen == defence, "def_value"] = pd.to_numeric(data.loc[data.def_gen == defence, "def_value"], errors='coerce')
-        #     data.loc[data.def_gen == defence, "def_value"] = (
-        #         data[data.def_gen == defence].def_value - def_min
-        #     ) / (def_max - def_min)
-
     for attack in attacks:
         if attack in control_dict:
             param = control_dict[attack]
@@ -251,14 +240,6 @@ def format_control_parameter(data, control_dict, min_max=True):
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-
-        # if min_max is True:
-        #     atk_min = data[data.atk_gen == attack].atk_value.min()
-        #     atk_max = data[data.atk_gen == attack].atk_value.max()
-        #     data.loc[data.atk_gen == attack, "atk_value"] = pd.to_numeric(data.loc[data.atk_gen == attack, "atk_value"], errors='coerce')
-        #     data.loc[data.atk_gen == attack, "atk_value"] = (
-        #         data[data.atk_gen == attack].atk_value - atk_min
-        #     ) / (atk_max - atk_min)
     return data
 
 def clean_data_for_plotting(
@@ -293,9 +274,10 @@ def save_results(results, results_file, results_folder) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
-    logger.info(f"Saving data to {Path(results_folder) / results_file}")
+    results_file = Path(results_folder, results_file)
+    logger.info(f"Saving data to {results_file}")
     Path(results_folder).mkdir(exist_ok=True, parents=True)
-    suffix = Path(results_folder, results_file).suffix
+    suffix = results_file.suffix
     if suffix == ".csv":
         results.to_csv(results_file)
     elif suffix == ".xlsx":
@@ -318,25 +300,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
-    parser.add_argument("--results_folder", type=str, default="results")
+    parser.add_argument("--results_folder", type=str, default=".")
     parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument("--default_epochs", type=int, default=20)
-    parser.add_argument(
-        "--kwargs",
-        type=list,
-        default=None,
-        nargs="*",
-    )
+    parser.add_argument("--merge_attacks", type=bool, default=True)
+    parser.add_argument("--merge_defences", type=bool, default=True)
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
     results_folder = args.results_folder
-    results = parse_results(report_folder, default_epochs=args.default_epochs)
-    with open(Path(Path(), args.config), "r") as f:
-        big_dict = yaml.load(f, Loader=yaml.FullLoader)
+    results = parse_results(report_folder, default_epochs=args.default_epochs, merge_def=args.merge_defences, merge_atk=args.merge_attacks)
+    if Path(args.config).is_absolute():
+        with open(Path(args.config), "r") as f:
+            big_dict = yaml.load(f, Loader=yaml.FullLoader)
+    else:
+        with open(Path(Path(), args.config), "r") as f:
+            big_dict = yaml.load(f, Loader=yaml.FullLoader)
     def_gen_dict = big_dict["defences"]
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
