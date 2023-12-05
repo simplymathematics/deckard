@@ -270,18 +270,18 @@ if __name__ == "__main__":
             "predict_time",
         ],
     )
-    # sense_dict = {
-    #     "accuracy": "max",
-    #     "adv_accuracy": "max",
-    #     "adv_success": "min",
-    #     "model_layers": "diff",
-    #     "atk_param": "diff",
-    #     "def_param": "diff",
-    #     "atk_gen": "diff",
-    #     "def_gen": "diff",
-    #     "data.sample.random_state": "diff",
-    # }
-    # data = pareto_set(data, sense_dict)
+    sense_dict = {
+        "accuracy": "max",
+        "adv_accuracy": "max",
+        "adv_success": "min",
+        "model_layers": "diff",
+        "atk_param": "diff",
+        "def_param": "diff",
+        "atk_gen": "diff",
+        "def_gen": "diff",
+        "data.sample.random_state": "diff",
+    }
+    data = pareto_set(data, sense_dict)
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
