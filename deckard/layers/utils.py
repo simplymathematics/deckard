@@ -25,6 +25,7 @@ deckard_nones = [
     "none",
     "NONE",
     nan,
+    "NaN",
 ]
 
 
