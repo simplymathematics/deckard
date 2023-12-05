@@ -5,9 +5,10 @@ stages:
       mnist/reports/attack.csv
     deps:
     - path: mnist/reports/attack/
-      md5: c1191d4aed87840a6035d44b5edfed67.dir
-      size: 63191255
-      nfiles: 8010
+      hash: md5
+      md5: a2694f8e9ea5c5ff400d11fa1d98001d.dir
+      size: 21895572255
+      nfiles: 53006
     - path: mnist/reports/attack/ResNet101.db
       md5: 600452804d96c8b8483c3f8da01130c4
       size: 462848
@@ -22,15 +23,17 @@ stages:
       size: 462848
     outs:
     - path: mnist/reports/attack.csv
-      md5: b6d03ebcc65d652ca2392c7510983fa5
-      size: 9063722
+      hash: md5
+      md5: 713d3512070894820a1deb87af405779
+      size: 48722791
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/attack.csv
       -o data.csv
     deps:
     - path: mnist/reports/attack.csv
-      md5: b6d03ebcc65d652ca2392c7510983fa5
-      size: 9063722
+      hash: md5
+      md5: 713d3512070894820a1deb87af405779
+      size: 48722791
     - path: mnist/reports/attack/ResNet101.db
       md5: 600452804d96c8b8483c3f8da01130c4
       size: 462848
@@ -48,5 +51,66 @@ stages:
       size: 462848
     outs:
     - path: mnist/plots/data.csv
-      md5: 73aac3fbd8615cc932c5537c7a9b74b4
-      size: 2353615
+      hash: md5
+      md5: db610c0ad15bbf4dbab8c6fefa65ceb5
+      size: 20582718
+  afr:
+    cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/plots/data.csv
+      --target adv_accuracy --duration_col adv_fit_time --dataset mnist
+    deps:
+    - path: mnist/plots/data.csv
+      hash: md5
+      md5: db610c0ad15bbf4dbab8c6fefa65ceb5
+      size: 20582718
+    outs:
+    - path: mnist/plots/aft_comparison.csv
+      hash: md5
+      md5: 61a80f55e2781b1d8439d15622d02f18
+      size: 182
+    - path: mnist/plots/aft_comparison.tex
+      hash: md5
+      md5: 40b136fcd07ffc5afac66b855fb1a0ae
+      size: 408
+    - path: mnist/plots/cox_aft.pdf
+      hash: md5
+      md5: 5bb62af7b8b5c4939044c917334962b8
+      size: 31116
+    - path: mnist/plots/cox_partial_effects.pdf
+      hash: md5
+      md5: ff3a05787c845851e9360ddee4f9477f
+      size: 45205
+    - path: mnist/plots/log_logistic_aft.pdf
+      hash: md5
+      md5: 7ba49fa73fa262a1707f1eaa829e94bc
+      size: 33200
+    - path: mnist/plots/log_logistic_partial_effects.pdf
+      hash: md5
+      md5: 8325b67480d660a697f837f2fb097862
+      size: 30586
+    - path: mnist/plots/log_normal_aft.pdf
+      hash: md5
+      md5: 78ebfb917fb2e96f7ac92f88eddc616b
+      size: 33689
+    - path: mnist/plots/log_normal_partial_effects.pdf
+      hash: md5
+      md5: 188b2e9780430d31440219c90696ae8f
+      size: 31186
+    - path: mnist/plots/weibull_aft.pdf
+      hash: md5
+      md5: 8743c238955628d835d3d810264aeb72
+      size: 31858
+    - path: mnist/plots/weibull_partial_effects.pdf
+      hash: md5
+      md5: 20142eb58002d28f34defe59e688355a
+      size: 30914
+  copy_results:
+    cmd: cp -r mnist/plots/* ~/ml_afr/mnist/
+    deps:
+    - path: mnist/plots/aft_comparison.csv
+      hash: md5
+      md5: 61a80f55e2781b1d8439d15622d02f18
+      size: 182
+    - path: mnist/plots/data.csv
+      hash: md5
+      md5: db610c0ad15bbf4dbab8c6fefa65ceb5
+      size: 20582718
