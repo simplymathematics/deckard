@@ -451,3 +451,99 @@ stages:
       hash: md5
       md5: 8adabcf8a15b13fc20ea31f58ae7388b
       size: 1069056
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder cifar/reports/attack --results_file
+      cifar/reports/attack.csv
+    deps:
+    - path: cifar/reports/attack/
+      hash: md5
+      md5: 8c7a44700932e363fa7482224eac15bb.dir
+      size: 9973372888
+      nfiles: 34873
+    - path: cifar/reports/attack/ResNet101.db
+      hash: md5
+      md5: 268500e55100c8e2c0de628e8b66b612
+      size: 819200
+    - path: cifar/reports/attack/ResNet18.db
+      hash: md5
+      md5: bf2b93a31c49e96b219c23095504a7f1
+      size: 819200
+    - path: cifar/reports/attack/ResNet34.db
+      hash: md5
+      md5: 8de8f4dfcda52bb40f206cf3c4977dd5
+      size: 819200
+    - path: cifar/reports/attack/ResNet50.db
+      hash: md5
+      md5: 8adabcf8a15b13fc20ea31f58ae7388b
+      size: 1069056
+    outs:
+    - path: cifar/reports/attack.csv
+      hash: md5
+      md5: 2284ec82ba4815740f281959a8825c8b
+      size: 26829479
+  plot:
+    cmd: python -m deckard.layers.plots --path cifar/plots/ --file cifar/reports/attack.csv
+      -o data.csv
+    deps:
+    - path: cifar/reports/attack.csv
+      hash: md5
+      md5: 2284ec82ba4815740f281959a8825c8b
+      size: 26829479
+    - path: cifar/reports/attack/ResNet18.db
+      hash: md5
+      md5: bf2b93a31c49e96b219c23095504a7f1
+      size: 819200
+    outs:
+    - path: cifar/plots/data.csv
+      hash: md5
+      md5: d4900d6803cc7869d3c16161e83752c4
+      size: 14370058
+  afr:
+    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/plots/data.csv
+      --target adv_accuracy --duration_col adv_fit_time --dataset cifar10
+    deps:
+    - path: cifar/plots/data.csv
+      hash: md5
+      md5: d4900d6803cc7869d3c16161e83752c4
+      size: 14370058
+    outs:
+    - path: cifar/plots/aft_comparison.csv
+      hash: md5
+      md5: 2ce3a28792b1d2a68d9c98de66fcdc96
+      size: 181
+    - path: cifar/plots/aft_comparison.tex
+      hash: md5
+      md5: 77cbe9f4b383545bc617534c2dd793a5
+      size: 409
+    - path: cifar/plots/cox_aft.pdf
+      hash: md5
+      md5: 75f74d0f6551c7d9abd461700c8a8b6f
+      size: 31134
+    - path: cifar/plots/cox_partial_effects.pdf
+      hash: md5
+      md5: dd3352b1824e8acb7a1453e9e45a77f2
+      size: 29531
+    - path: cifar/plots/log_logistic_aft.pdf
+      hash: md5
+      md5: 372e9be069ee7258a686c6b417d137cb
+      size: 33418
+    - path: cifar/plots/log_logistic_partial_effects.pdf
+      hash: md5
+      md5: 83fac263c272ef61c8ffb27ce4e2f270
+      size: 29341
+    - path: cifar/plots/log_normal_aft.pdf
+      hash: md5
+      md5: 782d0180d4e01d6e009b3b210b124f52
+      size: 33903
+    - path: cifar/plots/log_normal_partial_effects.pdf
+      hash: md5
+      md5: 0f93aa830d84a41f3b664f8ea7d75252
+      size: 29943
+    - path: cifar/plots/weibull_aft.pdf
+      hash: md5
+      md5: 857d2fed50ba4fce6dc72895d2d1f9e6
+      size: 32073
+    - path: cifar/plots/weibull_partial_effects.pdf
+      hash: md5
+      md5: 0af77e5c34cb8f59a5e3484af7138c6b
+      size: 29546

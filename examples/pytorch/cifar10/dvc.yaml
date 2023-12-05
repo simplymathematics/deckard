@@ -97,7 +97,7 @@ stages:
     outs:
       - ${files.directory}/plots/data.csv
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --file ${files.directory}/plots/data.csv
+    cmd:  python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/data.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar10
     deps:
       - ${files.directory}/plots/data.csv
     plots:
