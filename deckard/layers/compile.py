@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from math import isnan
 import json
 import logging
 from tqdm import tqdm
@@ -47,6 +48,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     path_gen = []
     for file in files:
         path_gen.extend(folder.glob(f"**/{file}"))
+    path_gen.sort()
+    path_gen = list(set(path_gen))
     path_gen.sort()
     folder_gen = map(lambda x: x.parent, path_gen)
     folder_gen = set(folder_gen)
@@ -96,6 +99,7 @@ def read_file(file, results):
 def merge_defences(results: pd.DataFrame, default_epochs=20):
     defences = []
     def_gens = []
+    epochs = []
     for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
         defence = []
         if (
@@ -120,16 +124,38 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             defence.append(entry["model.art.pipeline.trainer.name"])
         if (
             "model.init.nb_epoch" in entry
-            and entry["model.init.nb_epoch"] != default_epochs
+            and entry['model.init.nb_epoch'] not in nones
+            and not isnan(entry['model.init.nb_epoch'])
+            and int(entry["model.init.nb_epoch"]) != default_epochs 
         ):
+            epoch = int(entry['model.init.nb_epoch'])
             defence.append("Epochs")
+        elif ("model.trainer.nb_epoch" in entry 
+              and entry['model.trainer.nb_epoch'] not in nones
+              and not isnan(entry['model.trainer.nb_epoch'])
+              and int(entry["model.trainer.nb_epoch"]) != default_epochs
+              ):
+            epoch = int(entry['model.trainer.nb_epoch'])
+            defence.append("Epochs")
+        elif ('model.trainer.kwargs.nb_epoch' in entry 
+              and entry['model.trainer.kwargs.nb_epoch'] not in nones
+              and not isnan(entry['model.trainer.kwargs.nb_epoch'])
+              and int(entry['model.trainer.kwargs.nb_epoch']) != default_epochs
+              ):
+            epoch = int(entry['model.trainer.kwargs.nb_epoch'])
+            defence.append("Epochs")
+        else:
+            epoch = default_epochs
+        epochs.append(epoch)
         ############################################################################################################
         if len(defence) > 1:
             def_gen = [str(x).split(".")[-1] for x in defence]
             defence = "_".join(defence)
+            def_gen = defence
+            
         elif len(defence) == 1:
-            def_gen = [str(x).split(".")[-1] for x in defence][0]
-            defence = defence[0]
+            def_gen = defence[0].split(".")[-1]
+            defence = defence[0].split(".")[-1]
         else:
             def_gen = "Control"
             defence = "Control"
@@ -140,11 +166,13 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
         else:
             defences.append(None)
             def_gens.append(None)
-    if "ResNet" in str(results["model.init.name"].unique()):
-        results.loc[:, 'model_layers'] = results.loc[: , 'model.init.name'].str.split('ResNet').str[-1]
     results["defence_name"] = defences
     results["def_gen"] = def_gens
+    results['epochs'] = epochs
+    results['epochs'] = pd.to_numeric(results['epochs'], errors='coerce')
+    results['epochs'] = results['epochs'].fillna(default_epochs)
     return results
+
 
 
 def merge_attacks(results: pd.DataFrame):
@@ -163,8 +191,14 @@ def merge_attacks(results: pd.DataFrame):
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
     df = parse_folder(folder, files=files)
+    df = df[df['data'].notna()]
+    df = df[df['model'].notna()]
+    df = df[df['attack'].notna()]
     df = flatten_results(df)
-    
+    if hasattr(df, "model.init.name"):
+        model_names = df["model.init.name"].str.split(".").str[-1]
+        df["model_name"] = model_names
+        df['model_layers'] = [str(x).split("Net")[-1] for x in model_names]
     df = merge_defences(df, default_epochs=default_epochs)
     df = merge_attacks(df)
     return df
@@ -180,8 +214,6 @@ def format_control_parameter(data, control_dict, min_max=True):
         attacks = data.atk_gen.unique()
     else:
         attacks = []
-    if data["model.init.name"].str.contains("Net").any():
-        data["model_layers"] = data["model_name"].str.split("Net").str[-1]
     for defence in defences:
         if defence in control_dict:
             param = control_dict[defence]
@@ -229,7 +261,6 @@ def format_control_parameter(data, control_dict, min_max=True):
         #     ) / (atk_max - atk_min)
     return data
 
-
 def clean_data_for_plotting(
     data,
     def_gen_dict,
@@ -238,7 +269,6 @@ def clean_data_for_plotting(
 ):
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
-        data.def_gen.fillna("Control", inplace=True)
         def_gen = data.def_gen.map(def_gen_dict)
         data.def_gen = def_gen
     if hasattr(data, "atk_gen"):
