@@ -24,6 +24,7 @@ if "__main__" == __name__:
     afr_parser.add_argument("--target", type=str, default="adv_failures")
     afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
     afr_parser.add_argument("--dataset", type=str, default="mnist")
+    afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_args = afr_parser.parse_args()
     target = afr_args.target
     duration_col = afr_args.duration_col
@@ -37,8 +38,8 @@ if "__main__" == __name__:
 
     matplotlib.rc("font", **font)
 
-    FOLDER = Path(f"{afr_args.dataset}/plots/")
-    csv_file = FOLDER / "data.csv"
+    csv_file = afr_args.data_file
+    FOLDER = Path(csv_file).parent
     data = pd.read_csv(csv_file, index_col=0)
     data.columns = data.columns.str.strip()
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -55,29 +56,6 @@ if "__main__" == __name__:
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
         :, "attack.attack_size"
     ]
-
-    # data=data[data['def_gen'] == 'Gauss-in']
-    # data=data[data['atk_gen'] == 'HSJ']
-
-    print(
-        "Adversarial Accuracy:",
-        "\n",
-        "ResNet152:",
-        data[data["model_layers"] == 152].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet101:",
-        data[data["model_layers"] == 101].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet50:",
-        data[data["model_layers"] == 50].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet34:",
-        data[data["model_layers"] == 34].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet18:",
-        data[data["model_layers"] == 18].adv_accuracy.mean(skipna=True),
-        "\n",
-    )
 
     def plot_aft(
         df,
