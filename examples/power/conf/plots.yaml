@@ -19,7 +19,7 @@ line_plot:
   hue: device_id
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Epochs"}
   title: Epochs vs Ben. Accuracy
-  x: epochs
+  x: model.trainer.nb_epoch
   x_scale: linear 
   xlabel: Defence Control Parameter
   y: accuracy
@@ -44,7 +44,6 @@ scatter_plot:
   hue_order:
   - nvidia-tesla-v100
   - nvidia-tesla-p100
-  scatter_plot:
 - x: train_time_per_sample
   y: failure_rate
   hue: model_name

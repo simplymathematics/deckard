@@ -293,7 +293,10 @@ if __name__ == "__main__":
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     data = pd.read_csv(args.file)
-    # if isinstance(args.drop_is_empty)
+    if isinstance(args.drop_if_empty, str):
+        args.drop_if_empty = args.drop_if_empty.split(",")
+    else:
+        assert isinstance(args.drop_if_empty, list)
     data = drop_frames_without_results(
         data,
         subset=args.drop_if_empty,
