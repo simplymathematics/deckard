@@ -4,13 +4,15 @@ stages:
     cmd: python -m deckard.layers.parse --config_file torch_mnist.yaml
     deps:
     - path: conf/
-      md5: 7f331968a6f853c4fb3fb08071241499.dir
-      size: 133728
+      hash: md5
+      md5: 7753b64d38006a6ab59a63572df99553.dir
+      size: 133909
       nfiles: 34
     outs:
     - path: params.yaml
-      md5: da58baa8273336a2bc481bc3581f612e
-      size: 6849
+      hash: md5
+      md5: fb9682b00807fe1b37aa04052897ef23
+      size: 6826
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file torch_mnist.yaml
     deps:

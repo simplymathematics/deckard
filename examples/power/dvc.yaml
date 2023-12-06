@@ -75,4 +75,3 @@ stages:
        # This outputs a database file for each model
       - ${files.directory}/${data.generate.name}.db:
           cache: false
-

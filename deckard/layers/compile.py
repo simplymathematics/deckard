@@ -124,25 +124,27 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             defence.append(entry["model.art.pipeline.trainer.name"])
         if (
             "model.init.nb_epoch" in entry
-            and entry['model.init.nb_epoch'] not in nones
-            and not isnan(entry['model.init.nb_epoch'])
-            and int(entry["model.init.nb_epoch"]) != default_epochs 
+            and entry["model.init.nb_epoch"] not in nones
+            and not isnan(entry["model.init.nb_epoch"])
+            and int(entry["model.init.nb_epoch"]) != default_epochs
         ):
-            epoch = int(entry['model.init.nb_epoch'])
+            epoch = int(entry["model.init.nb_epoch"])
             defence.append("Epochs")
-        elif ("model.trainer.nb_epoch" in entry 
-              and entry['model.trainer.nb_epoch'] not in nones
-              and not isnan(entry['model.trainer.nb_epoch'])
-              and int(entry["model.trainer.nb_epoch"]) != default_epochs
-              ):
-            epoch = int(entry['model.trainer.nb_epoch'])
+        elif (
+            "model.trainer.nb_epoch" in entry
+            and entry["model.trainer.nb_epoch"] not in nones
+            and not isnan(entry["model.trainer.nb_epoch"])
+            and int(entry["model.trainer.nb_epoch"]) != default_epochs
+        ):
+            epoch = int(entry["model.trainer.nb_epoch"])
             defence.append("Epochs")
-        elif ('model.trainer.kwargs.nb_epoch' in entry 
-              and entry['model.trainer.kwargs.nb_epoch'] not in nones
-              and not isnan(entry['model.trainer.kwargs.nb_epoch'])
-              and int(entry['model.trainer.kwargs.nb_epoch']) != default_epochs
-              ):
-            epoch = int(entry['model.trainer.kwargs.nb_epoch'])
+        elif (
+            "model.trainer.kwargs.nb_epoch" in entry
+            and entry["model.trainer.kwargs.nb_epoch"] not in nones
+            and not isnan(entry["model.trainer.kwargs.nb_epoch"])
+            and int(entry["model.trainer.kwargs.nb_epoch"]) != default_epochs
+        ):
+            epoch = int(entry["model.trainer.kwargs.nb_epoch"])
             defence.append("Epochs")
         else:
             epoch = default_epochs
@@ -167,11 +169,10 @@ def merge_defences(results: pd.DataFrame, default_epochs=20):
             def_gens.append("Control")
     results["defence_name"] = defences
     results["def_gen"] = def_gens
-    results['epochs'] = epochs
-    results['epochs'] = pd.to_numeric(results['epochs'], errors='coerce')
-    results['epochs'] = results['epochs'].fillna(default_epochs)
+    results["epochs"] = epochs
+    results["epochs"] = pd.to_numeric(results["epochs"], errors="coerce")
+    results["epochs"] = results["epochs"].fillna(default_epochs)
     return results
-
 
 
 def merge_attacks(results: pd.DataFrame):
@@ -190,14 +191,14 @@ def merge_attacks(results: pd.DataFrame):
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"], default_epochs=20):
     df = parse_folder(folder, files=files)
-    df = df[df['data'].notna()]
-    df = df[df['model'].notna()]
-    df = df[df['attack'].notna()]
+    df = df[df["data"].notna()]
+    df = df[df["model"].notna()]
+    df = df[df["attack"].notna()]
     df = flatten_results(df)
     if hasattr(df, "model.init.name"):
         model_names = df["model.init.name"].str.split(".").str[-1]
         df["model_name"] = model_names
-        df['model_layers'] = [str(x).split("Net")[-1] for x in model_names]
+        df["model_layers"] = [str(x).split("Net")[-1] for x in model_names]
     return df
 
 
@@ -241,6 +242,7 @@ def format_control_parameter(data, control_dict):
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
     return data
+
 
 def clean_data_for_plotting(
     data,

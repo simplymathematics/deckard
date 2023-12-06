@@ -19,6 +19,7 @@ import argparse
 
 logger = logging.getLogger(__name__)
 
+
 def plot_aft(
     df,
     file,
@@ -64,6 +65,7 @@ def plot_aft(
     plt.gcf().clear()
     return ax, aft
 
+
 def plot_partial_effects(
     aft,
     covariate_array,
@@ -96,12 +98,14 @@ def plot_partial_effects(
     plt.gcf().clear()
     return pareto
 
+
 def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
     scores = {"train_score": train_score, "test_score": test_score}
     plt.show()
     return scores
+
 
 def make_afr_table(score_list, aft_dict, dataset, X_train):
     assert len(score_list) == len(
@@ -111,13 +115,11 @@ def make_afr_table(score_list, aft_dict, dataset, X_train):
     aft_data.index.name = "Model"
     aft_data.index = aft_dict.keys()
     aft_data["AIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-        for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
     aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
     aft_data["BIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-        for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
     # aft_data["Train LL"] = [x["train_score"] for x in score_list]
     # aft_data["Test LL"] = [x["test_score"] for x in score_list]
@@ -142,6 +144,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train):
     print(yaml.dump(aft_data.to_dict(), default_flow_style=False, indent=4))
     return aft_data
 
+
 def clean_data_for_aft(
     data,
     covariate_list,
@@ -159,14 +162,15 @@ def clean_data_for_aft(
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
     for col in cols:
-        cleaned = cleaned[cleaned[col]!= -1e10]
-        cleaned = cleaned[cleaned[col]!= 1e10]
+        cleaned = cleaned[cleaned[col] != -1e10]
+        cleaned = cleaned[cleaned[col] != 1e10]
     cleaned.dropna(inplace=True, how="any", axis=0)
     y = cleaned[target]
     assert (
         target in cleaned
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     return cleaned, y, data
+
 
 def split_data_for_aft(
     data,
@@ -180,7 +184,7 @@ def split_data_for_aft(
     X_train, X_test, y_train, y_test = train_test_split(
         cleaned,
         y,
-        train_size=(1-test_size),
+        train_size=(1 - test_size),
         test_size=test_size,
         random_state=random_state,
     )
@@ -191,9 +195,9 @@ def split_data_for_aft(
         duration_col in cleaned
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
     return X_train, X_test, y_train, y_test
-    
 
-def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, ):
+
+def render_afr_plot(mtype, config, X_train, X_test, target, duration_col):
     if len(config.keys()) > 0:
         plots = []
         plot_dict = config.get("plot", {})
@@ -213,8 +217,9 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, ):
             partial_effect_plot = plot_partial_effects(aft=aft, **partial_effect_dict)
             plots.append(partial_effect_plot)
     return aft, plots, score
-    
-def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=.8):
+
+
+def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8):
     covariate_list = config.pop("covariates", [])
     X_train, X_test, y_train, y_test = split_data_for_aft(
         data,
@@ -230,10 +235,18 @@ def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=
     mtypes = list(config.keys())
     for mtype in mtypes:
         sub_config = config.get(mtype, {})
-        models[mtype], plots[mtype], scores[mtype] = render_afr_plot(mtype=mtype,config=sub_config,X_train=X_train,X_test=X_test,target=target,duration_col=duration_col)
+        models[mtype], plots[mtype], scores[mtype] = render_afr_plot(
+            mtype=mtype,
+            config=sub_config,
+            X_train=X_train,
+            X_test=X_test,
+            target=target,
+            duration_col=duration_col,
+        )
     score_list = list(scores.values())
-    aft_data = make_afr_table(score_list,models, dataset, X_train)
+    aft_data = make_afr_table(score_list, models, dataset, X_train)
     print(aft_data)
+
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
@@ -268,19 +281,19 @@ if "__main__" == __name__:
         data.atk_value.replace("", 0, inplace=True)
     # data = drop_frames_without_results(data)
     data = calculate_failure_rate(data)
-    
-    
+
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
-    
+
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
-    
+
     data = min_max_scaling(data)
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
-    render_all_afr_plots(config, duration_col, target, data, dataset, test_size=.8)
-    
+    render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8)

@@ -150,26 +150,28 @@ def calculate_failure_rate(data):
         )
     elif hasattr(data, "predict_proba_time"):
         data.loc[:, "failure_rate"] = (
-            (1 - data.loc[:, "accuracy"]) 
+            (1 - data.loc[:, "accuracy"])
             * data.loc[:, "attack.attack_size"]
             / data.loc[:, "predict_proba_time"]
         )
     else:
-        raise ValueError("Data does not have predict_time or predict_proba_time as a column.")
+        raise ValueError(
+            "Data does not have predict_time or predict_proba_time as a column."
+        )
     data.loc[:, "adv_failure_rate"] = (
         (1 - data.loc[:, "adv_accuracy"])
         * data.loc[:, "attack.attack_size"]
         / data.loc[:, "adv_fit_time"]
     )
-  
+
     data.loc[:, "training_time_per_failure"] = (
         data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     )
-    
+
     data.loc[:, "training_time_per_adv_failure"] = (
         data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
-    
+
     data.loc[:, "adv_training_time_per_failure"] = (
         data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
@@ -190,9 +192,10 @@ def pareto_set(data, sense_dict):
 
 def find_subset(data, **kwargs):
     if len(kwargs) > 0:
-        qry = ' and '.join(["{} == '{}'".format(k,v) for k,v in kwargs.items()])    
+        qry = " and ".join(["{} == '{}'".format(k, v) for k, v in kwargs.items()])
         data.query(qry)
     return data
+
 
 def min_max_scaling(data, **kwargs):
     if "atk_gen" not in data.columns:
@@ -265,16 +268,16 @@ if __name__ == "__main__":
         "-s",
         "--subset",
         help="Subset of data you would like to plot",
-        default = None,
+        default=None,
         nargs="?",
     )
     parser.add_argument(
         "-d",
         "--drop_if_empty",
-        help = "Drop row if this columns is empty",
+        help="Drop row if this columns is empty",
         nargs="+",
         type=str,
-        default = [
+        default=[
             "accuracy",
             "adv_accuracy",
             "train_time",
@@ -284,8 +287,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--pareto_dict",
-        help = "Path to (optional) pareto set dictionary.",
-        default = None,
+        help="Path to (optional) pareto set dictionary.",
+        default=None,
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
@@ -302,16 +305,21 @@ if __name__ == "__main__":
         subset=args.drop_if_empty,
     )
     if args.pareto_dict is None:
-        sense_dict = {} 
+        sense_dict = {}
     else:
         if Path(args.pareto_dict).exists():
             with open(args.pareto_dict, "r") as f:
                 sense_dict = yaml.safe_load(f)
-        elif isinstance(args.pareto_dict.split(":")[:-2], str) and Path(args.pareto_dict.split(":")[:-2]).exists():
+        elif (
+            isinstance(args.pareto_dict.split(":")[:-2], str)
+            and Path(args.pareto_dict.split(":")[:-2]).exists()
+        ):
             with open(Path(args.pareto_dict.split(":")[:-2]), "r") as f:
                 sense_dict = yaml.safe_load(f)[args.pareto_dict.split(":")[:-1]]
         else:
-            raise ValueError(f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation.")
+            raise ValueError(
+                f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation."
+            )
     if len(list(sense_dict.keys())) > 1:
         data = pareto_set(data, sense_dict)
     else:
