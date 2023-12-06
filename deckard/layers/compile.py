@@ -266,7 +266,7 @@ def clean_data_for_plotting(
     if hasattr(data, "data.sample.random_state"):
         logger.info("Replacing data.sample.random_state with random_state...")
         data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = format_control_parameter(data, control_dict, min_max=True)
+    data = format_control_parameter(data, control_dict)
     return data
 
 
