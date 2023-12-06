@@ -1,0 +1,224 @@
+covariates:
+  - accuracy
+  - train_time
+  - predict_proba_time
+  - model.trainer.nb_epoch
+  - model.trainer.batch_size
+  - data.sample.random_state
+  - adv_failure_rate
+  - adv_fit_time
+weibull:
+  plot:
+    file : weibull_aft.pdf
+    title : Weibull AFR Model
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "train_time: lambda_": "$t_{train}$"
+    "predict_proba_time: lambda_": "$t_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$t_{attack}$"
+    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
+    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+  partial_effect:
+    - "file": "weibull_epochs_partial_effect.pdf"
+      "covariate_array": "model.trainer.nb_epoch"
+      "values_array": [1,10,25,50]
+      "title": "$S(t)$ for Weibull AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Epochs",
+          "labels": ["1", "10", "25", "50"]
+      }
+cox:
+  plot:
+    file : cox_aft.pdf
+    title : Cox AFR Model
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "train_time: lambda_": "$t_{train}$"
+    "predict_proba_time: lambda_": "$t_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$t_{attack}$"
+    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
+    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+  partial_effect:
+    - "file": "cox_epochs_partial_effect.pdf"
+      "covariate_array": "model.trainer.nb_epoch"
+      "values_array": [1,10,25,50]
+      "title": "$S(t)$ for Cox AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Epochs",
+          "labels": ["1", "10", "25", "50"]
+      }
+log_logistic:
+  plot:
+    file : log_logistic_aft.pdf
+    title : Log logistic AFR Model
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "train_time: lambda_": "$t_{train}$"
+    "predict_proba_time: lambda_": "$t_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$t_{attack}$"
+    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
+    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+  partial_effect:
+    - "file": "log_logistic_epochs_partial_effect.pdf"
+      "covariate_array": "model.trainer.nb_epoch"
+      "values_array": [1,10,25,50]
+      "title": "$S(t)$ for Log-Logistic AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Epochs",
+          "labels": ["1", "10", "25", "50"]
+      }
+log_normal:
+  plot:
+    file : log_normal_aft.pdf
+    title : Log Normal AFR Model
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "train_time: lambda_": "$t_{train}$"
+    "predict_proba_time: lambda_": "$t_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$t_{attack}$"
+    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
+    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+  partial_effect:
+    - "file": "log_normal_epochs_partial_effect.pdf"
+      "covariate_array": "model.trainer.nb_epoch"
+      "values_array": [1,10,25,50]
+      "title": "$S(t)$ for Log-Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Epochs",
+          "labels": ["1", "10", "25", "50"]
+      }
+# cox:
+#   plot:
+#     file: "cox_aft.pdf"
+#     title: "Cox AFR Model"
+#   labels:
+#     "adv_failure_rate": "$h_{adv}(t;\\theta)$"
+#     "def_value": "Defence Strength"
+#     "data.sample.random_state": "Random State"
+#     "train_time": "$t_{train}$"
+#     "model.trainer.nb_epoch": "No. of Layers"
+#     "adv_accuracy": "Adv. Accuracy"
+#     "adv_fit_time": "$t_{attack}$"
+#     "adv_log_loss": "Adv. Log Loss"
+#     "predict_time": "$t_{predict}$"
+#     "accuracy": "Ben. Accuracy"
+#     "failure_rate": "$h_{ben.}(t;\\theta)$"
+#     "atk_value": "Attack Strength"
+#   partial_effect:
+#     - "file": "cox_epochs_partial_effect.pdf"
+#       "covariate_array": "model.trainer.nb_epoch"
+#       "values_array": [1,10,25,50]
+#       "replacement_dict": cox_replacement_dict
+#       "title": "$S(t)$ for  Cox AFR"
+#       "ylabel": "Expectation of $S(t)$"
+#       "xlabel": "Time $T$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "Epochs",
+#           "labels": [1", "10", "25", "50"]
+#       }
+# log_normal:
+#   plot:
+#     title: "Log Normal AFR Model"
+#     file: "log_normal_aft.pdf"
+#   labels:
+#     "Intercept: sigma_": "$\\sigma$"
+#     "Intercept: mu_": "$\\mu$"
+#     "def_value: mu_": "Defence Strength"
+#     "atk_value: mu_": "Attack Strength"
+#     "train_time: mu_": "$t_{train}$"
+#     "predict_time: mu_": "$t_{predict}$"
+#     "adv_fit_time: mu_": "$t_{attack}$"
+#     "model.trainer.nb_epoch: mu_": "Epochs"
+#     "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate"
+#     "data.sample.random_state: mu_": "Random State"
+#     "adv_log_loss: mu_": "Adv. Log Loss"
+#     "adv_accuracy: mu_": "Adv. Accuracy"
+#     "accuracy: mu_": "Ben. Accuracy"
+#     "adv_failure_rate: mu_": "$h_{adv}(t,;\\theta)$"
+#     "def_gen": "Defence"
+#     "learning_rate: mu_": "Learning Rate"
+#   partial_effect:
+#     - "file": "log_normal_epochs_partial_effect.pdf"
+#       "covariate_array": "model.trainer.nb_epoch"
+#       "values_array": [1,10,25,50]
+#       "replacement_dict": cox_replacement_dict
+#       "title": "$S(t)$ for  Cox AFR"
+#       "ylabel": "Expectation of $S(t)$"
+#       "xlabel": "Time $T$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "Epochs",
+#           "labels": [1", "10", "25", "50"]
+#       }
+# log_logistic:
+#   plot:
+#     title: "Log Logistic AFR Model"
+#     file: "log_logistic_aft.pdf"
+#   labels:
+#     "Intercept: beta_": "$\\beta$"
+#     "Intercept: alpha_": "$\\alpha$"
+#     "data.sample.random_state: alpha_": "Random State"
+#     "def_value: alpha_": "Defence Strength"
+#     "atk_value: alpha_": "Attack Strength"
+#     "train_time: alpha_": "$t_{train}$"
+#     "predict_time: alpha_": "$t_{predict}$"
+#     "adv_accuracy: alpha_": "Adv. Accuracy"
+#     "accuracy: alpha_": "Ben. Accuracy"
+#     "adv_fit_time: alpha_": "$t_{attack}$"
+#     "model.trainer.nb_epoch: alpha_": "No. of Layers"
+#     "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate"
+#     "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$"
+#     "alpha_": ""
+#   partial_effect:
+#     - "file": "log_normal_epochs_partial_effect.pdf"
+#       "covariate_array": "model.trainer.nb_epoch"
+#       "values_array": [1,10,25,50]
+#       "replacement_dict": cox_replacement_dict
+#       "title": "$S(t)$ for  Cox AFR"
+#       "ylabel": "Expectation of $S(t)$"
+#       "xlabel": "Time $T$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "Epochs",
+#           "labels": [1", "10", "25", "50"]
+#       }
+
+
