@@ -1,3 +1,6 @@
+vars:
+  - ../conf/plots.yaml:line_plot
+  - ../conf/plots.yaml:scatter_plot
 stages:
   compile:
     foreach: # iterates through each stage
@@ -22,6 +25,10 @@ stages:
         - "../conf/plots.yaml"
       outs:
         - ${item}/plot_data.csv
+      plots:
+        - ${item}/${scatter_plot[0].file}
+        - ${item}/${scatter_plot[1].file}
+        - ${item}/${line_plot[0].file}
   afr:
     foreach:
        - mnist
