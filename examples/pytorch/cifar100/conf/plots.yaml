@@ -99,22 +99,22 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-# - file: adv_accuracy_vs_defence_type.pdf
-#   hue: model_name
-#   kind: boxen
-#   legend_title: Model Name
-#   titles: $\lambda_{adv.}$ vs Defence Type
-#   x: def_gen
-#   xlabels: Defence Type
-#   y: adv_accuracy
-#   ylabels: Adv. $\lambda_{ben.}$
-#   rotation : 90
-#   hue_order:
-#   - ResNet18
-#   - ResNet34
-#   - ResNet50
-#   - ResNet101
-#   - ResNet152
+- file: adv_accuracy_vs_defence_type.pdf
+  hue: model_name
+  kind: boxen
+  legend_title: Model Name
+  titles: $\lambda_{adv.}$ vs Defence Type
+  x: def_gen
+  xlabels: Defence Type
+  y: adv_accuracy
+  ylabels: Adv. $\lambda_{ben.}$
+  rotation : 90
+  hue_order:
+  - ResNet18
+  - ResNet34
+  - ResNet50
+  - ResNet101
+  - ResNet152
 - file: adv_accuracy_vs_attack_type.pdf
   hue: model_name
   kind: boxen
@@ -150,54 +150,54 @@ cat_plot:
   - ResNet101
   - ResNet152
 line_plot:
-# - file: def_param_vs_accuracy.pdf
-#   hue: def_gen
-#   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-#   title: $\lambda_{ben.}$ vs Defence Strength
-#   x: def_value
-#   x_scale: linear 
-#   xlabel: Defence Control Parameter
-#   y: accuracy
-#   y_scale: 
-#   ylabel: $\lambda_{ben.}$
-#   hue_order:
-#   - Control
-#   - Gauss-in
-#   - Gauss-out
-#   - Conf
-#   - FSQ
-# - file: def_param_vs_adv_accuracy.pdf
-#   hue: def_gen
-#   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-#   title: $\lambda_{adv.}$ vs Defence Strength
-#   x: def_value
-#   x_scale: linear 
-#   xlabel: Defence Control Parameter
-#   y: adv_accuracy
-#   y_scale: 
-#   ylabel: $\lambda_{adv.}$
-#   hue_order:
-#   - Control
-#   - Gauss-in
-#   - Gauss-out
-#   - Conf
-#   - FSQ
-# - file: def_param_vs_adv_failure_rate.pdf
-#   hue: def_gen
-#   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-#   title: $h_{adv}$ vs Defence Strength
-#   x: def_value
-#   x_scale: linear 
-#   xlabel: Defence Control Parameter
-#   y: adv_failure_rate
-#   y_scale: log
-#   ylabel: $h_{adv.}$
-#   hue_order:
-#   - Control
-#   - Gauss-in
-#   - Gauss-out
-#   - Conf
-#   - FSQ
+- file: def_param_vs_accuracy.pdf
+  hue: def_gen
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
+  title: $\lambda_{ben.}$ vs Defence Strength
+  x: def_value
+  x_scale: linear 
+  xlabel: Defence Control Parameter
+  y: accuracy
+  y_scale: 
+  ylabel: $\lambda_{ben.}$
+  hue_order:
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
+- file: def_param_vs_adv_accuracy.pdf
+  hue: def_gen
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
+  title: $\lambda_{adv.}$ vs Defence Strength
+  x: def_value
+  x_scale: linear 
+  xlabel: Defence Control Parameter
+  y: adv_accuracy
+  y_scale: 
+  ylabel: $\lambda_{adv.}$
+  hue_order:
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
+- file: def_param_vs_adv_failure_rate.pdf
+  hue: def_gen
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
+  title: $h_{adv}$ vs Defence Strength
+  x: def_value
+  x_scale: linear 
+  xlabel: Defence Control Parameter
+  y: adv_failure_rate
+  y_scale: log
+  ylabel: $h_{adv.}$
+  hue_order:
+  - Control
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - file: atk_param_vs_accuracy.pdf
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}

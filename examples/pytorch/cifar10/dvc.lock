@@ -509,41 +509,52 @@ stages:
     outs:
     - path: cifar/plots/aft_comparison.csv
       hash: md5
-      md5: 2ce3a28792b1d2a68d9c98de66fcdc96
-      size: 181
+      md5: 7023ca8225eb2085aa4c92e4ab90c95a
+      size: 229
     - path: cifar/plots/aft_comparison.tex
       hash: md5
-      md5: 77cbe9f4b383545bc617534c2dd793a5
-      size: 409
+      md5: cf6c34691417d16a6b5da3c0917bb8fa
+      size: 558
     - path: cifar/plots/cox_aft.pdf
       hash: md5
-      md5: 75f74d0f6551c7d9abd461700c8a8b6f
+      md5: 7b3c72bef42033288d4e3d458a655a5e
       size: 31134
     - path: cifar/plots/cox_partial_effects.pdf
       hash: md5
-      md5: dd3352b1824e8acb7a1453e9e45a77f2
+      md5: cb53d0bfa3a18a689854870732b7d886
       size: 29531
     - path: cifar/plots/log_logistic_aft.pdf
       hash: md5
-      md5: 372e9be069ee7258a686c6b417d137cb
+      md5: b7ad90d31208b22cb5680a02fd1c20e5
       size: 33418
     - path: cifar/plots/log_logistic_partial_effects.pdf
       hash: md5
-      md5: 83fac263c272ef61c8ffb27ce4e2f270
+      md5: ae9ee08ed0dd5ab2d68f6e975d108ad9
       size: 29341
     - path: cifar/plots/log_normal_aft.pdf
       hash: md5
-      md5: 782d0180d4e01d6e009b3b210b124f52
+      md5: 59fb36435c2071212470478f040f9906
       size: 33903
     - path: cifar/plots/log_normal_partial_effects.pdf
       hash: md5
-      md5: 0f93aa830d84a41f3b664f8ea7d75252
+      md5: dc187c78dca835e381f120bfb4fe24a6
       size: 29943
     - path: cifar/plots/weibull_aft.pdf
       hash: md5
-      md5: 857d2fed50ba4fce6dc72895d2d1f9e6
+      md5: 9940bda03fdfed790474f54700b60aa9
       size: 32073
     - path: cifar/plots/weibull_partial_effects.pdf
       hash: md5
-      md5: 0af77e5c34cb8f59a5e3484af7138c6b
+      md5: 38669b4228b05dfbee7be61b82908070
       size: 29546
+  copy_results:
+    cmd: cp -r cifar/plots/* ~/ml_afr/cifar/
+    deps:
+    - path: cifar/plots/aft_comparison.csv
+      hash: md5
+      md5: 7023ca8225eb2085aa4c92e4ab90c95a
+      size: 229
+    - path: cifar/plots/data.csv
+      hash: md5
+      md5: d4900d6803cc7869d3c16161e83752c4
+      size: 14370058

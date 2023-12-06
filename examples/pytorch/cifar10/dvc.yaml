@@ -114,7 +114,7 @@ stages:
     outs:
       - ${files.directory}/plots/aft_comparison.tex
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar10/
+      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
       deps:
         - ${files.directory}/plots/data.csv
         - ${files.directory}/plots/aft_comparison.csv

@@ -343,84 +343,169 @@ stages:
       md5: d78e6d6b697480fbccfb58bd791af506
       size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: e0afe623a549e81ca7d44a65ce362ee2
-      size: 1356
+      md5: cc6250493ce23c358493e58248580470
+      size: 1349
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet18.db
-      md5: 9994f9646c6081e91f5612a772d1cfe0
-      size: 245760
+      md5: a92cd9f6c41853a0752f3d8b3bcc5c5d
+      size: 450560
   attacks@ResNet152:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet152
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet152.db
       --config-name cifar100.yaml
     deps:
     - path: attacks.sh
-      md5: 963c858a322d7a4990a92a25d5684c57
-      size: 2907
+      md5: d78e6d6b697480fbccfb58bd791af506
+      size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: f21ab891918c857171941e84dcc1b09a
-      size: 561
+      md5: cc6250493ce23c358493e58248580470
+      size: 1349
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet152.db
-      md5: 5561d1c232b35787d315ebc17c28386d
-      size: 249856
+      md5: 4350bd46825aec423f0697eafd8bab5c
+      size: 450560
   attacks@ResNet34:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet34.db
       --config-name cifar100.yaml
     deps:
     - path: attacks.sh
-      md5: 963c858a322d7a4990a92a25d5684c57
-      size: 2907
+      md5: d78e6d6b697480fbccfb58bd791af506
+      size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: f21ab891918c857171941e84dcc1b09a
-      size: 561
+      md5: cc6250493ce23c358493e58248580470
+      size: 1349
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet34.db
-      md5: 95cd20456616d5eb65d47a74c8ea1fdd
-      size: 487424
+      md5: 14cee99bc02f11e3cddd61d012fa9d7a
+      size: 450560
   attacks@ResNet50:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet50.db
       --config-name cifar100.yaml
     deps:
     - path: attacks.sh
-      md5: 963c858a322d7a4990a92a25d5684c57
-      size: 2907
+      md5: d78e6d6b697480fbccfb58bd791af506
+      size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: f21ab891918c857171941e84dcc1b09a
-      size: 561
+      md5: cc6250493ce23c358493e58248580470
+      size: 1349
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet50.db
-      md5: 5556f78590f52e7879cb434450ab78c8
-      size: 745472
+      md5: beed70d2d444ab0a701398cc356310cf
+      size: 450560
   attacks@ResNet101:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet101.db
       --config-name cifar100.yaml
     deps:
     - path: attacks.sh
-      md5: 29a1990d363aa5e09675957c1beb3f61
-      size: 2929
+      md5: d78e6d6b697480fbccfb58bd791af506
+      size: 2897
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: b14eb1d736510305310573ea477f1d20
-      size: 1107
+      md5: cc6250493ce23c358493e58248580470
+      size: 1349
     - path: models.sh
       md5: 1937e58bedac027034aea7d4a5712407
       size: 1380
     outs:
     - path: cifar100/reports/attack/ResNet101.db
-      md5: bb029a105080100e8ea5ee180fe5cfbc
-      size: 544768
+      md5: 536be9988a2320d99f09c861e0bcd347
+      size: 450560
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder cifar100/reports/attack
+      --results_file cifar100/reports/attack.csv
+    deps:
+    - path: cifar100/reports/attack/
+      md5: 90b53d2ef28cb705a378b4ccc28ca86b.dir
+      size: 195753796
+      nfiles: 2888
+    - path: cifar100/reports/attack/ResNet101.db
+      md5: 536be9988a2320d99f09c861e0bcd347
+      size: 450560
+    - path: cifar100/reports/attack/ResNet152.db
+      md5: 4350bd46825aec423f0697eafd8bab5c
+      size: 450560
+    - path: cifar100/reports/attack/ResNet18.db
+      md5: a92cd9f6c41853a0752f3d8b3bcc5c5d
+      size: 450560
+    - path: cifar100/reports/attack/ResNet34.db
+      md5: 14cee99bc02f11e3cddd61d012fa9d7a
+      size: 450560
+    - path: cifar100/reports/attack/ResNet50.db
+      md5: beed70d2d444ab0a701398cc356310cf
+      size: 450560
+    outs:
+    - path: cifar100/reports/attack.csv
+      md5: 85de2012c07ede4d60c882b716355305
+      size: 3512767
+  plot:
+    cmd: python -m deckard.layers.plots --path cifar100/plots/ --file cifar100/reports/attack.csv
+      -o data.csv
+    deps:
+    - path: cifar100/reports/attack.csv
+      md5: 85de2012c07ede4d60c882b716355305
+      size: 3512767
+    outs:
+    - path: cifar100/plots/data.csv
+      md5: 0ade05afcc3da9f9249a3140849a5f8c
+      size: 2977261
+  afr:
+    cmd: python -m deckard.layers.afr --dataset cifar100 --data_file cifar100/plots/data.csv
+      --target adv_accuracy --duration_col adv_fit_time --dataset cifar100
+    deps:
+    - path: cifar100/plots/data.csv
+      md5: 0ade05afcc3da9f9249a3140849a5f8c
+      size: 2977261
+    outs:
+    - path: cifar100/plots/aft_comparison.csv
+      md5: 6ad56e75d18d7ea9349346b79a772167
+      size: 239
+    - path: cifar100/plots/aft_comparison.tex
+      md5: 7fd18c110cfcbbaf15b593d533706ed7
+      size: 893
+    - path: cifar100/plots/cox_aft.pdf
+      md5: 10bde6a3f3e7a8463424607968f3e4b5
+      size: 30834
+    - path: cifar100/plots/cox_partial_effects.pdf
+      md5: 3695b911cc517cea981298a65a4ad484
+      size: 38233
+    - path: cifar100/plots/log_logistic_aft.pdf
+      md5: beb231da66fec538d29b8511829232fc
+      size: 33470
+    - path: cifar100/plots/log_logistic_partial_effects.pdf
+      md5: a362711d166b57a5fb10a098aabcd831
+      size: 29667
+    - path: cifar100/plots/log_normal_aft.pdf
+      md5: 54b75851860d177c056ee6ca72ca7226
+      size: 33983
+    - path: cifar100/plots/log_normal_partial_effects.pdf
+      md5: 8af43a32bdbba1686206882c3822922a
+      size: 30232
+    - path: cifar100/plots/weibull_aft.pdf
+      md5: 2d7fa9a0bd0c0729d3492399a0d30178
+      size: 31582
+    - path: cifar100/plots/weibull_partial_effects.pdf
+      md5: cde5790226086c2ea7567011fba527db
+      size: 29933
+  copy_results:
+    cmd: cp -r cifar100/plots/* ~/ml_afr/cifar100/
+    deps:
+    - path: cifar100/plots/aft_comparison.csv
+      md5: 6ad56e75d18d7ea9349346b79a772167
+      size: 239
+    - path: cifar100/plots/data.csv
+      md5: 0ade05afcc3da9f9249a3140849a5f8c
+      size: 2977261

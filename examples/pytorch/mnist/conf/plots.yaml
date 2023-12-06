@@ -4,11 +4,11 @@ cat_plot:
   kind: boxen
   set:
     yscale: linear
-  titles: $\lambda_{adv.}$ vs Defence Type
+  titles: Adv. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: adv_accuracy
-  ylabels: $\lambda_{adv.}$
+  ylabels: Adv. Accuracy
   rotation : 90
   hue_order:
   - ResNet18
@@ -19,11 +19,11 @@ cat_plot:
 - file: ben_accuracy_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  titles: $\lambda_{ben.}$ vs Defence Type
+  titles: Ben. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: accuracy
-  ylabels: $\lambda_{ben.}$
+  ylabels: Ben. Accuracy
   rotation : 90
   hue_order:
   - ResNet18
@@ -103,11 +103,11 @@ cat_plot:
   hue: model_name
   kind: boxen
   legend_title: Model Name
-  titles: $\lambda_{adv.}$ vs Defence Type
+  titles: Adv. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: adv_accuracy
-  ylabels: Adv. $\lambda_{ben.}$
+  ylabels: Adv. Ben. Accuracy
   rotation : 90
   hue_order:
   - ResNet18
@@ -119,11 +119,11 @@ cat_plot:
   hue: model_name
   kind: boxen
   legend_title: Model Name
-  titles: $\lambda_{adv.}$ vs Attack Type
+  titles: Adv. Accuracy vs Attack Type
   x: atk_gen
   xlabels: Attack Type
   y: adv_accuracy
-  ylabels: $\lambda_{adv.}$
+  ylabels: Adv. Accuracy
   rotation : 90
   hue_order:
   - ResNet18
@@ -153,13 +153,13 @@ line_plot:
 - file: def_param_vs_accuracy.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-  title: $\lambda_{ben.}$ vs Defence Strength
+  title: Ben. Accuracy vs Defence Strength
   x: def_value
   x_scale: linear 
   xlabel: Defence Control Parameter
   y: accuracy
   y_scale: 
-  ylabel: $\lambda_{ben.}$
+  ylabel: Ben. Accuracy
   hue_order:
   - Control
   - Gauss-in
@@ -169,13 +169,13 @@ line_plot:
 - file: def_param_vs_adv_accuracy.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-  title: $\lambda_{adv.}$ vs Defence Strength
+  title: Adv. Accuracy vs Defence Strength
   x: def_value
   x_scale: linear 
   xlabel: Defence Control Parameter
   y: adv_accuracy
   y_scale: 
-  ylabel: $\lambda_{adv.}$
+  ylabel: Adv. Accuracy
   hue_order:
   - Control
   - Gauss-in
@@ -201,13 +201,13 @@ line_plot:
 - file: atk_param_vs_accuracy.pdf
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}
-  title: $\lambda_{adv.}$ vs Attack Strength
+  title: Adv. Accuracy vs Attack Strength
   x: atk_value
   x_scale: linear 
   xlabel: Attack Control Parameter
   y: adv_accuracy
   y_scale: 
-  ylabel: $\lambda_{adv.}$
+  ylabel: Adv. Accuracy
   hue_order:
   - FGM
   - PGD
@@ -235,6 +235,7 @@ scatter_plot:
   - ResNet50
   - ResNet101
   - ResNet152
+
   # style : atk_gen
 # - x: train_time_per_sample
 #   y: adv_failure_rate

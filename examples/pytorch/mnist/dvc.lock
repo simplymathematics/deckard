@@ -65,51 +65,51 @@ stages:
     outs:
     - path: mnist/plots/aft_comparison.csv
       hash: md5
-      md5: 61a80f55e2781b1d8439d15622d02f18
-      size: 182
+      md5: e29b7fbd967e947ae0a3273a0204f14e
+      size: 230
     - path: mnist/plots/aft_comparison.tex
       hash: md5
-      md5: 40b136fcd07ffc5afac66b855fb1a0ae
-      size: 408
+      md5: cf74753dd3b31cc18fb6d56f015cb231
+      size: 559
     - path: mnist/plots/cox_aft.pdf
       hash: md5
-      md5: 5bb62af7b8b5c4939044c917334962b8
+      md5: fa919a94982207e3eb6ea131fd30916c
       size: 31116
     - path: mnist/plots/cox_partial_effects.pdf
       hash: md5
-      md5: ff3a05787c845851e9360ddee4f9477f
+      md5: 6bc299bbdc9ebf1e72e7ddfcd64dbac2
       size: 45205
     - path: mnist/plots/log_logistic_aft.pdf
       hash: md5
-      md5: 7ba49fa73fa262a1707f1eaa829e94bc
+      md5: d84975623591c5235dbf677ebe33a648
       size: 33200
     - path: mnist/plots/log_logistic_partial_effects.pdf
       hash: md5
-      md5: 8325b67480d660a697f837f2fb097862
+      md5: c2186f297bc4471bf8a1042a425e7acd
       size: 30586
     - path: mnist/plots/log_normal_aft.pdf
       hash: md5
-      md5: 78ebfb917fb2e96f7ac92f88eddc616b
+      md5: 5d9115448e7410c087adfd3d3c082c8e
       size: 33689
     - path: mnist/plots/log_normal_partial_effects.pdf
       hash: md5
-      md5: 188b2e9780430d31440219c90696ae8f
+      md5: 405ae21731b2b4756b4bfab27bc44e1b
       size: 31186
     - path: mnist/plots/weibull_aft.pdf
       hash: md5
-      md5: 8743c238955628d835d3d810264aeb72
+      md5: 886dfbe31cbacece7435fc85cb9bcf02
       size: 31858
     - path: mnist/plots/weibull_partial_effects.pdf
       hash: md5
-      md5: 20142eb58002d28f34defe59e688355a
+      md5: 4cae830f6a9593a9c3007643381c5998
       size: 30914
   copy_results:
     cmd: cp -r mnist/plots/* ~/ml_afr/mnist/
     deps:
     - path: mnist/plots/aft_comparison.csv
       hash: md5
-      md5: 61a80f55e2781b1d8439d15622d02f18
-      size: 182
+      md5: e29b7fbd967e947ae0a3273a0204f14e
+      size: 230
     - path: mnist/plots/data.csv
       hash: md5
       md5: db610c0ad15bbf4dbab8c6fefa65ceb5
