@@ -101,6 +101,50 @@ if "__main__" == __name__:
         plt.show()
         plt.gcf().clear()
         return ax, aft
+    def plot_aft(
+        df,
+        file,
+        event_col,
+        duration_col,
+        title,
+        mtype,
+        xlabel=None,
+        ylabel=None,
+        replacement_dict={},
+        **kwargs,
+    ):
+        if mtype == "weibull":
+            aft = WeibullAFTFitter(**kwargs)
+        elif mtype == "log_normal":
+            aft = LogNormalAFTFitter(**kwargs)
+        elif mtype == "log_logistic":
+            aft = LogLogisticAFTFitter(**kwargs)
+        elif mtype == "cox":
+            aft = CoxPHFitter(**kwargs)
+        assert (
+            duration_col in df.columns
+        ), f"Column {duration_col} not in dataframe with columns {df.columns}"
+        if event_col is not None:
+            assert (
+                event_col in df.columns
+            ), f"Column {event_col} not in dataframe with columns {df.columns}"
+        plt.gcf().clear()
+        aft.fit(df, duration_col=duration_col, event_col=event_col)
+        ax = aft.plot()
+        labels = ax.get_yticklabels()
+        labels = [label.get_text() for label in labels]
+        for k, v in replacement_dict.items():
+            labels = [label.replace(k, v) for label in labels]
+        ax.set_yticklabels(labels)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.get_figure().tight_layout()
+        ax.get_figure().savefig(FOLDER / file)
+        logger.info(f"Saved graph to {FOLDER / file}")
+        plt.show()
+        plt.gcf().clear()
+        return ax, aft
 
     def plot_partial_effects(
         aft,

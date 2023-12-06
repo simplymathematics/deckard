@@ -98,7 +98,7 @@ def scatter_plot(
     hue_order=None,
     **kwargs,
 ):
-    # plt.gcf().clear()
+    plt.gcf().clear()
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
         data=data,
@@ -142,32 +142,36 @@ def calculate_failure_rate(data):
     logger.info("Calculating failure rate")
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
-    data.loc[:, "failure_rate"] = (
-        (1 - data.loc[:, "accuracy"])
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "predict_time"]
-    )
-    data.loc[:, "success_rate"] = (
-        data.loc[:, "accuracy"]
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "predict_time"]
-    )
+    if hasattr(data, "predict_time"):
+        data.loc[:, "failure_rate"] = (
+            (1 - data.loc[:, "accuracy"])
+            * data.loc[:, "attack.attack_size"]
+            / data.loc[:, "predict_time"]
+        )
+    elif hasattr(data, "predict_proba_time"):
+        data.loc[:, "failure_rate"] = (
+            (1 - data.loc[:, "accuracy"])
+            * data.loc[:, "attack.attack_size"]
+            / data.loc[:, "predict_proba_time"]
+        )
+    else:
+        raise ValueError(
+            "Data does not have predict_time or predict_proba_time as a column.",
+        )
     data.loc[:, "adv_failure_rate"] = (
         (1 - data.loc[:, "adv_accuracy"])
         * data.loc[:, "attack.attack_size"]
         / data.loc[:, "adv_fit_time"]
     )
-    data.loc[:, "adv_success_rate"] = (
-        data.loc[:, "adv_success"]
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "adv_fit_time"]
-    )
+
     data.loc[:, "training_time_per_failure"] = (
         data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     )
+
     data.loc[:, "training_time_per_adv_failure"] = (
         data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
+
     data.loc[:, "adv_training_time_per_failure"] = (
         data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
@@ -186,6 +190,13 @@ def pareto_set(data, sense_dict):
     return data.iloc[these, :]
 
 
+def find_subset(data, **kwargs):
+    if len(kwargs) > 0:
+        qry = " and ".join(["{} == '{}'".format(k, v) for k, v in kwargs.items()])
+        data.query(qry)
+    return data
+
+
 def min_max_scaling(data, **kwargs):
     if "atk_gen" not in data.columns:
         attacks = []
@@ -201,7 +212,6 @@ def min_max_scaling(data, **kwargs):
         min_ = data[data.def_gen == def_].def_value.min()
         scaled_value = (data[data.def_gen == def_].def_value - min_) / (max_ - min_)
         data.loc[data.def_gen == def_, "def_value"] = scaled_value
-
     for atk in attacks:
         max_ = data[data.atk_gen == atk].atk_value.max()
         min_ = data[data.atk_gen == atk].atk_value.min()
@@ -254,34 +264,67 @@ if __name__ == "__main__":
         help="Path to the config file",
         default="conf/plots.yaml",
     )
+    parser.add_argument(
+        "-s",
+        "--subset",
+        help="Subset of data you would like to plot",
+        default=None,
+        nargs="?",
+    )
+    parser.add_argument(
+        "-d",
+        "--drop_if_empty",
+        help="Drop row if this columns is empty",
+        nargs="+",
+        type=str,
+        default=[
+            "accuracy",
+            "adv_accuracy",
+            "train_time",
+            "adv_fit_time",
+            "predict_proba_time",
+        ],
+    )
+    parser.add_argument(
+        "--pareto_dict",
+        help="Path to (optional) pareto set dictionary.",
+        default=None,
+    )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     data = pd.read_csv(args.file)
+    if isinstance(args.drop_if_empty, str):
+        args.drop_if_empty = args.drop_if_empty.split(",")
+    else:
+        assert isinstance(args.drop_if_empty, list)
     data = drop_frames_without_results(
         data,
-        subset=[
-            "accuracy",
-            "adv_accuracy",
-            "train_time",
-            "adv_fit_time",
-            "predict_time",
-        ],
+        subset=args.drop_if_empty,
     )
-    # sense_dict = {
-    #     "accuracy": "max",
-    #     "adv_accuracy": "max",
-    #     "adv_success": "min",
-    #     "model_layers": "diff",
-    #     "atk_param": "diff",
-    #     "def_param": "diff",
-    #     "atk_gen": "diff",
-    #     "def_gen": "diff",
-    #     "data.sample.random_state": "diff",
-    # }
-    # data = pareto_set(data, sense_dict)
+    if args.pareto_dict is None:
+        sense_dict = {}
+    else:
+        if Path(args.pareto_dict).exists():
+            with open(args.pareto_dict, "r") as f:
+                sense_dict = yaml.safe_load(f)
+        elif (
+            isinstance(args.pareto_dict.split(":")[:-2], str)
+            and Path(args.pareto_dict.split(":")[:-2]).exists()
+        ):
+            with open(Path(args.pareto_dict.split(":")[:-2]), "r") as f:
+                sense_dict = yaml.safe_load(f)[args.pareto_dict.split(":")[:-1]]
+        else:
+            raise ValueError(
+                f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation.",
+            )
+    if len(list(sense_dict.keys())) > 1:
+        data = pareto_set(data, sense_dict)
+    else:
+        for col in args.drop_if_empty:
+            data[col] = pd.to_numeric(data[col])
     data = calculate_failure_rate(data)
     data = min_max_scaling(data)
     if "Unnamed: 0" in data.columns:
@@ -310,19 +353,19 @@ if __name__ == "__main__":
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    cat_plot_list = big_dict["cat_plot"]
+    cat_plot_list = big_dict.get("cat_plot", [])
     i = 0
     for dict_ in cat_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
         cat_plot(data, **dict_, folder=FOLDER)
-    line_plot_list = big_dict["line_plot"]
+    line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
         line_plot(data, **dict_, folder=FOLDER)
 
-    scatter_plot_list = big_dict["scatter_plot"]
+    scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         i += 1
         logger.info(f"Rendering graph {i}")
