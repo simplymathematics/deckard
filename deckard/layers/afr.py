@@ -279,7 +279,7 @@ if "__main__" == __name__:
     if hasattr(data, "atk_value"):
         data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
         data.atk_value.replace("", 0, inplace=True)
-    # data = drop_frames_without_results(data)
+    data = drop_frames_without_results(data)
     data = calculate_failure_rate(data)
 
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."

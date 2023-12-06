@@ -156,7 +156,7 @@ def calculate_failure_rate(data):
         )
     else:
         raise ValueError(
-            "Data does not have predict_time or predict_proba_time as a column."
+            "Data does not have predict_time or predict_proba_time as a column.",
         )
     data.loc[:, "adv_failure_rate"] = (
         (1 - data.loc[:, "adv_accuracy"])
@@ -318,7 +318,7 @@ if __name__ == "__main__":
                 sense_dict = yaml.safe_load(f)[args.pareto_dict.split(":")[:-1]]
         else:
             raise ValueError(
-                f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation."
+                f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation.",
             )
     if len(list(sense_dict.keys())) > 1:
         data = pareto_set(data, sense_dict)
