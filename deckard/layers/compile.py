@@ -305,14 +305,12 @@ if __name__ == "__main__":
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     parser.add_argument("--default_epochs", type=int, default=20)
-    parser.add_argument("--merge_attacks", type=bool, default=True)
-    parser.add_argument("--merge_defences", type=bool, default=True)
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
     results_folder = args.results_folder
-    results = parse_results(report_folder, default_epochs=args.default_epochs, merge_def=args.merge_defences, merge_atk=args.merge_attacks)
+    results = parse_results(report_folder, default_epochs=args.default_epochs)
     if Path(args.config).is_absolute():
         with open(Path(args.config), "r") as f:
             big_dict = yaml.load(f, Loader=yaml.FullLoader)
