@@ -1,3 +1,16 @@
+vars:
+  - conf/plots.yaml:line_plot
+  - conf/plots.yaml:scatter_plot
+  - conf/plots.yaml:cat_plot
+  - conf/afr.yaml:covariates
+  - conf/afr.yaml:weibull
+  - conf/afr.yaml:cox
+  - conf/afr.yaml:log_logistic
+  - conf/afr.yaml:log_normal
+  - conf/clean.yaml:attacks
+  - conf/clean.yaml:defences
+  - conf/clean.yaml:params
+  - conf/clean.yaml:fillna
 stages:
   train:
     cmd: python -m deckard.layers.experiment train --config_file cifar100.yaml
@@ -8,9 +21,12 @@ stages:
       - files
     outs:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
@@ -24,13 +40,31 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-
+  # models: # This is a loop over the ResNet models
+  #   foreach:
+  #     - ResNet18
+  #     # - ResNet34
+  #     # - ResNet50
+  #     # - ResNet101
+  #     # - ResNet152
+  #   do: # This script configures eazch defence
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml 
+  #     deps:
+  #     - models.sh
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+  #     outs:
+  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
+  #         cache: True
+  #         persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18
@@ -61,19 +95,57 @@ stages:
       - ${files.directory}/${files.reports}/${item}/ResNet34.db
       - ${files.directory}/${files.reports}/${item}/ResNet50.db
       - ${files.directory}/${files.reports}/${item}/ResNet101.db
-      - ${files.directory}/${files.reports}/${item}/ResNet152.db
+      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
+  clean:
+    foreach: # iterates through each stage
+      # - train 
+      - attack
+    do:
+      cmd: python -m deckard.layers.clean_data -i ${files.directory}/${files.reports}/${item}.csv -o ${files.directory}/${files.reports}/clean_${item}.csv -c conf/clean.yaml
+      deps:
+      - ${files.directory}/${files.reports}/${item}.csv
+      outs:
+      - ${files.directory}/${files.reports}/clean_${item}.csv
+      params:
+        - files.directory
+        - files.reports
+        - conf/clean.yaml:
+          - attacks
+          - defences
+          - params
+          - fillna
   plot:
-    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/clean_attack.csv -c conf/plots.yaml
     deps:
-      - ${files.directory}/${files.reports}/attack.csv
-    outs:
-      - ${files.directory}/plots/data.csv
+      - ${files.directory}/${files.reports}/clean_attack.csv
+    plots:
+      - ${files.directory}/plots/${cat_plot[0].file}
+      - ${files.directory}/plots/${cat_plot[1].file}
+      - ${files.directory}/plots/${cat_plot[2].file}
+      - ${files.directory}/plots/${cat_plot[3].file}
+      - ${files.directory}/plots/${cat_plot[4].file}
+      - ${files.directory}/plots/${cat_plot[5].file}
+      - ${files.directory}/plots/${cat_plot[6].file}
+      - ${files.directory}/plots/${cat_plot[7].file}
+      - ${files.directory}/plots/${cat_plot[8].file}
+      - ${files.directory}/plots/${line_plot[0].file}
+      - ${files.directory}/plots/${line_plot[1].file}
+      - ${files.directory}/plots/${line_plot[2].file}
+      - ${files.directory}/plots/${line_plot[3].file}
+      - ${files.directory}/plots/${scatter_plot[0].file}
+    params:
+      - files.directory
+      - files.reports
+      - conf/plots.yaml:
+        - line_plot
+        - scatter_plot
+        - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/data.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar100
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/clean_attack.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml
     deps:
-      - ${files.directory}/plots/data.csv
+      - ${files.directory}/plots/clean_attack.csv
     plots:
       - ${files.directory}/plots/weibull_aft.pdf
       - ${files.directory}/plots/weibull_partial_effects.pdf
@@ -87,9 +159,15 @@ stages:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
       - ${files.directory}/plots/aft_comparison.tex
+    params:
+      - files.directory
+      - conf/afr.yaml:
+        - covariates
+        - weibull
+        - cox
+        - log_logistic
+        - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar100/
+      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar100
       deps:
-        - ${files.directory}/plots/data.csv
-        - ${files.directory}/plots/aft_comparison.csv
-
+        - ${files.directory}/plots/aft_comparison.tex

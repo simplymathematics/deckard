@@ -33,59 +33,299 @@ stages:
       hash: md5
       md5: ada4d505a6c72408e50b929b2869ffee
       size: 19747128
+    params:
+      params.yaml:
+        files.directory: mnist
+        files.reports: reports
+      conf/plots.yaml:
+        cat_plot:
+        - file: adv_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: linear
+          titles: Adv. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          titles: Ben. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: accuracy
+          ylabels: Ben. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failures_per_train_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{ben.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_failure
+          ylabels: $\bar{C}_{ben.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_attack_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_test_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: $h_{adv}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_failure_rate
+          ylabels: $h_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: Adv. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_accuracy
+          ylabels: Adv. Ben. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_accuracy_vs_attack_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: Adv. Accuracy vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failure_rate_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $h_{ben}(t; \theta)$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: failure_rate
+          ylabels: $h_{ben}(t; \theta)$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        line_plot:
+        - file: def_param_vs_accuracy.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Ben. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: accuracy
+          y_scale:
+          ylabel: Ben. Accuracy
+        - file: def_param_vs_adv_accuracy.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Adv. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+        - file: def_param_vs_adv_failure_rate.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: $h_{adv}$ vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: adv_failure_rate
+          y_scale: log
+          ylabel: $h_{adv.}$
+        - file: atk_param_vs_accuracy.pdf
+          hue: atk_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          title: Adv. Accuracy vs Attack Strength
+          x: atk_value
+          x_scale: linear
+          xlabel: Attack Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+          hue_order:
+          - FGM
+          - PGD
+          - Deep
+          - HSJ
+          - Pixel
+          - Thresh
+        scatter_plot:
+        - x: train_time_per_sample
+          y: adv_failure_rate
+          hue: model_name
+          xlabel: $t_{train}$
+          ylabel: $h_{adv}$
+          title: $h_{adv}$ vs $t_{train}$
+          file: adv_failure_rate_vs_train_time.pdf
+          y_scale: log
+          x_scale: log
+          legend:
+            title: Model Name
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
     outs:
     - path: mnist/plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: 033b5f73079ca24f14bae1acb223d11b
+      md5: 92b07eb45ea394538a0b75c82123f428
       size: 32685
     - path: mnist/plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 3bfe6d8d611d2c268504a849c6434513
+      md5: 49f64c9cade92e7ac3a70ec86c082d3d
       size: 33020
     - path: mnist/plots/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: c1ce55cadecb07ca5f4a6d5458c82b97
+      md5: 5743c33b2d2a7df7167de781a4b12a81
       size: 96055
     - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.pdf
       hash: md5
-      md5: 02ab7bc4b1599760200f2b96efdd57ec
+      md5: b3e31d12c1e2c4016b67723728a98229
       size: 40000
     - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.pdf
       hash: md5
-      md5: a3f3f394ffbc305ca05fa15a0050a4b6
+      md5: 0c0a573771c878a94533444821537196
       size: 41252
     - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: 10f85d873da775c547a89c6ab8dc8131
+      md5: 7a3eb0908595a871522fe2da8c3bd20b
       size: 37353
     - path: mnist/plots/atk_param_vs_accuracy.pdf
       hash: md5
-      md5: 54e655e02f5df0e276c17a8c2cce8920
-      size: 20216
+      md5: 6182197d607cfe78c5de1539bb53ddaa
+      size: 20227
     - path: mnist/plots/ben_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 43db49b1d227e886254be835bb7db56e
+      md5: 76e69bd957d15a913ed5b4c497f89462
       size: 30124
     - path: mnist/plots/ben_failure_rate_vs_defence_type.pdf
       hash: md5
-      md5: 27710fa38be6c7570d7d8bdc65d0b85d
+      md5: 2327bd62a5fe51f413b1b4863b3be38b
       size: 42600
     - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: 80d14580b1f8f265c0babbc64085dca6
+      md5: 879b6eca3f8b9d204168b362582be948
       size: 37589
     - path: mnist/plots/def_param_vs_accuracy.pdf
       hash: md5
-      md5: 42d94cf288d91f7b3e4a885711a4b878
-      size: 20542
+      md5: 350fd705ea0dcf1209928ef4c09161bf
+      size: 20544
     - path: mnist/plots/def_param_vs_adv_accuracy.pdf
       hash: md5
-      md5: 787930e574826068d59a09b60cbc0ac2
-      size: 19857
+      md5: 355c59325cae349b23af1bd5495a784a
+      size: 19853
     - path: mnist/plots/def_param_vs_adv_failure_rate.pdf
       hash: md5
-      md5: 0f54d454c751d318c137d0a88c7c5aae
-      size: 23627
+      md5: 88f41c3ee94405253c832a75bbd69b4c
+      size: 23630
   afr:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/plots/data.csv
       --target adv_accuracy --duration_col adv_fit_time --dataset mnist
@@ -154,6 +394,41 @@ stages:
       hash: md5
       md5: aa61d0f5118327d164cfc37a466e5162
       size: 47376297
+    params:
+      params.yaml:
+        files.directory: mnist
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+        params:
+          Deep: attack.init.kwargs.nb_grads
+          FGM: attack.init.kwargs.eps
+          HSJ: attack.init.kwargs.max_iter
+          Pixel: attack.init.kwargs.th
+          PGD: attack.init.kwargs.eps
+          Thresh: attack.init.kwargs.th
+          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
+          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
+          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
+          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
     outs:
     - path: mnist/reports/clean_attack.csv
       hash: md5
