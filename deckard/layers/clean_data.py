@@ -90,7 +90,7 @@ def find_subset(data, **kwargs):
     return data
 
 
-def min_max_scaling(data, **kwargs):
+def min_max_scaling(data, *args):
     if "atk_gen" not in data.columns:
         attacks = []
     else:
@@ -110,8 +110,11 @@ def min_max_scaling(data, **kwargs):
         min_ = data[data.atk_gen == atk].atk_value.min()
         scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
         data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
-    for k, v in kwargs.items():
-        data.loc[:, k] = data.loc[:, k].apply(v)
+    for k in args:
+        max_ = data[k].max()
+        min_ = data[k].min()
+        scaled_value = (data[k] - min_) / (max_ - min_)
+        data[k] = scaled_value
     return data
 
 
@@ -124,11 +127,14 @@ def merge_defences(results: pd.DataFrame):
         "model.art.pipeline.transformer.name",
         "model.art.pipeline.trainer.name",
     ]
+    control_variable = [
+        "model_layers",
+    ]
     defaults = {
         "model.trainer.nb_epoch": 20,
         "model.trainer.kwargs.nb_epoch": 20,
     }
-    
+    assert "model_layers" in results.columns, "model_layers not in results.columns"
     for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
         defence = []
         i = 0
@@ -143,8 +149,22 @@ def merge_defences(results: pd.DataFrame):
                 pass
             i += 1
         for k, v in defaults.items():
-            if k in entry and v != entry[k] and defence == []:
+            if (
+                k in entry 
+                and v != entry[k] 
+                and not isnan(pd.to_numeric(entry[k]))
+                and len(defence) == 0
+            ):
                 defence.append(k)
+            else:
+                pass
+        for col in control_variable:
+            if (
+                col in entry
+                and entry[col] not in nones
+                and len(defence) == 0
+            ):
+                defence.append(col)
             else:
                 pass
         ############################################################################################################
@@ -163,9 +183,8 @@ def merge_defences(results: pd.DataFrame):
         def_gens.append(def_gen)
     results["defence_name"] = defences
     results["def_gen"] = def_gens
-    results["def_gen"].fillna("Control", inplace=True)
-    results["defence_name"].fillna("Control", inplace=True)
-    logger.info(f"Unique defences: {set(results.def_gen)}")
+    logger.info(f"Unique defences after merging: {set(results.def_gen)}")
+    assert hasattr(results,"def_gen"), "def_gen not in results.columns"
     return results
 
 
@@ -181,19 +200,17 @@ def merge_attacks(results: pd.DataFrame):
         results["attack_name"] = attacks
         results["atk_gen"] = [str(x).split(".")[-1] for x in attacks]
     logger.info(f"Unique attacks: {set(results.atk_gen)}")
+    assert hasattr(results,"atk_gen"), "atk_gen not in results.columns"
     return results
 
-def format_control_parameter(data, control_dict, fillna):
+def format_control_parameter(data, control_dict, fillna, def_control="model_layers"):
     logger.info("Formatting control parameters...")
-    if hasattr(data, "model.init.name"):
-        model_names = data["model.init.name"].str.split(".").str[-1]
-        data["model_name"] = model_names
-        data["model_layers"] = [str(x).split("Net")[-1] for x in model_names]
-    if hasattr(data, "def_gen"):
+    if "def_gen" in data:
         defences =  list(data.def_gen.unique())
     else:
         defences = []
-    if hasattr(data, "atk_gen"):
+    logger.info(f"Unique defences: {defences}")
+    if "atk_gen" in data:
         attacks = list(data.atk_gen.unique())
     else:
         attacks = []
@@ -201,50 +218,51 @@ def format_control_parameter(data, control_dict, fillna):
     logger.info("Fillna: ")
     logger.info(yaml.dump(fillna))
     for defence in defences:
-        if defence in control_dict:
+        if defence in control_dict and defence != "Epochs":
             # Get parameter name from control_dict
             param = control_dict[defence]
             # Shorten parameter name
-            data.loc[data.def_gen == defence, "def_param"] = param.split(".")[-1]
+            data.loc[data.def_gen == defence, "def_param"] = param
             # Read parameter value from data if it exists, otherwise set to nan
             value = data[data.def_gen == defence][param] if param in data.columns else np.nan
             # strip whitespace
             value = value.str.strip() if isinstance(value, str) else value
             # Set value to numeric
             value = pd.to_numeric(value, errors="coerce")
-            # Fill nan values with fillna value
-            value = value.fillna(fillna.get(defence, np.nan))
             # Set value to data
             data.loc[data.def_gen == defence, "def_value"] = value
-            logger.info(f"Unique values for defence, {defence}:")
-            logger.info(f"{data[data.def_gen == defence].def_value.unique()}")
+            logger.debug(f"Unique values for defence, {defence}:")
+            logger.debug(f"{data[data.def_gen == defence].def_value.unique()}")
+        elif defence in fillna.keys():
+            param = control_dict[defence]
+            value = data[data.def_gen == defence][param] if param in data.columns else np.nan
+            value = pd.to_numeric(value, errors="coerce")
+            value = value.fillna(fillna.get(defence, np.nan)) if isinstance(value, pd.Series) else value
+            data.loc[data.def_gen == defence, "def_value"] = value
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
-    data = data.dropna(axis=0, subset=["def_value"])
     for attack in attacks:
         if attack in control_dict:
             # Get parameter name from control_dict
             param = control_dict[attack]
             # Shorten parameter name
-            data.loc[data.atk_gen == attack, "atk_param"] = param.split(".")[-1]
+            data.loc[data.atk_gen == attack, "atk_param"] = param
             # Read parameter value from data if it exists, otherwise set to nan
             value = data[data.atk_gen == attack][param] if param in data.columns else np.nan
             # strip whitespace
             value = value.str.strip() if isinstance(value, str) else value
-            logger.info(f'Unique values: {pd.unique(value)}')
             # Set value to numeric
             value = pd.to_numeric(value, errors="coerce")
             # Fill nan values with fillna value
-            value = value.fillna(fillna.get(attack, np.nan))
+            value = value.fillna(fillna.get(attack, np.nan)) if isinstance(value, pd.Series) else value
             # Set value to data
             data.loc[data.atk_gen == attack, "atk_value"] = value
-            logger.info(f"Unique values for attack, {attack}:")
-            logger.info(f"{data[data.atk_gen == attack].atk_value.unique()}")
+            logger.debug(f"Unique values for attack, {attack}:")
+            logger.debug(f"{data[data.atk_gen == attack].atk_value.unique()}")
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-    data = data.dropna(axis=0, subset=["atk_value"])
     return data
 
 
@@ -257,18 +275,7 @@ def clean_data_for_plotting(
     fillna,
 
 ):
-    data = merge_defences(data)
-    if hasattr(data, "def_gen"):
-        def_gen = data.def_gen.map(def_gen_dict)
-        data.def_gen = def_gen
-        data.dropna(axis=0, subset=["def_gen"], inplace=True)
-    data = merge_attacks(data)
-    if hasattr(data, "atk_gen"):
-        atk_gen = data.atk_gen.map(atk_gen_dict)
-        data.atk_gen = atk_gen
-        data.dropna(axis=0, subset=["atk_gen"], inplace=True)
-    data = format_control_parameter(data, control_dict, fillna)
-    logger.info("Replacing attack and defence names with short names...")
+    
     
     logger.info(f"Dropping empty rows. Original shape: {data.shape}")
     data.dropna(axis=1, how="all", inplace=True)
@@ -281,11 +288,29 @@ def clean_data_for_plotting(
     model_names = data["model.init.name"].str.split(".").str[-1]
     data["model_name"] = model_names
     # If "Net" is in the model name, we assume the following string denotes the layers as in ResNet18
-    model_layers = [str(x).split("Net")[-1] for x in model_names]
-    data["model_layers"] = model_layers
-    if hasattr(data, "data.sample.random_state"):
-        logger.info("Replacing data.sample.random_state with random_state...")
-        data["data.sample.random_state"].rename("random_state", inplace=True)
+    if hasattr(data, "model.init.name"):
+        model_names = data["model.init.name"].str.split(".").str[-1]
+        data.loc[:, "model_name"] = model_names
+        model_layers = [str(x).split("Net")[-1] for x in model_names]
+        data.loc[:, "model_layers"] = model_layers
+        logger.info(f"Model Names: {data.model_name.unique()}")
+        logger.info(f"Model Layers: {data.model_layers.unique()}")
+    data['nb_epoch'] = data['model.trainer.kwargs.nb_epoch'] if "model.trainer.kwargs.nb_epoch" in data.columns else data['model.trainer.nb_epoch']
+    logger.info("Replacing data.sample.random_state with random_state...")
+    data["data.sample.random_state"].rename("random_state", inplace=True)
+    data = merge_defences(data)
+    
+    logger.info("Replacing attack and defence names with short names...")
+    if hasattr(data, "def_gen"):
+        def_gen = data.def_gen.map(def_gen_dict)
+        data.def_gen = def_gen
+        data.dropna(axis=0, subset=["def_gen"], inplace=True)
+    data = merge_attacks(data)
+    if hasattr(data, "atk_gen"):
+        atk_gen = data.atk_gen.map(atk_gen_dict)
+        data.atk_gen = atk_gen
+        data.dropna(axis=0, subset=["atk_gen"], inplace=True)
+    data = format_control_parameter(data, control_dict, fillna)
     return data
 
 if __name__ == "__main__":
@@ -379,6 +404,8 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict["attacks"]
     control_dict = big_dict["params"]
     fillna = big_dict.get("fillna", {})
+    min_max = big_dict.get("min_max", ["nb_epoch"])
+
     results = clean_data_for_plotting(
         data,
         def_gen_dict,
@@ -387,7 +414,8 @@ if __name__ == "__main__":
         fillna=fillna,
     )
     results = calculate_failure_rate(results)
-    results = min_max_scaling(results)
+    
+    results = min_max_scaling(results, *min_max)
     output_file = save_results(results, Path(args.output_file).name, Path(args.output_file).parent)
     assert Path(output_file).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
     logger.info(f"Saved results to {output_file}")
