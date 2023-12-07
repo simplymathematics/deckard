@@ -24,8 +24,8 @@ stages:
     outs:
     - path: mnist/reports/attack.csv
       hash: md5
-      md5: 713d3512070894820a1deb87af405779
-      size: 48722791
+      md5: aa61d0f5118327d164cfc37a466e5162
+      size: 47376297
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/attack.csv
       -o data.csv
@@ -52,8 +52,8 @@ stages:
     outs:
     - path: mnist/plots/data.csv
       hash: md5
-      md5: db610c0ad15bbf4dbab8c6fefa65ceb5
-      size: 20582718
+      md5: e9f98491c865d57cfa6e192e2fcd2a27
+      size: 20472844
   afr:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/plots/data.csv
       --target adv_accuracy --duration_col adv_fit_time --dataset mnist
