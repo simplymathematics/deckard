@@ -99,12 +99,7 @@ def read_file(file, results):
 
 def parse_results(folder, files=["score_dict.json", "params.yaml"]):
     df = parse_folder(folder, files=files)
-    df = df[df["data"].notna()]
-    df = df[df["model"].notna()]
-    df = df[df["attack"].notna()]
     df = flatten_results(df)
-    
-    
     return df
 
 
