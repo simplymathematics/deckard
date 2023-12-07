@@ -99,18 +99,27 @@ stages:
     - path: cifar100/data/data.pkl
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
+    - path: cifar100/models/model.optimizer.pt
+      md5: 63a3e08aea6252161ecb8341959089d8
+      size: 44989261
+    - path: cifar100/models/model.pt
+      md5: 94f5a359a540525eb14cf978558ec2d5
+      size: 44998157
     - path: cifar100/reports/train/default/predictions.json
-      md5: ae8fc23c617a98ec2ce2f7fa59a996ca
-      size: 24417256
+      md5: 0fc8724f3e3b0850bccbffefaa70291b
+      size: 24439795
     - path: cifar100/reports/train/default/score_dict.json
-      md5: cc8d94e9b560116b38a50ce4067f6979
-      size: 881
+      md5: a6933a3788408d39c91186fc0bfdbbab
+      size: 878
   attack:
     cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
     deps:
     - path: cifar100/data/data.pkl
       md5: 1070854e6c00fc787bc0fdfc82792fd6
       size: 761280311
+    - path: cifar100/models/model.pt
+      md5: 94f5a359a540525eb14cf978558ec2d5
+      size: 44998157
     params:
       params.yaml:
         attack:
@@ -326,14 +335,14 @@ stages:
             name: sklearn.metrics.log_loss
     outs:
     - path: cifar100/attacks/attack.pkl
-      md5: ce61a27e5d15756510cba20184f87c6a
+      md5: 28ac38301caadc7bc7db0bcc82f3adfe
       size: 123046
     - path: cifar100/reports/attack/default/adv_predictions.json
-      md5: a116525fa654fb44d2b5bef716a57c21
-      size: 21294
+      md5: 4b7c0279de85f0586a91bcc67046157a
+      size: 21286
     - path: cifar100/reports/attack/default/score_dict.json
-      md5: cc6250493ce23c358493e58248580470
-      size: 1349
+      md5: 352589a61f6f37759df461f0615ba44c
+      size: 1166
   attacks@ResNet18:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet18.db
@@ -453,8 +462,9 @@ stages:
       -c conf/plots.yaml
     deps:
     - path: cifar100/reports/clean_attack.csv
-      md5: d5c5b336555d47900e2493766c3611e1
-      size: 3001681
+      hash: md5
+      md5: aa3d7eb23985fbe51de371f6f5d98f32
+      size: 3006276
     params:
       params.yaml:
         files.directory: cifar100
@@ -697,44 +707,57 @@ stages:
           - ResNet152
     outs:
     - path: cifar100/plots/adv_accuracy_vs_attack_type.pdf
-      md5: 6f5448390bd461902fae2572393902d1
-      size: 25191
+      hash: md5
+      md5: cd21bb04fbf032cd9d444efc450b043e
+      size: 25379
     - path: cifar100/plots/adv_accuracy_vs_defence_type.pdf
-      md5: 4bb0332bf79e9c70a663615b9969ceb5
-      size: 19314
+      hash: md5
+      md5: 55af13a3d0ff64373c1d0c46f717b226
+      size: 19495
     - path: cifar100/plots/adv_failure_rate_vs_train_time.pdf
-      md5: 54eba17c500658aeda8e09adc27203d9
-      size: 31172
+      hash: md5
+      md5: 9ab27e5fde02665c9f4bc47775ba0ee5
+      size: 31168
     - path: cifar100/plots/adv_failures_per_test_time_vs_defence_type.pdf
-      md5: 3212ee7b29d789be1a6cac8a573796fe
-      size: 23014
+      hash: md5
+      md5: f0099cf03af13ce2cd74cf088c9ca233
+      size: 23209
     - path: cifar100/plots/adv_failures_per_train_time_vs_attack_type.pdf
-      md5: 4e96837564fe2cb37cfde71a35e390fb
-      size: 37252
+      hash: md5
+      md5: 9229b09210fff3980e435474e4f326a9
+      size: 37442
     - path: cifar100/plots/adv_failures_per_train_time_vs_defence_type.pdf
-      md5: e8d3cc5a8fc6c74fe275b662be3c67cd
-      size: 18684
+      hash: md5
+      md5: 570c09a46a5b8c0ce5b69d1b75a5482a
+      size: 18810
     - path: cifar100/plots/atk_param_vs_accuracy.pdf
-      md5: cc065b988fee813b5036b9261b679ac1
-      size: 18818
+      hash: md5
+      md5: 9155a0c72ebe982ccba4a35ade16d7e6
+      size: 19628
     - path: cifar100/plots/ben_accuracy_vs_defence_type.pdf
-      md5: 46aebdb108e51e65778b0cb893257136
-      size: 15490
+      hash: md5
+      md5: d028ae5f0313f56b3fc39fcfac9bc282
+      size: 15616
     - path: cifar100/plots/ben_failure_rate_vs_defence_type.pdf
-      md5: 9f238414a95a441426f32e7bbe725c7a
-      size: 24645
+      hash: md5
+      md5: 125540f8e2a8308d01eefa08be6aa426
+      size: 24867
     - path: cifar100/plots/ben_failures_per_train_time_vs_defence_type.pdf
-      md5: 349c66252c5338218d3e18f9e9e0636f
-      size: 18388
+      hash: md5
+      md5: 5e3f558f9affbf9b46b7557a0d559ed1
+      size: 18516
     - path: cifar100/plots/def_param_vs_accuracy.pdf
-      md5: b6ab641f616ef6c2ffff555e8d610e8e
-      size: 17809
+      hash: md5
+      md5: 01ba519eb255aa3970843e6a210be206
+      size: 17948
     - path: cifar100/plots/def_param_vs_adv_accuracy.pdf
-      md5: 61abe47421d5147cd7e6c5602daddd44
-      size: 17516
+      hash: md5
+      md5: 74ce44adb8bacb3048e84dacae6b678d
+      size: 17677
     - path: cifar100/plots/def_param_vs_adv_failure_rate.pdf
-      md5: 379fdb195cf2a1bd69ab9c1eb91ef77f
-      size: 21209
+      hash: md5
+      md5: 19ea1e969df17674ec700bf11cce3a95
+      size: 20713
   afr:
     cmd: python -m deckard.layers.afr --dataset cifar100 --data_file cifar100/plots/data.csv
       --target adv_accuracy --duration_col adv_fit_time --dataset cifar100
@@ -774,14 +797,13 @@ stages:
       md5: cde5790226086c2ea7567011fba527db
       size: 29933
   copy_results:
-    cmd: cp -r cifar100/plots/* ~/ml_afr/cifar100/
+    cmd: cp -r cifar100/plots/* ~/ml_afr/cifar100
     deps:
-    - path: cifar100/plots/aft_comparison.csv
-      md5: 6ad56e75d18d7ea9349346b79a772167
-      size: 239
-    - path: cifar100/plots/data.csv
-      md5: 0ade05afcc3da9f9249a3140849a5f8c
-      size: 2977261
+    - path: cifar100/plots/
+      hash: md5
+      md5: aae04e75d81e69e3583717ee10da3aef.dir
+      size: 3267729
+      nfiles: 14
   clean@attack:
     cmd: python -m deckard.layers.clean_data -i cifar100/reports/attack.csv -o cifar100/reports/clean_attack.csv
       -c conf/clean.yaml
@@ -808,19 +830,20 @@ stages:
         fillna:
           Epochs: 20
         params:
-          Deep: attack.init.kwargs.nb_grads
-          FGM: attack.init.kwargs.eps
-          HSJ: attack.init.kwargs.max_iter
-          Pixel: attack.init.kwargs.th
-          PGD: attack.init.kwargs.eps
-          Thresh: attack.init.kwargs.th
-          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
-          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
-          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
-          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+          Deep: attack.init.nb_grads
+          FGM: attack.init.eps
+          HSJ: attack.init.max_iter
+          Pixel: attack.init.th
+          PGD: attack.init.eps
+          Thresh: attack.init.th
+          Gauss-out: model.art.pipeline.postprocessor.scale
+          Conf: model.art.pipeline.postprocessor.cutoff
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Gauss-in: model.art.pipeline.preprocessor.sigma
           Control: model_layers
           Epochs: model.trainer.nb_epoch
     outs:
     - path: cifar100/reports/clean_attack.csv
-      md5: d5c5b336555d47900e2493766c3611e1
-      size: 3001681
+      hash: md5
+      md5: aa3d7eb23985fbe51de371f6f5d98f32
+      size: 3006276

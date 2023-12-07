@@ -35,6 +35,7 @@ def cat_plot(
 ):
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
+    logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.catplot(
         data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
@@ -73,6 +74,7 @@ def line_plot(
 ):
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
+    logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
     graph.legend(**legend)
@@ -85,6 +87,7 @@ def line_plot(
         graph.set_xscale(x_scale)
     graph.get_figure().tight_layout()
     graph.get_figure().savefig(folder / file)
+    logger.info(f"Saved graph to {folder/file}")
     plt.gcf().clear()
     return graph
 
@@ -108,6 +111,7 @@ def scatter_plot(
 ):
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
+    logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
         data=data,
@@ -208,17 +212,14 @@ if __name__ == "__main__":
     i = 0
     for dict_ in cat_plot_list:
         i += 1
-        logger.info(f"Rendering graph {i}")
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
         
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1
-        logger.info(f"Rendering graph {i}")
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         i += 1
-        logger.info(f"Rendering graph {i}")
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)

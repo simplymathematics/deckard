@@ -4,7 +4,6 @@ vars:
   - conf/plots.yaml:cat_plot
   - conf/afr.yaml:covariates
   - conf/afr.yaml:weibull
-  - conf/afr.yaml:cox
   - conf/afr.yaml:log_logistic
   - conf/afr.yaml:log_normal
   - conf/clean.yaml:attacks
@@ -143,31 +142,28 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/clean_attack.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar10 --config_file conf/afr.yaml
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
-      - ${files.directory}/plots/clean_attack.csv
+      - ${files.directory}/${files.reports}/clean_attack.csv
+      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
       - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_partial_effects.pdf
-      - ${files.directory}/plots/cox_partial_effects.pdf
-      - ${files.directory}/plots/cox_aft.pdf
+      - ${files.directory}/plots/weibull_epochs_partial_effect.pdf
+      - ${files.directory}/plots/weibull_layers_partial_effect.pdf
       - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_partial_effects.pdf
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.pdf
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.pdf
       - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_partial_effects.pdf
-    metrics:
-      - ${files.directory}/plots/aft_comparison.csv
-    outs:
-      - ${files.directory}/plots/aft_comparison.tex
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.pdf
+      - ${files.directory}/plots/log_normal_layers_partial_effect.pdf
     params:
       - files.directory
       - conf/afr.yaml:
         - covariates
         - weibull
-        - cox
         - log_logistic
         - log_normal
   copy_results:
       cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
       deps:
-        - ${files.directory}/plots/aft_comparison.tex
+        - ${files.directory}/plots/

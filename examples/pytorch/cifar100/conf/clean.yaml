@@ -14,16 +14,16 @@ defences:
   nb_epoch: Epochs
   model_layers: Control
 params:
-  Deep: attack.init.kwargs.nb_grads
-  FGM: attack.init.kwargs.eps
-  HSJ: attack.init.kwargs.max_iter
-  Pixel: attack.init.kwargs.th
-  PGD: attack.init.kwargs.eps
-  Thresh: attack.init.kwargs.th
-  Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
-  Conf: model.art.pipeline.postprocessor.kwargs.cutoff
-  FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
-  Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+  Deep: attack.init.nb_grads
+  FGM: attack.init.eps
+  HSJ: attack.init.max_iter
+  Pixel: attack.init.th
+  PGD: attack.init.eps
+  Thresh: attack.init.th
+  Gauss-out: model.art.pipeline.postprocessor.scale
+  Conf: model.art.pipeline.postprocessor.cutoff
+  FSQ: model.art.pipeline.preprocessor.bit_depth
+  Gauss-in: model.art.pipeline.preprocessor.sigma
   Control: model_layers
   Epochs: model.trainer.nb_epoch
 fillna:

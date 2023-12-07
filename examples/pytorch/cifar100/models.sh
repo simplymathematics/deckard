@@ -3,8 +3,8 @@
 # This script is used to generate the models for the sklearn example.
 
 # # Default model
-echo "python -m deckard.layers.optimise " $@ "--multirun"
-python -m deckard.layers.optimise  $@ --multirun
+# echo "python -m deckard.layers.optimise ++model.trainer.nb_epoch:1,10,30,50,100" $@ "--multirun" 
+# python -m deckard.layers.optimise ++model.trainer.nb_epoch:1,10,30,50,100  $@ --multirun
 
 # # This line generates the model and adds the FeatureSqueezing preprocessing defence.
 python -m deckard.layers.optimise \

@@ -732,116 +732,296 @@ stages:
     outs:
     - path: cifar/plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: ad1b03ede6abdf3c7ce5c36af38df152
+      md5: fa4182dde5c8518f850b3f544f6f4b47
       size: 32194
     - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: f1c250b43fdb7fb9267e52f32d4a9ea3
+      md5: 4ae5eccdd5676f9c419d3bafa51ee64f
       size: 32506
     - path: cifar/plots/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: 497db675d22850fe2b908d962bae7957
+      md5: 022ae441bf1634fa65d4a394a1242c0b
       size: 80138
     - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.pdf
       hash: md5
-      md5: 7b542a8e031729cd920df46b7ff6985e
+      md5: 116aaae2a165fa2da6b40e75ad08f791
       size: 39583
     - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.pdf
       hash: md5
-      md5: 4fc21c88b183dc0f9a513e2edaac19ae
+      md5: 577552540e5524b5d19ff69cea1d3196
       size: 40766
     - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: fafa1c2e256c4d6fd58616dd2b3eef7a
+      md5: 46f082107803063cee8c154e9b70c38b
       size: 36881
     - path: cifar/plots/atk_param_vs_accuracy.pdf
       hash: md5
-      md5: e29bde8207708007d6593f8bd1b56916
-      size: 20166
+      md5: 9d8dd906f5d0062a532ef746eaa2977c
+      size: 20726
     - path: cifar/plots/ben_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 20248882d597a50ab98bb29033379b1e
+      md5: bad8148d0901bdf58ae0063fc6381f61
       size: 29771
     - path: cifar/plots/ben_failure_rate_vs_defence_type.pdf
       hash: md5
-      md5: 47cb132748225b10fce0af6c5944ce9d
+      md5: 9365a16310decc28e2b13664a15adf08
       size: 41749
     - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: bf0081b32806e3e46b89f9010fe200de
+      md5: b676d6aa31996fd9dbd74c7493cd9e3f
       size: 36648
     - path: cifar/plots/def_param_vs_accuracy.pdf
       hash: md5
-      md5: 26b18bff6ac2a952fe42c6c11e374fe4
-      size: 19713
+      md5: 0d0c6bc3384ca384eeebab6cdbb66f85
+      size: 19715
     - path: cifar/plots/def_param_vs_adv_accuracy.pdf
       hash: md5
-      md5: 925fdbbf4a4b44968d5e83ae667ba92d
-      size: 19969
+      md5: 53997d0a283fe5ad4c8a807647fb1863
+      size: 19967
     - path: cifar/plots/def_param_vs_adv_failure_rate.pdf
       hash: md5
-      md5: a1fa827c64d6c1b6f989aa9b78e8b84e
-      size: 23539
+      md5: 99bf0b1596f58908be2aaa59fae6ed2b
+      size: 23544
   afr:
-    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/plots/data.csv
-      --target adv_accuracy --duration_col adv_fit_time --dataset cifar10
+    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/reports/clean_attack.csv  --duration_col
+      adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder cifar/plots/
     deps:
-    - path: cifar/plots/data.csv
+    - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: d4900d6803cc7869d3c16161e83752c4
-      size: 14370058
+      md5: 4ae5eccdd5676f9c419d3bafa51ee64f
+      size: 32506
+    - path: cifar/reports/clean_attack.csv
+      hash: md5
+      md5: 726a596355273abf4a5172268bf69c62
+      size: 14801171
+    params:
+      params.yaml:
+        files.directory: cifar
+      conf/afr.yaml:
+        covariates:
+        - accuracy
+        - train_time
+        - predict_time
+        - atk_value
+        - def_value
+        - data.sample.random_state
+        - adv_failure_rate
+        - model_layers
+        - adv_fit_time
+        - model.trainer.nb_epoch
+        log_logistic:
+          plot:
+            file: log_logistic_aft.pdf
+            title: Log logistic AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: log_logistic_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_logistic_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        log_normal:
+          plot:
+            file: log_normal_aft.pdf
+            title: Log Normal AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: log_normal_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_normal_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        weibull:
+          plot:
+            file: weibull_aft.pdf
+            title: Weibull AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: weibull_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: weibull_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
     outs:
-    - path: cifar/plots/aft_comparison.csv
-      hash: md5
-      md5: 7023ca8225eb2085aa4c92e4ab90c95a
-      size: 229
-    - path: cifar/plots/aft_comparison.tex
-      hash: md5
-      md5: cf6c34691417d16a6b5da3c0917bb8fa
-      size: 558
-    - path: cifar/plots/cox_aft.pdf
-      hash: md5
-      md5: 7b3c72bef42033288d4e3d458a655a5e
-      size: 31134
-    - path: cifar/plots/cox_partial_effects.pdf
-      hash: md5
-      md5: cb53d0bfa3a18a689854870732b7d886
-      size: 29531
     - path: cifar/plots/log_logistic_aft.pdf
       hash: md5
-      md5: b7ad90d31208b22cb5680a02fd1c20e5
-      size: 33418
-    - path: cifar/plots/log_logistic_partial_effects.pdf
+      md5: 66fd4b6d8efa8303e069f509b439766a
+      size: 23397
+    - path: cifar/plots/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: ae9ee08ed0dd5ab2d68f6e975d108ad9
-      size: 29341
+      md5: 9224c1cc7cab9abc3d3c0a0d053167b7
+      size: 27103
+    - path: cifar/plots/log_logistic_layers_partial_effect.pdf
+      hash: md5
+      md5: 39b2610fb9de1690d4d623a17884ee7a
+      size: 28955
     - path: cifar/plots/log_normal_aft.pdf
       hash: md5
-      md5: 59fb36435c2071212470478f040f9906
-      size: 33903
-    - path: cifar/plots/log_normal_partial_effects.pdf
+      md5: 2527e9f340d0e9f290c153104c8c3328
+      size: 23817
+    - path: cifar/plots/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: dc187c78dca835e381f120bfb4fe24a6
-      size: 29943
+      md5: 1b0e597276e72b935b1b8f9105d3a2b4
+      size: 28672
+    - path: cifar/plots/log_normal_layers_partial_effect.pdf
+      hash: md5
+      md5: 7dfcb1c5b5065b1f6329ef82efeffea4
+      size: 28982
     - path: cifar/plots/weibull_aft.pdf
       hash: md5
-      md5: 9940bda03fdfed790474f54700b60aa9
-      size: 32073
-    - path: cifar/plots/weibull_partial_effects.pdf
+      md5: 0fac35179c7accad13f4d936c0765649
+      size: 33056
+    - path: cifar/plots/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: 38669b4228b05dfbee7be61b82908070
-      size: 29546
+      md5: d4cab0b8d7d143c4e756dd2378c01864
+      size: 28141
+    - path: cifar/plots/weibull_layers_partial_effect.pdf
+      hash: md5
+      md5: 9868a02ca8bf3376d544aa3fd635364b
+      size: 28960
   copy_results:
     cmd: cp -r cifar/plots/* ~/ml_afr/cifar/
     deps:
-    - path: cifar/plots/aft_comparison.csv
+    - path: cifar/plots/
       hash: md5
-      md5: 7023ca8225eb2085aa4c92e4ab90c95a
-      size: 229
-    - path: cifar/plots/data.csv
-      hash: md5
-      md5: d4900d6803cc7869d3c16161e83752c4
-      size: 14370058
+      md5: df42040ca38ecd5d6d16d4643a28d1a8.dir
+      size: 15075916
+      nfiles: 25
   clean@attack:
     cmd: python -m deckard.layers.clean_data -i cifar/reports/attack.csv -o cifar/reports/clean_attack.csv
       -c conf/clean.yaml

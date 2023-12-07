@@ -48,23 +48,24 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  # models: # This is a loop over the ResNet models
-  #   foreach:
-  #     - ResNet18
-  #     # - ResNet34
-  #     # - ResNet50
-  #     # - ResNet101
-  #     # - ResNet152
-  #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml 
-  #     deps:
-  #     - models.sh
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-  #     outs:
-  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
-  #         cache: True
-  #         persist: True
+  models:
+    foreach: # This is a loop over the ResNet models
+      - ResNet18
+      - ResNet34
+      - ResNet50
+      - ResNet101
+      - ResNet152
+    do:
+      cmd: bash models.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml
+      deps:
+      - models.sh # This script configures each defence
+      - attacks.sh # This script configures each attack
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+      # - ${files.directory}/${files.reports}/train/${item}.db
+      outs:
+      - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
+          cache: True
+          persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18
@@ -170,4 +171,4 @@ stages:
   copy_results:
       cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar100
       deps:
-        - ${files.directory}/plots/aft_comparison.tex
+        - ${files.directory}/plots/
