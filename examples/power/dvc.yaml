@@ -17,6 +17,7 @@ stages:
     cmd: python -m deckard.layers.parse --config_file ${data.generate.name}.yaml
     deps:
       - conf/
+      - ../../deckard.egg-info
     outs:
       - params.yaml:
           cache: True
