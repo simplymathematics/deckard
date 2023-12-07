@@ -27,33 +27,65 @@ stages:
       md5: aa61d0f5118327d164cfc37a466e5162
       size: 47376297
   plot:
-    cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/attack.csv
-      -o data.csv
+    cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/clean_attack.csv
     deps:
-    - path: mnist/reports/attack.csv
+    - path: mnist/reports/clean_attack.csv
       hash: md5
-      md5: 713d3512070894820a1deb87af405779
-      size: 48722791
-    - path: mnist/reports/attack/ResNet101.db
-      md5: 600452804d96c8b8483c3f8da01130c4
-      size: 462848
-    - path: mnist/reports/attack/ResNet152.db
-      md5: afb6f3d2616446226012b3ff1143086a
-      size: 462848
-    - path: mnist/reports/attack/ResNet18.db
-      md5: 920b0ed178ec504c0d7990777862283f
-      size: 1363968
-    - path: mnist/reports/attack/ResNet34.db
-      md5: 3f56dd2ea0783a56a2a9e3eaaad88c21
-      size: 1945600
-    - path: mnist/reports/attack/ResNet50.db
-      md5: d9ee221b942b56d9bb720e022e05bf4b
-      size: 462848
+      md5: 30e2947d1544fd789c630906b08624c5
+      size: 13990463
     outs:
-    - path: mnist/plots/data.csv
+    - path: mnist/plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: e9f98491c865d57cfa6e192e2fcd2a27
-      size: 20472844
+      md5: 676f98736f2a5373bd063007d850aa37
+      size: 31913
+    - path: mnist/plots/adv_accuracy_vs_defence_type.pdf
+      hash: md5
+      md5: db2c4d59c424782ffd8e30c4ea0e4439
+      size: 30726
+    - path: mnist/plots/adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 6e18c7e499471251eba37c294e4c5530
+      size: 79819
+    - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.pdf
+      hash: md5
+      md5: 137f7b20ed2e4d13a3254c7584580bfa
+      size: 36894
+    - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.pdf
+      hash: md5
+      md5: 8b0cd3d52f700d8267c1845d120b92bd
+      size: 40419
+    - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: 2c01f24916a257b8be36df560ad9a69e
+      size: 33734
+    - path: mnist/plots/atk_param_vs_accuracy.pdf
+      hash: md5
+      md5: 022842a2c1e687f6ac0414aab4d1be06
+      size: 20224
+    - path: mnist/plots/ben_accuracy_vs_defence_type.pdf
+      hash: md5
+      md5: 4921ffdaa6fe7b0394289dd12ff7b4e4
+      size: 27434
+    - path: mnist/plots/ben_failure_rate_vs_defence_type.pdf
+      hash: md5
+      md5: 8503d4e036a493fe04af79e5d8b84b16
+      size: 39288
+    - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: 4184641a05ff88445386661b1b2524e8
+      size: 33960
+    - path: mnist/plots/def_param_vs_accuracy.pdf
+      hash: md5
+      md5: 0327657560364fb31b6c64570f7fa710
+      size: 19267
+    - path: mnist/plots/def_param_vs_adv_accuracy.pdf
+      hash: md5
+      md5: a57a94e2fdf36835db40986e723dae8a
+      size: 18581
+    - path: mnist/plots/def_param_vs_adv_failure_rate.pdf
+      hash: md5
+      md5: ca26a65c50e1b76ff138fc91bd144a65
+      size: 22342
   afr:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/plots/data.csv
       --target adv_accuracy --duration_col adv_fit_time --dataset mnist
@@ -114,3 +146,16 @@ stages:
       hash: md5
       md5: db610c0ad15bbf4dbab8c6fefa65ceb5
       size: 20582718
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: mnist/reports/attack.csv
+      hash: md5
+      md5: aa61d0f5118327d164cfc37a466e5162
+      size: 47376297
+    outs:
+    - path: mnist/reports/clean_attack.csv
+      hash: md5
+      md5: 30e2947d1544fd789c630906b08624c5
+      size: 13990463

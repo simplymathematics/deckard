@@ -1,7 +1,4 @@
-attack:
-  # CarliniL0Method: CW_0
-  # CarliniL2Method: CW_2
-  # CarliniLInfMethod: CW_inf
+attacks:
   DeepFool: Deep
   FastGradientMethod: FGM
   HopSkipJump: HSJ
@@ -14,11 +11,8 @@ defences:
   GaussianAugmentation: Gauss-in
   GaussianNoise: Gauss-out
   HighConfidence: Conf
-  Epochs: Epochs
+  nb_epoch : Epochs
 params:
-  # art.attacks.evasion.CarliniL0Method: attack.init.confidence
-  # art.attacks.evasion.CarliniL2Method: attack.init.confidence
-  # art.attacks.evasion.CarliniLInfMethod: attack.init.confidence
   Deep: attack.init.kwargs.nb_grads
   FGM: attack.init.kwargs.eps
   HSJ: attack.init.kwargs.max_iter
@@ -28,6 +22,9 @@ params:
   Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
   Conf: model.art.pipeline.postprocessor.kwargs.cutoff
   FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
-  Gauss-in: model.art.pipeline.kwargs.preprocessor.kwargs.sigma
+  Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
   Control: model_layers
   Epochs: model.trainer.nb_epoch
+fillna:
+  Epochs: 20
+
