@@ -1,6 +1,10 @@
 vars:
   - ../conf/plots.yaml:line_plot
   - ../conf/plots.yaml:scatter_plot
+  - ../conf/clean.yaml:attacks
+  - ../conf/clean.yaml:defences
+  - ../conf/clean.yaml:params
+  - ../conf/clean.yaml:fillna
 stages:
   compile:
     foreach: # iterates through each stage
@@ -9,53 +13,74 @@ stages:
       - cifar100
       - bit_depth/mnist/
       - bit_depth/cifar/
+      - bit_depth/cifar100/
     do:
       cmd: python -m deckard.layers.compile --report_folder /result/${item}/reports/attack/ --results_file attack.csv --results_folder ${item} --config "../conf/compile.yaml"
-      deps:
-       - "../conf/compile.yaml"
-       - /result/${item}/reports/attack/
+      # deps:
+      #  - /result/${item}/reports/attack/
       outs:
       - ${item}/attack.csv
-  plot:
+  clean:
     foreach:
-       - mnist
-       - cifar
-       - cifar100
-       - bit_depth/mnist/
-       - bit_depth/cifar/
+      - mnist
+      - cifar
+      - cifar100
+      - bit_depth/mnist/
+      - bit_depth/cifar/
+      - bit_depth/cifar100/
     do:
-      cmd: python -m deckard.layers.plots --path ${item} --file ${item}/attack.csv -o plot_data.csv -c "../conf/plots.yaml" --subset train_time,predict_proba_time,accuracy,adv_accuracy,adv_fit_time
+      cmd: python -m deckard.layers.clean_data --path ${item} --file attack.csv --config "../conf/clean.yaml"
       deps:
         - ${item}/attack.csv
-        - "../conf/plots.yaml"
+        - ../conf/clean.yaml
       outs:
-        - ${item}/plot_data.csv
-      plots:
-        - ${item}/${scatter_plot[0].file} # You can use the file specified in each list entry from the parameters specified above in vars
-        - ${item}/${scatter_plot[1].file}
-        - ${item}/${line_plot[0].file}
-  afr:
-    foreach:
-       - mnist
-       - cifar
-       - cifar100
-       - bit_depth/mnist/
-       - bit_depth/cifar/
-    do:
-      cmd: python -m deckard.layers.afr --dataset ${item} --data_file ${item}/plot_data.csv --config_file "../conf/afr.yaml"
-      deps:
-        - ${item}/plot_data.csv
-        - ../conf/afr.yaml
-      plots:
-        - ${item}/weibull_aft.pdf # You can also define them manually
-        - ${item}/weibull_epochs_partial_effect.pdf
-        - ${item}/cox_epochs_partial_effect.pdf
-        - ${item}/cox_aft.pdf
-        - ${item}/log_logistic_aft.pdf
-        - ${item}/log_logistic_epochs_partial_effect.pdf
-        - ${item}/log_normal_aft.pdf
-        - ${item}/log_normal_epochs_partial_effect.pdf
-      metrics:
-        - ${item}/aft_comparison.csv
-      outs:
-        - ${item}/aft_comparison.tex
+        - ${item}/clean.csv
+      params:
+        - ../conf/clean.yaml:
+          - attacks
+          - defences
+          - params
+          - fillna
+  # plot:
+  #   foreach:
+  #      - mnist
+  #      - cifar
+  #      - cifar100
+  #      - bit_depth/mnist/
+  #      - bit_depth/cifar/
+  #   do:
+  #     cmd: python -m deckard.layers.plots --path ${item} --file ${item}/attack.csv -o plot_data.csv -c "../conf/plots.yaml" --subset train_time,predict_proba_time,accuracy,adv_accuracy,adv_fit_time
+  #     deps:
+  #       # - ${item}/attack.csv  # This should be uncommented, but I don't have enough disk space to cache the hashes of the results.
+  #       - "../conf/plots.yaml"
+  #     outs:
+  #       - ${item}/plot_data.csv
+  #     plots:
+  #       - ${item}/${scatter_plot[0].file} # You can use the file specified in each list entry from the parameters specified above in vars
+  #       - ${item}/${scatter_plot[1].file}
+  #       - ${item}/${line_plot[0].file}
+  # afr:
+  #   foreach:
+  #      - mnist
+  #      - cifar
+  #      - cifar100
+  #      - bit_depth/mnist/
+  #      - bit_depth/cifar/
+  #   do:
+  #     cmd: python -m deckard.layers.afr --dataset ${item} --data_file ${item}/plot_data.csv --config_file "../conf/afr.yaml"
+  #     deps:
+  #       - ${item}/plot_data.csv
+  #       - ../conf/afr.yaml
+  #     plots:
+  #       - ${item}/weibull_aft.pdf # You can also define them manually
+  #       - ${item}/weibull_epochs_partial_effect.pdf
+  #       - ${item}/cox_epochs_partial_effect.pdf
+  #       - ${item}/cox_aft.pdf
+  #       - ${item}/log_logistic_aft.pdf
+  #       - ${item}/log_logistic_epochs_partial_effect.pdf
+  #       - ${item}/log_normal_aft.pdf
+  #       - ${item}/log_normal_epochs_partial_effect.pdf
+  #     metrics:
+  #       - ${item}/aft_comparison.csv
+  #     outs:
+  #       - ${item}/aft_comparison.tex

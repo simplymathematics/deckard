@@ -1,0 +1,13 @@
+attacks:
+  FastGradientMethod: FGM
+defences:
+  Control: Control
+  FeatureSqueezing: FSQ
+params:
+  FGM: attack.init.eps
+  Control: model.trainer.nb_epoch
+  FSQ: model.art.pipeline.preprocessor.bit_depth
+fillna:
+  FGM: 0.0
+  Control: 20
+  FSQ: 32

@@ -1,8 +1,0 @@
-attacks:
-  FastGradientMethod: FGM
-defences:
-  Control: Control
-  # FeatureSqueezing: FSQ
-params:
-  FGM: attack.init.eps
-  Control: epochs
