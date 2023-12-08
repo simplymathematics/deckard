@@ -732,55 +732,55 @@ stages:
     outs:
     - path: cifar/plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: fa4182dde5c8518f850b3f544f6f4b47
+      md5: 2ad8aa1137712e792fc9339cd9409d54
       size: 32194
     - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 4ae5eccdd5676f9c419d3bafa51ee64f
+      md5: 5c408e76ac388859dbb9cad4e2ddf968
       size: 32506
     - path: cifar/plots/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: 022ae441bf1634fa65d4a394a1242c0b
+      md5: 351d7f3bf8b5933c8ee3031447f48658
       size: 80138
     - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.pdf
       hash: md5
-      md5: 116aaae2a165fa2da6b40e75ad08f791
+      md5: 4c1bd0364c0e2d3f372714202c05f911
       size: 39583
     - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.pdf
       hash: md5
-      md5: 577552540e5524b5d19ff69cea1d3196
+      md5: 57ff7639a8f432aea0b4195e33d5ba96
       size: 40766
     - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: 46f082107803063cee8c154e9b70c38b
+      md5: ba23e1a31c95519b640bd2ab7edfea4b
       size: 36881
     - path: cifar/plots/atk_param_vs_accuracy.pdf
       hash: md5
-      md5: 9d8dd906f5d0062a532ef746eaa2977c
-      size: 20726
+      md5: 3bf276eed7ed8172d48896efd29991ac
+      size: 20181
     - path: cifar/plots/ben_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: bad8148d0901bdf58ae0063fc6381f61
+      md5: d182987f8164dc47305649c193506f10
       size: 29771
     - path: cifar/plots/ben_failure_rate_vs_defence_type.pdf
       hash: md5
-      md5: 9365a16310decc28e2b13664a15adf08
+      md5: a4bdbad3210e9da50098d068792673cc
       size: 41749
     - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: b676d6aa31996fd9dbd74c7493cd9e3f
+      md5: 900f4362e3e0ffa76a6d0f7f99d52051
       size: 36648
     - path: cifar/plots/def_param_vs_accuracy.pdf
       hash: md5
-      md5: 0d0c6bc3384ca384eeebab6cdbb66f85
-      size: 19715
+      md5: f7426fca89038c2f19da4afc9c41eab4
+      size: 19712
     - path: cifar/plots/def_param_vs_adv_accuracy.pdf
       hash: md5
-      md5: 53997d0a283fe5ad4c8a807647fb1863
-      size: 19967
+      md5: bda0d408b829c40e17e04f768852fd44
+      size: 19958
     - path: cifar/plots/def_param_vs_adv_failure_rate.pdf
       hash: md5
-      md5: 99bf0b1596f58908be2aaa59fae6ed2b
+      md5: 8b2e7a00615d225bdd9cfa0fdd3c7f36
       size: 23544
   afr:
     cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/reports/clean_attack.csv  --duration_col
@@ -788,7 +788,7 @@ stages:
     deps:
     - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 4ae5eccdd5676f9c419d3bafa51ee64f
+      md5: 5c408e76ac388859dbb9cad4e2ddf968
       size: 32506
     - path: cifar/reports/clean_attack.csv
       hash: md5
@@ -980,47 +980,47 @@ stages:
     outs:
     - path: cifar/plots/log_logistic_aft.pdf
       hash: md5
-      md5: 66fd4b6d8efa8303e069f509b439766a
+      md5: 2b28871d23665f9745e4d8cb1fef3a7c
       size: 23397
     - path: cifar/plots/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: 9224c1cc7cab9abc3d3c0a0d053167b7
+      md5: 820bec8e7d11f46984c7642e797c00d1
       size: 27103
     - path: cifar/plots/log_logistic_layers_partial_effect.pdf
       hash: md5
-      md5: 39b2610fb9de1690d4d623a17884ee7a
+      md5: 38c30a96926e95f5cbb810e1922d1ce3
       size: 28955
     - path: cifar/plots/log_normal_aft.pdf
       hash: md5
-      md5: 2527e9f340d0e9f290c153104c8c3328
+      md5: df4c2cc42d194386fafea2ef78411bf7
       size: 23817
     - path: cifar/plots/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: 1b0e597276e72b935b1b8f9105d3a2b4
+      md5: c3ffc8e94ccd522d1a8737a4e3c1436f
       size: 28672
     - path: cifar/plots/log_normal_layers_partial_effect.pdf
       hash: md5
-      md5: 7dfcb1c5b5065b1f6329ef82efeffea4
+      md5: 247006b93ddadc97a3849cfce5d2ea00
       size: 28982
     - path: cifar/plots/weibull_aft.pdf
       hash: md5
-      md5: 0fac35179c7accad13f4d936c0765649
+      md5: a4759653f442f4acb739f80f4e763600
       size: 33056
     - path: cifar/plots/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: d4cab0b8d7d143c4e756dd2378c01864
+      md5: 0ddb5d5038243152cd0d68d6dffeb88a
       size: 28141
     - path: cifar/plots/weibull_layers_partial_effect.pdf
       hash: md5
-      md5: 9868a02ca8bf3376d544aa3fd635364b
+      md5: e80a372b96f8845791f00a8a7b2f571b
       size: 28960
   copy_results:
     cmd: cp -r cifar/plots/* ~/ml_afr/cifar/
     deps:
     - path: cifar/plots/
       hash: md5
-      md5: df42040ca38ecd5d6d16d4643a28d1a8.dir
-      size: 15075916
+      md5: 7531488748e5e0453ac9eb36d844097e.dir
+      size: 15075359
       nfiles: 25
   clean@attack:
     cmd: python -m deckard.layers.clean_data -i cifar/reports/attack.csv -o cifar/reports/clean_attack.csv
