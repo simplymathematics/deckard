@@ -20,13 +20,7 @@ stages:
       - scorers
       - files
     outs:
-      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
@@ -40,32 +34,29 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
-      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
-      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  models:
-    foreach: # This is a loop over the ResNet models
-      - ResNet18
-      - ResNet34
-      - ResNet50
-      - ResNet101
-      - ResNet152
-    do:
-      cmd: bash models.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml
-      deps:
-      - models.sh # This script configures each defence
-      - attacks.sh # This script configures each attack
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
-      # - ${files.directory}/${files.reports}/train/${item}.db
-      outs:
-      - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
-          cache: True
-          persist: True
+  # models:
+  #   foreach: # This is a loop over the ResNet models
+  #     - ResNet18
+  #     - ResNet34
+  #     - ResNet50
+  #     - ResNet101
+  #     - ResNet152
+  #   do:
+  #     cmd: bash models.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml
+  #     deps:
+  #     - models.sh # This script configures each defence
+  #     - attacks.sh # This script configures each attack
+  #     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+  #     outs:
+  #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
+  #         cache: True
+  #         persist: True
   attacks:
     foreach: # This is a loop over the ResNet models
       - ResNet18
