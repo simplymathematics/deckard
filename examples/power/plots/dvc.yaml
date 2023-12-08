@@ -13,6 +13,7 @@ stages:
       cmd: python -m deckard.layers.compile --report_folder /result/${item}/reports/attack/ --results_file attack.csv --results_folder ${item} --config "../conf/compile.yaml"
       deps:
        - "../conf/compile.yaml"
+       - /result/${item}/reports/attack/
       outs:
       - ${item}/attack.csv
   plot:
@@ -30,7 +31,7 @@ stages:
       outs:
         - ${item}/plot_data.csv
       plots:
-        - ${item}/${scatter_plot[0].file}
+        - ${item}/${scatter_plot[0].file} # You can use the file specified in each list entry from the parameters specified above in vars
         - ${item}/${scatter_plot[1].file}
         - ${item}/${line_plot[0].file}
   afr:
@@ -46,7 +47,7 @@ stages:
         - ${item}/plot_data.csv
         - ../conf/afr.yaml
       plots:
-        - ${item}/weibull_aft.pdf
+        - ${item}/weibull_aft.pdf # You can also define them manually
         - ${item}/weibull_epochs_partial_effect.pdf
         - ${item}/cox_epochs_partial_effect.pdf
         - ${item}/cox_aft.pdf
