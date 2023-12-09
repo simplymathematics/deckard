@@ -7,6 +7,10 @@ covariates:
   - data.sample.random_state
   - adv_failure_rate
   - adv_fit_time
+fillna:
+  model.trainer.nb_epoch: 20
+  model.trainer.batch_size: 1024
+  model.art.preprocessor.bit_depth: 32
 weibull:
   plot:
     file : weibull_aft.pdf

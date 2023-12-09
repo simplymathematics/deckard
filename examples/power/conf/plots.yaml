@@ -1,18 +1,18 @@
-cat_plot:
-- file: Device_vs_adv_accuracy.pdf
-  hue: device_id
-  kind: "box"
-  set:
-    yscale: linear
-  titles: Adversarial Accuracy vs Device
-  x: device_id
-  xlabels: Attack Distance
-  y: adv_accuracy
-  ylabels: Adv. Accuracy
-  rotation : 90
-  hue_order:
-  - nvidia-tesla-p100
-  - nvidia-tesla-v100
+# cat_plot:
+# - file: Device_vs_adv_accuracy.pdf
+#   hue: device_id
+#   kind: "box"
+#   set:
+#     yscale: linear
+#   titles: Adversarial Accuracy vs Device
+#   x: device_id
+#   xlabels: Attack Distance
+#   y: adv_accuracy
+#   ylabels: Adv. Accuracy
+#   rotation : 90
+#   hue_order:
+#   - nvidia-tesla-p100
+#   - nvidia-tesla-v100
 
 line_plot:
 - file: train_time_vs_accuracy.pdf

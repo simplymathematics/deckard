@@ -275,13 +275,6 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        help="Output file name",
-        default="data.csv",
-    )
-    parser.add_argument(
         "-t",
         "--plotfiletype",
         type=str,
@@ -318,7 +311,7 @@ if __name__ == "__main__":
         FOLDER = Path(Path(), args.path)
     logger.info(f"Creating folder {FOLDER}")
     FOLDER.mkdir(parents=True, exist_ok=True)
-    logger.info(f"Saving data to {FOLDER / args.output}")
+    logger.info(f"Saving data to {FOLDER }")
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")

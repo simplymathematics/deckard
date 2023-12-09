@@ -163,7 +163,9 @@ def clean_data_for_aft(
     logger.info(f"Shape of dirty data: {subset.shape}")
     cleaned = pd.DataFrame()
     covariate_list.append(target)
+    logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
+        assert kwarg in subset.columns, f"{kwarg} not in data.columns"
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
@@ -286,25 +288,21 @@ if "__main__" == __name__:
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
     data = pd.read_csv(csv_file, index_col=0)
+    logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
-    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    if hasattr(data, "def_value"):
-        data.def_value.replace("", 0, inplace=True)
-        data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
-    if hasattr(data, "atk_value"):
-        data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
-        data.atk_value.replace("", 0, inplace=True)
-    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
-
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
-    logger.info(f"Shape of data: {data.shape}")
     fillna = config.pop("fillna", {})
     for k,v in fillna.items():
+        assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
+    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
         :,
         "attack.attack_size",

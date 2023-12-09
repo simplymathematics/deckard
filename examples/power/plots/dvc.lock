@@ -1,0 +1,439 @@
+schema: '2.0'
+stages:
+  compile@mnist:
+    cmd: python -m deckard.layers.compile --report_folder /result/mnist/reports/attack/
+      --results_file attack.csv --results_folder mnist --config "../conf/compile.yaml"
+    deps:
+    - path: /result/mnist/reports/attack/
+      hash: md5
+      md5: 2fd9e6eb909c65078ded91f85c5938d1.dir
+      size: 5846593866
+      nfiles: 8024
+    outs:
+    - path: mnist/attack.csv
+      hash: md5
+      md5: 49a0f8e54e50ce0f68929842fe150bb4
+      size: 9741090
+  compile@cifar:
+    cmd: python -m deckard.layers.compile --report_folder /result/cifar/reports/attack/
+      --results_file attack.csv --results_folder cifar --config "../conf/compile.yaml"
+    deps:
+    - path: /result/cifar/reports/attack/
+      hash: md5
+      md5: ed8b007df2788a65643c2c0b99a87a4d.dir
+      size: 5035287644
+      nfiles: 8031
+    outs:
+    - path: cifar/attack.csv
+      hash: md5
+      md5: b0bc8f836427dfd15154db3eb951c770
+      size: 9768945
+  compile@cifar100:
+    cmd: python -m deckard.layers.compile --report_folder /result/cifar100/reports/attack/
+      --results_file attack.csv --results_folder cifar100 --config "../conf/compile.yaml"
+    deps:
+    - path: /result/cifar100/reports/attack/
+      hash: md5
+      md5: 98cca8dcf77af04243bb18055c5f9bd6.dir
+      size: 73162490540
+      nfiles: 12469
+    outs:
+    - path: cifar100/attack.csv
+      hash: md5
+      md5: b60317375748c88064e0fbc7648664ad
+      size: 15729259
+  compile@bit_depth/mnist/:
+    cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/mnist//reports/attack/
+      --results_file attack.csv --results_folder bit_depth/mnist/ --config "../conf/compile.yaml"
+    deps:
+    - path: /result/bit_depth/mnist//reports/attack/
+      hash: md5
+      md5: 0e98e6497ec11efe7d15d6d26d48e373.dir
+      size: 3045516686
+      nfiles: 4182
+    outs:
+    - path: bit_depth/mnist//attack.csv
+      hash: md5
+      md5: 931d5f4dbd17abe4c31689f81dadf8a3
+      size: 5302969
+  compile@bit_depth/cifar/:
+    cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/cifar//reports/attack/
+      --results_file attack.csv --results_folder bit_depth/cifar/ --config "../conf/compile.yaml"
+    deps:
+    - path: /result/bit_depth/cifar//reports/attack/
+      hash: md5
+      md5: 8bb22698afd785bc1f0f3c2a6e59da3f.dir
+      size: 2549717549
+      nfiles: 4064
+    outs:
+    - path: bit_depth/cifar//attack.csv
+      hash: md5
+      md5: f8af91790f0fabe6bf17878379ea5541
+      size: 5174817
+  compile@bit_depth/cifar100/:
+    cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/cifar100//reports/attack/
+      --results_file attack.csv --results_folder bit_depth/cifar100/ --config "../conf/compile.yaml"
+    deps:
+    - path: /result/bit_depth/cifar100//reports/attack/
+      hash: md5
+      md5: 89064a9c0d246f457fd0994933be1082.dir
+      size: 11156025991
+      nfiles: 1953
+    outs:
+    - path: bit_depth/cifar100//attack.csv
+      hash: md5
+      md5: b05292a547c25f814225266218ee1adc
+      size: 2555658
+  clean@mnist:
+    cmd: python -m deckard.layers.clean_data --i mnist/attack.csv --o mnist/clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: mnist/attack.csv
+      hash: md5
+      md5: 49a0f8e54e50ce0f68929842fe150bb4
+      size: 9741090
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: mnist/clean.csv
+      hash: md5
+      md5: ab90ebadab8915ef132c3161b8abb836
+      size: 8556584
+  clean@cifar:
+    cmd: python -m deckard.layers.clean_data --i cifar/attack.csv --o cifar/clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: cifar/attack.csv
+      hash: md5
+      md5: b0bc8f836427dfd15154db3eb951c770
+      size: 9768945
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: cifar/clean.csv
+      hash: md5
+      md5: 5894ff26c79d9eeed68212757ba8e99e
+      size: 8532894
+  clean@cifar100:
+    cmd: python -m deckard.layers.clean_data --i cifar100/attack.csv --o cifar100/clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: cifar100/attack.csv
+      hash: md5
+      md5: b60317375748c88064e0fbc7648664ad
+      size: 15729259
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: cifar100/clean.csv
+      hash: md5
+      md5: 30601c3b051103dbd974c60266a8e04b
+      size: 13447438
+  clean@bit_depth/mnist/:
+    cmd: python -m deckard.layers.clean_data --i bit_depth/mnist//attack.csv --o bit_depth/mnist//clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: bit_depth/mnist//attack.csv
+      hash: md5
+      md5: 931d5f4dbd17abe4c31689f81dadf8a3
+      size: 5302969
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: bit_depth/mnist//clean.csv
+      hash: md5
+      md5: be9c19e571e973494d1ec9d5e5c296aa
+      size: 4616360
+  clean@bit_depth/cifar/:
+    cmd: python -m deckard.layers.clean_data --i bit_depth/cifar//attack.csv --o bit_depth/cifar//clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: bit_depth/cifar//attack.csv
+      hash: md5
+      md5: f8af91790f0fabe6bf17878379ea5541
+      size: 5174817
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: bit_depth/cifar//clean.csv
+      hash: md5
+      md5: 87925c04208c680ca5f74ff9b06771cc
+      size: 4499337
+  clean@bit_depth/cifar100/:
+    cmd: python -m deckard.layers.clean_data --i bit_depth/cifar100//attack.csv --o
+      bit_depth/cifar100//clean.csv --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: 8abf5440006041306a4bc2f66926dbe0
+      size: 382
+    - path: bit_depth/cifar100//attack.csv
+      hash: md5
+      md5: b05292a547c25f814225266218ee1adc
+      size: 2555658
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.pipeline.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: bit_depth/cifar100//clean.csv
+      hash: md5
+      md5: 8b1eaeaea313746a2785370ae48036b5
+      size: 2246065
+  plot@mnist:
+    cmd: python -m deckard.layers.plots --path mnist --file mnist/clean.csv -o plot_data.csv
+      -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: mnist/clean.csv
+      hash: md5
+      md5: ab90ebadab8915ef132c3161b8abb836
+      size: 8556584
+    outs:
+    - path: mnist/adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 15a885cc78080f4175df04255dc899a8
+      size: 16833
+    - path: mnist/ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: fe3d9c564525d3e811e2fa48e254e699
+      size: 17680
+    - path: mnist/train_time_vs_accuracy.pdf
+      hash: md5
+      md5: 4f373ec899f618c2c749130a6d21d1e3
+      size: 21136
+  plot@cifar:
+    cmd: python -m deckard.layers.plots --path cifar --file cifar/clean.csv -o plot_data.csv
+      -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: cifar/clean.csv
+      hash: md5
+      md5: 5894ff26c79d9eeed68212757ba8e99e
+      size: 8532894
+    outs:
+    - path: cifar/adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: dd63e9eb7bb6a5c86a66214e3251005d
+      size: 16816
+    - path: cifar/ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 5e0492f377216127352a4e442dfa89c0
+      size: 17671
+    - path: cifar/train_time_vs_accuracy.pdf
+      hash: md5
+      md5: f87f6066d231d7881d6294214a0a49ec
+      size: 22308
+  plot@cifar100:
+    cmd: python -m deckard.layers.plots --path cifar100 --file cifar100/clean.csv
+      -o plot_data.csv -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: cifar100/clean.csv
+      hash: md5
+      md5: 30601c3b051103dbd974c60266a8e04b
+      size: 13447438
+    outs:
+    - path: cifar100/adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: ef3ea44ba049aed03645a8af2ef6caa8
+      size: 33390
+    - path: cifar100/ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: b33ff9282e4c8ab698032970908bb0ec
+      size: 21083
+    - path: cifar100/train_time_vs_accuracy.pdf
+      hash: md5
+      md5: 7a9f47ebbe8e749660997497cc00f1d2
+      size: 24886
+  plot@bit_depth/mnist/:
+    cmd: python -m deckard.layers.plots --path bit_depth/mnist/ --file bit_depth/mnist//clean.csv
+      -o plot_data.csv -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: bit_depth/mnist//clean.csv
+      hash: md5
+      md5: be9c19e571e973494d1ec9d5e5c296aa
+      size: 4616360
+    outs:
+    - path: bit_depth/mnist//adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 064c4d6b49cf6acde5dfe41b4999c924
+      size: 16818
+    - path: bit_depth/mnist//ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 3c377d887eba2fbdef68374cb592c51a
+      size: 17704
+    - path: bit_depth/mnist//train_time_vs_accuracy.pdf
+      hash: md5
+      md5: 187c4e2e61190791829f0a33417b6416
+      size: 20906
+  plot@bit_depth/cifar/:
+    cmd: python -m deckard.layers.plots --path bit_depth/cifar/ --file bit_depth/cifar//clean.csv
+      -o plot_data.csv -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: bit_depth/cifar//clean.csv
+      hash: md5
+      md5: 87925c04208c680ca5f74ff9b06771cc
+      size: 4499337
+    outs:
+    - path: bit_depth/cifar//adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 264f9f4f08d3297059564d67d33f02cd
+      size: 16854
+    - path: bit_depth/cifar//ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: ad073ee47703296e7cd9d719d681570e
+      size: 17697
+    - path: bit_depth/cifar//train_time_vs_accuracy.pdf
+      hash: md5
+      md5: 498dc613bf96aa721afbfc1c15d92a19
+      size: 20906
