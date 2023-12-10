@@ -2,7 +2,7 @@ schema: '2.0'
 stages:
   compile@mnist:
     cmd: python -m deckard.layers.compile --report_folder /result/mnist/reports/attack/
-      --results_file attack.csv --results_folder mnist --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/mnist --config "../conf/compile.yaml"
     deps:
     - path: /result/mnist/reports/attack/
       hash: md5
@@ -10,13 +10,13 @@ stages:
       size: 5846593866
       nfiles: 8024
     outs:
-    - path: mnist/attack.csv
+    - path: data/mnist/raw.csv
       hash: md5
       md5: 49a0f8e54e50ce0f68929842fe150bb4
       size: 9741090
   compile@cifar:
     cmd: python -m deckard.layers.compile --report_folder /result/cifar/reports/attack/
-      --results_file attack.csv --results_folder cifar --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/cifar --config "../conf/compile.yaml"
     deps:
     - path: /result/cifar/reports/attack/
       hash: md5
@@ -24,13 +24,13 @@ stages:
       size: 5035287644
       nfiles: 8031
     outs:
-    - path: cifar/attack.csv
+    - path: data/cifar/raw.csv
       hash: md5
       md5: b0bc8f836427dfd15154db3eb951c770
       size: 9768945
   compile@cifar100:
     cmd: python -m deckard.layers.compile --report_folder /result/cifar100/reports/attack/
-      --results_file attack.csv --results_folder cifar100 --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/cifar100 --config "../conf/compile.yaml"
     deps:
     - path: /result/cifar100/reports/attack/
       hash: md5
@@ -38,13 +38,13 @@ stages:
       size: 73162490540
       nfiles: 12469
     outs:
-    - path: cifar100/attack.csv
+    - path: data/cifar100/raw.csv
       hash: md5
       md5: b60317375748c88064e0fbc7648664ad
       size: 15729259
   compile@bit_depth/mnist/:
     cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/mnist//reports/attack/
-      --results_file attack.csv --results_folder bit_depth/mnist/ --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/bit_depth/mnist/ --config "../conf/compile.yaml"
     deps:
     - path: /result/bit_depth/mnist//reports/attack/
       hash: md5
@@ -52,13 +52,13 @@ stages:
       size: 3045516686
       nfiles: 4182
     outs:
-    - path: bit_depth/mnist//attack.csv
+    - path: data/bit_depth/mnist//raw.csv
       hash: md5
       md5: 931d5f4dbd17abe4c31689f81dadf8a3
       size: 5302969
   compile@bit_depth/cifar/:
     cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/cifar//reports/attack/
-      --results_file attack.csv --results_folder bit_depth/cifar/ --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/bit_depth/cifar/ --config "../conf/compile.yaml"
     deps:
     - path: /result/bit_depth/cifar//reports/attack/
       hash: md5
@@ -66,36 +66,36 @@ stages:
       size: 2549717549
       nfiles: 4064
     outs:
-    - path: bit_depth/cifar//attack.csv
+    - path: data/bit_depth/cifar//raw.csv
       hash: md5
       md5: f8af91790f0fabe6bf17878379ea5541
       size: 5174817
   compile@bit_depth/cifar100/:
     cmd: python -m deckard.layers.compile --report_folder /result/bit_depth/cifar100//reports/attack/
-      --results_file attack.csv --results_folder bit_depth/cifar100/ --config "../conf/compile.yaml"
+      --results_file raw.csv --results_folder data/bit_depth/cifar100/ --config "../conf/compile.yaml"
     deps:
     - path: /result/bit_depth/cifar100//reports/attack/
       hash: md5
-      md5: 89064a9c0d246f457fd0994933be1082.dir
-      size: 11156025991
-      nfiles: 1953
+      md5: a61ca3c007a82f2fcb927d6b21fcd7f0.dir
+      size: 12191467091
+      nfiles: 2137
     outs:
-    - path: bit_depth/cifar100//attack.csv
+    - path: data/bit_depth/cifar100//raw.csv
       hash: md5
-      md5: b05292a547c25f814225266218ee1adc
-      size: 2555658
+      md5: 7721c65085fd7fa26a2558e88ceecd6f
+      size: 2795520
   clean@mnist:
-    cmd: python -m deckard.layers.clean_data --i mnist/attack.csv --o mnist/clean.csv
+    cmd: python -m deckard.layers.clean_data --i plots/mnist/merged.csv --o plots/mnist/clean.csv
       --config "../conf/clean.yaml"
     deps:
     - path: ../conf/clean.yaml
       hash: md5
-      md5: 8abf5440006041306a4bc2f66926dbe0
-      size: 382
-    - path: mnist/attack.csv
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: plots/mnist/merged.csv
       hash: md5
-      md5: 49a0f8e54e50ce0f68929842fe150bb4
-      size: 9741090
+      md5: 2d6929af603db1b4f0ae106fc31ae713
+      size: 15053785
     params:
       ../conf/clean.yaml:
         attacks:
@@ -113,27 +113,27 @@ stages:
           Batch_Size: 1024
         params:
           FGM: attack.init.eps
-          FSQ: model.art.pipeline.preprocessor.bit_depth
+          FSQ: model.art.preprocessor.bit_depth
           Control: model_layers
           Epochs: model.trainer.nb_epoch
           Batch_Size: model.trainer.batch_size
     outs:
-    - path: mnist/clean.csv
+    - path: plots/mnist/clean.csv
       hash: md5
-      md5: ab90ebadab8915ef132c3161b8abb836
-      size: 8556584
+      md5: a14975912f4445413e69927b340218f5
+      size: 9091050
   clean@cifar:
-    cmd: python -m deckard.layers.clean_data --i cifar/attack.csv --o cifar/clean.csv
+    cmd: python -m deckard.layers.clean_data --i plots/cifar/merged.csv --o plots/cifar/clean.csv
       --config "../conf/clean.yaml"
     deps:
     - path: ../conf/clean.yaml
       hash: md5
-      md5: 8abf5440006041306a4bc2f66926dbe0
-      size: 382
-    - path: cifar/attack.csv
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: plots/cifar/merged.csv
       hash: md5
-      md5: b0bc8f836427dfd15154db3eb951c770
-      size: 9768945
+      md5: d391c352c3777885f066ddb922105832
+      size: 14952800
     params:
       ../conf/clean.yaml:
         attacks:
@@ -151,27 +151,27 @@ stages:
           Batch_Size: 1024
         params:
           FGM: attack.init.eps
-          FSQ: model.art.pipeline.preprocessor.bit_depth
+          FSQ: model.art.preprocessor.bit_depth
           Control: model_layers
           Epochs: model.trainer.nb_epoch
           Batch_Size: model.trainer.batch_size
     outs:
-    - path: cifar/clean.csv
+    - path: plots/cifar/clean.csv
       hash: md5
-      md5: 5894ff26c79d9eeed68212757ba8e99e
-      size: 8532894
+      md5: a125c8f0b5b2c1ad3f9122e388baab66
+      size: 9102229
   clean@cifar100:
-    cmd: python -m deckard.layers.clean_data --i cifar100/attack.csv --o cifar100/clean.csv
+    cmd: python -m deckard.layers.clean_data --i plots/cifar100/merged.csv --o plots/cifar100/clean.csv
       --config "../conf/clean.yaml"
     deps:
     - path: ../conf/clean.yaml
       hash: md5
-      md5: 8abf5440006041306a4bc2f66926dbe0
-      size: 382
-    - path: cifar100/attack.csv
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: plots/cifar100/merged.csv
       hash: md5
-      md5: b60317375748c88064e0fbc7648664ad
-      size: 15729259
+      md5: d6b7a5cffcfe3b1ce3e86e33fdd58738
+      size: 18547746
     params:
       ../conf/clean.yaml:
         attacks:
@@ -189,15 +189,15 @@ stages:
           Batch_Size: 1024
         params:
           FGM: attack.init.eps
-          FSQ: model.art.pipeline.preprocessor.bit_depth
+          FSQ: model.art.preprocessor.bit_depth
           Control: model_layers
           Epochs: model.trainer.nb_epoch
           Batch_Size: model.trainer.batch_size
     outs:
-    - path: cifar100/clean.csv
+    - path: plots/cifar100/clean.csv
       hash: md5
-      md5: 30601c3b051103dbd974c60266a8e04b
-      size: 13447438
+      md5: 665e5a76445a5dfe5a0c00f83d3647ba
+      size: 9018968
   clean@bit_depth/mnist/:
     cmd: python -m deckard.layers.clean_data --i bit_depth/mnist//attack.csv --o bit_depth/mnist//clean.csv
       --config "../conf/clean.yaml"
@@ -284,8 +284,8 @@ stages:
       size: 382
     - path: bit_depth/cifar100//attack.csv
       hash: md5
-      md5: b05292a547c25f814225266218ee1adc
-      size: 2555658
+      md5: eb5f127dea09691fe7a082aa1f8c66e0
+      size: 2732950
     params:
       ../conf/clean.yaml:
         attacks:
@@ -310,83 +310,83 @@ stages:
     outs:
     - path: bit_depth/cifar100//clean.csv
       hash: md5
-      md5: 8b1eaeaea313746a2785370ae48036b5
-      size: 2246065
+      md5: 9b824fca1d0efc263cb84f051005e232
+      size: 2403993
   plot@mnist:
-    cmd: python -m deckard.layers.plots --path mnist --file mnist/clean.csv -o plot_data.csv
-      -c "../conf/plots.yaml"
+    cmd: python -m deckard.layers.plots --path plots/mnist --file plots/mnist/clean.csv  -c
+      "../conf/plots.yaml"
     deps:
     - path: ../conf/plots.yaml
       hash: md5
       md5: f874ee0b44e22fa0a7759900ad1b2221
       size: 1351
-    - path: mnist/clean.csv
+    - path: plots/mnist/clean.csv
       hash: md5
-      md5: ab90ebadab8915ef132c3161b8abb836
-      size: 8556584
+      md5: a14975912f4445413e69927b340218f5
+      size: 9091050
     outs:
-    - path: mnist/adv_failure_rate_vs_train_time.pdf
+    - path: plots/mnist/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: 15a885cc78080f4175df04255dc899a8
-      size: 16833
-    - path: mnist/ben_failure_rate_vs_train_time.pdf
+      md5: 2c360c1bec6486ef17869ccdec88c889
+      size: 16699
+    - path: plots/mnist/ben_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: fe3d9c564525d3e811e2fa48e254e699
-      size: 17680
-    - path: mnist/train_time_vs_accuracy.pdf
+      md5: 791cc597e9056d99167b0787b00be724
+      size: 17402
+    - path: plots/mnist/train_time_vs_accuracy.pdf
       hash: md5
-      md5: 4f373ec899f618c2c749130a6d21d1e3
-      size: 21136
+      md5: 5852e6ad1ef8026ad2e525923598be1b
+      size: 21821
   plot@cifar:
-    cmd: python -m deckard.layers.plots --path cifar --file cifar/clean.csv -o plot_data.csv
-      -c "../conf/plots.yaml"
+    cmd: python -m deckard.layers.plots --path plots/cifar --file plots/cifar/clean.csv  -c
+      "../conf/plots.yaml"
     deps:
     - path: ../conf/plots.yaml
       hash: md5
       md5: f874ee0b44e22fa0a7759900ad1b2221
       size: 1351
-    - path: cifar/clean.csv
+    - path: plots/cifar/clean.csv
       hash: md5
-      md5: 5894ff26c79d9eeed68212757ba8e99e
-      size: 8532894
+      md5: a125c8f0b5b2c1ad3f9122e388baab66
+      size: 9102229
     outs:
-    - path: cifar/adv_failure_rate_vs_train_time.pdf
+    - path: plots/cifar/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: dd63e9eb7bb6a5c86a66214e3251005d
-      size: 16816
-    - path: cifar/ben_failure_rate_vs_train_time.pdf
+      md5: 23e69cbab34a82b3e789975e575db9a9
+      size: 16703
+    - path: plots/cifar/ben_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: 5e0492f377216127352a4e442dfa89c0
-      size: 17671
-    - path: cifar/train_time_vs_accuracy.pdf
+      md5: 3e39fa775300e841b0aa76390eb860f0
+      size: 17410
+    - path: plots/cifar/train_time_vs_accuracy.pdf
       hash: md5
-      md5: f87f6066d231d7881d6294214a0a49ec
-      size: 22308
+      md5: 9a46ca5b42a46b44f4b8d1b5036ec70f
+      size: 22574
   plot@cifar100:
-    cmd: python -m deckard.layers.plots --path cifar100 --file cifar100/clean.csv
-      -o plot_data.csv -c "../conf/plots.yaml"
+    cmd: python -m deckard.layers.plots --path plots/cifar100 --file plots/cifar100/clean.csv  -c
+      "../conf/plots.yaml"
     deps:
     - path: ../conf/plots.yaml
       hash: md5
       md5: f874ee0b44e22fa0a7759900ad1b2221
       size: 1351
-    - path: cifar100/clean.csv
+    - path: plots/cifar100/clean.csv
       hash: md5
-      md5: 30601c3b051103dbd974c60266a8e04b
-      size: 13447438
+      md5: 665e5a76445a5dfe5a0c00f83d3647ba
+      size: 9018968
     outs:
-    - path: cifar100/adv_failure_rate_vs_train_time.pdf
+    - path: plots/cifar100/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: ef3ea44ba049aed03645a8af2ef6caa8
-      size: 33390
-    - path: cifar100/ben_failure_rate_vs_train_time.pdf
+      md5: 4d2d747d54eda82439989bb6db36cc86
+      size: 138119
+    - path: plots/cifar100/ben_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: b33ff9282e4c8ab698032970908bb0ec
-      size: 21083
-    - path: cifar100/train_time_vs_accuracy.pdf
+      md5: 2672ba05e9d4e1852ac988b88d5a241b
+      size: 47359
+    - path: plots/cifar100/train_time_vs_accuracy.pdf
       hash: md5
-      md5: 7a9f47ebbe8e749660997497cc00f1d2
-      size: 24886
+      md5: 00584d6ce8d84a0948e3631a4d54749c
+      size: 23810
   plot@bit_depth/mnist/:
     cmd: python -m deckard.layers.plots --path bit_depth/mnist/ --file bit_depth/mnist//clean.csv
       -o plot_data.csv -c "../conf/plots.yaml"
@@ -437,3 +437,477 @@ stages:
       hash: md5
       md5: 498dc613bf96aa721afbfc1c15d92a19
       size: 20906
+  afr@mnist:
+    cmd: python -m deckard.layers.afr --dataset mnist --data_file plots/mnist/clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder plots/mnist/
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: d2b0242d65a14ff76c939f06f353f11a
+      size: 8193
+    - path: plots/mnist/clean.csv
+      hash: md5
+      md5: a14975912f4445413e69927b340218f5
+      size: 9091050
+    outs:
+    - path: plots/mnist/aft_comparison.csv
+      hash: md5
+      md5: 75649efa8976a848cb820dde571ac2e6
+      size: 211
+    - path: plots/mnist/aft_comparison.tex
+      hash: md5
+      md5: d87ca3419fce3ebfdcdcdaac8f4ec670
+      size: 451
+    - path: plots/mnist/cox_aft.pdf
+      hash: md5
+      md5: 34cfbec91e0522a77b90ebe0c862556f
+      size: 20224
+    - path: plots/mnist/cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 2ad962115cd66dce8b6dabb524f3b6fa
+      size: 32890
+    - path: plots/mnist/log_logistic_aft.pdf
+      hash: md5
+      md5: 1f57552a2314a19169536751d33f7c08
+      size: 22925
+    - path: plots/mnist/log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: ccc23d3ea3078218d3693e91e3a5e1de
+      size: 27825
+    - path: plots/mnist/log_normal_aft.pdf
+      hash: md5
+      md5: aad7a0ff77b3e035251849d88ca35008
+      size: 23995
+    - path: plots/mnist/log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 99f08e5a8cbf71c69d425006f33492b3
+      size: 28351
+    - path: plots/mnist/weibull_aft.pdf
+      hash: md5
+      md5: 6778862378f1caa9d11d9050611a3593
+      size: 31870
+    - path: plots/mnist/weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: acfc9fe6605bf6f3a6456048bd0c9392
+      size: 27246
+  afr@cifar:
+    cmd: python -m deckard.layers.afr --dataset cifar --data_file plots/cifar/clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder plots/cifar/
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: d2b0242d65a14ff76c939f06f353f11a
+      size: 8193
+    - path: plots/cifar/clean.csv
+      hash: md5
+      md5: a125c8f0b5b2c1ad3f9122e388baab66
+      size: 9102229
+    outs:
+    - path: plots/cifar/aft_comparison.csv
+      hash: md5
+      md5: fe4c01a879f59639d319f02d18c1dbba
+      size: 211
+    - path: plots/cifar/aft_comparison.tex
+      hash: md5
+      md5: d21b263ad8bbd00dba6684c9ea90aa1b
+      size: 451
+    - path: plots/cifar/cox_aft.pdf
+      hash: md5
+      md5: 918d3ee2d1d1f82403da3f344fe0ed66
+      size: 19813
+    - path: plots/cifar/cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 51a44013cb4373541e0b397a2c4c9909
+      size: 32935
+    - path: plots/cifar/log_logistic_aft.pdf
+      hash: md5
+      md5: 12bc7e565631dfa700430dc1188e0ad7
+      size: 22926
+    - path: plots/cifar/log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 102a6036756a0f436a6c91626b19225c
+      size: 27917
+    - path: plots/cifar/log_normal_aft.pdf
+      hash: md5
+      md5: cbeb3472711e4928ab7fb2f6dab3df2e
+      size: 23625
+    - path: plots/cifar/log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 94f10a1fd2341bd0961f6fea675727ba
+      size: 28446
+    - path: plots/cifar/weibull_aft.pdf
+      hash: md5
+      md5: 2983464583fe7f244f34676d2eee39f1
+      size: 31869
+    - path: plots/cifar/weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 1e6682f5a5828c4bae7e24fc744a99c4
+      size: 27839
+  afr@cifar100:
+    cmd: python -m deckard.layers.afr --dataset cifar100 --data_file plots/cifar100/clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder plots/cifar100/
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: d2b0242d65a14ff76c939f06f353f11a
+      size: 8193
+    - path: plots/cifar100/clean.csv
+      hash: md5
+      md5: 665e5a76445a5dfe5a0c00f83d3647ba
+      size: 9018968
+    outs:
+    - path: plots/cifar100/aft_comparison.csv
+      hash: md5
+      md5: 19a561633d5cc9a08e9df637d6a50c89
+      size: 211
+    - path: plots/cifar100/aft_comparison.tex
+      hash: md5
+      md5: 2fed9d35933b54943997a5d3cd94af34
+      size: 457
+    - path: plots/cifar100/cox_aft.pdf
+      hash: md5
+      md5: 0866f46cc1dab65156a263320ae297ad
+      size: 19506
+    - path: plots/cifar100/cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 8e2fcff5d8978649a569a77a6469111c
+      size: 34190
+    - path: plots/cifar100/log_logistic_aft.pdf
+      hash: md5
+      md5: 899a6f4a4d5ba4e37a143d6788af0a72
+      size: 22937
+    - path: plots/cifar100/log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 8c6fc2e327a941cb60ed24337872bda8
+      size: 28138
+    - path: plots/cifar100/log_normal_aft.pdf
+      hash: md5
+      md5: 29f08dd22b9ddda7063e9ed5fa7d1338
+      size: 23631
+    - path: plots/cifar100/log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 81ef8750508d5b297d3f2217cd32299d
+      size: 28586
+    - path: plots/cifar100/weibull_aft.pdf
+      hash: md5
+      md5: cba44555ff83b441927ff25bc4853948
+      size: 32241
+    - path: plots/cifar100/weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: d3bccc5a5f78b454c6eb3e474d70576f
+      size: 27335
+  afr@bit_depth/mnist/:
+    cmd: python -m deckard.layers.afr --dataset bit_depth/mnist/ --data_file bit_depth/mnist//clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder bit_depth/mnist//
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: 2f7ff61ce1517a4320ab990cbf5f2b16
+      size: 8084
+    - path: bit_depth/mnist//clean.csv
+      hash: md5
+      md5: be9c19e571e973494d1ec9d5e5c296aa
+      size: 4616360
+    outs:
+    - path: bit_depth/mnist//aft_comparison.csv
+      hash: md5
+      md5: 005f7fad3e004cd1aeba4d7026fec59f
+      size: 206
+    - path: bit_depth/mnist//aft_comparison.tex
+      hash: md5
+      md5: dadb9ff937ff4439a3417470875dbff0
+      size: 467
+    - path: bit_depth/mnist//cox_aft.pdf
+      hash: md5
+      md5: 464d748d09b5a74e4caf7dcba53c7765
+      size: 19845
+    - path: bit_depth/mnist//cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 43d1816f6d9787447db3f6b4165b06e9
+      size: 36065
+    - path: bit_depth/mnist//log_logistic_aft.pdf
+      hash: md5
+      md5: c6263466d092370807856b8e7b3b7076
+      size: 22924
+    - path: bit_depth/mnist//log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 13444657c03eb7657a97ade1e8d1e757
+      size: 29056
+    - path: bit_depth/mnist//log_normal_aft.pdf
+      hash: md5
+      md5: 4cd001effbde77d0a6b73d27b76f59bd
+      size: 23623
+    - path: bit_depth/mnist//log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 7027ffe31c4577b7715a051fbe407037
+      size: 29511
+    - path: bit_depth/mnist//weibull_aft.pdf
+      hash: md5
+      md5: cd3ede6772afe1ec39fbbfb4b665be61
+      size: 31852
+    - path: bit_depth/mnist//weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 88c5aa82888d12799b0d6fac49ad1342
+      size: 29294
+  afr@bit_depth/cifar/:
+    cmd: python -m deckard.layers.afr --dataset bit_depth/cifar/ --data_file bit_depth/cifar//clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder bit_depth/cifar//
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: 2f7ff61ce1517a4320ab990cbf5f2b16
+      size: 8084
+    - path: bit_depth/cifar//clean.csv
+      hash: md5
+      md5: 87925c04208c680ca5f74ff9b06771cc
+      size: 4499337
+    outs:
+    - path: bit_depth/cifar//aft_comparison.csv
+      hash: md5
+      md5: 31691c01a4d8111943a3a1d32f9e3ebb
+      size: 204
+    - path: bit_depth/cifar//aft_comparison.tex
+      hash: md5
+      md5: db7e6f8c03c430d64f78f6a3080b5def
+      size: 467
+    - path: bit_depth/cifar//cox_aft.pdf
+      hash: md5
+      md5: 4056b0e496ac3a40a8fea027bd0f52a7
+      size: 19876
+    - path: bit_depth/cifar//cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 8fcf5fd69b6aa2e70e518b53b4df292e
+      size: 32754
+    - path: bit_depth/cifar//log_logistic_aft.pdf
+      hash: md5
+      md5: 7cbe9fc3ea456e4b58586e7bbec4f8ac
+      size: 22935
+    - path: bit_depth/cifar//log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: a1359c6b99df8423c27602bd174a869d
+      size: 28501
+    - path: bit_depth/cifar//log_normal_aft.pdf
+      hash: md5
+      md5: c5b535be1360c67342029214a79e9fb8
+      size: 23626
+    - path: bit_depth/cifar//log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: bbd9c216373bc3adb953bd504580e58b
+      size: 28805
+    - path: bit_depth/cifar//weibull_aft.pdf
+      hash: md5
+      md5: cf81ad1f8b61d2a1a6100bae5e7c9120
+      size: 31870
+    - path: bit_depth/cifar//weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 5f1f798dbcf45d5d3013b17b75d539a2
+      size: 28387
+  plot@bit_depth/cifar100/:
+    cmd: python -m deckard.layers.plots --path bit_depth/cifar100/ --file bit_depth/cifar100//clean.csv
+      -o plot_data.csv -c "../conf/plots.yaml"
+    deps:
+    - path: ../conf/plots.yaml
+      hash: md5
+      md5: f874ee0b44e22fa0a7759900ad1b2221
+      size: 1351
+    - path: bit_depth/cifar100//clean.csv
+      hash: md5
+      md5: 9b824fca1d0efc263cb84f051005e232
+      size: 2403993
+    outs:
+    - path: bit_depth/cifar100//adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 6f3f8c6c616fde7c66e9185c8e419cc0
+      size: 21180
+    - path: bit_depth/cifar100//ben_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 09bde7a2f4e8c81e644eeaaf6c59784b
+      size: 18780
+    - path: bit_depth/cifar100//train_time_vs_accuracy.pdf
+      hash: md5
+      md5: 4780e39f698b096e1af30484c96a1020
+      size: 20906
+  afr@bit_depth/cifar100/:
+    cmd: python -m deckard.layers.afr --dataset bit_depth/cifar100/ --data_file bit_depth/cifar100//clean.csv
+      --config_file "../conf/afr.yaml" --plots_folder bit_depth/cifar100//
+    deps:
+    - path: ../conf/afr.yaml
+      hash: md5
+      md5: 2f7ff61ce1517a4320ab990cbf5f2b16
+      size: 8084
+    - path: bit_depth/cifar100//clean.csv
+      hash: md5
+      md5: 9b824fca1d0efc263cb84f051005e232
+      size: 2403993
+    outs:
+    - path: bit_depth/cifar100//aft_comparison.csv
+      hash: md5
+      md5: 658cd7c48b76641e3fda34336feccc7c
+      size: 204
+    - path: bit_depth/cifar100//aft_comparison.tex
+      hash: md5
+      md5: 74305c44bf6406bb7fd7f5c401f49c19
+      size: 473
+    - path: bit_depth/cifar100//cox_aft.pdf
+      hash: md5
+      md5: 250ba5a5be747cface3a9ec77fa269b1
+      size: 19872
+    - path: bit_depth/cifar100//cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: df843106e13b4ee688b4727b53a5a3ac
+      size: 29415
+    - path: bit_depth/cifar100//log_logistic_aft.pdf
+      hash: md5
+      md5: 90a0016fb6a1f85a6ef42131d123d97c
+      size: 22925
+    - path: bit_depth/cifar100//log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 23b8087b03afb16f29b09c4cbed09b11
+      size: 30511
+    - path: bit_depth/cifar100//log_normal_aft.pdf
+      hash: md5
+      md5: 400c9fbfa2fb07d15f1e449b738d6a74
+      size: 23996
+    - path: bit_depth/cifar100//log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 5fb00d45f339547852f0772768f1efe9
+      size: 31109
+    - path: bit_depth/cifar100//weibull_aft.pdf
+      hash: md5
+      md5: e9942fd0735b01427d6024d7ac80ef04
+      size: 31869
+    - path: bit_depth/cifar100//weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 33fad63a9c8c692a91ce0e42a10bd002
+      size: 30264
+  merge:
+    cmd: python merge.py  --big_dir bit_depth --datasets mnist cifar cifar100 --config
+      ../conf/afr.yaml --data_file attack.csv
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: c0bfb9304aacb5239da46845148a028b
+      size: 389
+    - path: bit_depth/cifar/attack.csv
+      hash: md5
+      md5: f8af91790f0fabe6bf17878379ea5541
+      size: 5174817
+    - path: bit_depth/cifar100/attack.csv
+      hash: md5
+      md5: af03ce29cacd070f9544242ecead9605
+      size: 2764244
+    - path: bit_depth/mnist/attack.csv
+      hash: md5
+      md5: 931d5f4dbd17abe4c31689f81dadf8a3
+      size: 5302969
+    params:
+      ../conf/clean.yaml:
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+    outs:
+    - path: cifar/merged.csv
+      hash: md5
+      md5: a6a7652c510dabf337d850720a7dacb4
+      size: 14930733
+    - path: cifar100/merged.csv
+      hash: md5
+      md5: 5faa77876ec19c9a399f2dc949e2fe97
+      size: 18486413
+    - path: mnist/merged.csv
+      hash: md5
+      md5: 4599a8648c7ac726a387b09591b7bc6d
+      size: 15031592
+  merge@mnist:
+    cmd: python merge.py  --big_dir data/bit_depth/mnist --little_dir data/mnist --config
+      ../conf/afr.yaml --data_file raw.csv --output_folder plots/mnist/ --output_file
+      merged.csv
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: data/bit_depth/mnist/raw.csv
+      hash: md5
+      md5: 931d5f4dbd17abe4c31689f81dadf8a3
+      size: 5302969
+    - path: data/mnist/raw.csv
+      hash: md5
+      md5: 49a0f8e54e50ce0f68929842fe150bb4
+      size: 9741090
+    params:
+      ../conf/clean.yaml:
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+    outs:
+    - path: plots/mnist/merged.csv
+      hash: md5
+      md5: 2d6929af603db1b4f0ae106fc31ae713
+      size: 15053785
+  merge@cifar:
+    cmd: python merge.py  --big_dir data/bit_depth/cifar --little_dir data/cifar --config
+      ../conf/afr.yaml --data_file raw.csv --output_folder plots/cifar/ --output_file
+      merged.csv
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: data/bit_depth/cifar/raw.csv
+      hash: md5
+      md5: f8af91790f0fabe6bf17878379ea5541
+      size: 5174817
+    - path: data/cifar/raw.csv
+      hash: md5
+      md5: b0bc8f836427dfd15154db3eb951c770
+      size: 9768945
+    params:
+      ../conf/clean.yaml:
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+    outs:
+    - path: plots/cifar/merged.csv
+      hash: md5
+      md5: d391c352c3777885f066ddb922105832
+      size: 14952800
+  merge@cifar100:
+    cmd: python merge.py  --big_dir data/bit_depth/cifar100 --little_dir data/cifar100
+      --config ../conf/afr.yaml --data_file raw.csv --output_folder plots/cifar100/
+      --output_file merged.csv
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: data/bit_depth/cifar100/raw.csv
+      hash: md5
+      md5: 7721c65085fd7fa26a2558e88ceecd6f
+      size: 2795520
+    - path: data/cifar100/raw.csv
+      hash: md5
+      md5: b60317375748c88064e0fbc7648664ad
+      size: 15729259
+    params:
+      ../conf/clean.yaml:
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+    outs:
+    - path: plots/cifar100/merged.csv
+      hash: md5
+      md5: d6b7a5cffcfe3b1ce3e86e33fdd58738
+      size: 18547746
