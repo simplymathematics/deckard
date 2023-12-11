@@ -1,6 +1,7 @@
 import logging
 import os
-import tempfile
+# import tempfile
+from pathlib import Path
 import warnings
 
 from sklearn.exceptions import UndefinedMetricWarning
@@ -32,7 +33,9 @@ LOGGING = {
     "handlers": {
         "default": {
             "class": "logging.FileHandler",
-            "filename": os.path.join(tempfile.gettempdir(), "deckard.log"),
+            "filename": os.path.join(Path.cwd(), "deckard.log"),
+            "formatter": "std",
+            "level": logging.DEBUG,
             "mode": "a",
         },
         "test": {
