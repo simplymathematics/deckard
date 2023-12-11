@@ -76,3 +76,14 @@ stages:
        # This outputs a database file for each model
       - ${files.directory}/${data.generate.name}.db:
           cache: false
+  plot_all_data_and_hardware:
+    deps:
+     - plots/dvc.yaml
+     - conf/afr.yaml
+     - conf/clean.yaml
+     - conf/combined_afr.yaml
+     - conf/plots.yaml
+    cmd: cd plots && dvc repro
+    outs:
+      - plots/data
+      - plots/plots

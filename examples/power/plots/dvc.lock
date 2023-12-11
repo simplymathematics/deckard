@@ -765,3 +765,94 @@ stages:
       hash: md5
       md5: 974753b58c381e3a47802c74d59812d8
       size: 37662
+  combined_clean:
+    cmd: python -m deckard.layers.clean_data --i data/combined/combined.csv --o plots/combined/clean.csv
+      --config "../conf/clean.yaml"
+    deps:
+    - path: ../conf/clean.yaml
+      hash: md5
+      md5: eba3dd17dd820ad8273a37ba57ea73b7
+      size: 373
+    - path: data/combined/combined.csv
+      hash: md5
+      md5: 49c45582a8434e229a6d848b2daa98de
+      size: 48168778
+    params:
+      ../conf/clean.yaml:
+        attacks:
+          FastGradientMethod: FGM
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+          FGM: 0.0
+          FSQ: 32
+          Control: 18
+          Batch_Size: 1024
+        params:
+          FGM: attack.init.eps
+          FSQ: model.art.preprocessor.bit_depth
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          Batch_Size: model.trainer.batch_size
+    outs:
+    - path: plots/combined/clean.csv
+      hash: md5
+      md5: e43de478b2e16e8c8df1f2bda3885953
+      size: 9931448
+  combined_afr:
+    cmd: python -m deckard.layers.afr --dataset Combined --data_file plots/combined/clean.csv
+      --config_file "../conf/combined_afr.yaml" --plots_folder plots/combined/
+    deps:
+    - path: ../conf/combined_afr.yaml
+      hash: md5
+      md5: a8cce1086d7be153adfa2aa446173f15
+      size: 9701
+    - path: plots/combined/clean.csv
+      hash: md5
+      md5: e43de478b2e16e8c8df1f2bda3885953
+      size: 9931448
+    outs:
+    - path: plots/combined/aft_comparison.csv
+      hash: md5
+      md5: 7e871c738af90af937d37cb73f3983d0
+      size: 205
+    - path: plots/combined/aft_comparison.tex
+      hash: md5
+      md5: 026addb01cc018b7dff4d955e76d4e6d
+      size: 457
+    - path: plots/combined/cox_aft.pdf
+      hash: md5
+      md5: 63497d9a40725c628e5cdb2c14545927
+      size: 20127
+    - path: plots/combined/cox_epochs_partial_effect.pdf
+      hash: md5
+      md5: 2c83b76ce9461c0a27713a2cce3d937e
+      size: 38718
+    - path: plots/combined/log_logistic_aft.pdf
+      hash: md5
+      md5: ff6266dd2a940003b2878b427eea1f34
+      size: 22615
+    - path: plots/combined/log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 9a0af300418b8bf6ef23aca2c86ee74f
+      size: 28635
+    - path: plots/combined/log_normal_aft.pdf
+      hash: md5
+      md5: 2da2c6d70e41b3fdddd978c63ecc244b
+      size: 23693
+    - path: plots/combined/log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: 293e8f8563e4e24702c1d5a45ab4cca7
+      size: 29144
+    - path: plots/combined/weibull_aft.pdf
+      hash: md5
+      md5: 0538e75314aee0d8551b3e24c1394039
+      size: 31814
+    - path: plots/combined/weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 9333127625760743a18b2b9816f37a0a
+      size: 28542

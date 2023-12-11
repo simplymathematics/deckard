@@ -122,3 +122,34 @@ stages:
        - plots/combined/time.pdf
        - plots/combined/cost.pdf
        - plots/combined/power.pdf
+  combined_clean:
+    cmd: python -m deckard.layers.clean_data --i data/combined/combined.csv --o plots/combined/clean.csv --config "../conf/clean.yaml"
+    deps:
+      - data/combined/combined.csv
+      - ../conf/clean.yaml
+    outs:
+     - plots/combined/clean.csv
+    params:
+     - ../conf/clean.yaml:
+       - attacks
+       - defences
+       - params
+       - fillna
+  combined_afr:
+    cmd: python -m deckard.layers.afr --dataset Combined --data_file plots/combined/clean.csv --config_file "../conf/combined_afr.yaml" --plots_folder plots/combined/ 
+    deps:
+      - plots/combined/clean.csv
+      - ../conf/combined_afr.yaml
+    plots:
+      - plots/combined/weibull_aft.pdf # You can also define them manually
+      - plots/combined/weibull_epochs_partial_effect.pdf
+      - plots/combined/cox_epochs_partial_effect.pdf
+      - plots/combined/cox_aft.pdf
+      - plots/combined/log_logistic_aft.pdf
+      - plots/combined/log_logistic_epochs_partial_effect.pdf
+      - plots/combined/log_normal_aft.pdf
+      - plots/combined/log_normal_epochs_partial_effect.pdf
+    metrics:
+      - plots/combined/aft_comparison.csv
+    outs:
+      - plots/combined/aft_comparison.tex
