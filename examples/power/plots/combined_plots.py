@@ -88,7 +88,7 @@ big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False
 
 
 
-fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+fig, ax = plt.subplots(1, 2, figsize=(8, 5))
 ben_acc = sns.boxenplot(data=big_df, x="dataset", y="accuracy", hue="Device", ax=ax[0], legend=False,)
 ben_acc.set_title("Average Accuracy on Benign Samples")
 ben_acc.set_ylabel("Ben. Accuracy")

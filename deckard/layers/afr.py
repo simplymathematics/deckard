@@ -139,11 +139,10 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
-    aft_data = aft_data.round(2)
     aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
         folder / "aft_comparison.tex",
-        float_format="%.2f",
+        float_format="%.3g",
         label=f"tab:{dataset}",
         caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
     )
