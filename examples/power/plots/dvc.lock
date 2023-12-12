@@ -856,3 +856,16 @@ stages:
       hash: md5
       md5: 435131a33a804dbf858826a7855ab855
       size: 28542
+  get_power_data@bit_depth/cifar100/:
+    cmd: python -m deckard.layers.query_kepler --input_file data/bit_depth/cifar100//raw.csv
+      --output_file data/bit_depth/cifar100//power.csv
+    deps:
+    - path: data/bit_depth/cifar100//raw.csv
+      hash: md5
+      md5: 37b87d60ad6e609c8c5a42c8c5623ee5
+      size: 3900609
+    outs:
+    - path: data/bit_depth/cifar100//power.csv
+      hash: md5
+      md5: d52080413e3ba7bd86ef8d92ebd00507
+      size: 3987447
