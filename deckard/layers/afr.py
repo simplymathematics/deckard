@@ -173,10 +173,12 @@ def clean_data_for_aft(
         cleaned = cleaned[cleaned[col] != -1e10]
         cleaned = cleaned[cleaned[col] != 1e10]
     cleaned.dropna(inplace=True, how="any", axis=0)
+    cleaned = pd.get_dummies(cleaned)
     assert (
         target in cleaned
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     logger.info(f"Shape of cleaned data: {cleaned.shape}")
+    
     return cleaned
 
 

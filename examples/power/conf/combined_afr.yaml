@@ -51,6 +51,26 @@ weibull:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
+    - "file" : "weibull_accuracy_partial_effect.pdf"
+      "covariate_array": "accuracy"
+      "values_array": [0.5, 0.6, 0.7, 0.8, 0.9]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Accuracy",
+          "labels": ["0.5", "0.6", "0.7", "0.8", "0.9"]
+      }
+    - "file" : "weibull_adv_failure_rate_partial_effect.pdf"
+      "covariate_array": "adv_failure_rate"
+      "values_array": [1, 1e2, 1e4]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Adv. Failure Rate",
+          "labels": ["1", "1e2", "1e4"]
+      }
 cox:
   plot:
     file : cox_aft.pdf
@@ -90,6 +110,26 @@ cox:
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
+      }
+    - "file" : "cox_accuracy_partial_effect.pdf"
+      "covariate_array": "accuracy"
+      "values_array": [0.5, 0.6, 0.7, 0.8, 0.9]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Accuracy",
+          "labels": ["0.5", "0.6", "0.7", "0.8", "0.9"]
+      }
+    - "file" : "cox_adv_failure_rate_partial_effect.pdf"
+      "covariate_array": "adv_failure_rate"
+      "values_array": [1, 1e2, 1e4]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Adv. Failure Rate",
+          "labels": ["1", "1e2", "1e4"]
       }
 log_logistic:
   plot:
@@ -131,6 +171,26 @@ log_logistic:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
+    - "file" : "log_logistic_accuracy_partial_effect.pdf"
+      "covariate_array": "accuracy"
+      "values_array": [0.5, 0.6, 0.7, 0.8, 0.9]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Accuracy",
+          "labels": ["0.5", "0.6", "0.7", "0.8", "0.9"]
+      }
+    - "file" : "log_logistic_adv_failure_rate_partial_effect.pdf"
+      "covariate_array": "adv_failure_rate"
+      "values_array": [1, 1e2, 1e4]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Adv. Failure Rate",
+          "labels": ["1", "1e2", "1e4"]
+      }
 log_normal:
   plot:
     file : log_normal_aft.pdf
@@ -170,6 +230,26 @@ log_normal:
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
+      }
+    - "file" : "log_normal_accuracy_partial_effect.pdf"
+      "covariate_array": "accuracy"
+      "values_array": [0.5, 0.6, 0.7, 0.8, 0.9]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Accuracy",
+          "labels": ["0.5", "0.6", "0.7", "0.8", "0.9"]
+      }
+    - "file" : "log_normal_adv_failure_rate_partial_effect.pdf"
+      "covariate_array": "adv_failure_rate"
+      "values_array": [1, 1e2, 1e4]
+      "title": "$S(t)$ for Log Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "Adv. Failure Rate",
+          "labels": ["1", "1e2", "1e4"]
       }
 # cox:
 #   plot:
