@@ -79,7 +79,7 @@ def cat_plot(
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     logger.debug(
-        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}."
+        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
     )
     graph = sns.catplot(
         data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs

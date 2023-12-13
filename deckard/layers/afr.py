@@ -233,7 +233,13 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
 
 
 def render_all_afr_plots(
-    config, duration_col, target, data, dataset, test_size=0.8, folder="."
+    config,
+    duration_col,
+    target,
+    data,
+    dataset,
+    test_size=0.8,
+    folder=".",
 ):
     covariate_list = config.pop("covariates", [])
     X_train, X_test = split_data_for_aft(
@@ -317,5 +323,11 @@ if "__main__" == __name__:
         "attack.attack_size",
     ]
     render_all_afr_plots(
-        config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER
+        config,
+        duration_col,
+        target,
+        data,
+        dataset,
+        test_size=0.8,
+        folder=FOLDER,
     )

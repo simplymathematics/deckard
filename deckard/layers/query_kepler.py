@@ -35,11 +35,14 @@ class PromQuery:
         start = datetime.fromtimestamp((self.start + self.warmup))
         end = datetime.fromtimestamp((self.end - self.cooldown))
         result = prom.custom_query_range(
-            query=self.query, start_time=start, end_time=end, step=self.step
+            query=self.query,
+            start_time=start,
+            end_time=end,
+            step=self.step,
         )
         return abs(
             float(result[0]["values"][-1 * int(self.total)][1])
-            - float(result[0]["values"][-1][1])
+            - float(result[0]["values"][-1][1]),
         )
 
     def get_power(self):

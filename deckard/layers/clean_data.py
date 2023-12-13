@@ -606,9 +606,11 @@ if __name__ == "__main__":
 
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
-        results, Path(args.output_file).name, Path(args.output_file).parent
+        results,
+        Path(args.output_file).name,
+        Path(args.output_file).parent,
     )
     assert Path(
-        output_file
+        output_file,
     ).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
     logger.info(f"Saved results to {output_file}")

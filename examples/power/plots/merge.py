@@ -56,7 +56,9 @@ def merge_run(
     results_file = Path(output_file).name
     results_folder.mkdir(parents=True, exist_ok=True)
     saved_path = save_results(
-        merged, results_file=results_file, results_folder=results_folder
+        merged,
+        results_file=results_file,
+        results_folder=results_folder,
     )
     assert Path(saved_path).exists(), f"Saved path {saved_path} does not exist."
     return None
@@ -67,19 +69,34 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--big_dir", type=str, help="Directory of the big run", required=True
+        "--big_dir",
+        type=str,
+        help="Directory of the big run",
+        required=True,
     )
     parser.add_argument(
-        "--little_dir", type=str, help="Directory of the small run", required=False
+        "--little_dir",
+        type=str,
+        help="Directory of the small run",
+        required=False,
     )
     parser.add_argument(
-        "--data_file", type=str, help="Name of the data file", required=True
+        "--data_file",
+        type=str,
+        help="Name of the data file",
+        required=True,
     )
     parser.add_argument(
-        "--output_file", type=str, help="Name of the output file", default="merged.csv"
+        "--output_file",
+        type=str,
+        help="Name of the output file",
+        default="merged.csv",
     )
     parser.add_argument(
-        "--output_folder", type=str, help="Name of the output folder", required=False
+        "--output_folder",
+        type=str,
+        help="Name of the output folder",
+        required=False,
     )
     parser.add_argument(
         "--little_dir_data_file",
@@ -88,7 +105,10 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--config", type=str, help="Name of the output folder", required=False
+        "--config",
+        type=str,
+        help="Name of the output folder",
+        required=False,
     )
     args = parser.parse_args()
     if args.config is not None:
