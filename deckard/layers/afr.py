@@ -114,6 +114,7 @@ def score_model(aft, train, test):
 
 
 def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
+    pd.set_option('display.float_format', lambda x: '%.3f' % x)
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
@@ -136,7 +137,6 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data["Median $S(t;\\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
-    aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.fillna("--", inplace=True)
