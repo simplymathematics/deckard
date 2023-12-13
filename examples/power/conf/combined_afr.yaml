@@ -6,8 +6,8 @@ covariates:
   - model.trainer.batch_size
   - attack.init.eps
   - data.sample.random_state
-  - adv_failure_rate
   - adv_fit_time
+  # - model.art.preprocessor.bit_depth
   # - train_power
   # - predict_power
   # - n_pixels
@@ -61,7 +61,7 @@ weibull:
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_t$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -71,9 +71,19 @@ weibull:
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_i$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
+    - "file" : weibull_attack_eps_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Weibull AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
 cox:
@@ -121,7 +131,7 @@ cox:
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Cox AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_t$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -131,9 +141,19 @@ cox:
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Cox AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_i$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
+    - "file" : cox_attack_eps_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Cox AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
 log_logistic:
@@ -169,7 +189,7 @@ log_logistic:
     - "file": "log_logistic_batch_size_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,25,50]
-      "title": "$S(t)$ for Log Logistic AFR"
+      "title": "$S(t)$ for Log-Logistic AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
@@ -179,9 +199,9 @@ log_logistic:
     - "file": "log_logistic_train_time_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Log Logistic AFR"
+      "title": "$S(t)$ for Log-Logistic AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_t$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -189,17 +209,27 @@ log_logistic:
     - "file" : log_logistic_predict_time_partial_effect.pdf
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Log Logistic AFR"
+      "title": "$S(t)$ for Log-Logistic AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_i$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
+    - "file" : log_logistic_attack_eps_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Log-Logistic AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
 log_normal:
   plot:
     file : log_normal_aft.pdf
-    title : Log Normal AFR Model
+    title : Log-Normal AFR Model
   labels:
     "Intercept: rho_": "$\\rho$"
     "Intercept: lambda_": "$\\lambda$" 
@@ -229,7 +259,7 @@ log_normal:
     - "file": "log_normal_batch_size_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,25,50]
-      "title": "$S(t)$ for Log Normal AFR"
+      "title": "$S(t)$ for Log-Normal AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
@@ -239,9 +269,9 @@ log_normal:
     - "file": "log_normal_train_time_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Log_normal AFR"
+      "title": "$S(t)$ for Log-Normal AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_t$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -249,10 +279,20 @@ log_normal:
     - "file" : log_normal_predict_time_partial_effect.pdf
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Log_normal AFR"
+      "title": "$S(t)$ for Log-Normal AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $t_i$ (seconds)"
+      "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
+    - "file" : log_normal_attack_eps_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Log-Normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $T$ (seconds)"
+      "legend_kwargs": {
+          "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }

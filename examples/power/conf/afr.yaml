@@ -5,7 +5,6 @@ covariates:
   - model.trainer.nb_epoch
   - model.trainer.batch_size
   - data.sample.random_state
-  - adv_failure_rate
   - adv_fit_time
   - attack.init.eps
 fillna:
