@@ -133,7 +133,6 @@ adv_acc = sns.boxenplot(
 adv_acc.set_title("Average Accuracy on Adversarial Samples")
 adv_acc.set_ylabel("Adv. Accuracy")
 adv_acc.set_xlabel("Dataset")
-from pathlib import Path
 
 Path("plots/combined").mkdir(parents=True, exist_ok=True)
 fig.savefig("plots/combined/acc.pdf")
