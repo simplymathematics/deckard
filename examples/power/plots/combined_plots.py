@@ -52,6 +52,16 @@ dataset_resolution = {
     "cifar": 32,
     "cifar100": 32,
 }
+dataset_channels = {
+    "mnist" : 1,
+    "cifar" : 3,
+    "cifar100" : 3,
+}
+dataset_classes = {
+    "mnist" : 10,
+    "cifar" : 10,
+    "cifar100" : 100,
+}
 cost  = {
     "nvidia-tesla-p100": 1.60,
     "nvidia-tesla-v100": 2.55,
@@ -71,6 +81,8 @@ big_df['predict_cost'] = big_df['predict_time'] * big_df['cost']
 big_df['adv_fit_cost'] = big_df['adv_fit_time'] * big_df['cost']
 for dataset in big_df.dataset.unique():
     big_df.loc[big_df.dataset == dataset, "n_pixels"] = int(dataset_resolution[dataset] ** 2)
+    big_df.loc[big_df.dataset == dataset, "n_channels"] = int(dataset_channels[dataset])
+    big_df.loc[big_df.dataset == dataset, "n_classes"] = int(dataset_classes[dataset])
 
 big_df["peak_memory_bandwith"] = big_df["peak_memory_bandwith"].astype(float)
 big_df.loc[:, 'memory_per_batch'] = (big_df[batch_size] * big_df[resolution] * big_df[resolution] * big_df[bit_depth] / 8).values

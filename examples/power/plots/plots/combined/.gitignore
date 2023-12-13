@@ -11,4 +11,15 @@
 /log_logistic_epochs_partial_effect.pdf
 /log_normal_aft.pdf
 /log_normal_epochs_partial_effect.pdf
-*.pdf
+/weibull_batch_size_partial_effect.pdf
+/weibull_train_time_partial_effect.pdf
+/weibull_predict_time_partial_effect.pdf
+/cox_batch_size_partial_effect.pdf
+/cox_train_time_partial_effect.pdf
+/cox_predict_time_partial_effect.pdf
+/log_logistic_batch_size_partial_effect.pdf
+/log_logistic_train_time_partial_effect.pdf
+/log_logistic_predict_time_partial_effect.pdf
+/log_normal_batch_size_partial_effect.pdf
+/log_normal_train_time_partial_effect.pdf
+/log_normal_predict_time_partial_effect.pdf

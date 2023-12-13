@@ -8,9 +8,10 @@ covariates:
   - data.sample.random_state
   - adv_failure_rate
   - adv_fit_time
-  - train_power
-  - predict_power
-  - n_pixels
+  # - train_power
+  # - predict_power
+  # - n_pixels
+  # - n_channels
 fillna:
   model.trainer.nb_epoch: 20
   model.trainer.batch_size: 1024
@@ -37,7 +38,7 @@ weibull:
   partial_effect:
     - "file": "weibull_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.nb_epoch"
-      "values_array": [1,10,25,50]
+      "values_array": [1,10,25,50, 100]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
@@ -47,7 +48,7 @@ weibull:
       }
     - "file": "weibull_batch_size_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
-      "values_array": [1,10,25,50]
+      "values_array": [1,10,100, 1000]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
@@ -55,15 +56,25 @@ weibull:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
-    - "file": "weibull_train_power_partial_effect.pdf"
+    - "file": "weibull_train_time_partial_effect.pdf"
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "xlabel": "Time $t_t$ (seconds)"
       "legend_kwargs": {
-          "title": "Batch Size",
+          "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
+      }
+    - "file" : weibull_predict_time_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Weibull AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_i$ (seconds)"
+      "legend_kwargs": {
+          "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
 cox:
   plot:
@@ -105,6 +116,26 @@ cox:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
+    - "file": "cox_train_time_partial_effect.pdf"
+      "covariate_array": "model.trainer.batch_size"
+      "values_array": [1, 10, 100, 1000]
+      "title": "$S(t)$ for Cox AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_t$ (seconds)"
+      "legend_kwargs": {
+          "title": "$T_t$",
+          "labels": ["1", "10", "100", "1000"]
+      }
+    - "file" : cox_predict_time_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Cox AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_i$ (seconds)"
+      "legend_kwargs": {
+          "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
 log_logistic:
   plot:
     file : log_logistic_aft.pdf
@@ -145,6 +176,26 @@ log_logistic:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
+    - "file": "log_logistic_train_time_partial_effect.pdf"
+      "covariate_array": "model.trainer.batch_size"
+      "values_array": [1, 10, 100, 1000]
+      "title": "$S(t)$ for Log Logistic AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_t$ (seconds)"
+      "legend_kwargs": {
+          "title": "$T_t$",
+          "labels": ["1", "10", "100", "1000"]
+      }
+    - "file" : log_logistic_predict_time_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Log Logistic AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_i$ (seconds)"
+      "legend_kwargs": {
+          "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+      }
 log_normal:
   plot:
     file : log_normal_aft.pdf
@@ -184,4 +235,24 @@ log_normal:
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
+      }
+    - "file": "log_normal_train_time_partial_effect.pdf"
+      "covariate_array": "model.trainer.batch_size"
+      "values_array": [1, 10, 100, 1000]
+      "title": "$S(t)$ for Log_normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_t$ (seconds)"
+      "legend_kwargs": {
+          "title": "$T_t$",
+          "labels": ["1", "10", "100", "1000"]
+      }
+    - "file" : log_normal_predict_time_partial_effect.pdf
+      "covariate_array" : predict_proba_time
+      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+      "title": "$S(t)$ for Log_normal AFR"
+      "ylabel": "Expectation of $S(t)$"
+      "xlabel": "Time $t_i$ (seconds)"
+      "legend_kwargs": {
+          "title": "$t_i$",
+          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
