@@ -30,8 +30,8 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype = ".pdf",
-    folder = ".",
+    filetype=".pdf",
+    folder=".",
     **kwargs,
 ):
     file = Path(folder, file).with_suffix(filetype)
@@ -114,7 +114,7 @@ def score_model(aft, train, test):
 
 
 def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
-    pd.set_option('display.float_format', lambda x: '%.3f' % x)
+    pd.set_option("display.float_format", lambda x: "%.3f" % x)
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
@@ -177,7 +177,7 @@ def clean_data_for_aft(
         target in cleaned
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     logger.info(f"Shape of cleaned data: {cleaned.shape}")
-    
+
     return cleaned
 
 
@@ -188,7 +188,7 @@ def split_data_for_aft(
     covariate_list,
     test_size=0.2,
     random_state=42,
-):  
+):
     cleaned = clean_data_for_aft(data, covariate_list, target=target)
     X_train, X_test = train_test_split(
         cleaned,
@@ -225,12 +225,16 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
         plots.append(afr_plot)
         score = score_model(aft, X_train, X_test)
         for partial_effect_dict in partial_effect_list:
-            partial_effect_plot = plot_partial_effects(aft=aft, **partial_effect_dict, folder=folder)
+            partial_effect_plot = plot_partial_effects(
+                aft=aft, **partial_effect_dict, folder=folder
+            )
             plots.append(partial_effect_plot)
     return aft, plots, score
 
 
-def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8, folder="."):
+def render_all_afr_plots(
+    config, duration_col, target, data, dataset, test_size=0.8, folder="."
+):
     covariate_list = config.pop("covariates", [])
     X_train, X_test = split_data_for_aft(
         data,
@@ -253,15 +257,15 @@ def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=
             X_test=X_test,
             target=target,
             duration_col=duration_col,
-            folder = folder,
+            folder=folder,
         )
     score_list = list(scores.values())
     aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
-    print("*"*80)
-    print("*"*34+"  RESULTS   "+"*"*34)
-    print("*"*80)
+    print("*" * 80)
+    print("*" * 34 + "  RESULTS   " + "*" * 34)
+    print("*" * 80)
     print(f"{aft_data}")
-    print("*"*80)
+    print("*" * 80)
 
 
 if "__main__" == __name__:
@@ -294,7 +298,7 @@ if "__main__" == __name__:
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
     fillna = config.pop("fillna", {})
-    for k,v in fillna.items():
+    for k, v in fillna.items():
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -312,4 +316,6 @@ if "__main__" == __name__:
         :,
         "attack.attack_size",
     ]
-    render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER)
+    render_all_afr_plots(
+        config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER
+    )

@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import yaml
-from math import isnan
 import numpy as np
 from .utils import deckard_nones as nones
 from tqdm import tqdm
@@ -30,13 +29,13 @@ def cat_plot(
     hue_order=None,
     rotation=0,
     set={},
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
     """
     The `cat_plot` function is a Python function that creates a categorical plot using seaborn library
     and saves it to a specified file in a specified folder.
-    
+
     Args:
       data: The data parameter is the DataFrame that contains the data to be plotted. It should have
     columns corresponding to the x, y, and hue variables.
@@ -74,12 +73,14 @@ def cat_plot(
     default, it is set to ".pdf", but you can change it to any other valid file extension such as
     ".png", ".jpg", etc. Defaults to .pdf
     """
-   
+
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
-    logger.debug(f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.")
+    logger.debug(
+        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}."
+    )
     graph = sns.catplot(
         data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
     )
@@ -98,7 +99,8 @@ def cat_plot(
     logger.info(f"Saved graph to {folder / file}")
 
 
-def line_plot(data,
+def line_plot(
+    data,
     x,
     y,
     hue,
@@ -111,13 +113,13 @@ def line_plot(data,
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
     """
     The function `line_plot` is used to create a line plot with various customization options and save
     it to a specified file and folder.
-    
+
     Args:
       data: The `data` parameter is the DataFrame that contains the data to be plotted.
       x: The parameter "x" is the name of the column in the dataset that will be used as the x-axis
@@ -150,7 +152,7 @@ def line_plot(data,
       filetype: The `filetype` parameter specifies the file type of the saved graph. In the given code,
     the default value is set to ".pdf", indicating that the graph will be saved as a PDF file. However,
     you can change the value of `filetype` to save the graph in a different. Defaults to .pdf
-    
+
     Returns:
       the line plot graph object.
     """
@@ -174,7 +176,7 @@ def line_plot(data,
     return graph
 
 
-def scatter_plot( 
+def scatter_plot(
     data,
     x,
     y,
@@ -188,13 +190,13 @@ def scatter_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
     """
     The function `scatter_plot` creates a scatter plot using the provided data and parameters, and saves
     it to a specified file and folder.
-    
+
     Args:
       data: The `data` parameter is the DataFrame that contains the data for the scatter plot.
       x: The parameter "x" in the scatter_plot function represents the variable that will be plotted on
@@ -225,11 +227,11 @@ def scatter_plot(
       filetype: The `filetype` parameter is a string that specifies the file type of the saved graph. It
     is used to determine the file extension of the saved graph file. By default, it is set to ".pdf",
     indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .pdf
-    
+
     Returns:
       the scatter plot graph object.
     """
-   
+
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
@@ -254,8 +256,6 @@ def scatter_plot(
     logger.info(f"Saved graph to {Path(folder) / file}")
     plt.gcf().clear()
     return graph
-
-
 
 
 if __name__ == "__main__":
@@ -299,10 +299,10 @@ if __name__ == "__main__":
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     data = pd.read_csv(args.file)
-     # Reads Config file
+    # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    
+
     if Path(args.path).absolute() == Path(args.path):
         logger.info("Absolute path specified")
         FOLDER = Path(args.path).absolute()
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     for dict_ in cat_plot_list:
         i += 1
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
-        
+
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1

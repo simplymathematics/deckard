@@ -51,10 +51,12 @@ if "__main__" == __name__:
     data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
     data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
 
     def plot_aft(
@@ -101,6 +103,7 @@ if "__main__" == __name__:
         plt.show()
         plt.gcf().clear()
         return ax, aft
+
     def plot_aft(
         df,
         file,

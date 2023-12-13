@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
-
 def drop_frames_without_results(
     data,
     subset=[
@@ -31,30 +30,31 @@ def drop_frames_without_results(
     """
     The function `drop_frames_without_results` drops rows from a DataFrame that have missing values in
     specified columns.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the results of some experiment or
     analysis.
       subset: The `subset` parameter is a list of column names that are used to determine whether a
     frame has results or not. If any of the columns specified in the `subset` list have missing values
     (NaN), then the corresponding frame will be dropped from the `data` DataFrame.
-    
+
     Returns:
       the modified DataFrame after dropping the frames without results.
     """
-    
+
     logger.info(f"Dropping frames without results for {subset}")
     data.dropna(axis=0, subset=subset, inplace=True)
     return data
+
 
 def calculate_failure_rate(data):
     """
     The function `calculate_failure_rate` calculates failure rates and training times based on input
     data.
-    
+
     Args:
       data: The `data` parameter is expected to be a pandas DataFrame containing the following columns:
-    
+
     Returns:
       the modified "data" dataframe with additional columns added, including "adv_failure_rate",
     "failure_rate", "training_time_per_failure", and "training_time_per_adv_failure".
@@ -63,28 +63,44 @@ def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     assert "accuracy" in data.columns, "accuracy not in data.columns"
-    assert "attack.attack_size" in data.columns, "attack.attack_size not in data.columns"
-    assert "predict_time" in data.columns or "predict_proba_time" in data.columns, "predict_time or predict_proba_time not in data.columns"
+    assert (
+        "attack.attack_size" in data.columns
+    ), "attack.attack_size not in data.columns"
+    assert (
+        "predict_time" in data.columns or "predict_proba_time" in data.columns
+    ), "predict_time or predict_proba_time not in data.columns"
     assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
     assert "adv_fit_time" in data.columns, "adv_fit_time not in data.columns"
     assert "train_time" in data.columns, "train_time not in data.columns"
     if "predict_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]) / data.loc[:, "predict_time"]
+        failure_rate = (
+            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+        ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]) / data.loc[:, "predict_proba_time"]
+        failure_rate = (
+            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+        ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"]) / data.loc[:, "predict_time"]
-    
-    data = data.assign(adv_failure_rate = adv_failure_rate)
-    data = data.assign(failure_rate = failure_rate)
+    adv_failure_rate = (
+        1 - data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"]
+    ) / data.loc[:, "predict_time"]
+
+    data = data.assign(adv_failure_rate=adv_failure_rate)
+    data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
-    training_time_per_adv_failure = data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
-    data = data.assign(training_time_per_failure = training_time_per_failure)
-    data = data.assign(training_time_per_adv_failure = training_time_per_adv_failure)
-    
-    assert "training_time_per_adv_failure" in data.columns, "training_time_per_adv_failure not in data.columns"
-    assert "training_time_per_failure" in data.columns, "training_time_per_failure not in data.columns"
+    training_time_per_adv_failure = (
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
+    )
+    data = data.assign(training_time_per_failure=training_time_per_failure)
+    data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
+
+    assert (
+        "training_time_per_adv_failure" in data.columns
+    ), "training_time_per_adv_failure not in data.columns"
+    assert (
+        "training_time_per_failure" in data.columns
+    ), "training_time_per_failure not in data.columns"
     assert "adv_failure_rate" in data.columns, "adv_failure_rate not in data.columns"
     assert "failure_rate" in data.columns, "failure_rate not in data.columns"
     return data
@@ -94,14 +110,14 @@ def pareto_set(data, sense_dict):
     """
     The function `pareto_set` takes in a dataset and a dictionary specifying the sense (minimize or
     maximize) for each column, and returns the subset of the dataset that represents the Pareto set.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the data you want to analyze. It
     should have columns that correspond to the keys in the `sense_dict`.
       sense_dict: The `sense_dict` parameter is a dictionary that maps column names in the `data`
     DataFrame to their corresponding sense (either "min" or "max"). This is used to specify the
     optimization direction for each column when finding the Pareto set.
-    
+
     Returns:
       a subset of the input data that represents the Pareto set.
     """
@@ -120,10 +136,10 @@ def find_subset(data, **kwargs):
     """
     The function `find_subset` takes a dataset and optional keyword arguments, and returns a subset of
     the dataset based on the provided arguments.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the dataset you want to filter.
-    
+
     Returns:
       the input data, possibly filtered based on the keyword arguments provided.
     """
@@ -136,12 +152,12 @@ def find_subset(data, **kwargs):
 def min_max_scaling(data, *args):
     """
     The function `min_max_scaling` performs min-max scaling on specified columns of a given dataset.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the data you want to perform
     min-max scaling on. It should have columns named "atk_gen" and "def_gen" for attack and defense
     generations, and columns named "atk_value" and "def_value" for attack and defense values.
-    
+
     Returns:
       the modified data with the control parameters scaled using min-max scaling.
     """
@@ -174,7 +190,7 @@ def min_max_scaling(data, *args):
 
 def merge_defences(
     results: pd.DataFrame,
-    defence_columns = [
+    defence_columns=[
         "model.art.pipeline.preprocessor.name",
         "model.art.pipeline.postprocessor.name",
         "model.art.pipeline.transformer.name",
@@ -184,10 +200,10 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable = [
+    control_variable=[
         "device_id",
     ],
-    defaults = {
+    defaults={
         # "model.trainer.nb_epoch": 20,
         # "model.trainer.kwargs.nb_epoch": 20,
         # "model.trainer.batch_size" : 1024,
@@ -197,7 +213,7 @@ def merge_defences(
     """
     The function `merge_defences` merges different defence columns in a DataFrame and assigns a unique
     name to each merged defence.
-    
+
     Args:
       results (pd.DataFrame): A pandas DataFrame containing the results of different defences.
       defence_columns: A list of column names in the `results` DataFrame that represent the different
@@ -208,7 +224,7 @@ def merge_defences(
       defaults: The `defaults` parameter is a dictionary that contains default values for certain
     parameters. These default values will be used if the corresponding parameter is not present in the
     `results` DataFrame.
-    
+
     Returns:
       the modified `results` DataFrame with two additional columns: `defence_name` and `def_gen`.
     """
@@ -220,19 +236,15 @@ def merge_defences(
         defence = []
         i = 0
         for col in defence_columns:
-            if (
-                col in entry
-                and entry[col] not in nones
-                
-            ):
+            if col in entry and entry[col] not in nones:
                 defence.append(entry[col])
             else:
                 pass
             i += 1
         for k, v in defaults.items():
             if (
-                k in entry 
-                and v != entry[k] 
+                k in entry
+                and v != entry[k]
                 and not isnan(pd.to_numeric(entry[k]))
                 and len(defence) == 0
             ):
@@ -240,11 +252,7 @@ def merge_defences(
             else:
                 pass
         for col in control_variable:
-            if (
-                col in entry
-                and entry[col] not in nones
-                and len(defence) == 0
-            ):
+            if col in entry and entry[col] not in nones and len(defence) == 0:
                 defence.append(col)
             else:
                 pass
@@ -265,7 +273,7 @@ def merge_defences(
     results["defence_name"] = defences
     results["def_gen"] = def_gens
     logger.info(f"Unique defences after merging: {set(results.def_gen)}")
-    assert hasattr(results,"def_gen"), "def_gen not in results.columns"
+    assert hasattr(results, "def_gen"), "def_gen not in results.columns"
     return results
 
 
@@ -273,13 +281,13 @@ def merge_attacks(results: pd.DataFrame):
     """
     The function `merge_attacks` merges attack information from a DataFrame and adds it to the DataFrame
     as new columns.
-    
+
     Args:
       results (pd.DataFrame): The `results` parameter is expected to be a pandas DataFrame containing
     the results of some analysis or computation. It is assumed that the DataFrame has a column named
     "attack.init.name" which contains the names of attacks. The function iterates over each row of the
     DataFrame, checks if the "attack.init
-    
+
     Returns:
       the modified `results` DataFrame with additional columns `attack_name` and `atk_gen`.
     """
@@ -296,14 +304,15 @@ def merge_attacks(results: pd.DataFrame):
         logger.info(f"Unique attacks: {set(results.atk_gen)}")
     else:
         logger.warning("No attacks found in data. Check your config file.")
-    assert hasattr(results,"atk_gen"), "atk_gen not in results.columns"
+    assert hasattr(results, "atk_gen"), "atk_gen not in results.columns"
     return results
+
 
 def format_control_parameter(data, control_dict, fillna):
     """
     The function `format_control_parameter` takes in data, a control dictionary, and a fillna parameter,
     and formats the control parameters in the data based on the control dictionary and fillna values.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the control parameters for a
     system. It should have columns named "def_gen" and "atk_gen" which represent the defence and attack
@@ -315,17 +324,17 @@ def format_control_parameter(data, control_dict, fillna):
       fillna: The `fillna` parameter is a dictionary that contains default values to fill missing values
     in the data. The keys of the dictionary correspond to the names of defences or attacks, and the
     values are the default values to be used for filling missing values.
-    
+
     Returns:
       the modified "data" dataframe with additional columns "def_param", "atk_param", "def_value", and
     "atk_value".
     """
     logger.info("Formatting control parameters...")
     if "def_gen" in data:
-        defences =  list(data.def_gen.unique())
+        defences = list(data.def_gen.unique())
     else:
         defences = []
-    
+
     if "atk_gen" in data:
         attacks = list(data.atk_gen.unique())
     else:
@@ -341,7 +350,11 @@ def format_control_parameter(data, control_dict, fillna):
             # Shorten parameter name
             data.loc[data.def_gen == defence, "def_param"] = param
             # Read parameter value from data if it exists, otherwise set to nan
-            value = data[data.def_gen == defence][param] if param in data.columns else np.nan
+            value = (
+                data[data.def_gen == defence][param]
+                if param in data.columns
+                else np.nan
+            )
             # strip whitespace
             value = value.str.strip() if isinstance(value, str) else value
             # Set value to numeric
@@ -352,9 +365,17 @@ def format_control_parameter(data, control_dict, fillna):
             logger.debug(f"{data[data.def_gen == defence].def_value.unique()}")
         elif defence in fillna.keys():
             param = control_dict[defence]
-            value = data[data.def_gen == defence][param] if param in data.columns else np.nan
+            value = (
+                data[data.def_gen == defence][param]
+                if param in data.columns
+                else np.nan
+            )
             value = pd.to_numeric(value, errors="coerce")
-            value = value.fillna(fillna.get(defence, np.nan)) if isinstance(value, pd.Series) else value
+            value = (
+                value.fillna(fillna.get(defence, np.nan))
+                if isinstance(value, pd.Series)
+                else value
+            )
             data.loc[data.def_gen == defence, "def_value"] = value
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
@@ -366,22 +387,34 @@ def format_control_parameter(data, control_dict, fillna):
             # Shorten parameter name
             data.loc[data.atk_gen == attack, "atk_param"] = param
             # Read parameter value from data if it exists, otherwise set to nan
-            value = data[data.atk_gen == attack][param] if param in data.columns else np.nan
+            value = (
+                data[data.atk_gen == attack][param] if param in data.columns else np.nan
+            )
             # strip whitespace
             value = value.str.strip() if isinstance(value, str) else value
             # Set value to numeric
             value = pd.to_numeric(value, errors="coerce")
             # Fill nan values with fillna value
-            value = value.fillna(fillna.get(attack, np.nan)) if isinstance(value, pd.Series) else value
+            value = (
+                value.fillna(fillna.get(attack, np.nan))
+                if isinstance(value, pd.Series)
+                else value
+            )
             # Set value to data
             data.loc[data.atk_gen == attack, "atk_value"] = value
             logger.debug(f"Unique values for attack, {attack}:")
             logger.debug(f"{data[data.atk_gen == attack].atk_value.unique()}")
         elif attack in fillna.keys():
             param = control_dict[attack]
-            value = data[data.atk_gen == attack][param] if param in data.columns else np.nan
+            value = (
+                data[data.atk_gen == attack][param] if param in data.columns else np.nan
+            )
             value = pd.to_numeric(value, errors="coerce")
-            value = value.fillna(fillna.get(attack, np.nan)) if isinstance(value, pd.Series) else value
+            value = (
+                value.fillna(fillna.get(attack, np.nan))
+                if isinstance(value, pd.Series)
+                else value
+            )
             data.loc[data.atk_gen == attack, "def_value"] = value
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
@@ -397,7 +430,6 @@ def format_control_parameter(data, control_dict, fillna):
     return data
 
 
-
 def clean_data_for_plotting(
     data,
     def_gen_dict,
@@ -409,7 +441,7 @@ def clean_data_for_plotting(
     The function `clean_data_for_plotting` cleans and formats data for plotting by dropping empty rows,
     removing poorly merged columns, shortening model names, replacing certain column names, and
     formatting control parameters.
-    
+
     Args:
       data: The `data` parameter is a pandas DataFrame that contains the data to be cleaned and prepared
     for plotting.
@@ -424,7 +456,7 @@ def clean_data_for_plotting(
       fillna: The `fillna` parameter is used to specify how missing values in the data should be filled.
     It is a value or a dictionary of values where the keys are column names and the values are the
     values to fill in for missing values in those columns.
-    
+
     Returns:
       the cleaned and formatted data.
     """
@@ -446,7 +478,11 @@ def clean_data_for_plotting(
         data.loc[:, "model_layers"] = model_layers
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    data['nb_epoch'] = data['model.trainer.kwargs.nb_epoch'] if "model.trainer.kwargs.nb_epoch" in data.columns else data['model.trainer.nb_epoch']
+    data["nb_epoch"] = (
+        data["model.trainer.kwargs.nb_epoch"]
+        if "model.trainer.kwargs.nb_epoch" in data.columns
+        else data["model.trainer.nb_epoch"]
+    )
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = merge_defences(data)
@@ -462,6 +498,7 @@ def clean_data_for_plotting(
         data.dropna(axis=0, subset=["atk_gen"], inplace=True)
     data = format_control_parameter(data, control_dict, fillna)
     return data
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -549,7 +586,7 @@ if __name__ == "__main__":
             raise ValueError(
                 f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation.",
             )
-     # Reads Config file
+    # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
     def_gen_dict = big_dict.get("defences", {})
@@ -566,11 +603,12 @@ if __name__ == "__main__":
         fillna=fillna,
     )
     results = calculate_failure_rate(results)
-    
-    results = min_max_scaling(results, *min_max)
-    output_file = save_results(results, Path(args.output_file).name, Path(args.output_file).parent)
-    assert Path(output_file).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
-    logger.info(f"Saved results to {output_file}")
-    
-    
 
+    results = min_max_scaling(results, *min_max)
+    output_file = save_results(
+        results, Path(args.output_file).name, Path(args.output_file).parent
+    )
+    assert Path(
+        output_file
+    ).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
+    logger.info(f"Saved results to {output_file}")
