@@ -24,7 +24,7 @@ python -m deckard.layers.optimise \
 # # # # Gaussian Noise (Output)
 python -m deckard.layers.optimise \
   ++model.art.postprocessor.name=art.defences.postprocessor.GaussianNoise \
-  ++model.art.postprocessor.params.scale=.01,.1,.3,.5,1 \W
+  ++model.art.postprocessor.params.scale=.01,.1,.3,.5,1 \
   ++hydra.sweeper.study_name=gauss-out $@ --multirun
 
 # # # # High Confidence
