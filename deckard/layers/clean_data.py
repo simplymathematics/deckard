@@ -200,7 +200,7 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=["device_id"],
+    control_variable=[],
     defaults={
         # "model.trainer.nb_epoch": 20,
         # "model.trainer.kwargs.nb_epoch": 20,
@@ -483,7 +483,7 @@ def clean_data_for_plotting(
     )
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = merge_defences(data)
+    data = merge_defences(data, control_variable=list(control_dict.get("control", [])), defaults=control_dict.get("defaults", {}))
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
         def_gen = data.def_gen.map(def_gen_dict)
