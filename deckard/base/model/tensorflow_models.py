@@ -131,7 +131,8 @@ class TensorflowV2Initializer:
             train_step = kwargs.pop("train_step")
             train_step = factory(name=train_step.pop("name"), **train_step)
         if library in tensorflow_dict and not isinstance(
-            model, tuple(tensorflow_dict.values()),
+            model,
+            tuple(tensorflow_dict.values()),
         ):
             est = tensorflow_dict[library]
             model = est(model, **kwargs, train_step=train_step)

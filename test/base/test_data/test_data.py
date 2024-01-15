@@ -21,7 +21,8 @@ class testSklearnData(unittest.TestCase):
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(),
+            version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg
@@ -77,7 +78,8 @@ class testSklearnData(unittest.TestCase):
         train_labels_file = Path(data_file).with_suffix(".csv").as_posix()
         test_labels_file = Path(data_file).with_suffix(".json").as_posix()
         _ = self.data(
-            train_labels_file=train_labels_file, test_labels_file=test_labels_file,
+            train_labels_file=train_labels_file,
+            test_labels_file=test_labels_file,
         )
         score_dict = {"test_score": 0.5}
         score_series = Series(score_dict)

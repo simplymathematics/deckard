@@ -152,7 +152,9 @@ class GCP_Config:
         logger.info(f"Running command: {command}")
         command = command.split(" ")
         output = subprocess.run(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         logger.info(f"{output}")
         return output.stdout

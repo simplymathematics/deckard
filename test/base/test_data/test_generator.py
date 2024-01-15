@@ -25,7 +25,8 @@ class testDataGenerator(unittest.TestCase):
 
     def setUp(self):
         with initialize_config_dir(
-            config_dir=Path(self.config_dir).resolve().as_posix(), version_base="1.3",
+            config_dir=Path(self.config_dir).resolve().as_posix(),
+            version_base="1.3",
         ):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg
@@ -125,7 +126,8 @@ class testTorchDataGenerator(unittest.TestCase):
         for name in self.names:
             data = TorchDataGenerator(name=name, path=self.dir)()
             data = TorchDataGenerator(
-                name=name, path=self.dir,
+                name=name,
+                path=self.dir,
             )()  # Test it again to make sure download only happens once
             self.assertIsInstance(data, list)
             self.assertIsInstance(data[0], np.ndarray)
