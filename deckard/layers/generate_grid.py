@@ -67,19 +67,14 @@ def generate_grid_from_folders(conf_dir, regex):
     big_list = make_grid(big_dict)
 
     assert len(big_list) == reduce(
-        mul,
-        layers,
+        mul, layers,
     ), f"Grid size {len(big_list)} does not match product of layer sizes {reduce(mul, layers)}"
     logger.info(f"Generated grid with {len(big_list)} configs")
     return big_list
 
 
 def generate_queue(
-    conf_root,
-    grid_dir,
-    regex,
-    queue_folder="queue",
-    default_file="default.yaml",
+    conf_root, grid_dir, regex, queue_folder="queue", default_file="default.yaml",
 ):
     this_dir = os.getcwd()
     conf_dir = os.path.join(this_dir, conf_root, grid_dir)

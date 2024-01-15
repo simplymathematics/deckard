@@ -429,11 +429,7 @@ def format_control_parameter(data, control_dict, fillna):
 
 
 def clean_data_for_plotting(
-    data,
-    def_gen_dict,
-    atk_gen_dict,
-    control_dict,
-    fillna,
+    data, def_gen_dict, atk_gen_dict, control_dict, fillna,
 ):
     """
     The function `clean_data_for_plotting` cleans and formats data for plotting by dropping empty rows,
@@ -501,30 +497,16 @@ def clean_data_for_plotting(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-i",
-        "--input_file",
-        type=str,
-        help="Data file to read from",
-        required=True,
+        "-i", "--input_file", type=str, help="Data file to read from", required=True,
     )
     parser.add_argument(
-        "-o",
-        "--output_file",
-        type=str,
-        help="Data file to read from",
-        required=True,
+        "-o", "--output_file", type=str, help="Data file to read from", required=True,
     )
     parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
+        "-v", "--verbosity", default="INFO", help="Increase output verbosity",
     )
     parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="clean.yaml",
+        "-c", "--config", help="Path to the config file", default="clean.yaml",
     )
     parser.add_argument(
         "-s",
@@ -548,9 +530,7 @@ if __name__ == "__main__":
         ],
     )
     parser.add_argument(
-        "--pareto_dict",
-        help="Path to (optional) pareto set dictionary.",
-        default=None,
+        "--pareto_dict", help="Path to (optional) pareto set dictionary.", default=None,
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
@@ -591,19 +571,13 @@ if __name__ == "__main__":
     min_max = big_dict.get("min_max", ["nb_epoch"])
 
     results = clean_data_for_plotting(
-        data,
-        def_gen_dict,
-        atk_gen_dict,
-        control_dict,
-        fillna=fillna,
+        data, def_gen_dict, atk_gen_dict, control_dict, fillna=fillna,
     )
     results = calculate_failure_rate(results)
 
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
-        results,
-        Path(args.output_file).name,
-        Path(args.output_file).parent,
+        results, Path(args.output_file).name, Path(args.output_file).parent,
     )
     assert Path(
         output_file,
