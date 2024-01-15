@@ -124,4 +124,4 @@ if __name__ == "__main__":
     )
     logger.info("Quering the Prometheus for power metrics")
 
-    results = run_query(input_file=input_file, output_file=output_file,)
+    results = run_query(input_file=input_file, output_file=output_file)

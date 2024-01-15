@@ -200,7 +200,7 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=["device_id",],
+    control_variable=["device_id"],
     defaults={
         # "model.trainer.nb_epoch": 20,
         # "model.trainer.kwargs.nb_epoch": 20,
@@ -544,7 +544,7 @@ if __name__ == "__main__":
         assert isinstance(args.drop_if_empty, list)
     for col in args.drop_if_empty:
         assert col in data.columns, f"Column {col} not in data.columns"
-    data = drop_frames_without_results(data, subset=args.drop_if_empty,)
+    data = drop_frames_without_results(data, subset=args.drop_if_empty)
     if args.pareto_dict is None:
         sense_dict = {}
     else:
