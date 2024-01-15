@@ -94,21 +94,10 @@ def read_file(file, results):
     return results
 
 
-
-
-
 def parse_results(folder, files=["score_dict.json", "params.yaml"]):
     df = parse_folder(folder, files=files)
     df = flatten_results(df)
     return df
-
-
-
-
-
-
-
-
 
 
 def save_results(results, results_file, results_folder) -> str:
@@ -134,6 +123,7 @@ def save_results(results, results_file, results_folder) -> str:
     ).exists(), f"Results file {results_file} does not exist. Something went wrong."
     return results_file
 
+
 def load_results(results_file, results_folder) -> pd.DataFrame:
     """
     Load results from a csv file; return the path to the csv file. It will optionally delete columns from the results.
@@ -157,8 +147,10 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     ).exists(), f"Results file {results_file} does not exist. Something went wrong."
     return results
 
+
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
@@ -171,7 +163,7 @@ if __name__ == "__main__":
     report_folder = args.report_folder
     results_file = args.results_file
     results_folder = args.results_folder
-    results = parse_results(report_folder)  
+    results = parse_results(report_folder)
     report_file = save_results(results, results_file, results_folder)
     assert Path(
         report_file,

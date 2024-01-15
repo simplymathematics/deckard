@@ -28,4 +28,3 @@ params:
   Epochs: model.trainer.nb_epoch
 fillna:
   Epochs: 20
-

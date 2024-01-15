@@ -1,0 +1,19 @@
+attacks:
+  FastGradientMethod: FGM
+defences:
+  Control: Control
+  FeatureSqueezing: FSQ
+  nb_epoch: Epochs
+  model_layers: Control
+params:
+  FGM: attack.init.eps
+  FSQ: model.art.preprocessor.bit_depth
+  Control: model_layers
+  Epochs: model.trainer.nb_epoch
+  Batch_Size: model.trainer.batch_size
+fillna:
+  Epochs: 20
+  FGM: 0.0
+  FSQ: 32
+  Control: 18
+  Batch_Size: 1024

@@ -1,15 +1,10 @@
 import argparse
 import logging
-from pathlib import Path
-from paretoset import paretoset
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import yaml
-from math import isnan
-import numpy as np
-from .utils import deckard_nones as nones
-from tqdm import tqdm
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -30,13 +25,58 @@ def cat_plot(
     hue_order=None,
     rotation=0,
     set={},
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
+    """
+    The `cat_plot` function is a Python function that creates a categorical plot using seaborn library
+    and saves it to a specified file in a specified folder.
+
+    Args:
+      data: The data parameter is the DataFrame that contains the data to be plotted. It should have
+    columns corresponding to the x, y, and hue variables.
+      x: The parameter "x" in the function "cat_plot" represents the variable that will be plotted on
+    the x-axis of the categorical plot.
+      y: The parameter "y" in the `cat_plot` function represents the variable that will be plotted on
+    the y-axis of the categorical plot. It is the dependent variable or the variable of interest that
+    you want to analyze or compare across different categories.
+      hue: The "hue" parameter in the "cat_plot" function is used to specify the variable in the dataset
+    that will be used to group the data points and create different colors for each group in the plot.
+      kind: The "kind" parameter in the "cat_plot" function specifies the type of categorical plot to be
+    created. It can take the following values. Check the seaborn.catplot documentation.
+      titles: The `titles` parameter is a string or list of strings that specifies the titles of the
+    subplots in the catplot. If it is a string, it will be used as the title for all subplots. If it is
+    a list of strings, each string will be used as the title for
+      xlabels: The `xlabels` parameter is used to set the label for the x-axis of the plot. It specifies
+    the text that will be displayed as the label for the x-axis.
+      ylabels: The `ylabels` parameter in the `cat_plot` function is used to set the label for the
+    y-axis of the plot. It specifies the text that will be displayed as the label for the y-axis.
+      file: The `file` parameter is the name of the file where the graph will be saved.
+      folder: The "folder" parameter is the directory where the graph will be saved.
+      legend_title: The `legend_title` parameter is used to set the title of the legend in the plot. If
+    you want to provide a title for the legend, you can pass it as a string to the `legend_title`
+    parameter when calling the `cat_plot` function.
+      hue_order: The `hue_order` parameter is used to specify the order of the levels of the `hue`
+    variable. It is a list that determines the order in which the different categories of the `hue`
+    variable will be plotted.
+      rotation: The "rotation" parameter in the "cat_plot" function is used to specify the rotation
+    angle (in degrees) for the x-axis tick labels. By default, it is set to 0, which means the tick
+    labels are not rotated. You can change the value of "rotation" to rotate. Defaults to 0
+      set: The `set` parameter is a dictionary that allows you to set additional properties for the
+    plot. You can pass any valid keyword arguments that are accepted by the `set()` method of the
+    `seaborn.FacetGrid` object. These properties can be used to customize the appearance of the plot,
+      filetype: The `filetype` parameter is used to specify the file extension for saving the graph. By
+    default, it is set to ".pdf", but you can change it to any other valid file extension such as
+    ".png", ".jpg", etc. Defaults to .pdf
+    """
+
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
+    logger.debug(
+        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
+    )
     graph = sns.catplot(
         data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
     )
@@ -69,9 +109,49 @@ def line_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
+    """
+    The function `line_plot` is used to create a line plot with various customization options and save
+    it to a specified file and folder.
+
+    Args:
+      data: The `data` parameter is the DataFrame that contains the data to be plotted.
+      x: The parameter "x" is the name of the column in the dataset that will be used as the x-axis
+    values in the line plot.
+      y: The parameter `y` in the `line_plot` function represents the variable that will be plotted on
+    the y-axis of the line plot. It is the dependent variable or the variable of interest that you want
+    to visualize.
+      hue: The "hue" parameter is used to specify a categorical variable that will be used to group the
+    data points and differentiate the lines on the line plot. Each unique value of the "hue" variable
+    will be represented by a different line on the plot.
+      xlabel: The x-axis label for the line plot. It is the label that will be displayed on the x-axis
+    of the graph.
+      ylabel: The `ylabel` parameter is used to specify the label for the y-axis of the line plot. It is
+    a string that represents the name or description of the data being plotted on the y-axis.
+      title: The title of the line plot.
+      file: The `file` parameter is the name of the file where the line plot will be saved. It should
+    include the file extension.
+      folder: The `folder` parameter is the directory where the generated graph will be saved.
+      y_scale: The `y_scale` parameter is used to set the scale of the y-axis. It allows you to specify
+    the type of scale to be used, such as "linear" for a linear scale, "log" for a logarithmic scale, or
+    "symlog" for a symmetrical logarithmic
+      x_scale: The `x_scale` parameter is used to set the scale of the x-axis. It can take the following
+    values:
+      legend: The `legend` parameter is a dictionary that allows you to customize the legend of the line
+    plot. You can pass various options to the `legend` parameter to control the appearance of the
+    legend. Some common options include:
+      hue_order: The `hue_order` parameter is used to specify the order of the levels of the `hue`
+    variable in the plot. It is a list that determines the order in which the different categories of
+    the `hue` variable will be plotted.
+      filetype: The `filetype` parameter specifies the file type of the saved graph. In the given code,
+    the default value is set to ".pdf", indicating that the graph will be saved as a PDF file. However,
+    you can change the value of `filetype` to save the graph in a different. Defaults to .pdf
+
+    Returns:
+      the line plot graph object.
+    """
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
@@ -106,9 +186,48 @@ def scatter_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype = ".pdf",
+    filetype=".pdf",
     **kwargs,
 ):
+    """
+    The function `scatter_plot` creates a scatter plot using the provided data and parameters, and saves
+    it to a specified file and folder.
+
+    Args:
+      data: The `data` parameter is the DataFrame that contains the data for the scatter plot.
+      x: The parameter "x" in the scatter_plot function represents the variable that will be plotted on
+    the x-axis of the scatter plot.
+      y: The parameter "y" in the scatter_plot function represents the variable that will be plotted on
+    the y-axis of the scatter plot.
+      hue: The "hue" parameter in the scatter_plot function is used to specify a categorical variable
+    that will be used to color the data points in the scatter plot. Each unique value of the "hue"
+    variable will be assigned a different color in the plot.
+      xlabel: The x-axis label for the scatter plot.
+      ylabel: The `ylabel` parameter in the `scatter_plot` function is used to specify the label for the
+    y-axis of the scatter plot. It is a string that represents the label you want to assign to the
+    y-axis.
+      title: The title parameter is used to specify the title of the scatter plot.
+      file: The `file` parameter is the name of the file where the scatter plot will be saved.
+      folder: The `folder` parameter is the directory where the scatter plot image will be saved.
+      y_scale: The `y_scale` parameter is used to set the scale of the y-axis in the scatter plot. It
+    can take values such as "linear" (default), "log", "symlog", "logit", etc. These values determine
+    how the data is displayed on the y-axis. For
+      x_scale: The `x_scale` parameter is used to set the scale of the x-axis. It can take values like
+    "linear", "log", "symlog", "logit", etc. By default, if `x_scale` is not specified, the x-axis scale
+    will be determined automatically based on
+      legend: The `legend` parameter is a dictionary that allows you to customize the legend of the
+    scatter plot. It can include the following keys:
+      hue_order: The `hue_order` parameter is used to specify the order of the levels of the `hue`
+    variable in the scatter plot. By default, the levels of the `hue` variable are ordered based on the
+    order in which they appear in the data. However, if you want to specify a specific
+      filetype: The `filetype` parameter is a string that specifies the file type of the saved graph. It
+    is used to determine the file extension of the saved graph file. By default, it is set to ".pdf",
+    indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .pdf
+
+    Returns:
+      the scatter plot graph object.
+    """
+
     plt.gcf().clear()
     file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
@@ -135,8 +254,6 @@ def scatter_plot(
     return graph
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -152,13 +269,6 @@ if __name__ == "__main__":
         type=str,
         help="Data file to read from",
         required=True,
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        help="Output file name",
-        default="data.csv",
     )
     parser.add_argument(
         "-t",
@@ -185,10 +295,10 @@ if __name__ == "__main__":
         args.file,
     ).exists(), f"File {args.file} does not exist. Please specify a valid file using the -f flag."
     data = pd.read_csv(args.file)
-     # Reads Config file
+    # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
-    cat_plot_list = big_dict.get("cat_plot", [])
+
     if Path(args.path).absolute() == Path(args.path):
         logger.info("Absolute path specified")
         FOLDER = Path(args.path).absolute()
@@ -197,7 +307,7 @@ if __name__ == "__main__":
         FOLDER = Path(Path(), args.path)
     logger.info(f"Creating folder {FOLDER}")
     FOLDER.mkdir(parents=True, exist_ok=True)
-    logger.info(f"Saving data to {FOLDER / args.output}")
+    logger.info(f"Saving data to {FOLDER }")
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")
@@ -210,10 +320,11 @@ if __name__ == "__main__":
         FOLDER.mkdir(parents=True, exist_ok=True)
 
     i = 0
+    cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
         i += 1
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
-        
+
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1
