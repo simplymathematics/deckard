@@ -35,10 +35,7 @@ class PromQuery:
         start = datetime.fromtimestamp((self.start + self.warmup))
         end = datetime.fromtimestamp((self.end - self.cooldown))
         result = prom.custom_query_range(
-            query=self.query,
-            start_time=start,
-            end_time=end,
-            step=self.step,
+            query=self.query, start_time=start, end_time=end, step=self.step,
         )
         return abs(
             float(result[0]["values"][-1 * int(self.total)][1])
@@ -127,7 +124,4 @@ if __name__ == "__main__":
     )
     logger.info("Quering the Prometheus for power metrics")
 
-    results = run_query(
-        input_file=input_file,
-        output_file=output_file,
-    )
+    results = run_query(input_file=input_file, output_file=output_file,)

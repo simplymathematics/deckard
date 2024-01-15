@@ -61,8 +61,7 @@ class ArtInitializer:
         model = self.model
         kwargs = self.kwargs
         if "torch" in str(library) and not isinstance(
-            model,
-            tuple(torch_dict.values()),
+            model, tuple(torch_dict.values()),
         ):
             import torch
 
@@ -80,15 +79,10 @@ class ArtInitializer:
             else:
                 device = torch.device("cpu")
             model = TorchInitializer(
-                data=data,
-                model=model,
-                library=library,
-                device_type=device,
-                **kwargs,
+                data=data, model=model, library=library, device_type=device, **kwargs,
             )()
         elif "keras" in str(library) and not isinstance(
-            model,
-            tuple(keras_dict.values()),
+            model, tuple(keras_dict.values()),
         ):  # pragma: no cover
             raise NotImplementedError("Keras not implemented yet")
             # try:
@@ -126,16 +120,14 @@ class ArtInitializer:
                 data=data, model=model, library=library, **kwargs
             )()
         elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(
-            model,
-            tuple(tensorflow_dict.values()),
+            model, tuple(tensorflow_dict.values()),
         ):  # pragma: no cover
             raise NotImplementedError("Tensorflow V1 not implemented yet")
             # model = TensorflowV1Initializer(
             #     data=data, model=model, library=library, **kwargs
             # )()
         elif library in supported_models and isinstance(
-            model,
-            tuple(all_models.values()),
+            model, tuple(all_models.values()),
         ):
             pass
         else:  # pragma: no cover
@@ -143,8 +135,7 @@ class ArtInitializer:
                 f"library must be one of {supported_models}. Got {library}",
             )
         assert hasattr(
-            model,
-            "fit",
+            model, "fit",
         ), f"model must have a fit method. Got type {type(model)}"
         return model
 
