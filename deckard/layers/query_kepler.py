@@ -94,8 +94,8 @@ def run_query(input_file, output_file):
         data["peak_power"] = 0
     for index, row in data.iterrows():
         for start_time in start_times:
-            promObj.start = log_data[start_time]
-            promObj.end = log_data[end_times[start_times.index(start_time)]]
+            promObj.start = data[start_time]
+            promObj.end = data[end_times[start_times.index(start_time)]]
             promObj.get_power()
             consumed_power = promObj.query_prometheus()
             peak_power = 0
