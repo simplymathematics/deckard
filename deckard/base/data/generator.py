@@ -34,7 +34,12 @@ SKLEARN_DATASETS = [
 @dataclass
 class SklearnDataGenerator:
     name: Literal[
-        "classification", "regression", "blobs", "moons", "circles", "biclusters",
+        "classification",
+        "regression",
+        "blobs",
+        "moons",
+        "circles",
+        "biclusters",
     ] = "classification"
     kwargs: dict = field(default_factory=dict)
 
@@ -70,7 +75,10 @@ TORCH_DATASETS = ["torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar
 @dataclass
 class TorchDataGenerator:
     name: Literal[
-        "torch_mnist", "torch_cifar10", "torch_diabetes", "torch_cifar100",
+        "torch_mnist",
+        "torch_cifar10",
+        "torch_diabetes",
+        "torch_cifar100",
     ] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)

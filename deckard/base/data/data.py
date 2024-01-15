@@ -158,7 +158,8 @@ class Data:
                     json.dump(data, f)
             elif suffix in [".csv"]:
                 assert isinstance(
-                    data, (Series, DataFrame, dict, np.ndarray),
+                    data,
+                    (Series, DataFrame, dict, np.ndarray),
                 ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
                 DataFrame(data).to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
@@ -169,7 +170,10 @@ class Data:
             assert Path(filename).exists()
 
     def __call__(
-        self, data_file=None, train_labels_file=None, test_labels_file=None,
+        self,
+        data_file=None,
+        train_labels_file=None,
+        test_labels_file=None,
     ) -> list:
         """Loads data from file if it exists, otherwise generates data and saves it to file. Returns X_train, X_test, y_train, y_test as a list of arrays, typed according to the framework.
         :param filename: str
