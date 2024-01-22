@@ -6,6 +6,7 @@ from tqdm import tqdm
 import yaml
 
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +21,7 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     for col in tqdm(df.columns, desc="Flattening columns"):
         if isinstance(df[col][0], dict):
-            tmp = pd.json_normalize(df[col])
+            tmp = pd.json_normalize(df[col].fillna({i: {} for i in df[col].index}))
             tmp.columns = [f"{col}.{subcol}" for subcol in tmp.columns]
             tmp.index = df.index
             df = pd.merge(df, tmp, left_index=True, how="outer", right_index=True)
@@ -83,6 +84,7 @@ def read_file(file, results):
             try:
                 dict_ = json.load(f)
             except json.decoder.JSONDecodeError as e:
+                logger.error(f"Error reading {file}")
                 raise e
     elif suffix == ".yaml":
         with open(file, "r") as f:
@@ -106,7 +108,7 @@ def save_results(results, results_file, results_folder) -> str:
     """
     results_file = Path(results_folder, results_file)
     logger.info(f"Saving data to {results_file}")
-    Path(results_folder).mkdir(exist_ok=True, parents=True)
+    Path(results_file).parent.mkdir(exist_ok=True, parents=True)
     suffix = results_file.suffix
     if suffix == ".csv":
         results.to_csv(results_file)
@@ -150,12 +152,10 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
     parser.add_argument("--results_folder", type=str, default=".")
-    parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     args = parser.parse_args()

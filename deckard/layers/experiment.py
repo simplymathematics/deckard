@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
-
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse

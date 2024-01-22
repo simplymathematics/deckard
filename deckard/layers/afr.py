@@ -120,8 +120,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     ), "Length of score list and aft dict must be equal"
     folder = Path(folder)
     aft_data = pd.DataFrame()
-    aft_data.index.name = "Model"
-    aft_data.index = aft_dict.keys()
+    
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
@@ -137,16 +136,21 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data["Median $S(t;\\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
-    aft_data.to_csv(folder / "aft_comparison.csv")
+    aft_data.index.name = "Model"
+    aft_data.index = aft_dict.keys()
+    label = f"tab:{dataset}"
+    upper = dataset.upper()
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.fillna("--", inplace=True)
+    aft_data.to_csv(Path(folder / "aft_comparison.csv"))
     aft_data.to_latex(
-        folder / "aft_comparison.tex",
+        buf = folder / "aft_comparison.tex",
         float_format="%.3g",
-        label=f"tab:{dataset}",
-        caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+        na_rep = "--",
+        label=label,
+        caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
-
+    
     return aft_data
 
 

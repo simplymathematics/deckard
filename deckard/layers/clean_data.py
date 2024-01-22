@@ -464,12 +464,8 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info(f"Shape after dropping poorly merged columns: {data.shape}")
-    logger.info("Shortening model names...")
-    # Removes the path and to the model object and leaves the name of the model
-    model_names = data["model.init.name"].str.split(".").str[-1]
-    data["model_name"] = model_names
-    # If "Net" is in the model name, we assume the following string denotes the layers as in ResNet18
     if hasattr(data, "model.init.name"):
+        logger.info("Shortening model names...")
         model_names = data["model.init.name"].str.split(".").str[-1]
         data.loc[:, "model_name"] = model_names
         model_layers = [str(x).split("Net")[-1] for x in model_names]

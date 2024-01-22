@@ -7,6 +7,7 @@ from typing import Union
 
 import numpy as np
 from pandas import DataFrame, read_csv, Series
+from omegaconf import OmegaConf
 
 from ..utils import my_hash
 from .generator import DataGenerator
@@ -66,6 +67,7 @@ class Data:
         else:
             self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
+            sklearn_pipeline = OmegaConf.to_container(OmegaConf.create(sklearn_pipeline))
             self.sklearn_pipeline = (
                 sklearn_pipeline
                 if isinstance(sklearn_pipeline, (SklearnDataPipeline, type(None)))
