@@ -1,0 +1,284 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m deckard.layers.experiment train
+    params:
+      params.yaml:
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            n_classes: 3
+            n_clusters_per_class: 1
+            n_features: 20
+            n_samples: 1100
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 1000
+            train_size: 100
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pkl
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            initialize:
+              nb_classes: 3
+            library: sklearn
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              n_classes: 3
+              n_clusters_per_class: 1
+              n_features: 20
+              n_samples: 1100
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+              test_size: 1000
+              train_size: 100
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            k: 1
+            name: gzip_classifier.GzipClassifier
+          library: sklearn
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/data/data.pkl
+      md5: 2a6f980d11c78ce7a183a5ab4c5ee975
+      size: 185102
+    - path: output/models/model.pkl
+      md5: ae39ac2b547797417ba6dc31b9ef2a26
+      size: 9946
+    - path: output/reports/train/default/score_dict.json
+      md5: 12a6326a9e1d3d050cb83a10b0b2a837
+      size: 845
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - path: output/data/data.pkl
+      md5: eeabc07006294278801a3906f7016b20
+      size: 185102
+    - path: output/models/model.pkl
+      md5: 38622dfa7ae717dc7c3a6cc03e2d50b7
+      size: 15127
+    params:
+      params.yaml:
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              n_features: 20
+              n_samples: 1100
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+              test_size: 1000
+              train_size: 100
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            model:
+              _target_: deckard.base.model.Model
+              art:
+                _target_: deckard.base.model.art_pipeline.ArtPipeline
+                initialize:
+                library: sklearn-svc
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  n_features: 20
+                  n_samples: 1100
+                  name: classification
+                  random_state: 0
+                sample:
+                  random_state: 0
+                  stratify: true
+                  test_size: 1000
+                  train_size: 100
+                sklearn_pipeline:
+                  preprocessor:
+                    name: sklearn.preprocessing.StandardScaler
+                    with_mean: true
+                    with_std: true
+              init:
+                C: 1.0
+                _target_: deckard.base.model.ModelInitializer
+                kernel: rbf
+                max_iter: 100
+                name: sklearn.svm.SVC
+                probability: true
+                random_state: 0
+              library: sklearn-svc
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            _target_: deckard.base.model.Model
+            art:
+              _target_: deckard.base.model.art_pipeline.ArtPipeline
+              initialize:
+              library: sklearn-svc
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                n_features: 20
+                n_samples: 1100
+                name: classification
+                random_state: 0
+              sample:
+                random_state: 0
+                stratify: true
+                test_size: 1000
+                train_size: 100
+              sklearn_pipeline:
+                preprocessor:
+                  name: sklearn.preprocessing.StandardScaler
+                  with_mean: true
+                  with_std: true
+            init:
+              C: 1.0
+              _target_: deckard.base.model.ModelInitializer
+              kernel: rbf
+              max_iter: 100
+              name: sklearn.svm.SVC
+              probability: true
+              random_state: 0
+            library: sklearn-svc
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            n_features: 20
+            n_samples: 1100
+            name: classification
+            random_state: 0
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 1000
+            train_size: 100
+          sklearn_pipeline:
+            preprocessor:
+              name: sklearn.preprocessing.StandardScaler
+              with_mean: true
+              with_std: true
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          adv_probabilities_file: adv_probabilities.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          data_dir: data
+          data_file: data
+          data_type: .pkl
+          directory: output
+          model_dir: models
+          model_file: model
+          model_type: .pkl
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          probabilities_file: probabilities.json
+          reports: reports
+          score_dict_file: score_dict.json
+          test_labels_file: test_labels.json
+          train_labels_file: train_labels.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            initialize:
+            library: sklearn-svc
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              n_features: 20
+              n_samples: 1100
+              name: classification
+              random_state: 0
+            sample:
+              random_state: 0
+              stratify: true
+              test_size: 1000
+              train_size: 100
+            sklearn_pipeline:
+              preprocessor:
+                name: sklearn.preprocessing.StandardScaler
+                with_mean: true
+                with_std: true
+          init:
+            C: 1.0
+            _target_: deckard.base.model.ModelInitializer
+            kernel: rbf
+            max_iter: 100
+            name: sklearn.svm.SVC
+            probability: true
+            random_state: 0
+          library: sklearn-svc
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: output/reports/attack/default/adv_probabilities.json
+      md5: 65f8a10b7001beb89bc2a743e52274c6
+      size: 393
+    - path: output/reports/attack/default/score_dict.json
+      md5: 817fea6016e7e5f446b0016fa2316dc1
+      size: 1121

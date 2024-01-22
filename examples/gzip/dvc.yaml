@@ -1,0 +1,83 @@
+stages:
+  ##############################################################################
+  # These stages use the dvc API to run a single experiment at a time using a
+  # deckard.Experiment object. This parses this file, saves the default hydra configuration
+  # to params.yaml, and then runs the experiment with the given parameters.
+  # This can be used to define a stage that runs a single experiment, or a stage for the
+  # optimisation using the optimise.py script and the hydrasweeper API. This API is primarily used for
+  # development and testing, as it is easier to run a single experiment at a time and debug it using
+  # DVC's git-like features to track changes and minimise run time.
+  train:
+    cmd: python -m deckard.layers.experiment train
+    metrics:
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+    outs:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    params:
+    - data
+    - model
+    - scorers
+    - files
+  attack:
+    cmd: python -m deckard.layers.experiment attack
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    metrics:
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+    outs:
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
+    params:
+    - data
+    - model
+    - attack
+    - scorers
+    - files
+  ##############################################################################
+  find_best_model:
+    cmd: python -m deckard.layers.find_best model.yaml
+    deps:
+    - model.db
+    outs:
+    - conf/model/best.yaml
+  model_optimise:
+    cmd: python -m deckard.layers.optimise +stage=train +optimizers=accuracy --multirun --config-name model
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+    outs:
+    - model.db
+    params:
+    - conf/model.yaml:
+      - hydra
+  ##############################################################################
+  attack_optimise:
+    cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
+    deps:
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    - conf/model/best.yaml
+    outs:
+    - attack.db
+    params:
+    - conf/attack.yaml:
+      - hydra
+  find_best_attack:
+    cmd: python -m deckard.layers.find_best attack.yaml
+    deps:
+    - attack.db
+    outs:
+    - conf/attack/best.yaml
+  ##############################################################################
+  # defend:
+  #   cmd : bash models.sh
+  #   deps:
+  #   - model.db
+  #   outs:
+  #   - multirun
+  # attack-again:
+  #   cmd : bash attacks.sh
+  #   deps:
+  #   - attack.db
