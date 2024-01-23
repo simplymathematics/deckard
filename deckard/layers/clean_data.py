@@ -41,7 +41,10 @@ def drop_frames_without_results(
     Returns:
       the modified DataFrame after dropping the frames without results.
     """
-
+    for entry in subset:
+        if entry not in data.columns:
+            logger.warning(f"Column {entry} not in data.columns. Ignoring.")
+            subset.remove(entry)
     logger.info(f"Dropping frames without results for {subset}")
     data.dropna(axis=0, subset=subset, inplace=True)
     return data
@@ -200,7 +203,7 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=[],
+    control_variable=["model.trainer.nb_epoch"],
     defaults={
         "model.trainer.nb_epoch": 1,
         "model.trainer.kwargs.nb_epoch": 1,
@@ -376,7 +379,6 @@ def format_control_parameter(data, control_dict, fillna):
             data.loc[data.def_gen == defence, "def_value"] = value
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
-            input("Press Enter to continue...")
             data = data[data.def_gen != defence]
     for attack in attacks:
         if attack in control_dict:
@@ -475,14 +477,14 @@ def clean_data_for_plotting(
         data.loc[:, "model_layers"] = model_layers
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    data["nb_epoch"] = (
+    data["Epochs"] = (
         data["model.trainer.kwargs.nb_epoch"]
         if "model.trainer.kwargs.nb_epoch" in data.columns
         else data["model.trainer.nb_epoch"]
     )
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = merge_defences(data, control_variable=list(control_dict.get("control", [])), defaults=control_dict.get("defaults", {}))
+    data = merge_defences(data, control_variable=list(control_dict.pop("control", [])), defaults=control_dict.pop("defaults", {}))
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
         def_gen = data.def_gen.map(def_gen_dict)
@@ -551,6 +553,12 @@ if __name__ == "__main__":
         help="Path to (optional) pareto set dictionary.",
         default=None,
     )
+    parser.add_argument(
+        "--drop_cpu",
+        help="Drop CPU results",
+        action="store_true",
+        default=True,
+    )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert Path(
@@ -587,7 +595,7 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict.get("attacks", {})
     control_dict = big_dict.get("params", {})
     fillna = big_dict.get("fillna", {})
-    min_max = big_dict.get("min_max", ["nb_epoch"])
+    min_max = big_dict.get("min_max", ["Epochs"])
 
     results = clean_data_for_plotting(
         data,
@@ -597,7 +605,10 @@ if __name__ == "__main__":
         fillna=fillna,
     )
     results = calculate_failure_rate(results)
-
+    results = results[results['adv_failure_rate'] >= 0] # Remove negative failure rates from an earlier bug
+    if args.drop_cpu:
+        results = results[results['train_device'] != 'cpu'] # Remove CPU results from an earlier bug
+        results = results[results['adv_fit_device'] != 'cpu'] # Remove CPU results from an earlier bug
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
         results,
