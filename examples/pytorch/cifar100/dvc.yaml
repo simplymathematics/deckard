@@ -135,18 +135,13 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/clean_attack.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
-      - ${files.directory}/plots/clean_attack.csv
+      - ${files.directory}/${files.reports}/clean_attack.csv
     plots:
       - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_partial_effects.pdf
-      - ${files.directory}/plots/cox_partial_effects.pdf
       - ${files.directory}/plots/cox_aft.pdf
       - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_partial_effects.pdf
-      - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_partial_effects.pdf
     metrics:
       - ${files.directory}/plots/aft_comparison.csv
     outs:

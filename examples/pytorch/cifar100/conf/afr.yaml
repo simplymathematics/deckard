@@ -5,10 +5,10 @@ covariates:
  - "atk_value"
  - "def_value"
  - "data.sample.random_state"
- - "adv_failure_rate"
+#  - "adv_failure_rate"
  - "model_layers"
  - "adv_fit_time"
- - "model.trainer.kwargs.nb_epoch"
+ - "model.trainer.nb_epoch"
 weibull:
   plot:
     file : weibull_aft.pdf
@@ -30,7 +30,7 @@ weibull:
     "def_gen": "Defence"
   partial_effect:
     - "file": "weibull_epochs_partial_effect.pdf"
-      "covariate_array": "model.trainer.kwargs.nb_epoch"
+      "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"

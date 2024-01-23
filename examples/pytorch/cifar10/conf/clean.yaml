@@ -11,7 +11,7 @@ defences:
   GaussianAugmentation: Gauss-in
   GaussianNoise: Gauss-out
   HighConfidence: Conf
-  Epochs: model.trainer.nb_epoch
+  Epochs: Epochs
   model_layers: Control
 params:
   Deep: attack.init.kwargs.nb_grads

@@ -26,5 +26,9 @@ params:
   Gauss-in: model.art.preprocessor.params.sigma
   Control: model_layers
   Epochs: model.trainer.nb_epoch
+  control:
+    model_layers: 18
+  defaults:
+    Epochs: 1
 fillna:
-  Epochs: 1
+  Epochs: 10
