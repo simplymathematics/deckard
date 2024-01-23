@@ -607,8 +607,10 @@ if __name__ == "__main__":
     results = calculate_failure_rate(results)
     results = results[results['adv_failure_rate'] >= 0] # Remove negative failure rates from an earlier bug
     if args.drop_cpu:
-        results = results[results['train_device'] != 'cpu'] # Remove CPU results from an earlier bug
-        results = results[results['adv_fit_device'] != 'cpu'] # Remove CPU results from an earlier bug
+        if "train_device" in results.columns:
+            results = results[results['train_device'] != 'cpu'] # Remove CPU results from an earlier bug
+        if "adv_fit_device" in results.columns:
+            results = results[results['adv_fit_device'] != 'cpu'] # Remove CPU results from an earlier bug
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
         results,
