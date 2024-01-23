@@ -8,7 +8,7 @@ covariates:
  - "adv_failure_rate"
  - "model_layers"
  - "adv_fit_time"
- - model.trainer.nb_epoch
+ - nb_epoch
 fillna:
   model.trainer.nb_epoch: 20
 weibull:

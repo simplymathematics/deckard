@@ -160,14 +160,13 @@ line_plot:
   y: accuracy
   y_scale: 
   ylabel: Ben. Accuracy
-  # hue_order:
-  # - Control
-  # - Conf
-  # - Epochs
-  # - Gauss-in
-  # - Gauss-out
-  # - Conf
-  # - FSQ
+  hue_order:
+  - Control
+  - Conf
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - file: def_param_vs_adv_accuracy.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
@@ -178,14 +177,13 @@ line_plot:
   y: adv_accuracy
   y_scale: 
   ylabel: Adv. Accuracy
-  # hue_order:
-  # - Control
-  # - Conf
-  # - Epochs
-  # - Gauss-in
-  # - Gauss-out
-  # - Conf
-  # - FSQ
+  hue_order:
+  - Control
+  - Conf
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - file: def_param_vs_adv_failure_rate.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
@@ -196,14 +194,13 @@ line_plot:
   y: adv_failure_rate
   y_scale: log
   ylabel: $h_{adv.}$
-  # hue_order:
-  # - Control
-  # - Conf
-  # - Epochs
-  # - Gauss-in
-  # - Gauss-out
-  # - Conf
-  # - FSQ
+  hue_order:
+  - Control
+  - Conf
+  - Gauss-in
+  - Gauss-out
+  - Conf
+  - FSQ
 - file: atk_param_vs_accuracy.pdf
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}
@@ -221,7 +218,6 @@ line_plot:
   - HSJ
   - Pixel
   - Thresh
-
 scatter_plot:
 - x: train_time_per_sample
   y: adv_failure_rate

@@ -5,10 +5,9 @@ stages:
       mnist/reports/attack.csv
     deps:
     - path: mnist/reports/attack/
-      hash: md5
-      md5: a2694f8e9ea5c5ff400d11fa1d98001d.dir
-      size: 21895572255
-      nfiles: 53006
+      md5: 452a2037e67ca3c94b921ef2577c55eb.dir
+      size: 21895569544
+      nfiles: 53004
     - path: mnist/reports/attack/ResNet101.db
       md5: 600452804d96c8b8483c3f8da01130c4
       size: 462848
@@ -23,17 +22,61 @@ stages:
       size: 462848
     outs:
     - path: mnist/reports/attack.csv
-      hash: md5
-      md5: aa61d0f5118327d164cfc37a466e5162
-      size: 47376297
+      md5: ec29f31a3296cc148eabeb7b7ac111bd
+      size: 47418362
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: mnist/reports/attack.csv
+      md5: ec29f31a3296cc148eabeb7b7ac111bd
+      size: 47418362
+    params:
+      params.yaml:
+        files.directory: mnist
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+        params:
+          Deep: attack.init.kwargs.nb_grads
+          FGM: attack.init.kwargs.eps
+          HSJ: attack.init.kwargs.max_iter
+          Pixel: attack.init.kwargs.th
+          PGD: attack.init.kwargs.eps
+          Thresh: attack.init.kwargs.th
+          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
+          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
+          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
+          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+    outs:
+    - path: mnist/reports/clean_attack.csv
+      md5: afaf48a3155310c166d18264cc125171
+      size: 19638690
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/clean_attack.csv
       -c conf/plots.yaml
     deps:
     - path: mnist/reports/clean_attack.csv
-      hash: md5
-      md5: ada4d505a6c72408e50b929b2869ffee
-      size: 19747128
+      md5: afaf48a3155310c166d18264cc125171
+      size: 19638690
     params:
       params.yaml:
         files.directory: mnist
@@ -133,22 +176,6 @@ stages:
           xlabels: Defence Type
           y: adv_failure_rate
           ylabels: $h_{adv.}$
-          rotation: 90
-          hue_order:
-          - ResNet18
-          - ResNet34
-          - ResNet50
-          - ResNet101
-          - ResNet152
-        - file: adv_accuracy_vs_defence_type.pdf
-          hue: model_name
-          kind: boxen
-          legend_title: Model Name
-          titles: Adv. Accuracy vs Defence Type
-          x: def_gen
-          xlabels: Defence Type
-          y: adv_accuracy
-          ylabels: Adv. Ben. Accuracy
           rotation: 90
           hue_order:
           - ResNet18
@@ -276,69 +303,54 @@ stages:
           - ResNet152
     outs:
     - path: mnist/plots/adv_accuracy_vs_attack_type.pdf
-      hash: md5
-      md5: 175188b326b4c519d51274f461fe4b56
-      size: 32685
+      md5: be01372574a4c89ab5ebd79aa83c3afb
+      size: 32417
     - path: mnist/plots/adv_accuracy_vs_defence_type.pdf
-      hash: md5
-      md5: 65201d5844ae16efa9e675d3622c6c6d
-      size: 33020
+      md5: ee94bc1528f4c8a27fa96f80629945bb
+      size: 25802
     - path: mnist/plots/adv_failure_rate_vs_train_time.pdf
-      hash: md5
-      md5: ee56e84db4091efa7b1526ec51fdfdd5
-      size: 96055
+      md5: ec95593696b7d7d3c7e0aaf5e07e97a3
+      size: 18368
     - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.pdf
-      hash: md5
-      md5: bdd64c58fc2cfdc344ec81a0642be597
-      size: 40000
+      md5: b292c1a421a568a842d0aa46a9006239
+      size: 37057
     - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.pdf
-      hash: md5
-      md5: 1216c3aa5898e874f430c7734b26ea56
-      size: 41252
+      md5: 7c92e7e9d58a70a0919c55db35ac4b08
+      size: 35959
     - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.pdf
-      hash: md5
-      md5: 8f04fa98643a1210910ef8657df1c2fa
-      size: 37353
+      md5: 63ff1284b144c9dc0cdc53c47b20f9d1
+      size: 29632
     - path: mnist/plots/atk_param_vs_accuracy.pdf
-      hash: md5
-      md5: 66c481c894939696b9f217570790fcec
-      size: 20223
+      md5: 7f5b71ea7d5f2b62f01757c30e49a8b9
+      size: 20032
     - path: mnist/plots/ben_accuracy_vs_defence_type.pdf
-      hash: md5
-      md5: ff6f4bb8bde362750bf5878eea7e13ff
-      size: 30124
+      md5: df0c6785c1f5e518843f0c517a6fbd1a
+      size: 27085
     - path: mnist/plots/ben_failure_rate_vs_defence_type.pdf
-      hash: md5
-      md5: 983850e56fcd0ad50d85e630d61c82a5
-      size: 42600
+      md5: 1c297e1f8728bf3dcece2df9f2c83404
+      size: 36305
     - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.pdf
-      hash: md5
-      md5: e62b68ef46db339eb9def2f4959be2b3
-      size: 37589
+      md5: 6b3cbb67dcfc33fe1c924af06021a77f
+      size: 32030
     - path: mnist/plots/def_param_vs_accuracy.pdf
-      hash: md5
-      md5: e1b0f111bc5d7797256be82187586023
-      size: 20548
+      md5: 1e6a2fb54f5b4a81d42b3ad185e90dba
+      size: 19538
     - path: mnist/plots/def_param_vs_adv_accuracy.pdf
-      hash: md5
-      md5: 310f01fdaa47a92500f03d728cd6b117
-      size: 19862
+      md5: 1381863008471927a474064f92e8ca90
+      size: 18574
     - path: mnist/plots/def_param_vs_adv_failure_rate.pdf
-      hash: md5
-      md5: d376c93f824251f3508b0a7e3c365020
-      size: 23632
+      md5: 3417240b181d09dc2e9fe2b1c10ee681
+      size: 22128
   afr:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/reports/clean_attack.csv  --duration_col
       adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder mnist/plots/
     deps:
     - path: mnist/plots/adv_accuracy_vs_defence_type.pdf
-      hash: md5
-      md5: 65201d5844ae16efa9e675d3622c6c6d
-      size: 33020
+      md5: ee94bc1528f4c8a27fa96f80629945bb
+      size: 25802
     - path: mnist/reports/clean_attack.csv
-      hash: md5
-      md5: ada4d505a6c72408e50b929b2869ffee
-      size: 19747128
+      md5: afaf48a3155310c166d18264cc125171
+      size: 19638690
     params:
       params.yaml:
         files.directory: mnist
@@ -524,223 +536,42 @@ stages:
               - '152'
     outs:
     - path: mnist/plots/aft_comparison.csv
-      hash: md5
-      md5: a35241fbedbd3900b42424e4036f1cdb
-      size: 183
+      md5: 6c7cecdedb373f2d55876f80d0d4b55d
+      size: 352
     - path: mnist/plots/aft_comparison.tex
-      hash: md5
-      md5: c0d2c64f3b2696750aa5de1539312379
-      size: 407
+      md5: f2d4fe999311654b19f4dbd592c45fcc
+      size: 600
     - path: mnist/plots/log_logistic_aft.pdf
-      hash: md5
-      md5: 03f05b16a9504eea7e81652b31de0d00
-      size: 23401
+      md5: 681c95e69962e94decc9c3891cb8b319
+      size: 22338
     - path: mnist/plots/log_logistic_epochs_partial_effect.pdf
-      hash: md5
-      md5: 535a9ea4255b7577cb300efbd1d256df
-      size: 27394
+      md5: 23c922a3e6fd44a33157361e6fc2233a
+      size: 26620
     - path: mnist/plots/log_logistic_layers_partial_effect.pdf
-      hash: md5
-      md5: 2a4ab1809b665e226617185e475fb76b
-      size: 28988
+      md5: a9a069f2081eb7ecc52a81f645ddb541
+      size: 28300
     - path: mnist/plots/log_normal_aft.pdf
-      hash: md5
-      md5: 007fd6530b124cb76995f2d11ccea52f
-      size: 24471
+      md5: e809cc27cb5c83aeea4fb0ec6b0e0327
+      size: 23331
     - path: mnist/plots/log_normal_epochs_partial_effect.pdf
-      hash: md5
-      md5: 29293af9fa83d8c9a6ca3680183c53c5
-      size: 28043
+      md5: c062b9a682d21a65f435b1a0268a50ce
+      size: 27088
     - path: mnist/plots/log_normal_layers_partial_effect.pdf
-      hash: md5
-      md5: 1848f13abd7b100cb455de45f4fd13fd
-      size: 29095
+      md5: 855a578fd16a7859983b2a3da7f9d0ac
+      size: 28354
     - path: mnist/plots/weibull_aft.pdf
-      hash: md5
-      md5: 0e5d3b23fa0607678359c96c978c0952
-      size: 33691
+      md5: 8d242055d53e9c611f60ae5cbc10bd14
+      size: 32774
     - path: mnist/plots/weibull_epochs_partial_effect.pdf
-      hash: md5
-      md5: c48ae038ac53ec5844f72eda45812146
-      size: 27547
+      md5: 6fbecd0af3059042403cf7807812dc42
+      size: 27102
     - path: mnist/plots/weibull_layers_partial_effect.pdf
-      hash: md5
-      md5: e7c2e1ec85fdb54e59bfbe55a9065c5a
-      size: 29116
+      md5: aa7e2407cb770d1d5731528413422b2f
+      size: 28378
   copy_results:
     cmd: cp -r mnist/plots/* ~/ml_afr/mnist/
     deps:
     - path: mnist/plots/
-      hash: md5
-      md5: 7baeb7db4aacc8c9e9676f7d04713294.dir
-      size: 727279
+      md5: 38ee447af547e3421468c65b79da400d.dir
+      size: 600164
       nfiles: 24
-  clean@attack:
-    cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
-      -c conf/clean.yaml
-    deps:
-    - path: mnist/reports/attack.csv
-      hash: md5
-      md5: aa61d0f5118327d164cfc37a466e5162
-      size: 47376297
-    params:
-      params.yaml:
-        files.directory: mnist
-        files.reports: reports
-      conf/clean.yaml:
-        attacks:
-          DeepFool: Deep
-          FastGradientMethod: FGM
-          HopSkipJump: HSJ
-          PixelAttack: Pixel
-          ProjectedGradientDescent: PGD
-          ThresholdAttack: Thresh
-        defences:
-          Control: Control
-          FeatureSqueezing: FSQ
-          GaussianAugmentation: Gauss-in
-          GaussianNoise: Gauss-out
-          HighConfidence: Conf
-          nb_epoch: Epochs
-          model_layers: Control
-        fillna:
-          Epochs: 20
-        params:
-          Deep: attack.init.kwargs.nb_grads
-          FGM: attack.init.kwargs.eps
-          HSJ: attack.init.kwargs.max_iter
-          Pixel: attack.init.kwargs.th
-          PGD: attack.init.kwargs.eps
-          Thresh: attack.init.kwargs.th
-          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
-          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
-          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
-          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
-          Control: model_layers
-          Epochs: model.trainer.nb_epoch
-    outs:
-    - path: mnist/reports/clean_attack.csv
-      hash: md5
-      md5: ada4d505a6c72408e50b929b2869ffee
-      size: 19747128
-  train:
-    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
-    params:
-      params.yaml:
-        data:
-          _target_: deckard.base.data.Data
-          generate:
-            _target_: deckard.base.data.generator.DataGenerator
-            name: torch_mnist
-          sample:
-            _target_: deckard.base.data.sampler.SklearnDataSampler
-            random_state: 0
-            stratify: true
-          sklearn_pipeline:
-            _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
-            preprocessor:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-        files:
-          _target_: deckard.base.files.FileConfig
-          adv_predictions_file: adv_predictions.json
-          attack_dir: attacks
-          attack_file: attack
-          attack_type: .pkl
-          data_dir: data
-          data_file: data
-          data_type: .pkl
-          directory: mnist
-          model_dir: models
-          model_file: model
-          model_type: .pt
-          name: default
-          params_file: params.yaml
-          predictions_file: predictions.json
-          reports: reports
-          score_dict_file: score_dict.json
-        model:
-          _target_: deckard.base.model.Model
-          art:
-            _target_: deckard.base.model.art_pipeline.ArtPipeline
-            data:
-              _target_: deckard.base.data.Data
-              generate:
-                _target_: deckard.base.data.generator.DataGenerator
-                name: torch_mnist
-              sample:
-                _target_: deckard.base.data.sampler.SklearnDataSampler
-                random_state: 0
-                stratify: true
-              sklearn_pipeline:
-                _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
-                preprocessor:
-                  name: sklearn.preprocessing.StandardScaler
-                  with_mean: true
-                  with_std: true
-            initialize:
-              clip_values:
-              - 0
-              - 255
-              criterion:
-                name: torch.nn.CrossEntropyLoss
-              optimizer:
-                lr: 0.01
-                momentum: 0.9
-                name: torch.optim.SGD
-            library: pytorch
-          data:
-            _target_: deckard.base.data.Data
-            generate:
-              _target_: deckard.base.data.generator.DataGenerator
-              name: torch_mnist
-            sample:
-              _target_: deckard.base.data.sampler.SklearnDataSampler
-              random_state: 0
-              stratify: true
-            sklearn_pipeline:
-              _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
-              preprocessor:
-                name: sklearn.preprocessing.StandardScaler
-                with_mean: true
-                with_std: true
-          init:
-            _target_: deckard.base.model.ModelInitializer
-            name: torch_example.ResNet18
-            num_channels: 1
-          library: pytorch
-          trainer:
-            batch_size: 1024
-            nb_epoch: 100
-        scorers:
-          _target_: deckard.base.scorer.ScorerDict
-          accuracy:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: maximize
-            name: sklearn.metrics.accuracy_score
-          log_loss:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: minimize
-            name: sklearn.metrics.log_loss
-    outs:
-    - path: mnist/data/data.pkl
-      hash: md5
-      md5: de934a5f5157970e5f30b8f3f1856a68
-      size: 222320311
-    - path: mnist/models/model.optimizer.pt
-      hash: md5
-      md5: 1e527d70896a4a05a2d6ac103382cd50
-      size: 44780845
-    - path: mnist/models/model.pt
-      hash: md5
-      md5: f01e051c7b7dfa20eca3fe1caab0b25e
-      size: 44785941
-    - path: mnist/reports/train/default/predictions.json
-      hash: md5
-      md5: 1e2cf0100bb5f0a42182021e12b00dd9
-      size: 2882749
-    - path: mnist/reports/train/default/score_dict.json
-      hash: md5
-      md5: ebe552d99842320709ca466da6d3092c
-      size: 410

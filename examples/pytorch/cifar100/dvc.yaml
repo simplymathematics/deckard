@@ -87,7 +87,7 @@ stages:
       - ${files.directory}/${files.reports}/${item}/ResNet34.db
       - ${files.directory}/${files.reports}/${item}/ResNet50.db
       - ${files.directory}/${files.reports}/${item}/ResNet101.db
-      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
+      - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   clean:

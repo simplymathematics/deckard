@@ -128,7 +128,6 @@ stages:
       - ${files.directory}/plots/${cat_plot[5].file}
       - ${files.directory}/plots/${cat_plot[6].file}
       - ${files.directory}/plots/${cat_plot[7].file}
-      - ${files.directory}/plots/${cat_plot[8].file}
       - ${files.directory}/plots/${line_plot[0].file}
       - ${files.directory}/plots/${line_plot[1].file}
       - ${files.directory}/plots/${line_plot[2].file}

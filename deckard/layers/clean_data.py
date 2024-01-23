@@ -202,10 +202,8 @@ def merge_defences(
     ],
     control_variable=[],
     defaults={
-        # "model.trainer.nb_epoch": 20,
-        # "model.trainer.kwargs.nb_epoch": 20,
-        # "model.trainer.batch_size" : 1024,
-        # "model.trainer.kwargs.batch_size" : 1024,
+        "model.trainer.nb_epoch": 1,
+        "model.trainer.kwargs.nb_epoch": 1,
     },
 ):
     """
@@ -302,6 +300,7 @@ def merge_attacks(results: pd.DataFrame):
         logger.info(f"Unique attacks: {set(results.atk_gen)}")
     else:
         logger.warning("No attacks found in data. Check your config file.")
+    
     assert hasattr(results, "atk_gen"), "atk_gen not in results.columns"
     return results
 
@@ -342,7 +341,7 @@ def format_control_parameter(data, control_dict, fillna):
     logger.info("Fillna: ")
     logger.info(yaml.dump(fillna))
     for defence in defences:
-        if defence in control_dict and defence != "Epochs":
+        if defence in control_dict:
             # Get parameter name from control_dict
             param = control_dict[defence]
             # Shorten parameter name
@@ -377,6 +376,7 @@ def format_control_parameter(data, control_dict, fillna):
             data.loc[data.def_gen == defence, "def_value"] = value
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
+            input("Press Enter to continue...")
             data = data[data.def_gen != defence]
     for attack in attacks:
         if attack in control_dict:
@@ -464,6 +464,9 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info(f"Shape after dropping poorly merged columns: {data.shape}")
+    logger.info(f"Dropping rows where time is negative (from earlier bug).")
+    data = data[data['train_time'] >= 0]
+    data = data[data['adv_fit_time'] >= 0]
     if hasattr(data, "model.init.name"):
         logger.info("Shortening model names...")
         model_names = data["model.init.name"].str.split(".").str[-1]

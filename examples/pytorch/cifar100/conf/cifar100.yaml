@@ -25,7 +25,7 @@ hydra:
     study_name: control
     storage: sqlite:///model.db
     n_jobs: 4
-    n_trials : 32
+    n_trials : 10
     params:
       ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
       ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
