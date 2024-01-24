@@ -1,3 +1,15 @@
+vars:
+  - conf/plots.yaml:line_plot
+  - conf/plots.yaml:scatter_plot
+  - conf/plots.yaml:cat_plot
+  - conf/afr.yaml:covariates
+  - conf/afr.yaml:weibull
+  - conf/afr.yaml:log_logistic
+  - conf/afr.yaml:log_normal
+  - conf/clean.yaml:attacks
+  - conf/clean.yaml:defences
+  - conf/clean.yaml:params
+  - conf/clean.yaml:fillna
 stages:
   train:
     cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
@@ -85,36 +97,77 @@ stages:
       # - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
+  clean:
+    foreach: # iterates through each stage
+      # - train 
+      - attack
+    do:
+      cmd: python -m deckard.layers.clean_data -i ${files.directory}/${files.reports}/${item}.csv -o ${files.directory}/${files.reports}/clean_${item}.csv -c conf/clean.yaml
+      deps:
+      - ${files.directory}/${files.reports}/${item}.csv
+      outs:
+      - ${files.directory}/${files.reports}/clean_${item}.csv
+      params:
+        - files.directory
+        - files.reports
+        - conf/clean.yaml:
+          - attacks
+          - defences
+          - params
+          - fillna
   plot:
-    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/attack.csv -o data.csv
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/clean_attack.csv -c conf/plots.yaml
     deps:
-      - ${files.directory}/${files.reports}/attack.csv
-      - ${files.directory}/${files.reports}/attack/ResNet18.db
-      - ${files.directory}/${files.reports}/attack/ResNet34.db
-      - ${files.directory}/${files.reports}/attack/ResNet50.db
-      - ${files.directory}/${files.reports}/attack/ResNet101.db
-      - ${files.directory}/${files.reports}/attack/ResNet152.db
-    outs:
-      - ${files.directory}/plots/data.csv
+      - ${files.directory}/${files.reports}/clean_attack.csv
+    plots:
+      - ${files.directory}/plots/${cat_plot[0].file}
+      - ${files.directory}/plots/${cat_plot[1].file}
+      - ${files.directory}/plots/${cat_plot[2].file}
+      - ${files.directory}/plots/${cat_plot[3].file}
+      - ${files.directory}/plots/${cat_plot[4].file}
+      - ${files.directory}/plots/${cat_plot[5].file}
+      - ${files.directory}/plots/${cat_plot[6].file}
+      - ${files.directory}/plots/${cat_plot[7].file}
+      - ${files.directory}/plots/${cat_plot[8].file}
+      - ${files.directory}/plots/${line_plot[0].file}
+      - ${files.directory}/plots/${line_plot[1].file}
+      - ${files.directory}/plots/${line_plot[2].file}
+      - ${files.directory}/plots/${line_plot[3].file}
+      - ${files.directory}/plots/${scatter_plot[0].file}
+    params:
+      - files.directory
+      - files.reports
+      - conf/plots.yaml:
+        - line_plot
+        - scatter_plot
+        - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/plots/data.csv --target adv_accuracy --duration_col adv_fit_time --dataset mnist
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
-      - ${files.directory}/plots/data.csv
+      - ${files.directory}/${files.reports}/clean_attack.csv
+      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
       - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_partial_effects.pdf
-      - ${files.directory}/plots/cox_partial_effects.pdf
-      - ${files.directory}/plots/cox_aft.pdf
+      - ${files.directory}/plots/weibull_epochs_partial_effect.pdf
+      - ${files.directory}/plots/weibull_layers_partial_effect.pdf
       - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_partial_effects.pdf
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.pdf
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.pdf
       - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_partial_effects.pdf
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.pdf
+      - ${files.directory}/plots/log_normal_layers_partial_effect.pdf
     metrics:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
       - ${files.directory}/plots/aft_comparison.tex
+    params:
+      - files.directory
+      - conf/afr.yaml:
+        - covariates
+        - weibull
+        - log_logistic
+        - log_normal
   copy_results:
       cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
       deps:
-        - ${files.directory}/plots/data.csv
-        - ${files.directory}/plots/aft_comparison.csv
+        - ${files.directory}/plots/

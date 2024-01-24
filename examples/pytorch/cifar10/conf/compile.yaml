@@ -14,6 +14,7 @@ defences:
   GaussianAugmentation: Gauss-in
   GaussianNoise: Gauss-out
   HighConfidence: Conf
+  Epochs: Epochs
 params:
   # art.attacks.evasion.CarliniL0Method: attack.init.confidence
   # art.attacks.evasion.CarliniL2Method: attack.init.confidence
@@ -28,5 +29,5 @@ params:
   Conf: model.art.pipeline.postprocessor.cutoff
   FSQ: model.art.pipeline.preprocessor.bit_depth
   Gauss-in: model.art.pipeline.preprocessor.sigma
-  Depth: model_layers
-  Epochs: model.train.nb_epoch
+  Control: model_layers
+  Epochs: model.trainer.nb_epoch

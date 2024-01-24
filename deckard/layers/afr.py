@@ -11,7 +11,7 @@ from lifelines import (
     LogLogisticAFTFitter,
     CoxPHFitter,
 )
-from .plots import calculate_failure_rate, drop_frames_without_results, min_max_scaling
+from .clean_data import drop_frames_without_results
 import matplotlib
 import logging
 import yaml
@@ -19,16 +19,274 @@ import argparse
 
 logger = logging.getLogger(__name__)
 
+
+def plot_aft(
+    df,
+    file,
+    event_col,
+    duration_col,
+    title,
+    mtype,
+    xlabel=None,
+    ylabel=None,
+    replacement_dict={},
+    filetype=".pdf",
+    folder=".",
+    **kwargs,
+):
+    file = Path(folder, file).with_suffix(filetype)
+    if mtype == "weibull":
+        aft = WeibullAFTFitter(**kwargs)
+    elif mtype == "log_normal":
+        aft = LogNormalAFTFitter(**kwargs)
+    elif mtype == "log_logistic":
+        aft = LogLogisticAFTFitter(**kwargs)
+    elif mtype == "cox":
+        aft = CoxPHFitter(**kwargs)
+    assert (
+        duration_col in df.columns
+    ), f"Column {duration_col} not in dataframe with columns {df.columns}"
+    if event_col is not None:
+        assert (
+            event_col in df.columns
+        ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    plt.gcf().clear()
+    aft.fit(df, duration_col=duration_col, event_col=event_col)
+    ax = aft.plot()
+    labels = ax.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    ax.set_yticklabels(labels)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.get_figure().tight_layout()
+    ax.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.show()
+    plt.gcf().clear()
+    return ax, aft
+
+
+def plot_partial_effects(
+    aft,
+    covariate_array,
+    values_array,
+    title=None,
+    file="partial_effects.pdf",
+    xlabel="Covariate",
+    ylabel="Failure rate",
+    legend_kwargs={"loc": "upper left"},
+    replacement_dict={},
+    cmap="coolwarm",
+    folder=".",
+    filetype=".pdf",
+    **kwargs,
+):
+    plt.gcf().clear()
+    file = Path(folder, file).with_suffix(filetype)
+    pareto = aft.plot_partial_effects_on_outcome(
+        covariate_array, values_array, cmap=cmap, **kwargs
+    )
+    labels = pareto.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    pareto.set_yticklabels(labels)
+    pareto.legend(**legend_kwargs)
+    pareto.set_ylabel(ylabel)
+    pareto.set_xlabel(xlabel)
+    pareto.set_title(title)
+    pareto.get_figure().tight_layout()
+    pareto.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.gcf().clear()
+    return pareto
+
+
+def score_model(aft, train, test):
+    train_score = aft.score(train)
+    test_score = aft.score(test)
+    scores = {"train_score": train_score, "test_score": test_score}
+    plt.show()
+    return scores
+
+
+def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
+    pd.set_option("display.float_format", lambda x: "%.3f" % x)
+    assert len(score_list) == len(
+        aft_dict,
+    ), "Length of score list and aft dict must be equal"
+    folder = Path(folder)
+    aft_data = pd.DataFrame()
+    aft_data.index.name = "Model"
+    aft_data.index = aft_dict.keys()
+    aft_data["AIC"] = [
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+    ]
+    aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
+    aft_data["BIC"] = [
+        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+    ]
+    # aft_data["Train LL"] = [x["train_score"] for x in score_list]
+    # aft_data["Test LL"] = [x["test_score"] for x in score_list]
+    aft_data["Mean $S(t;\\theta)$"] = [
+        x.predict_expectation(X_train).mean() for x in aft_dict.values()
+    ]
+    aft_data["Median $S(t;\\theta)$"] = [
+        x.predict_median(X_train).median() for x in aft_dict.values()
+    ]
+    aft_data.to_csv(folder / "aft_comparison.csv")
+    logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
+    aft_data.fillna("--", inplace=True)
+    aft_data.to_latex(
+        folder / "aft_comparison.tex",
+        float_format="%.3g",
+        label=f"tab:{dataset}",
+        caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+    )
+
+    return aft_data
+
+
+def clean_data_for_aft(
+    data,
+    covariate_list,
+    target="adv_failure_rate",
+):
+    subset = data.copy()
+    assert (
+        target in subset
+    ), f"Target {target} not in dataframe with columns {subset.columns}"
+    logger.info(f"Shape of dirty data: {subset.shape}")
+    cleaned = pd.DataFrame()
+    covariate_list.append(target)
+    logger.info(f"Covariates : {covariate_list}")
+    for kwarg in covariate_list:
+        assert kwarg in subset.columns, f"{kwarg} not in data.columns"
+        cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
+    cols = cleaned.columns
+    cleaned = pd.DataFrame(subset, columns=cols)
+    for col in cols:
+        cleaned = cleaned[cleaned[col] != -1e10]
+        cleaned = cleaned[cleaned[col] != 1e10]
+    cleaned.dropna(inplace=True, how="any", axis=0)
+    cleaned = pd.get_dummies(cleaned)
+    assert (
+        target in cleaned
+    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
+    logger.info(f"Shape of cleaned data: {cleaned.shape}")
+
+    return cleaned
+
+
+def split_data_for_aft(
+    data,
+    target,
+    duration_col,
+    covariate_list,
+    test_size=0.2,
+    random_state=42,
+):
+    cleaned = clean_data_for_aft(data, covariate_list, target=target)
+    X_train, X_test = train_test_split(
+        cleaned,
+        train_size=(1 - test_size),
+        test_size=test_size,
+        random_state=random_state,
+    )
+    assert (
+        target in cleaned
+    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
+    assert (
+        duration_col in cleaned
+    ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
+    X_train = X_train.dropna(axis=0, how="any")
+    X_test = X_test.dropna(axis=0, how="any")
+    return X_train, X_test
+
+
+def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder="."):
+    if len(config.keys()) > 0:
+        plots = []
+        plot_dict = config.get("plot", {})
+        label_dict = config.get("labels", [])
+        partial_effect_list = config.get("partial_effect", [])
+        afr_plot, aft = plot_aft(
+            X_train,
+            event_col=target,
+            duration_col=duration_col,
+            mtype=mtype,
+            folder=folder,
+            **plot_dict,
+            replacement_dict=label_dict,
+        )
+        plots.append(afr_plot)
+        score = score_model(aft, X_train, X_test)
+        for partial_effect_dict in partial_effect_list:
+            partial_effect_plot = plot_partial_effects(
+                aft=aft, **partial_effect_dict, folder=folder
+            )
+            plots.append(partial_effect_plot)
+    return aft, plots, score
+
+
+def render_all_afr_plots(
+    config,
+    duration_col,
+    target,
+    data,
+    dataset,
+    test_size=0.8,
+    folder=".",
+):
+    covariate_list = config.pop("covariates", [])
+    X_train, X_test = split_data_for_aft(
+        data,
+        target,
+        duration_col,
+        covariate_list,
+        test_size=test_size,
+        random_state=42,
+    )
+    plots = {}
+    scores = {}
+    models = {}
+    mtypes = list(config.keys())
+    for mtype in mtypes:
+        sub_config = config.get(mtype, {})
+        models[mtype], plots[mtype], scores[mtype] = render_afr_plot(
+            mtype=mtype,
+            config=sub_config,
+            X_train=X_train,
+            X_test=X_test,
+            target=target,
+            duration_col=duration_col,
+            folder=folder,
+        )
+    score_list = list(scores.values())
+    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
+    print("*" * 80)
+    print("*" * 34 + "  RESULTS   " + "*" * 34)
+    print("*" * 80)
+    print(f"{aft_data}")
+    print("*" * 80)
+
+
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument("--target", type=str, default="adv_failures")
     afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
     afr_parser.add_argument("--dataset", type=str, default="mnist")
-    afr_args = afr_parser.parse_args()
-    target = afr_args.target
-    duration_col = afr_args.duration_col
-    dataset = afr_args.dataset
-
+    afr_parser.add_argument("--data_file", type=str, default="data.csv")
+    afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
+    afr_parser.add_argument("--plots_folder", type=str, default="plots")
+    args = afr_parser.parse_args()
+    target = args.target
+    duration_col = args.duration_col
+    dataset = args.dataset
+    logging.basicConfig(level=logging.INFO)
     font = {
         "family": "Times New Roman",
         "weight": "bold",
@@ -37,428 +295,39 @@ if "__main__" == __name__:
 
     matplotlib.rc("font", **font)
 
-    FOLDER = Path(f"{afr_args.dataset}/plots/")
-    csv_file = FOLDER / "data.csv"
+    csv_file = args.data_file
+    FOLDER = args.plots_folder
+    Path(FOLDER).mkdir(exist_ok=True, parents=True)
     data = pd.read_csv(csv_file, index_col=0)
+    logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
+    with Path(args.config_file).open("r") as f:
+        config = yaml.safe_load(f)
+    fillna = config.pop("fillna", {})
+    for k, v in fillna.items():
+        assert k in data.columns, f"{k} not in data"
+        data[k] = data[k].fillna(v)
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    data.def_value.replace("", 0, inplace=True)
-    data.atk_value.replace("", 0, inplace=True)
-    data = drop_frames_without_results(data)
-    data = calculate_failure_rate(data)
-    data = min_max_scaling(data)
-    data.dropna(axis=0, subset=["atk_value", "atk_param"], inplace=True)
-    data.dropna(axis=0, subset=["def_value", "def_param"], inplace=True)
+    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
+    covariates = config.get("covariates", [])
+    assert len(covariates) > 0, "No covariates specified in config file"
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
+    data = drop_frames_without_results(data, covariates)
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :, "attack.attack_size"
+        :,
+        "attack.attack_size",
     ]
-
-    # data=data[data['def_gen'] == 'Gauss-in']
-    # data=data[data['atk_gen'] == 'HSJ']
-
-    print(
-        "Adversarial Accuracy:",
-        "\n",
-        "ResNet152:",
-        data[data["model_layers"] == 152].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet101:",
-        data[data["model_layers"] == 101].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet50:",
-        data[data["model_layers"] == 50].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet34:",
-        data[data["model_layers"] == 34].adv_accuracy.mean(skipna=True),
-        "\n",
-        "Resnet18:",
-        data[data["model_layers"] == 18].adv_accuracy.mean(skipna=True),
-        "\n",
-    )
-
-    def plot_aft(
-        df,
-        file,
-        event_col,
+    render_all_afr_plots(
+        config,
         duration_col,
-        title,
-        mtype,
-        xlabel=None,
-        ylabel=None,
-        replacement_dict={},
-        **kwargs,
-    ):
-        if mtype == "weibull":
-            aft = WeibullAFTFitter(**kwargs)
-        elif mtype == "log_normal":
-            aft = LogNormalAFTFitter(**kwargs)
-        elif mtype == "log_logistic":
-            aft = LogLogisticAFTFitter(**kwargs)
-        elif mtype == "cox":
-            aft = CoxPHFitter(**kwargs)
-        assert (
-            duration_col in df.columns
-        ), f"Column {duration_col} not in dataframe with columns {df.columns}"
-        if event_col is not None:
-            assert (
-                event_col in df.columns
-            ), f"Column {event_col} not in dataframe with columns {df.columns}"
-        plt.gcf().clear()
-        aft.fit(df, duration_col=duration_col, event_col=event_col)
-        ax = aft.plot()
-        labels = ax.get_yticklabels()
-        labels = [label.get_text() for label in labels]
-        for k, v in replacement_dict.items():
-            labels = [label.replace(k, v) for label in labels]
-        ax.set_yticklabels(labels)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        ax.get_figure().tight_layout()
-        ax.get_figure().savefig(FOLDER / file)
-        logger.info(f"Saved graph to {FOLDER / file}")
-        plt.show()
-        plt.gcf().clear()
-        return ax, aft
-
-    def plot_partial_effects(
-        aft,
-        covariate_array,
-        values_array,
-        title=None,
-        file="partial_effects.pdf",
-        xlabel="Covariate",
-        ylabel="Failure rate",
-        legend_kwargs={"loc": "upper left"},
-        replacement_dict={},
-        cmap="coolwarm",
-        **kwargs,
-    ):
-        plt.gcf().clear()
-        # kwargs.pop("replacement_dict")
-        pareto = aft.plot_partial_effects_on_outcome(
-            covariate_array, values_array, cmap=cmap, **kwargs
-        )
-        labels = pareto.get_yticklabels()
-        labels = [label.get_text() for label in labels]
-        for k, v in replacement_dict.items():
-            labels = [label.replace(k, v) for label in labels]
-        pareto.set_yticklabels(labels)
-        pareto.legend(**legend_kwargs)
-        pareto.set_ylabel(ylabel)
-        pareto.set_xlabel(xlabel)
-        pareto.set_title(title)
-        pareto.get_figure().tight_layout()
-        pareto.get_figure().savefig(FOLDER / file)
-        logger.info(f"Saved graph to {FOLDER / file}")
-        plt.gcf().clear()
-        return pareto
-
-    def score_model(aft, train, test):
-        train_score = aft.score(train)
-        test_score = aft.score(test)
-        scores = {"train_score": train_score, "test_score": test_score}
-        plt.show()
-        return scores
-
-    def make_afr_table(score_list, aft_dict, dataset):
-        assert len(score_list) == len(
-            aft_dict,
-        ), "Length of score list and aft dict must be equal"
-        aft_data = pd.DataFrame()
-        aft_data.index.name = "Model"
-        aft_data.index = aft_dict.keys()
-        aft_data["AIC"] = [
-            x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-            for x in aft_dict.values()
-        ]
-        aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
-        aft_data["BIC"] = [
-            x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan
-            for x in aft_dict.values()
-        ]
-        # aft_data["Train LL"] = [x["train_score"] for x in score_list]
-        # aft_data["Test LL"] = [x["test_score"] for x in score_list]
-        aft_data["Mean $S(t;\\theta)$"] = [
-            x.predict_expectation(X_train).mean() for x in aft_dict.values()
-        ]
-        aft_data["Median $S(t;\\theta)$"] = [
-            x.predict_median(X_train).median() for x in aft_dict.values()
-        ]
-        aft_data = aft_data.round(2)
-        aft_data.to_csv(FOLDER / "aft_comparison.csv")
-        logger.info(f"Saved AFT comparison to {FOLDER / 'aft_comparison.csv'}")
-        aft_data = aft_data.round(2)
-        aft_data.fillna("--", inplace=True)
-        aft_data.to_latex(
-            FOLDER / "aft_comparison.tex",
-            float_format="%.2f",
-            label=f"tab:{dataset}",
-            caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
-        )
-
-        print(yaml.dump(aft_data.to_dict(), default_flow_style=False, indent=4))
-        return aft_data
-
-    def clean_data_for_aft(
+        target,
         data,
-        kwarg_list,
-        target="adv_failure_rate",
-    ):
-        subset = data.copy()
-        assert (
-            target in subset
-        ), f"Target {target} not in dataframe with columns {subset.columns}"
-
-        cleaned = pd.DataFrame()
-        kwarg_list.append(target)
-        for kwarg in kwarg_list:
-            cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
-        cols = cleaned.columns
-        cleaned = pd.DataFrame(subset, columns=cols)
-        if "accuracy" in cleaned.columns:
-            cleaned = cleaned[cleaned["accuracy"] != 1e10]
-            cleaned = cleaned[cleaned["accuracy"] != -1e10]
-        if "adv_accuracy" in cleaned.columns:
-            cleaned = cleaned[cleaned["adv_accuracy"] != 1e10]
-            cleaned = cleaned[cleaned["adv_accuracy"] != -1e10]
-        cleaned.dropna(inplace=True, how="any", axis=0)
-        y = cleaned[target]
-        assert (
-            target in cleaned
-        ), f"Target {target} not in dataframe with columns {cleaned.columns}"
-        return cleaned, y, data
-
-    def split_data_for_aft(
-        data,
-        target,
-        duration_col,
-        kwarg_list,
-        test_size=0.2,
-        random_state=42,
-    ):
-        cleaned, y, data = clean_data_for_aft(data, kwarg_list, target=target)
-        X_train, X_test, y_train, y_test = train_test_split(
-            cleaned,
-            y,
-            test_size=test_size,
-            random_state=random_state,
-        )
-        assert (
-            target in cleaned
-        ), f"Target {target} not in dataframe with columns {cleaned.columns}"
-        assert (
-            duration_col in cleaned
-        ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
-        return X_train, X_test, y_train, y_test
-
-    kwarg_list = [
-        "accuracy",
-        "train_time",
-        "predict_time",
-        "atk_value",
-        "def_value",
-        "data.sample.random_state",
-        "adv_failure_rate",
-        "model_layers",
-        "adv_fit_time",
-        # "model.art.pipeline.initialize.kwargs.optimizer.lr",
-    ]
-
-    X_train, X_test, y_train, y_test = split_data_for_aft(
-        data,
-        target,
-        duration_col,
-        kwarg_list,
-        test_size=0.2,
-        random_state=42,
+        dataset,
+        test_size=0.8,
+        folder=FOLDER,
     )
-
-    weibull_dict = {  # noqa w605
-        "Intercept: rho_": "$\\rho$",
-        "Intercept: lambda_": "$\lambda$",  # noqa w605
-        "data.sample.random_state: lambda_": "Random State",  # noqa w605
-        "def_value: lambda_": "Defence Strength",
-        "atk_value: lambda_": "Attack Strength",
-        "train_time: lambda_": "$t_{train}$",
-        "predict_time: lambda_": "$t_{predict}$",
-        "adv_accuracy: lambda_": "$\lambda_{adv.}$",  # noqa w605
-        "accuracy: lambda_": "$\lambda_{ben.}$",  # noqa w605
-        "adv_fit_time: lambda_": "$t_{attack}$",
-        "adv_log_loss: lambda_": "Adv. Log Loss",
-        "adv_failure_rate: lambda_": "$h_{adv.}(t,;\\theta)$",
-        "failure_rate: lambda_": "$h_{ben.}(t,;\\theta)$",
-        "model_layers: lambda_": "No. of Layers",
-        "model.art.pipeline.initialize.kwargs.optimizer.lr: lambda_": "Learning Rate",
-        "def_gen": "Defence",
-    }  # noqa w605
-
-    weibull_plot_dict = {
-        "file": "weibull_aft.pdf",
-        "title": "Weibull AFR Model",
-        "mtype": "weibull",
-    }
-
-    weibull_afr, wft = plot_aft(
-        X_train,
-        event_col=target,
-        duration_col=duration_col,
-        **weibull_plot_dict,
-        replacement_dict=weibull_dict,
-    )
-
-    weibull_partial_dict_layers = {
-        "file": "weibull_partial_effects.pdf",
-        "covariate_array": "model_layers",
-        "values_array": [18, 34, 50, 101, 152],
-        "title": "$S(t)$ for Weibull AFR",
-        "ylabel": "Expectation of $S(t)$",
-        "xlabel": "Time $T$ (seconds)",
-        "legend_kwargs": {
-            "title": "No. of Layers",
-            "labels": ["18", "34", "50", "101", "152"],
-        },
-    }
-
-    weibull_layers = plot_partial_effects(aft=wft, **weibull_partial_dict_layers)
-    wft_scores = score_model(wft, X_train, X_test)
-
-    cox_replacement_dict = {
-        "adv_failure_rate": "$h_{adv}(t,;\\theta)$",
-        "def_value": "Defence Strength",
-        "data.sample.random_state": "Random State",
-        "train_time": "$t_{train}$",
-        "model_layers": "No. of Layers",
-        "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-        "adv_accuracy": "$\lambda_{adv.}$",  # noqa w605
-        "adv_fit_time": "$t_{attack}$",
-        "adv_log_loss": "Adv. Log Loss",
-        "predict_time": "$t_{predict}$",
-        "accuracy": "$\lambda_{ben.}$",  # noqa w605
-        "failure_rate": "$h_{ben.}(t,;\\theta)$",
-        "atk_value": "Attack Strength",
-    }  # noqa w605
-    cox_partial_dict = {
-        "file": "cox_partial_effects.pdf",
-        "covariate_array": "model_layers",
-        "values_array": [18, 34, 50, 101, 152],
-        "replacement_dict": cox_replacement_dict,
-        "title": "$S(t)$ for  Cox AFR",
-        "ylabel": "Expectation of $S(t)$",
-        "xlabel": "Time $T$ (seconds)",
-        "legend_kwargs": {
-            "title": "No. of Layers",
-            "labels": ["18", "34", "50", "101", "152"],
-        },
-    }
-    cox_plot_dict = {
-        "file": "cox_aft.pdf",
-        "duration_col": duration_col,
-        "title": "Cox AFR Model",
-        "mtype": "cox",
-        "replacement_dict": cox_replacement_dict,
-    }
-    cox_afr, cft = plot_aft(df=X_train, event_col=target, **cox_plot_dict)
-    cox_scores = score_model(cft, X_train, X_test)
-    cox_partial = plot_partial_effects(aft=cft, **cox_partial_dict)
-
-    log_normal_dict = {
-        "Intercept: sigma_": "$\sigma$",  # noqa w605
-        "Intercept: mu_": "$\mu$",  # noqa w605
-        "def_value: mu_": "Defence Strength",
-        "atk_value: mu_": "Attack Strength",
-        "train_time: mu_": "$t_{train}$",
-        "predict_time: mu_": "$t_{predict}$",
-        "adv_fit_time: mu_": "$t_{attack}$",
-        "model_layers: mu_": "No. of Layers",
-        "model.art.pipeline.initialize.kwargs.optimizer.lr: mu_": "Learning Rate",
-        "data.sample.random_state: mu_": "Random State",
-        "adv_log_loss: mu_": "Adv. Log Loss",
-        "adv_accuracy: mu_": "$\lambda_{adv.}$",  # noqa w605
-        "accuracy: mu_": "$\lambda_{ben.}$",  # noqa w605
-        "adv_failure_rate: mu_": "$h_{adv}(t,;\\theta)$",
-        "def_gen": "Defence",
-        "learning_rate: mu_": "Learning Rate",
-    }  # noqa w605
-
-    log_normal_graph, lnt = plot_aft(
-        X_train,
-        "log_normal_aft.pdf",
-        target,
-        duration_col,
-        "Log Normal AFR Model",
-        "log_normal",
-        replacement_dict=log_normal_dict,
-    )
-    lnt_scores = score_model(lnt, X_train, X_test)
-    lnt_partial = plot_partial_effects(
-        file="log_normal_partial_effects.pdf",
-        aft=lnt,
-        covariate_array="model_layers",
-        values_array=[18, 34, 50, 101, 152],
-        replacement_dict=log_normal_dict,
-        title="$S(t)$ for Log-Normal AFR",
-        ylabel="Expectation of $S(t)$",
-        xlabel="Time $T$ (seconds)",
-        legend_kwargs={
-            "title": "No. of Layers",
-            "labels": ["18", "34", "50", "101", "152"],
-        },
-    )
-    log_logistic_dict = {  # noqa w605
-        "Intercept: beta_": "$\\beta$",  # noqa w605
-        "Intercept: alpha_": "$\\alpha$",
-        "data.sample.random_state: alpha_": "Random State",
-        "def_value: alpha_": "Defence Strength",
-        "atk_value: alpha_": "Attack Strength",
-        "train_time: alpha_": "$t_{train}$",
-        "predict_time: alpha_": "$t_{predict}$",
-        "adv_accuracy: alpha_": "$\lambda_{adv.}$",  # noqa w605
-        "accuracy: alpha_": "$\lambda_{ben.}$",  # noqa w605
-        "adv_fit_time: alpha_": "$t_{attack}$",
-        "model_layers: alpha_": "No. of Layers",
-        "model.art.pipeline.initialize.kwargs.optimizer.lr": "Learning Rate",
-        "adv_failure_rate: alpha_": "$h_{adv.}(t,\\theta)$",
-        "alpha_": "",
-    }
-
-    log_logistic_graph, llt = plot_aft(
-        X_train,
-        "log_logistic_aft.pdf",
-        target,
-        duration_col,
-        "Log Logistic AFR Model",
-        "log_logistic",
-        replacement_dict=log_logistic_dict,
-    )
-    llt_scores = score_model(llt, X_train, X_test)
-    llt_partial = plot_partial_effects(
-        file="log_logistic_partial_effects.pdf",
-        aft=llt,
-        covariate_array="model_layers",
-        values_array=[18, 34, 50, 101, 152],
-        replacement_dict=log_logistic_dict,
-        title="$S(t)$  for Log-Logistic AFR",
-        ylabel="Expectation of $S(t)$",
-        xlabel="Time $T$ (seconds)",
-        legend_kwargs={
-            "title": "No. of Layers",
-            "labels": ["18", "34", "50", "101", "152"],
-        },
-    )
-    aft_dict = {
-        "Weibull": wft,
-        "LogNormal": lnt,
-        "LogLogistic": llt,
-        # "Cox": cft,
-    }
-    score_list = [
-        wft_scores,
-        lnt_scores,
-        llt_scores,
-        # cft_scores,
-    ]
-    aft_data = make_afr_table(score_list, aft_dict, dataset)

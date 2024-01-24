@@ -451,3 +451,622 @@ stages:
       hash: md5
       md5: 8adabcf8a15b13fc20ea31f58ae7388b
       size: 1069056
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder cifar/reports/attack --results_file
+      cifar/reports/attack.csv
+    deps:
+    - path: cifar/reports/attack/
+      hash: md5
+      md5: 8c7a44700932e363fa7482224eac15bb.dir
+      size: 9973372888
+      nfiles: 34873
+    - path: cifar/reports/attack/ResNet101.db
+      hash: md5
+      md5: 268500e55100c8e2c0de628e8b66b612
+      size: 819200
+    - path: cifar/reports/attack/ResNet18.db
+      hash: md5
+      md5: bf2b93a31c49e96b219c23095504a7f1
+      size: 819200
+    - path: cifar/reports/attack/ResNet34.db
+      hash: md5
+      md5: 8de8f4dfcda52bb40f206cf3c4977dd5
+      size: 819200
+    - path: cifar/reports/attack/ResNet50.db
+      hash: md5
+      md5: 8adabcf8a15b13fc20ea31f58ae7388b
+      size: 1069056
+    outs:
+    - path: cifar/reports/attack.csv
+      hash: md5
+      md5: 51d3b7360885430ef15c78e66a85393a
+      size: 26068128
+  plot:
+    cmd: python -m deckard.layers.plots --path cifar/plots/ --file cifar/reports/clean_attack.csv
+      -c conf/plots.yaml
+    deps:
+    - path: cifar/reports/clean_attack.csv
+      hash: md5
+      md5: 726a596355273abf4a5172268bf69c62
+      size: 14801171
+    params:
+      params.yaml:
+        files.directory: cifar
+        files.reports: reports
+      conf/plots.yaml:
+        cat_plot:
+        - file: adv_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: linear
+          titles: Adv. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          titles: Ben. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: accuracy
+          ylabels: Ben. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failures_per_train_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{ben.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_failure
+          ylabels: $\bar{C}_{ben.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_attack_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_test_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: $h_{adv}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_failure_rate
+          ylabels: $h_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_accuracy_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: Adv. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_accuracy
+          ylabels: Adv. Ben. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_accuracy_vs_attack_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: Adv. Accuracy vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failure_rate_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $h_{ben}(t; \theta)$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: failure_rate
+          ylabels: $h_{ben}(t; \theta)$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        line_plot:
+        - file: def_param_vs_accuracy.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Ben. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: accuracy
+          y_scale:
+          ylabel: Ben. Accuracy
+        - file: def_param_vs_adv_accuracy.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Adv. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+        - file: def_param_vs_adv_failure_rate.pdf
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: $h_{adv}$ vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: adv_failure_rate
+          y_scale: log
+          ylabel: $h_{adv.}$
+        - file: atk_param_vs_accuracy.pdf
+          hue: atk_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          title: Adv. Accuracy vs Attack Strength
+          x: atk_value
+          x_scale: linear
+          xlabel: Attack Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+          hue_order:
+          - FGM
+          - PGD
+          - Deep
+          - HSJ
+          - Pixel
+          - Thresh
+        scatter_plot:
+        - x: train_time_per_sample
+          y: adv_failure_rate
+          hue: model_name
+          xlabel: $t_{train}$
+          ylabel: $h_{adv}$
+          title: $h_{adv}$ vs $t_{train}$
+          file: adv_failure_rate_vs_train_time.pdf
+          y_scale: log
+          x_scale: log
+          legend:
+            title: Model Name
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+    outs:
+    - path: cifar/plots/adv_accuracy_vs_attack_type.pdf
+      hash: md5
+      md5: 2ad8aa1137712e792fc9339cd9409d54
+      size: 32194
+    - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
+      hash: md5
+      md5: 5c408e76ac388859dbb9cad4e2ddf968
+      size: 32506
+    - path: cifar/plots/adv_failure_rate_vs_train_time.pdf
+      hash: md5
+      md5: 351d7f3bf8b5933c8ee3031447f48658
+      size: 80138
+    - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.pdf
+      hash: md5
+      md5: 4c1bd0364c0e2d3f372714202c05f911
+      size: 39583
+    - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.pdf
+      hash: md5
+      md5: 57ff7639a8f432aea0b4195e33d5ba96
+      size: 40766
+    - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: ba23e1a31c95519b640bd2ab7edfea4b
+      size: 36881
+    - path: cifar/plots/atk_param_vs_accuracy.pdf
+      hash: md5
+      md5: 3bf276eed7ed8172d48896efd29991ac
+      size: 20181
+    - path: cifar/plots/ben_accuracy_vs_defence_type.pdf
+      hash: md5
+      md5: d182987f8164dc47305649c193506f10
+      size: 29771
+    - path: cifar/plots/ben_failure_rate_vs_defence_type.pdf
+      hash: md5
+      md5: a4bdbad3210e9da50098d068792673cc
+      size: 41749
+    - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: 900f4362e3e0ffa76a6d0f7f99d52051
+      size: 36648
+    - path: cifar/plots/def_param_vs_accuracy.pdf
+      hash: md5
+      md5: f7426fca89038c2f19da4afc9c41eab4
+      size: 19712
+    - path: cifar/plots/def_param_vs_adv_accuracy.pdf
+      hash: md5
+      md5: bda0d408b829c40e17e04f768852fd44
+      size: 19958
+    - path: cifar/plots/def_param_vs_adv_failure_rate.pdf
+      hash: md5
+      md5: 8b2e7a00615d225bdd9cfa0fdd3c7f36
+      size: 23544
+  afr:
+    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/reports/clean_attack.csv  --duration_col
+      adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder cifar/plots/
+    deps:
+    - path: cifar/plots/adv_accuracy_vs_defence_type.pdf
+      hash: md5
+      md5: 5c408e76ac388859dbb9cad4e2ddf968
+      size: 32506
+    - path: cifar/reports/clean_attack.csv
+      hash: md5
+      md5: 726a596355273abf4a5172268bf69c62
+      size: 14801171
+    params:
+      params.yaml:
+        files.directory: cifar
+      conf/afr.yaml:
+        covariates:
+        - accuracy
+        - train_time
+        - predict_time
+        - atk_value
+        - def_value
+        - data.sample.random_state
+        - adv_failure_rate
+        - model_layers
+        - adv_fit_time
+        - model.trainer.nb_epoch
+        log_logistic:
+          plot:
+            file: log_logistic_aft.pdf
+            title: Log logistic AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: log_logistic_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_logistic_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        log_normal:
+          plot:
+            file: log_normal_aft.pdf
+            title: Log Normal AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: log_normal_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_normal_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        weibull:
+          plot:
+            file: weibull_aft.pdf
+            title: Weibull AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+          partial_effect:
+          - file: weibull_epochs_partial_effect.pdf
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: weibull_layers_partial_effect.pdf
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Cox AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+    outs:
+    - path: cifar/plots/log_logistic_aft.pdf
+      hash: md5
+      md5: 2b28871d23665f9745e4d8cb1fef3a7c
+      size: 23397
+    - path: cifar/plots/log_logistic_epochs_partial_effect.pdf
+      hash: md5
+      md5: 820bec8e7d11f46984c7642e797c00d1
+      size: 27103
+    - path: cifar/plots/log_logistic_layers_partial_effect.pdf
+      hash: md5
+      md5: 38c30a96926e95f5cbb810e1922d1ce3
+      size: 28955
+    - path: cifar/plots/log_normal_aft.pdf
+      hash: md5
+      md5: df4c2cc42d194386fafea2ef78411bf7
+      size: 23817
+    - path: cifar/plots/log_normal_epochs_partial_effect.pdf
+      hash: md5
+      md5: c3ffc8e94ccd522d1a8737a4e3c1436f
+      size: 28672
+    - path: cifar/plots/log_normal_layers_partial_effect.pdf
+      hash: md5
+      md5: 247006b93ddadc97a3849cfce5d2ea00
+      size: 28982
+    - path: cifar/plots/weibull_aft.pdf
+      hash: md5
+      md5: a4759653f442f4acb739f80f4e763600
+      size: 33056
+    - path: cifar/plots/weibull_epochs_partial_effect.pdf
+      hash: md5
+      md5: 0ddb5d5038243152cd0d68d6dffeb88a
+      size: 28141
+    - path: cifar/plots/weibull_layers_partial_effect.pdf
+      hash: md5
+      md5: e80a372b96f8845791f00a8a7b2f571b
+      size: 28960
+  copy_results:
+    cmd: cp -r cifar/plots/* ~/ml_afr/cifar/
+    deps:
+    - path: cifar/plots/
+      hash: md5
+      md5: 7531488748e5e0453ac9eb36d844097e.dir
+      size: 15075359
+      nfiles: 25
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i cifar/reports/attack.csv -o cifar/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: cifar/reports/attack.csv
+      hash: md5
+      md5: 51d3b7360885430ef15c78e66a85393a
+      size: 26068128
+    params:
+      params.yaml:
+        files.directory: cifar
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 20
+        params:
+          Deep: attack.init.kwargs.nb_grads
+          FGM: attack.init.kwargs.eps
+          HSJ: attack.init.kwargs.max_iter
+          Pixel: attack.init.kwargs.th
+          PGD: attack.init.kwargs.eps
+          Thresh: attack.init.kwargs.th
+          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
+          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
+          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
+          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+    outs:
+    - path: cifar/reports/clean_attack.csv
+      hash: md5
+      md5: 726a596355273abf4a5172268bf69c62
+      size: 14801171
