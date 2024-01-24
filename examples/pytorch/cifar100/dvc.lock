@@ -733,50 +733,50 @@ stages:
           - ResNet152
     outs:
     - path: cifar100/plots/adv_accuracy_vs_attack_type.pdf
-      md5: d346f3c932e9add6a4e62bdbbf4cfdd6
+      md5: dc3d14bbf92e22ee85a766562f1ec47f
       size: 23203
     - path: cifar100/plots/adv_accuracy_vs_defence_type.pdf
-      md5: 5bbd1686381188d3136521328bf2bcc2
+      md5: 439d06138f11f528c0122230d3eca094
       size: 23922
     - path: cifar100/plots/adv_failure_rate_vs_train_time.pdf
-      md5: 0ba377dc67e2e78c9e316561251037bf
+      md5: e4ad8d15af98cb961c002b36884bf8bf
       size: 87282
     - path: cifar100/plots/adv_failures_per_test_time_vs_defence_type.pdf
-      md5: 99d5bffb55346655a532e655a9d2cc1f
+      md5: 5a6073fa8833686dba112e9da8a97354
       size: 37552
     - path: cifar100/plots/adv_failures_per_train_time_vs_attack_type.pdf
-      md5: 04038a672e33b27c2580f000aa4df6bf
+      md5: b0ace5473b156fa5def1d798cb7dc100
       size: 39190
     - path: cifar100/plots/adv_failures_per_train_time_vs_defence_type.pdf
-      md5: 96c43dd72e99791b17ab9c688bc47114
+      md5: 1a4fcbcbe1f77c81e623c014c1bb8de3
       size: 35201
     - path: cifar100/plots/atk_param_vs_accuracy.pdf
-      md5: 24fbda4fda48c120f2815686272f433a
-      size: 20755
+      md5: e291d7e952d34578f7be1f384dbcff67
+      size: 20756
     - path: cifar100/plots/ben_accuracy_vs_defence_type.pdf
-      md5: 34ac9ca0fa2a04c720d647fa3398ba57
+      md5: 72d071d4b8a83d995ab670b0da565600
       size: 30437
     - path: cifar100/plots/ben_failure_rate_vs_defence_type.pdf
-      md5: e9e1a815e5bf2b4e4eb7a67bd85a1b7e
+      md5: 0671e6b09ab9edbbc2542230d3113109
       size: 38827
     - path: cifar100/plots/ben_failures_per_train_time_vs_defence_type.pdf
-      md5: 2a5324d8fe88f51f44285e3262140b44
+      md5: 3af19684e4ff1c59dd2141c3d3c95991
       size: 32397
     - path: cifar100/plots/def_param_vs_accuracy.pdf
-      md5: 8230f26423f54ea5f0c7c3eaf7fa3075
-      size: 18770
+      md5: 9d47ff80b9217a2903b6cd0e42d65fea
+      size: 18771
     - path: cifar100/plots/def_param_vs_adv_accuracy.pdf
-      md5: f000f672faf06ea7493e712744fc2c0b
-      size: 19805
+      md5: 5b1f61975e9471d11a0df9c10b75a031
+      size: 20024
     - path: cifar100/plots/def_param_vs_adv_failure_rate.pdf
-      md5: 0ff83abc8a59a2913ae2ed76d3179c69
-      size: 22802
+      md5: f8ca6b6ce0b99f5763fd28bdaf3e90b7
+      size: 22801
   copy_results:
     cmd: cp -r cifar100/plots/* ~/ml_afr/cifar100
     deps:
     - path: cifar100/plots/
-      md5: da68d386de552b44457e599365b52be4.dir
-      size: 681342
+      md5: 4c3634c7511e1f88028e92d941973583.dir
+      size: 683568
       nfiles: 24
   afr:
     cmd: python -m deckard.layers.afr --dataset cifar100 --data_file cifar100/reports/clean_attack.csv
@@ -797,6 +797,7 @@ stages:
         - atk_value
         - def_value
         - data.sample.random_state
+        - adv_failure_rate
         - model_layers
         - adv_fit_time
         - model.trainer.nb_epoch
@@ -969,20 +970,20 @@ stages:
               - '50'
     outs:
     - path: cifar100/plots/aft_comparison.csv
-      md5: 90eb0ce0f18da5f816ad1e4297c614e9
-      size: 411
+      md5: 4c4bbe40d48d7fbad12aa5e5fb0d436e
+      size: 397
     - path: cifar100/plots/aft_comparison.tex
-      md5: 210ddeb87d4f250c8926c4c69428823d
+      md5: bf6b0281625f73e1a13a6126ed4ac176
       size: 705
     - path: cifar100/plots/cox_aft.pdf
-      md5: 83a610de1806ac690a9a8348e5eee987
-      size: 20261
+      md5: 675b1e70e4d0bae290478839f579bb4e
+      size: 19928
     - path: cifar100/plots/log_logistic_aft.pdf
-      md5: 7153bb381be8007696cd08a2d89e1e47
-      size: 22981
+      md5: e1df197f086e40489fd2e765b2d80391
+      size: 22566
     - path: cifar100/plots/weibull_aft.pdf
-      md5: 3abacdfdc7b3f5263fd1946d33561064
-      size: 29085
+      md5: 25b2c8ccc90d07a8edfe518a34b9b15e
+      size: 33113
   attacks@ResNet101:
     cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet101
       stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet101.db
