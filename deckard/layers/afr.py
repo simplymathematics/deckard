@@ -34,6 +34,7 @@ def plot_aft(
     folder=".",
     **kwargs,
 ):
+    plt.gcf().clear()
     file = Path(folder, file).with_suffix(filetype)
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
@@ -64,7 +65,6 @@ def plot_aft(
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
-    plt.show()
     plt.gcf().clear()
     return ax, aft
 
