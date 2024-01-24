@@ -25,7 +25,7 @@ def cat_plot(
     hue_order=None,
     rotation=0,
     set={},
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -66,8 +66,8 @@ def cat_plot(
     plot. You can pass any valid keyword arguments that are accepted by the `set()` method of the
     `seaborn.FacetGrid` object. These properties can be used to customize the appearance of the plot,
       filetype: The `filetype` parameter is used to specify the file extension for saving the graph. By
-    default, it is set to ".pdf", but you can change it to any other valid file extension such as
-    ".png", ".jpg", etc. Defaults to .pdf
+    default, it is set to ".eps", but you can change it to any other valid file extension such as
+    ".png", ".jpg", etc. Defaults to .eps
     """
 
     plt.gcf().clear()
@@ -109,7 +109,7 @@ def line_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -146,8 +146,8 @@ def line_plot(
     variable in the plot. It is a list that determines the order in which the different categories of
     the `hue` variable will be plotted.
       filetype: The `filetype` parameter specifies the file type of the saved graph. In the given code,
-    the default value is set to ".pdf", indicating that the graph will be saved as a PDF file. However,
-    you can change the value of `filetype` to save the graph in a different. Defaults to .pdf
+    the default value is set to ".eps", indicating that the graph will be saved as a PDF file. However,
+    you can change the value of `filetype` to save the graph in a different. Defaults to .eps
 
     Returns:
       the line plot graph object.
@@ -186,7 +186,7 @@ def scatter_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -221,8 +221,8 @@ def scatter_plot(
     variable in the scatter plot. By default, the levels of the `hue` variable are ordered based on the
     order in which they appear in the data. However, if you want to specify a specific
       filetype: The `filetype` parameter is a string that specifies the file type of the saved graph. It
-    is used to determine the file extension of the saved graph file. By default, it is set to ".pdf",
-    indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .pdf
+    is used to determine the file extension of the saved graph file. By default, it is set to ".eps",
+    indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .eps
 
     Returns:
       the scatter plot graph object.
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         "--plotfiletype",
         type=str,
         help="Filetype of the plots",
-        default=".pdf",
+        default=".eps",
     )
     parser.add_argument(
         "-v",

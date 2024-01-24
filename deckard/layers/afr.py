@@ -30,7 +30,7 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype=".pdf",
+    filetype=".eps",
     folder=".",
     **kwargs,
 ):
@@ -74,14 +74,14 @@ def plot_partial_effects(
     covariate_array,
     values_array,
     title=None,
-    file="partial_effects.pdf",
+    file="partial_effects.eps",
     xlabel="Covariate",
     ylabel="Failure rate",
     legend_kwargs={"loc": "upper left"},
     replacement_dict={},
     cmap="coolwarm",
     folder=".",
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     plt.gcf().clear()
