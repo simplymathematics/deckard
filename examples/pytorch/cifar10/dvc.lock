@@ -52,7 +52,7 @@ stages:
           GaussianAugmentation: Gauss-in
           GaussianNoise: Gauss-out
           HighConfidence: Conf
-          Epochs: Epochs
+          nb_epoch: Epochs
           model_layers: Control
         fillna:
           Epochs: 20

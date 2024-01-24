@@ -70,6 +70,11 @@ stages:
             model_layers: 18
           defaults:
             model.trainer.nb_epoch: 20
+          Epochs: model.trainer.kwargs.nb_epoch
+          control:
+            model_layers: 18
+          defaults:
+            model.trainer.nb_epoch: 20
     outs:
     - path: mnist/reports/clean_attack.csv
       md5: e7155777976aae7d1682d912e9ea7a22
@@ -370,6 +375,8 @@ stages:
         - adv_fit_time
         - adv_failure_rate
         - model.trainer.kwargs.nb_epoch
+        - adv_failure_rate
+        - model.trainer.kwargs.nb_epoch
         log_logistic:
           plot:
             file: log_logistic_aft.pdf
@@ -387,10 +394,12 @@ stages:
             'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
             'failure_rate: lambda_': $h_{ben.}(t;\theta)$
             'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
           partial_effect:
           - file: log_logistic_epochs_partial_effect.pdf
+            covariate_array: model.trainer.kwargs.nb_epoch
             covariate_array: model.trainer.kwargs.nb_epoch
             values_array:
             - 1
@@ -443,10 +452,12 @@ stages:
             'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
             'failure_rate: lambda_': $h_{ben.}(t;\theta)$
             'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
           partial_effect:
           - file: log_normal_epochs_partial_effect.pdf
+            covariate_array: model.trainer.kwargs.nb_epoch
             covariate_array: model.trainer.kwargs.nb_epoch
             values_array:
             - 1
@@ -499,10 +510,12 @@ stages:
             'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
             'failure_rate: lambda_': $h_{ben.}(t;\theta)$
             'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
           partial_effect:
           - file: weibull_epochs_partial_effect.pdf
+            covariate_array: model.trainer.kwargs.nb_epoch
             covariate_array: model.trainer.kwargs.nb_epoch
             values_array:
             - 1
@@ -527,6 +540,7 @@ stages:
             - 50
             - 101
             - 152
+            title: $S(t)$ for Weibull AFR
             title: $S(t)$ for Weibull AFR
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)

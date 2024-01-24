@@ -798,6 +798,7 @@ stages:
         - def_value
         - data.sample.random_state
         - adv_failure_rate
+        - adv_failure_rate
         - model_layers
         - adv_fit_time
         - model.trainer.nb_epoch
