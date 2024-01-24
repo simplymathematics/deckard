@@ -77,16 +77,16 @@ def calculate_failure_rate(data):
     assert "train_time" in data.columns, "train_time not in data.columns"
     if "predict_time" in data.columns:
         failure_rate = (
-            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+            (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
         failure_rate = (
-            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+            (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
     adv_failure_rate = (
-        1 - data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"]
+        (1 - data.loc[:, "adv_accuracy"]) * data.loc[:, "attack.attack_size"]
     ) / data.loc[:, "predict_time"]
 
     data = data.assign(adv_failure_rate=adv_failure_rate)
@@ -469,6 +469,8 @@ def clean_data_for_plotting(
     logger.info(f"Dropping rows where time is negative (from earlier bug).")
     data = data[data['train_time'] >= 0]
     data = data[data['adv_fit_time'] >= 0]
+    if "predict_time" in data.columns:
+        data = data[data['predict_time'] >= 0]
     if hasattr(data, "model.init.name"):
         logger.info("Shortening model names...")
         model_names = data["model.init.name"].str.split(".").str[-1]
