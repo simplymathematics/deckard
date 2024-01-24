@@ -469,6 +469,8 @@ def clean_data_for_plotting(
     logger.info(f"Dropping rows where time is negative (from earlier bug).")
     data = data[data['train_time'] >= 0]
     data = data[data['adv_fit_time'] >= 0]
+    if "predict_time" in data.columns:
+        data = data[data['predict_time'] >= 0]
     if hasattr(data, "model.init.name"):
         logger.info("Shortening model names...")
         model_names = data["model.init.name"].str.split(".").str[-1]
