@@ -41,10 +41,7 @@ def drop_frames_without_results(
     Returns:
       the modified DataFrame after dropping the frames without results.
     """
-    for entry in subset:
-        if entry not in data.columns:
-            logger.warning(f"Column {entry} not in data.columns. Ignoring.")
-            subset.remove(entry)
+
     logger.info(f"Dropping frames without results for {subset}")
     data.dropna(axis=0, subset=subset, inplace=True)
     return data
@@ -76,17 +73,24 @@ def calculate_failure_rate(data):
     assert "adv_fit_time" in data.columns, "adv_fit_time not in data.columns"
     assert "train_time" in data.columns, "train_time not in data.columns"
     if "predict_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"]) *100 / data.loc[:, "predict_time"]
+        failure_rate = (
+            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+        ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"]) *100  / data.loc[:, "predict_proba_time"]
+        failure_rate = (
+            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+        ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"]) *100 / data.loc[:, "predict_time"]
+    adv_failure_rate = (
+        1 - data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"]
+    ) / data.loc[:, "predict_time"]
+
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
@@ -196,10 +200,12 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=["model.trainer.nb_epoch"],
+    control_variable=["device_id"],
     defaults={
-        "model.trainer.nb_epoch": 1,
-        "model.trainer.kwargs.nb_epoch": 1,
+        # "model.trainer.nb_epoch": 20,
+        # "model.trainer.kwargs.nb_epoch": 20,
+        # "model.trainer.batch_size" : 1024,
+        # "model.trainer.kwargs.batch_size" : 1024,
     },
 ):
     """
@@ -296,7 +302,6 @@ def merge_attacks(results: pd.DataFrame):
         logger.info(f"Unique attacks: {set(results.atk_gen)}")
     else:
         logger.warning("No attacks found in data. Check your config file.")
-    
     assert hasattr(results, "atk_gen"), "atk_gen not in results.columns"
     return results
 
@@ -337,7 +342,7 @@ def format_control_parameter(data, control_dict, fillna):
     logger.info("Fillna: ")
     logger.info(yaml.dump(fillna))
     for defence in defences:
-        if defence in control_dict:
+        if defence in control_dict and defence != "Epochs":
             # Get parameter name from control_dict
             param = control_dict[defence]
             # Shorten parameter name
@@ -459,27 +464,26 @@ def clean_data_for_plotting(
     logger.info("Dropping poorly merged columns...")
     data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info(f"Shape after dropping poorly merged columns: {data.shape}")
-    logger.info(f"Dropping rows where time is negative (from earlier bug).")
-    data = data[data['train_time'] >= 0]
-    data = data[data['adv_fit_time'] >= 0]
-    if "predict_time" in data.columns:
-        data = data[data['predict_time'] >= 0]
+    logger.info("Shortening model names...")
+    # Removes the path and to the model object and leaves the name of the model
+    model_names = data["model.init.name"].str.split(".").str[-1]
+    data["model_name"] = model_names
+    # If "Net" is in the model name, we assume the following string denotes the layers as in ResNet18
     if hasattr(data, "model.init.name"):
-        logger.info("Shortening model names...")
         model_names = data["model.init.name"].str.split(".").str[-1]
         data.loc[:, "model_name"] = model_names
         model_layers = [str(x).split("Net")[-1] for x in model_names]
         data.loc[:, "model_layers"] = model_layers
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    data["Epochs"] = (
+    data["nb_epoch"] = (
         data["model.trainer.kwargs.nb_epoch"]
         if "model.trainer.kwargs.nb_epoch" in data.columns
         else data["model.trainer.nb_epoch"]
     )
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = merge_defences(data, control_variable=list(control_dict.pop("control", [])), defaults=control_dict.pop("defaults", {}))
+    data = merge_defences(data)
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
         def_gen = data.def_gen.map(def_gen_dict)
@@ -548,12 +552,6 @@ if __name__ == "__main__":
         help="Path to (optional) pareto set dictionary.",
         default=None,
     )
-    parser.add_argument(
-        "--drop_cpu",
-        help="Drop CPU results",
-        action="store_true",
-        default=True,
-    )
     args = parser.parse_args()
     logging.basicConfig(level=args.verbosity)
     assert Path(
@@ -590,7 +588,7 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict.get("attacks", {})
     control_dict = big_dict.get("params", {})
     fillna = big_dict.get("fillna", {})
-    min_max = big_dict.get("min_max", ["Epochs"])
+    min_max = big_dict.get("min_max", ["nb_epoch"])
 
     results = clean_data_for_plotting(
         data,
@@ -600,12 +598,7 @@ if __name__ == "__main__":
         fillna=fillna,
     )
     results = calculate_failure_rate(results)
-    results = results[results['adv_failure_rate'] >= 0] # Remove negative failure rates from an earlier bug
-    if args.drop_cpu:
-        if "train_device" in results.columns:
-            results = results[results['train_device'] != 'cpu'] # Remove CPU results from an earlier bug
-        if "adv_fit_device" in results.columns:
-            results = results[results['adv_fit_device'] != 'cpu'] # Remove CPU results from an earlier bug
+
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
         results,

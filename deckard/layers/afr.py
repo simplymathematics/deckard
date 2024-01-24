@@ -12,6 +12,7 @@ from lifelines import (
     CoxPHFitter,
 )
 from .clean_data import drop_frames_without_results
+from .clean_data import drop_frames_without_results
 import matplotlib
 import logging
 import yaml
@@ -30,11 +31,10 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype=".eps",
+    filetype=".pdf",
     folder=".",
     **kwargs,
 ):
-    plt.gcf().clear()
     file = Path(folder, file).with_suffix(filetype)
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
@@ -65,9 +65,45 @@ def plot_aft(
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
+    plt.show()
     plt.gcf().clear()
     return ax, aft
 
+
+def plot_partial_effects(
+    aft,
+    covariate_array,
+    values_array,
+    title=None,
+    file="partial_effects.pdf",
+    xlabel="Covariate",
+    ylabel="Failure rate",
+    legend_kwargs={"loc": "upper left"},
+    replacement_dict={},
+    cmap="coolwarm",
+    folder=".",
+    filetype=".pdf",
+    **kwargs,
+):
+    plt.gcf().clear()
+    file = Path(folder, file).with_suffix(filetype)
+    pareto = aft.plot_partial_effects_on_outcome(
+        covariate_array, values_array, cmap=cmap, **kwargs
+    )
+    labels = pareto.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    pareto.set_yticklabels(labels)
+    pareto.legend(**legend_kwargs)
+    pareto.set_ylabel(ylabel)
+    pareto.set_xlabel(xlabel)
+    pareto.set_title(title)
+    pareto.get_figure().tight_layout()
+    pareto.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.gcf().clear()
+    return pareto
 
 def plot_partial_effects(
     aft,
@@ -114,7 +150,6 @@ def score_model(aft, train, test):
 
 
 def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
-    pd.set_option("display.float_format", lambda x: "%.3f" % x)
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
@@ -137,18 +172,18 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
     aft_data.index.name = "Distribution"
-    aft_data.index = aft_dict.keys()
+    aft_data.index = [str(x).replace("_", " ").title() for x in aft_dict.keys()]
     label = f"tab:{dataset}"
     upper = dataset.upper()
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
         buf = folder / "aft_comparison.tex",
         float_format="%.3g",
+        na_rep="--",
         label=label,
         caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
-    aft_data.fillna("--", inplace=True)
-    aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution")
+    aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--")
     
     
     return aft_data
@@ -337,4 +372,3 @@ if "__main__" == __name__:
         test_size=0.8,
         folder=FOLDER,
     )
-
