@@ -286,6 +286,7 @@ if "__main__" == __name__:
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
+    afr_parser.add_argument("--attack_size", type=int, default=100)
     args = afr_parser.parse_args()
     target = args.target
     duration_col = args.duration_col
@@ -318,14 +319,8 @@ if "__main__" == __name__:
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
+    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * args.attack_size
+    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * args.attack_size
     render_all_afr_plots(
         config,
         duration_col,
