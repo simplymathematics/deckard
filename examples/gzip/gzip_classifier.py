@@ -75,7 +75,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self._compress = self._gzip_compressor
         else:
             raise NotImplementedError(
-                f"Compressing with {self.compressor} not supported."
+                f"Compressing with {self.compressor} not supported.",
             )
 
     def _gzip_compressor(self, x):

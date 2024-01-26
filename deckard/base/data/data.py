@@ -68,7 +68,7 @@ class Data:
             self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
             sklearn_pipeline = OmegaConf.to_container(
-                OmegaConf.create(sklearn_pipeline)
+                OmegaConf.create(sklearn_pipeline),
             )
             self.sklearn_pipeline = (
                 sklearn_pipeline

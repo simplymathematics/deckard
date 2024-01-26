@@ -166,7 +166,9 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
     aft_data.to_csv(
-        Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--"
+        Path(folder / "aft_comparison.csv"),
+        index_label="Distribution",
+        na_rep="--",
     )
 
     return aft_data
