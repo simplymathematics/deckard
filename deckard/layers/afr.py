@@ -166,18 +166,14 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
     aft_data.to_csv(
-        Path(folder / "aft_comparison.csv"),
-        index_label="Distribution",
-        na_rep="--",
+        Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--",
     )
 
     return aft_data
 
 
 def clean_data_for_aft(
-    data,
-    covariate_list,
-    target="adv_accuracy",
+    data, covariate_list, target="adv_accuracy",
 ):
     subset = data.copy()
     assert (
@@ -210,12 +206,7 @@ def clean_data_for_aft(
 
 
 def split_data_for_aft(
-    data,
-    target,
-    duration_col,
-    covariate_list,
-    test_size=0.2,
-    random_state=42,
+    data, target, duration_col, covariate_list, test_size=0.2, random_state=42,
 ):
     cleaned = clean_data_for_aft(data, covariate_list, target=target)
     X_train, X_test = train_test_split(
@@ -263,13 +254,7 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
 
 
 def render_all_afr_plots(
-    config,
-    duration_col,
-    target,
-    data,
-    dataset,
-    test_size=0.8,
-    folder=".",
+    config, duration_col, target, data, dataset, test_size=0.8, folder=".",
 ):
     covariate_list = config.pop("covariates", [])
     X_train, X_test = split_data_for_aft(
@@ -345,19 +330,11 @@ if "__main__" == __name__:
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
+        :, "attack.attack_size",
     ]
     data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
+        :, "attack.attack_size",
     ]
     render_all_afr_plots(
-        config,
-        duration_col,
-        target,
-        data,
-        dataset,
-        test_size=0.8,
-        folder=FOLDER,
+        config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER,
     )

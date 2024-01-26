@@ -12,17 +12,11 @@ class MNISTNet:
         self.input_ph = tf.placeholder(tf.float32, shape=[None, *input_shape])
         self.labels_ph = tf.placeholder(tf.float32, shape=[None, num_classes])
         self.layer1 = tf.layers.conv2d(
-            self.input_ph,
-            filters=4,
-            kernel_size=5,
-            activation=tf.nn.relu,
+            self.input_ph, filters=4, kernel_size=5, activation=tf.nn.relu,
         )
         self.layer2 = tf.layers.max_pooling2d(self.layer1, 2, 2)
         self.layer3 = tf.layers.conv2d(
-            self.layer2,
-            filters=10,
-            kernel_size=5,
-            activation=tf.nn.relu,
+            self.layer2, filters=10, kernel_size=5, activation=tf.nn.relu,
         )
         self.layer4 = tf.layers.max_pooling2d(self.layer3, 2, 2)
         self.layer5 = tf.layers.flatten(self.layer4)

@@ -11,9 +11,7 @@ extra_data_dir = "bit_depth"
 big_df = pd.DataFrame()
 for data in datasets:
     df = pd.read_csv(
-        Path(normal_dir) / data / "power.csv",
-        index_col=0,
-        low_memory=False,
+        Path(normal_dir) / data / "power.csv", index_col=0, low_memory=False,
     )
     df["dataset"] = data
     print(f"Shape of {data} is {df.shape}")
@@ -113,22 +111,13 @@ big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False
 
 fig, ax = plt.subplots(1, 2, figsize=(8, 5))
 ben_acc = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="accuracy",
-    hue="Device",
-    ax=ax[0],
-    legend=False,
+    data=big_df, x="dataset", y="accuracy", hue="Device", ax=ax[0], legend=False,
 )
 ben_acc.set_title("Average Accuracy on Benign Samples")
 ben_acc.set_ylabel("Ben. Accuracy")
 ben_acc.set_xlabel("Dataset")
 adv_acc = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="adv_accuracy",
-    hue="Device",
-    ax=ax[1],
+    data=big_df, x="dataset", y="adv_accuracy", hue="Device", ax=ax[1],
 )
 adv_acc.set_title("Average Accuracy on Adversarial Samples")
 adv_acc.set_ylabel("Adv. Accuracy")
@@ -140,31 +129,19 @@ fig.savefig("plots/combined/acc.pdf")
 
 fig, ax = plt.subplots(1, 3, figsize=(16, 5))
 train_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="train_time",
-    hue="Device",
-    ax=ax[0],
+    data=big_df, x="dataset", y="train_time", hue="Device", ax=ax[0],
 )
 train_time.set_title("Average Training Time per Sample")
 train_time.set_ylabel("$t_{t}$ (seconds)")
 train_time.set_xlabel("Dataset")
 predict_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="predict_time",
-    hue="Device",
-    ax=ax[1],
+    data=big_df, x="dataset", y="predict_time", hue="Device", ax=ax[1],
 )
 predict_time.set_title("Average Inference Time per Sample")
 predict_time.set_ylabel("$t_{i}$ (seconds)")
 predict_time.set_xlabel("Dataset")
 adv_fit_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="adv_fit_time",
-    hue="Device",
-    ax=ax[2],
+    data=big_df, x="dataset", y="adv_fit_time", hue="Device", ax=ax[2],
 )
 adv_fit_time.set_title("Average Attack Time per Sample")
 adv_fit_time.set_ylabel("$t_{a}$ (seconds)")
@@ -174,31 +151,19 @@ fig.savefig("plots/combined/time.pdf")
 
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
 train_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="train_power",
-    hue="Device",
-    ax=ax[0],
+    data=big_df, x="dataset", y="train_power", hue="Device", ax=ax[0],
 )
 train_time.set_title("Average Training Power per Sample")
 train_time.set_ylabel("$P_{t}$ (Watts)")
 train_time.set_xlabel("Dataset")
 predict_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="predict_power",
-    hue="Device",
-    ax=ax[1],
+    data=big_df, x="dataset", y="predict_power", hue="Device", ax=ax[1],
 )
 predict_time.set_title("Average Inference Power per Sample")
 predict_time.set_ylabel("$P_{i}$ (Watts)")
 predict_time.set_xlabel("Dataset")
 adv_fit_time = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="adv_fit_power",
-    hue="Device",
-    ax=ax[2],
+    data=big_df, x="dataset", y="adv_fit_power", hue="Device", ax=ax[2],
 )
 adv_fit_time.set_title("Average Attack Power per Sample")
 adv_fit_time.set_ylabel("$P_{a}$ (Watts)")
@@ -208,32 +173,19 @@ fig.savefig("plots/combined/power.pdf")
 
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
 train_cost = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="train_cost",
-    hue="Device",
-    ax=ax[0],
+    data=big_df, x="dataset", y="train_cost", hue="Device", ax=ax[0],
 )
 train_cost.set_title("Average Training Cost per Sample")
 train_cost.set_ylabel("$C_{t}$ (USD)")
 train_cost.set_xlabel("Dataset")
 predict_cost = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="predict_cost",
-    hue="Device",
-    ax=ax[1],
-    legend=False,
+    data=big_df, x="dataset", y="predict_cost", hue="Device", ax=ax[1], legend=False,
 )
 predict_cost.set_title("Average Inference Cost per Sample")
 predict_cost.set_ylabel("$C_{i}$ (USD)")
 predict_cost.set_xlabel("Dataset")
 adv_fit_cost = sns.boxenplot(
-    data=big_df,
-    x="dataset",
-    y="adv_fit_cost",
-    hue="Device",
-    ax=ax[2],
+    data=big_df, x="dataset", y="adv_fit_cost", hue="Device", ax=ax[2],
 )
 adv_fit_cost.set_title("Average Attack Cost per Sample")
 adv_fit_cost.set_ylabel("$C_{a}$ (USD)")

@@ -67,22 +67,13 @@ if __name__ == "__main__":
         required=True,
     )
     attack_success_parser.add_argument(
-        "-l",
-        "--labels_file",
-        help="Full path to the predictions file",
-        required=True,
+        "-l", "--labels_file", help="Full path to the predictions file", required=True,
     )
     attack_success_parser.add_argument(
-        "-i",
-        "--input_score_file",
-        default=None,
-        required=True,
+        "-i", "--input_score_file", default=None, required=True,
     )
     attack_success_parser.add_argument(
-        "-o",
-        "--output_score_file",
-        help="Full path to the labels file",
-        required=True,
+        "-o", "--output_score_file", help="Full path to the labels file", required=True,
     )
     args = attack_success_parser.parse_args()
 
