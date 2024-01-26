@@ -384,7 +384,6 @@ def render_all_afr_plots(
     print(f"{aft_data}")
     print("*" * 80)
 
-
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument("--target", type=str, default="adv_failures")
@@ -401,10 +400,12 @@ if "__main__" == __name__:
     logging.basicConfig(level=logging.INFO)
     font = {
         "family": "Times New Roman",
+        "weight": "bold",
+        "size": 22,
     }
 
     matplotlib.rc("font", **font)
-    matplotlib.rcParams['font.size'] = 8
+
     csv_file = args.data_file
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
@@ -421,18 +422,11 @@ if "__main__" == __name__:
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
-    
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
+    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * args.attack_size
+    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * args.attack_size
     render_all_afr_plots(
         config,
         duration_col,

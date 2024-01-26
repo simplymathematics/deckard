@@ -82,9 +82,9 @@ def calculate_failure_rate(data):
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (
-        1 - data.loc[:, "adv_accuracy"] * 100
-    ) / data.loc[:, "predict_time"]
+    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"] * 100) / data.loc[
+        :, "predict_time"
+    ]
 
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)

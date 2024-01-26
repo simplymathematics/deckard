@@ -34,7 +34,10 @@ class PromQuery:
         end = datetime.fromtimestamp((self.end - self.warmdown) / 1000)
 
         result = prom.custom_query_range(
-            query=self.query, start_time=start, end_time=end, step=self.step
+            query=self.query,
+            start_time=start,
+            end_time=end,
+            step=self.step,
         )
         return result
 
