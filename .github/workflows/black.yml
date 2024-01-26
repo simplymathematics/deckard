@@ -10,4 +10,3 @@ jobs:
           options: "--check --verbose"
           src: "deckard/"
           jupyter: true
-      ```
