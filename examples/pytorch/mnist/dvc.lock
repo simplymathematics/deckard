@@ -25,10 +25,10 @@ stages:
           GaussianAugmentation: Gauss-in
           GaussianNoise: Gauss-out
           HighConfidence: Conf
-          nb_epoch: Epochs
+          Epochs: Epochs
           model_layers: Control
         fillna:
-          Epochs: 20
+          model.trainer.nb_epoch: 20
         params:
           Deep: attack.init.kwargs.nb_grads
           FGM: attack.init.kwargs.eps
@@ -48,8 +48,242 @@ stages:
             model.trainer.nb_epoch: 20
     outs:
     - path: mnist/reports/clean_attack.csv
-      md5: 391e4f71cfe7aca10f2b91f1f88e7805
-      size: 19657689
+      md5: 8c2f0dc9983738dbab77c33d1008ed02
+      size: 19653500
+  afr:
+    cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/reports/clean_attack.csv  --target
+      adv_accuracy --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml
+      --plots_folder mnist/plots/
+    deps:
+    - path: mnist/reports/clean_attack.csv
+      md5: 8c2f0dc9983738dbab77c33d1008ed02
+      size: 19653500
+    params:
+      params.yaml:
+        files.directory: mnist
+      conf/afr.yaml:
+        covariates:
+        - adv_fit_time
+        - accuracy
+        - train_time
+        - atk_value
+        - def_value
+        - data.sample.random_state
+        - model.trainer.nb_epoch
+        - model_layers
+        - atk_gen
+        - def_gen
+        log_logistic:
+          plot:
+            file: log_logistic_aft.eps
+            title: Log logistic AFR Model
+          labels:
+            'Intercept: beta_': $\beta$
+            'Intercept: alpha_': $\alpha$
+            'data.sample.random_state: alpha_': Random State
+            'atk_value: alpha_': Attack Strength
+            'train_time: alpha_': $t_{train}$
+            'predict_proba_time: alpha_': $t_{predict}$
+            'adv_accuracy: alpha_': Adv. Accuracy
+            'accuracy: alpha_': Ben. Accuracy
+            'adv_fit_time: alpha_': $t_{attack}$
+            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
+            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: alpha_': No. of Epochs
+            'model.trainer.batch_size: alpha_': Batch Size
+            def_gen: Defence
+            'model_layers: alpha_': ResNet Layers
+            'def_value: alpha_': Defence Strength
+            'predict_time: alpha_': $t_{predict}$
+          partial_effect:
+          - file: log_logistic_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_logistic_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Log Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        log_normal:
+          plot:
+            file: log_normal_aft.eps
+            title: Log Normal AFR Model
+          labels:
+            'Intercept: sigma_': $\rho$
+            'Intercept: mu_': $\mu$
+            'data.sample.random_state: mu_': Random State
+            'atk_value: mu_': Attack Strength
+            'train_time: mu_': $t_{train}$
+            'predict_proba_time: mu_': $t_{predict}$
+            'adv_accuracy: mu_': Adv. Accuracy
+            'accuracy: mu_': Ben. Accuracy
+            'adv_fit_time: mu_': $t_{attack}$
+            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
+            'failure_rate: mu_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: mu_': No. of Epochs
+            'model.trainer.batch_size: mu_': Batch Size
+            def_gen: Defence
+            'model_layers: mu_': ResNet Layers
+            'def_value: mu_': Defence Strength
+            'predict_time: mu_': $t_{predict}$
+          partial_effect:
+          - file: log_normal_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_normal_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Log Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        weibull:
+          plot:
+            file: weibull_aft.eps
+            title: Weibull AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+            'model_layers: lambda_': ResNet Layers
+            'def_value: lambda_': Defence Strength
+            'predict_time: lambda_': $t_{predict}$
+          partial_effect:
+          - file: weibull_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: weibull_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: ResNet Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+    outs:
+    - path: mnist/plots/aft_comparison.csv
+      md5: 5c0df24a07b0e4386b122e0313f9418b
+      size: 379
+    - path: mnist/plots/aft_comparison.tex
+      md5: 7549973258b13105dc1cde8386220c9d
+      size: 598
+    - path: mnist/plots/log_logistic_aft.eps
+      md5: ab5378c3af088e4b897746be060e8612
+      size: 63004
+    - path: mnist/plots/log_logistic_epochs_partial_effect.eps
+      md5: 9d598f9be89a1ffdf2a7c687f9793af4
+      size: 38604
+    - path: mnist/plots/log_logistic_layers_partial_effect.eps
+      md5: e303c9c394b43f733a297b79dc1d320c
+      size: 43324
+    - path: mnist/plots/log_normal_aft.eps
+      md5: 5efd3e7187f93209551e6384b2f36c78
+      size: 63627
+    - path: mnist/plots/log_normal_epochs_partial_effect.eps
+      md5: 514f523739c180449ab05bb4cffad701
+      size: 39332
+    - path: mnist/plots/log_normal_layers_partial_effect.eps
+      md5: 9d3174cbbd465afe8c40c02f6d6ed04d
+      size: 43892
+    - path: mnist/plots/weibull_aft.eps
+      md5: c890d5858fe4d3ad58c580237e8e2ed5
+      size: 61365
+    - path: mnist/plots/weibull_epochs_partial_effect.eps
+      md5: 0b965ecd956fae6230ff68c9842bf057
+      size: 40068
+    - path: mnist/plots/weibull_layers_partial_effect.eps
+      md5: 971ae4217afae1e3fef2b9d7ee34a58a
+      size: 43197
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/clean_attack.csv
       -c conf/plots.yaml
@@ -156,22 +390,6 @@ stages:
           xlabels: Defence Type
           y: adv_failure_rate
           ylabels: $h_{adv.}$
-          rotation: 90
-          hue_order:
-          - ResNet18
-          - ResNet34
-          - ResNet50
-          - ResNet101
-          - ResNet152
-        - file: adv_accuracy_vs_defence_type.eps
-          hue: model_name
-          kind: boxen
-          legend_title: Model Name
-          titles: Adv. Accuracy vs Defence Type
-          x: def_gen
-          xlabels: Defence Type
-          y: adv_accuracy
-          ylabels: Adv. Ben. Accuracy
           rotation: 90
           hue_order:
           - ResNet18
@@ -316,8 +534,6 @@ stages:
           ylabel: $h_{adv}$
           title: $h_{adv}$ vs $t_{train}$
           file: adv_failure_rate_vs_train_time.eps
-          y_scale: log
-          x_scale: log
           legend:
             title: Model Name
             bbox_to_anchor:
@@ -331,532 +547,48 @@ stages:
           - ResNet152
     outs:
     - path: mnist/plots/adv_accuracy_vs_attack_type.eps
-      md5: 73638ea39951a551baeda3d70e1dc72d
+      md5: 39a5528984ccd95fd653084d74a76c6b
       size: 113600
     - path: mnist/plots/adv_accuracy_vs_defence_type.eps
-      md5: bdf8b45f4ec877241252dd05bdfe680e
-      size: 102679
+      md5: 68ea59b33809fb5355aa6dd073dc48e2
+      size: 92854
     - path: mnist/plots/adv_failure_rate_vs_train_time.eps
-      md5: d442e5ef7cdb9627b2c8fcbc0de6fce9
-      size: 37923
+      md5: 5c1fb35b5a73861ec6eb30324280f8df
+      size: 781104
     - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 59fe52fb61876dc2bf72e62f1a7d9b72
+      md5: a1c179ef70f5f6b685124e732d6effc5
       size: 111264
     - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: 4c5982946aa15105fa072b1d6b0c4525
+      md5: 85146219ee5b70e1b8848a4339013138
       size: 96648
     - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: fcbcfae1b949f0c4cf5ef9162fcca536
+      md5: b18ccac28b87f54d9176c75a98e0cf98
       size: 77643
     - path: mnist/plots/atk_param_vs_accuracy.eps
-      md5: 1da8dd6473b3bac9342c063efcb55092
+      md5: 5ddbd6d626888abafe1434d1f4b61563
       size: 37580
     - path: mnist/plots/ben_accuracy_vs_defence_type.eps
-      md5: 2d762e24ea8f213b4d0b9db64bebccea
+      md5: 271db072c57d9b4a4bc8bd1f31e66b7b
       size: 89524
     - path: mnist/plots/ben_failure_rate_vs_defence_type.eps
-      md5: c10eed913010912da5d1e9d7b0df5564
+      md5: f419fe8f9809a4ab2af340ca60b64e36
       size: 99108
     - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: e3f00ac86701ef52c7d6806fe0bc21c5
+      md5: 9f5f650d99a517fd9dff47f81415321a
       size: 87718
     - path: mnist/plots/def_param_vs_accuracy.eps
-      md5: bbcb0dc5abfa6095e1b17e6746b7661a
+      md5: d74cac9542afb7f2d0a4d19c0013d589
       size: 38917
     - path: mnist/plots/def_param_vs_adv_accuracy.eps
-      md5: 1e7066a2e2b4dd74dbc1dc40c0774c9a
+      md5: ff63acce8c2162d6c4b2af1717818794
       size: 38014
     - path: mnist/plots/def_param_vs_adv_failure_rate.eps
-      md5: 16f87a96098dfaf7d6a172af235d794b
+      md5: c16e6e9afcd36e6a55895197226a88a6
       size: 34015
-  afr:
-    cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/reports/clean_attack.csv  --target=adv_accuracy
-      --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder
-      mnist/plots/
-    deps:
-    - path: mnist/reports/clean_attack.csv
-      md5: 8c2f0dc9983738dbab77c33d1008ed02
-      size: 19653500
-    params:
-      params.yaml:
-        files.directory: mnist
-      conf/afr.yaml:
-        covariates:
-        - accuracy
-        - train_time
-        - atk_value
-        - def_value
-        - data.sample.random_state
-        - model_layers
-        - adv_fit_time
-        - model.trainer.nb_epoch
-        - atk_gen
-        - def_gen
-        log_logistic:
-          plot:
-            file: log_logistic_aft.eps
-            title: Log logistic AFR Model
-          labels:
-            'Intercept: beta_': $\beta$
-            'Intercept: alpha_': $\alpha$
-            'data.sample.random_state: alpha_': Random State
-            'atk_value: alpha_': Attack Strength
-            'train_time: alpha_': $t_{train}$
-            'predict_proba_time: alpha_': $t_{predict}$
-            'adv_accuracy: alpha_': Adv. Accuracy
-            'accuracy: alpha_': Ben. Accuracy
-            'adv_fit_time: alpha_': $t_{attack}$
-            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
-            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
-            'model.trainer.nb_epoch: alpha_': No. of Epochs
-            'model.trainer.batch_size: alpha_': Batch Size
-            def_gen_: ''
-            'def_value: alpha_': Defence Strength
-            'model_layers: alpha_': No. of Layers
-            'predict_time: alpha_': $t_{predict}$
-            'atk_gen_Thresh: alpha_': Thresh
-            atk_gen_: ''
-            ': alpha_': ''
-          partial_effect:
-          - file: log_logistic_epochs_partial_effect.eps
-            covariate_array: model.trainer.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Log-Logistic AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: log_logistic_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Log-Logistic AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-        log_normal:
-          plot:
-            file: log_normal_aft.eps
-            title: Log Normal AFR Model
-          labels:
-            'Intercept: sigma_': $\rho$
-            'Intercept: mu_': $\mu$
-            data.sample.random_state: Random State
-            atk_value: Attack Strength
-            train_time: $t_{train}$
-            predict_proba_time: $t_{predict}$
-            adv_accuracy: Adv. Accuracy
-            accuracy: Ben. Accuracy
-            adv_fit_time: $t_{attack}$
-            adv_failure_rate: $h_{adv.}(t;\theta)$
-            failure_rate: $h_{ben.}(t;\theta)$
-            model.trainer.nb_epoch: No. of Epochs
-            model.trainer.batch_size: Batch Size
-            def_value: Defence Strength
-            model_layers: No. of Layers
-            predict_time: $t_{predict}$
-            ': mu_': ''
-            atk_gen_: ''
-            def_gen_: ''
-            ': alpha_': ''
-          partial_effect:
-          - file: log_normal_epochs_partial_effect.eps
-            covariate_array: model.trainer.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Log-Normal AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: log_normal_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Log-Normal AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-        weibull:
-          plot:
-            file: weibull_aft.eps
-            title: Weibull AFR Model
-          labels:
-            'Intercept: rho_': $\rho$
-            'Intercept: lambda_': $\lambda$
-            'data.sample.random_state: lambda_': Random State
-            'atk_value: lambda_': Attack Strength
-            'train_time: lambda_': $t_{train}$
-            'predict_proba_time: lambda_': $t_{predict}$
-            'adv_accuracy: lambda_': Adv. Accuracy
-            'accuracy: lambda_': Ben. Accuracy
-            'adv_fit_time: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
-            'model.trainer.nb_epoch: lambda_': No. of Epochs
-            'model.trainer.batch_size: lambda_': Batch Size
-            def_gen_: ''
-            'def_value: lambda_': Defence Strength
-            'model_layers: lambda_': No. of Layers
-            'predict_time: lambda_': $t_{predict}$
-            atk_gen_: ''
-            ': lambda_': ''
-          partial_effect:
-          - file: weibull_epochs_partial_effect.eps
-            covariate_array: model.trainer.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Weibull AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: weibull_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Cox AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-    outs:
-    - path: mnist/plots/aft_comparison.csv
-      md5: 98a57b50c0717b1d5c8752aeddc90263
-      size: 367
-    - path: mnist/plots/aft_comparison.tex
-      md5: 7549973258b13105dc1cde8386220c9d
-      size: 598
-    - path: mnist/plots/log_logistic_aft.eps
-      md5: 4b6e608053af99521005efd698669b81
-      size: 48594
-    - path: mnist/plots/log_logistic_epochs_partial_effect.eps
-      md5: 91072e0f878e9d90ccd469d48d7ee9ba
-      size: 36919
-    - path: mnist/plots/log_logistic_layers_partial_effect.eps
-      md5: 03b2cef66a7dec607e95bff12ccc4715
-      size: 39249
-    - path: mnist/plots/log_normal_aft.eps
-      md5: 088c8d5b115f7680e108f94587413a03
-      size: 46967
-    - path: mnist/plots/log_normal_epochs_partial_effect.eps
-      md5: aad800dfedeb56041406a4a5eac90561
-      size: 37573
-    - path: mnist/plots/log_normal_layers_partial_effect.eps
-      md5: 9c424dc769b9032f1149f35537439857
-      size: 39190
-    - path: mnist/plots/weibull_aft.eps
-      md5: e10614c01cbc6a469948cce7b74903dc
-      size: 48017
-    - path: mnist/plots/weibull_epochs_partial_effect.eps
-      md5: 4ffdce2071cd1051f19ab9b80a265d8e
-      size: 36835
-    - path: mnist/plots/weibull_layers_partial_effect.eps
-      md5: 7afa2adf62a64c3a21da3b7655422eb5
-      size: 37531
-  copy_results:
-    cmd: cp -r mnist/plots/* ~/ml_afr/mnist/
-    deps:
-    - path: mnist/plots/
-      md5: c2ff4e6fc858e5c338060458e1374a2d.dir
-      size: 1336473
-      nfiles: 24
-  clean@attack:
-    cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
-      -c conf/clean.yaml
-    deps:
-    - path: mnist/plots/adv_accuracy_vs_defence_type.eps
-      md5: 07cd5db97f9c638295ac3c423f7c392a
-      size: 105721
-    - path: mnist/reports/clean_attack.csv
-      md5: 391e4f71cfe7aca10f2b91f1f88e7805
-      size: 19657689
-    params:
-      params.yaml:
-        files.directory: mnist
-      conf/afr.yaml:
-        covariates:
-        - adv_fit_time
-        - accuracy
-        - train_time
-        - predict_time
-        - atk_value
-        - def_value
-        - data.sample.random_state
-        - model_layers
-        - model.trainer.kwargs.nb_epoch
-        log_logistic:
-          plot:
-            file: log_logistic_aft.eps
-            title: Log logistic AFR Model
-          labels:
-            'Intercept: beta_': $\beta$
-            'Intercept: alpha_': $\alpha$
-            'data.sample.random_state: alpha_': Random State
-            'atk_value: alpha_': Attack Strength
-            'train_time: alpha_': $t_{train}$
-            'predict_proba_time: alpha_': $t_{predict}$
-            'adv_accuracy: alpha_': Adv. Accuracy
-            'accuracy: alpha_': Ben. Accuracy
-            'adv_fit_time: alpha_': $t_{attack}$
-            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
-            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
-            'model.trainer.kwargs.nb_epoch: alpha_': No. of Epochs
-            'model.trainer.batch_size: alpha_': Batch Size
-            def_gen: Defence
-            'model_layers: alpha_': ResNet Layers
-            'def_value: alpha_': Defence Strength
-            'predict_time: alpha_': $t_{predict}$
-          partial_effect:
-          - file: log_logistic_epochs_partial_effect.eps
-            covariate_array: model.trainer.kwargs.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Log-Logistic AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: log_logistic_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Cox AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-        log_normal:
-          plot:
-            file: log_normal_aft.eps
-            title: Log Normal AFR Model
-          labels:
-            'Intercept: sigma_': $\rho$
-            'Intercept: mu_': $\mu$
-            'data.sample.random_state: mu_': Random State
-            'atk_value: mu_': Attack Strength
-            'train_time: mu_': $t_{train}$
-            'predict_proba_time: mu_': $t_{predict}$
-            'adv_accuracy: mu_': Adv. Accuracy
-            'accuracy: mu_': Ben. Accuracy
-            'adv_fit_time: mu_': $t_{attack}$
-            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
-            'failure_rate: mu_': $h_{ben.}(t;\theta)$
-            'model.trainer.kwargs.nb_epoch: mu_': No. of Epochs
-            'model.trainer.batch_size: mu_': Batch Size
-            def_gen: Defence
-            'model_layers: mu_': ResNet Layers
-            'def_value: mu_': Defence Strength
-            'predict_time: mu_': $t_{predict}$
-          partial_effect:
-          - file: log_normal_epochs_partial_effect.eps
-            covariate_array: model.trainer.kwargs.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Log-Normal AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: log_normal_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Cox AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-        weibull:
-          plot:
-            file: weibull_aft.eps
-            title: Weibull AFR Model
-          labels:
-            'Intercept: rho_': $\rho$
-            'Intercept: lambda_': $\lambda$
-            'data.sample.random_state: lambda_': Random State
-            'atk_value: lambda_': Attack Strength
-            'train_time: lambda_': $t_{train}$
-            'predict_proba_time: lambda_': $t_{predict}$
-            'adv_accuracy: lambda_': Adv. Accuracy
-            'accuracy: lambda_': Ben. Accuracy
-            'adv_fit_time: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
-            'model.trainer.kwargs.nb_epoch: lambda_': No. of Epochs
-            'model.trainer.batch_size: lambda_': Batch Size
-            def_gen: Defence
-            'model_layers: lambda_': ResNet Layers
-            'def_value: lambda_': Defence Strength
-            'predict_time: lambda_': $t_{predict}$
-          partial_effect:
-          - file: weibull_epochs_partial_effect.eps
-            covariate_array: model.trainer.kwargs.nb_epoch
-            values_array:
-            - 1
-            - 10
-            - 25
-            - 50
-            title: $S(t)$ for Weibull AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: Epochs
-              labels:
-              - '1'
-              - '10'
-              - '25'
-              - '50'
-          - file: weibull_layers_partial_effect.eps
-            covariate_array: model_layers
-            values_array:
-            - 18
-            - 34
-            - 50
-            - 101
-            - 152
-            title: $S(t)$ for Weibull AFR
-            ylabel: Expectation of $S(t)$
-            xlabel: Time $T$ (seconds)
-            legend_kwargs:
-              title: ResNet Layers
-              labels:
-              - '18'
-              - '34'
-              - '50'
-              - '101'
-              - '152'
-    outs:
-    - path: mnist/plots/aft_comparison.csv
-      md5: 44d0cbf3175dadc617103edd6f8ccf48
-      size: 360
-    - path: mnist/plots/aft_comparison.tex
-      md5: 0034975eb38ed6deb1b6f325f714571f
-      size: 600
-    - path: mnist/plots/log_logistic_aft.eps
-      md5: e8f5bca449f316663d8092808b6d24e4
-      size: 46346
-    - path: mnist/plots/log_logistic_epochs_partial_effect.eps
-      md5: 2c70ca9021dad25186186ad29fcbcb94
-      size: 41508
-    - path: mnist/plots/log_logistic_layers_partial_effect.eps
-      md5: 6cb6711c3c71712cd90e04ca26dd4ec0
-      size: 44506
-    - path: mnist/plots/log_normal_aft.eps
-      md5: 97cf44435a30408e67da5dd8aa48bdbe
-      size: 48850
-    - path: mnist/plots/log_normal_epochs_partial_effect.eps
-      md5: 03d7e5030a5622f2943247a7f63bf798
-      size: 42101
-    - path: mnist/plots/log_normal_layers_partial_effect.eps
-      md5: dbc5cc0d10e796a1f95c196e4422e3d1
-      size: 44637
-    - path: mnist/plots/weibull_aft.eps
-      md5: 8da07fa3a561e4d6117a8e1ba1baf004
-      size: 45762
-    - path: mnist/plots/weibull_epochs_partial_effect.eps
-      md5: 88cd93025e62330ee8c33cfba0a5667c
-      size: 41588
-    - path: mnist/plots/weibull_layers_partial_effect.eps
-      md5: 7540ae46e4c3ccf5047f876e47165590
-      size: 46463
   copy_results:
     cmd: mkdir -p ~/ml_afr/mnist/ && cp -r mnist/plots/* ~/ml_afr/mnist/
     deps:
     - path: mnist/plots/
-      md5: 71800e43aef08c66b89898cc69e47ea5.dir
-      size: 2286297
+      md5: a95789a1dcb23a5cfe8eeecb74e83b5b.dir
+      size: 2135379
       nfiles: 24

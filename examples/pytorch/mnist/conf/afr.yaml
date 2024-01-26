@@ -5,14 +5,12 @@ covariates:
  - "atk_value"
  - "def_value"
  - "data.sample.random_state"
- - "model_layers"
- - model.trainer.kwargs.nb_epoch
- - "model_layers"
  - model.trainer.nb_epoch
+ - "model_layers"
  - atk_gen
  - def_gen
 fillna:
-  model.trainer.kwargs.nb_epoch: 20
+  model.trainer.nb_epoch: 20
 weibull:
   plot:
     file : weibull_aft.eps
@@ -29,7 +27,7 @@ weibull:
     "adv_fit_time: lambda_": "$t_{attack}$"
     "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.kwargs.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
     "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
     "model_layers: lambda_" : "ResNet Layers"
@@ -37,7 +35,7 @@ weibull:
     "predict_time: lambda_" : "$t_{predict}$"
   partial_effect:
     - "file": "weibull_epochs_partial_effect.eps"
-      "covariate_array": "model.trainer.kwargs.nb_epoch"
+      "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "Expectation of $S(t)$"
@@ -72,12 +70,12 @@ weibull:
 #     "adv_fit_time: lambda_": "$t_{attack}$"
 #     "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
 #     "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-#     "model.trainer.kwargs.nb_epoch: lambda_": "No. of Epochs"
+#     "model.trainer.nb_epoch: lambda_": "No. of Epochs"
 #     "model.trainer.batch_size: lambda_": "Batch Size"
 #     "def_gen": "Defence"
 #   partial_effect:
 #     - "file": "cox_epochs_partial_effect.eps"
-#       "covariate_array": "model.trainer.kwargs.nb_epoch"
+#       "covariate_array": "model.trainer.nb_epoch"
 #       "values_array": [1,10,25,50]
 #       "title": "$S(t)$ for Cox AFR"
 #       "ylabel": "Expectation of $S(t)$"
@@ -112,7 +110,7 @@ log_logistic:
     "adv_fit_time: alpha_": "$t_{attack}$"
     "adv_failure_rate: alpha_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: alpha_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.kwargs.nb_epoch: alpha_": "No. of Epochs"
+    "model.trainer.nb_epoch: alpha_": "No. of Epochs"
     "model.trainer.batch_size: alpha_": "Batch Size"
     "def_gen": "Defence"
     "model_layers: alpha_" : "ResNet Layers"
@@ -120,7 +118,7 @@ log_logistic:
     "predict_time: alpha_" : "$t_{predict}$"
   partial_effect:
     - "file": "log_logistic_epochs_partial_effect.eps"
-      "covariate_array": "model.trainer.kwargs.nb_epoch"
+      "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Logistic AFR"
       "ylabel": "Expectation of $S(t)$"
@@ -155,7 +153,7 @@ log_normal:
     "adv_fit_time: mu_": "$t_{attack}$"
     "adv_failure_rate: mu_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: mu_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.kwargs.nb_epoch: mu_": "No. of Epochs"
+    "model.trainer.nb_epoch: mu_": "No. of Epochs"
     "model.trainer.batch_size: mu_": "Batch Size"
     "def_gen": "Defence"
     "model_layers: mu_" : "ResNet Layers"
@@ -163,7 +161,7 @@ log_normal:
     "predict_time: mu_" : "$t_{predict}$"
   partial_effect:
     - "file": "log_normal_epochs_partial_effect.eps"
-      "covariate_array": "model.trainer.kwargs.nb_epoch"
+      "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Normal AFR"
       "ylabel": "Expectation of $S(t)$"

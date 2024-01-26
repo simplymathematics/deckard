@@ -30,7 +30,6 @@ def plot_aft(
     mtype,
     xlabel=None,
     ylabel=None,
-    strata_cols=['atk_gen', 'def_gen'],
     replacement_dict={},
     filetype=".eps",
     folder=".",
@@ -53,22 +52,13 @@ def plot_aft(
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
     plt.gcf().clear()
-    # sort column names by name
-    df = df.reindex(sorted(df.columns), axis=1)
-    if isinstance(aft, CoxPHFitter) and len(strata_cols)> 0:
-        aft.fit(df,
-                duration_col=duration_col, 
-                event_col=event_col, 
-                strata=strata_cols, 
-                model_ancillary=df[strata_cols], 
-                robust=True, 
-                )
-    else:
-        aft.fit(df, 
-                duration_col=duration_col,
-                event_col=event_col,
-                robust=True,
-                )
+    assert duration_col in df.columns, f"{duration_col} not in df.columns"
+    assert event_col in df.columns, f"{event_col} not in df.columns"
+    aft.fit(df, 
+            duration_col=duration_col,
+            event_col=event_col,
+            # robust=True,
+            )
     ax = aft.plot()
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -246,7 +236,6 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         label=label,
         index_names = True,
         caption=f"Comparison of AFR Models on the {upper} dataset.",
-        na_rep="--",
     )
     aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--")
     
@@ -273,11 +262,11 @@ def clean_data_for_aft(
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
     cleaned.index = subset.index
-    for col in cols:
-        cleaned = cleaned[cleaned[col] != -1e10]
-        cleaned = cleaned[cleaned[col] != 1e10]
+    # for col in cols:
+    #     cleaned = cleaned[cleaned[col] != -1e10]
+    #     cleaned = cleaned[cleaned[col] != 1e10]
     
-    cleaned.dropna(inplace=True, how="any", axis=0)
+    # cleaned.dropna(inplace=True, how="any", axis=0)
     cleaned = pd.get_dummies(cleaned)
     # de-duplicate index
     cleaned = cleaned.loc[~cleaned.index.duplicated(keep="first")]
@@ -312,6 +301,8 @@ def split_data_for_aft(
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
     X_train = X_train.dropna(axis=0, how="any")
     X_test = X_test.dropna(axis=0, how="any")
+    X_train = pd.DataFrame(X_train, columns=cleaned.columns)
+    X_test = pd.DataFrame(X_test, columns=cleaned.columns)
     return X_train, X_test
 
 
