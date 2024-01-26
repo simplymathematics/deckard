@@ -8,5 +8,5 @@ jobs:
       - uses: psf/black@stable
         with:
           src: "deckard/"
-          args: "-t py38 -t py37 -t py36"
+          options: "-t py38 -t py37 -t py36"
 ```
