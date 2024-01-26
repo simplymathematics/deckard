@@ -9,6 +9,7 @@ covariates:
  - "model_layers"
  - atk_gen
  - def_gen
+ - predict_time
 fillna:
   model.trainer.nb_epoch: 20
 weibull:

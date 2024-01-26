@@ -340,48 +340,48 @@ stages:
           - ResNet152
     outs:
     - path: cifar/plots/adv_accuracy_vs_attack_type.eps
-      md5: 5c5293ff55d3f34947b0c3b1ec9669f8
+      md5: 4160a73e6154103adf3068c4e157786c
       size: 108266
     - path: cifar/plots/adv_accuracy_vs_defence_type.eps
-      md5: 5355559ccf5f9b4894d305f34511ca98
+      md5: 29898f7f705966650f2791bda376c436
       size: 91403
     - path: cifar/plots/adv_failure_rate_vs_train_time.eps
-      md5: 7946ce7569a73f7c154a972ac3fefaf3
+      md5: f77fc44fc80ad1b06c988716c0ea39f4
       size: 622247
     - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 697f2db1ff9399b3a22628bf0263578b
+      md5: e6db6d5ecef5a53277e7671decbaf291
       size: 109736
     - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: cb0002f799a15e4d86eceb6f2059f8c4
+      md5: 1c9deedc14dd127e57f96056e2535aca
       size: 97414
     - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: 79170db87d987166056bc4dd6c6ababd
+      md5: aacd8ea8031e501f9243232f5bd28898
       size: 78583
     - path: cifar/plots/atk_param_vs_accuracy.eps
-      md5: 47aa1f6b5d811846b628d961e9e7bc1b
+      md5: 505d98d8d1250908ac2b933fbdedadd4
       size: 39191
     - path: cifar/plots/ben_accuracy_vs_defence_type.eps
-      md5: 2f5e183d217b61a89e022c923c4557c0
+      md5: 7567d88e5e73bd6fe2fb02fb2c5ba3eb
       size: 86338
     - path: cifar/plots/ben_failure_rate_vs_defence_type.eps
-      md5: dd62a735216472819f577e2805bdf959
+      md5: 3fa15bcf04c96bc27aaf6f673aa180bb
       size: 97772
     - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: 3a76861f4ee025777270a0fbfa1890a8
+      md5: ef07dc08edd6d6897e2d5391ee75abb1
       size: 87956
     - path: cifar/plots/def_param_vs_accuracy.eps
-      md5: cc197684560d6ae3e15570fdadecb07d
+      md5: 28c09498d39764f50f96cb6cb534903a
       size: 37915
     - path: cifar/plots/def_param_vs_adv_accuracy.eps
-      md5: ce3e5e8101b6db2223a8133113b35cbe
+      md5: 330f34de6238e3bdb574b98994fcf66e
       size: 37901
     - path: cifar/plots/def_param_vs_adv_failure_rate.eps
-      md5: 5e0de1fc7ecebd292160021dbd57f091
+      md5: 01b45c5a39785165ff36196f964f2bc5
       size: 33832
   afr:
-    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/reports/clean_attack.csv  --target=adv_accuracy
-      --duration_col adv_fit_time --dataset cifar --config_file conf/afr.yaml --plots_folder
-      cifar/plots/
+    cmd: python -m deckard.layers.afr --dataset cifar --data_file cifar/reports/clean_attack.csv  --target
+      adv_accuracy --duration_col predict_time --dataset cifar --config_file conf/afr.yaml
+      --plots_folder cifar/plots/
     deps:
     - path: cifar/reports/clean_attack.csv
       md5: 6419b50f95599aa4406f539411f53139
@@ -401,6 +401,7 @@ stages:
         - model.trainer.nb_epoch
         - atk_gen
         - def_gen
+        - predict_time
         log_logistic:
           plot:
             file: log_logistic_aft.eps
@@ -580,38 +581,38 @@ stages:
               - '152'
     outs:
     - path: cifar/plots/log_logistic_aft.eps
-      md5: d543fae5da4d1973eee0f90b37205269
-      size: 62734
+      md5: bb488446242efce619bd57ea57e8242b
+      size: 63377
     - path: cifar/plots/log_logistic_epochs_partial_effect.eps
-      md5: 05a40fe5652bc80347da9c31c7a96303
-      size: 39066
+      md5: 92aae3dc291fc05cbf17b2ffb633c59d
+      size: 42362
     - path: cifar/plots/log_logistic_layers_partial_effect.eps
-      md5: 7f911f07e4e3488d13355258e6db3904
-      size: 42197
+      md5: 6b1a9417b4a6ec6790abe220965071e6
+      size: 46929
     - path: cifar/plots/log_normal_aft.eps
-      md5: c4a7c30d1bbd818b30646d16e3d5e67e
-      size: 64210
+      md5: 97aada9de7323692b6677b44570b704a
+      size: 62728
     - path: cifar/plots/log_normal_epochs_partial_effect.eps
-      md5: 1c2891f1051d1d0fff430b5c2dc3d0e8
-      size: 38233
+      md5: 27f5b5bc44dc5df0cc973f85210a0a02
+      size: 42664
     - path: cifar/plots/log_normal_layers_partial_effect.eps
-      md5: 68682b1988dc3dbd13e092d47f690351
-      size: 42779
+      md5: 9343577357669df12ead9e92eacf1180
+      size: 47593
     - path: cifar/plots/weibull_aft.eps
-      md5: cb3d14f422e005822a2aed9f5c7aa681
-      size: 62124
+      md5: ccb5a4e1ee06ced8364a068842284c36
+      size: 62994
     - path: cifar/plots/weibull_epochs_partial_effect.eps
-      md5: 23a713efc83cd3cf0d76f89d4d5468ae
-      size: 37609
+      md5: 520614aace2be712efa636463591aabd
+      size: 42134
     - path: cifar/plots/weibull_layers_partial_effect.eps
-      md5: f62fd7d7d5e50adb75a32d5d71757daf
-      size: 42037
+      md5: 5a0dd43075d4c6d22d1f5939781215f7
+      size: 46807
   copy_results:
     cmd: mkdir -p ~/ml_afr/cifar/ && cp -r cifar/plots/* ~/ml_afr/cifar/
     deps:
     - path: cifar/plots/
-      md5: 0cf1e480cebea5e005cfb99dbaa6476c.dir
-      size: 16330582
+      md5: ea90c92f8322493ce676af8daa7b2f0c.dir
+      size: 16357147
       nfiles: 25
   train:
     cmd: python -m deckard.layers.experiment train --config_file cifar10.yaml

@@ -7,8 +7,9 @@ covariates:
  - "data.sample.random_state"
  - "model_layers"
  - model.trainer.nb_epoch
- - atk_gen
- - def_gen
+ - predict_time
+#  - atk_gen
+#  - def_gen
 fillna:
   model.trainer.nb_epoch: 20
 weibull:

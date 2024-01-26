@@ -52,7 +52,7 @@ stages:
       size: 19653500
   afr:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/reports/clean_attack.csv  --target
-      adv_accuracy --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml
+      adv_accuracy --duration_col predict_time --dataset mnist --config_file conf/afr.yaml
       --plots_folder mnist/plots/
     deps:
     - path: mnist/reports/clean_attack.csv

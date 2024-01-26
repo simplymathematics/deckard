@@ -4,7 +4,7 @@ paper_dir=~/ml_afr/
 for d in */ ; do
     cd $d
     # run command and write to log file
-    dvc repro --downstream clean  >| dvc_repro.log
+    dvc repro --downstream clean -f  >| dvc_repro.log
     # dvc push
     cd -
 done
