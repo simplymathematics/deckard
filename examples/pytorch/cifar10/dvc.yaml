@@ -12,7 +12,7 @@ vars:
   - conf/clean.yaml:fillna
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train --config_file cifar10.yaml
+    cmd: python -m deckard.layers.experiment train --config_file cifar.yaml
     params:
       - data
       - model
@@ -29,7 +29,7 @@ stages:
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file cifar10.yaml
+    cmd: python -m deckard.layers.experiment attack --config_file cifar.yaml
     params:
       - data
       - model
@@ -55,7 +55,7 @@ stages:
   #     # - ResNet101
   #     # - ResNet152
   #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar10.yaml 
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar.yaml 
   #     deps:
   #     - models.sh
   #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -72,7 +72,7 @@ stages:
       - ResNet101
       - ResNet152
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name cifar10.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name cifar.yaml
       deps:
       - models.sh # This script configures each defence
       - attacks.sh # This script configures each attack
@@ -142,7 +142,7 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/ 
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --target=adv_accuracy --duration_col adv_fit_time --dataset cifar --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
     plots:

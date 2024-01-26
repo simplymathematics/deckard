@@ -141,10 +141,9 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col ${covariates[0]} --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/ 
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --target=adv_accuracy --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
-      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
       - ${files.directory}/plots/weibull_aft.eps
       - ${files.directory}/plots/weibull_epochs_partial_effect.eps

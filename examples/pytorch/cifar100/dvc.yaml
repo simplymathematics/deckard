@@ -19,7 +19,13 @@ stages:
       - scorers
       - files
     outs:
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.params_file}
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
       - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
+      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
@@ -33,25 +39,27 @@ stages:
     outs:
       - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}
+      # - ${files.directory}/${files.reports}/attack/${files.name}/${files.params_file}
     deps:
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     metrics:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
 
         ##############################################################################
-  # models:
-  #   foreach: # This is a loop over the ResNet models
+  # models: # This is a loop over the ResNet models
+  #   foreach:
   #     - ResNet18
-  #     - ResNet34
-  #     - ResNet50
-  #     - ResNet101
-  #     - ResNet152
-  #   do:
-  #     cmd: bash models.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml
+  #     # - ResNet34
+  #     # - ResNet50
+  #     # - ResNet101
+  #     # - ResNet152
+  #   do: # This script configures eazch defence
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar100.yaml 
   #     deps:
-  #     - models.sh # This script configures each defence
-  #     - attacks.sh # This script configures each attack
-  #     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+  #     - models.sh
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
   #     outs:
   #     - ${files.directory}/${files.reports}/train/${item}.db: # This outputs a database file for each model
   #         cache: True
@@ -134,13 +142,19 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv --target adv_failures --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --target=adv_accuracy --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
     plots:
       - ${files.directory}/plots/weibull_aft.eps
-      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/weibull_epochs_partial_effect.eps
+      - ${files.directory}/plots/weibull_layers_partial_effect.eps
       - ${files.directory}/plots/log_logistic_aft.eps
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.eps
+      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_normal_layers_partial_effect.eps
     metrics:
       - ${files.directory}/plots/aft_comparison.csv
     outs:

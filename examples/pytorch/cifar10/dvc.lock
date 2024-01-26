@@ -298,7 +298,7 @@ stages:
             title: Defence
           title: $h_{adv}$ vs Defence Strength
           x: def_value
-          x_scale: linear
+          x_scale: log
           xlabel: Defence Control Parameter
           y: adv_failure_rate
           y_scale: log
@@ -333,6 +333,8 @@ stages:
           - HSJ
           - Pixel
           - Thresh
+          errorbar: se
+          err_style: bars
         scatter_plot:
         - x: train_time_per_sample
           y: adv_failure_rate

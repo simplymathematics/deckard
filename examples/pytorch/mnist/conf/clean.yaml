@@ -11,7 +11,7 @@ defences:
   GaussianAugmentation: Gauss-in
   GaussianNoise: Gauss-out
   HighConfidence: Conf
-  nb_epoch: Epochs
+  Epochs: Epochs
   model_layers: Control
 params:
   Deep: attack.init.kwargs.nb_grads
@@ -31,4 +31,4 @@ params:
   defaults:
     model.trainer.nb_epoch: 20
 fillna:
-  Epochs: 20
+  model.trainer.nb_epoch : 20

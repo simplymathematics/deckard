@@ -2,13 +2,18 @@ covariates:
  - "adv_fit_time"
  - "accuracy"
  - "train_time"
- - "predict_time"
+#  - "predict_time"
  - "atk_value"
  - "def_value"
  - "data.sample.random_state"
  - "model_layers"
 #  - "adv_failure_rate"
  - model.trainer.kwargs.nb_epoch
+#  - "adv_failure_rate"
+ - "model_layers"
+ - model.trainer.nb_epoch
+ - atk_gen
+ - def_gen
 fillna:
   model.trainer.kwargs.nb_epoch: 20
 weibull:

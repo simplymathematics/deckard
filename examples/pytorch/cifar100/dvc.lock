@@ -1,100 +1,47 @@
 schema: '2.0'
 stages:
-  train:
-    cmd: python -m deckard.layers.experiment train --config_file cifar100.yaml
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i cifar100/reports/attack.csv -o cifar100/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: cifar100/reports/attack.csv
+      md5: e1e1b67a591afdb5c9ea8f35003e5394
+      size: 36167864
     params:
       params.yaml:
-        data:
-          _target_: deckard.base.data.Data
-          generate:
-            name: torch_cifar100
-            path: original_data
-          sample:
-            random_state: 0
-            stratify: true
-          sklearn_pipeline:
-            preprocessor:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-        files:
-          _target_: deckard.base.files.FileConfig
-          adv_predictions_file: adv_predictions.json
-          attack_dir: attacks
-          attack_file: attack
-          attack_type: .pkl
-          data_dir: data
-          data_file: data
-          data_type: .pkl
-          directory: cifar100
-          model_dir: models
-          model_file: model
-          model_type: .pt
-          name: default
-          params_file: params.yaml
-          predictions_file: predictions.json
-          reports: reports
-          score_dict_file: score_dict.json
-        model:
-          _target_: deckard.base.model.Model
-          art:
-            _target_: deckard.base.model.art_pipeline.ArtPipeline
-            data:
-              _target_: deckard.base.data.Data
-              generate:
-                name: torch_cifar100
-                path: original_data
-              sample:
-                random_state: 0
-                stratify: true
-              sklearn_pipeline:
-                preprocessor:
-                  name: sklearn.preprocessing.StandardScaler
-                  with_mean: true
-                  with_std: true
-            initialize:
-              clip_values:
-              - 0
-              - 255
-              criterion:
-                name: torch.nn.CrossEntropyLoss
-              optimizer:
-                lr: 0.01
-                momentum: 0.9
-                name: torch.optim.SGD
-            library: pytorch
-          data:
-            _target_: deckard.base.data.Data
-            generate:
-              name: torch_cifar100
-              path: original_data
-            sample:
-              random_state: 0
-              stratify: true
-            sklearn_pipeline:
-              preprocessor:
-                name: sklearn.preprocessing.StandardScaler
-                with_mean: true
-                with_std: true
-          init:
-            _target_: deckard.base.model.ModelInitializer
-            name: torch_example.ResNet18
-            num_channels: 3
-            num_classes: 100
-          library: pytorch
-          trainer:
-            batch_size: 1024
-            nb_epoch: 10
-        scorers:
-          _target_: deckard.base.scorer.ScorerDict
-          accuracy:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: maximize
-            name: sklearn.metrics.accuracy_score
-          log_loss:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: minimize
-            name: sklearn.metrics.log_loss
+        files.directory: cifar100
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          model.trainer.nb_epoch: 20
+        params:
+          Deep: attack.init.nb_grads
+          FGM: attack.init.eps
+          HSJ: attack.init.max_iter
+          Pixel: attack.init.th
+          PGD: attack.init.eps
+          Thresh: attack.init.th
+          Gauss-out: model.art.postprocessor.params.scale
+          Conf: model.art.postprocessor.params.cutoff
+          FSQ: model.art.preprocessor.params.bit_depth
+          Gauss-in: model.art.preprocessor.params.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
     outs:
     - path: cifar100/reports/train/default/predictions.json
       md5: 3ef4550e044e6e587079a021519b2bc9

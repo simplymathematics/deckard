@@ -83,14 +83,14 @@ def calculate_failure_rate(data):
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
     adv_failure_rate = (
-        1 - data.loc[:, "adv_accuracy"] * data.loc[:, "attack.attack_size"]
+        1 - data.loc[:, "adv_accuracy"] * 100
     ) / data.loc[:, "predict_time"]
 
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
@@ -200,12 +200,10 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=["device_id"],
+    control_variable=["model_layers"],
     defaults={
-        # "model.trainer.nb_epoch": 20,
-        # "model.trainer.kwargs.nb_epoch": 20,
-        # "model.trainer.batch_size" : 1024,
-        # "model.trainer.kwargs.batch_size" : 1024,
+        "model.trainer.nb_epoch": 20,
+        "model.trainer.kwargs.nb_epoch": 20,
     },
 ):
     """
@@ -476,7 +474,7 @@ def clean_data_for_plotting(
         data.loc[:, "model_layers"] = model_layers
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    data["nb_epoch"] = (
+    data["model.trainer.nb_epoch"] = (
         data["model.trainer.kwargs.nb_epoch"]
         if "model.trainer.kwargs.nb_epoch" in data.columns
         else data["model.trainer.nb_epoch"]
@@ -572,10 +570,10 @@ if __name__ == "__main__":
             with open(args.pareto_dict, "r") as f:
                 sense_dict = yaml.safe_load(f)
         elif (
-            isinstance(args.pareto_dict.split(":")[:-2], str)
+            isinstance(args.pareto_dict.split(":")[:-1], str)
             and Path(args.pareto_dict.split(":")[:-2]).exists()
         ):
-            with open(Path(args.pareto_dict.split(":")[:-2]), "r") as f:
+            with open(Path(args.pareto_dict.split(":")[:-1]), "r") as f:
                 sense_dict = yaml.safe_load(f)[args.pareto_dict.split(":")[:-1]]
         else:
             raise ValueError(
@@ -588,7 +586,7 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict.get("attacks", {})
     control_dict = big_dict.get("params", {})
     fillna = big_dict.get("fillna", {})
-    min_max = big_dict.get("min_max", ["nb_epoch"])
+    min_max = big_dict.get("min_max", ["model.trainer.nb_epoch"])
 
     results = clean_data_for_plotting(
         data,
