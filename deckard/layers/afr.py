@@ -30,8 +30,9 @@ def plot_aft(
     mtype,
     xlabel=None,
     ylabel=None,
+    strata_cols=['atk_gen', 'def_gen'],
     replacement_dict={},
-    filetype=".pdf",
+    filetype=".eps",
     folder=".",
     **kwargs,
 ):
@@ -52,13 +53,33 @@ def plot_aft(
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
     plt.gcf().clear()
-    aft.fit(df, duration_col=duration_col, event_col=event_col)
+    # sort column names by name
+    df = df.reindex(sorted(df.columns), axis=1)
+    if isinstance(aft, CoxPHFitter) and len(strata_cols)> 0:
+        aft.fit(df,
+                duration_col=duration_col, 
+                event_col=event_col, 
+                strata=strata_cols, 
+                model_ancillary=df[strata_cols], 
+                robust=True, 
+                )
+    else:
+        aft.fit(df, 
+                duration_col=duration_col,
+                event_col=event_col,
+                robust=True,
+                )
     ax = aft.plot()
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
-    ax.set_yticklabels(labels)
+    values = ax.get_yticks().tolist()
+    # sort labels by values
+    labels = [x for _, x in sorted(zip(values, labels))]
+    values = [x for x, _ in sorted(zip(values, labels))]
+    ax.set_yticks(values)
+    ax.set_yticklabels(labels, fontsize=12)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -75,14 +96,14 @@ def plot_partial_effects(
     covariate_array,
     values_array,
     title=None,
-    file="partial_effects.pdf",
+    file="partial_effects.eps",
     xlabel="Covariate",
     ylabel="Failure rate",
     legend_kwargs={"loc": "upper left"},
     replacement_dict={},
     cmap="coolwarm",
     folder=".",
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     plt.gcf().clear()
@@ -92,8 +113,47 @@ def plot_partial_effects(
     )
     labels = pareto.get_yticklabels()
     labels = [label.get_text() for label in labels]
+    values = pareto.get_yticks().tolist()
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
+    pareto.set_yticks(values)
+    pareto.set_yticklabels(labels)
+    pareto.legend(**legend_kwargs)
+    pareto.set_ylabel(ylabel)
+    pareto.set_xlabel(xlabel)
+    pareto.set_title(title)
+    pareto.get_figure().tight_layout()
+    pareto.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.gcf().clear()
+    return pareto
+
+def plot_partial_effects(
+    aft,
+    covariate_array,
+    values_array,
+    title=None,
+    file="partial_effects.eps",
+    xlabel="Covariate",
+    ylabel="Failure rate",
+    legend_kwargs={"loc": "upper left"},
+    replacement_dict={},
+    cmap="coolwarm",
+    folder=".",
+    filetype=".eps",
+    **kwargs,
+):
+    plt.gcf().clear()
+    file = Path(folder, file).with_suffix(filetype)
+    pareto = aft.plot_partial_effects_on_outcome(
+        covariate_array, values_array, cmap=cmap, **kwargs
+    )
+    labels = pareto.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    values = pareto.get_yticks().tolist()
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    pareto.set_yticks(values)
     pareto.set_yticklabels(labels)
     pareto.legend(**legend_kwargs)
     pareto.set_ylabel(ylabel)
@@ -165,23 +225,28 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     ]
     # aft_data["Train LL"] = [x["train_score"] for x in score_list]
     # aft_data["Test LL"] = [x["test_score"] for x in score_list]
-    aft_data["Mean $S(t;\\theta)$"] = [
+    aft_data[r"Mean $S(t;\theta)$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data["Median $S(t;\\theta)$"] = [
+    aft_data[r"Median $S(t;\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
     aft_data.index.name = "Distribution"
     aft_data.index = [str(x).replace("_", " ").title() for x in aft_dict.keys()]
     label = f"tab:{dataset}"
     upper = dataset.upper()
+    aft_data.index.name = "Distribution"
+    aft_data.index = [str(k).replace("_", ' ' ).capitalize() for k in aft_dict.keys()]
+    aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
         buf = folder / "aft_comparison.tex",
         float_format="%.3g",
         na_rep="--",
         label=label,
+        index_names = True,
         caption=f"Comparison of AFR Models on the {upper} dataset.",
+        na_rep="--",
     )
     aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--")
     
@@ -336,12 +401,10 @@ if "__main__" == __name__:
     logging.basicConfig(level=logging.INFO)
     font = {
         "family": "Times New Roman",
-        "weight": "bold",
-        "size": 22,
     }
 
     matplotlib.rc("font", **font)
-
+    matplotlib.rcParams['font.size'] = 8
     csv_file = args.data_file
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
@@ -358,11 +421,18 @@ if "__main__" == __name__:
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
+    
+    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
+    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * args.attack_size
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * args.attack_size
     render_all_afr_plots(
         config,
         duration_col,
