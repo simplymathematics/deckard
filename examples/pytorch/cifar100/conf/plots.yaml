@@ -99,22 +99,6 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_accuracy_vs_defence_type.eps
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  titles: Adv. Accuracy vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: adv_accuracy
-  ylabels: Adv. Ben. Accuracy
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
 - file: adv_accuracy_vs_attack_type.eps
   hue: model_name
   kind: boxen
@@ -162,8 +146,8 @@ line_plot:
   ylabel: Ben. Accuracy
   hue_order:
   - Control
-  - Epochs
   - Conf
+  - Epochs
   - Gauss-in
   - Gauss-out
   - Conf
@@ -182,8 +166,8 @@ line_plot:
   ylabel: Adv. Accuracy
   hue_order:
   - Control
-  - Epochs
   - Conf
+  - Epochs
   - Gauss-in
   - Gauss-out
   - Conf
@@ -202,8 +186,8 @@ line_plot:
   ylabel: $h_{adv.}$
   hue_order:
   - Control
-  - Epochs
   - Conf
+  - Epochs
   - Gauss-in
   - Gauss-out
   - Conf

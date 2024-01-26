@@ -130,7 +130,7 @@ log_logistic:
     - "file": "log_logistic_layers_partial_effect.eps"
       "covariate_array": "model_layers"
       "values_array": [18, 34, 50, 101, 152]
-      "title": "$S(t)$ for Cox AFR"
+      "title": "$S(t)$ for Log Logistic AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
@@ -173,7 +173,7 @@ log_normal:
     - "file": "log_normal_layers_partial_effect.eps"
       "covariate_array": "model_layers"
       "values_array": [18, 34, 50, 101, 152]
-      "title": "$S(t)$ for Cox AFR"
+      "title": "$S(t)$ for Log Normal AFR"
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {

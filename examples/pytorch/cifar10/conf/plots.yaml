@@ -99,22 +99,6 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_accuracy_vs_defence_type.eps
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  titles: Adv. Accuracy vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: adv_accuracy
-  ylabels: Adv. Ben. Accuracy
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
 - file: adv_accuracy_vs_attack_type.eps
   hue: model_name
   kind: boxen
@@ -227,7 +211,8 @@ line_plot:
   - HSJ
   - Pixel
   - Thresh
-
+  errorbar: se
+  err_style: bars
 scatter_plot:
 - x: train_time_per_sample
   y: adv_failure_rate
@@ -236,8 +221,8 @@ scatter_plot:
   ylabel: $h_{adv}$
   title: $h_{adv}$ vs $t_{train}$
   file: adv_failure_rate_vs_train_time.eps
-  y_scale: log
-  x_scale: log
+  # y_scale: log
+  # x_scale: log
   legend: 
     title: Model Name
     bbox_to_anchor: [1.05, 1]

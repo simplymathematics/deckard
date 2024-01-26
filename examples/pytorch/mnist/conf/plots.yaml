@@ -221,8 +221,8 @@ scatter_plot:
   ylabel: $h_{adv}$
   title: $h_{adv}$ vs $t_{train}$
   file: adv_failure_rate_vs_train_time.eps
-  y_scale: log
-  x_scale: log
+  # y_scale: log
+  # x_scale: log
   legend: 
     title: Model Name
     bbox_to_anchor: [1.05, 1]
