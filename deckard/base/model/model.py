@@ -134,6 +134,7 @@ class ModelTrainer:
             end_timestamp = time()
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
+
             nb_classes = len(np.unique(data[2]))
             data[2] = to_categorical(data[2], nb_classes=nb_classes)
             data[3] = to_categorical(data[3], nb_classes=nb_classes)
@@ -145,6 +146,7 @@ class ModelTrainer:
         except ValueError as e:  # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
+
                 nb_classes = len(np.unique(data[2]))
                 data[2] = to_categorical(data[2], nb_classes=nb_classes)
                 start = process_time_ns()

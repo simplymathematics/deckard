@@ -53,11 +53,12 @@ def plot_aft(
     plt.gcf().clear()
     assert duration_col in df.columns, f"{duration_col} not in df.columns"
     assert event_col in df.columns, f"{event_col} not in df.columns"
-    aft.fit(df, 
-            duration_col=duration_col,
-            event_col=event_col,
-            # robust=True,
-            )
+    aft.fit(
+        df,
+        duration_col=duration_col,
+        event_col=event_col,
+        # robust=True,
+    )
     ax = aft.plot()
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -132,7 +133,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     ), "Length of score list and aft dict must be equal"
     folder = Path(folder)
     aft_data = pd.DataFrame()
-    
+
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
@@ -153,20 +154,21 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     label = f"tab:{dataset}"
     upper = dataset.upper()
     aft_data.index.name = "Distribution"
-    aft_data.index = [str(k).replace("_", ' ' ).capitalize() for k in aft_dict.keys()]
+    aft_data.index = [str(k).replace("_", " ").capitalize() for k in aft_dict.keys()]
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf = folder / "aft_comparison.tex",
+        buf=folder / "aft_comparison.tex",
         float_format="%.3g",
         na_rep="--",
         label=label,
-        index_names = True,
+        index_names=True,
         caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
-    aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--")
-    
-    
+    aft_data.to_csv(
+        Path(folder / "aft_comparison.csv"), index_label="Distribution", na_rep="--"
+    )
+
     return aft_data
 
 
@@ -192,7 +194,7 @@ def clean_data_for_aft(
     # for col in cols:
     #     cleaned = cleaned[cleaned[col] != -1e10]
     #     cleaned = cleaned[cleaned[col] != 1e10]
-    
+
     # cleaned.dropna(inplace=True, how="any", axis=0)
     cleaned = pd.get_dummies(cleaned)
     # de-duplicate index

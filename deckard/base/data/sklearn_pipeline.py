@@ -43,7 +43,9 @@ class SklearnDataPipeline:
         pipe = kwargs.pop("pipeline", {})
         pipe.update(**kwargs)
         for stage in pipe:
-            pipe[stage] = OmegaConf.to_container(OmegaConf.create(pipe[stage]), resolve=True)
+            pipe[stage] = OmegaConf.to_container(
+                OmegaConf.create(pipe[stage]), resolve=True
+            )
             name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
             pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
         self.pipeline = pipe

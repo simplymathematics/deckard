@@ -241,9 +241,9 @@ def scatter_plot(
         **kwargs,
     )
     if y_scale is not None:
-      graph.set_yscale(y_scale)
+        graph.set_yscale(y_scale)
     if x_scale is not None:
-      graph.set_xscale(x_scale)
+        graph.set_xscale(x_scale)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)
