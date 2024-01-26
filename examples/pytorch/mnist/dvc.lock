@@ -4,7 +4,28 @@ stages:
     cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
       -c conf/clean.yaml
     deps:
+    - path: mnist/reports/attack/
+      hash: md5
+      md5: a2694f8e9ea5c5ff400d11fa1d98001d.dir
+      size: 21895572255
+      nfiles: 53006
+    - path: mnist/reports/attack/ResNet101.db
+      md5: 600452804d96c8b8483c3f8da01130c4
+      size: 462848
+    - path: mnist/reports/attack/ResNet18.db
+      md5: 920b0ed178ec504c0d7990777862283f
+      size: 1363968
+    - path: mnist/reports/attack/ResNet34.db
+      md5: 3f56dd2ea0783a56a2a9e3eaaad88c21
+      size: 1945600
+    - path: mnist/reports/attack/ResNet50.db
+      md5: d9ee221b942b56d9bb720e022e05bf4b
+      size: 462848
+    outs:
     - path: mnist/reports/attack.csv
+      hash: md5
+      md5: aa61d0f5118327d164cfc37a466e5162
+      size: 47376297
       md5: ec29f31a3296cc148eabeb7b7ac111bd
       size: 47418362
     params:

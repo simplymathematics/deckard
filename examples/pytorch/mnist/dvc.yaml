@@ -165,7 +165,15 @@ stages:
         - weibull
         - log_logistic
         - log_normal
+    params:
+      - files.directory
+      - conf/afr.yaml:
+        - covariates
+        - weibull
+        - log_logistic
+        - log_normal
   copy_results:
       cmd: mkdir -p ~/ml_afr/mnist/ && cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
       deps:
+        - ${files.directory}/plots/
         - ${files.directory}/plots/

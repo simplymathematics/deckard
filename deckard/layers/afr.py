@@ -12,7 +12,6 @@ from lifelines import (
     CoxPHFitter,
 )
 from .clean_data import drop_frames_without_results
-from .clean_data import drop_frames_without_results
 import matplotlib
 import logging
 import yaml
@@ -107,78 +106,6 @@ def plot_partial_effects(
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
     pareto.set_yticks(values)
-    pareto.set_yticklabels(labels)
-    pareto.legend(**legend_kwargs)
-    pareto.set_ylabel(ylabel)
-    pareto.set_xlabel(xlabel)
-    pareto.set_title(title)
-    pareto.get_figure().tight_layout()
-    pareto.get_figure().savefig(file)
-    logger.info(f"Saved graph to {file}")
-    plt.gcf().clear()
-    return pareto
-
-def plot_partial_effects(
-    aft,
-    covariate_array,
-    values_array,
-    title=None,
-    file="partial_effects.eps",
-    xlabel="Covariate",
-    ylabel="Failure rate",
-    legend_kwargs={"loc": "upper left"},
-    replacement_dict={},
-    cmap="coolwarm",
-    folder=".",
-    filetype=".eps",
-    **kwargs,
-):
-    plt.gcf().clear()
-    file = Path(folder, file).with_suffix(filetype)
-    pareto = aft.plot_partial_effects_on_outcome(
-        covariate_array, values_array, cmap=cmap, **kwargs
-    )
-    labels = pareto.get_yticklabels()
-    labels = [label.get_text() for label in labels]
-    values = pareto.get_yticks().tolist()
-    for k, v in replacement_dict.items():
-        labels = [label.replace(k, v) for label in labels]
-    pareto.set_yticks(values)
-    pareto.set_yticklabels(labels)
-    pareto.legend(**legend_kwargs)
-    pareto.set_ylabel(ylabel)
-    pareto.set_xlabel(xlabel)
-    pareto.set_title(title)
-    pareto.get_figure().tight_layout()
-    pareto.get_figure().savefig(file)
-    logger.info(f"Saved graph to {file}")
-    plt.gcf().clear()
-    return pareto
-
-def plot_partial_effects(
-    aft,
-    covariate_array,
-    values_array,
-    title=None,
-    file="partial_effects.eps",
-    xlabel="Covariate",
-    ylabel="Failure rate",
-    legend_kwargs={"loc": "upper left"},
-    replacement_dict={},
-    cmap="coolwarm",
-    folder=".",
-    filetype=".eps",
-    **kwargs,
-):
-    plt.gcf().clear()
-    file = Path(folder, file).with_suffix(filetype)
-    pareto = aft.plot_partial_effects_on_outcome(
-        covariate_array, values_array, cmap=cmap, **kwargs
-    )
-    labels = pareto.get_yticklabels()
-    labels = [label.get_text() for label in labels]
-    for k, v in replacement_dict.items():
-        labels = [label.replace(k, v) for label in labels]
     pareto.set_yticklabels(labels)
     pareto.legend(**legend_kwargs)
     pareto.set_ylabel(ylabel)
@@ -364,9 +291,6 @@ def render_all_afr_plots(
             duration_col=duration_col,
             folder=folder,
         )
-        models[mtype].print_summary()
-        if isinstance(models[mtype], CoxPHFitter):
-            models[mtype].check_assumptions(X_train, show_plots=True)
     score_list = list(scores.values())
     aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
     print("*" * 80)
@@ -374,6 +298,7 @@ def render_all_afr_plots(
     print("*" * 80)
     print(f"{aft_data}")
     print("*" * 80)
+
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
@@ -383,7 +308,6 @@ if "__main__" == __name__:
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
-    afr_parser.add_argument("--attack_size", type=int, default=100)
     args = afr_parser.parse_args()
     target = args.target
     duration_col = args.duration_col
@@ -416,8 +340,14 @@ if "__main__" == __name__:
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * args.attack_size
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * args.attack_size
+    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
+    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+        :,
+        "attack.attack_size",
+    ]
     render_all_afr_plots(
         config,
         duration_col,
