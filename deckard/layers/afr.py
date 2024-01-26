@@ -136,7 +136,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data["Median $S(t;\\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
-    aft_data.index.name = "Model"
+    aft_data.index.name = "Distribution"
     aft_data.index = aft_dict.keys()
     label = f"tab:{dataset}"
     upper = dataset.upper()
@@ -148,7 +148,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         caption=f"Comparison of AFR Models on the {upper} dataset.",
     )
     aft_data.fillna("--", inplace=True)
-    aft_data.to_csv(Path(folder / "aft_comparison.csv"))
+    aft_data.to_csv(Path(folder / "aft_comparison.csv"), index_label="Distribution")
     
     
     return aft_data
@@ -157,7 +157,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
 def clean_data_for_aft(
     data,
     covariate_list,
-    target="adv_failure_rate",
+    target="adv_accuracy",
 ):
     subset = data.copy()
     assert (
@@ -172,11 +172,15 @@ def clean_data_for_aft(
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
+    cleaned.index = subset.index
     for col in cols:
         cleaned = cleaned[cleaned[col] != -1e10]
         cleaned = cleaned[cleaned[col] != 1e10]
+    
     cleaned.dropna(inplace=True, how="any", axis=0)
     cleaned = pd.get_dummies(cleaned)
+    # de-duplicate index
+    cleaned = cleaned.loc[~cleaned.index.duplicated(keep="first")]
     assert (
         target in cleaned
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
@@ -269,6 +273,9 @@ def render_all_afr_plots(
             duration_col=duration_col,
             folder=folder,
         )
+        models[mtype].print_summary()
+        if isinstance(models[mtype], CoxPHFitter):
+            models[mtype].check_assumptions(X_train, show_plots=True)
     score_list = list(scores.values())
     aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
     print("*" * 80)
@@ -330,3 +337,4 @@ if "__main__" == __name__:
         test_size=0.8,
         folder=FOLDER,
     )
+

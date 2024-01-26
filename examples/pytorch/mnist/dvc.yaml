@@ -141,7 +141,7 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col ${covariates[0]} --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/ --target adv_failures
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col ${covariates[0]} --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/ 
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
       - ${files.directory}/plots/${cat_plot[0].file}
@@ -167,6 +167,6 @@ stages:
         - log_logistic
         - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+      cmd: mkdir -p ~/ml_afr/mnist/ && cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
       deps:
         - ${files.directory}/plots/

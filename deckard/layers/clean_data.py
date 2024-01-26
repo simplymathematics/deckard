@@ -76,17 +76,17 @@ def calculate_failure_rate(data):
     assert "adv_fit_time" in data.columns, "adv_fit_time not in data.columns"
     assert "train_time" in data.columns, "train_time not in data.columns"
     if "predict_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"])  / data.loc[:, "predict_time_per_sample"]
+        failure_rate = (1 - data.loc[:, "accuracy"]) *100 / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
-        failure_rate = (1 - data.loc[:, "accuracy"]) / data.loc[:, "predict_proba_time_per_sample"]
+        failure_rate = (1 - data.loc[:, "accuracy"]) *100  / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"]) / data.loc[:, "adv_fit_time_per_sample"]
+    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"]) *100 / data.loc[:, "predict_time"]
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time_per_sample"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)

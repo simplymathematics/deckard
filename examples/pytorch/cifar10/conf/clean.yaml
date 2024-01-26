@@ -25,7 +25,7 @@ params:
   FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
   Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
   Control: model_layers
-  Epochs: model.trainer.kwargs.nb_epoch
+  Epochs: model.trainer.nb_epoch
   control:
     model_layers: 18
   defaults:

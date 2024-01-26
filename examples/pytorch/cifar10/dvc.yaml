@@ -142,20 +142,19 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/ 
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
-      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
-      - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_epochs_partial_effect.pdf
-      - ${files.directory}/plots/weibull_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_layers_partial_effect.pdf
+      - ${files.directory}/plots/weibull_aft.eps
+      - ${files.directory}/plots/weibull_epochs_partial_effect.eps
+      - ${files.directory}/plots/weibull_layers_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_aft.eps
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.eps
+      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_normal_layers_partial_effect.eps
     params:
       - files.directory
       - conf/afr.yaml:
@@ -164,6 +163,7 @@ stages:
         - log_logistic
         - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
+      cmd: mkdir -p ~/ml_afr/cifar/ && cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
       deps:
         - ${files.directory}/plots/
+  

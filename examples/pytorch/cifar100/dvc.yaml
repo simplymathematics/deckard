@@ -4,7 +4,6 @@ vars:
   - conf/plots.yaml:cat_plot
   - conf/afr.yaml:covariates
   - conf/afr.yaml:weibull
-  - conf/afr.yaml:cox
   - conf/afr.yaml:log_logistic
   - conf/afr.yaml:log_normal
   - conf/clean.yaml:attacks
@@ -135,13 +134,13 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv --target adv_accuracy --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv --target adv_failures --duration_col adv_fit_time --dataset cifar100 --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
     plots:
-      - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/cox_aft.pdf
-      - ${files.directory}/plots/log_logistic_aft.pdf
+      - ${files.directory}/plots/weibull_aft.eps
+      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/log_logistic_aft.eps
     metrics:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
@@ -151,10 +150,9 @@ stages:
       - conf/afr.yaml:
         - covariates
         - weibull
-        - cox
         - log_logistic
         - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar100
+      cmd: mkdir -p ~/ml_afr/cifar100 &&  cp -r ${files.directory}/plots/* ~/ml_afr/cifar100
       deps:
         - ${files.directory}/plots/

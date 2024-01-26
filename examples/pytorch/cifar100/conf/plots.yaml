@@ -1,5 +1,5 @@
 cat_plot:
-- file: adv_accuracy_vs_defence_type.pdf
+- file: adv_accuracy_vs_defence_type.eps
   hue: model_name
   kind: boxen
   set:
@@ -16,7 +16,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_accuracy_vs_defence_type.pdf
+- file: ben_accuracy_vs_defence_type.eps
   hue: model_name
   kind: boxen
   titles: Ben. Accuracy vs Defence Type
@@ -31,7 +31,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_failures_per_train_time_vs_defence_type.pdf
+- file: ben_failures_per_train_time_vs_defence_type.eps
   hue: model_name
   kind: boxen
   set:
@@ -48,7 +48,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_failures_per_train_time_vs_defence_type.pdf
+- file: adv_failures_per_train_time_vs_defence_type.eps
   hue: model_name
   kind: boxen
   set:
@@ -65,7 +65,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_failures_per_train_time_vs_attack_type.pdf
+- file: adv_failures_per_train_time_vs_attack_type.eps
   hue: model_name
   kind: boxen
   legend_title: Model Name
@@ -83,7 +83,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_failures_per_test_time_vs_defence_type.pdf
+- file: adv_failures_per_test_time_vs_defence_type.eps
   hue: model_name
   kind: boxen
   legend_title: Model Name
@@ -99,7 +99,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_accuracy_vs_defence_type.pdf
+- file: adv_accuracy_vs_defence_type.eps
   hue: model_name
   kind: boxen
   legend_title: Model Name
@@ -115,7 +115,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_accuracy_vs_attack_type.pdf
+- file: adv_accuracy_vs_attack_type.eps
   hue: model_name
   kind: boxen
   legend_title: Model Name
@@ -131,7 +131,7 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_failure_rate_vs_defence_type.pdf
+- file: ben_failure_rate_vs_defence_type.eps
   hue: model_name
   kind: boxen
   legend_title: Model Name
@@ -150,7 +150,7 @@ cat_plot:
   - ResNet101
   - ResNet152
 line_plot:
-- file: def_param_vs_accuracy.pdf
+- file: def_param_vs_accuracy.eps
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: Ben. Accuracy vs Defence Strength
@@ -168,7 +168,9 @@ line_plot:
   - Gauss-out
   - Conf
   - FSQ
-- file: def_param_vs_adv_accuracy.pdf
+  errorbar: se
+  err_style: bars
+- file: def_param_vs_adv_accuracy.eps
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: Adv. Accuracy vs Defence Strength
@@ -186,7 +188,9 @@ line_plot:
   - Gauss-out
   - Conf
   - FSQ
-- file: def_param_vs_adv_failure_rate.pdf
+  errorbar: se
+  err_style: bars
+- file: def_param_vs_adv_failure_rate.eps
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: $h_{adv}$ vs Defence Strength
@@ -204,7 +208,9 @@ line_plot:
   - Gauss-out
   - Conf
   - FSQ
-- file: atk_param_vs_accuracy.pdf
+  errorbar: se
+  err_style: bars
+- file: atk_param_vs_accuracy.eps
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}
   title: Adv. Accuracy vs Attack Strength
@@ -221,6 +227,8 @@ line_plot:
   - HSJ
   - Pixel
   - Thresh
+  errorbar: se
+  err_style: bars
 scatter_plot:
 - x: train_time_per_sample
   y: adv_failure_rate
@@ -228,7 +236,7 @@ scatter_plot:
   xlabel: $t_{train}$
   ylabel: $h_{adv}$
   title: $h_{adv}$ vs $t_{train}$
-  file: adv_failure_rate_vs_train_time.pdf
+  file: adv_failure_rate_vs_train_time.eps
   # y_scale: log
   # x_scale: log
   legend: 
