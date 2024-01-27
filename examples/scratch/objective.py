@@ -9,7 +9,8 @@ from deckard.layers.optimise import optimise
 
 logger = logging.getLogger(__name__)
 config_path = os.environ.pop(
-    "DECKARD_CONFIG_PATH", str(Path(Path(), "conf").absolute().as_posix()),
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path(), "conf").absolute().as_posix()),
 )
 config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
 
@@ -56,10 +57,12 @@ def configure(cfg: DictConfig, trial: Trial) -> None:
     if postprocessor is not None:
         if postprocessor.strip() == "art.defences.postprocessor.HighConfidence":
             _ = trial.suggest_int(
-                "model.art.pipeline.preprocessor.defences.HighConfidence.threshold", 1,
+                "model.art.pipeline.preprocessor.defences.HighConfidence.threshold",
+                1,
             )
             trial.suggest_categorical(
-                "model.art.pipeline.preprocessor.defences.HighConfidence.abs", [True],
+                "model.art.pipeline.preprocessor.defences.HighConfidence.abs",
+                [True],
             )
             trial.suggest_categorical(
                 "model.art.pipeline.preprocessor.defences.HighConfidence.clip_values",
@@ -67,7 +70,9 @@ def configure(cfg: DictConfig, trial: Trial) -> None:
             )
         elif postprocessor.strip() == "art.defences.postprocessor.GaussianNoise":
             _ = trial.suggest_loguniform(
-                "model.art.pipeline.preprocessor.defences.GaussianNoise.sigma", 0.1, 10,
+                "model.art.pipeline.preprocessor.defences.GaussianNoise.sigma",
+                0.1,
+                10,
             )
             trial.suggest_categorical(
                 "model.art.pipeline.preprocessor.defences.GaussianNoise.clip_values",

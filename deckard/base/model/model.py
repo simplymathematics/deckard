@@ -67,7 +67,8 @@ class ModelInitializer:
                 params["output_dim"] = params["output_dim"]
             elif isinstance(params["output_dim"], ListConfig):
                 output_dim_list = OmegaConf.to_container(
-                    params["output_dim"], resolve=True,
+                    params["output_dim"],
+                    resolve=True,
                 )
                 if len(output_dim_list) == 1:
                     params["output_dim"] = output_dim_list[0]
@@ -320,7 +321,8 @@ class Model:
         elif isinstance(data, (str, Path)):
             data = self.load(data)
         assert isinstance(
-            data, (type(None), list, tuple),
+            data,
+            (type(None), list, tuple),
         ), f"Data {data} is not a list. It is of type {type(data)}."
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         result_dict["data"] = data
@@ -333,7 +335,8 @@ class Model:
             model = self.load(model)
         elif hasattr(model, ("fit", "fit_generator")):
             assert hasattr(model, "predict") or hasattr(
-                model, "predict_proba",
+                model,
+                "predict_proba",
             ), f"Model {model} does not have a predict or predict_proba method."
         else:  # pragma: no cover
             raise ValueError(f"Model {model} is not a valid model.")
@@ -362,7 +365,9 @@ class Model:
             # Fitting
             if model_file is None:
                 model, fit_time_dict = self.fit(
-                    data=data, model=model, model_file=model_file,
+                    data=data,
+                    model=model,
+                    model_file=model_file,
                 )
                 time_dict.update(**fit_time_dict)
                 result_dict["model"] = model
@@ -373,7 +378,9 @@ class Model:
                 result_dict["model"] = model
             else:
                 model, fit_time_dict = self.fit(
-                    data=data, model=model, model_file=model_file,
+                    data=data,
+                    model=model,
+                    model_file=model_file,
                 )
                 result_dict["model"] = model
                 result_dict["data"] = data
@@ -381,7 +388,9 @@ class Model:
             # Predicting
             if predictions_file is not None and not Path(predictions_file).exists():
                 preds, pred_time_dict = self.predict(
-                    data=data, model=model, predictions_file=predictions_file,
+                    data=data,
+                    model=model,
+                    predictions_file=predictions_file,
                 )
                 result_dict["time_dict"].update(**pred_time_dict)
                 result_dict["predictions"] = preds
@@ -390,14 +399,18 @@ class Model:
                 result_dict["predictions"] = preds
             else:
                 preds, pred_time_dict = self.predict(
-                    data=data, model=model, predictions_file=predictions_file,
+                    data=data,
+                    model=model,
+                    predictions_file=predictions_file,
                 )
                 result_dict["time_dict"].update(**pred_time_dict)
                 result_dict["predictions"] = preds
             # Predicting probabilities
             if probabilities_file is not None:
                 probs, prob_time_dict = self.predict_proba(
-                    data=data, model=model, probabilities_file=probabilities_file,
+                    data=data,
+                    model=model,
+                    probabilities_file=probabilities_file,
                 )
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
@@ -407,14 +420,18 @@ class Model:
                 result_dict["time_dict"].update(**prob_time_dict)
             else:
                 probs, prob_time_dict = self.predict_proba(
-                    data=data, model=model, probabilities_file=probabilities_file,
+                    data=data,
+                    model=model,
+                    probabilities_file=probabilities_file,
                 )
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
             # Predicting loss
             if losses_file is not None:
                 loss, loss_time_dict = self.predict_log_loss(
-                    data=data, model=model, losses_file=losses_file,
+                    data=data,
+                    model=model,
+                    losses_file=losses_file,
                 )
                 time_dict.update(**loss_time_dict)
                 result_dict["losses"] = loss
@@ -424,7 +441,9 @@ class Model:
                 result_dict["losses"] = loss
             else:
                 loss, loss_time_dict = self.predict_log_loss(
-                    data=data, model=model, losses_file=losses_file,
+                    data=data,
+                    model=model,
+                    losses_file=losses_file,
                 )
                 time_dict.update(**loss_time_dict)
                 result_dict["losses"] = loss
@@ -460,7 +479,8 @@ class Model:
         elif isinstance(data, type(None)):
             data = self.data.initialize(data)
         assert isinstance(
-            data, (list),
+            data,
+            (list),
         ), f"Data {data} is not a list. It is of type {type(data)}."
         if isinstance(model, (str, Path)) and Path(model).exists():
             model = self.load(model)
@@ -535,7 +555,8 @@ class Model:
         ), "X_test and y_test must have the same length."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         assert hasattr(
-            model, "predict",
+            model,
+            "predict",
         ), f"Model {model} does not have a predict method."
         device = str(model.device) if hasattr(model, "device") else "cpu"
         try:

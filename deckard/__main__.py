@@ -24,7 +24,10 @@ def run_submodule(submodule, args):
         cmd = f"python -m deckard.layers.{submodule} {args}"
     logger.info(f"Running {cmd}")
     with subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
     ) as proc:
         for line in proc.stdout:
             print(line.rstrip().decode("utf-8"))
@@ -41,9 +44,11 @@ def parse_and_repro(args, default_config="default.yaml", config_dir="conf"):
     if len(args) == 0:
         assert (
             save_params_file(
-                config_dir=Path(Path(), config_dir)
-                if not Path(config_dir).is_absolute()
-                else Path(config_dir),
+                config_dir=(
+                    Path(Path(), config_dir)
+                    if not Path(config_dir).is_absolute()
+                    else Path(config_dir)
+                ),
                 config_file=default_config,
             )
             is None
@@ -70,7 +75,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--submodule", type=str, help=f"Submodule to run. Choices: {layer_list}",
+        "--submodule",
+        type=str,
+        help=f"Submodule to run. Choices: {layer_list}",
     )
     parser.add_argument(
         "--config_file",
