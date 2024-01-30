@@ -126,3 +126,7 @@ deckard/deckard.egg-info/*
 
 *log.txt
 *.hydra
+
+
+# envs
+env310/

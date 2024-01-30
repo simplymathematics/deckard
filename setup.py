@@ -31,6 +31,8 @@ install_requires = [
     "dvc",
     "paretoset",
     "lifelines",
+    "seaborn",
+    "jinja2",
 ]
 test_requires = [
     "pytest",
