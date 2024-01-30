@@ -74,15 +74,15 @@ def calculate_failure_rate(data):
     assert "train_time" in data.columns, "train_time not in data.columns"
     if "predict_time" in data.columns:
         failure_rate = (
-            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+            (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
         failure_rate = (
-            1 - data.loc[:, "accuracy"] * data.loc[:, "attack.attack_size"]
+            (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"] * 100) / data.loc[
+    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"]) * data.loc[:, "attack.attack_size"] / data.loc[
         :, "predict_time"
     ]
 
