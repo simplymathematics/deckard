@@ -63,20 +63,31 @@ def calculate_failure_rate(data):
     data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
     data.columns.str.replace(" ", "")
     assert "accuracy" in data.columns, "accuracy not in data.columns"
+    data.loc[:, "accuracy"] = pd.to_numeric(data.loc[:, "accuracy"])
     assert (
         "attack.attack_size" in data.columns
     ), "attack.attack_size not in data.columns"
+    data.loc[:, "attack.attack_size"] = pd.to_numeric(
+        data.loc[:, "attack.attack_size"]
+    )
     assert (
         "predict_time" in data.columns or "predict_proba_time" in data.columns
     ), "predict_time or predict_proba_time not in data.columns"
     assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
+    data.loc[:, "adv_accuracy"] = pd.to_numeric(data.loc[:, "adv_accuracy"])
     assert "adv_fit_time" in data.columns, "adv_fit_time not in data.columns"
+    data.loc[:, "adv_fit_time"] = pd.to_numeric(data.loc[:, "adv_fit_time"])
     assert "train_time" in data.columns, "train_time not in data.columns"
+    data.loc[:, "train_time"] = pd.to_numeric(data.loc[:, "train_time"])
     if "predict_time" in data.columns:
+        data.loc[:, "predict_time"] = pd.to_numeric(data.loc[:, "predict_time"])
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
+        data.loc[:, "predict_proba_time"] = pd.to_numeric(
+            data.loc[:, "predict_proba_time"]
+        )
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
@@ -172,17 +183,24 @@ def min_max_scaling(data, *args):
     # Min-max scaling of control parameters
     for def_ in defences:
         max_ = data[data.def_gen == def_].def_value.max()
+        max_ = pd.to_numeric(max_, errors="raise")
         min_ = data[data.def_gen == def_].def_value.min()
+        min_ = pd.to_numeric(min_, errors="raise")
         scaled_value = (data[data.def_gen == def_].def_value - min_) / (max_ - min_)
         data.loc[data.def_gen == def_, "def_value"] = scaled_value
     for atk in attacks:
         max_ = data[data.atk_gen == atk].atk_value.max()
+        max_ = pd.to_numeric(max_, errors="raise")
         min_ = data[data.atk_gen == atk].atk_value.min()
+        min_ = pd.to_numeric(min_, errors="raise")
         scaled_value = (data[data.atk_gen == atk].atk_value - min_) / (max_ - min_)
         data.loc[data.atk_gen == atk, "atk_value"] = scaled_value
     for k in args:
         max_ = data[k].max()
+        max_ = pd.to_numeric(max_, errors="raise")
         min_ = data[k].min()
+        min_ = pd.to_numeric(min_, errors="raise")
+        data[k] = pd.to_numeric(data[k], errors="raise")
         scaled_value = (data[k] - min_) / (max_ - min_)
         data[k] = scaled_value
     return data
@@ -203,7 +221,6 @@ def merge_defences(
     control_variable=["model_layers"],
     defaults={
         "model.trainer.nb_epoch": 20,
-        "model.trainer.kwargs.nb_epoch": 20,
     },
 ):
     """
@@ -269,6 +286,7 @@ def merge_defences(
     results["defence_name"] = defences
     results["def_gen"] = def_gens
     logger.info(f"Unique defences after merging: {set(results.def_gen)}")
+    logger.info(f"Unique set of full names after merge: {set(results.defence_name)}")
     assert hasattr(results, "def_gen"), "def_gen not in results.columns"
     return results
 
@@ -295,8 +313,9 @@ def merge_attacks(results: pd.DataFrame):
             attack = None
         attacks.append(attack)
     if attacks != [None] * len(attacks):
-        results["attack_name"] = attacks
-        results["atk_gen"] = [str(x).split(".")[-1] for x in attacks]
+        results = results.assign(attack_name=attacks)
+        attacks = [str(x).split(".")[-1] for x in attacks]
+        results = results.assign(atk_gen=attacks)
         logger.info(f"Unique attacks: {set(results.atk_gen)}")
     else:
         logger.warning("No attacks found in data. Check your config file.")
@@ -340,7 +359,7 @@ def format_control_parameter(data, control_dict, fillna):
     logger.info("Fillna: ")
     logger.info(yaml.dump(fillna))
     for defence in defences:
-        if defence in control_dict and defence != "Epochs":
+        if defence in control_dict:
             # Get parameter name from control_dict
             param = control_dict[defence]
             # Shorten parameter name
@@ -463,22 +482,15 @@ def clean_data_for_plotting(
     data = data.loc[:, ~data.columns.str.endswith(".1")]
     logger.info(f"Shape after dropping poorly merged columns: {data.shape}")
     logger.info("Shortening model names...")
-    # Removes the path and to the model object and leaves the name of the model
-    model_names = data["model.init.name"].str.split(".").str[-1]
-    data["model_name"] = model_names
     # If "Net" is in the model name, we assume the following string denotes the layers as in ResNet18
     if hasattr(data, "model.init.name"):
         model_names = data["model.init.name"].str.split(".").str[-1]
-        data.loc[:, "model_name"] = model_names
+        data = data.assign(model_name=model_names)
         model_layers = [str(x).split("Net")[-1] for x in model_names]
-        data.loc[:, "model_layers"] = model_layers
+        data = data.assign(model_layers=model_layers)
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    data["model.trainer.nb_epoch"] = (
-        data["model.trainer.kwargs.nb_epoch"]
-        if "model.trainer.kwargs.nb_epoch" in data.columns
-        else data["model.trainer.nb_epoch"]
-    )
+    
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = merge_defences(data)
@@ -556,6 +568,16 @@ if __name__ == "__main__":
         args.input_file,
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
     data = pd.read_csv(args.input_file)
+    # Strip whitespace from column names
+    trim_strings = lambda x: x.strip() if isinstance(x, str) else x
+    data.rename(columns=trim_strings, inplace=True)
+    # Strip whitespace from column values
+    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    
+    
+    assert "model.init.name" in data.columns, "model.init.name not in data.columns"
+    
+    
     if isinstance(args.drop_if_empty, str):
         args.drop_if_empty = args.drop_if_empty.split(",")
     else:
@@ -586,7 +608,7 @@ if __name__ == "__main__":
     atk_gen_dict = big_dict.get("attacks", {})
     control_dict = big_dict.get("params", {})
     fillna = big_dict.get("fillna", {})
-    min_max = big_dict.get("min_max", ["model.trainer.nb_epoch"])
+    min_max = big_dict.get("min_max", [])
 
     results = clean_data_for_plotting(
         data,

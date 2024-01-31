@@ -25,7 +25,7 @@ stages:
           GaussianAugmentation: Gauss-in
           GaussianNoise: Gauss-out
           HighConfidence: Conf
-          Epochs: model.trainer.nb_epoch
+          nb_epoch: Epochs
           model_layers: Control
         fillna:
           Epochs: 10
@@ -45,19 +45,19 @@ stages:
           control:
             model_layers: 18
           defaults:
-            Epochs: 1
+            Epochs: 10
     outs:
     - path: cifar100/reports/clean_attack.csv
-      md5: dc61adaccab751a5196e50efca425899
-      size: 25684579
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
   afr:
     cmd: python -m deckard.layers.afr --dataset cifar100 --data_file cifar100/reports/clean_attack.csv  --target
       adv_accuracy --duration_col predict_time --dataset cifar100 --config_file conf/afr.yaml
       --plots_folder cifar100/plots/
     deps:
     - path: cifar100/reports/clean_attack.csv
-      md5: dc61adaccab751a5196e50efca425899
-      size: 25684579
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
     params:
       params.yaml:
         files.directory: cifar100
@@ -251,45 +251,45 @@ stages:
               - '152'
     outs:
     - path: cifar100/plots/aft_comparison.csv
-      md5: 2ee656f3e8b1d424e83b16a3fa4479b4
-      size: 378
+      md5: 9c486aa8ca1b035f2d501971353760b0
+      size: 381
     - path: cifar100/plots/aft_comparison.tex
-      md5: 67bd1c8f9f758516f647016ea6d1e17d
-      size: 604
+      md5: b8d8117defa391250aeaace7a9d0f31d
+      size: 420
     - path: cifar100/plots/log_logistic_aft.eps
-      md5: 6ca448a2fe113280e63ed3918c469d18
-      size: 46155
+      md5: 2a00669b8531ee844501696165161633
+      size: 46124
     - path: cifar100/plots/log_logistic_epochs_partial_effect.eps
-      md5: 79207a8068794756dfca738c71ca10b4
-      size: 41070
+      md5: 76072e421d1b378aa08038a8aee3e794
+      size: 42195
     - path: cifar100/plots/log_logistic_layers_partial_effect.eps
-      md5: f10c37331e9a02355d77262196d7be1a
-      size: 44709
+      md5: 443a5f66ee0f5f33d3157e1c2f3902ee
+      size: 45092
     - path: cifar100/plots/log_normal_aft.eps
-      md5: a43f253b4d767367ac8fb18dec66f08b
-      size: 47922
+      md5: c4101598dc7829434a29f14e0e35eb2e
+      size: 45906
     - path: cifar100/plots/log_normal_epochs_partial_effect.eps
-      md5: 357a41b8cca196f94449cd9c0ff7db6f
-      size: 41821
+      md5: dfbcef202ab83ed734d3c702d8feb7ce
+      size: 42931
     - path: cifar100/plots/log_normal_layers_partial_effect.eps
-      md5: e55fe376f154d042cb62518714eb3eb8
-      size: 45394
+      md5: 653bec7fae71a7d37c4016d8441b4450
+      size: 45750
     - path: cifar100/plots/weibull_aft.eps
-      md5: 8b559bde4109c851013b26e8780c758a
-      size: 43494
+      md5: bdb5514c75f45f7e8d0613695f154e3e
+      size: 43486
     - path: cifar100/plots/weibull_epochs_partial_effect.eps
-      md5: 290a37a06d1d84ddbc85c33c27d584ac
-      size: 40567
+      md5: f371fa1d20ca422fd5f1f033e89a580c
+      size: 41438
     - path: cifar100/plots/weibull_layers_partial_effect.eps
-      md5: 699ec3fd34d445bf8ba8f63267f9ad68
-      size: 44411
+      md5: 9a93c288e3dd0341faf58fec0eac8174
+      size: 44594
   plot:
     cmd: python -m deckard.layers.plots --path cifar100/plots/ --file cifar100/reports/clean_attack.csv
       -c conf/plots.yaml
     deps:
     - path: cifar100/reports/clean_attack.csv
-      md5: dc61adaccab751a5196e50efca425899
-      size: 25684579
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
     params:
       params.yaml:
         files.directory: cifar100
@@ -546,48 +546,48 @@ stages:
           - ResNet152
     outs:
     - path: cifar100/plots/adv_accuracy_vs_attack_type.eps
-      md5: 441a103b654d6b0884ce037601c64762
-      size: 107284
+      md5: 99e6b8d7f25237bfa0eaeee3e74cadee
+      size: 110928
     - path: cifar100/plots/adv_accuracy_vs_defence_type.eps
-      md5: f1ab1301410ddf968c13966492e295bb
-      size: 74746
+      md5: 2c8acd9927fa6449e6dd48c917f3af1d
+      size: 89728
     - path: cifar100/plots/adv_failure_rate_vs_train_time.eps
-      md5: ae880081ef74ecfdc0c8c38ef5b7e546
-      size: 987550
+      md5: c396c4c6276796623a148d9b3b29289c
+      size: 1189211
     - path: cifar100/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 2b8e9e14bed33e17305fbf3186496e2d
-      size: 99197
+      md5: efc4db91b705002b7c37e0a96cc637bb
+      size: 117493
     - path: cifar100/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: 805c0b7e39441c3d84a289dd63c2d5bf
-      size: 112797
+      md5: c6bf59539d98476702b8c84c2aa64946
+      size: 135357
     - path: cifar100/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: f4e33a2252cd8480be5d487aec5f49b1
-      size: 81687
+      md5: f4924d806de467f04ecda3faac2387dc
+      size: 110305
     - path: cifar100/plots/atk_param_vs_accuracy.eps
-      md5: b0b3735a724c5830be03f73fc3ae08df
-      size: 39666
+      md5: 1bd5da22dc86766a061ffff31063102d
+      size: 38228
     - path: cifar100/plots/ben_accuracy_vs_defence_type.eps
-      md5: 603af1f7014be3e588f7a60f1eb9b120
-      size: 82768
+      md5: 18b96e9f2c05791177c7bcfbda593a71
+      size: 100131
     - path: cifar100/plots/ben_failure_rate_vs_defence_type.eps
-      md5: b29be45324d822419a0d266b1f1ba999
-      size: 90237
+      md5: 4a330acb1ef1cf283798e7c7a4978bf3
+      size: 118820
     - path: cifar100/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: 32eaaae2f2e889a24c206e91e1b03892
-      size: 79246
+      md5: 2b2922250e8145a8df0fe4045b36375d
+      size: 109170
     - path: cifar100/plots/def_param_vs_accuracy.eps
-      md5: 8fbbd98593fbc396f2fa133183ea34d7
-      size: 38220
+      md5: 3eaf9233e72d7f9aed68bedb8c774d91
+      size: 38880
     - path: cifar100/plots/def_param_vs_adv_accuracy.eps
-      md5: 1b3744d18c0971e4733cb56e15bd52d5
-      size: 37081
+      md5: 7530d3ed19c853d6021531749bfef7b1
+      size: 37677
     - path: cifar100/plots/def_param_vs_adv_failure_rate.eps
-      md5: 77301fe030e310986701e5a10ee78e33
-      size: 35354
+      md5: 67ba433cce6645c616caf7cad3d426de
+      size: 41558
   copy_results:
     cmd: mkdir -p ~/ml_afr/cifar100 &&  cp -r cifar100/plots/* ~/ml_afr/cifar100
     deps:
     - path: cifar100/plots/
-      md5: afcd989a547081fdcc45aab2247b966d.dir
-      size: 2508336
+      md5: 033db8735a877f49f6c30502c26d4652.dir
+      size: 2881781
       nfiles: 27

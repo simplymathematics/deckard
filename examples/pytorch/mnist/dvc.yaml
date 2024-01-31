@@ -134,8 +134,6 @@ stages:
       - ${files.directory}/plots/${line_plot[3].file}
       - ${files.directory}/plots/${scatter_plot[0].file}
     params:
-      - files.directory
-      - files.reports
       - conf/plots.yaml:
         - line_plot
         - scatter_plot
@@ -158,13 +156,6 @@ stages:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
       - ${files.directory}/plots/aft_comparison.tex
-    params:
-      - files.directory
-      - conf/afr.yaml:
-        - covariates
-        - weibull
-        - log_logistic
-        - log_normal
     params:
       - files.directory
       - conf/afr.yaml:
