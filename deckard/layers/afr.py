@@ -130,7 +130,7 @@ def score_model(aft, train, test):
     return scores
 
 
-def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
+def make_afr_table(score_list, aft_dict, dataset, X_train, folder=".", filename='aft_comparison',):
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
@@ -159,7 +159,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf=folder / "aft_comparison.tex",
+        buf=folder / f"{filename}.tex",
         float_format="%.3g",
         na_rep="--",
         label=label,
@@ -168,7 +168,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         escape=False,
     )
     aft_data.to_csv(
-        Path(folder / "aft_comparison.csv"),
+        Path(folder / f"{filename}.csv"),
         index_label="Distribution",
         na_rep="--",
     )
@@ -270,6 +270,7 @@ def render_all_afr_plots(
     data,
     dataset,
     test_size=0.8,
+    filename="aft_comparison",
     folder=".",
 ):
     covariate_list = config.pop("covariates", [])
@@ -297,7 +298,7 @@ def render_all_afr_plots(
             folder=folder,
         )
     score_list = list(scores.values())
-    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
+    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder, filename=filename)
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
     print("*" * 80)
@@ -313,6 +314,7 @@ if "__main__" == __name__:
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
+    afr_parser.add_argument("--summary_file", type=str, default="aft_comparison")
     args = afr_parser.parse_args()
     target = args.target
     duration_col = args.duration_col
@@ -328,6 +330,7 @@ if "__main__" == __name__:
 
     csv_file = args.data_file
     FOLDER = args.plots_folder
+    filename = Path(args.summary_file).as_posix()
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
     data = pd.read_csv(csv_file, index_col=0)
     logger.info(f"Shape of data: {data.shape}")
@@ -361,4 +364,5 @@ if "__main__" == __name__:
         dataset,
         test_size=0.8,
         folder=FOLDER,
+        filename=filename,
     )
