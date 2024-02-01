@@ -251,31 +251,31 @@ stages:
               - '152'
     outs:
     - path: cifar/plots/log_logistic_aft.eps
-      md5: 979683173c939719699a3dab5e19e701
-      size: 47167
+      md5: 1c1da1a8bb6e9d18392a0dbecd08eeb6
+      size: 44318
     - path: cifar/plots/log_logistic_epochs_partial_effect.eps
-      md5: 5b9ab9ec9a7047857f962b8ec49b78d6
-      size: 42642
+      md5: 71c163b169d26e6c5d84b4f54a1bf44a
+      size: 43547
     - path: cifar/plots/log_logistic_layers_partial_effect.eps
-      md5: 39b9beda00d08f24c895841bb7441699
+      md5: 55e6808f5d36057051a963ca119f9d00
       size: 48035
     - path: cifar/plots/log_normal_aft.eps
-      md5: 6f9f0b5c93b1eded06f6f3b8a4dc085c
-      size: 46183
+      md5: 1a425db5ad56d0656c70e63aa814719b
+      size: 43722
     - path: cifar/plots/log_normal_epochs_partial_effect.eps
-      md5: 878a35c352eff007b43b3b309dbac4a7
+      md5: 6bb300d6c0a578990f7914bf66e77110
       size: 44094
     - path: cifar/plots/log_normal_layers_partial_effect.eps
-      md5: 05a6ce0906372bce4cd49138beb571cb
+      md5: 40c39356ea116867b1e53c29fcfc2ea4
       size: 48447
     - path: cifar/plots/weibull_aft.eps
-      md5: e810ac81eacb92d620080f2f8051eedc
-      size: 43372
+      md5: a0b1225be89804e1f71c4e5a3f25276b
+      size: 41235
     - path: cifar/plots/weibull_epochs_partial_effect.eps
-      md5: 63e1a2d5616287397ea443b593aaf024
+      md5: c988c3020698b468bd70be7ced458d52
       size: 43063
     - path: cifar/plots/weibull_layers_partial_effect.eps
-      md5: 51540bdcbe1c94df73f88527820196d1
+      md5: ffc0bd5469b5df8a7903fcda02f7a58f
       size: 47334
   plot:
     cmd: python -m deckard.layers.plots --path cifar/plots/ --file cifar/reports/clean_attack.csv
@@ -540,48 +540,48 @@ stages:
           - ResNet152
     outs:
     - path: cifar/plots/adv_accuracy_vs_attack_type.eps
-      md5: 98aaf5d038c3ca4d15003aa64ba0969c
+      md5: fc7f066b4ddc797dd023a1e39ea3ed9b
       size: 108266
     - path: cifar/plots/adv_accuracy_vs_defence_type.eps
-      md5: cbe08bb3d0eb40c025fffe12a2502f31
+      md5: 6bbd3c795fc9d1f00804ada8a51e01d3
       size: 101582
     - path: cifar/plots/adv_failure_rate_vs_train_time.eps
-      md5: 2b210092f770f06a107af363206d23e3
+      md5: 8c28a837768af5deadb72a574743ab3e
       size: 627343
     - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 805fade0479d01af2fb4fbab2f97468e
+      md5: 97bd299f91c23feea9568eb5273c7a45
       size: 121861
     - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: 89eb5a1e07d26ca4a2696d5cb3591e2a
+      md5: 78b820a2b76587187c40692ebbfe9019
       size: 119154
     - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: 80ff8d7b6b4ebf9f058c73d67fbc0ba1
+      md5: 6682dbe4f5b719741be9b46e0d1b8719
       size: 110880
     - path: cifar/plots/atk_param_vs_accuracy.eps
-      md5: 9d4a773c76d924bf3073932a4930581c
+      md5: 7c0f40bb6c9c9d20cc4b4bed53127967
       size: 39212
     - path: cifar/plots/ben_accuracy_vs_defence_type.eps
-      md5: f66b6aa4cce82ef4cb5df9c622c770b0
+      md5: 08aa1b6cca253b238e4abf73f7d02683
       size: 96824
     - path: cifar/plots/ben_failure_rate_vs_defence_type.eps
-      md5: dc35fd3eeea1396ace6b1da37b6d7e9e
+      md5: 54735a97fa12fe9cfbab0092c5a12389
       size: 122891
     - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: e565209d9d0c3c016299f3bd03fdce10
+      md5: 47434aa336575b2859ab705673f83125
       size: 112749
     - path: cifar/plots/def_param_vs_accuracy.eps
-      md5: a6f2e64b91e80a7f0c9f47cdb0727868
+      md5: 950fbb5176fe094b41e437d411acdfa5
       size: 38940
     - path: cifar/plots/def_param_vs_adv_accuracy.eps
-      md5: 442c702a3dfa976a9553616f5dcb6877
+      md5: f1d8d808cc5687ee218b26ccb16af61b
       size: 38631
     - path: cifar/plots/def_param_vs_adv_failure_rate.eps
-      md5: 4e11c5893548f4ce74eb192a48bbc8a8
+      md5: c7a8ec3b2af3fdad295a051dc8ad71c0
       size: 39454
   copy_results:
     cmd: mkdir -p ~/ml_afr/cifar/ && cp -r cifar/plots/* ~/ml_afr/cifar/
     deps:
     - path: cifar/plots/
-      md5: 915ce7a0053030e8391630b7598fecb1.dir
-      size: 16459129
+      md5: 88318333900b553e12d9fd15042e73b5.dir
+      size: 16452555
       nfiles: 25

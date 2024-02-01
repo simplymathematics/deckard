@@ -254,34 +254,34 @@ stages:
       md5: f59decd89bd1e9a684ea77c280dd4977
       size: 375
     - path: mnist/plots/aft_comparison.tex
-      md5: 79fbd04280db8dd92df6a8873c382553
-      size: 598
+      md5: 9ba120db593233d5811417ba894d3551
+      size: 566
     - path: mnist/plots/log_logistic_aft.eps
-      md5: 3ea1650bba6863bc92a7346fb6ef052e
-      size: 45825
+      md5: ce46a67b686fa37aabd53a81fca5ecf3
+      size: 42967
     - path: mnist/plots/log_logistic_epochs_partial_effect.eps
-      md5: a3cd4bf8d11aa15bcd2055444de970ed
-      size: 45099
+      md5: eb1e54d94cac11ff31a009e6f92b5943
+      size: 45110
     - path: mnist/plots/log_logistic_layers_partial_effect.eps
-      md5: 6b074e2cf0d580c24f1ee60024cf8cf7
-      size: 48151
+      md5: 9592cf1c06aca6a5e8ec0aaed908064a
+      size: 48184
     - path: mnist/plots/log_normal_aft.eps
-      md5: 3c556665e940b34ab1a3df1d4c350f81
-      size: 47084
+      md5: f5b9432aaa8fa890d1aa6862d2fd8c0b
+      size: 43933
     - path: mnist/plots/log_normal_epochs_partial_effect.eps
-      md5: 14c6430c3f9f005d9918559941e85dfc
+      md5: 904ad06da2eb3d4829949b21a40f8e3a
       size: 45828
     - path: mnist/plots/log_normal_layers_partial_effect.eps
-      md5: ecee1cd69996161a11837464b059b6aa
+      md5: 0b36c66ccfc71f9237c2c8328283941e
       size: 48660
     - path: mnist/plots/weibull_aft.eps
-      md5: 0a95ea7f935927c3eed6ba80bd68f9ab
-      size: 43072
+      md5: 396981fbae50b78849f973230ed3964e
+      size: 41235
     - path: mnist/plots/weibull_epochs_partial_effect.eps
-      md5: 7649a104934696a7ec56ecd5336edd91
+      md5: e26c84d09e360794b422ff3b0cc3827d
       size: 44468
     - path: mnist/plots/weibull_layers_partial_effect.eps
-      md5: cfb582c0812d00d9a702207e9d6df205
+      md5: ab1d39164115b83fc5c07d0feee3e066
       size: 47494
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/clean_attack.csv
@@ -543,52 +543,52 @@ stages:
           - ResNet152
     outs:
     - path: mnist/plots/adv_accuracy_vs_attack_type.eps
-      md5: be793540cb92d32341ae93784257f573
+      md5: 8f73764801e267119f01df193ba2cc5b
       size: 123974
     - path: mnist/plots/adv_accuracy_vs_defence_type.eps
-      md5: 21b5648533557deb262b076f4256c61a
+      md5: 27b5a37323282bcf221a03243ea0976b
       size: 118866
     - path: mnist/plots/adv_failure_rate_vs_train_time.eps
-      md5: ad9086bd7936b2bc21d0d8307df4731b
+      md5: 73110827d16551c27c74dfaf95873b72
       size: 980246
     - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: c1fe7b358508b17ca2b161385e9606b6
+      md5: 8451291b03f29b600fc8b4c30685fe95
       size: 138379
     - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: b8320b751fc91efddc89826856fb2b33
+      md5: bde2314198361627dbba2314b0e866fa
       size: 128046
     - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: 4c6cf0fb0e2d71f719b8a215c2689162
+      md5: a5a87574107fa5dcc9ba2be4958a4bb2
       size: 122522
     - path: mnist/plots/atk_param_vs_accuracy.eps
-      md5: 3915a1a5a011107a9f2b45196bd15889
+      md5: 7806d5c7ea02cbef95590bcfaaafb6a3
       size: 39701
     - path: mnist/plots/ben_accuracy_vs_defence_type.eps
-      md5: edbbf352715a6cb0f59e046ec1a0d482
+      md5: fddc66d7d0f793984f09e6ffb000cb60
       size: 112716
     - path: mnist/plots/ben_failure_rate_vs_defence_type.eps
-      md5: e997d08d73cd2399ba5150d85183c64a
+      md5: 9b8d4676241305995146dafea0127ae1
       size: 140192
     - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: b928d41da826843081a166480e983978
+      md5: 249388d88701c5bb537dffeb2830a894
       size: 123124
     - path: mnist/plots/def_param_vs_accuracy.eps
-      md5: c21df48704f0ffde618f29387aa3949d
+      md5: 53cac271a43baecdf7884d37d67801a3
       size: 39660
     - path: mnist/plots/def_param_vs_adv_accuracy.eps
-      md5: a88c9e569cf214bb53acddccf39769db
+      md5: 2a92cc0118cae90093bf5344735ad7c3
       size: 39631
     - path: mnist/plots/def_param_vs_adv_failure_rate.eps
-      md5: e74ccda9399783037a23cb19836ba155
+      md5: 943b788c3a18e33aad910bf8be4543df
       size: 39217
   copy_results:
     cmd: mkdir -p ~/ml_afr/mnist/ && cp -r mnist/plots/* ~/ml_afr/mnist/
     deps:
     - path: mnist/plots/
-      md5: 3b3842f83204d98a12f8a7df4e5c38b4.dir
-      size: 2562928
+      md5: ac4597a127eed9af9a99307b0b79109f.dir
+      size: 2555094
       nfiles: 24
     - path: mnist/plots/
-      md5: 3b3842f83204d98a12f8a7df4e5c38b4.dir
-      size: 2562928
+      md5: ac4597a127eed9af9a99307b0b79109f.dir
+      size: 2555094
       nfiles: 24
