@@ -86,12 +86,12 @@ stages:
             'adv_accuracy: alpha_': Adv. Accuracy
             'accuracy: alpha_': Ben. Accuracy
             'adv_fit_time: alpha_': $t_{attack}$
-            'adv_failure_rate: alpha_': $f_{adv.}(t;\theta)$
-            'failure_rate: alpha_': $f_{ben.}(t;\theta)$
+            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
+            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: alpha_': No. of Epochs
             'model.trainer.batch_size: alpha_': Batch Size
             def_gen: Defence
-            'model_layers: alpha_': ResNet Layers
+            'model_layers: alpha_': Layers
             'def_value: alpha_': Defence Strength
             'predict_time: alpha_': $t_{predict}$
           partial_effect:
@@ -124,7 +124,7 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
@@ -145,12 +145,12 @@ stages:
             'adv_accuracy: mu_': Adv. Accuracy
             'accuracy: mu_': Ben. Accuracy
             'adv_fit_time: mu_': $t_{attack}$
-            'adv_failure_rate: mu_': $f_{adv.}(t;\theta)$
-            'failure_rate: mu_': $f_{ben.}(t;\theta)$
+            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
+            'failure_rate: mu_': $h_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: mu_': No. of Epochs
             'model.trainer.batch_size: mu_': Batch Size
             def_gen: Defence
-            'model_layers: mu_': ResNet Layers
+            'model_layers: mu_': Layers
             'def_value: mu_': Defence Strength
             'predict_time: mu_': $t_{predict}$
           partial_effect:
@@ -183,13 +183,16 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
               - '50'
               - '101'
               - '152'
+              bbox_to_anchor:
+              - 1.05
+              - 1
         weibull:
           plot:
             file: weibull_aft.eps
@@ -204,12 +207,12 @@ stages:
             'adv_accuracy: lambda_': Adv. Accuracy
             'accuracy: lambda_': Ben. Accuracy
             'adv_fit_time: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
-            'model_layers: lambda_': ResNet Layers
+            'model_layers: lambda_': Layers
             'def_value: lambda_': Defence Strength
             'predict_time: lambda_': $t_{predict}$
           partial_effect:
@@ -242,7 +245,7 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
@@ -257,32 +260,32 @@ stages:
       md5: b8d8117defa391250aeaace7a9d0f31d
       size: 420
     - path: cifar100/plots/log_logistic_aft.eps
-      md5: 58e24458b06724535959608008f2b4a3
-      size: 42984
+      md5: 25570be7c47838516dc2ce6737ea23cf
+      size: 43150
     - path: cifar100/plots/log_logistic_epochs_partial_effect.eps
-      md5: fde17904e16e21e1c6be8fafc6be76c8
+      md5: dce601a023295267b4219a3d344c6390
       size: 42195
     - path: cifar100/plots/log_logistic_layers_partial_effect.eps
-      md5: 9d0de940973ffeb4a4bc70e2523a3996
-      size: 45092
+      md5: 422b035d3bffc50166597ad26e175400
+      size: 43155
     - path: cifar100/plots/log_normal_aft.eps
-      md5: e03c7beefccac97f329a4414dcc5485b
-      size: 43950
+      md5: 2cf3e5852ca6cd9bee9aa66974db1ad7
+      size: 44116
     - path: cifar100/plots/log_normal_epochs_partial_effect.eps
-      md5: 834527e09b4c44793c7bb8d88dace969
+      md5: 0cb86ef85c693118c8b6abc83a503ac3
       size: 42931
     - path: cifar100/plots/log_normal_layers_partial_effect.eps
-      md5: f32a4c365c6e8c9189618994d8e884d6
-      size: 45750
+      md5: 4386a26119906fa28709501875c95660
+      size: 43230
     - path: cifar100/plots/weibull_aft.eps
-      md5: 415e685693f125a22d5cdbce62896458
-      size: 41247
+      md5: 9509c6ffd09f15d01d411d76074695d3
+      size: 41413
     - path: cifar100/plots/weibull_epochs_partial_effect.eps
-      md5: 980eb36c0fe55ce5c71fc9250c530242
+      md5: 65e05f0fee7247d061ce52014821d3dd
       size: 41438
     - path: cifar100/plots/weibull_layers_partial_effect.eps
-      md5: 0ceb476fe927b46600781071ecc8a84d
-      size: 44594
+      md5: 8903ae7d7c4fd97247d80abde3febaed
+      size: 42657
   plot:
     cmd: python -m deckard.layers.plots --path cifar100/plots/ --file cifar100/reports/clean_attack.csv
       -c conf/plots.yaml
@@ -548,48 +551,48 @@ stages:
           - ResNet152
     outs:
     - path: cifar100/plots/adv_accuracy_vs_attack_type.eps
-      md5: f64062c1f8d002a963ab8e34d337ae3e
+      md5: c8da4b76e14a314a366460692dc783c5
       size: 110928
     - path: cifar100/plots/adv_accuracy_vs_defence_type.eps
-      md5: ad69626f7666bddde7b9db89ca357640
+      md5: 28fc6c3ec076122c0817ff72bf445724
       size: 89728
     - path: cifar100/plots/adv_failure_rate_vs_train_time.eps
-      md5: 88e1ba39919f998725845db8fa2c0ea6
+      md5: 6b120de323dda22b1d1f7c865a3fee40
       size: 1197829
     - path: cifar100/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 6d29568f5aef29213081bad014cee493
+      md5: 992a14b470a5297898effaacef21da58
       size: 117343
     - path: cifar100/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: c5af31dc12ebed42608ee035970f4cb6
+      md5: da342b3a5f817de813e3831fb704a137
       size: 135357
     - path: cifar100/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: 3f93ac267d1427a43904f7b1d1c3c8c6
+      md5: 02573bd82b9a8e91f222b223265d4c88
       size: 110305
     - path: cifar100/plots/atk_param_vs_accuracy.eps
-      md5: 62324b3c0ae9ea970ffd20484c1cfabe
+      md5: 3a9ee8b1f8d7632d5e5346ee98fd7302
       size: 38228
     - path: cifar100/plots/ben_accuracy_vs_defence_type.eps
-      md5: a28ea0f7a653ecc68e53e0364a33fc9f
+      md5: a87ff0bfe4abeb62c8a11b14625094c6
       size: 100131
     - path: cifar100/plots/ben_failure_rate_vs_defence_type.eps
-      md5: 3e34dcd09fc91eee048ff72645b35806
+      md5: 353409db77a5e01b3e1cace395724747
       size: 118669
     - path: cifar100/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: 52992ecff6d8d5c65a69f8b95eea995a
+      md5: c5b1247944a237ece405e2cc6d8d5f17
       size: 109170
     - path: cifar100/plots/def_param_vs_accuracy.eps
-      md5: d166225d4c1b792488b0fc1c47c5fcec
+      md5: a1d1bca25b228523ca3518e85407d9f9
       size: 38880
     - path: cifar100/plots/def_param_vs_adv_accuracy.eps
-      md5: 29d9250b821a8a96bc591615ec37b1d9
+      md5: 361afc1a730165a3c05d80ad16fe4c66
       size: 37677
     - path: cifar100/plots/def_param_vs_adv_failure_rate.eps
-      md5: 53146b30e32159e9c6b4aaee576ede8d
+      md5: cd8cc762d8541f690335ea6118eff227
       size: 41408
   copy_results:
     cmd: mkdir -p ~/ml_afr/cifar100 &&  cp -r cifar100/plots/* ~/ml_afr/cifar100
     deps:
     - path: cifar100/plots/
-      md5: b0df47b6ad64509d09859617ff2c1d66.dir
-      size: 2882613
+      md5: 5862826c5918c815b4814de0b1d5e53b.dir
+      size: 2876717
       nfiles: 27

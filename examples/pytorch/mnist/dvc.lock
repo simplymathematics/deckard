@@ -91,7 +91,7 @@ stages:
             'model.trainer.nb_epoch: alpha_': No. of Epochs
             'model.trainer.batch_size: alpha_': Batch Size
             def_gen: Defence
-            'model_layers: alpha_': ResNet Layers
+            'model_layers: alpha_': Layers
             'def_value: alpha_': Defence Strength
             'predict_time: alpha_': $t_{predict}$
           partial_effect:
@@ -124,7 +124,7 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
@@ -150,7 +150,7 @@ stages:
             'model.trainer.nb_epoch: mu_': No. of Epochs
             'model.trainer.batch_size: mu_': Batch Size
             def_gen: Defence
-            'model_layers: mu_': ResNet Layers
+            'model_layers: mu_': Layers
             'def_value: mu_': Defence Strength
             'predict_time: mu_': $t_{predict}$
           partial_effect:
@@ -183,7 +183,7 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
@@ -209,7 +209,7 @@ stages:
             'model.trainer.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
-            'model_layers: lambda_': ResNet Layers
+            'model_layers: lambda_': Layers
             'def_value: lambda_': Defence Strength
             'predict_time: lambda_': $t_{predict}$
           partial_effect:
@@ -242,7 +242,7 @@ stages:
             ylabel: Expectation of $S(t)$
             xlabel: Time $T$ (seconds)
             legend_kwargs:
-              title: ResNet Layers
+              title: Layers
               labels:
               - '18'
               - '34'
@@ -257,32 +257,32 @@ stages:
       md5: 9ba120db593233d5811417ba894d3551
       size: 566
     - path: mnist/plots/log_logistic_aft.eps
-      md5: 873d9de6aac9156baec279295c347b0d
-      size: 42967
+      md5: b7b0671479b42062562f0c03d8c0975f
+      size: 43143
     - path: mnist/plots/log_logistic_epochs_partial_effect.eps
-      md5: c3994f5854fedd78ce7823db92a405d0
+      md5: 6d4454d35005dfd34dc25de5691b05b3
       size: 45110
     - path: mnist/plots/log_logistic_layers_partial_effect.eps
-      md5: 5120291c05bc2069a05c3eb48ab04fe6
-      size: 48184
+      md5: 04f63bb1af4c6cc182f031b0a6f2f570
+      size: 46247
     - path: mnist/plots/log_normal_aft.eps
-      md5: 8c5a26a7f6ef441735d444a9a41437be
-      size: 43933
+      md5: 3c5895eed8d86f1bb68e50a9e8d705fb
+      size: 44109
     - path: mnist/plots/log_normal_epochs_partial_effect.eps
-      md5: 82c3ebb2228855b64fa26662a4733ee8
+      md5: e273ac270f3c7a04257edf27250f0451
       size: 45828
     - path: mnist/plots/log_normal_layers_partial_effect.eps
-      md5: d203d169b93f952d3c0fd205b8823df9
-      size: 48660
+      md5: 0bd9b1734275002d5fba203829d9ace6
+      size: 46723
     - path: mnist/plots/weibull_aft.eps
-      md5: a6a791a77f1b7f96cd1ad067adaa0b9c
-      size: 41235
+      md5: 7671058fb0db407eef4a01464e324a5c
+      size: 41411
     - path: mnist/plots/weibull_epochs_partial_effect.eps
-      md5: 40e6853a62e15c58aeb1a9c79e5b661a
+      md5: b77d411ad6499a3a77a38486ef67e600
       size: 44468
     - path: mnist/plots/weibull_layers_partial_effect.eps
-      md5: 64b133939a65017b784594dd1bb68617
-      size: 47494
+      md5: 90c8f92165a288641f249f866d8c25d0
+      size: 45557
   plot:
     cmd: python -m deckard.layers.plots --path mnist/plots/ --file mnist/reports/clean_attack.csv
       -c conf/plots.yaml
@@ -544,50 +544,54 @@ stages:
           - ResNet152
     outs:
     - path: mnist/plots/adv_accuracy_vs_attack_type.eps
-      md5: 470486aaf4f2f85abd07c66a14636b10
+      md5: d51200cf3e8cefd7517a97c507c32a92
       size: 123974
     - path: mnist/plots/adv_accuracy_vs_defence_type.eps
-      md5: d84c1c7160d8449cf69db385d7b55924
+      md5: 1142a65c254df12224d88187d580c756
       size: 118866
     - path: mnist/plots/adv_failure_rate_vs_train_time.eps
-      md5: 91030f01fba85962ee90a03ee7ae1f24
+      md5: 584a893a5e386ce8af1b49dd4333f27a
       size: 987785
     - path: mnist/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: dee0c945f10d0a7c8c2fe498f05e72c1
+      md5: ae31c6898b60fc8c4b2d5ed523e8648b
       size: 138229
     - path: mnist/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: d727d03ccbc88632e9fa8e296696fdb9
+      md5: 32d8a97ee6fa8bfb385cd10cef9985a0
       size: 128046
     - path: mnist/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: d62a7eb587e9619215db74fce675805d
+      md5: 191c566d64c2f94b5832578951a1ca3a
       size: 122522
     - path: mnist/plots/atk_param_vs_accuracy.eps
-      md5: 9ed62da3e02e6399b7f98924a55aeb6c
+      md5: 2d20b9e7214b8b04c8d6ba60e59be5a0
       size: 39701
     - path: mnist/plots/ben_accuracy_vs_defence_type.eps
-      md5: 6ee6bb5b56da7fa9438e4b1c2a4a42f6
+      md5: c94bb2af2ed7a26bf6d1f232d010671a
       size: 112716
     - path: mnist/plots/ben_failure_rate_vs_defence_type.eps
-      md5: 56d6b58c3bea4f9ff2a0c2b94640eb8c
+      md5: ab115d786b80015aba9efe0b03df9ada
       size: 140041
     - path: mnist/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: 98a04c60a8488d4ae62ba5ea11d03851
+      md5: e2e8499a4b6fc81d50e18d6b4bdf29f7
       size: 123124
     - path: mnist/plots/def_param_vs_accuracy.eps
-      md5: 59369ff1e4549eff0f92a1ce3e54386e
+      md5: a37bec164c0ba420ef4c20cab952cd9a
       size: 39660
     - path: mnist/plots/def_param_vs_adv_accuracy.eps
-      md5: 4ecb64ce6708b5bc04954a53545492d5
+      md5: 09af779c5fd3c9b132bd5270516a6e53
       size: 39631
     - path: mnist/plots/def_param_vs_adv_failure_rate.eps
-      md5: 52aa75f6bbc1eee23bd40b4d24c0b7df
+      md5: 706238ba734e5a65642f12e105365aa9
       size: 39067
   copy_results:
     cmd: mkdir -p ~/ml_afr/mnist/ && cp -r mnist/plots/* ~/ml_afr/mnist/
     deps:
     - path: mnist/plots/
-      md5: f723f3c68f1c381433e3784f688f1d8d.dir
-      size: 3027047
+      md5: 37a3df39d57394928f1d659d522f9544.dir
+      size: 3021764
+      nfiles: 35
+    - path: mnist/plots/
+      md5: 37a3df39d57394928f1d659d522f9544.dir
+      size: 3021764
       nfiles: 35
   afr_with_dummies:
     cmd: python -m deckard.layers.afr --dataset mnist --data_file mnist/reports/clean_attack.csv  --target

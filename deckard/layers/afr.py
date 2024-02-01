@@ -32,6 +32,7 @@ def plot_aft(
     replacement_dict={},
     filetype=".eps",
     folder=".",
+    legend={},
     **kwargs,
 ):
     file = Path(folder, file).with_suffix(filetype)
@@ -76,6 +77,7 @@ def plot_aft(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
+    ax.legend(**legend)
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")

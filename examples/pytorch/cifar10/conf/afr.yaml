@@ -31,7 +31,7 @@ weibull:
     "model.trainer.nb_epoch: lambda_": "No. of Epochs"
     "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
-    "model_layers: lambda_" : "ResNet Layers"
+    "model_layers: lambda_" : "Layers"
     "def_value: lambda_" : "Defence Strength"
     "predict_time: lambda_" : "$t_{predict}$"
   partial_effect:
@@ -52,7 +52,7 @@ weibull:
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
-          "title": "ResNet Layers",
+          "title": "Layers",
           "labels": ["18", "34", "50", "101", "152"]
       }
 # cox:
@@ -92,7 +92,7 @@ weibull:
 #       "ylabel": "Expectation of $S(t)$"
 #       "xlabel": "Time $T$ (seconds)"
 #       "legend_kwargs": {
-#           "title": "ResNet Layers",
+#           "title": "Layers",
 #           "labels": ["18", "34", "50", "101", "152"]
 #       }
 log_logistic:
@@ -114,7 +114,7 @@ log_logistic:
     "model.trainer.nb_epoch: alpha_": "No. of Epochs"
     "model.trainer.batch_size: alpha_": "Batch Size"
     "def_gen": "Defence"
-    "model_layers: alpha_" : "ResNet Layers"
+    "model_layers: alpha_" : "Layers"
     "def_value: alpha_" : "Defence Strength"
     "predict_time: alpha_" : "$t_{predict}$"
   partial_effect:
@@ -135,7 +135,7 @@ log_logistic:
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
-          "title": "ResNet Layers",
+          "title": "Layers",
           "labels": ["18", "34", "50", "101", "152"]
       }
 log_normal:
@@ -157,7 +157,7 @@ log_normal:
     "model.trainer.nb_epoch: mu_": "No. of Epochs"
     "model.trainer.batch_size: mu_": "Batch Size"
     "def_gen": "Defence"
-    "model_layers: mu_" : "ResNet Layers"
+    "model_layers: mu_" : "Layers"
     "def_value: mu_" : "Defence Strength"
     "predict_time: mu_" : "$t_{predict}$"
   partial_effect:
@@ -178,6 +178,6 @@ log_normal:
       "ylabel": "Expectation of $S(t)$"
       "xlabel": "Time $T$ (seconds)"
       "legend_kwargs": {
-          "title": "ResNet Layers",
+          "title": "Layers",
           "labels": ["18", "34", "50", "101", "152"]
       }
