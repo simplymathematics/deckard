@@ -59,7 +59,10 @@ def plot_aft(
         event_col=event_col,
         # robust=True,
     )
-    ax = aft.plot()
+    columns = list(df.columns)
+    columns.remove(event_col)
+    columns.remove(duration_col)
+    ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
@@ -149,8 +152,6 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data[r"Median $S(t;\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
-    aft_data.index.name = "Distribution"
-    aft_data.index = [str(x).replace("_", " ").title() for x in aft_dict.keys()]
     label = f"tab:{dataset}"
     upper = dataset.upper()
     aft_data.index.name = "Distribution"
@@ -164,6 +165,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
         label=label,
         index_names=True,
         caption=f"Comparison of AFR Models on the {upper} dataset.",
+        escape=False,
     )
     aft_data.to_csv(
         Path(folder / "aft_comparison.csv"),
