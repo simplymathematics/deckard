@@ -195,11 +195,10 @@ def clean_data_for_aft(
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
     cleaned.index = subset.index
-    # for col in cols:
-    #     cleaned = cleaned[cleaned[col] != -1e10]
-    #     cleaned = cleaned[cleaned[col] != 1e10]
+    for col in cols:
+        cleaned = cleaned[cleaned[col] != -1e10]
+        cleaned = cleaned[cleaned[col] != 1e10]
 
-    # cleaned.dropna(inplace=True, how="any", axis=0)
     cleaned = pd.get_dummies(cleaned)
     # de-duplicate index
     cleaned = cleaned.loc[~cleaned.index.duplicated(keep="first")]
