@@ -86,8 +86,8 @@ stages:
             'adv_accuracy: alpha_': Adv. Accuracy
             'accuracy: alpha_': Ben. Accuracy
             'adv_fit_time: alpha_': $t_{attack}$
-            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
-            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
+            'adv_failure_rate: alpha_': $f_{adv.}(t;\theta)$
+            'failure_rate: alpha_': $f_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: alpha_': No. of Epochs
             'model.trainer.batch_size: alpha_': Batch Size
             def_gen: Defence
@@ -145,8 +145,8 @@ stages:
             'adv_accuracy: mu_': Adv. Accuracy
             'accuracy: mu_': Ben. Accuracy
             'adv_fit_time: mu_': $t_{attack}$
-            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
-            'failure_rate: mu_': $h_{ben.}(t;\theta)$
+            'adv_failure_rate: mu_': $f_{adv.}(t;\theta)$
+            'failure_rate: mu_': $f_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: mu_': No. of Epochs
             'model.trainer.batch_size: mu_': Batch Size
             def_gen: Defence
@@ -204,8 +204,8 @@ stages:
             'adv_accuracy: lambda_': Adv. Accuracy
             'accuracy: lambda_': Ben. Accuracy
             'adv_fit_time: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
             'model.trainer.nb_epoch: lambda_': No. of Epochs
             'model.trainer.batch_size: lambda_': Batch Size
             def_gen: Defence
@@ -251,31 +251,31 @@ stages:
               - '152'
     outs:
     - path: cifar/plots/log_logistic_aft.eps
-      md5: 1c1da1a8bb6e9d18392a0dbecd08eeb6
+      md5: f50db07672ef19e4e95523934e54d5a2
       size: 44318
     - path: cifar/plots/log_logistic_epochs_partial_effect.eps
-      md5: 71c163b169d26e6c5d84b4f54a1bf44a
+      md5: 5892f80532a0660449497f8f3fe9b158
       size: 43547
     - path: cifar/plots/log_logistic_layers_partial_effect.eps
-      md5: 55e6808f5d36057051a963ca119f9d00
+      md5: 5baf83e332c5a8ccd208d107d91e1b2d
       size: 48035
     - path: cifar/plots/log_normal_aft.eps
-      md5: 1a425db5ad56d0656c70e63aa814719b
+      md5: e444f334b816d5ac164fbf7e3912100a
       size: 43722
     - path: cifar/plots/log_normal_epochs_partial_effect.eps
-      md5: 6bb300d6c0a578990f7914bf66e77110
+      md5: b461482675b4075060abb792a3fde484
       size: 44094
     - path: cifar/plots/log_normal_layers_partial_effect.eps
-      md5: 40c39356ea116867b1e53c29fcfc2ea4
+      md5: 7238e91540774eaacebf992d19bb3937
       size: 48447
     - path: cifar/plots/weibull_aft.eps
-      md5: a0b1225be89804e1f71c4e5a3f25276b
+      md5: 5cd640a41765c24893ae552d2f807ac2
       size: 41235
     - path: cifar/plots/weibull_epochs_partial_effect.eps
-      md5: c988c3020698b468bd70be7ced458d52
+      md5: 5eadafdbf44bd0e2c6ab9624dba807c4
       size: 43063
     - path: cifar/plots/weibull_layers_partial_effect.eps
-      md5: ffc0bd5469b5df8a7903fcda02f7a58f
+      md5: 86d5d6156593bd5a01b782653c256fa1
       size: 47334
   plot:
     cmd: python -m deckard.layers.plots --path cifar/plots/ --file cifar/reports/clean_attack.csv
@@ -342,8 +342,6 @@ stages:
         - file: adv_failures_per_train_time_vs_defence_type.eps
           hue: model_name
           kind: boxen
-          set:
-            yscale: log
           titles: $\bar{C}_{adv.}$ vs Defence Type
           x: def_gen
           xlabels: Defence Type
@@ -360,8 +358,6 @@ stages:
           hue: model_name
           kind: boxen
           legend_title: Model Name
-          set:
-            yscale: log
           titles: $\bar{C}_{adv.}$ vs Attack Type
           x: atk_gen
           xlabels: Attack Type
@@ -378,11 +374,11 @@ stages:
           hue: model_name
           kind: boxen
           legend_title: Model Name
-          titles: $h_{adv}$ vs Defence Type
+          titles: $f_{adv}$ vs Defence Type
           x: def_gen
           xlabels: Defence Type
           y: adv_failure_rate
-          ylabels: $h_{adv.}$
+          ylabels: $f_{adv.}$
           rotation: 90
           hue_order:
           - ResNet18
@@ -412,11 +408,11 @@ stages:
           legend_title: Model Name
           set:
             yscale: log
-          titles: $h_{ben}(t; \theta)$ vs Defence Type
+          titles: $f_{ben}(t; \theta)$ vs Defence Type
           x: def_gen
           xlabels: Defence Type
           y: failure_rate
-          ylabels: $h_{ben}(t; \theta)$
+          ylabels: $f_{ben}(t; \theta)$
           rotation: 90
           hue_order:
           - ResNet18
@@ -480,13 +476,13 @@ stages:
             - 1.05
             - 1
             title: Defence
-          title: $h_{adv}$ vs Defence Strength
+          title: $f_{adv}$ vs Defence Strength
           x: def_value
           x_scale: log
           xlabel: Defence Control Parameter
           y: adv_failure_rate
           y_scale: log
-          ylabel: $h_{adv.}$
+          ylabel: $f_{adv.}$
           hue_order:
           - Control
           - Conf
@@ -524,9 +520,11 @@ stages:
           y: adv_failure_rate
           hue: model_name
           xlabel: $t_{train}$
-          ylabel: $h_{adv}$
-          title: $h_{adv}$ vs $t_{train}$
+          ylabel: $f_{adv}$
+          title: $f_{adv}$ vs $t_{train}$
           file: adv_failure_rate_vs_train_time.eps
+          y_scale: linear
+          x_scale: log
           legend:
             title: Model Name
             bbox_to_anchor:
@@ -540,48 +538,48 @@ stages:
           - ResNet152
     outs:
     - path: cifar/plots/adv_accuracy_vs_attack_type.eps
-      md5: fc7f066b4ddc797dd023a1e39ea3ed9b
+      md5: 5138387d43aa6b80861beda375a668a4
       size: 108266
     - path: cifar/plots/adv_accuracy_vs_defence_type.eps
-      md5: 6bbd3c795fc9d1f00804ada8a51e01d3
+      md5: 413761c7484aed43f3d3f6f75da81e82
       size: 101582
     - path: cifar/plots/adv_failure_rate_vs_train_time.eps
-      md5: 8c28a837768af5deadb72a574743ab3e
-      size: 627343
+      md5: 2cdddda5ce788d5813ca55880fdb7a91
+      size: 631508
     - path: cifar/plots/adv_failures_per_test_time_vs_defence_type.eps
-      md5: 97bd299f91c23feea9568eb5273c7a45
-      size: 121861
+      md5: 23aff41fad24c912f0301f2e986ae96d
+      size: 121711
     - path: cifar/plots/adv_failures_per_train_time_vs_attack_type.eps
-      md5: 78b820a2b76587187c40692ebbfe9019
-      size: 119154
+      md5: 85efb2307112f220946f0c4b623df366
+      size: 120765
     - path: cifar/plots/adv_failures_per_train_time_vs_defence_type.eps
-      md5: 6682dbe4f5b719741be9b46e0d1b8719
-      size: 110880
+      md5: f914efca4568b2f5163b7e8723f0df5c
+      size: 113874
     - path: cifar/plots/atk_param_vs_accuracy.eps
-      md5: 7c0f40bb6c9c9d20cc4b4bed53127967
+      md5: 35ee04493de38424453b9514c45d66f1
       size: 39212
     - path: cifar/plots/ben_accuracy_vs_defence_type.eps
-      md5: 08aa1b6cca253b238e4abf73f7d02683
+      md5: 61569c543a2891c9fcdc95314924ceb4
       size: 96824
     - path: cifar/plots/ben_failure_rate_vs_defence_type.eps
-      md5: 54735a97fa12fe9cfbab0092c5a12389
-      size: 122891
+      md5: 792603cf59c01c922408c18d1dfeda3e
+      size: 122740
     - path: cifar/plots/ben_failures_per_train_time_vs_defence_type.eps
-      md5: 47434aa336575b2859ab705673f83125
+      md5: 25f8992268b8eefa2eaa60b73e1f6370
       size: 112749
     - path: cifar/plots/def_param_vs_accuracy.eps
-      md5: 950fbb5176fe094b41e437d411acdfa5
+      md5: 21b2ace7923bdeb9c5bb950caf2307f1
       size: 38940
     - path: cifar/plots/def_param_vs_adv_accuracy.eps
-      md5: f1d8d808cc5687ee218b26ccb16af61b
+      md5: 43d5d57465019a4067af163be4178fa8
       size: 38631
     - path: cifar/plots/def_param_vs_adv_failure_rate.eps
-      md5: c7a8ec3b2af3fdad295a051dc8ad71c0
-      size: 39454
+      md5: 2a6cfab767a224847deb07eb1d451b4a
+      size: 39304
   copy_results:
     cmd: mkdir -p ~/ml_afr/cifar/ && cp -r cifar/plots/* ~/ml_afr/cifar/
     deps:
     - path: cifar/plots/
-      md5: 88318333900b553e12d9fd15042e73b5.dir
-      size: 16452555
+      md5: e5bd21a43835f0ceedd29dd40295d275.dir
+      size: 16460874
       nfiles: 25

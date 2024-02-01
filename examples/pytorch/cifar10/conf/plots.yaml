@@ -51,8 +51,8 @@ cat_plot:
 - file: adv_failures_per_train_time_vs_defence_type.eps
   hue: model_name
   kind: boxen
-  set:
-    yscale: log
+  # set:
+    # yscale: log
   titles:  $\bar{C}_{adv.}$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
@@ -69,8 +69,8 @@ cat_plot:
   hue: model_name
   kind: boxen
   legend_title: Model Name
-  set:
-    yscale: log
+  # set:
+  #   yscale: log
   titles:  $\bar{C}_{adv.}$ vs Attack Type
   x: atk_gen
   xlabels: Attack Type
@@ -87,11 +87,11 @@ cat_plot:
   hue: model_name
   kind: boxen
   legend_title: Model Name
-  titles: $h_{adv}$ vs Defence Type
+  titles: $f_{adv}$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: adv_failure_rate
-  ylabels: $h_{adv.}$
+  ylabels: $f_{adv.}$
   rotation : 90
   hue_order:
   - ResNet18
@@ -121,11 +121,11 @@ cat_plot:
   legend_title: Model Name
   set:
     yscale: log
-  titles: $h_{ben}(t; \theta)$ vs Defence Type
+  titles: $f_{ben}(t; \theta)$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: failure_rate
-  ylabels: $h_{ben}(t; \theta)$
+  ylabels: $f_{ben}(t; \theta)$
   rotation : 90
   hue_order:
   - ResNet18
@@ -177,13 +177,13 @@ line_plot:
 - file: def_param_vs_adv_failure_rate.eps
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
-  title: $h_{adv}$ vs Defence Strength
+  title: $f_{adv}$ vs Defence Strength
   x: def_value
   x_scale: log 
   xlabel: Defence Control Parameter
   y: adv_failure_rate
   y_scale: log
-  ylabel: $h_{adv.}$
+  ylabel: $f_{adv.}$
   hue_order:
   - Control
   - Conf
@@ -218,11 +218,11 @@ scatter_plot:
   y: adv_failure_rate
   hue: model_name
   xlabel: $t_{train}$
-  ylabel: $h_{adv}$
-  title: $h_{adv}$ vs $t_{train}$
+  ylabel: $f_{adv}$
+  title: $f_{adv}$ vs $t_{train}$
   file: adv_failure_rate_vs_train_time.eps
-  # y_scale: log
-  # x_scale: log
+  y_scale: linear
+  x_scale: log
   legend: 
     title: Model Name
     bbox_to_anchor: [1.05, 1]
