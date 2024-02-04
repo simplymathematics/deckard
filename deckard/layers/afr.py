@@ -132,7 +132,14 @@ def score_model(aft, train, test):
     return scores
 
 
-def make_afr_table(score_list, aft_dict, dataset, X_train, folder=".", filename='aft_comparison',):
+def make_afr_table(
+    score_list,
+    aft_dict,
+    dataset,
+    X_train,
+    folder=".",
+    filename="aft_comparison",
+):
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
@@ -300,7 +307,14 @@ def render_all_afr_plots(
             folder=folder,
         )
     score_list = list(scores.values())
-    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder, filename=filename)
+    aft_data = make_afr_table(
+        score_list,
+        models,
+        dataset,
+        X_train,
+        folder=folder,
+        filename=filename,
+    )
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
     print("*" * 80)
