@@ -67,7 +67,9 @@ def calculate_failure_rate(data):
     assert (
         "attack.attack_size" in data.columns
     ), "attack.attack_size not in data.columns"
-    data.loc[:, "attack.attack_size"] = pd.to_numeric(data.loc[:, "attack.attack_size"])
+    data.loc[:, "attack.attack_size"] = pd.to_numeric(
+        data.loc[:, "attack.attack_size"],
+    )
     assert (
         "predict_time" in data.columns or "predict_proba_time" in data.columns
     ), "predict_time or predict_proba_time not in data.columns"
@@ -569,7 +571,7 @@ if __name__ == "__main__":
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
     data = pd.read_csv(args.input_file)
     # Strip whitespace from column names
-    trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # Noqa E731
+    trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # noqa E731
     data.rename(columns=trim_strings, inplace=True)
     # Strip whitespace from column values
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
