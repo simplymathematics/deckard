@@ -4,11 +4,10 @@ import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
-
+from validators import url
 import numpy as np
 from pandas import DataFrame, read_csv, Series
 from omegaconf import OmegaConf
-
 from ..utils import my_hash
 from .generator import DataGenerator
 from .sampler import SklearnDataSampler
@@ -67,12 +66,13 @@ class Data:
         else:
             self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
+            
             sklearn_pipeline = OmegaConf.to_container(
                 OmegaConf.create(sklearn_pipeline),
             )
             self.sklearn_pipeline = (
                 sklearn_pipeline
-                if isinstance(sklearn_pipeline, (SklearnDataPipeline, type(None)))
+                if isinstance(sklearn_pipeline, (SklearnDataPipeline))
                 else SklearnDataPipeline(**sklearn_pipeline)
             )
         else:
@@ -112,6 +112,8 @@ class Data:
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
+        if self.sklearn_pipeline is not None:
+            result = self.sklearn_pipeline(*result)
         return result
 
     def load(self, filename) -> DataFrame:
@@ -184,7 +186,7 @@ class Data:
         :return: list
         """
         result_dict = {}
-        if data_file is not None and Path(data_file).exists():
+        if data_file is not None and Path(data_file).exists() and not url(data_file):
             data = self.load(data_file)
             assert len(data) == 4, f"Some data is missing: {self.name}"
         else:
