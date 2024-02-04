@@ -1,15 +1,15 @@
 _target_: deckard.base.data.Data
 generate:
     # _target_: deckard.base.data.generator.DataGenerator
-    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/379b679bdea30724e9fa188931f0109ff422cce0/kdd_nsl.csv
-    target : -2
+    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
+    target : BotScoreBinary
 sample:
     # _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
     stratify: True
     train_size : 10000
     test_size : 1000
-ssklearn_pipeline:
+sklearn_pipeline:
     encoder:
         name : sklearn.preprocessing.OrdinalEncoder
         handle_unknown : use_encoded_value
