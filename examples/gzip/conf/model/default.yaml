@@ -1,12 +1,2 @@
-data: ${data}
-library : sklearn
-init:
-    _target_: deckard.base.model.ModelInitializer
-    name : gzip_classifier.GzipClassifier
-    k : 1
-_target_: deckard.base.model.Model
-art:
-    _target_ : deckard.base.model.art_pipeline.ArtPipeline
-    library : sklearn
-    initialize:
-      nb_classes: 3
+defaults:
+ - gzip_classifier.yaml
