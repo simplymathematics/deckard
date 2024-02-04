@@ -6,7 +6,7 @@ RUN python3 -m pip install nvidia-pyindex nvidia-cuda-runtime-cu11
 RUN git clone https://github.com/simplymathematics/deckard.git
 WORKDIR /deckard
 RUN python3 -m pip install --editable .
-RUN python3 -m pip install pytest torch torchvision tensorflow
+RUN python3 -m pip install pytest torch tensorflow
 RUN git clone https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
 RUN cd adversarial-robustness-toolbox && python3 -m pip install .
 RUN apt install python-is-python3
