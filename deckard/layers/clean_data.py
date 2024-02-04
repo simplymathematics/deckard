@@ -68,7 +68,7 @@ def calculate_failure_rate(data):
         "attack.attack_size" in data.columns
     ), "attack.attack_size not in data.columns"
     data.loc[:, "attack.attack_size"] = pd.to_numeric(
-        data.loc[:, "attack.attack_size"]
+        data.loc[:, "attack.attack_size"],
     )
     assert (
         "predict_time" in data.columns or "predict_proba_time" in data.columns
@@ -86,16 +86,18 @@ def calculate_failure_rate(data):
         ) / data.loc[:, "predict_time"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
-            data.loc[:, "predict_proba_time"]
+            data.loc[:, "predict_proba_time"],
         )
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (1 - data.loc[:, "adv_accuracy"]) * data.loc[:, "attack.attack_size"] / data.loc[
-        :, "predict_time"
-    ]
+    adv_failure_rate = (
+        (1 - data.loc[:, "adv_accuracy"])
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "predict_time"]
+    )
 
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
@@ -490,7 +492,7 @@ def clean_data_for_plotting(
         data = data.assign(model_layers=model_layers)
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-    
+
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     data = merge_defences(data)
@@ -569,15 +571,13 @@ if __name__ == "__main__":
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
     data = pd.read_csv(args.input_file)
     # Strip whitespace from column names
-    trim_strings = lambda x: x.strip() if isinstance(x, str) else x
+    trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # noqa E731
     data.rename(columns=trim_strings, inplace=True)
     # Strip whitespace from column values
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    
-    
+
     assert "model.init.name" in data.columns, "model.init.name not in data.columns"
-    
-    
+
     if isinstance(args.drop_if_empty, str):
         args.drop_if_empty = args.drop_if_empty.split(",")
     else:
