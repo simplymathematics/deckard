@@ -6,6 +6,7 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from copy import deepcopy
 import numpy as np
+import pandas as pd
 from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
@@ -244,16 +245,12 @@ class SklearnModelInitializer:
             clip_values = params.pop("clip_values")
             kwargs["clip_values"] = tuple(clip_values)
         else:
-            X_train, _, _, _ = data
-            kwargs.update({"clip_values": (np.amin(X_train), np.amax(X_train))})
+            numeric = pd.DataFrame(data[0]).apply(pd.to_numeric, args=('coerce',))
+            min_ = np.min(numeric)
+            max_ = np.max(numeric)
+            kwargs["clip_values"] = (min_, max_)
         if "preprocessing" not in params:
-            if len(data[0].shape) > 2:
-                mean = np.mean(data[0], axis=0)
-                std = np.std(data[0], axis=0)
-                pre_tup = (mean, std)
-            else:
-                pre_tup = (np.mean(data[0]), np.std(data[0]))
-            kwargs["preprocessing"] = pre_tup
+            kwargs['preprocessing']= None
         if "preprocessing_defences" in params:
             preprocessing_defences = params.pop("preprocessing_defences")
             kwargs["preprocessing_defences"] = preprocessing_defences
