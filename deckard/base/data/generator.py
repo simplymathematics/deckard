@@ -4,6 +4,7 @@ from typing import Literal
 from dataclasses import dataclass, field
 from pathlib import Path
 import numpy as np
+from validators import url
 from sklearn.datasets import (
     make_classification,
     make_regression,
@@ -61,6 +62,32 @@ class SklearnDataGenerator:
             X, y = make_moons(**self.kwargs)
         elif self.name in "circles":
             X, y = make_circles(**self.kwargs)
+        elif isinstance(self.name, str) and Path(self.name).exists():
+            suffix = Path(self.name).suffix
+            if suffix == ".npz":
+                with np.load(self.name) as data:
+                    X = data["X"]
+                    y = data["y"]
+            elif suffix == ".csv":
+                import pandas as pd
+
+                df = pd.read_csv(self.name)
+                X = df.iloc[:, :-1].values
+                y = df.iloc[:, -1].values
+            elif suffix == ".json":
+                import json
+
+                with open(self.name, "r") as f:
+                    data = json.load(f)
+                X = data["X"]
+                y = data["y"]
+            elif suffix in [".pkl", ".pickle"]:
+                import pickle
+
+                with open(self.name, "rb") as f:
+                    data = pickle.load(f)
+                X = data["X"]
+                y = data["y"]
         else:  # pragma: no cover
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]
@@ -222,6 +249,10 @@ class DataGenerator:
             return TorchDataGenerator(self.name, **self.kwargs)()
         elif self.name in KERAS_DATASETS:
             return KerasDataGenerator(self.name, **self.kwargs)()
+        elif isinstance(self.name, str) and Path(self.name).exists():
+            return SklearnDataGenerator(self.name, **self.kwargs)()
+        elif url(self.name):
+            return SklearnDataGenerator(self.name, **self.kwargs)()
         else:  # pragma: no cover
             raise ValueError(
                 f"Invalid name {self.name}. Please choose from {ALL_DATASETS}",
