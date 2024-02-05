@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
+import pandas as pd
 import yaml
 from ..base.utils import flatten_dict
 
@@ -20,25 +21,73 @@ def find_optuna_best(
     default_config="default.yaml",
     config_subdir=None,
     direction=None,
+    average_over = ["++data.sample.random_state"],
 ):
     logger.info(f"Study name: {study_name}")
     logger.info(f"Storage name: {storage_name}")
-    study = optuna.create_study(
-        study_name=study_name,
-        storage=storage_name,
-        load_if_exists=True,
-        direction=direction,
-    )
-    df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
+    if isinstance(direction, str):
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+            direction=direction,
+        )
+        directions = [direction]
+    else:
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+            directions=direction,
+        )
+        directions = direction
+    df = study.trials_dataframe(attrs=("number", "value", "params"))
+    # Find the average of each value over the columns in average_over
+    not_these = ['number', 'value']
+    val_cols = [col for col in df.columns if col.startswith("values_") and col.split("values_")[-1] not in not_these]
+    not_these.extend(val_cols)
+    not_these.extend(average_over)
+    print(f"Not these: {not_these}")
+    groupby_cols = [col for col in df.columns if col.split("params_")[-1] not in not_these]
+    print(f"Groupby cols: {groupby_cols}")
+    dfs = df.groupby(groupby_cols)
+    new_df = pd.DataFrame(columns=groupby_cols + ["mean", "std", "ntrials", "nuniques"])
+    means = []
+    stds = []
+    ntrials = []
+    nuniques = []
+    for _, df in dfs:
+        # find mean of value
+        mean_ = df.value.mean()
+        # find the std
+        std_ = df.value.std()
+        # find the number of trials
+        n = df.value.count()
+        # find the number of unique trials
+        nunique = df.value.nunique()
+        means.append(mean_)
+        stds.append(std_)
+        ntrials.append(n)
+        nuniques.append(nunique)
+        # add first row of df to new_df
+        new_df = pd.concat([new_df, df.head(1)])
+    new_df.drop(columns=["value"], inplace=True)
+    for col in average_over:
+        new_df.drop(columns=[ f"params_{col}"], inplace=True)
+    new_df["mean"] = means
+    new_df["std"] = stds
+    new_df["ntrials"] = ntrials
+    new_df["nuniques"] = nuniques
+    param_cols = [col for col in new_df.columns if col.startswith("params_")]
+    mean_cols = [col for col in new_df.columns if col.startswith("mean_")]
+    directions = [False if x == "maximise" else True for x in directions]
+    sorted_df = df.sort(by = mean_cols, ascending = directions)
     if study_csv is not None:
-        df.to_csv(study_csv)
-    best_params = flatten_dict(study.best_params)
-    more_params = flatten_dict(study.best_trial.user_attrs)
-    even_more_params = flatten_dict(study.best_trial.system_attrs)
+        Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
+        sorted_df.to_csv(study_csv, index=False)
+    params = new_df.iloc[0][param_cols].to_dict()
+    best_params = flatten_dict(params)
     logger.debug(f"Best params: {best_params}")
-    logger.debug(f"Best user params: {more_params}")
-    logger.debug(f"Best system params: {even_more_params}")
-    best_params = {**more_params, **best_params}
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
@@ -56,7 +105,7 @@ def find_optuna_best(
                 )
                 params = cfg.get(config_subdir)
             else:
-                params_file = Path(config_folder, f"{default_config}.yaml")
+                params_file = Path(config_folder, f"best_{default_config}.yaml")
                 params = cfg
         else:
             if config_subdir is not None:
@@ -107,6 +156,7 @@ if __name__ == "__main__":
         study_name = args.study_name
         storage_name = hydra_params["sweeper"]["storage"]
         direction = default_params.get("direction", "maximize")
+        logger.info(f"Direction: {direction}")
         find_optuna_best(
             study_name=study_name,
             storage_name=storage_name,
