@@ -11,6 +11,7 @@ from sklearn.utils.validation import check_is_fitted
 # from sklearn.datasets import make_classification, fetch_20newsgroups
 import gzip
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
@@ -34,8 +35,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         The classes seen at :meth:`fit`.
     """
 
-    def __init__(self, k=3):
+    def __init__(self, k=3, n=-1):
         self.k = k
+        self.n = n 
         self.compressor = "gzip"
         self._set_compressor()
 
@@ -59,7 +61,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # Store the classes seen during fit
         self.n_classes_ = len(np.unique(y))
         self.n_features_ = X.shape[1]
-
+        # Return the classifier
+        if self.n != -1:
+            X, _, y, _ = train_test_split(X,y, train_size = self.n)
         self.X_ = X
         self.y_ = y
         Cxs = []
@@ -68,7 +72,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             Cx = self._compress(x)
             Cxs.append(Cx)
         self.Cx_ = Cxs
-        # Return the classifier
+        
         return self
 
     def _set_compressor(self):
@@ -111,7 +115,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # Input validation
         # X = check_array(X)
         results = []
-        for x1 in tqdm(X, desc="Predicting..."):
+        for x1 in tqdm(X, desc="Predicting...", total=len(X), dynamic_ncols=True, position=0, leave=False):
             x1 = str(x1)
             Cx1 = self._compress(x1)
             distance_from_x1 = []
@@ -121,9 +125,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 Cx1x2 = self._compress(x1x2)
                 ncd = (Cx1x2 - min(Cx1, Cx2)) / max(Cx1, Cx2)
                 distance_from_x1.append(ncd)
-            # distance_from_x1 = self._ncd(Cx1, x1)
             sorted_idx = np.argsort(np.array(distance_from_x1))
             top_k_class = list(self.y_[sorted_idx[: self.k]])
             predict_class = max(set(top_k_class), key=top_k_class.count)
             results.append(predict_class)
         return results
+
+
+    
