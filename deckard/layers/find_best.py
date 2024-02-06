@@ -41,6 +41,7 @@ def find_optuna_best(
             directions=direction,
         )
         directions = direction
+    assert isinstance(directions, list), f"Directions is not a list: {type(directions)}"
     df = study.trials_dataframe(attrs=("number", "value", "params"))
     # Find the average of each value over the columns in average_over
     not_these = ['number', 'value']
@@ -79,9 +80,11 @@ def find_optuna_best(
     new_df["ntrials"] = ntrials
     new_df["nuniques"] = nuniques
     param_cols = [col for col in new_df.columns if col.startswith("params_")]
-    mean_cols = [col for col in new_df.columns if col.startswith("mean_")]
-    directions = [False if x == "maximise" else True for x in directions]
-    sorted_df = df.sort(by = mean_cols, ascending = directions)
+    for direction in directions:
+        assert direction in ["minimize", "maximize"], f"Direction {direction} not recognized."
+    directions = [False if x == "maximize" else True for x in directions]
+    assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(df)}"
+    sorted_df = new_df.sort_values(by = 'mean', ascending = directions)
     if study_csv is not None:
         Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
         sorted_df.to_csv(study_csv, index=False)
@@ -91,6 +94,12 @@ def find_optuna_best(
     overrides = []
     for key, value in best_params.items():
         logger.info(f"Overriding {key} with {value}")
+        if key.startswith("++"):
+            pass
+        elif key.startswith("+"):
+            key = key.replace("+", "++")
+        else:
+            key = f"++{key}"
         overrides.append(f"{key}={value}")
     with initialize_config_dir(config_dir=config_folder, version_base="1.3"):
         cfg = compose(config_name=default_config, overrides=overrides)
@@ -145,14 +154,13 @@ if __name__ == "__main__":
     args.config_folder = Path(args.config_folder).resolve().as_posix()
 
     if args.study_type == "optuna":
-        with open(
-            Path(args.config_folder, args.default_config).with_suffix(".yaml"),
-            "r",
-        ) as f:
-            default_params = yaml.load(f, Loader=yaml.FullLoader)
+        with initialize_config_dir(config_dir=args.config_folder, version_base="1.3"):
+            default_params = compose(config_name=args.default_config, return_hydra_config=True, overrides=["++hydra.job.num=0", "++hydra.job_logging.handlers.file.filename=null"])
+        default_params = OmegaConf.to_container(OmegaConf.create(default_params), resolve=True)
         if "hydra" in default_params:
             hydra_params = default_params.pop("hydra")
-
+        else:
+            raise ValueError("No hydra params found in default config.")
         study_name = args.study_name
         storage_name = hydra_params["sweeper"]["storage"]
         direction = default_params.get("direction", "maximize")
