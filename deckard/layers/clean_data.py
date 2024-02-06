@@ -436,14 +436,16 @@ def format_control_parameter(data, control_dict, fillna):
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
-    defences = list(data.def_gen.unique())
-    attacks = list(data.atk_gen.unique())
+    defences = list(data.def_gen.unique()) if "def_gen" in data.columns else []
+    attacks = list(data.atk_gen.unique()) if "atk_gen" in data.columns else []
     logger.info(f"Unique defences: {defences}")
     logger.info(f"Unique attacks: {attacks}")
-    assert "def_param" in data.columns, "def_param not in data.columns"
-    assert "atk_param" in data.columns, "atk_param not in data.columns"
-    assert "def_value" in data.columns, "def_value not in data.columns"
-    assert "atk_value" in data.columns, "atk_value not in data.columns"
+    if len(defences) > 0:
+        assert "def_param" in data.columns, "def_param not in data.columns"
+        assert "def_value" in data.columns, "def_value not in data.columns"
+    if len(attacks) > 0:
+        assert "atk_param" in data.columns, "atk_param not in data.columns"
+        assert "atk_value" in data.columns, "atk_value not in data.columns"
     return data
 
 
@@ -495,13 +497,15 @@ def clean_data_for_plotting(
 
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
-    data = merge_defences(data)
+    if len(def_gen_dict) > 0:
+        data = merge_defences(data)
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
         def_gen = data.def_gen.map(def_gen_dict)
         data.def_gen = def_gen
         data.dropna(axis=0, subset=["def_gen"], inplace=True)
-    data = merge_attacks(data)
+    if "attack.init.name" in data:
+        data = merge_attacks(data)
     if hasattr(data, "atk_gen"):
         atk_gen = data.atk_gen.map(atk_gen_dict)
         data.atk_gen = atk_gen
@@ -553,10 +557,10 @@ if __name__ == "__main__":
         type=str,
         default=[
             "accuracy",
-            "adv_accuracy",
+            # "adv_accuracy",
             "train_time",
-            "adv_fit_time",
-            "predict_proba_time",
+            # "adv_fit_time",
+            "predict_time",
         ],
     )
     parser.add_argument(
@@ -617,7 +621,9 @@ if __name__ == "__main__":
         control_dict,
         fillna=fillna,
     )
-    results = calculate_failure_rate(results)
+    
+    if "adv_accuracy" in results.columns:
+        results = calculate_failure_rate(results)
 
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
