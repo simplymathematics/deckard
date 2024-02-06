@@ -71,7 +71,11 @@ def cat_plot(
     """
 
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+      file = Path(file)
+    else:
+      file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     logger.debug(
@@ -153,7 +157,11 @@ def line_plot(
       the line plot graph object.
     """
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+      file = Path(file)
+    else:
+      file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
@@ -229,7 +237,11 @@ def scatter_plot(
     """
 
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+      file = Path(file)
+    else:
+      file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
