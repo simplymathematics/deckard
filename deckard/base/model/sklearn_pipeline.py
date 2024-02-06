@@ -163,16 +163,16 @@ class SklearnModelPipeline:
         for stage in pipeline:
             stage = pipeline[stage]
             if isinstance(stage, dict):
-                stage[
-                    "_target_"
-                ] = "deckard.base.model.sklearn_pipeline.SklearnModelPipelineStage"
+                stage["_target_"] = (
+                    "deckard.base.model.sklearn_pipeline.SklearnModelPipelineStage"
+                )
                 stage = instantiate(stage)
                 model = stage(model=model)
             elif isinstance(stage, DictConfig):
                 stage = OmegaConf.to_container(stage, resolve=True)
-                stage[
-                    "_target_"
-                ] = "deckard.base.model.sklearn_pipeline.SklearnModelPipelineStage"
+                stage["_target_"] = (
+                    "deckard.base.model.sklearn_pipeline.SklearnModelPipelineStage"
+                )
                 stage = instantiate(stage)
                 model = stage(model=model)
             elif isinstance(stage, SklearnModelPipelineStage):
