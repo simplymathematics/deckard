@@ -28,6 +28,7 @@ class Data:
     )
     target: Union[str, None] = None
     name: Union[str, None] = None
+    drop : list = field(default_factory=list)
 
     def __init__(
         self,
@@ -36,6 +37,7 @@ class Data:
         sample: SklearnDataSampler = None,
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
+        drop: list = None,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
 
@@ -77,6 +79,7 @@ class Data:
             )
         else:
             self.sklearn_pipeline = None
+        self.drop = drop
         self.target = target
         self.name = name if name is not None else my_hash(self)
         logger.debug(f"Instantiating Data with id: {self.get_name()}")
@@ -100,18 +103,23 @@ class Data:
             result = self.generate()
         else:
             result = self.load(self.name)
+        
         if isinstance(result, DataFrame):
             assert self.target is not None, "Target is not specified"
             y = result[self.target]
             X = result.drop(self.target, axis=1)
-            X = np.array(X)
-            y = np.array(y)
-            result = [X, y]
+            if self.drop is not None:
+                X = X.drop(self.drop, axis=1)
+        else:
+            if self.drop is not None:
+                X = DataFrame(X).drop(self.drop, axis=1)
+        result = [X, y]
         if len(result) == 2:
             result = self.sample(*result)
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
+        
         if self.sklearn_pipeline is not None:
             result = self.sklearn_pipeline(*result)
         return result
