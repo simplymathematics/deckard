@@ -1,0 +1,19 @@
+cat_plot:
+- file: summary.pdf
+  hue: model.init.method
+  kind: "point"
+  set:
+    yscale: linear
+  titles: 
+  x: data.sample.train_size
+  xlabels: train_size
+  y: accuracy
+  ylabels: Accuracy
+  rotation : 90
+  hue_order:
+  - random
+  - medoid
+  - knn
+  - svc
+  row : model.init.m
+  col : model.init.k

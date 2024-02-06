@@ -5,8 +5,8 @@ sample:
     _target_: deckard.base.data.SklearnDataSampler
     random_state : 0
     stratify: True
-    train_size : 2000
-    test_size : 100
+    train_size : 100
+    test_size :  100
 sklearn_pipeline:
     encoder:
         name : sklearn.preprocessing.OrdinalEncoder

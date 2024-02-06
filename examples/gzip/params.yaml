@@ -6,7 +6,7 @@ data:
     random_state: 0
     stratify: true
     test_size: 100
-    train_size: 2000
+    train_size: 100
   sklearn_pipeline:
     encoder:
       handle_unknown: use_encoded_value
@@ -52,7 +52,7 @@ model:
       random_state: 0
       stratify: true
       test_size: 100
-      train_size: 2000
+      train_size: 100
     sklearn_pipeline:
       encoder:
         handle_unknown: use_encoded_value
@@ -65,8 +65,11 @@ model:
     target: label
   init:
     _target_: deckard.base.model.ModelInitializer
+    compressor: gzip
+    distance_matrix: output/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
     k: 1
-    n: 100
+    m: 100
+    method: random
     name: gzip_classifier.GzipClassifier
   library: sklearn
 model_name: gzip_classifier
@@ -82,3 +85,4 @@ scorers:
     _target_: deckard.base.scorer.ScorerConfig
     direction: minimize
     name: sklearn.metrics.log_loss
+stage: train

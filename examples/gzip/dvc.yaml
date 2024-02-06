@@ -37,25 +37,31 @@ stages:
   #   - scorers
   #   - files
   ##############################################################################
-  find_best_model:
-    cmd: python -m deckard.layers.find_best --study_name ${hydra.sweeper.study_name} --config_folder conf --default_config gzip_classifier --config_subdir model --config_name gzip --params_file best_model --study_csv best_model.csv
-    deps:
-    - model.db
-    outs:
-    - conf/model/best_model.yaml
   model_optimise:
-    cmd: python -m deckard.layers.optimise +stage=train ++data.sample.random_state=0,1,2,3,4,5 dataset=${dataset} model_name=${model_name} --multirun --config-name gzip 
+    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9 data.sample.train_size=10,100,1000,.8 dataset=${dataset} data=${dataset} model=${model_name} model_name=${model_name} --multirun 
     deps:
     - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
-    - model.db
+    - ${dataset}.db
+    - ${files.directory}/logs/${dataset}/${model_name}
     params:
     - conf/default.yaml:
       - hydra
     - dataset
     - model_name
+  find_best_model:
+    cmd: python -m deckard.layers.find_best --study_name ${model_name} --config_folder conf  --config_subdir model  --params_file best_${model_name} --study_csv ${files.directory}/${files.reports}/summaries/${model_name}_${dataset}.csv --study_name ${model_name}
+    deps:
+    - ${dataset}.db
+    outs:
+    - conf/model/best_${model_name}.yaml
+    params:
+    - conf/default.yaml:
+      - hydra
+    - model_name
+    - dataset
   ##############################################################################
   # attack_optimise:
   #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
