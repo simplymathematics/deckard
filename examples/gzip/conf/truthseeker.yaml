@@ -1,14 +1,14 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: kdd_nsl
+    - data: truthseeker
     - model: gzip_classifier
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : tpe
     - override hydra/launcher : joblib
-dataset : kdd_nsl
+dataset : truthseeker
 model_name : gzip_classifier
 stage : train
 direction : 
@@ -30,7 +30,7 @@ hydra:
     n_jobs: 128
     n_trials : 128 # 1050
     params:
-      # model.init.k : int(1,3,5,7,11)
+      model.init.k : int(1,3,5,7,9,11)
       # model.init.m : int(10, 20, 50, 100, 200, 500, 1000)
       # model.init.method : choice("random", "svc", "medoid", "sum")
       # model.init.compressor : choice("gzip", "lzma", "zstd", "pkl")
