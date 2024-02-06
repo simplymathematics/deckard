@@ -73,7 +73,7 @@ stages:
             compressor: gzip
             distance_matrix: output/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
             k: 1
-            m: 100
+            m: -1
             method: random
             name: gzip_classifier.GzipClassifier
           library: sklearn
@@ -94,12 +94,12 @@ stages:
       size: 72965
     - path: output/model/model.pkl
       hash: md5
-      md5: 1f3fbcf8dee46fcd8d4c7a35e52f88d6
-      size: 71300
+      md5: cc712060a10e0f66d7ffbf9c853dba0c
+      size: 36094
     - path: output/reports/train/default/score_dict.json
       hash: md5
-      md5: 414745bceb7f6130af50538f7cfce334
-      size: 844
+      md5: 4d8e715b1caacf6702866044ba66cdb3
+      size: 843
   model_optimise:
     cmd: python -m deckard.layers.optimise +stage=train ++data.sample.random_state=0,1,2,3,4,5
       dataset=kdd_nsl data=kdd_nsl model=gzip_classifier model_name=gzip_classifier

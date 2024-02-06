@@ -68,7 +68,7 @@ model:
     compressor: gzip
     distance_matrix: output/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
     k: 1
-    m: 100
+    m: -1
     method: random
     name: gzip_classifier.GzipClassifier
   library: sklearn
