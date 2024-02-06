@@ -54,7 +54,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self._set_compressor()
         self.method = method
         if isinstance(distance_matrix, str) and Path(distance_matrix).exists():
-            distance_matrix = np.load(distance_matrix, allow_pickle=True)
+            self.distance_matrix = np.load(distance_matrix, allow_pickle=True)['X']
         elif isinstance(distance_matrix, str) and not Path(distance_matrix).exists():
             self.distance_matrix = distance_matrix
         elif isinstance(distance_matrix, np.ndarray):
@@ -63,7 +63,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix = None
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(distance_matrix)}")
-        self.distance_matrix = distance_matrix
 
     def fit(self, X, y):
         """A reference implementation of a fitting function for a classifier.
@@ -85,7 +84,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # Store the classes seen during fit
         self.classes_ = unique_labels(y)
         self.n_features_ = X.shape[1] if hasattr(X, "shape") and len(X.shape) > 1 else 1
-
         self.X_ = np.array(X)
         self.y_ = np.array(y)
         Cxs = []
@@ -108,10 +106,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             assert len(self.X_) == len(self.y_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.y_)} == {len(self.Cx_)}"
 
     def _find_best_training_samples(self, method = "medoid"):
-        if method in ["random"]:
-            distance_matrix = np.ones((len(self.X_), len(self.X_)))
-        else:
-            distance_matrix = self._calculate_distance_matrix(self.X_)
+        distance_matrix = self._calculate_distance_matrix(self.X_, self.Cx_)
         indices = []
         if method == "sum":
             for label in self.classes_:
@@ -140,13 +135,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         elif method == "knn":
             from sklearn.neighbors import NearestNeighbors
             nn = NearestNeighbors(n_neighbors=self.m).fit(distance_matrix)
-            distances, indices = nn.kneighbors(distance_matrix, n_neighbors=self.classes_, return_distance=True)
-            # Sort the indices by the shortest distance
-            tmp = zip(indices, distances)
-            tmp = sorted(tmp, key=lambda x: x[1])
-            # Unzip the sorted indices
-            indices, distances = zip(*tmp)
-            # Take the first m*len(classes_) indices
+            _, indices = nn.kneighbors(distance_matrix, n_neighbors=self.m, return_distance=True)
+            # TODO: Sort by distances
+            # TODO: select m entries from each class
             indices = list(indices[: self.m * len(self.classes_)])
         elif method == "svc":
             from sklearn.svm import SVC
@@ -155,7 +146,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             raise NotImplementedError(f"Method {method} not supported")
         return indices
-    
     
     
     
@@ -170,14 +160,23 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             distance_from_x1.append(ncd)
         return distance_from_x1
 
-    def _calculate_distance_matrix(self, x):
-        if self.distance_matrix is not None:
+    def _calculate_distance_matrix(self, x, Cx):
+        if  isinstance(self.distance_matrix, np.ndarray) and not isinstance(self.distance_matrix, type(None)):
             return self.distance_matrix
+        elif isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
+            return np.load(self.distance_matrix, allow_pickle=True)
+        elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
+            distance_matrix = np.zeros((len(x), len(x)))
+            for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=x):
+                # using the self._ncd method to calculate the distance
+                distance_matrix[i] = self._ncd(Cx[i], str(xi))
+            Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
+            np.savez(self.distance_matrix, X=distance_matrix)
         else:
             distance_matrix = np.zeros((len(x), len(x)))
-            for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(self.X_), position=0):
+            for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(x)):
                 # using the self._ncd method to calculate the distance
-                distance_matrix[i] = self._ncd(self.Cx_[i], str(xi))
+                distance_matrix[i] = self._ncd(Cx[i], str(xi))
             return distance_matrix
             
     def predict(self, X):
