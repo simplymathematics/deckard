@@ -9,6 +9,9 @@ from sklearn.utils.multiclass import unique_labels
 import gzip
 from tqdm import tqdm
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
@@ -166,17 +169,24 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         elif isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
             return np.load(self.distance_matrix, allow_pickle=True)
         elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
+            pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
+            logger.info(f"Calculating distance matrix and saving to {self.distance_matrix}")
             distance_matrix = np.zeros((len(x), len(x)))
-            for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=x):
+            for i, xi in enumerate(x):
                 # using the self._ncd method to calculate the distance
                 distance_matrix[i] = self._ncd(Cx[i], str(xi))
+                pbar.update(1)
+            pbar.close()
             Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
             np.savez(self.distance_matrix, X=distance_matrix)
         else:
             distance_matrix = np.zeros((len(x), len(x)))
+            pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
             for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(x)):
                 # using the self._ncd method to calculate the distance
                 distance_matrix[i] = self._ncd(Cx[i], str(xi))
+                pbar.update(1)
+            pbar.close()
             return distance_matrix
             
     def predict(self, X):
