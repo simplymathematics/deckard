@@ -53,9 +53,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.m = m
         self._set_compressor()
         self.method = method
-        if isinstance(distance_matrix, str) and Path(distance_matrix).exists():
+        pathExists = Path(distance_matrix).exists()
+        isString = isinstance(distance_matrix, str)
+        if isString and pathExists:
             self.distance_matrix = np.load(distance_matrix, allow_pickle=True)['X']
-        elif isinstance(distance_matrix, str) and not Path(distance_matrix).exists():
+        elif isString and not pathExists:
             self.distance_matrix = distance_matrix
         elif isinstance(distance_matrix, np.ndarray):
             self.distance_matrix = distance_matrix
@@ -149,7 +151,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     
     
-    
+    # misleading name. this is considerably more than ncd
+    # which makes it harder to optimize
     def _ncd(self, Cx1, x1):
         distance_from_x1 = []
         for x2, Cx2 in zip(self.X_, self.Cx_):
@@ -163,15 +166,20 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     def _calculate_distance_matrix(self, x, Cx):
         if  isinstance(self.distance_matrix, np.ndarray) and not isinstance(self.distance_matrix, type(None)):
             return self.distance_matrix
-        elif isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
+
+        isString = isinstance(self.distance_matrix, str)
+        pathExists = Path(self.distance_matrix).exists()
+        if isString and pathExists:
             return np.load(self.distance_matrix, allow_pickle=True)
-        elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
+
+        if isinstance(self.distance_matrix, str) and not pathExists:
             distance_matrix = np.zeros((len(x), len(x)))
             for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=x):
                 # using the self._ncd method to calculate the distance
                 distance_matrix[i] = self._ncd(Cx[i], str(xi))
             Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
             np.savez(self.distance_matrix, X=distance_matrix)
+            # all other cases return something. why doesn't this one?
         else:
             distance_matrix = np.zeros((len(x), len(x)))
             for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(x)):
