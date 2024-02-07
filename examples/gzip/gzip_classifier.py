@@ -4,11 +4,15 @@ This is a module that implments a gzip classifier. You can test it by running th
 python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --distance_matrix None --dataset 20newsgroups
 """
 # These lines will be used  to setup a virtual environment inside the current working directory in a folder called env
+# You might need to install venv with:
+# sudo apt-get install python3-venv
 # python3 -m pip install venv
 # python3 -m venv env
 # source env/bin/activate
 # run `deactivate` to exit the virtual environment
 # These lines will be used to install the dependencies needed for this file
+# You might need to install pip with:
+# sudo apt-get install python3-pip
 # python -m pip install numpy scikit-learn tqdm scikit-learn-extra pandas
 
 import numpy as np
@@ -338,7 +342,7 @@ def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
     end = time.time()
     pred_time = end - start
     score = round(accuracy_score(y_test, predictions), 3)
-    print(f"Training time: {end - start}")
+    print(f"Training time: {train_time}")
     print(f"Prediction time: {pred_time}")
     print(f"Accuracy score is: {score}")
     return {
