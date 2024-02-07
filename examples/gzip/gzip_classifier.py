@@ -10,7 +10,7 @@ import gzip
 from tqdm import tqdm
 from pathlib import Path
 
-# I think these could all be implemented outside the class
+# it makes sense to implement these outside the class
 # since none of the functions actually use 'self'
 def _gzip_compressor(x):
     return len(gzip.compress(str(x).encode()))
