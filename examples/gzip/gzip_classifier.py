@@ -388,7 +388,7 @@ def main(test_model):
         raise ValueError(f"Dataset {args.dataset} not found")
     params = vars(args)
     params.pop("dataset")
-     test_model(X, y, train_size=args.train_size, test_size=args.test_size, k=args.k, m=args.m, method=args.method, distance_matrix=args.distance_matrix, compressor=args.compressor)
+    test_model(X, y, train_size=args.train_size, test_size=args.test_size, k=args.k, m=args.m, method=args.method, distance_matrix=args.distance_matrix, compressor=args.compressor)
 
 if __name__ == "__main__":
     main(test_model)
