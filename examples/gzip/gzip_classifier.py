@@ -114,8 +114,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             for label in self.classes_:
                 label_idx = np.where(self.y_ == label)[0]
                 label_distance_matrix = distance_matrix[label_idx, :]
-                summed_matix = np.sum(label_distance_matrix, axis=0)
-                sorted_idx = np.argsort(summed_matix)
+                summed_matrix = np.sum(label_distance_matrix, axis=0)
+                sorted_idx = np.argsort(summed_matrix)
                 indices.extend(sorted_idx[: self.m])
         elif method == "mean":
             for label in self.classes_:
