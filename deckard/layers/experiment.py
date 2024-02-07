@@ -1,12 +1,16 @@
+#! /usr/bin/env python
+
 import logging
 from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
+
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse
 from copy import deepcopy
 from ..base.utils import unflatten_dict
+from .utils import save_params_file
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +54,14 @@ def run_stage(
     logger.info(
         f"Running stage {stage} with params_file: {params_file} and pipeline_file: {pipeline_file} in directory {directory}",
     )
+    
     params = get_dvc_stage_params(
         stage=stage,
         params_file=params_file,
         pipeline_file=pipeline_file,
         directory=directory,
     )
+    
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
@@ -89,7 +95,7 @@ def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
     return stages
 
 
-def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo=None):
+def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo=None,):
     results = {}
     stages = get_stages(stages=stages, pipeline_file=pipeline_file, repo=repo)
     for stage in stages:
@@ -113,17 +119,20 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--config_dir", type=str, default="conf")
     dvc_parser.add_argument("--config_file", type=str, default="default")
     dvc_parser.add_argument("--workdir", type=str, default=".")
+    dvc_parser.add_argument("--overrides", nargs="*", default=None, type=str)
     args = dvc_parser.parse_args()
-    config_dir = Path(args.workdir, args.config_dir).resolve().as_posix()
-    # save_params_file(
-    #     config_dir=config_dir,
-    #     config_file=args.config_file,
-    #     params_file=args.params_file,
-    # )
     logging.basicConfig(
         level=args.verbosity,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    config_dir = Path(args.workdir, args.config_dir).relative_to(Path()).as_posix()
+    if args.overrides is not None and len(args.overrides) > 0:
+        save_params_file(
+            config_dir=config_dir,
+            config_file=args.config_file,
+            params_file=args.params_file,
+            overrides=args.overrides,
+        )
     results = run_stages(
         stages=args.stage,
         pipeline_file=args.pipeline_file,
