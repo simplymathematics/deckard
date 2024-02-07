@@ -12,12 +12,12 @@ python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --dist
 # python -m pip install numpy scikit-learn tqdm scikit-learn-extra pandas
 
 import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import unique_labels
 import gzip
 from tqdm import tqdm
 from pathlib import Path
+import logging
+import time
+import argparse
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
@@ -26,14 +26,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.preprocessing import LabelEncoder
-import time
-import gzip
-from tqdm import tqdm
-import argparse
+from sklearn.base import BaseEstimator, ClassifierMixin
 import pandas as pd
 
-
-import logging
 
 logger = logging.getLogger(__name__)
 
