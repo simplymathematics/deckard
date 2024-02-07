@@ -59,7 +59,7 @@ def find_conf_files(
     return files
 
 
-def get_overrides(file: str, key: str = None, overrides=None):
+def get_overrides(overrides=None):
     if overrides is None:
         overrides = {}
     else:
@@ -137,9 +137,11 @@ def save_params_file(
     config_dir="conf",
     config_file="default",
     params_file="params.yaml",
+    working_directory = ".",
     overrides=[],
 ):
-    config_dir = str(Path(Path(), config_dir).absolute().as_posix())
+    config_dir = str(Path(working_directory, config_dir).absolute().as_posix())
+    logger.info(f"Running save_params_file in config_dir: {config_dir}")
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         cfg = compose(config_name=config_file, overrides=overrides)
         params = OmegaConf.to_container(cfg, resolve=True)
