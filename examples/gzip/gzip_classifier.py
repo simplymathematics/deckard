@@ -10,6 +10,37 @@ import gzip
 from tqdm import tqdm
 from pathlib import Path
 
+# I think these could all be implemented outside the class
+# since none of the functions actually use 'self'
+def _gzip_compressor(x):
+    return len(gzip.compress(str(x).encode()))
+
+def _lzma_compressor(x):
+    import lzma
+    return len(lzma.compress(str(x).encode()))
+
+def _bz2_compressor(x):
+    import bz2
+
+    return len(bz2.compress(str(x).encode()))
+
+def _zstd_compressor(x):
+    import zstd
+    return len(zstd.compress(str(x).encode()))
+
+def _pickle_compressor(x):
+    import pickle
+    return len(pickle.dumps(x))
+
+compressors = {
+    "gzip": _gzip_compressor,
+    "lzma": _lzma_compressor,
+    "bz2": _bz2_compressor,
+    "zstd": _zstd_compressor,
+    "pkl": _pickle_compressor,
+    "pickle": _pickle_compressor,
+}
+
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
 
@@ -225,41 +256,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             results.append(predict_class)
         return results
     
+    # A switch statement might be nicer than this
+    # but those are only supported in python3.10 or later:
+    # https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
     def _set_compressor(self):
-        if self.compressor == "gzip":
-            self._compress = self._gzip_compressor
-        elif self.compressor == "lzma":
-            self._compress = self._lzma_compressor
-        elif self.compressor == "bz2":
-            self._compress = self._bz2_compressor
-        elif self.compressor == "zstd":
-            self._compress = self._zstd_compressor
-        elif self.compressor in ["pkl", "pickle"]:
-            self._compress = self._pickle_compressor
+        if self.compressor in compressors:
+            self._compress = compressors(self.compressor)
         else:
             raise NotImplementedError(
                 f"Compressing with {self.compressor} not supported."
             )
-
-    def _gzip_compressor(self, x):
-        return len(gzip.compress(str(x).encode()))
-
-    def _lzma_compressor(self, x):
-        import lzma
-        return len(lzma.compress(str(x).encode()))
-    
-    def _bz2_compressor(self, x):
-        import bz2
-
-        return len(bz2.compress(str(x).encode()))
-    
-    def _zstd_compressor(self, x):
-        import zstd
-        return len(zstd.compress(str(x).encode()))
-    
-    def _pickle_compressor(self, x):
-        import pickle
-        return len(pickle.dumps(x))
-    
-    
 
