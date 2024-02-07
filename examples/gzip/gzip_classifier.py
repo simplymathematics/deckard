@@ -10,6 +10,37 @@ import gzip
 from tqdm import tqdm
 from pathlib import Path
 
+# it makes sense to implement these outside the class
+# since none of the functions actually use 'self'
+def _gzip_compressor(x):
+    return len(gzip.compress(str(x).encode()))
+
+def _lzma_compressor(x):
+    import lzma
+    return len(lzma.compress(str(x).encode()))
+
+def _bz2_compressor(x):
+    import bz2
+
+    return len(bz2.compress(str(x).encode()))
+
+def _zstd_compressor(x):
+    import zstd
+    return len(zstd.compress(str(x).encode()))
+
+def _pickle_compressor(x):
+    import pickle
+    return len(pickle.dumps(x))
+
+compressors = {
+    "gzip": _gzip_compressor,
+    "lzma": _lzma_compressor,
+    "bz2": _bz2_compressor,
+    "zstd": _zstd_compressor,
+    "pkl": _pickle_compressor,
+    "pickle": _pickle_compressor,
+}
+
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
 
@@ -53,9 +84,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.m = m
         self._set_compressor()
         self.method = method
-        if isinstance(distance_matrix, str) and Path(distance_matrix).exists():
+        pathExists = Path(distance_matrix).exists()
+        isString = isinstance(distance_matrix, str)
+        if isString and pathExists:
             self.distance_matrix = np.load(distance_matrix, allow_pickle=True)['X']
-        elif isinstance(distance_matrix, str) and not Path(distance_matrix).exists():
+        elif isString and not pathExists:
             self.distance_matrix = distance_matrix
         elif isinstance(distance_matrix, np.ndarray):
             self.distance_matrix = distance_matrix
@@ -112,8 +145,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             for label in self.classes_:
                 label_idx = np.where(self.y_ == label)[0]
                 label_distance_matrix = distance_matrix[label_idx, :]
-                summed_matix = np.sum(label_distance_matrix, axis=0)
-                sorted_idx = np.argsort(summed_matix)
+                summed_matrix = np.sum(label_distance_matrix, axis=0)
+                sorted_idx = np.argsort(summed_matrix)
                 indices.extend(sorted_idx[: self.m])
         elif method == "mean":
             for label in self.classes_:
@@ -149,7 +182,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     
     
-    
+    # misleading name. this is considerably more than ncd
+    # which makes it harder to optimize
     def _ncd(self, Cx1, x1):
         distance_from_x1 = []
         for x2, Cx2 in zip(self.X_, self.Cx_):
@@ -163,15 +197,20 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     def _calculate_distance_matrix(self, x, Cx):
         if  isinstance(self.distance_matrix, np.ndarray) and not isinstance(self.distance_matrix, type(None)):
             return self.distance_matrix
-        elif isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
+
+        isString = isinstance(self.distance_matrix, str)
+        pathExists = Path(self.distance_matrix).exists()
+        if isString and pathExists:
             return np.load(self.distance_matrix, allow_pickle=True)
-        elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
+
+        if isinstance(self.distance_matrix, str) and not pathExists:
             distance_matrix = np.zeros((len(x), len(x)))
             for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=x):
                 # using the self._ncd method to calculate the distance
                 distance_matrix[i] = self._ncd(Cx[i], str(xi))
             Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
             np.savez(self.distance_matrix, X=distance_matrix)
+            # all other cases return something. why doesn't this one?
         else:
             distance_matrix = np.zeros((len(x), len(x)))
             for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(x)):
@@ -217,41 +256,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             results.append(predict_class)
         return results
     
+    # A switch statement might be nicer than this
+    # but those are only supported in python3.10 or later:
+    # https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
     def _set_compressor(self):
-        if self.compressor == "gzip":
-            self._compress = self._gzip_compressor
-        elif self.compressor == "lzma":
-            self._compress = self._lzma_compressor
-        elif self.compressor == "bz2":
-            self._compress = self._bz2_compressor
-        elif self.compressor == "zstd":
-            self._compress = self._zstd_compressor
-        elif self.compressor in ["pkl", "pickle"]:
-            self._compress = self._pickle_compressor
+        if self.compressor in compressors:
+            self._compress = compressors(self.compressor)
         else:
             raise NotImplementedError(
                 f"Compressing with {self.compressor} not supported."
             )
-
-    def _gzip_compressor(self, x):
-        return len(gzip.compress(str(x).encode()))
-
-    def _lzma_compressor(self, x):
-        import lzma
-        return len(lzma.compress(str(x).encode()))
-    
-    def _bz2_compressor(self, x):
-        import bz2
-
-        return len(bz2.compress(str(x).encode()))
-    
-    def _zstd_compressor(self, x):
-        import zstd
-        return len(zstd.compress(str(x).encode()))
-    
-    def _pickle_compressor(self, x):
-        import pickle
-        return len(pickle.dumps(x))
-    
-    
 
