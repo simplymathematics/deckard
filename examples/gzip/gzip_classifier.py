@@ -348,18 +348,7 @@ def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
     }
 
 
-def main(test_model):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--compressor", type=str, default="gzip")
-    parser.add_argument("--k", type=int, default=3)
-    parser.add_argument("--m", type=int, default=-1)
-    parser.add_argument("--method", type=str, default="random")
-    parser.add_argument("--distance_matrix", type=str, default=None)
-    parser.add_argument("--dataset", type=str, default="kdd_nsl")
-    parser.add_argument("--train_size", type=int, default=100)
-    parser.add_argument("--test_size", type=int, default=100)
-    args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO)
+def main(args:argparse.Namespace):
     if args.dataset == "20newsgroups":
         X, y = fetch_20newsgroups(subset='train', categories=["alt.atheism", "talk.religion.misc"], shuffle=True, random_state=42, return_X_y=True)
         y = LabelEncoder().fit(y).transform(y) # Turns the labels "alt.atheism" and "talk.religion.misc" into 0 and 1
@@ -391,4 +380,15 @@ def main(test_model):
     test_model(X, y, train_size=args.train_size, test_size=args.test_size, k=args.k, m=args.m, method=args.method, distance_matrix=args.distance_matrix, compressor=args.compressor)
 
 if __name__ == "__main__":
-    main(test_model)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--compressor", type=str, default="gzip")
+    parser.add_argument("--k", type=int, default=3)
+    parser.add_argument("--m", type=int, default=-1)
+    parser.add_argument("--method", type=str, default="random")
+    parser.add_argument("--distance_matrix", type=str, default=None)
+    parser.add_argument("--dataset", type=str, default="kdd_nsl")
+    parser.add_argument("--train_size", type=int, default=100)
+    parser.add_argument("--test_size", type=int, default=100)
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO)
+    main(args)
