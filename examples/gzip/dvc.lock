@@ -27,14 +27,11 @@ stages:
         files:
           _target_: deckard.base.files.FileConfig
           attack_dir: attacks
-          attack_file: attack
           attack_type: .pkl
           data_dir: data
-          data_file: data
           data_type: .pkl
-          directory: output
+          directory: kdd_nsl
           model_dir: model
-          model_file: model
           model_type: .pkl
           name: default
           params_file: params.yaml
@@ -71,9 +68,9 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             compressor: gzip
-            distance_matrix: output/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
+            distance_matrix: kdd_nsl/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
             k: 1
-            m: 100
+            m: -1
             method: random
             name: gzip_classifier.GzipClassifier
           library: sklearn
@@ -88,22 +85,14 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: output/data/data.pkl
+    - path: kdd_nsl/reports/train/default/predictions.json
       hash: md5
-      md5: 594bde75cd95fbfcd31ab762f5803b05
-      size: 72965
-    - path: output/model/model.pkl
-      hash: md5
-      md5: 335027c75e7600ffed6d4dfff6a829c2
-      size: 71300
-    - path: output/reports/train/default/predictions.json
-      hash: md5
-      md5: c448bbe1c03707789eb41e67275076c0
+      md5: 0be534fb57a09c24b508c3b8a0a8cba7
       size: 1200
-    - path: output/reports/train/default/score_dict.json
+    - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 134450cc3bafe45bddf748217d40bca7
-      size: 410
+      md5: 4ff5f25905173f444a7eceff500f71ad
+      size: 415
   model_optimise:
     cmd: python -m deckard.layers.optimise +stage=train ++data.sample.random_state=0,1,2,3,4,5
       dataset=kdd_nsl data=kdd_nsl model=gzip_classifier model_name=gzip_classifier
@@ -209,3 +198,204 @@ stages:
       hash: md5
       md5: e8651990cf7a92e8d67182ccd9261314
       size: 287
+  model_optimise_k:
+    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9
+      data.sample.train_size=10,100,1000,.8 dataset=kdd_nsl data=kdd_nsl model=gzip_classifier
+      model_name=gzip_classifier  model.init.k=1,3,5,7,11 ++hydra.sweep.dir=kdd_nsl/logs/k/kdd_nsl/gzip_classifier
+      --multirun
+    deps:
+    - path: kdd_nsl/reports/train/default/score_dict.json
+      hash: md5
+      md5: bdaec2cb69c3fda6d83d8befdfcb8884
+      size: 413
+    params:
+      params.yaml:
+        dataset: kdd_nsl
+        model_name: gzip_classifier
+      conf/default.yaml:
+        hydra:
+          run:
+            dir: ${files.directory}/logs/${stage}/
+          sweep:
+            dir: ${files.directory}/logs/${dataset}
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${model_name}_${dataset}
+            storage: sqlite:///${files.directory}/${dataset}.db
+            n_jobs: 128
+            n_trials: 200
+            params:
+            direction: ${direction}
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 128
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: n_jobs
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
+      hash: md5
+      md5: a2520e639a84e52f1eda691c5188d481.dir
+      size: 2686195
+      nfiles: 801
+  find_best_k:
+    cmd: python -m deckard.layers.find_best --study_name gzip_classifier --config_folder
+      conf  --config_subdir model  --params_file best_k_gzip_classifier --study_csv
+      kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv --study_name gzip_classifier_kdd_nsl
+    deps:
+    - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
+      hash: md5
+      md5: a2520e639a84e52f1eda691c5188d481.dir
+      size: 2686195
+      nfiles: 801
+    params:
+      params.yaml:
+        dataset: kdd_nsl
+        model_name: gzip_classifier
+      conf/default.yaml:
+        hydra:
+          run:
+            dir: ${files.directory}/logs/${stage}/
+          sweep:
+            dir: ${files.directory}/logs/${dataset}
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${model_name}_${dataset}
+            storage: sqlite:///${files.directory}/${dataset}.db
+            n_jobs: 128
+            n_trials: 200
+            params:
+            direction: ${direction}
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 128
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: n_jobs
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: conf/model/best_k_gzip_classifier.yaml
+      hash: md5
+      md5: 8b3d3e36d8039367a1ecf50d60223c7e
+      size: 488
+  model_optimise_m:
+    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9
+      data.sample.train_size=10,100,1000,.8 dataset=truthseeker data=truthseeker model=best_k_gzip_classifier.yaml
+      model_name=gzip_classifier model.init.m=10,20,50,100,200,500,1000  model.init.method="random","svc","medoid","sum"
+      ++hydra.sweep.dir=output/logs/m/truthseeker/gzip_classifier --multirun
+    deps:
+    - path: output/data/data.pkl
+      hash: md5
+      md5: 94a9367cee9b99b18caed3377f1ac3be
+      size: 1092988
+    - path: output/model/model.pkl
+      hash: md5
+      md5: 8412613981221f3cd313db3a177b1612
+      size: 1024911
+    - path: output/reports/train/default/score_dict.json
+      hash: md5
+      md5: 4c9d93b43a9eb3d2bc1595d3bce14f1a
+      size: 419
+    params:
+      params.yaml:
+        dataset: truthseeker
+        model_name: gzip_classifier
+      conf/default.yaml:
+        hydra:
+          run:
+            dir: ${files.directory}/logs/${stage}/
+          sweep:
+            dir: ${files.directory}/logs/${dataset}
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${model_name}
+            storage: sqlite:///${files.directory}/${dataset}.db
+            n_jobs: 128
+            n_trials: 1000
+            params:
+            direction: ${direction}
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 128
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: n_jobs
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: output/logs/m/truthseeker/gzip_classifier
+      hash: md5
+      md5: 7994e9ddc3fdda0906a0068a61e055e0.dir
+      size: 12537244
+      nfiles: 4001
+    - path: output/truthseeker.db
+      hash: md5
+      md5: c99c88e985590a28dc6a3ae580f3eaa2
+      size: 1097728
+  find_best_m:
+    cmd: python -m deckard.layers.find_best --study_name gzip_classifier --config_folder
+      conf  --config_subdir model  --params_file best_m_gzip_classifier --study_csv
+      output/reports/summaries/gzip_classifier_truthseeker.csv --study_name gzip_classifier
+    deps:
+    - path: output/truthseeker.db
+      hash: md5
+      md5: c99c88e985590a28dc6a3ae580f3eaa2
+      size: 1097728
+    params:
+      params.yaml:
+        dataset: truthseeker
+        model_name: gzip_classifier
+      conf/default.yaml:
+        hydra:
+          run:
+            dir: ${files.directory}/logs/${stage}/
+          sweep:
+            dir: ${files.directory}/logs/${dataset}
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${model_name}
+            storage: sqlite:///${files.directory}/${dataset}.db
+            n_jobs: 128
+            n_trials: 1000
+            params:
+            direction: ${direction}
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 128
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: n_jobs
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: conf/model/best_m_gzip_classifier.yaml
+      hash: md5
+      md5: f3f51702c8c333571c509f593fdeec16
+      size: 487

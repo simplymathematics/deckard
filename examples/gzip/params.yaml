@@ -23,14 +23,11 @@ direction:
 files:
   _target_: deckard.base.files.FileConfig
   attack_dir: attacks
-  attack_file: attack
   attack_type: .pkl
   data_dir: data
-  data_file: data
   data_type: .pkl
-  directory: output
+  directory: kdd_nsl
   model_dir: model
-  model_file: model
   model_type: .pkl
   name: default
   params_file: params.yaml
@@ -66,9 +63,9 @@ model:
   init:
     _target_: deckard.base.model.ModelInitializer
     compressor: gzip
-    distance_matrix: output/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
+    distance_matrix: kdd_nsl/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
     k: 1
-    m: 100
+    m: -1
     method: random
     name: gzip_classifier.GzipClassifier
   library: sklearn
