@@ -95,7 +95,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
 
         Args:
             k (int): The value of k for k-nearest neighbors. Default is 3. 
-            m (int): The value of m for m-nearest neighbors. Default is -1, which indicates using all training samples.
+            m (int): The value of m for  m-best samples. Default is -1, which indicates using all training samples.
             compressor (str): The name of the compressor. Default is "gzip".
             method (str): The method used for classification. Default is "random".
             distance_matrix (str or np.ndarray): The path to a numpy file or a numpy array representing the distance matrix.
