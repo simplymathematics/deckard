@@ -22,13 +22,9 @@ direction:
 - maximize
 files:
   _target_: deckard.base.files.FileConfig
-  attack_dir: attacks
-  attack_type: .pkl
   data_dir: data
-  data_type: .pkl
   directory: kdd_nsl
   model_dir: model
-  model_type: .pkl
   name: default
   params_file: params.yaml
   predictions_file: predictions.json
