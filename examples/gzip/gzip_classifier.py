@@ -336,7 +336,6 @@ def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
     model.fit(X_train, y_train)
     end = time.time()
     train_time = end - start
-    print(f"Training time: {end - start}")
     start = time.time()
     predictions = model.predict(X_test)
     end = time.time()
