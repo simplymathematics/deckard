@@ -348,14 +348,14 @@ def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
     }
 
 
-if __name__ == "__main__":
+def main(test_model):
     parser = argparse.ArgumentParser()
     parser.add_argument("--compressor", type=str, default="gzip")
     parser.add_argument("--k", type=int, default=3)
     parser.add_argument("--m", type=int, default=-1)
     parser.add_argument("--method", type=str, default="random")
     parser.add_argument("--distance_matrix", type=str, default=None)
-    parser.add_argument("--dataset", type=str, default="20newsgroups")
+    parser.add_argument("--dataset", type=str, default="kdd_nsl")
     parser.add_argument("--train_size", type=int, default=100)
     parser.add_argument("--test_size", type=int, default=100)
     args = parser.parse_args()
@@ -389,6 +389,6 @@ if __name__ == "__main__":
     params = vars(args)
     params.pop("dataset")
     results = test_model(X, y, train_size=args.train_size, test_size=args.test_size, k=args.k, m=args.m, method=args.method, distance_matrix=args.distance_matrix, compressor=args.compressor)
-    
-    
-    
+
+if __name__ == "__main__":
+    main(test_model)
