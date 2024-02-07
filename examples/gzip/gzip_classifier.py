@@ -169,6 +169,12 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             assert len(self.X_) == len(self.y_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.y_)} == {len(self.Cx_)}"
 
     def _find_best_training_samples(self, method = "medoid"):
+        """
+        Args:
+            method (str): The method used to select the best training samples. Default is "medoid". Choices are "sum", "mean", "medoid", "random", "knn", "svc".
+        Returns:
+            list: The indices of the best training samples.
+        """
         distance_matrix = self._calculate_distance_matrix(self.X_, self.Cx_)
         indices = []
         if method == "sum":
@@ -214,6 +220,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     # misleading name. this is considerably more than ncd
     # which makes it harder to optimize
+    # +1
     def _ncd(self, Cx1, x1):
         distance_from_x1 = []
         for x2, Cx2 in zip(self.X_, self.Cx_):
@@ -225,6 +232,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         return distance_from_x1
 
     def _calculate_distance_matrix(self, x, Cx):
+        """
+        Args:
+            x (np.ndarray): The input data
+            Cx (np.ndarray): The compressed input data
+        Returns:
+            np.ndarray: The distance matrix of size (len(x), len(x))
+        """
         if  isinstance(self.distance_matrix, np.ndarray) and not isinstance(self.distance_matrix, type(None)):
             return self.distance_matrix
 
@@ -255,7 +269,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             return distance_matrix
             
     def predict(self, X):
-        """A reference implementation of a prediction for a classifier.
+        
+        """A scikit-learn implementation of a prediction for a classifier.
 
         Parameters
         ----------
@@ -296,6 +311,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     # but those are only supported in python3.10 or later:
     # https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
     def _set_compressor(self):
+        """ Selects the compressor based on the model initialization."""
         if self.compressor in compressors:
             self._compress = compressors[self.compressor]
         else:
@@ -304,8 +320,18 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             )
 
 
-def test_model(X, y, train_size = 100, test_size =100, **kwargs):
-    X_train, X_test, y_train, y_test = train_test_split(X,y, train_size=train_size, test_size=100, stratify=y, random_state=42)
+def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
+    """
+    Args:
+        X (np.ndarray): The input data
+        y (np.ndarray): The target labels
+        train_size (int): The number of samples to use for training. Default is 100.
+        test_size (int): The number of samples to use for testing. Default is 100.
+        **kwargs: Additional keyword arguments to pass to the GzipClassifier
+    Returns:
+        dict: A dictionary containing the accuracy, train_time, and pred_time
+    """
+    X_train, X_test, y_train, y_test = train_test_split(X,y, train_size=train_size, test_size=test_size, stratify=y, random_state=42)
     model = GzipClassifier(**kwargs)
     start = time.time()
     model.fit(X_train, y_train)
