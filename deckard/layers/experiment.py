@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 import dvc.api
 from hydra.utils import instantiate
-
 from dulwich.errors import NotGitRepository
 import yaml
 import argparse
@@ -80,7 +79,7 @@ def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
         )
     except NotGitRepository:
         raise ValueError(
-            f"Directory {repo} is not a git repository. Please run `dvc init` in {repo} and try again.",
+            f"Directory {repo} is not a dvc repository. Please run `dvc init` in {repo} and try again.",
         )
     if stages is None or stages == []:
         raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
@@ -119,20 +118,23 @@ if __name__ == "__main__":
     dvc_parser.add_argument("--config_dir", type=str, default="conf")
     dvc_parser.add_argument("--config_file", type=str, default="default")
     dvc_parser.add_argument("--workdir", type=str, default=".")
-    dvc_parser.add_argument("--overrides", nargs="*", default=None, type=str)
+    dvc_parser.add_argument("--overrides", nargs="*", default=[], type=str)
     args = dvc_parser.parse_args()
     logging.basicConfig(
         level=args.verbosity,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     config_dir = Path(args.workdir, args.config_dir).relative_to(Path()).as_posix()
-    if args.overrides is not None and len(args.overrides) > 0:
+    if (args.overrides is not None and len(args.overrides) > 0):
         save_params_file(
             config_dir=config_dir,
             config_file=args.config_file,
             params_file=args.params_file,
             overrides=args.overrides,
         )
+
+    else:
+        logger.info(f"Using existing params file {args.params_file} in directory {args.workdir}")
     results = run_stages(
         stages=args.stage,
         pipeline_file=args.pipeline_file,
