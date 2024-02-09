@@ -24,15 +24,13 @@ stages:
               with_mean: true
               with_std: true
           target: label
+        dataset: kdd_nsl
+        device_id: cpu
         files:
           _target_: deckard.base.files.FileConfig
-          attack_dir: attacks
-          attack_type: .pkl
           data_dir: data
-          data_type: .pkl
           directory: kdd_nsl
           model_dir: model
-          model_type: .pkl
           name: default
           params_file: params.yaml
           predictions_file: predictions.json
@@ -68,12 +66,15 @@ stages:
           init:
             _target_: deckard.base.model.ModelInitializer
             compressor: gzip
-            distance_matrix: kdd_nsl/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
+            distance_matrix: kdd_nsl/model/gzip_classifier/gzip/0-100.npz
             k: 1
             m: -1
             method: random
             name: gzip_classifier.GzipClassifier
           library: sklearn
+        model_name: gzip_classifier
+        optimizers:
+        - accuracy
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -91,8 +92,8 @@ stages:
       size: 1200
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 4ff5f25905173f444a7eceff500f71ad
-      size: 415
+      md5: ffa0df46ab1f5a8ffc10afd468503d05
+      size: 416
   model_optimise:
     cmd: python -m deckard.layers.optimise +stage=train ++data.sample.random_state=0,1,2,3,4,5
       dataset=kdd_nsl data=kdd_nsl model=gzip_classifier model_name=gzip_classifier
@@ -199,15 +200,12 @@ stages:
       md5: e8651990cf7a92e8d67182ccd9261314
       size: 287
   model_optimise_k:
-    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9
-      data.sample.train_size=10,100,1000,.8 dataset=kdd_nsl data=kdd_nsl model=gzip_classifier
-      model_name=gzip_classifier  model.init.k=1,3,5,7,11 ++hydra.sweep.dir=kdd_nsl/logs/k/kdd_nsl/gzip_classifier
-      --multirun
+    cmd: 'python -m deckard.layers.optimise   data.sample.random_state=0,1,2,3,4,5,6,7,8,9  data.sample.train_size=10,100,1000,.8  dataset=kdd_nsl  data=kdd_nsl  model=gzip_classifier  model_name=gzip_classifier  model.init.k=1,3,5,7,11  hydra.sweep.dir=kdd_nsl/logs/k/kdd_nsl/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_kdd_nsl_k  --multirun '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: bdaec2cb69c3fda6d83d8befdfcb8884
-      size: 413
+      md5: ffa0df46ab1f5a8ffc10afd468503d05
+      size: 416
     params:
       params.yaml:
         dataset: kdd_nsl
@@ -217,14 +215,14 @@ stages:
           run:
             dir: ${files.directory}/logs/${stage}/
           sweep:
-            dir: ${files.directory}/logs/${dataset}
+            dir: ${files.directory}/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
           sweeper:
             sampler:
               _target_: optuna.samplers.TPESampler
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             study_name: ${model_name}_${dataset}
-            storage: sqlite:///${files.directory}/${dataset}.db
+            storage: sqlite:///optuna.db
             n_jobs: 128
             n_trials: 200
             params:
@@ -243,18 +241,19 @@ stages:
     outs:
     - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
       hash: md5
-      md5: a2520e639a84e52f1eda691c5188d481.dir
-      size: 2686195
+      md5: 5cad256bc3c6c3dcc97957734d6ae609.dir
+      size: 2769830
       nfiles: 801
   find_best_k:
-    cmd: python -m deckard.layers.find_best --study_name gzip_classifier --config_folder
-      conf  --config_subdir model  --params_file best_k_gzip_classifier --study_csv
-      kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv --study_name gzip_classifier_kdd_nsl
+    cmd: python -m deckard.layers.find_best  --params_file best_k_gzip_classifier  --config_folder
+      conf --default_config default.yaml --study_name gzip_classifier_kdd_nsl_k --config_subdir
+      model   --study_csv kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv   --study_name=gzip_classifier_kdd_nsl_k
+      --storage_name=sqlite:///optuna.db
     deps:
     - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
       hash: md5
-      md5: a2520e639a84e52f1eda691c5188d481.dir
-      size: 2686195
+      md5: 5cad256bc3c6c3dcc97957734d6ae609.dir
+      size: 2769830
       nfiles: 801
     params:
       params.yaml:
@@ -265,14 +264,14 @@ stages:
           run:
             dir: ${files.directory}/logs/${stage}/
           sweep:
-            dir: ${files.directory}/logs/${dataset}
+            dir: ${files.directory}/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
           sweeper:
             sampler:
               _target_: optuna.samplers.TPESampler
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             study_name: ${model_name}_${dataset}
-            storage: sqlite:///${files.directory}/${dataset}.db
+            storage: sqlite:///optuna.db
             n_jobs: 128
             n_trials: 200
             params:
@@ -291,45 +290,40 @@ stages:
     outs:
     - path: conf/model/best_k_gzip_classifier.yaml
       hash: md5
-      md5: 8b3d3e36d8039367a1ecf50d60223c7e
-      size: 488
+      md5: db012c8557bba97739f257cf4fe85121
+      size: 476
   model_optimise_m:
-    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9
-      data.sample.train_size=10,100,1000,.8 dataset=truthseeker data=truthseeker model=best_k_gzip_classifier.yaml
-      model_name=gzip_classifier model.init.m=10,20,50,100,200,500,1000  model.init.method="random","svc","medoid","sum"
-      ++hydra.sweep.dir=output/logs/m/truthseeker/gzip_classifier --multirun
+    cmd: 'python -m deckard.layers.optimise   data.sample.random_state=0,1,2,3,4,5,6,7,8,9  data.sample.train_size=10,100,1000,.8
+      dataset=kdd_nsl  data=kdd_nsl  model=best_k_gzip_classifier.yaml  model_name=gzip_classifier  model.init.m=10,20,50,100,200,500,1000   model.init.method="random","svc","medoid","sum"  hydra.sweep.dir=kdd_nsl/logs/m/kdd_nsl/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_kdd_nsl_m
+      --multirun '
     deps:
-    - path: output/data/data.pkl
+    - path: conf/model/best_k_gzip_classifier.yaml
       hash: md5
-      md5: 94a9367cee9b99b18caed3377f1ac3be
-      size: 1092988
-    - path: output/model/model.pkl
+      md5: db012c8557bba97739f257cf4fe85121
+      size: 476
+    - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 8412613981221f3cd313db3a177b1612
-      size: 1024911
-    - path: output/reports/train/default/score_dict.json
-      hash: md5
-      md5: 4c9d93b43a9eb3d2bc1595d3bce14f1a
-      size: 419
+      md5: ffa0df46ab1f5a8ffc10afd468503d05
+      size: 416
     params:
       params.yaml:
-        dataset: truthseeker
+        dataset: kdd_nsl
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
           run:
             dir: ${files.directory}/logs/${stage}/
           sweep:
-            dir: ${files.directory}/logs/${dataset}
+            dir: ${files.directory}/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
           sweeper:
             sampler:
               _target_: optuna.samplers.TPESampler
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            study_name: ${model_name}
-            storage: sqlite:///${files.directory}/${dataset}.db
+            study_name: ${model_name}_${dataset}
+            storage: sqlite:///optuna.db
             n_jobs: 128
-            n_trials: 1000
+            n_trials: 200
             params:
             direction: ${direction}
           launcher:
@@ -344,43 +338,40 @@ stages:
             max_nbytes: 100000
             mmap_mode: r
     outs:
-    - path: output/logs/m/truthseeker/gzip_classifier
+    - path: kdd_nsl/logs/m/kdd_nsl/gzip_classifier
       hash: md5
-      md5: 7994e9ddc3fdda0906a0068a61e055e0.dir
-      size: 12537244
-      nfiles: 4001
-    - path: output/truthseeker.db
-      hash: md5
-      md5: c99c88e985590a28dc6a3ae580f3eaa2
-      size: 1097728
+      md5: 77db7d05091429491aaae40d54742f9d.dir
+      size: 2605751
+      nfiles: 801
   find_best_m:
-    cmd: python -m deckard.layers.find_best --study_name gzip_classifier --config_folder
-      conf  --config_subdir model  --params_file best_m_gzip_classifier --study_csv
-      output/reports/summaries/gzip_classifier_truthseeker.csv --study_name gzip_classifier
+    cmd: python -m deckard.layers.find_best  --study_name gzip_classifier_kdd_nsl_m  --config_folder
+      conf   --config_subdir model   --params_file best_m_gzip_classifier  --study_csv
+      kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv --storage_name=sqlite:///optuna.db
     deps:
-    - path: output/truthseeker.db
+    - path: kdd_nsl/logs/m/kdd_nsl/gzip_classifier
       hash: md5
-      md5: c99c88e985590a28dc6a3ae580f3eaa2
-      size: 1097728
+      md5: 77db7d05091429491aaae40d54742f9d.dir
+      size: 2605751
+      nfiles: 801
     params:
       params.yaml:
-        dataset: truthseeker
+        dataset: kdd_nsl
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
           run:
             dir: ${files.directory}/logs/${stage}/
           sweep:
-            dir: ${files.directory}/logs/${dataset}
+            dir: ${files.directory}/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
           sweeper:
             sampler:
               _target_: optuna.samplers.TPESampler
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            study_name: ${model_name}
-            storage: sqlite:///${files.directory}/${dataset}.db
+            study_name: ${model_name}_${dataset}
+            storage: sqlite:///optuna.db
             n_jobs: 128
-            n_trials: 1000
+            n_trials: 200
             params:
             direction: ${direction}
           launcher:
@@ -397,5 +388,5 @@ stages:
     outs:
     - path: conf/model/best_m_gzip_classifier.yaml
       hash: md5
-      md5: f3f51702c8c333571c509f593fdeec16
-      size: 487
+      md5: 5cc49f9333ee2668ad9cad1abbc52e03
+      size: 477
