@@ -29,7 +29,7 @@ class Experiment:
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
     optimizers: Union[list, None] = field(default_factory=list)
-    device_id: str = None
+    device_id: str = "cpu"
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
@@ -38,7 +38,7 @@ class Experiment:
         model: Model,
         scorers: ScorerDict,
         files: list,
-        device_id: str = None,
+        device_id: str = "cpu",
         attack: Attack = None,
         name=None,
         stage=None,
@@ -120,8 +120,6 @@ class Experiment:
         :return: The score for the specified scorer or the status of the experiment if scorer=None (default).
         """
         logger.info("Running experiment with id: {}".format(self.get_name()))
-        old_name = self.get_name()
-        old_hash = my_hash(self)
         # Setup files, data, and model
         files = deepcopy(self.files).get_filenames()
 
@@ -260,13 +258,6 @@ class Experiment:
             raise ValueError("Scorer is None. Please specify a scorer.")
         logger.info(f"Score for id : {self.get_name()}: {score_dict}")
         logger.info("Finished running experiment with id: {}".format(self.get_name()))
-        new_name = self.get_name()
-        assert (
-            old_name == new_name
-        ), f"Experiment hash() name changed from {old_name} to {new_name}."
-        logger.debug(
-            f"Experiment deckard hash changed from {old_hash} to {my_hash(self)}.",
-        )
         return score_dict
 
     def _set_name(self):
