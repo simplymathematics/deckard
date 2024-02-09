@@ -6,14 +6,15 @@ stages:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
+          drop:
+          - BotScore
           name: 
-            https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+            https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
           sample:
-            _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
             test_size: 100
-            train_size: 100
+            train_size: 2000
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -23,13 +24,13 @@ stages:
               name: sklearn.preprocessing.StandardScaler
               with_mean: true
               with_std: true
-          target: label
-        dataset: kdd_nsl
+          target: BotScoreBinary
+        dataset: truthseeker
         device_id: cpu
         files:
           _target_: deckard.base.files.FileConfig
           data_dir: data
-          directory: kdd_nsl
+          directory: truthseeker
           model_dir: model
           name: default
           params_file: params.yaml
@@ -45,14 +46,15 @@ stages:
             library: sklearn
           data:
             _target_: deckard.base.data.Data
+            drop:
+            - BotScore
             name: 
-              https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+              https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
             sample:
-              _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
               test_size: 100
-              train_size: 100
+              train_size: 2000
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -62,11 +64,11 @@ stages:
                 name: sklearn.preprocessing.StandardScaler
                 with_mean: true
                 with_std: true
-            target: label
+            target: BotScoreBinary
           init:
             _target_: deckard.base.model.ModelInitializer
             compressor: gzip
-            distance_matrix: kdd_nsl/model/gzip_classifier/gzip/0-100.npz
+            distance_matrix: truthseeker/model/gzip_classifier/gzip/0-2000.npz
             k: 1
             m: -1
             method: random
@@ -86,14 +88,14 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: kdd_nsl/reports/train/default/predictions.json
+    - path: truthseeker/reports/train/default/predictions.json
       hash: md5
-      md5: 0be534fb57a09c24b508c3b8a0a8cba7
+      md5: 7196e43249a669b1b7f680d7867d4489
       size: 1200
-    - path: kdd_nsl/reports/train/default/score_dict.json
+    - path: truthseeker/reports/train/default/score_dict.json
       hash: md5
-      md5: ffa0df46ab1f5a8ffc10afd468503d05
-      size: 416
+      md5: 25086d181a9aa7bb0393d1168dcef00a
+      size: 422
   model_optimise:
     cmd: python -m deckard.layers.optimise +stage=train ++data.sample.random_state=0,1,2,3,4,5
       dataset=kdd_nsl data=kdd_nsl model=gzip_classifier model_name=gzip_classifier
@@ -200,15 +202,15 @@ stages:
       md5: e8651990cf7a92e8d67182ccd9261314
       size: 287
   model_optimise_k:
-    cmd: 'python -m deckard.layers.optimise   data.sample.random_state=0,1,2,3,4,5,6,7,8,9  data.sample.train_size=10,100,1000,.8  dataset=kdd_nsl  data=kdd_nsl  model=gzip_classifier  model_name=gzip_classifier  model.init.k=1,3,5,7,11  hydra.sweep.dir=kdd_nsl/logs/k/kdd_nsl/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_kdd_nsl_k  --multirun '
+    cmd: 'python -m deckard.layers.optimise   data.sample.random_state=0,1,2,3,4,5,6,7,8,9  data.sample.train_size=10,100,1000,.8  dataset=truthseeker  data=truthseeker  model=gzip_classifier  model_name=gzip_classifier  model.init.k=1,3,5,7,11  hydra.sweep.dir=truthseeker/logs/k/truthseeker/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_truthseeker_k  --multirun '
     deps:
-    - path: kdd_nsl/reports/train/default/score_dict.json
+    - path: truthseeker/reports/train/default/score_dict.json
       hash: md5
-      md5: ffa0df46ab1f5a8ffc10afd468503d05
-      size: 416
+      md5: 25086d181a9aa7bb0393d1168dcef00a
+      size: 422
     params:
       params.yaml:
-        dataset: kdd_nsl
+        dataset: truthseeker
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
@@ -239,25 +241,25 @@ stages:
             max_nbytes: 100000
             mmap_mode: r
     outs:
-    - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
+    - path: truthseeker/logs/k/truthseeker/gzip_classifier
       hash: md5
-      md5: 5cad256bc3c6c3dcc97957734d6ae609.dir
-      size: 2769830
+      md5: 09ad4b63a3457abf515f5e0844795d66.dir
+      size: 2736305
       nfiles: 801
   find_best_k:
     cmd: python -m deckard.layers.find_best  --params_file best_k_gzip_classifier  --config_folder
-      conf --default_config default.yaml --study_name gzip_classifier_kdd_nsl_k --config_subdir
-      model   --study_csv kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv   --study_name=gzip_classifier_kdd_nsl_k
+      conf --default_config default.yaml --study_name gzip_classifier_truthseeker_k
+      --config_subdir model   --study_csv truthseeker/reports/summaries/gzip_classifier_truthseeker.csv   --study_name=gzip_classifier_truthseeker_k
       --storage_name=sqlite:///optuna.db
     deps:
-    - path: kdd_nsl/logs/k/kdd_nsl/gzip_classifier
+    - path: truthseeker/logs/k/truthseeker/gzip_classifier
       hash: md5
-      md5: 5cad256bc3c6c3dcc97957734d6ae609.dir
-      size: 2769830
+      md5: 09ad4b63a3457abf515f5e0844795d66.dir
+      size: 2736305
       nfiles: 801
     params:
       params.yaml:
-        dataset: kdd_nsl
+        dataset: truthseeker
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
@@ -290,24 +292,24 @@ stages:
     outs:
     - path: conf/model/best_k_gzip_classifier.yaml
       hash: md5
-      md5: db012c8557bba97739f257cf4fe85121
+      md5: c28e464d179b01d120f70cf6e5fd3069
       size: 476
   model_optimise_m:
     cmd: 'python -m deckard.layers.optimise   data.sample.random_state=0,1,2,3,4,5,6,7,8,9  data.sample.train_size=10,100,1000,.8
-      dataset=kdd_nsl  data=kdd_nsl  model=best_k_gzip_classifier.yaml  model_name=gzip_classifier  model.init.m=10,20,50,100,200,500,1000   model.init.method="random","svc","medoid","sum"  hydra.sweep.dir=kdd_nsl/logs/m/kdd_nsl/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_kdd_nsl_m
+      dataset=truthseeker  data=truthseeker  model=best_k_gzip_classifier.yaml  model_name=gzip_classifier  model.init.m=10,20,50,100,200,500,1000   model.init.method="random","svc","medoid","sum"  hydra.sweep.dir=truthseeker/logs/m/truthseeker/gzip_classifier  hydra.sweeper.study_name=gzip_classifier_truthseeker_m
       --multirun '
     deps:
     - path: conf/model/best_k_gzip_classifier.yaml
       hash: md5
-      md5: db012c8557bba97739f257cf4fe85121
+      md5: c28e464d179b01d120f70cf6e5fd3069
       size: 476
-    - path: kdd_nsl/reports/train/default/score_dict.json
+    - path: truthseeker/reports/train/default/score_dict.json
       hash: md5
-      md5: ffa0df46ab1f5a8ffc10afd468503d05
-      size: 416
+      md5: 25086d181a9aa7bb0393d1168dcef00a
+      size: 422
     params:
       params.yaml:
-        dataset: kdd_nsl
+        dataset: truthseeker
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
@@ -338,24 +340,24 @@ stages:
             max_nbytes: 100000
             mmap_mode: r
     outs:
-    - path: kdd_nsl/logs/m/kdd_nsl/gzip_classifier
+    - path: truthseeker/logs/m/truthseeker/gzip_classifier
       hash: md5
-      md5: 77db7d05091429491aaae40d54742f9d.dir
-      size: 2605751
+      md5: 0d3cb6565cd5bc3098d4a355344ef2b5.dir
+      size: 2725394
       nfiles: 801
   find_best_m:
-    cmd: python -m deckard.layers.find_best  --study_name gzip_classifier_kdd_nsl_m  --config_folder
+    cmd: python -m deckard.layers.find_best  --study_name gzip_classifier_truthseeker_m  --config_folder
       conf   --config_subdir model   --params_file best_m_gzip_classifier  --study_csv
-      kdd_nsl/reports/summaries/gzip_classifier_kdd_nsl.csv --storage_name=sqlite:///optuna.db
+      truthseeker/reports/summaries/gzip_classifier_truthseeker.csv --storage_name=sqlite:///optuna.db
     deps:
-    - path: kdd_nsl/logs/m/kdd_nsl/gzip_classifier
+    - path: truthseeker/logs/m/truthseeker/gzip_classifier
       hash: md5
-      md5: 77db7d05091429491aaae40d54742f9d.dir
-      size: 2605751
+      md5: 0d3cb6565cd5bc3098d4a355344ef2b5.dir
+      size: 2725394
       nfiles: 801
     params:
       params.yaml:
-        dataset: kdd_nsl
+        dataset: truthseeker
         model_name: gzip_classifier
       conf/default.yaml:
         hydra:
@@ -388,5 +390,5 @@ stages:
     outs:
     - path: conf/model/best_m_gzip_classifier.yaml
       hash: md5
-      md5: 5cc49f9333ee2668ad9cad1abbc52e03
+      md5: 478cbb498919fc3ef6fb88115830b114
       size: 477

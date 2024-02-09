@@ -6,7 +6,7 @@ init:
     k : 1
     m: -1
     method : random
-    distance_matrix : ${files.directory}/${files.model_dir}/${dataset}/${model_name}/${model.init.compressor}/${data.sample.random_state}-${data.sample.train_size}.npz
+    distance_matrix : ${files.directory}/${files.model_dir}/${model_name}/${model.init.compressor}/${data.sample.random_state}-${data.sample.train_size}.npz
     compressor : gzip
 _target_: deckard.base.model.Model
 art:

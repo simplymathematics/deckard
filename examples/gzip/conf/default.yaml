@@ -15,20 +15,21 @@ direction :
   - maximize
 optimizers: 
    - accuracy
+device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
     dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${dataset}
+    dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${model_name}_${dataset}
-    storage: sqlite:///${files.directory}/${dataset}.db
+    storage: sqlite:///optuna.db
     n_jobs: 128
-    n_trials : 200 # 1050
+    n_trials : 200 
     params:
       # I'm optimizing inside the dvc.yaml in stages to reduce the search space and run-time
       # You can enable these to optimize over the entire space

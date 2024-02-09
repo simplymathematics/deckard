@@ -1,12 +1,13 @@
 data:
   _target_: deckard.base.data.Data
-  name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+  drop:
+  - BotScore
+  name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
   sample:
-    _target_: deckard.base.data.SklearnDataSampler
     random_state: 0
     stratify: true
     test_size: 100
-    train_size: 100
+    train_size: 2000
   sklearn_pipeline:
     encoder:
       handle_unknown: use_encoded_value
@@ -16,14 +17,15 @@ data:
       name: sklearn.preprocessing.StandardScaler
       with_mean: true
       with_std: true
-  target: label
-dataset: kdd_nsl
+  target: BotScoreBinary
+dataset: truthseeker
+device_id: cpu
 direction:
 - maximize
 files:
   _target_: deckard.base.files.FileConfig
   data_dir: data
-  directory: kdd_nsl
+  directory: truthseeker
   model_dir: model
   name: default
   params_file: params.yaml
@@ -39,13 +41,14 @@ model:
     library: sklearn
   data:
     _target_: deckard.base.data.Data
-    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+    drop:
+    - BotScore
+    name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
     sample:
-      _target_: deckard.base.data.SklearnDataSampler
       random_state: 0
       stratify: true
       test_size: 100
-      train_size: 100
+      train_size: 2000
     sklearn_pipeline:
       encoder:
         handle_unknown: use_encoded_value
@@ -55,11 +58,11 @@ model:
         name: sklearn.preprocessing.StandardScaler
         with_mean: true
         with_std: true
-    target: label
+    target: BotScoreBinary
   init:
     _target_: deckard.base.model.ModelInitializer
     compressor: gzip
-    distance_matrix: kdd_nsl/model/kdd_nsl/gzip_classifier/gzip/0-100.npz
+    distance_matrix: truthseeker/model/gzip_classifier/gzip/0-2000.npz
     k: 1
     m: -1
     method: random
