@@ -8,6 +8,7 @@ from dulwich.errors import NotGitRepository
 import yaml
 import argparse
 from copy import deepcopy
+from omegaconf import OmegaConf
 from ..base.utils import unflatten_dict
 from .utils import save_params_file
 
@@ -49,6 +50,7 @@ def run_stage(
     pipeline_file="dvc.yaml",
     directory=".",
     stage=None,
+    overrides=None,
 ):
     logger.info(
         f"Running stage {stage} with params_file: {params_file} and pipeline_file: {pipeline_file} in directory {directory}",
@@ -60,7 +62,12 @@ def run_stage(
         pipeline_file=pipeline_file,
         directory=directory,
     )
-    
+    old_params = deepcopy(params)   
+    if overrides is not None:
+        # convert from dot notation to nested dict
+        overrides = OmegaConf.from_dotlist(overrides)
+        params = OmegaConf.merge(params, overrides)
+        assert params != old_params, f"Params are the same as before overrides: {overrides}"
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
