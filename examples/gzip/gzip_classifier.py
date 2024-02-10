@@ -112,14 +112,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.m = m
         self._set_compressor()
         self.method = method
-        if distance_matrix is not None: # Added this line because the next fails when it is None
-            pathExists = Path(distance_matrix).exists()
-        else: # Added this to handle the case when distance_matrix is None
-            pathExists = False
-        isString = isinstance(distance_matrix, str)
-        if isString and pathExists:
+
+        if  isinstance(distance_matrix, str) and Path(distance_matrix).exists():
             self.distance_matrix = np.load(distance_matrix, allow_pickle=True)['X']
-        elif isString and not pathExists:
+        elif isinstance(distance_matrix, str) and not Path(distance_matrix).exists():
             self.distance_matrix = distance_matrix
         elif isinstance(distance_matrix, np.ndarray):
             self.distance_matrix = distance_matrix
@@ -209,7 +205,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             indices = list(indices[: self.m * len(self.classes_)])
         elif method == "svc":
             from sklearn.svm import SVC
-            svc = SVC(kernel="rbf").fit(distance_matrix, self.y_)
+            svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
             indices.extend(svc.support_[: self.m * len(self.classes_)])
         else:
             raise NotImplementedError(f"Method {method} not supported")
@@ -229,6 +225,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ncd = (Cx1x2 - min(Cx1, Cx2)) / max(Cx1, Cx2)
             distance_from_x1.append(ncd)
         return distance_from_x1
+    
+    
 
     def _calculate_distance_matrix(self, x, Cx):
         """
@@ -256,8 +254,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             pbar.close()
             Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
             np.savez(self.distance_matrix, X=distance_matrix)
-            # all other cases return something. why doesn't this one? 
-            # answer: the return statement should not have been indented. 
         else:
             distance_matrix = np.zeros((len(x), len(x)))
             pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
