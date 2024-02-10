@@ -242,9 +242,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             return self.distance_matrix
 
         isString = isinstance(self.distance_matrix, str)
-        pathExists = Path(self.distance_matrix).exists()
+        pathExists = Path(self.distance_matrix).exists() if isString else False
         if isString and pathExists:
-            return np.load(self.distance_matrix, allow_pickle=True)
+            distance_matrix =  np.load(self.distance_matrix, allow_pickle=True)
         elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
             pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
             logger.info(f"Calculating distance matrix and saving to {self.distance_matrix}")
@@ -256,7 +256,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             pbar.close()
             Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
             np.savez(self.distance_matrix, X=distance_matrix)
-            # all other cases return something. why doesn't this one?
+            # all other cases return something. why doesn't this one? 
+            # answer: the return statement should not have been indented. 
         else:
             distance_matrix = np.zeros((len(x), len(x)))
             pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
@@ -265,7 +266,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 distance_matrix[i] = self._ncd(Cx[i], str(xi))
                 pbar.update(1)
             pbar.close()
-            return distance_matrix
+        return distance_matrix
             
     def predict(self, X):
         
