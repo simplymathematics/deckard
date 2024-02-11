@@ -32,7 +32,9 @@ def get_files(
     stage,
 ):
     """
-    Gets the file names from
+    Gets the file names from cfg and calculates the hash of the attack, model and data, and files objects. 
+    If "files.name == 'default'", the name is set to the hash of the cfg. 
+    For attack, model and data, the file name is set to the hash of the respective object.
     """
     if isinstance(cfg, dict):
         pass
@@ -74,7 +76,7 @@ def get_files(
     cfg["files"]["_target_"] = "deckard.base.files.FileConfig"
     id_ = my_hash(cfg)
     cfg["name"] = id_
-    cfg["files"]["name"] = id_
+    cfg["files"]["name"] = id_ if cfg['files']['name'] == 'default' else cfg['files']['name']
     if stage is not None:
         cfg["files"]["stage"] = stage
     return cfg
@@ -165,36 +167,6 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         assert isinstance(stage, list), f"args.stage is of type {type(stage)}"
         stages = stage
-    # if params is None:
-    #     with open(Path(path, "params.yaml"), "r") as f:
-    #         default_params = yaml.load(f, Loader=yaml.FullLoader)
-    #     key_list = []
-    #     for stage in stages:
-    #         with open(Path(path, "dvc.yaml"), "r") as f:
-    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-    #                 "params"
-    #             ]
-    #         key_list.extend(new_keys)
-    #     params = read_subset_of_params(key_list, params)
-    #     params = merge_params(default_params, params)
-    # elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
-    #     with open(Path(params), "r") as f:
-    #         params = yaml.load(f, Loader=yaml.FullLoader)
-    #     assert isinstance(
-    #         params,
-    #         dict,
-    #     ), f"Params in file {params} must be a dict. It is a {type(params)}."
-    #     key_list = []
-    #     for stage in stages:
-    #         with open(Path(path, "dvc.yaml"), "r") as f:
-    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-    #                 "params"
-    #             ]
-    #         key_list.extend(new_keys)
-    #     with open(Path(path, "params.yaml"), "r") as f:
-    #         all_params = yaml.load(f, Loader=yaml.FullLoader)
-    #     default_params = read_subset_of_params(key_list, all_params)
-    #     params = merge_params(default_params, params)
     if isinstance(params, dict):
         key_list = []
         for stage in stages:
