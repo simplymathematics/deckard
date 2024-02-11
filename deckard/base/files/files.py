@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict
 from copy import deepcopy
-
+from omegaconf import OmegaConf
 from ..utils import my_hash
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class FileConfig:
         :return: A FileConfig object.
         """
         self._target_ = "deckard.base.files.FileConfig"
-        files.update(kwargs)
+        files = OmegaConf.merge(files, kwargs)
         self.reports = str(Path(reports).as_posix()) if reports is not None else None
         self.data_dir = str(Path(data_dir).as_posix()) if data_dir is not None else None
         self.model_dir = (
