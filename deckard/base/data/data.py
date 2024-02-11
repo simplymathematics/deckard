@@ -110,16 +110,17 @@ class Data:
             X = result.drop(self.target, axis=1)
             if self.drop is not None:
                 X = X.drop(self.drop, axis=1)
+            X = X.to_numpy()
+            y = y.to_numpy()
+            result = [X, y] 
         else:
             if self.drop is not None:
-                X = DataFrame(X).drop(self.drop, axis=1)
-        result = [X, y]
+                raise ValueError("Drop is not supported for non-DataFrame data")
         if len(result) == 2:
             result = self.sample(*result)
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
-        
         if self.sklearn_pipeline is not None:
             result = self.sklearn_pipeline(*result)
         return result
