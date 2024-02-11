@@ -163,22 +163,32 @@ stages:
     - model_name
     - dataset
   model_optimise_m:
+    matrix:
+      dataset : [kdd_nsl, truthseeker]
+      model_name : [gzip_classifier]
     cmd: >-
       python -m deckard.layers.optimise  
       data.sample.random_state=0,1,2,3,4,5,6,7,8,9 
-      data.sample.train_size=10,100,1000,.8 dataset=${dataset} 
-      data=${dataset} 
-      model=best_k_${model_name}.yaml 
-      model_name=${model_name} 
-      model.init.m=10,20,50,100,200,500,1000  
+      data.sample.test_size=1000
+      data=${item.dataset} 
+      dataset=${item.dataset}
+      model=best_k_${item.model_name}_${item.dataset}.yaml 
+      model_name=${item.model_name} 
+      model.init.m=10,20,50,100  
       model.init.method="random","svc","medoid","sum" 
-      hydra.sweep.dir=${files.directory}/logs/m/${dataset}/${model_name} 
-      hydra.sweeper.study_name=${model_name}_${dataset}_m --multirun 
+      hydra.sweep.dir=${item.dataset}/logs/m//${item.model_name} 
+      hydra.sweeper.n_trials=160
+      hydra.sweeper.n_jobs=128
+      hydra.sweeper.study_name=${item.model_name}_${item.dataset}_m --multirun 
     deps:
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-    - conf/model/best_k_${model_name}.yaml
+    - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
+    - conf/model/best_k_${item.model_name}_${item.dataset}.yaml
+    - ${item.dataset}/${files.reports}/train/random/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/train/svc/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/train/medoid/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/train/sum/${files.score_dict_file}
     outs:
-    - ${files.directory}/logs/m/${dataset}/${model_name}
+    - ${item.dataset}/logs/m/${item.model_name}
     params:
     - conf/default.yaml:
       - hydra
