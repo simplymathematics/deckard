@@ -37,7 +37,7 @@ class Data:
         sample: SklearnDataSampler = None,
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
-        drop: list = None,
+        drop: list = [],
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
 
@@ -108,13 +108,13 @@ class Data:
             assert self.target is not None, "Target is not specified"
             y = result[self.target]
             X = result.drop(self.target, axis=1)
-            if self.drop is not None:
+            if self.drop != []:
                 X = X.drop(self.drop, axis=1)
             X = X.to_numpy()
             y = y.to_numpy()
             result = [X, y] 
         else:
-            if self.drop is not None:
+            if self.drop != []:
                 raise ValueError("Drop is not supported for non-DataFrame data")
         if len(result) == 2:
             result = self.sample(*result)
