@@ -25,6 +25,7 @@ stages:
     - files
     - dataset
     - model_name
+    - device_id
   ##############################################################################
   test_each_method:
     matrix:
@@ -107,7 +108,7 @@ stages:
   #   - attack
   #   - scorers
   #   - files
-  ##############################################################################
+  # ##############################################################################
   model_optimise_k:
     matrix:
       dataset : [kdd_nsl, truthseeker]
@@ -233,14 +234,3 @@ stages:
   #   - attack.db
   #   outs:
   #   - conf/attack/best.yaml
-  ##############################################################################
-  # defend:study_n
-  #   cmd : bash models.sh
-  #   deps:
-  #   - model.db
-  #   outs:
-  #   - multirun
-  # attack-again:
-  #   cmd : bash attacks.sh
-  #   deps:
-  #   - attack.db
