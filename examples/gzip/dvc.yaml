@@ -25,7 +25,36 @@ stages:
     - files
     - dataset
     - model_name
-    - optimizers
+  ##############################################################################
+  test_each_method:
+    matrix:
+      method: [knn, svc, medoid, sum, random]
+      dataset : [kdd_nsl, truthseeker]
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=train 
+      model.init.method=${item.method} 
+      model.init.m=10 
+      files.name=${item.method}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      dataset=${item.dataset}
+      model_name=${model_name}
+      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.compressor}/${item.method}.npz
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
     - device_id
   # attack:
   #   cmd: python -m deckard.layers.experiment attack
