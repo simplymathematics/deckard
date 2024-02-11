@@ -185,30 +185,26 @@ stages:
     - dataset
     - model_name
   find_best_m:
+    matrix:
+      dataset : [kdd_nsl, truthseeker]
+      model_name : [gzip_classifier]
     cmd: >-
       python -m deckard.layers.find_best 
-      --study_name ${model_name}_${dataset}_m 
+      --study_name ${item.model_name}_${item.dataset}_m 
       --config_folder conf  
       --config_subdir model  
-      --params_file best_m_${model_name} 
-      --study_csv ${files.directory}/${files.reports}/summaries/${model_name}_${dataset}.csv
+      --params_file best_m_${item.model_name}_${item.dataset}
+      --study_csv ${item.dataset}/${files.reports}/summaries/${model_name}_${item.dataset}.csv
       --storage_name=sqlite:///optuna.db
     deps:
-    - ${files.directory}/logs/m/${dataset}/${model_name}
+    - ${item.dataset}/logs/m/${item.model_name}
     outs:
-    - conf/model/best_m_${model_name}.yaml
+    - conf/model/best_m_${item.model_name}_${item.dataset}.yaml
     params:
     - conf/default.yaml:
       - hydra
     - model_name
     - dataset
-  # truthseeker:  # Re-run up to this stage with the truthseeker dataset
-  #   cmd: python -m deckard.layers.parse data=truthseeker dataset=truthseeker && dvc repro
-  #   deps:
-  #   - conf/default.yaml
-  #   - conf/data/truthseeker.yaml
-  #   outs:
-  #   - truthseeker
   ##############################################################################
   # attack_optimise:
   #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
