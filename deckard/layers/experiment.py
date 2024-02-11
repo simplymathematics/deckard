@@ -34,14 +34,16 @@ def get_dvc_stage_params(
     )
     params = dvc.api.params_show(stages=stage)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
-    files = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
-    unflattened_files = unflatten_dict(files)
-    params["files"] = dict(unflattened_files.get("files", unflattened_files))
+    pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
+    pipe_params = unflatten_dict(pipe_params)
+    params["files"] = dict(pipe_params.pop("files", pipe_params))
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
     params["files"]["stage"] = stage
     params["stage"] = stage
     if name is not None:
         params["files"]["name"] = name
+    # Merge remaining params
+    params = OmegaConf.merge(params, pipe_params)
     return params
 
 
