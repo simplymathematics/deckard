@@ -5,7 +5,7 @@ init:
     name : gzip_classifier.GzipClassifier
     k : 1
     m: -1
-    method : random
+    method : null
     distance_matrix : ${files.directory}/${files.model_dir}/${model_name}/${model.init.compressor}/${data.sample.random_state}-${data.sample.train_size}.npz
     compressor : gzip
 _target_: deckard.base.model.Model
@@ -13,4 +13,4 @@ art:
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
     library : sklearn
     initialize:
-      nb_classes: 3
+        nb_classes : 2
