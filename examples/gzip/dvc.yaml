@@ -55,6 +55,42 @@ stages:
       - dataset
       - model_name
       - device_id
+  ##############################################################################
+  prepare_distance_matrices:
+    matrix:
+      random_state: [0,1,2,3,4,5,6,7,8,9]
+      train_size: [100,1000]
+      dataset : [kdd_nsl, truthseeker]
+    cmd: >-
+      python -m deckard.layers.optimise 
+      files.name=${item.random_state}-${item.train_size}
+      stage=train 
+      data=${item.dataset}
+      dataset=${item.dataset}
+      data.sample.random_state=${item.random_state}
+      data.sample.train_size=${item.train_size}
+      dataset=${dataset}
+      files.directory=${item.dataset}
+      model_name=${model_name}
+      model=${model_name}
+      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.compressor}/${item.random_state}-${item.train_size}.npz
+      model.init.method=random 
+      model.init.m=100
+      ++raise_exception=True
+    deps:
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.model_dir}/${model_name}/${model.init.compressor}/${item.random_state}-${item.train_size}.npz:
+        cache: true
+        persist: true
+    - ${item.dataset}/${files.reports}/train/${item.random_state}-${item.train_size}/${files.score_dict_file}
+    params:
+    - data
+    - model
+    - scorers
+    - files
+    - dataset
+    - model_name
     - device_id
   # attack:
   #   cmd: python -m deckard.layers.experiment attack
