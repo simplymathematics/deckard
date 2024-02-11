@@ -5,7 +5,7 @@ drop : [ 'BotScore', 'statement' ]
 sample:
     random_state : 0
     stratify: True
-    train_size : 2000
+    train_size : 100
     test_size : 100
 sklearn_pipeline:
     # column_transformer:
