@@ -1,8 +1,3 @@
 _target_: deckard.base.data.Data
 name: https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv
 target : Survived
-sklearn_pipeline:
-    preprocessor:
-        name: sklearn.preprocessing.StandardScaler
-        with_mean: True
-        with_std: True
