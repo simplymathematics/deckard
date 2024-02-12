@@ -31,14 +31,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.preprocessing import LabelEncoder
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.neighbors import NearestNeighbors
+from sklearn.svm import SVC
+from sklearn_extra.cluster import KMedoids
+            
 import pandas as pd
+from joblib import Parallel, delayed
+from typing import Literal
 
 
 logger = logging.getLogger(__name__)
 
 
-# it makes sense to implement these outside the class
-# since none of the functions actually use 'self'
 def _gzip_compressor(x):
     return len(gzip.compress(str(x).encode()))
 
@@ -48,7 +52,6 @@ def _lzma_compressor(x):
 
 def _bz2_compressor(x):
     import bz2
-
     return len(bz2.compress(str(x).encode()))
 
 def _zstd_compressor(x):
@@ -59,14 +62,35 @@ def _pickle_compressor(x):
     import pickle
     return len(pickle.dumps(x))
 
-compressors = {
-    "gzip": _gzip_compressor,
-    "lzma": _lzma_compressor,
-    "bz2": _bz2_compressor,
-    "zstd": _zstd_compressor,
-    "pkl": _pickle_compressor,
-    "pickle": _pickle_compressor,
-}
+def ncd(x1, x2, compressor:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="gzip") -> float:
+    """
+    Calculate the normalized compression distance between two objects treated as strings.
+    Args:
+        x1 (str): The first object
+        x2 (str): The second object
+    Returns:
+        float: The normalized compression distance between x1 and x2
+    """
+    compressors = {
+        "gzip": _gzip_compressor,
+        "lzma": _lzma_compressor,
+        "bz2": _bz2_compressor,
+        "zstd": _zstd_compressor,
+        "pkl": _pickle_compressor,
+    }
+    compressor = compressors[compressor]
+    x1 = str(x1)
+    x2 = str(x2)
+    Cx1 = compressor(x1)
+    Cx2 = compressor(x2) 
+    x1x2 = " ".join([x1, x2])
+    Cx1x2 = len(gzip.compress(x1x2.encode()))
+    min_ = min(Cx1, Cx2)
+    max_ = max(Cx1, Cx2)
+    ncd = (Cx1x2 - min_) / max_
+    return ncd
+
+
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
@@ -76,9 +100,18 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    demo_param : str, default='demo'
-        A parameter used for demonstation of how to pass and store paramters.
-
+    k : int, default=3
+        The number of neighbors to use.
+    m: int, default=-1
+        The number of best samples to use. If -1, all samples will be used.
+    compressor: str, default="gzip"
+        The name of the compressor to use. Choices are "gzip", "lzma", "bz2", "zstd", "pkl", "pickle".
+    method: str, default="random"
+        The method used to select the best training samples. Choices are "sum", "mean", "medoid", "random", "knn", "svc".
+    metric: str, default="ncd"
+        The metric used to calculate the distance between samples. Choices are "ncd".
+    distance_matrix: str or np.ndarray, default=None
+        The path to a numpy file or a numpy array representing the distance matrix. If a path is provided, the file will be loaded. If an array is provided, it will be used directly. Default is None.
     Attributes
     ----------
     X_ : ndarray, shape (n_samples, n_features)
@@ -87,9 +120,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         The labels passed during :meth:`fit`.
     classes_ : ndarray, shape (n_classes,)
         The classes seen at :meth:`fit`.
+    distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, k=3, m=-1, compressor="gzip", method="random", distance_matrix=None):
+    def __init__(self, k=3, m=-1, compressor="gzip", method="random", distance_matrix=None, metric='ncd', symmetric=True):
         """
         Initialize the GzipClassifier object.
 
@@ -98,21 +132,19 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             m (int): The value of m for  m-best samples. Default is -1, which indicates using all training samples.
             compressor (str): The name of the compressor. Default is "gzip".
             method (str): The method used for classification. Default is "random".
+            metric (str): The metric used to calculate the distance between samples. Default is "ncd".
             distance_matrix (str or np.ndarray): The path to a numpy file or a numpy array representing the distance matrix.
                 If a path is provided, the file will be loaded. If an array is provided, it will be used directly.
                 Default is None.
 
         Raises:
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
-
+            NotImplementedError: If the metric is not supported.
         """
         logger.info(f"Initializing GzipClassifier with k={k}, m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}")
         self.k = k
-        self.compressor = compressor
         self.m = m
-        self._set_compressor()
         self.method = method
-
         if  isinstance(distance_matrix, str) and Path(distance_matrix).exists():
             self.distance_matrix = np.load(distance_matrix, allow_pickle=True)['X']
         elif isinstance(distance_matrix, str) and not Path(distance_matrix).exists():
@@ -123,198 +155,190 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix = None
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(distance_matrix)}")
+        self.metric = metric
+        if self.metric == "ncd":
+            self._distance = ncd
+            self.compressor= compressor
+        else:
+            raise NotImplementedError(f"Metric {self.metric} not supported")
+        self.symmetric = symmetric
+    
+    
+    def fit(self, X:np.ndarray, y:np.ndarray):
+        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.method.
 
-    def fit(self, X, y):
-        """A reference implementation of a fitting function for a classifier.
+        Args:
+            X (np.ndarray): The input data
+            y (np.ndarray): The target labels
 
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            The training input samples.
-        y : array-like, shape (n_samples,)
-            The target values. An array of int.
-
-        Returns
-        -------
-        self : object
-            Returns self.
+        Returns:
+            GzipClassifier: The fitted model
         """
-        # Check that X and y have correct shape
-        # X, y = check_X_y(X, y)
-        # Store the classes seen during fit
+        assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
+        logger.info(f"Fitting GzipClassifier with X of shape {X.shape} and y of shape {y.shape}")
+        self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
+        self.y_ = np.array(y) if not isinstance(y, np.ndarray) else y
+        self.n_classes_ = len(unique_labels(y)) if len(unique_labels(y)) > 2 else 2
+        self.n_features_ = X.shape[1]
         self.classes_ = unique_labels(y)
-        self.n_features_ = X.shape[1] if hasattr(X, "shape") and len(X.shape) > 1 else 1
-        self.X_ = np.array(X)
-        self.y_ = np.array(y)
-        Cxs = []
-        logger.info(f"Training with {len(self.X_)} samples")
-        # Convert all strings to gzip compressed strings
-        for x in tqdm(self.X_, desc="Compressing...", leave=False):
-            Cx = self._compress(x)
-            Cxs.append(Cx)
-        Cxs = np.array(Cxs)
-        self.Cx_ = Cxs
-        if self.m != -1 :
-            # Calculate a distance matrix
-            # For each class, find the m-nearest neighbors
-            indices = self._find_best_training_samples(method = self.method)
+        if self.m != -1:
+            indices = self._find_best_samples(self.method)
             self.X_ = self.X_[indices]
             self.y_ = self.y_[indices]
-            self.Cx_ = self.Cx_[indices]
-            assert len(self.X_) == len(self.y_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.y_)} == {len(self.Cx_)}"
+        assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
+        return self
 
-    def _find_best_training_samples(self, method = "medoid"):
+    def predict(self, X:np.ndarray):
+        """Predict the class labels for the provided data.
+
+        Args:
+            X (np.ndarray): The input data
+
+        Returns:
+            np.ndarray: The predicted class labels
+        """
+        check_is_fitted(self)
+        
+        y_pred = []
+        distance_matrix = np.zeros((len(X), len(self.X_)))
+        # Iterate over the samples provided by th euser
+        for i in tqdm(range(len(X)), desc="Predicting", leave=False, position=0, total=len(X)):
+            # Iterate over the training samples
+            distance_matrix[i,:] = Parallel(n_jobs=-1)(delayed(self._distance)(X[i], self.X_[j], compressor=self.compressor) for j in range(len(self.X_)))
+            # Sort the distances and get the nearest k samples
+            sorted_idx = np.argsort(distance_matrix[i])
+            # Get the labels of the nearest samples
+            nearest_labels = list(self.y_[sorted_idx[: self.k]])
+            # predict class
+            unique, counts = np.unique(nearest_labels, return_counts=True)
+            # Get the most frequent label
+            y_pred.append(unique[np.argmax(counts)])
+        return y_pred
+
+    def _find_best_samples(self, method = "medoid"):
         """
         Args:
             method (str): The method used to select the best training samples. Default is "medoid". Choices are "sum", "mean", "medoid", "random", "knn", "svc".
         Returns:
             list: The indices of the best training samples.
         """
-        distance_matrix = self._calculate_distance_matrix(self.X_, self.Cx_)
+        distance_matrix = self._prepare_distance_matrix()
         indices = []
         if method == "sum":
-            for label in self.classes_:
+            for label in range(self.n_classes_):
                 label_idx = np.where(self.y_ == label)[0]
                 label_distance_matrix = distance_matrix[label_idx, :]
                 summed_matrix = np.sum(label_distance_matrix, axis=0)
                 sorted_idx = np.argsort(summed_matrix)
                 indices.extend(sorted_idx[: self.m])
         elif method == "mean":
-            for label in self.classes_:
+            for label in range(self.n_classes_):
                 label_idx = np.where(self.y_ == label)[0]
                 label_distance_matrix = distance_matrix[label_idx, :]
                 mean_matrix = np.mean(label_distance_matrix, axis=0)
                 sorted_idx = np.argsort(mean_matrix)
                 indices.extend(sorted_idx[: self.m])
         elif method == "medoid":
-            from sklearn_extra.cluster import KMedoids
-            for label in self.classes_:
+            for label in range(self.n_classes_):
                 kmedoids = KMedoids(n_clusters=self.m, metric="precomputed").fit(distance_matrix)
                 indices.extend(kmedoids.medoid_indices_)
         elif method == "random":
-            for label in self.classes_:
+            for label in range(self.n_classes_):
                 label_idx = np.where(self.y_ == label)[0]
                 random_idx = np.random.choice(label_idx, self.m)
                 indices.extend(random_idx)
         elif method == "knn":
-            from sklearn.neighbors import NearestNeighbors
             nn = NearestNeighbors(n_neighbors=self.m).fit(distance_matrix)
             _, indices = nn.kneighbors(distance_matrix, n_neighbors=self.m, return_distance=True)
             # TODO: Sort by distances
             # TODO: select m entries from each class
-            indices = list(indices[: self.m * len(self.classes_)])
+            indices = list(indices[: self.m * self.n_classes_])
         elif method == "svc":
-            from sklearn.svm import SVC
             svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
-            indices.extend(svc.support_[: self.m * len(self.classes_)])
+            # TODO: Sort by distances
+            # TODO: select m entries from each class
+            indices.extend(svc.support_[: self.m * self.n_classes_])
         else:
             raise NotImplementedError(f"Method {method} not supported")
         return indices
     
-    
-    
-    # misleading name. this is considerably more than ncd
-    # which makes it harder to optimize
-    # +1
-    def _ncd(self, Cx1, x1):
-        distance_from_x1 = []
-        for x2, Cx2 in zip(self.X_, self.Cx_):
-            x2 = str(x2)
-            x1x2 = " ".join([x1, x2])
-            Cx1x2 = self._compress(x1x2)
-            ncd = (Cx1x2 - min(Cx1, Cx2)) / max(Cx1, Cx2)
-            distance_from_x1.append(ncd)
-        return distance_from_x1
-    
-    
-
-    def _calculate_distance_matrix(self, x, Cx):
+    def _calculate_square_distance_matrix(self, x1, x2, n_jobs=-1):
         """
+        Calculate the distance matrix between two sets of objects, treating them as strings, assuming d(a,b) != d(b,a)
         Args:
-            x (np.ndarray): The input data
-            Cx (np.ndarray): The compressed input data
+            x1 (np.ndarray): The first set of objects
+            x2 (np.ndarray): The second set of objects
         Returns:
-            np.ndarray: The distance matrix of size (len(x), len(x))
+            np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
-        if  isinstance(self.distance_matrix, np.ndarray) and not isinstance(self.distance_matrix, type(None)):
-            return self.distance_matrix
-
-        isString = isinstance(self.distance_matrix, str)
-        pathExists = Path(self.distance_matrix).exists() if isString else False
-        if isString and pathExists:
-            distance_matrix =  np.load(self.distance_matrix, allow_pickle=True)
-        elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
-            pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
-            logger.info(f"Calculating distance matrix and saving to {self.distance_matrix}")
-            distance_matrix = np.zeros((len(x), len(x)))
-            for i, xi in enumerate(x):
-                # using the self._ncd method to calculate the distance
-                distance_matrix[i] = self._ncd(Cx[i], str(xi))
-                pbar.update(1)
-            pbar.close()
-            Path(self.distance_matrix).parent.mkdir(parents=True, exist_ok=True)
-            np.savez(self.distance_matrix, X=distance_matrix)
-        else:
-            distance_matrix = np.zeros((len(x), len(x)))
-            pbar = tqdm(total=len(x), desc="Calculating distance matrix...", leave=False)
-            for i, xi in tqdm(enumerate(x), desc="Calculating distance matrix...", leave=False, total=len(x)):
-                # using the self._ncd method to calculate the distance
-                distance_matrix[i] = self._ncd(Cx[i], str(xi))
-                pbar.update(1)
-            pbar.close()
-        return distance_matrix
-            
-    def predict(self, X):
-        
-        """A scikit-learn implementation of a prediction for a classifier.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            The input samples.
-
-        Returns
-        -------
-        y : ndarray, shape (n_samples,)
-            The label for each sample is the label of the closest sample
-            seen during fit.
-        """
-        # Check is fit had been called
-        check_is_fitted(self, ["X_", "y_", "Cx_", "_compress"])
-
-        # Input validation
-        # X = check_array(X)
-        results = []
-        for x1 in tqdm(X, desc="Predicting...", leave=False, position=0, total=len(X)):
-            x1 = str(x1)
-            Cx1 = self._compress(x1)
-            distance_from_x1 = []
-            for x2, Cx2 in zip(self.X_, self.Cx_):
-                x2 = str(x2)
-                x1x2 = " ".join([x1, x2])
-                Cx1x2 = self._compress(x1x2)
-                ncd = (Cx1x2 - min(Cx1, Cx2)) / max(Cx1, Cx2)
-                distance_from_x1.append(ncd)
-            distance_from_x1 = self._ncd(Cx1, x1)
-            sorted_idx = np.argsort(np.array(distance_from_x1))
-            top_k_class = list(self.y_[sorted_idx[: self.k]])
-            # predict class
-            predict_class = max(set(top_k_class), key=top_k_class.count)
-            results.append(predict_class)
-        return results
+        matrix_ = np.zeros((len(x1), len(x2)))
+        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix")
+        for i in range(len(x1)):
+            # Parallelize the calculation of the distance matrix
+            matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], compressor=self.compressor) for j in range(len(x2)))
+            pbar.update(1)
+        pbar.close()
+        assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        return matrix_
     
-    # A switch statement might be nicer than this
-    # but those are only supported in python3.10 or later:
-    # https://www.freecodecamp.org/news/python-switch-statement-switch-case-example/
-    def _set_compressor(self):
-        """ Selects the compressor based on the model initialization."""
-        if self.compressor in compressors:
-            self._compress = compressors[self.compressor]
+    
+    def _calculate_triangular_distance_matrix(self, x1, x2, n_jobs=-1):
+        """
+        Calculate the distance matrix between two sets of objects, treating them as strings. Assuming the d(a,b) = d(b,a)
+        Args:
+            x1 (np.ndarray): The first set of objects
+            x2 (np.ndarray): The second set of objects
+        Returns:
+            np.ndarray: The distance matrix of size (len(x1), len(x2))
+        """
+        matrix_ = np.zeros((len(x1), len(x2)))
+        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix")
+        for i in range(len(x1)):
+            # Parallelize the calculation of the distance matrix
+            matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], compressor=self.compressor) for j in range(i))
+            # Copy the lower triangular part to the upper triangular part
+            matrix_[i, :i] = matrix_[:i, i]
+            pbar.update(1)
+        pbar.close()
+        assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        return matrix_
+    
+    def _load_distance_matrix(self, path):
+        if Path(path).exists():
+            return np.load(path, allow_pickle=True)['X']
         else:
-            raise NotImplementedError(
-                f"Compressing with {self.compressor} not supported."
-            )
-
+            raise FileNotFoundError(f"Distance matrix file {path} not found")
+    
+    def _save_distance_matrix(self, path, matrix):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(path, X=matrix)
+    
+    def _prepare_distance_matrix(self):
+        """
+        Prepare the distance matrix for classification. 
+        If self.distance_matrix is a path to a numpy file, it will be loaded.
+        If it is a numpy array, it will be used directly. 
+        If it is None, the distance matrix will be calculated using self.X_ and self.X_.
+        """
+        if self.symmetric is True:
+            self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
+        else:
+            self._calculate_distance_matrix = self._calculate_square_distance_matrix
+        if isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
+            distance_matrix = self._load_distance_matrix(self.distance_matrix)
+        elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
+            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_)
+            self._save_distance_matrix(self.distance_matrix, distance_matrix)
+        elif isinstance(self.distance_matrix, np.ndarray):
+            distance_matrix = self.distance_matrix
+        elif isinstance(self.distance_matrix, type(None)):
+            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_)
+        else:
+            raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(self.distance_matrix)}")
+        return distance_matrix
+    
+    
+    
 
 def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
     """
@@ -349,6 +373,15 @@ def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
 
 
 def main(args:argparse.Namespace):
+    """
+    This is the main function that runs the GzipClassifier with the provided arguments. 
+    It will fetch the dataset, split it into training and testing sets.
+    Then, it will train the model using the fit method and test it using the predict method.
+    Args:
+        args (argparse.Namespace): The command line arguments
+    Usage:
+        python gzip_classifier.py --compressor gzip --k 3 --m 100 --method random --distance_matrix distance_matrix --dataset kdd_nsl
+    """
     if args.dataset == "20newsgroups":
         X, y = fetch_20newsgroups(subset='train', categories=["alt.atheism", "talk.religion.misc"], shuffle=True, random_state=42, return_X_y=True)
         y = LabelEncoder().fit(y).transform(y) # Turns the labels "alt.atheism" and "talk.religion.misc" into 0 and 1
@@ -381,6 +414,7 @@ def main(args:argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--symmetric", type=bool, default=True)
     parser.add_argument("--compressor", type=str, default="gzip")
     parser.add_argument("--k", type=int, default=3)
     parser.add_argument("--m", type=int, default=-1)
