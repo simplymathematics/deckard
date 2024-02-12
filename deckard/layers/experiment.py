@@ -69,6 +69,7 @@ def run_stage(
         # convert from dot notation to nested dict
         overrides = OmegaConf.from_dotlist(overrides)
         params = OmegaConf.merge(params, overrides)
+        params = OmegaConf.to_container(params, resolve=True)
         assert params != old_params, f"Params are the same as before overrides: {overrides}"
     exp = instantiate(params)
     id_ = exp.name
