@@ -84,10 +84,18 @@ def read_file(file, results):
                 dict_ = json.load(f)
             except json.decoder.JSONDecodeError as e:
                 logger.error(f"Error reading {file}")
+                print(f"Error reading {file}")
+                input("Press Enter to raise the error.")
                 raise e
     elif suffix == ".yaml":
         with open(file, "r") as f:
-            dict_ = yaml.safe_load(f)
+            try:
+                dict_ = yaml.safe_load(f)
+            except Exception as e:
+                logger.error(f"Error reading {file}")
+                print(f"Error reading {file}")
+                input("Press Enter to raise the error.")
+                raise e
     else:
         raise ValueError(f"File type {suffix} not supported.")
     results[folder]["stage"] = stage
