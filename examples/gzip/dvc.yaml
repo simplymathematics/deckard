@@ -57,6 +57,36 @@ stages:
       - model_name
       - device_id
   ##############################################################################
+  test_each_compressor:
+    matrix:
+      compressor: [gzip, lzma, zstd, pkl, bz2]
+      dataset : [kdd_nsl, truthseeker]
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=train 
+      files.name=${item.compressor}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      dataset=${item.dataset}
+      model_name=${model_name}
+      model.init.method=random
+      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.compressor}.npz
+      model.init.compressor=${item.compressor} 
+      model.init.m=10 
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/train/${item.compressor}/${files.score_dict_file}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
   prepare_distance_matrices:
     matrix:
       random_state: [0,1,2,3,4,5,6,7,8,9]
