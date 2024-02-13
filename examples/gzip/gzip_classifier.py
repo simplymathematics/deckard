@@ -28,7 +28,7 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups, make_classification
 from sklearn.preprocessing import LabelEncoder
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import NearestNeighbors
@@ -399,6 +399,9 @@ def main(args:argparse.Namespace):
             else:
                 new_y.append(1)
         y = LabelEncoder().fit(new_y).transform(new_y)
+    elif args.dataset == "make_classification":
+        X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
+        y = LabelEncoder().fit(y).transform(y)
     elif args.dataset == "truthseeker":
         df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv")
         y = np.array(df['BotScoreBinary'].astype("int"))
