@@ -34,7 +34,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import NearestNeighbors
 from sklearn.svm import SVC
 from sklearn_extra.cluster import KMedoids
-            
+from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
 from joblib import Parallel, delayed
 from typing import Literal
@@ -96,6 +96,25 @@ def ncd(x1, x2, cx1=None, method:Literal["gzip", "lzma", "bz2", "zstd", "pkl", N
 
 
 
+
+
+string_metrics = {
+    "levenshtein": distance,
+    "ratio": ratio,
+    "hamming": hamming,
+    "jaro": jaro,
+    "jaro_winkler": jaro_winkler,
+    "seqratio": seqratio
+    
+}
+
+def _calculate_string_distance(x1, x2, method):
+    dist = string_metrics[method]
+    return dist(x1, x2)
+
+
+
+
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
 
@@ -145,7 +164,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
         """
-        logger.info(f"Initializing GzipClassifier with k={k}, m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}")
+        logger.info(f"Initializing GzipClassifier with k={k}, m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}")
         self.k = k
         self.m = m
         self.method = method
@@ -159,12 +178,19 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix = None
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(distance_matrix)}")
+        
         if metric == "ncd":
             logger.info(f"Using NCD metric")
             self._distance = ncd
             self.compressor = compressor
+            self.metric = "ncd"
+        elif metric in string_metrics.keys():
+            logger.info(f"Using {metric} metric")
+            self._distance = _calculate_string_distance
+            self.metric = metric
+            self.compressor = None
         else:
-            raise NotImplementedError(f"Metric {self.metric} not supported")
+            raise NotImplementedError(f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()}")
         self.symmetric = symmetric
     
     
@@ -185,10 +211,17 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_classes_ = len(unique_labels(y)) if len(unique_labels(y)) > 2 else 2
         self.n_features_ = X.shape[1]
         self.classes_ = unique_labels(y)
+        if self.metric == "ncd":
+            self.Cx_ = Parallel(n_jobs=-1)(delayed(ncd)(x, x, method=self.compressor) for x in self.X_)
+        else:
+            self.Cx_ = None
+            self.X_ = self.X_.astype(str)
         if self.m != -1:
             indices = self._find_best_samples(self.method)
             self.X_ = self.X_[indices]
             self.y_ = self.y_[indices]
+            if self.Cx_ is not None:
+                self.Cx_ = self.Cx_[indices]
         assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
         return self
 
@@ -206,7 +239,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         y_pred = []
         distance_matrix = np.zeros((len(X), len(self.X_)))
         # Iterate over the samples provided by th euser
-        for i in tqdm(range(len(X)), desc="Predicting", leave=False, position=0, total=len(X)):
+        for i in tqdm(range(len(X)), desc="Predicting", leave=False, total=len(X), dynamic_ncols=True):
             # Iterate over the training samples
             method = self.compressor if self.metric == "ncd" else self.metric
             distance_matrix[i,:] = Parallel(n_jobs=-1)(delayed(self._distance)(X[i], self.X_[j], method=method) for j in range(len(self.X_)))
@@ -280,12 +313,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         pbar = tqdm(total=len(x1), desc="Calculating square distance matrix", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            method = self.compressor if self.compressor is not None else self.metric
+            method = self.compressor if self.metric == "ncd" else self.metric
             matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(len(x2)))
             pbar.update(1)
         pbar.close()
         assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
         return matrix_
+    
+    
     
     
     def _calculate_triangular_distance_matrix(self, x1, x2, n_jobs=-1):
@@ -298,7 +333,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix")
+        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
             method = self.compressor if self.metric == "ncd" else self.metric
@@ -415,12 +450,13 @@ def main(args:argparse.Namespace):
         del df['BotScoreBinary']
         del df['BotScore']
         del df['statement']
+        del df['embeddings']
         X = np.array(df)
     else:
         raise ValueError(f"Dataset {args.dataset} not found")
     params = vars(args)
     params.pop("dataset")
-    test_model(X, y, train_size=args.train_size, test_size=args.test_size, k=args.k, m=args.m, method=args.method, distance_matrix=args.distance_matrix, compressor=args.compressor)
+    test_model(X, y, **params)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
