@@ -212,7 +212,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_features_ = X.shape[1]
         self.classes_ = unique_labels(y)
         if self.metric == "ncd":
-            self.Cx_ = Parallel(n_jobs=-1)(delayed(ncd)(x, x, method=self.compressor) for x in self.X_)
+            Cx_ = Parallel(n_jobs=-1)(delayed(ncd)(x, x, method=self.compressor) for x in self.X_)
+            self.Cx_ = np.array(Cx_)
         else:
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
