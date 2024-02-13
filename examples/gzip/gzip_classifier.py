@@ -414,8 +414,10 @@ def main(args:argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--symmetric", type=bool, default=True)
+    parser.add_argument("--symmetric", action="store_true")
+    parser.add_argument("--not_symmetric", dest="symmetric", action="store_false")
     parser.add_argument("--compressor", type=str, default="gzip")
+    parser.add_argument("--metric", type=str, default="ncd")
     parser.add_argument("--k", type=int, default=3)
     parser.add_argument("--m", type=int, default=-1)
     parser.add_argument("--method", type=str, default="random")
