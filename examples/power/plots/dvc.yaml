@@ -21,6 +21,21 @@ stages:
        - /result/${item}/reports/attack/
       outs:
       - data/${item}/raw.csv
+  get_power_data:
+    foreach:
+      - mnist
+      - cifar
+      - cifar100
+      - bit_depth/mnist/
+      - bit_depth/cifar/
+      - bit_depth/cifar100/
+    do:
+      cmd: python -m deckard.layers.query_kepler --input_file data/${item}/raw.csv --output_file data/${item}/power.csv
+      deps:
+        -  data/bit_depth/${item}/raw.csv
+        -  data/${item}/raw.csv
+      outs:
+        - data/${item}/power.csv
   merge:
     foreach:
        - mnist
