@@ -62,7 +62,17 @@ def _pickle_compressor(x):
     import pickle
     return len(pickle.dumps(x))
 
-def ncd(x1, x2, compressor:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="gzip") -> float:
+
+compressors = {
+        "gzip": _gzip_compressor,
+        "lzma": _lzma_compressor,
+        "bz2": _bz2_compressor,
+        "zstd": _zstd_compressor,
+        "pkl": _pickle_compressor,
+    }
+
+
+def ncd(x1, x2, cx1=None, method:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="gzip") -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
     Args:
@@ -71,17 +81,11 @@ def ncd(x1, x2, compressor:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="
     Returns:
         float: The normalized compression distance between x1 and x2
     """
-    compressors = {
-        "gzip": _gzip_compressor,
-        "lzma": _lzma_compressor,
-        "bz2": _bz2_compressor,
-        "zstd": _zstd_compressor,
-        "pkl": _pickle_compressor,
-    }
-    compressor = compressors[compressor]
+    
+    compressor = compressors[method]
     x1 = str(x1)
     x2 = str(x2)
-    Cx1 = compressor(x1)
+    Cx1 = compressor(x1) if cx1 is None else cx1
     Cx2 = compressor(x2) 
     x1x2 = " ".join([x1, x2])
     Cx1x2 = len(gzip.compress(x1x2.encode()))
@@ -155,10 +159,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.distance_matrix = None
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(distance_matrix)}")
-        self.metric = metric
-        if self.metric == "ncd":
+        if metric == "ncd":
+            logger.info(f"Using NCD metric")
             self._distance = ncd
-            self.compressor= compressor
+            self.compressor = compressor
         else:
             raise NotImplementedError(f"Metric {self.metric} not supported")
         self.symmetric = symmetric
@@ -204,7 +208,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # Iterate over the samples provided by th euser
         for i in tqdm(range(len(X)), desc="Predicting", leave=False, position=0, total=len(X)):
             # Iterate over the training samples
-            distance_matrix[i,:] = Parallel(n_jobs=-1)(delayed(self._distance)(X[i], self.X_[j], compressor=self.compressor) for j in range(len(self.X_)))
+            method = self.compressor if self.metric == "ncd" else self.metric
+            distance_matrix[i,:] = Parallel(n_jobs=-1)(delayed(self._distance)(X[i], self.X_[j], method=method) for j in range(len(self.X_)))
             # Sort the distances and get the nearest k samples
             sorted_idx = np.argsort(distance_matrix[i])
             # Get the labels of the nearest samples
@@ -272,10 +277,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix")
+        pbar = tqdm(total=len(x1), desc="Calculating square distance matrix", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], compressor=self.compressor) for j in range(len(x2)))
+            method = self.compressor if self.compressor is not None else self.metric
+            matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(len(x2)))
             pbar.update(1)
         pbar.close()
         assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
@@ -295,7 +301,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix")
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], compressor=self.compressor) for j in range(i))
+            method = self.compressor if self.metric == "ncd" else self.metric
+            matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(i))
             # Copy the lower triangular part to the upper triangular part
             matrix_[i, :i] = matrix_[:i, i]
             pbar.update(1)
