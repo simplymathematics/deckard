@@ -328,6 +328,100 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             raise NotImplementedError(f"Method {method} not supported")
         return indices
     
+    def fit(self, X:np.ndarray, y:np.ndarray, n_jobs=-1):
+        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.method.
+
+        Args:
+            X (np.ndarray): The input data
+            y (np.ndarray): The target labels
+
+        Returns:
+            GzipClassifier: The fitted model
+        """
+        assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
+        logger.info(f"Fitting GzipClassifier with X of shape {X.shape} and y of shape {y.shape}")
+        self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
+        self.y_ = np.array(y) if not isinstance(y, np.ndarray) else y
+        self.n_classes_ = len(unique_labels(y)) if len(unique_labels(y)) > 2 else 2
+        self.n_features_ = X.shape[1]
+        self.classes_ = unique_labels(y)
+        # Compress samples not working
+        if self.metric == "ncd":
+            Cx_ = Parallel(n_jobs=-1)(delayed(compressors[self.compressor])(x) for x in self.X_)
+            self.Cx_ = np.array(Cx_)
+        else:
+            self.Cx_ = None
+            self.X_ = self.X_.astype(str)
+        if self.m > 0:
+            assert isinstance(self.m, int), f"Expected {self.m} to be an integer"
+            assert isinstance(self.method, (str, type(None))), f"Expected {self.method} to be a string or None"
+            indices = self._find_best_samples(self.method)
+            self.X_ = self.X_[indices]
+            self.y_ = self.y_[indices]
+            # Compress samples not working
+            if self.Cx_ is not None:
+                self.Cx_ = self.Cx_[indices]
+        elif self.m == -1:
+            indices = list(range(len(self.X_)))
+        else:
+            raise ValueError(f"Expected {self.m} to be -1 or a positive integer")
+        if self.precompute is "precomputed" or True:
+            self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.distance_matrix_ = self.distance_matrix_[indices, :][:, indices]
+            self.clf_ = KNeighborsClassifier(n_neighbors=self.k, metric="precomputed").fit(self.distance_matrix_, self.y_)
+        elif self.precompute == "ball_tree":
+            self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.clf_ = KNeighborsClassifier(n_neighbors=self.k, algorithm="ball_tree", metric="precomputed").fit(self.distance_matrix_, self.y_)
+        elif self.precompute == "brute":
+            self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.clf_ = KNeighborsClassifier(n_neighbors=self.k, algorithm="brute", metric="precomputed").fit(self.distance_matrix_, self.y_)
+        elif self.precompute == "kd_tree":
+            self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.clf_ = KNeighborsClassifier(n_neighbors=self.k, algorithm="kd_tree", metric="precomputed").fit(self.distance_matrix_, self.y_)
+        else:
+            assert self.precompute is False, f"Expected {self.precompute} to be True, False, 'ball_tree', 'brute', or 'kd_tree'"
+        assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
+        return self
+
+
+    def predict(self, X:np.ndarray, n_jobs=-1):
+        """Predict the class labels for the provided data.
+
+        Args:
+            X (np.ndarray): The input data
+
+        Returns:
+            np.ndarray: The predicted class labels
+        """
+        check_is_fitted(self)
+        
+        
+        logger.info(f"Predicting with X of shape {X.shape}")
+        # Pre-compress samples not working
+        if self.metric == "ncd":
+            compressor = compressors[self.compressor]
+            Cx2 = Parallel(n_jobs=n_jobs)(delayed(compressor)(x) for x in X)
+            Cx2 = np.array(Cx2)
+            # 
+            distance_matrix = self._calculate_square_distance_matrix( x1=X, Cx1=Cx2, x2=self.X_, Cx2=self.Cx_, n_jobs=n_jobs)
+        else:
+            distance_matrix = self._calculate_square_distance_matrix(self.X_, X, n_jobs=n_jobs)
+        distance_matrix = self._calculate_square_distance_matrix(X, self.X_, n_jobs=n_jobs)
+        y_pred = []
+        if self.precompute is True:
+            clf = self.clf_
+            y_pred = clf.predict(distance_matrix)
+        else:
+            for i in tqdm(range(len(X)), desc="Predicting", leave=False, total=len(X), dynamic_ncols=True):
+                # Sort the distances and get the nearest k samples
+                sorted_idx = np.argsort(distance_matrix[i])
+                # Get the labels of the nearest samples
+                nearest_labels = list(self.y_[sorted_idx[: self.k]])
+                # predict class
+                unique, counts = np.unique(nearest_labels, return_counts=True)
+                # Get the most frequent label
+                y_pred.append(unique[np.argmax(counts)])
+        return y_pred
     
 
 def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
