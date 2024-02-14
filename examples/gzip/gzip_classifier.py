@@ -146,7 +146,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, k=3, m=-1, compressor="gzip", method="random", distance_matrix=None, metric='ncd', symmetric=True):
+    def __init__(self, k=3, m=-1, compressor="gzip", method="random", distance_matrix=None, metric='ncd', symmetric=True, precompute=False):
         """
         Initialize the GzipClassifier object.
 
@@ -164,7 +164,16 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
         """
-        logger.info(f"Initializing GzipClassifier with k={k}, m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}")
+        logger.info(f"""\
+                    Initializing GzipClassifier with k={k}, \
+                    m={m}, \
+                    compressor={compressor}, \
+                    method={method}, \
+                    distance_matrix={distance_matrix}, \
+                    metric={metric}, \
+                    symmetric={symmetric} \
+                    precompute={precompute} \
+                    """)
         self.k = k
         self.m = m
         self.method = method
@@ -183,7 +192,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             logger.info(f"Using NCD metric")
             self._distance = ncd
             self.compressor = compressor
-            self.metric = "ncd"
+            self.metric = metric
         elif metric in string_metrics.keys():
             logger.info(f"Using {metric} metric")
             self._distance = _calculate_string_distance
@@ -191,6 +200,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.compressor = None
         else:
             raise NotImplementedError(f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()}")
+        self.precompute = precompute # If True, the distance matrix will be precomputed and stored in self.distance_matrix_ during the fit method and a sklearn KNeighborsClassifier object will be created and stored in self.clf_.
+        self.symmetric = symmetric  
         if self.symmetric is True: 
             self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
         else:
