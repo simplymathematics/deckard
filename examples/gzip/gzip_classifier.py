@@ -191,117 +191,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.compressor = None
         else:
             raise NotImplementedError(f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()}")
-        self.symmetric = symmetric
-    
-    
-    def fit(self, X:np.ndarray, y:np.ndarray):
-        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.method.
-
-        Args:
-            X (np.ndarray): The input data
-            y (np.ndarray): The target labels
-
-        Returns:
-            GzipClassifier: The fitted model
-        """
-        assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
-        logger.info(f"Fitting GzipClassifier with X of shape {X.shape} and y of shape {y.shape}")
-        self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
-        self.y_ = np.array(y) if not isinstance(y, np.ndarray) else y
-        self.n_classes_ = len(unique_labels(y)) if len(unique_labels(y)) > 2 else 2
-        self.n_features_ = X.shape[1]
-        self.classes_ = unique_labels(y)
-        if self.metric == "ncd":
-            Cx_ = Parallel(n_jobs=-1)(delayed(ncd)(x, x, method=self.compressor) for x in self.X_)
-            self.Cx_ = np.array(Cx_)
+        if self.symmetric is True: 
+            self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
         else:
-            self.Cx_ = None
-            self.X_ = self.X_.astype(str)
-        if self.m != -1:
-            indices = self._find_best_samples(self.method)
-            self.X_ = self.X_[indices]
-            self.y_ = self.y_[indices]
-            if self.Cx_ is not None:
-                self.Cx_ = self.Cx_[indices]
-        assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
-        return self
-
-    def predict(self, X:np.ndarray):
-        """Predict the class labels for the provided data.
-
-        Args:
-            X (np.ndarray): The input data
-
-        Returns:
-            np.ndarray: The predicted class labels
-        """
-        check_is_fitted(self)
-        
-        y_pred = []
-        distance_matrix = np.zeros((len(X), len(self.X_)))
-        # Iterate over the samples provided by th euser
-        for i in tqdm(range(len(X)), desc="Predicting", leave=False, total=len(X), dynamic_ncols=True):
-            # Iterate over the training samples
-            method = self.compressor if self.metric == "ncd" else self.metric
-            distance_matrix[i,:] = Parallel(n_jobs=-1)(delayed(self._distance)(X[i], self.X_[j], method=method) for j in range(len(self.X_)))
-            # Sort the distances and get the nearest k samples
-            sorted_idx = np.argsort(distance_matrix[i])
-            # Get the labels of the nearest samples
-            nearest_labels = list(self.y_[sorted_idx[: self.k]])
-            # predict class
-            unique, counts = np.unique(nearest_labels, return_counts=True)
-            # Get the most frequent label
-            y_pred.append(unique[np.argmax(counts)])
-        return y_pred
-
-    def _find_best_samples(self, method = "medoid"):
-        """
-        Args:
-            method (str): The method used to select the best training samples. Default is "medoid". Choices are "sum", "mean", "medoid", "random", "knn", "svc".
-        Returns:
-            list: The indices of the best training samples.
-        """
-        distance_matrix = self._prepare_distance_matrix()
-        indices = []
-        if method == "sum":
-            for label in range(self.n_classes_):
-                label_idx = np.where(self.y_ == label)[0]
-                label_distance_matrix = distance_matrix[label_idx, :]
-                summed_matrix = np.sum(label_distance_matrix, axis=0)
-                sorted_idx = np.argsort(summed_matrix)
-                indices.extend(sorted_idx[: self.m])
-        elif method == "mean":
-            for label in range(self.n_classes_):
-                label_idx = np.where(self.y_ == label)[0]
-                label_distance_matrix = distance_matrix[label_idx, :]
-                mean_matrix = np.mean(label_distance_matrix, axis=0)
-                sorted_idx = np.argsort(mean_matrix)
-                indices.extend(sorted_idx[: self.m])
-        elif method == "medoid":
-            for label in range(self.n_classes_):
-                kmedoids = KMedoids(n_clusters=self.m, metric="precomputed").fit(distance_matrix)
-                indices.extend(kmedoids.medoid_indices_)
-        elif method == "random":
-            for label in range(self.n_classes_):
-                label_idx = np.where(self.y_ == label)[0]
-                random_idx = np.random.choice(label_idx, self.m)
-                indices.extend(random_idx)
-        elif method == "knn":
-            nn = NearestNeighbors(n_neighbors=self.m).fit(distance_matrix)
-            _, indices = nn.kneighbors(distance_matrix, n_neighbors=self.m, return_distance=True)
-            # TODO: Sort by distances
-            # TODO: select m entries from each class
-            indices = list(indices[: self.m * self.n_classes_])
-        elif method == "svc":
-            svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
-            # TODO: Sort by distances
-            # TODO: select m entries from each class
-            indices.extend(svc.support_[: self.m * self.n_classes_])
-        else:
-            raise NotImplementedError(f"Method {method} not supported")
-        return indices
-    
-    def _calculate_square_distance_matrix(self, x1, x2, n_jobs=-1):
+            self._calculate_distance_matrix = self._calculate_square_distance_matrix
         """
         Calculate the distance matrix between two sets of objects, treating them as strings, assuming d(a,b) != d(b,a)
         Args:
@@ -356,30 +249,68 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(path, X=matrix)
     
-    def _prepare_distance_matrix(self):
+    def _prepare_training_matrix(self, n_jobs=-1):
         """
         Prepare the distance matrix for classification. 
         If self.distance_matrix is a path to a numpy file, it will be loaded.
         If it is a numpy array, it will be used directly. 
         If it is None, the distance matrix will be calculated using self.X_ and self.X_.
         """
-        if self.symmetric is True:
-            self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
-        else:
-            self._calculate_distance_matrix = self._calculate_square_distance_matrix
+        
         if isinstance(self.distance_matrix, str) and Path(self.distance_matrix).exists():
             distance_matrix = self._load_distance_matrix(self.distance_matrix)
         elif isinstance(self.distance_matrix, str) and not Path(self.distance_matrix).exists():
-            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_)
+            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_, Cx1=self.Cx_, Cx2=self.Cx_, n_jobs=n_jobs)
             self._save_distance_matrix(self.distance_matrix, distance_matrix)
         elif isinstance(self.distance_matrix, np.ndarray):
             distance_matrix = self.distance_matrix
         elif isinstance(self.distance_matrix, type(None)):
-            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_)
+            distance_matrix = self._calculate_distance_matrix(self.X_, self.X_,  Cx1=self.Cx_, Cx2=self.Cx_, n_jobs=n_jobs)
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(self.distance_matrix)}")
         return distance_matrix
     
+    def _find_best_samples(self, method = "medoid"):
+        """
+        Args:
+            method (str): The method used to select the best training samples. Default is "medoid". Choices are "sum", "mean", "medoid", "random", "knn", "svc".
+        Returns:
+            list: The indices of the best training samples.
+        """
+        distance_matrix = self._prepare_training_matrix()
+        indices = []
+        if method == "sum":
+            for label in range(self.n_classes_):
+                label_idx = np.where(self.y_ == label)[0]
+                label_distance_matrix = distance_matrix[label_idx, :]
+                summed_matrix = np.sum(label_distance_matrix, axis=0)
+                sorted_idx = np.argsort(summed_matrix)
+                indices.extend(sorted_idx[: self.m])
+        elif method == "medoid":
+            for label in range(self.n_classes_):
+                kmedoids = KMedoids(n_clusters=self.m, metric="precomputed").fit(distance_matrix)
+                indices.extend(kmedoids.medoid_indices_)
+        elif method == "random":
+            for label in range(self.n_classes_):
+                label_idx = np.where(self.y_ == label)[0]
+                random_idx = np.random.choice(label_idx, self.m)
+                indices.extend(random_idx)
+        elif method == "knn":
+            nn = NearestNeighbors(n_neighbors=self.m).fit(distance_matrix)
+            distances, indices = nn.kneighbors(distance_matrix, n_neighbors=self.m, return_distance=True)
+            best_indices = distances.argsort()
+            indices = indices[best_indices]
+            indices = list(indices[: self.m])
+        elif method == "svc":
+            svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
+            summed_matrix = np.sum(distance_matrix, axis=0)
+            support_idx = svc.support_
+            # sort the support vectors by the summed matrix
+            sorted_idx = np.argsort(summed_matrix[support_idx])
+            indices.extend(support_idx[sorted_idx][: self.m])
+        else:
+            raise NotImplementedError(f"Method {method} not supported")
+        return indices
     
     
 
