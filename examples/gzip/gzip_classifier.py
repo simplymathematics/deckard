@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_20newsgroups, make_classification
 from sklearn.preprocessing import LabelEncoder
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier 
 from sklearn.svm import SVC
 from sklearn_extra.cluster import KMedoids
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
@@ -88,7 +88,7 @@ def ncd(x1, x2, cx1=None, cx2=None, method:Literal["gzip", "lzma", "bz2", "zstd"
     Cx1 = compressor(x1) if cx1 is None else cx1
     Cx2 = compressor(x2) if cx2 is None else cx2
     x1x2 = " ".join([x1, x2])
-    Cx1x2 = len(gzip.compress(x1x2.encode()))
+    Cx1x2 = compressor(x1x2)
     min_ = min(Cx1, Cx2)
     max_ = max(Cx1, Cx2)
     ncd = (Cx1x2 - min_) / max_
@@ -111,6 +111,8 @@ string_metrics = {
 
 
 def _calculate_string_distance(x1, x2, method):
+    x1 = str(x1)
+    x2 = str(x2)
     if method in string_metrics.keys():
         dist = string_metrics[method]
     else:
@@ -169,16 +171,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
         """
-        logger.info(f"""\
-                    Initializing GzipClassifier with k={k}, \
-                    m={m}, \
-                    compressor={compressor}, \
-                    method={method}, \
-                    distance_matrix={distance_matrix}, \
-                    metric={metric}, \
-                    symmetric={symmetric} \
-                    precompute={precompute} \
-                    """)
+        logger.info(f"Initializing GzipClassifier with k={k}, m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, precompute={precompute}")
+                    
         self.k = k
         self.m = m
         self.method = method
@@ -211,6 +205,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
         else:
             self._calculate_distance_matrix = self._calculate_square_distance_matrix
+    
+    def _calculate_square_distance_matrix(self, x1, x2,  Cx1=None, Cx2=None, n_jobs=-1):
         """
         Calculate the distance matrix between two sets of objects, treating them as strings, assuming d(a,b) != d(b,a)
         Args:
@@ -220,11 +216,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(total=len(x1), desc="Calculating square distance matrix", leave=False, dynamic_ncols=True)
+        pbar = tqdm(total=len(x1), desc="Calculating asymmetric distance matrix.", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            method = self.compressor if self.metric == "ncd" else self.metric
-            matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(len(x2)))
+            if self.metric == "ncd":
+                method = self.compressor
+                matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(len(x2)))
+            else:
+                matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(len(x2)))
             pbar.update(1)
         pbar.close()
         assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
@@ -233,7 +232,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     
     
-    def _calculate_triangular_distance_matrix(self, x1, x2, n_jobs=-1):
+    def _calculate_triangular_distance_matrix(self, x1, x2, Cx1=None, Cx2=None, n_jobs=-1):
         """
         Calculate the distance matrix between two sets of objects, treating them as strings. Assuming the d(a,b) = d(b,a)
         Args:
@@ -242,12 +241,16 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
+        
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(total=len(x1), desc="Calculating triangular distance matrix", leave=False, dynamic_ncols=True)
+        pbar = tqdm(total=len(x1), desc="Calculating symmetric distance metrix.", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            method = self.compressor if self.metric == "ncd" else self.metric
-            matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(i))
+            if self.metric == "ncd":
+                method = self.compressor
+                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=method) for j in range(i))
+            else:
+                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(i))
             # Copy the lower triangular part to the upper triangular part
             matrix_[i, :i] = matrix_[:i, i]
             pbar.update(1)
@@ -422,6 +425,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 # Get the most frequent label
                 y_pred.append(unique[np.argmax(counts)])
         return y_pred
+            
+            
+
+    
+    
+    
+    
+    
     
 
 def test_model(X, y, train_size = 100, test_size =100, **kwargs) -> dict:
@@ -493,7 +504,7 @@ def main(args:argparse.Namespace):
         del df['BotScore']
         del df['statement']
         del df['embeddings']
-        X = np.array(df)
+        X = np.array(df['tweet'])
     else:
         raise ValueError(f"Dataset {args.dataset} not found")
     params = vars(args)
@@ -502,6 +513,7 @@ def main(args:argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--precompute", action="store_true")
     parser.add_argument("--symmetric", action="store_true")
     parser.add_argument("--not_symmetric", dest="symmetric", action="store_false")
     parser.add_argument("--compressor", type=str, default="gzip")
