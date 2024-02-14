@@ -1,23 +1,4 @@
-# attacks:
-#   DeepFool: Deep
-#   FastGradientMethod: FGM
-#   HopSkipJump: HSJ
-#   PixelAttack: Pixel
-#   ProjectedGradientDescent: PGD
-#   ThresholdAttack: Thresh
-defences:
-  Control: Control
-  FeatureSqueezing: FSQ
-  GaussianAugmentation: Gauss-in
-  GaussianNoise: Gauss-out
-  HighConfidence: Conf
-  nb_epoch : Epochs
-  method : Control
 params:
-  FGM: attack.init.kwargs.eps
-  HSJ: attack.init.kwargs.max_iter
-  Control: model.init.method
-  Epochs: model.trainer.nb_epoch
   control:
     data.sample.train_size: 100
   defaults:

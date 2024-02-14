@@ -1,19 +1,94 @@
-cat_plot:
-- file: summary.pdf
-  hue: model.init.method
-  kind: "point"
-  set:
-    yscale: linear
-  titles: 
+line_plot:
+- file: accuracy_vs_k.pdf
+  hue: model.init.k
+  title: "Accuracy vs $k$-nearest Neighbours"
   x: data.sample.train_size
-  xlabels: train_size
+  xlabel: Training Samples
   y: accuracy
-  ylabels: Accuracy
-  rotation : 90
+  ylabel: Accuracy
+  hue_order:
+  - 1
+  - 3
+  - 5
+  - 7
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
+  errorbar: se
+  err_style: bars
+- file: accuracy_vs_m.pdf
+  hue: model.init.method
+  title: "Accuracy vs $m$-best Samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: accuracy
+  ylabel: Accuracy
   hue_order:
   - random
-  - medoid
+  - sum
   - knn
   - svc
-  row : model.init.m
-  col : model.init.k
+  - medoid
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
+  errorbar: se
+  err_style: bars
+- file: train_time_vs_k.pdf
+  hue: model.init.k
+  title: "Training Time vs $k$-nearest Neighbours"
+  x: data.sample.train_size
+  xlabel: Training Samples
+  y: train_time
+  ylabel: Training Time
+  hue_order:
+  - 1
+  - 3
+  - 5
+  - 7
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
+  errorbar: se
+  err_style: bars
+- file: train_time_vs_n.pdf
+  # hue: model.init.method
+  title: "Training Time vs $n$ Samples"
+  x: data.sample.train_size
+  xlabel: $n$ Samples
+  y: train_time
+  ylabel: Training Time
+  # hue_order:
+  # - random
+  # - sum
+  # - knn
+  # - svc
+  # - medoid
+  # legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
+  errorbar: se
+  err_style: bars
+- file: predict_time_vs_k.pdf
+  hue: model.init.k
+  title: "Prediction Time vs $k$-nearest Neighbours"
+  x: data.sample.train_size
+  xlabel: Training Samples
+  y: predict_time
+  ylabel: Prediction Time
+  hue_order:
+  - 1
+  - 3
+  - 5
+  - 7
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
+  errorbar: se
+  err_style: bars
+- file: predict_time_vs_m.pdf
+  hue: model.init.method
+  title: "Prediction Time vs $m$-best Samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: predict_time
+  ylabel: Prediction Time
+  hue_order:
+  - random
+  - sum
+  - knn
+  - svc
+  - medoid
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
+  errorbar: se
+  err_style: bars

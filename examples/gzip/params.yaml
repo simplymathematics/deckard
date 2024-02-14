@@ -65,7 +65,9 @@ model:
     k: 1
     m: -1
     method: null
+    metric: ncd
     name: gzip_classifier.GzipClassifier
+    symmetric: true
   library: sklearn
 model_name: gzip_classifier
 optimizers:

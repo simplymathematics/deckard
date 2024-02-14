@@ -7,7 +7,9 @@ init:
     m: -1
     method : null
     distance_matrix : ${files.directory}/${files.model_dir}/${model_name}/${model.init.compressor}/${data.sample.random_state}-${data.sample.train_size}.npz
+    symmetric: true
     compressor : gzip
+    metric : ncd
 _target_: deckard.base.model.Model
 art:
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
