@@ -72,7 +72,7 @@ compressors = {
     }
 
 
-def ncd(x1, x2, cx1=None, method:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="gzip") -> float:
+def ncd(x1, x2, cx1=None, cx2=None, method:Literal["gzip", "lzma", "bz2", "zstd", "pkl", None]="gzip") -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
     Args:
@@ -86,7 +86,7 @@ def ncd(x1, x2, cx1=None, method:Literal["gzip", "lzma", "bz2", "zstd", "pkl", N
     x1 = str(x1)
     x2 = str(x2)
     Cx1 = compressor(x1) if cx1 is None else cx1
-    Cx2 = compressor(x2) 
+    Cx2 = compressor(x2) if cx2 is None else cx2
     x1x2 = " ".join([x1, x2])
     Cx1x2 = len(gzip.compress(x1x2.encode()))
     min_ = min(Cx1, Cx2)
@@ -108,8 +108,13 @@ string_metrics = {
     
 }
 
+
+
 def _calculate_string_distance(x1, x2, method):
-    dist = string_metrics[method]
+    if method in string_metrics.keys():
+        dist = string_metrics[method]
+    else:
+        raise NotImplementedError(f"Method {method} not supported. Supported methods are: {string_metrics.keys()}")
     return dist(x1, x2)
 
 
