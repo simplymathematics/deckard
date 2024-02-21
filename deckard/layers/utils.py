@@ -3,6 +3,7 @@ from pathlib import Path
 
 from hydra.errors import OverrideParseException
 from omegaconf import OmegaConf
+from omegaconf import SCMode
 from copy import deepcopy
 import yaml
 from hydra import initialize_config_dir, compose
@@ -144,9 +145,9 @@ def save_params_file(
     logger.info(f"Running save_params_file in config_dir: {config_dir}")
     with initialize_config_dir(config_dir=config_dir, version_base="1.3"):
         cfg = compose(config_name=config_file, overrides=overrides)
-        params = OmegaConf.to_container(cfg, resolve=True)
-        with open(params_file, "w") as f:
-            yaml.dump(params, f)
-        logger.info(f"Saved params file to {params_file}")
+    params = OmegaConf.to_container(cfg, resolve=True, structured_config_mode=SCMode.DICT)
+    with open(params_file, "w") as f:
+        yaml.dump(params, f)
+    logger.info(f"Saved params file to {params_file}")
     assert Path(params_file).exists(), f"Failed to save params file to {params_file}"
     return None
