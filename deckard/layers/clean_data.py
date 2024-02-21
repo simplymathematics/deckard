@@ -394,6 +394,7 @@ def format_control_parameter(data, control_dict, fillna):
                 else value
             )
             data.loc[data.def_gen == defence, "def_value"] = value
+            del fillna[defence]
         else:
             logger.warning(f"Defence {defence} not in control_dict. Deleting rows.")
             data = data[data.def_gen != defence]
@@ -433,6 +434,7 @@ def format_control_parameter(data, control_dict, fillna):
                 else value
             )
             data.loc[data.atk_gen == attack, "def_value"] = value
+            del fillna[attack]
         else:
             logger.warning(f"Attack {attack} not in control_dict. Deleting rows.")
             data = data[data.atk_gen != attack]
@@ -446,8 +448,21 @@ def format_control_parameter(data, control_dict, fillna):
     if len(attacks) > 0:
         assert "atk_param" in data.columns, "atk_param not in data.columns"
         assert "atk_value" in data.columns, "atk_value not in data.columns"
-    return data
+    return data, fillna
 
+def replace_strings_in_data(data, replace_dict):
+    for k,v in replace_dict.items():
+        logger.info(f"Replacing strings in {k}...")
+        assert isinstance(v, dict), f"Value for key {k} in replace_dict is not a dictionary."
+        assert k in data.columns, f"Key {k} not in data.columns."
+        for k1,v1 in v.items():
+            logger.info(f"Replacing {k1} with {v1} in {k}...")
+            k1 = str(k1)
+            v1 = str(v1)
+            data[k] = data[k].astype(str)
+            data.loc[:, k] = data.loc[:, k].str.replace(k1, v1)
+        logger.info(f"Unique values after replacement: {data[k].unique()}")
+    return data
 
 def clean_data_for_plotting(
     data,
@@ -455,6 +470,8 @@ def clean_data_for_plotting(
     atk_gen_dict,
     control_dict,
     fillna,
+    replace_dict,
+    pareto_dict,
 ):
     """
     The function `clean_data_for_plotting` cleans and formats data for plotting by dropping empty rows,
@@ -510,7 +527,12 @@ def clean_data_for_plotting(
         atk_gen = data.atk_gen.map(atk_gen_dict)
         data.atk_gen = atk_gen
         data.dropna(axis=0, subset=["atk_gen"], inplace=True)
-    data = format_control_parameter(data, control_dict, fillna)
+    data, fillna = format_control_parameter(data, control_dict, fillna)
+    for k,v in fillna.items():
+        data[k] = data[k].fillna(v)
+    data = replace_strings_in_data(data, replace_dict)
+    if len(pareto_dict) > 0:
+        data = pareto_set(data, pareto_dict)
     return data
 
 
@@ -557,9 +579,7 @@ if __name__ == "__main__":
         type=str,
         default=[
             "accuracy",
-            # "adv_accuracy",
             "train_time",
-            # "adv_fit_time",
             "predict_time",
         ],
     )
@@ -589,22 +609,6 @@ if __name__ == "__main__":
     for col in args.drop_if_empty:
         assert col in data.columns, f"Column {col} not in data.columns"
     data = drop_frames_without_results(data, subset=args.drop_if_empty)
-    if args.pareto_dict is None:
-        sense_dict = {}
-    else:
-        if Path(args.pareto_dict).exists():
-            with open(args.pareto_dict, "r") as f:
-                sense_dict = yaml.safe_load(f)
-        elif (
-            isinstance(args.pareto_dict.split(":")[:-1], str)
-            and Path(args.pareto_dict.split(":")[:-2]).exists()
-        ):
-            with open(Path(args.pareto_dict.split(":")[:-1]), "r") as f:
-                sense_dict = yaml.safe_load(f)[args.pareto_dict.split(":")[:-1]]
-        else:
-            raise ValueError(
-                f"Pareto_dictionary, {args.pareto_dict} does not exist as a file or file and dictionary using file:dictionary notation.",
-            )
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -613,13 +617,16 @@ if __name__ == "__main__":
     control_dict = big_dict.get("params", {})
     fillna = big_dict.get("fillna", {})
     min_max = big_dict.get("min_max", [])
-
+    replace_dict = big_dict.get("replace", {})
+    pareto_dict = big_dict.get("pareto", {})
     results = clean_data_for_plotting(
         data,
         def_gen_dict,
         atk_gen_dict,
         control_dict,
         fillna=fillna,
+        replace_dict=replace_dict,
+        pareto_dict=pareto_dict,
     )
     
     if "adv_accuracy" in results.columns:
