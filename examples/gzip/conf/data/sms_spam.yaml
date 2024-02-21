@@ -1,7 +1,7 @@
 _target_: deckard.base.data.Data
 generate:
-    name: raw_data/truthseeker.csv
-    target: 'BotScoreBinary'
+    name: raw_data/sms-spam.csv
+    target: 'label'
 sample:
     random_state : 0
     train_size : 100

@@ -1,94 +1,205 @@
 line_plot:
-- file: accuracy_vs_k.pdf
-  hue: model.init.k
-  title: "Accuracy vs $k$-nearest Neighbours"
-  x: data.sample.train_size
-  xlabel: Training Samples
-  y: accuracy
-  ylabel: Accuracy
-  hue_order:
-  - 1
-  - 3
-  - 5
-  - 7
-  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
-  errorbar: se
-  err_style: bars
-- file: accuracy_vs_m.pdf
+- file: method_vs_accuracy.pdf
   hue: model.init.method
-  title: "Accuracy vs $m$-best Samples"
+  title: #"Accuracy vs $m$-best samples"
   x: model.init.m
   xlabel: $m$-best Samples
   y: accuracy
   ylabel: Accuracy
   hue_order:
-  - random
-  - sum
-  - knn
-  - svc
-  - medoid
-  legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
+  - Random
+  - Sum
+  - Medoid
+  - SVC
+  - KNN
+  xlim: [0, 500]
+  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
   errorbar: se
   err_style: bars
-- file: train_time_vs_k.pdf
-  hue: model.init.k
-  title: "Training Time vs $k$-nearest Neighbours"
-  x: data.sample.train_size
-  xlabel: Training Samples
-  y: train_time
-  ylabel: Training Time
-  hue_order:
-  - 1
-  - 3
-  - 5
-  - 7
-  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
-  errorbar: se
-  err_style: bars
-- file: train_time_vs_n.pdf
-  # hue: model.init.method
-  title: "Training Time vs $n$ Samples"
-  x: data.sample.train_size
-  xlabel: $n$ Samples
-  y: train_time
-  ylabel: Training Time
-  # hue_order:
-  # - random
-  # - sum
-  # - knn
-  # - svc
-  # - medoid
-  # legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
-  errorbar: se
-  err_style: bars
-- file: predict_time_vs_k.pdf
-  hue: model.init.k
-  title: "Prediction Time vs $k$-nearest Neighbours"
-  x: data.sample.train_size
-  xlabel: Training Samples
-  y: predict_time
-  ylabel: Prediction Time
-  hue_order:
-  - 1
-  - 3
-  - 5
-  - 7
-  legend: {"bbox_to_anchor": [1.05, 1], "title": "$k$ Neighbours"}
-  errorbar: se
-  err_style: bars
-- file: predict_time_vs_m.pdf
-  hue: model.init.method
-  title: "Prediction Time vs $m$-best Samples"
+- file: metric_vs_accuracy.pdf
+  hue: model.init.metric
+  title: #"Accuracy vs $m$-best samples"
   x: model.init.m
   xlabel: $m$-best Samples
-  y: predict_time
-  ylabel: Prediction Time
+  y: accuracy
+  ylabel: Accuracy
   hue_order:
-  - random
-  - sum
-  - knn
-  - svc
-  - medoid
-  legend: {"bbox_to_anchor": [1.05, 1], "title": "Methods"}
+  - NCD
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
   errorbar: se
   err_style: bars
+  xlim: [0, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}  
+- file: compressor_vs_accuracy.pdf
+  hue: model.init.compressor
+  title: #"Accuracy vs $m$-best samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: accuracy
+  ylabel: Accuracy
+  hue_order:
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  xlim: [0, 500]
+  errorbar: se
+  err_style: bars
+- file: method_vs_train_time.pdf
+  hue: model.init.method
+  title: #"Training Time vs $m$-best samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale : log
+  hue_order:
+  - Random
+  - Sum
+  - Medoid
+  - SVC
+  - KNN
+  xlim: [10, 500]
+  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  errorbar: se
+  err_style: bars
+- file: metric_vs_train_time.pdf
+  hue: model.init.metric
+  title: #"Training Time vs $m$-best samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale : log
+  hue_order:
+  - NCD
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+- file: compressor_vs_train_time.pdf
+  hue: model.init.compressor
+  title: #"Training Time vs $m$-best samples"
+  x: model.init.m
+  xlabel: $m$-best Samples
+  y: train_time
+  ylabel: Training Time (s)
+  hue_order:
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  xlim: [10, 500]
+  errorbar: se
+  err_style: bars
+  y_scale : log
+- file: method_vs_predict_time.pdf
+  hue: model.init.method
+  title: #"Prediction Time vs $m$-best samples"
+  x: model.init.m
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  hue_order:
+  - Random
+  - Sum
+  - Medoid
+  - SVC
+  - KNN
+  xlim: [100, 500]
+  y_scale : log
+  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  errorbar: se
+  err_style: bars
+- file: metric_vs_predict_time.pdf
+  hue: model.init.metric
+  title: #"Prediction Time vs $m$-best samples"
+  x: model.init.m
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale : log
+  hue_order:
+  - NCD
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [100, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+- file: compressor_vs_predict_time.pdf
+  hue: model.init.compressor
+  title: #"Prediction Time vs $m$-best samples"
+  x: model.init.m
+  xlim : [100, 500]
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale : log
+  hue_order:
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  errorbar: se
+  err_style: bars
+cat_plot:
+  - file: symmetric_vs_metric.pdf
+    x : model.init.symmetric
+    y : accuracy
+    hue : model.init.metric
+    errorbar: se
+    kind : bar
+    titles : 
+    xlabels : Assume Symmetric
+    ylabels : Accuracy
+    legend_title: "Metrics"
+    hue_order:
+    - NCD
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    set:
+      yscale: linear
+      ylim: [0, 1]
+  - file: symmetric_vs_compressor.pdf
+    x : model.init.symmetric
+    y : accuracy
+    hue : model.init.compressor
+    errorbar: se
+    kind : bar
+    titles : 
+    xlabels : Assume Symmetric
+    ylabels : Accuracy
+    legend_title: "Compressors"
+    hue_order:
+    - Gzip
+    - Pickle
+    - BZ2
+    - Zstd
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "left center"}
+    set:
+      yscale: linear
+      ylim: [0, 1]

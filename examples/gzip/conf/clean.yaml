@@ -3,4 +3,31 @@ params:
     data.sample.train_size: 100
   defaults:
     model.init.m : -1
-
+fillna:
+  model.init.compressor : "None"
+  model.init.metric : "ncd"
+  model.init.method : "random"
+  model.init.m : -1
+  model.init.precompute : "False"
+replace:
+  model.init.metric:
+    jaro: "Jaro"
+    _winkler: "-Winkler"
+    levenshtein: "Levenshtein"
+    ncd: "NCD"
+    ratio: "Ratio"
+    seqRatio: "SeqRatio"
+    hamming: "Hamming"
+  model.init.method:
+    svc: "SVC"
+    knn: "KNN"
+    medoid: "Medoid"
+    sum: "Sum"
+    random: "Random"
+  model.init.compressor:
+    gzip: "Gzip"
+    pkl: "Pickle"
+    bz2: "BZ2"
+    zstd: "Zstd"
+  model.init.m:
+    "-1" : "1000"

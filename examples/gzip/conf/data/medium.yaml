@@ -14,7 +14,7 @@ sample:
     # _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
     stratify: True
-    train_size : 10000
+    train_size : 1000
     test_size : 1000
 sklearn_pipeline:
     # _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
