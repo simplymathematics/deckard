@@ -47,6 +47,30 @@ def get_dvc_stage_params(
     return params
 
 
+
+
+
+def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
+    try:
+        def_stages = list(
+            dvc.api.params_show(pipeline_file, repo=repo)["stages"].keys(),
+        )
+    except NotGitRepository:
+        raise ValueError(
+            f"Directory {repo} is not a dvc repository. Please run `dvc init` in {repo} and try again.",
+        )
+    if stages is None or stages == []:
+        raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
+    elif isinstance(stages, str):
+        stages = [stages]
+    else:
+        assert isinstance(stages, list), f"args.stage is of type {type(stages)}"
+        for stage in stages:
+            assert (
+                stage in def_stages
+            ), f"Stage {stage} not found in {pipeline_file}. Available stages: {def_stages}"
+    return stages
+
 def run_stage(
     params_file="params.yaml",
     pipeline_file="dvc.yaml",
@@ -71,6 +95,8 @@ def run_stage(
         params = OmegaConf.merge(params, overrides)
         params = OmegaConf.to_container(params, resolve=True)
         assert params != old_params, f"Params are the same as before overrides: {overrides}"
+    params = OmegaConf.create(params)
+    params = OmegaConf.to_container(params, resolve=True)
     exp = instantiate(params)
     id_ = exp.name
     files = deepcopy(exp.files())
@@ -80,29 +106,6 @@ def run_stage(
         yaml.dump(params, f)
     score = exp()
     return id_, score
-
-
-def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
-    try:
-        def_stages = list(
-            dvc.api.params_show(pipeline_file, repo=repo)["stages"].keys(),
-        )
-    except NotGitRepository:
-        raise ValueError(
-            f"Directory {repo} is not a dvc repository. Please run `dvc init` in {repo} and try again.",
-        )
-    if stages is None or stages == []:
-        raise ValueError(f"Please specify one or more stage(s) from {def_stages}")
-    elif isinstance(stages, str):
-        stages = [stages]
-    else:
-        assert isinstance(stages, list), f"args.stage is of type {type(stages)}"
-        for stage in stages:
-            assert (
-                stage in def_stages
-            ), f"Stage {stage} not found in {pipeline_file}. Available stages: {def_stages}"
-    return stages
-
 
 def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo=None,):
     results = {}
