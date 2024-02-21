@@ -369,8 +369,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 self.Cx_ = self.Cx_[indices]
         elif self.m == -1:
             indices = list(range(len(self.X_)))
+            self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
+        elif self.m is None or self.m==0:
+            indices = list(range(len(self.X_)))
         else:
-            raise ValueError(f"Expected {self.m} to be -1 or a positive integer")
+            raise ValueError(f"Expected {self.m} to be -1, 0, or a positive integer")
         if self.precompute is "precomputed" or True:
             self.distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
             self.distance_matrix_ = self.distance_matrix_[indices, :][:, indices]
@@ -484,34 +487,30 @@ def main(args:argparse.Namespace):
         X, y = fetch_20newsgroups(subset='train', categories=["alt.atheism", "talk.religion.misc"], shuffle=True, random_state=42, return_X_y=True)
         y = LabelEncoder().fit(y).transform(y) # Turns the labels "alt.atheism" and "talk.religion.misc" into 0 and 1
     elif args.dataset == "kdd_nsl":
-        df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/kdd-nsl.csv", header=None)
-        width = df.shape[1]
-        y = df[width-2] # the 2nd to last column is the target
-        del df[width-2] # remove the target from the dataframe
-        X = np.array(df)
-        del df
-        new_y = []
-        for entry in y: # convert the target to binary from 'normal' and various attacks.
-            if entry == "normal":
-                new_y.append(0)
-            else:
-                new_y.append(1)
-        y = LabelEncoder().fit(new_y).transform(new_y)
+        df = pd.read_csv("raw_data/kdd_nsl.csv")
+        y = df['label']
+        X = df.drop('label', axis=1)
     elif args.dataset == "make_classification":
         X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
         y = LabelEncoder().fit(y).transform(y)
     elif args.dataset == "truthseeker":
-        df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv")
-        y = np.array(df['BotScoreBinary'].astype("int"))
-        del df['BotScoreBinary']
-        del df['BotScore']
-        del df['statement']
-        del df['embeddings']
-        X = np.array(df['tweet'])
+        df = pd.read_csv("raw_data/truthseeker.csv")
+        y = df['BotScoreBinary']
+        X = df['tweet'].drop('BotScoreBinary', axis=1)
+    elif args.dataset == "sms-spam":
+        df = pd.read_csv("raw_data/sms-spam.csv")
+        y = df['label']
+        X = df.drop('label', axis=1)
+    elif args.dataset == "ddos":
+        df = pd.read_csv("raw_data/ddos.csv")
+        y = df['Label']
+        X = df.drop('Label', axis=1)
     else:
         raise ValueError(f"Dataset {args.dataset} not found")
     params = vars(args)
     params.pop("dataset")
+    X = np.array(X)
+    y = np.array(y)
     test_model(X, y, **params)
 
 if __name__ == "__main__":
