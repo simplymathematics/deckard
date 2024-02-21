@@ -344,10 +344,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
         logger.info(f"Fitting GzipClassifier with X of shape {X.shape} and y of shape {y.shape}")
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
-        self.y_ = np.array(y) if not isinstance(y, np.ndarray) else y
-        self.n_classes_ = len(unique_labels(y)) if len(unique_labels(y)) > 2 else 2
+        encoder = LabelEncoder()
+        self.y_ = encoder.fit_transform(y)
+        self.n_classes_ = len(unique_labels(y))
+        counts = np.bincount(self.y_)
+        logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
         self.n_features_ = X.shape[1]
-        self.classes_ = unique_labels(y)
+        self.classes_ = range(len(unique_labels(y)))
         # Compress samples not working
         if self.metric == "ncd":
             Cx_ = Parallel(n_jobs=-1)(delayed(compressors[self.compressor])(x) for x in self.X_)
