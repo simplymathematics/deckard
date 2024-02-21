@@ -77,20 +77,28 @@ def cat_plot(
     else:
       file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    logger.debug(
+    if hue is not None:
+      data = data.sort_values(by=[hue, x, y])
+      logger.debug(
         f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
-    )
-    graph = sns.catplot(
-        data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
-    )
+      )
+      graph = sns.catplot(
+          data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
+      )
+    else:
+      data = data.sort_values(by=[x, y])
+      logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
+      graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:
-        graph.legend.remove()
+        if graph.legend is not None:
+          graph.legend.remove()
+        else:
+          pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -103,7 +111,6 @@ def line_plot(
     data,
     x,
     y,
-    hue,
     xlabel,
     ylabel,
     title,
@@ -112,7 +119,6 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order=None,
     filetype=".eps",
     **kwargs,
 ):
@@ -163,12 +169,22 @@ def line_plot(
     else:
       file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
+    if "hue" in kwargs:
+      hue = kwargs.get("hue")
+      data = data.sort_values(by=[hue, x, y]) 
+    else:
+      data.sort_values(by=[x, y])
+    xlim = kwargs.pop("xlim", None)
+    ylim = kwargs.pop("ylim", None)
+    graph = sns.lineplot(data=data, x=x, y=y, **kwargs)
     graph.legend(**legend)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
+    if xlim is not None:
+        graph.set_xlim(xlim)
+    if ylim is not None:
+        graph.set_ylim(ylim)
     if y_scale is not None:
         graph.set_yscale(y_scale)
     if x_scale is not None:
