@@ -1,11 +1,19 @@
 import pandas as pd
 from pathlib import Path
-import numpy as np  
+import logging
+logger = logging.getLogger(__name__)
 
 
-import plotext as plt
+try:
+    import plotext as plt
+    plot = True
+except ImportError:
+    logger.info("Plotext not installed. Please install plotext to use the plotting functions. Will skip the plotting for now.")
+    plot = False
 
 if __name__ == "__main__":
+    
+    Path("raw_data").mkdir(parents=True, exist_ok=True)
     df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/kdd_nsl.csv")
     del df['difficulty_level']
     X = df.drop('label', axis=1)
@@ -17,8 +25,11 @@ if __name__ == "__main__":
     counts = pd.DataFrame(df['label']).value_counts().values
     labels = range(len(counts))
     # Plot the counts
-    plt.simple_bar(labels, counts, title="KDD NSL Label Counts", width=50,)
-    plt.show()
+    if plot is True:
+        plt.simple_bar(labels, counts, title="KDD NSL Label Counts", width=50,)
+        plt.show()
+    else:
+        logger.info("Label counts for KDD NSL: {}".format(counts))
     df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv")
     X = df['tweet']
     label = 'BotScoreBinary'
@@ -28,9 +39,12 @@ if __name__ == "__main__":
     # Find the number of entries for each label
     counts = pd.DataFrame(df[label]).value_counts().values
     labels = range(len(counts))
-    # Plot the counts
-    plt.simple_bar(labels, counts, title="Truthseeker Label Counts", width=50,)
-    plt.show()
+    if plot is True:
+        # Plot the counts
+        plt.simple_bar(labels, counts, title="Truthseeker Label Counts", width=50,)
+        plt.show()
+    else:
+        logger.info("Label counts for Truthseeker: {}".format(counts))
     df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/c91944733b8f2b9a6ac0b8c8fab01ddcdf0898eb/sms-spam.csv")
     X = df['message']
     y = df['label']
@@ -41,8 +55,11 @@ if __name__ == "__main__":
     counts = pd.DataFrame(df['label']).value_counts().values
     labels = range(len(counts))
     # Plot the counts
-    plt.simple_bar(labels, counts, title="SMS Spam Label Counts", width=50,)
-    plt.show()
+    if plot is True:
+        plt.simple_bar(labels, counts, title="SMS Spam Label Counts", width=50,)
+        plt.show()
+    else:
+        logger.info("Label counts for SMS Spam: {}".format(counts))
     df = pd.read_csv("https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/712b528dcd212d5a6d1767332f50161fc1cfe55c/ddos.csv")
     # Find the number of entries for each label
     X = df.drop('Label', axis=1)
@@ -53,9 +70,12 @@ if __name__ == "__main__":
     counts = pd.DataFrame(y).value_counts().values
     labels = range(len(counts))
     # Plot the counts
-    plt.simple_bar(labels, counts, title="DDoS Label Counts", width=50,)
-    plt.show()
-    
+    if plot is True:
+        plt.simple_bar(labels, counts, title="DDoS Label Counts", width=50,)
+        plt.show()
+    else:
+        logger.info("Label counts for DDoS: {}".format(counts))
+        
     
     
         
