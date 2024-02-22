@@ -1,2 +1,2 @@
 defaults:
- - gzip_classifier.yaml
+ - gzip_knn.yaml

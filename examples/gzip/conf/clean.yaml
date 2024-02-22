@@ -8,7 +8,7 @@ fillna:
   model.init.metric : "ncd"
   model.init.method : "random"
   model.init.m : -1
-  model.init.precompute : "False"
+  # model.init.precompute : "False"
 replace:
   model.init.metric:
     jaro: "Jaro"

@@ -2,7 +2,7 @@ defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
     - data: ???
-    - model: gzip_classifier
+    - model: default
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna

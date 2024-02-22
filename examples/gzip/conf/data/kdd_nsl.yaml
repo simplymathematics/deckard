@@ -6,9 +6,8 @@ sample:
     stratify: True
     train_size : 100
     test_size :  100
-generate:
-    name: raw_data/kdd_nsl.csv
-    target: label
+name: raw_data/kdd_nsl.csv
+target: label
 sklearn_pipeline:
     encoder:
         name : sklearn.preprocessing.OrdinalEncoder

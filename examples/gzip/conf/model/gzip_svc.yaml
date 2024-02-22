@@ -1,0 +1,17 @@
+data: ${data}
+library : sklearn
+init:
+    _target_: deckard.base.model.ModelInitializer
+    name : gzip_classifier.GzipSVC
+    m: -1
+    method : null
+    distance_matrix : 
+    compressor : gzip
+    metric : ncd
+    symmetric : false
+_target_: deckard.base.model.Model
+art:
+    _target_ : deckard.base.model.art_pipeline.ArtPipeline
+    library : sklearn
+    initialize:
+        nb_classes : 2
