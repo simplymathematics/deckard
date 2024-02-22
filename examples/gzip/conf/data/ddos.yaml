@@ -1,7 +1,7 @@
 _target_: deckard.base.data.Data
 generate:
     name: raw_data/ddos.csv
-    target: 'label'
+    target: 'Label'
 sample:
     random_state : 0
     train_size : 100
