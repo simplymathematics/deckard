@@ -267,29 +267,6 @@ class SklearnModelInitializer:
             obj = model
         if library in sklearn_dict and "art." not in str(type(model)):
             est = sklearn_dict[library]
-            try:
-                check_is_fitted(obj)
-            except NotFittedError:
-                try:
-                    obj.fit(data[0], data[2])
-                except np.AxisError as e:
-                    logger.warning(e)
-                    logger.warning(
-                        "Error while fitting model. Attempting to reshape data",
-                    )
-                    if len(np.squeeze(data[2]).shape) > 1:
-                        nb_classes = np.squeeze(data[2]).shape[1]
-                    else:
-                        nb_classes = len(np.unique(data[2]))
-                    y_train = to_categorical(data[2], nb_classes)
-                    obj.fit(data[0], y_train)
-                except ValueError as e:
-                    if "Found array with dim 3. Estimator expected <= 2." in str(e):
-                        obj.fit(data[0].reshape(data[0].shape[0], -1), data[2])
-                    elif "y should be a 1d array, got an array of shape" in str(e):
-                        obj.fit(data[0], np.argmax(data[2], axis=1))
-                    else:
-                        raise e
             model = est(obj, **kwargs)
         elif "art." in str(type(model)):
             model = obj
