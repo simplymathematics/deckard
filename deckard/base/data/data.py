@@ -115,7 +115,7 @@ class Data:
             result = [X, y] 
         else:
             if self.drop != []:
-                raise ValueError("Drop is not supported for non-DataFrame data")
+                raise ValueError(f"Drop is not supported for non-DataFrame data. Data is type {type(result)}")
         if len(result) == 2:
             result = self.sample(*result)
         assert (
