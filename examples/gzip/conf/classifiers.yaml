@@ -1,15 +1,15 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: kdd_nsl
-    - model: default
+    - data: ???
+    - model: ???
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
-    - override hydra/sweeper/sampler : grid
+    - override hydra/sweeper/sampler : tpe
     - override hydra/launcher : joblib
-dataset : kdd_nsl
-model_name : gzip_knn
+dataset : ???
+model_name : ???
 stage : train
 direction : 
   - maximize
@@ -20,19 +20,23 @@ optimizers:
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
-    dir: ${files.directory}/logs/${stage}/
+    dir: ${dataset}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/
-    subdir : ${hydra.sweeper.study_name}/${hydra.job.id}
+    dir: ${dataset}/logs/classifiers/${hydra.sweeper.study_name}/
+    subdir : ${hydra.job.id}
   sweeper:
     sampler:
-      _target_: optuna.samplers.GridSampler
+      _target_: optuna.samplers.TPESampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ${model_name}_${dataset}
+    study_name: ???
     storage: sqlite:///optuna.db
     n_jobs: 1
     n_trials : 1
     params:
+      model.init.m : 10,20,30,50,100,200,300,500
+      model.init.method: random,svc,medoid,sum,knn
+      model.init.symmetric : True,False
+      model.init.compressor : gzip,zstd,pkl,bz2  #,lzma
     direction: ${direction}
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

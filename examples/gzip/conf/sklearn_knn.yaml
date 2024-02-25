@@ -2,7 +2,7 @@ defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
     - data: ???
-    - model: gzip_classifier
+    - model: default
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
@@ -13,14 +13,16 @@ model_name : ???
 stage : train
 direction : 
   - maximize
+  - minimize
 optimizers: 
    - accuracy
+   - predict_time
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
     dir: ${dataset}/logs/${stage}/
   sweep:
-    dir: ${dataset}/logs/${hydra.sweeper.study_name}/
+    dir: ${dataset}/logs/sklearn_knn/${hydra.sweeper.study_name}/
     subdir : ${hydra.job.id}
   sweeper:
     sampler:

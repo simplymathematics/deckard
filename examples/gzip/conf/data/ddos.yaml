@@ -5,7 +5,7 @@ drop:
   - 'Timestamp' # Drop the timestamp column
 sample:
     random_state : 0
-    train_size : 100
-    test_size : 100
+    train_size : 10
+    test_size : 10
     stratify: True
     shuffle : True

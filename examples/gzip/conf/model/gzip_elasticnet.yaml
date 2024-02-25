@@ -12,6 +12,4 @@ init:
 _target_: deckard.base.model.Model
 art:
     _target_ : deckard.base.model.art_pipeline.ArtPipeline
-    library : sklearn
-    initialize:
-        nb_classes : 2
+    library : sklearn-regressor

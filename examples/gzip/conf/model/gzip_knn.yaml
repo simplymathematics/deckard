@@ -2,7 +2,7 @@ data: ${data}
 library : sklearn
 init:
     _target_: deckard.base.model.ModelInitializer
-    name : gzip_classifier.GzipClassifier
+    name : gzip_classifier.GzipKNN
     k : 1
     m: -1
     method : null
