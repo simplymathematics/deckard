@@ -65,6 +65,7 @@ stages:
       dataset=${item.dataset}
       model_name=${model_name}
       model.init.symmetric=${item.symmetric}
+      hydra.run.dir=${item.dataset}/logs/symmetric/${item.symmetric}
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/symmetric_${item.symmetric}.npz
       ++raise_exception=True 
     deps:
@@ -99,6 +100,7 @@ stages:
       data=${item.dataset}
       dataset=${item.dataset}
       model_name=${model_name}
+      hydra.run.dir=${item.dataset}/logs/method/${item.method}
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.method}.npz
       ++raise_exception=True 
     deps:
@@ -130,7 +132,8 @@ stages:
       model.init.method=random
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.compressor}.npz
       model.init.compressor=${item.compressor} 
-      model.init.m=10 
+      model.init.m=10
+      hydra.run.dir=${item.dataset}/logs/compressor/${item.compressor}
       ++raise_exception=True 
     deps:
     - params.yaml
@@ -162,6 +165,7 @@ stages:
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.precompute}.npz
       +model.init.precompute=${item.precompute} 
       model.init.m=10 
+      hydra.run.dir=${item.dataset}/logs/precompute/${item.precompute}
       ++raise_exception=True 
     deps:
     - params.yaml
@@ -192,6 +196,7 @@ stages:
       model_name=${model_name}
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.metric}/${item.metric}.npz
       hydra.sweeper.n_jobs=1
+      hydra.run.dir=${item.dataset}/logs/metric/${item.metric}
       ++raise_exception=True 
     deps:
     - params.yaml
@@ -221,6 +226,7 @@ stages:
       dataset=${item.dataset}
       model.init.method=random
       model.init.distance_matrix=${item.dataset}/${files.model_dir}/${item.model_name}/${model.init.method}/${item.model_name}.npz
+      hydra.run.dir=${item.dataset}/logs/model/${item.model_name}
       ++raise_exception=True 
     deps:
     - params.yaml
@@ -235,8 +241,6 @@ stages:
       - dataset
       - model_name
       - device_id
-  
-
   ##############################################################################
   grid_search_knn:
     matrix: 

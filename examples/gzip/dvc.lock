@@ -11,8 +11,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -50,8 +50,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -73,7 +73,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -87,12 +87,12 @@ stages:
     outs:
     - path: kdd_nsl/reports/train/default/predictions.json
       hash: md5
-      md5: 943e695ced6e7ba99228cc09be4c53ee
-      size: 1200
+      md5: a52a25e140c25451c5fbdc1c33410263
+      size: 120
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
   test_each_method@knn-kdd_nsl:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=knn  model.init.m=10  files.name=knn
       files.directory=kdd_nsl data=kdd_nsl dataset=kdd_nsl model_name=gzip_classifier
@@ -1250,17 +1250,17 @@ stages:
   test_symmetric_methods@true-kdd_nsl:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_true files.directory=kdd_nsl data=kdd_nsl
-      dataset=kdd_nsl model_name=gzip_classifier model.init.symmetric=true model.init.distance_matrix=kdd_nsl/model/gzip_classifier/None/symmetric_true.npz
+      dataset=kdd_nsl model_name=gzip_knn model.init.symmetric=true model.init.distance_matrix=kdd_nsl/model/gzip_knn/None/symmetric_true.npz
       ++raise_exception=True '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
     - path: params.yaml
       hash: md5
-      md5: b7255d0cf8a2619a719f5a741aaec23e
-      size: 2067
+      md5: 4999b48c21cb63a45801003d03576594
+      size: 2082
     - path: raw_data/
       hash: md5
       md5: d897229dd67895957a0a4330ce95b09a.dir
@@ -1275,8 +1275,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -1314,8 +1314,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -1337,7 +1337,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -1349,28 +1349,28 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: kdd_nsl/model/gzip_classifier/None/symmetric_true.npz
+    - path: kdd_nsl/model/gzip_knn/None/symmetric_true.npz
       hash: md5
       md5: 1b745ff8dbc88f247f3245d9efd6de7e
       size: 208
     - path: kdd_nsl/reports/train/symmetric_true/score_dict.json
       hash: md5
-      md5: bfefd89384127062c0204b774d4d1b08
-      size: 431
+      md5: ce75278858d7d0ccfb0932eaa0c2705c
+      size: 429
   test_symmetric_methods@true-truthseeker:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_true files.directory=truthseeker data=truthseeker
-      dataset=truthseeker model_name=gzip_classifier model.init.symmetric=true model.init.distance_matrix=truthseeker/model/gzip_classifier/None/symmetric_true.npz
+      dataset=truthseeker model_name=gzip_knn model.init.symmetric=true model.init.distance_matrix=truthseeker/model/gzip_knn/None/symmetric_true.npz
       ++raise_exception=True '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
     - path: params.yaml
       hash: md5
-      md5: b7255d0cf8a2619a719f5a741aaec23e
-      size: 2067
+      md5: 4999b48c21cb63a45801003d03576594
+      size: 2082
     - path: raw_data/
       hash: md5
       md5: d897229dd67895957a0a4330ce95b09a.dir
@@ -1385,8 +1385,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -1424,8 +1424,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -1447,7 +1447,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -1459,28 +1459,28 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: truthseeker/model/gzip_classifier/None/symmetric_true.npz
+    - path: truthseeker/model/gzip_knn/None/symmetric_true.npz
       hash: md5
       md5: f71a2727e708fdfb7867a6983f3aa8cf
       size: 223
     - path: truthseeker/reports/train/symmetric_true/score_dict.json
       hash: md5
-      md5: a3d4f3a2cb97731390dcc229c8373d22
-      size: 434
+      md5: a9c6dbf6d84c5c692826121f8c43b45b
+      size: 435
   test_symmetric_methods@true-sms_spam:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_true files.directory=sms_spam data=sms_spam
-      dataset=sms_spam model_name=gzip_classifier model.init.symmetric=true model.init.distance_matrix=sms_spam/model/gzip_classifier/None/symmetric_true.npz
+      dataset=sms_spam model_name=gzip_knn model.init.symmetric=true model.init.distance_matrix=sms_spam/model/gzip_knn/None/symmetric_true.npz
       ++raise_exception=True '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
     - path: params.yaml
       hash: md5
-      md5: b7255d0cf8a2619a719f5a741aaec23e
-      size: 2067
+      md5: 4999b48c21cb63a45801003d03576594
+      size: 2082
     - path: raw_data/
       hash: md5
       md5: d897229dd67895957a0a4330ce95b09a.dir
@@ -1495,8 +1495,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -1534,8 +1534,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -1557,7 +1557,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -1569,28 +1569,28 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: sms_spam/model/gzip_classifier/None/symmetric_true.npz
+    - path: sms_spam/model/gzip_knn/None/symmetric_true.npz
       hash: md5
       md5: 1b745ff8dbc88f247f3245d9efd6de7e
       size: 208
     - path: sms_spam/reports/train/symmetric_true/score_dict.json
       hash: md5
-      md5: 9e4f99e28261a92bca246ad2713275da
-      size: 428
+      md5: bf79aed1695b795d3a3d807f5d2f9e03
+      size: 431
   test_symmetric_methods@true-ddos:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_true files.directory=ddos data=ddos dataset=ddos
-      model_name=gzip_classifier model.init.symmetric=true model.init.distance_matrix=ddos/model/gzip_classifier/None/symmetric_true.npz
+      model_name=gzip_knn model.init.symmetric=true model.init.distance_matrix=ddos/model/gzip_knn/None/symmetric_true.npz
       ++raise_exception=True '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
     - path: params.yaml
       hash: md5
-      md5: b7255d0cf8a2619a719f5a741aaec23e
-      size: 2067
+      md5: 4999b48c21cb63a45801003d03576594
+      size: 2082
     - path: raw_data/
       hash: md5
       md5: d897229dd67895957a0a4330ce95b09a.dir
@@ -1605,8 +1605,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -1644,8 +1644,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -1667,7 +1667,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -1679,28 +1679,28 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: ddos/model/gzip_classifier/None/symmetric_true.npz
+    - path: ddos/model/gzip_knn/None/symmetric_true.npz
       hash: md5
       md5: 1b745ff8dbc88f247f3245d9efd6de7e
       size: 208
     - path: ddos/reports/train/symmetric_true/score_dict.json
       hash: md5
-      md5: 305f540700f5ec07debdd5bbe4132494
-      size: 429
+      md5: 21997d77a7730e1d80a9db2f5727c569
+      size: 414
   test_symmetric_methods@false-kdd_nsl:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_false files.directory=kdd_nsl data=kdd_nsl
-      dataset=kdd_nsl model_name=gzip_classifier model.init.symmetric=false model.init.distance_matrix=kdd_nsl/model/gzip_classifier/None/symmetric_false.npz
+      dataset=kdd_nsl model_name=gzip_knn model.init.symmetric=false model.init.distance_matrix=kdd_nsl/model/gzip_knn/None/symmetric_false.npz
       ++raise_exception=True '
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 1f65cadbb71e3500c891f394eb3fc337
-      size: 432
+      md5: 6443f4d66d3df2e08ff8850f666e36ba
+      size: 430
     - path: params.yaml
       hash: md5
-      md5: b7255d0cf8a2619a719f5a741aaec23e
-      size: 2067
+      md5: 4999b48c21cb63a45801003d03576594
+      size: 2082
     - path: raw_data/
       hash: md5
       md5: d897229dd67895957a0a4330ce95b09a.dir
@@ -1715,8 +1715,8 @@ stages:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
             stratify: true
-            test_size: 100
-            train_size: 100
+            test_size: 10
+            train_size: 10
           sklearn_pipeline:
             encoder:
               handle_unknown: use_encoded_value
@@ -1754,8 +1754,8 @@ stages:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
               stratify: true
-              test_size: 100
-              train_size: 100
+              test_size: 10
+              train_size: 10
             sklearn_pipeline:
               encoder:
                 handle_unknown: use_encoded_value
@@ -1777,7 +1777,7 @@ stages:
             name: gzip_classifier.GzipKNN
             symmetric: false
           library: sklearn
-        model_name: gzip_classifier
+        model_name: gzip_knn
         scorers:
           _target_: deckard.base.scorer.ScorerDict
           accuracy:
@@ -1789,14 +1789,14 @@ stages:
             direction: minimize
             name: sklearn.metrics.log_loss
     outs:
-    - path: kdd_nsl/model/gzip_classifier/None/symmetric_false.npz
+    - path: kdd_nsl/model/gzip_knn/None/symmetric_false.npz
       hash: md5
       md5: 9a9fcf9ba5dbc34eb2ca1f203088fc47
       size: 740
     - path: kdd_nsl/reports/train/symmetric_false/score_dict.json
       hash: md5
-      md5: 03407ccb7952e484f77ba8b8ca188837
-      size: 431
+      md5: f8cf4a611328b0b62226344a5398b1e0
+      size: 432
   test_symmetric_methods@false-truthseeker:
     cmd: 'python -m deckard.layers.optimise  stage=train  model.init.method=random
       model.init.m=10  files.name=symmetric_false files.directory=truthseeker data=truthseeker
