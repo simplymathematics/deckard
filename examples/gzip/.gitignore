@@ -2,4 +2,7 @@ output
 *.db
 kdd_nsl
 truthseeker
-
+ddos
+sms_spam
+/raw_data
+.dvc/config
