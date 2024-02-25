@@ -153,6 +153,10 @@ class Data:
             logger.info(f"Saving data to {filename}")
             suffix = Path(filename).suffix
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
+            if isinstance(data, dict):
+                for k,v in data.items():
+                    v = str(v)
+                    data[k] = v
             if suffix in [".json"]:
                 if isinstance(data, (Series, DataFrame)):
                     data = data.to_dict()
