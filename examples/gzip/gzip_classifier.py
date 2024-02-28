@@ -109,7 +109,7 @@ string_metrics = {
     
 }
 
-
+all_metrics = list(string_metrics.keys()) + list(compressors.keys())
 
 def _calculate_string_distance(x1, x2, method):
     x1 = str(x1)
@@ -136,11 +136,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     m: int, default=-1
         The number of best samples to use. If -1, all samples will be used.
     compressor: str, default="gzip"
-        The name of the compressor to use. Choices are "gzip", "lzma", "bz2", "zstd", "pkl", "pickle".
+        The name of the compressor to use. Choices are 
     method: str, default="random"
         The method used to select the best training samples. Choices are "sum", "mean", "medoid", "random", "knn", "svc".
     metric: str, default="ncd"
-        The metric used to calculate the distance between samples. Choices are "ncd".
+        The metric used to calculate the distance between samples. Choices are "gzip", "lzma", "bz2", "zstd", "pkl", "pickle", "levenshtein", "ratio", "seqratio", "hamming", "jaro", "jaro".
     distance_matrix: str or np.ndarray, default=None
         The path to a numpy file or a numpy array representing the distance matrix. If a path is provided, the file will be loaded. If an array is provided, it will be used directly. Default is None.
     Attributes
@@ -154,15 +154,14 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, m=-1, compressor="gzip", sampling_method="random", distance_matrix=None, metric='ncd', symmetric=False, precompute=True, **kwargs):  
+    def __init__(self, m=0, compressor="gzip", sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):  
         """
         Initialize the GzipClassifier object.
 
         Args:
             k (int): The value of k for k-nearest neighbors. Default is 3. 
             m (int): The value of m for  m-best samples. Default is -1, which indicates using all training samples.
-            compressor (str): The name of the compressor. Default is "gzip".
-            method (str): The method used for classification. Default is "random".
+            sampling_method (str): The method used for classification. Default is "random".
             metric (str): The metric used to calculate the distance between samples. Default is "ncd".
             distance_matrix (str or np.ndarray): The path to a numpy file or a numpy array representing the distance matrix.
                 If a path is provided, the file will be loaded. If an array is provided, it will be used directly.
@@ -174,7 +173,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
         """
-        kwarg_string = str(*[f"{key}={value}" for key, value in kwargs.items()])
+        kwarg_string = str([f"{key}={value}" for key, value in kwargs.items()])
         logger.info(f"Initializing GzipClassifier with  m={m},  method={sampling_method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, precompute={precompute}, {kwarg_string}")
         self.m = m
         self.sampling_method = sampling_method
@@ -325,12 +324,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 subset = label_idx[best_indices]
                 indices.extend(subset.tolist())
         elif method == "svc":
-            label_distance_matrix = distance_matrix
-            svc = SVC(kernel="precomputed").fit(label_distance_matrix, self.y_)
-            summed_matrix = np.sum(label_distance_matrix, axis=0)
+            svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
             support_idx = svc.support_
-            sorted_idx = np.argsort(summed_matrix[support_idx])[::-1] # Sort the support vectors by the sum of their distances, [::-1] to sort in descending order
-            indices.extend(support_idx[sorted_idx][: self.m])
+            summed_matrix = np.sum(distance_matrix, axis=0)
+            for label in range(self.n_classes_):
+                sub_idx = np.where(self.y_[support_idx] == label)[0]
+                sorted_idx = np.argsort(summed_matrix[sub_idx])[::-1] # Sort the support vectors by the sum of their distances, [::-1] to sort in descending order
+                indices.extend(support_idx[sorted_idx][: self.m])
         else:
             raise NotImplementedError(f"Method {method} not supported")
         return indices
@@ -375,6 +375,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 self.Cx_ = self.Cx_[indices]
         elif self.m == -1:
             indices = list(range(len(self.X_)))
+            distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.distance_matrix = distance_matrix
         elif self.m is None or self.m==0:
             indices = list(range(len(self.X_)))
         else:
@@ -548,7 +550,7 @@ class GzipLasso(GzipClassifier):
 
         
 
-def test_model(X, y, model_type, train_size = 100, test_size =100, **kwargs) -> dict:
+def test_model(X, y, model_type, train_size = 100, test_size =100, optimizer=None, **kwargs) -> dict:
     """
     Args:
         X (np.ndarray): The input data
@@ -599,12 +601,16 @@ def test_model(X, y, model_type, train_size = 100, test_size =100, **kwargs) -> 
     print(f"Training time: {train_time}")
     print(f"Prediction time: {pred_time}")
     print(f"{alias}  is: {score}")
-    return {
-        "accuracy": score,
+    score_dict = {
+        f"{alias.lower()}": score,
         "train_time": train_time,
         "pred_time": pred_time,
     }
-
+    if optimizer is not None:
+        score = score_dict[optimizer]
+        return score
+    else:
+        return score_dict
 
 def main(args:argparse.Namespace):
     """
@@ -657,8 +663,7 @@ if __name__ == "__main__":
     parser.add_argument("--precompute", action="store_false")
     parser.add_argument("--symmetric", action="store_true")
     parser.add_argument("--not_symmetric", dest="symmetric", action="store_false")
-    parser.add_argument("--compressor", type=str, default="gzip")
-    parser.add_argument("--metric", type=str, default="ncd")
+    parser.add_argument("--metric", type=str, default='gzip', choices=all_metrics)
     parser.add_argument("--k", type=int, default=None)
     parser.add_argument("--m", type=int, default=-1)
     parser.add_argument("--method", type=str, default="random")
@@ -666,6 +671,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="kdd_nsl")
     parser.add_argument("--train_size", type=int, default=100)
     parser.add_argument("--test_size", type=int, default=100)
+    parser.add_argument("--optimizer", type=str, default="accuracy")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     main(args)
