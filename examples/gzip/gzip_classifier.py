@@ -83,7 +83,7 @@ def ncd(x1, x2, cx1=None, cx2=None, method:Literal["gzip", "lzma", "bz2", "zstd"
         float: The normalized compression distance between x1 and x2
     """
     
-    compressor = compressors[method]
+    compressor = compressors[method] if method in compressors.keys() else compressors["gzip"]
     x1 = str(x1)
     x2 = str(x2)
     Cx1 = compressor(x1) if cx1 is None else cx1
@@ -154,7 +154,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, m=-1, compressor="gzip", method="random", distance_matrix=None, metric='ncd', symmetric=False, precompute=True, **kwargs):  
+    def __init__(self, m=-1, compressor="gzip", sampling_method="random", distance_matrix=None, metric='ncd', symmetric=False, precompute=True, **kwargs):  
         """
         Initialize the GzipClassifier object.
 
@@ -175,19 +175,17 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             NotImplementedError: If the metric is not supported.
         """
         kwarg_string = str(*[f"{key}={value}" for key, value in kwargs.items()])
-        logger.info(f"Initializing GzipClassifier with  m={m}, compressor={compressor}, method={method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, precompute={precompute}, {kwarg_string}")
+        logger.info(f"Initializing GzipClassifier with  m={m},  method={sampling_method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, precompute={precompute}, {kwarg_string}")
         self.m = m
-        self.method = method
-        if metric == "ncd":
-            logger.info(f"Using NCD metric")
+        self.sampling_method = sampling_method
+        if metric in compressors.keys():
+            logger.info(f"Using NCD metric with {compressor} compressor.")
             self._distance = ncd
-            self.compressor = compressor
             self.metric = metric
         elif metric in string_metrics.keys():
             logger.info(f"Using {metric} metric")
             self._distance = _calculate_string_distance
             self.metric = metric
-            self.compressor = None
         else:
             raise NotImplementedError(f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()}")
         
@@ -215,9 +213,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         pbar = tqdm(total=len(x1), desc="Calculating asymmetric distance matrix.", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            if self.metric == "ncd":
-                method = self.compressor
-                matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=method) for j in range(len(x2)))
+            if self.metric in compressors.keys():
+                matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=self.metric) for j in range(len(x2)))
             else:
                 matrix_[i, :] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(len(x2)))
             pbar.update(1)
@@ -242,9 +239,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         pbar = tqdm(total=len(x1), desc="Calculating symmetric distance metrix.", leave=False, dynamic_ncols=True)
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
-            if self.metric == "ncd":
-                method = self.compressor
-                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=method) for j in range(i))
+            if self.metric in compressors.keys():
+                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=self.metric) for j in range(i))
             else:
                 matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], Cx1[i], Cx2[j], method=self.metric) for j in range(i))
             # Copy the lower triangular part to the upper triangular part
@@ -341,7 +337,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     
     def fit(self, X:np.ndarray, y:np.ndarray, n_jobs=-1):
-        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.method.
+        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.sampling_method.
 
         Args:
             X (np.ndarray): The input data
@@ -361,8 +357,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_features_ = X.shape[1]
         self.classes_ = range(len(unique_labels(y)))
         
-        if self.metric == "ncd":
-            Cx_ = Parallel(n_jobs=n_jobs)(delayed(compressors[self.compressor])(x) for x in self.X_)
+        if self.metric in compressors.keys():
+            compressor = compressors[self.metric]
+            Cx_ = Parallel(n_jobs=n_jobs)(delayed(compressor)(x) for x in self.X_)
             self.Cx_ = np.array(Cx_) if not isinstance(Cx_, np.ndarray) else Cx_
         else:
             self.Cx_ = None
@@ -370,13 +367,12 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             
         if self.m > 0:
             assert isinstance(self.m, int), f"Expected {self.m} to be an integer"
-            assert isinstance(self.method, (str, type(None))), f"Expected {self.method} to be a string or None"
-            indices = self._find_best_samples(self.method)
+            assert isinstance(self.sampling_method, (str, type(None))), f"Expected {self.sampling_method} to be a string or None"
+            indices = self._find_best_samples(self.sampling_method)
             self.X_ = self.X_[indices]
             self.y_ = self.y_[indices]
             if self.Cx_ is not None:
                 self.Cx_ = self.Cx_[indices]
-            # Compress samples not working
         elif self.m == -1:
             indices = list(range(len(self.X_)))
         elif self.m is None or self.m==0:
@@ -403,9 +399,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         logger.info(f"Predicting with X of shape {X.shape}")
-        # Pre-compress samples not working
-        if self.metric == "ncd":
-            compressor = compressors[self.compressor]
+        if self.metric in compressors.keys():
+            compressor = compressors[self.metric]
             Cx2 = Parallel(n_jobs=-1)(delayed(compressor)(x) for x in tqdm(X, desc="Compressing samples", leave=False, dynamic_ncols=True))
             assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
             assert len(self.X_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.Cx_)}"
@@ -430,7 +425,7 @@ class GzipKNN(GzipClassifier):
         
         
     def fit(self, X:np.ndarray, y:np.ndarray, n_jobs=-1):
-        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.method.
+        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.sampling_method.
 
         Args:
             X (np.ndarray): The input data
@@ -450,8 +445,9 @@ class GzipKNN(GzipClassifier):
         self.n_features_ = X.shape[1]
         self.classes_ = range(len(unique_labels(y)))
         
-        if self.metric == "ncd":
-            Cx_ = Parallel(n_jobs=n_jobs)(delayed(compressors[self.compressor])(x) for x in self.X_)
+        if self.metric in compressors.keys():
+            compressor = compressors[self.metric]
+            Cx_ = Parallel(n_jobs=n_jobs)(delayed(compressor)(x) for x in self.X_)
             self.Cx_ = np.array(Cx_) if not isinstance(Cx_, np.ndarray) else Cx_
         else:
             self.Cx_ = None
@@ -459,8 +455,8 @@ class GzipKNN(GzipClassifier):
             
         if self.m > 0:
             assert isinstance(self.m, int), f"Expected {self.m} to be an integer"
-            assert isinstance(self.method, (str, type(None))), f"Expected {self.method} to be a string or None"
-            indices = self._find_best_samples(self.method)
+            assert isinstance(self.sampling_method, (str, type(None))), f"Expected {self.sampling_method} to be a string or None"
+            indices = self._find_best_samples(self.sampling_method)
             self.X_ = self.X_[indices]
             self.y_ = self.y_[indices]
             if self.Cx_ is not None:
@@ -468,6 +464,7 @@ class GzipKNN(GzipClassifier):
             # Compress samples not working
         elif self.m == -1:
             indices = list(range(len(self.X_)))
+            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
         elif self.m is None or self.m==0:
             indices = list(range(len(self.X_)))
         else:
@@ -494,8 +491,8 @@ class GzipKNN(GzipClassifier):
         
         logger.info(f"Predicting with X of shape {X.shape}")
         # Pre-compress samples not working
-        if self.metric == "ncd":
-            compressor = compressors[self.compressor]
+        if self.metric in compressors.keys():
+            compressor = compressors[self.metric]
             Cx2 = Parallel(n_jobs=n_jobs)(delayed(compressor)(x) for x in tqdm(X, desc="Compressing samples", leave=False, dynamic_ncols=True))
             assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
             assert len(self.X_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.Cx_)}"
@@ -509,8 +506,10 @@ class GzipKNN(GzipClassifier):
             for i in tqdm(range(len(X)), desc="Predicting", leave=False, total=len(X), dynamic_ncols=True):
                 # Sort the distances and get the nearest k samples
                 sorted_idx = np.argsort(distance_matrix[i])
+                # Get the first k samples
+                nearest_k = sorted_idx[: self.k]
                 # Get the labels of the nearest samples
-                nearest_labels = list(self.y_[sorted_idx[: self.k]])
+                nearest_labels = list(self.y_[nearest_k])
                 # predict class
                 unique, counts = np.unique(nearest_labels, return_counts=True)
                 # Get the most frequent label
@@ -629,8 +628,9 @@ def main(args:argparse.Namespace):
         y = LabelEncoder().fit(y).transform(y)
     elif args.dataset == "truthseeker":
         df = pd.read_csv("raw_data/truthseeker.csv")
+        df.drop("BotScore", axis=1, inplace=True)
         y = df['BotScoreBinary']
-        X = df['tweet'].drop('BotScoreBinary', axis=1)
+        X = df.drop('BotScoreBinary', axis=1)   
     elif args.dataset == "sms-spam":
         df = pd.read_csv("raw_data/sms-spam.csv")
         y = df['label']
