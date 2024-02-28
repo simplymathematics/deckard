@@ -6,8 +6,7 @@ init:
     m: -1
     method : null
     distance_matrix : 
-    compressor : gzip
-    metric : ncd
+    metric : gzip
     symmetric : false
 _target_: deckard.base.model.Model
 art:
