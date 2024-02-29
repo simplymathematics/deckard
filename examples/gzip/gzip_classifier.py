@@ -34,6 +34,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, ElasticNet, Lasso, Ridge
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
 from sklearn_extra.cluster import KMedoids
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
@@ -154,7 +157,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, m=0, compressor="gzip", sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):  
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):  
         """
         Initialize the GzipClassifier object.
 
@@ -178,7 +181,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.m = m
         self.sampling_method = sampling_method
         if metric in compressors.keys():
-            logger.info(f"Using NCD metric with {compressor} compressor.")
+            logger.info(f"Using NCD metric with {metric} compressor.")
             self._distance = ncd
             self.metric = metric
         elif metric in string_metrics.keys():
@@ -241,7 +244,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             if self.metric in compressors.keys():
                 matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=self.metric) for j in range(i))
             else:
-                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], Cx1[i], Cx2[j], method=self.metric) for j in range(i))
+                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(i))
             # Copy the lower triangular part to the upper triangular part
             matrix_[i, :i] = matrix_[:i, i]
             pbar.update(1)
@@ -278,6 +281,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             distance_matrix = self._calculate_distance_matrix(self.X_, self.X_,  Cx1=self.Cx_, Cx2=self.Cx_, n_jobs=n_jobs)
         else:
             raise ValueError(f"distance_matrix must be a path to a numpy file or a numpy array, got {type(self.distance_matrix)}")
+        assert distance_matrix.shape == (len(self.X_), len(self.X_)), f"Expected {distance_matrix.shape} == ({len(self.X_)}, {len(self.X_)})"
         return distance_matrix
     
     def _find_best_samples(self, method = "medoid", n_jobs=-1):
@@ -377,7 +381,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             indices = list(range(len(self.X_)))
             distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
             self.distance_matrix = distance_matrix
-        elif self.m is None or self.m==0:
+        elif self.m is None or self.m == 0:
             indices = list(range(len(self.X_)))
         else:
             raise ValueError(f"Expected {self.m} to be -1, 0, or a positive integer")
@@ -441,12 +445,13 @@ class GzipKNN(GzipClassifier):
         assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
         logger.info(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
+        self.X_ = self.X_.astype(str)
         encoder = LabelEncoder()
         self.y_ = encoder.fit_transform(y)
         self.n_classes_ = len(unique_labels(y))
         counts = np.bincount(self.y_)
         logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
-        self.n_features_ = X.shape[1]
+        self.n_features_ = X.shape[1] if len(X.shape) > 1 else 1
         self.classes_ = range(len(unique_labels(y)))
         
         if self.metric in compressors.keys():
@@ -465,7 +470,6 @@ class GzipKNN(GzipClassifier):
             self.y_ = self.y_[indices]
             if self.Cx_ is not None:
                 self.Cx_ = self.Cx_[indices]
-            # Compress samples not working
         elif self.m == -1:
             indices = list(range(len(self.X_)))
             self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
@@ -519,6 +523,7 @@ class GzipKNN(GzipClassifier):
                 # Get the most frequent label
                 y_pred.append(unique[np.argmax(counts)])
         return y_pred
+
             
             
 
@@ -633,6 +638,7 @@ def main(args:argparse.Namespace):
     Usage:
         python gzip_classifier.py --compressor gzip --k 3 --m 100 --method random --distance_matrix distance_matrix --dataset kdd_nsl
     """
+        
     if args.dataset == "20newsgroups":
         X, y = fetch_20newsgroups(subset='train', categories=["alt.atheism", "talk.religion.misc"], shuffle=True, random_state=42, return_X_y=True)
         y = LabelEncoder().fit(y).transform(y) # Turns the labels "alt.atheism" and "talk.religion.misc" into 0 and 1
@@ -640,12 +646,16 @@ def main(args:argparse.Namespace):
         df = pd.read_csv("raw_data/kdd_nsl.csv")
         y = df['label']
         X = df.drop('label', axis=1)
+    elif args.dataset == "kdd_nsl":
+        df = pd.read_csv("raw_data/kdd_nsl.csv")
+        y = df['label']
+        X = df.drop('label', axis=1)
+        X = np.array(X)
     elif args.dataset == "make_classification":
         X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
         y = LabelEncoder().fit(y).transform(y)
     elif args.dataset == "truthseeker":
         df = pd.read_csv("raw_data/truthseeker.csv")
-        df.drop("BotScore", axis=1, inplace=True)
         y = df['BotScoreBinary']
         X = df.drop('BotScoreBinary', axis=1)   
     elif args.dataset == "sms-spam":
@@ -658,8 +668,12 @@ def main(args:argparse.Namespace):
         X = df.drop('Label', axis=1)
     else:
         raise ValueError(f"Dataset {args.dataset} not found")
+    if args.precompressed is True:
+        X = pd.DataFrame(X).applymap(lambda x: len(gzip.compress(str(x).encode())))
+        X = np.array(X)
     params = vars(args)
     params.pop("dataset")
+    params.pop("precompressed")
     items_ = list(params.items())
     for k,v in items_:
         if v is None:
@@ -671,18 +685,18 @@ def main(args:argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", type=str, default="knn")
-    parser.add_argument("--precompute", action="store_false")
-    parser.add_argument("--symmetric", action="store_true")
-    parser.add_argument("--not_symmetric", dest="symmetric", action="store_false")
+    parser.add_argument("--precompute", type=bool, default=False)
+    parser.add_argument("--symmetric", type=bool, default=False)
     parser.add_argument("--metric", type=str, default='gzip', choices=all_metrics)
     parser.add_argument("--k", type=int, default=None)
     parser.add_argument("--m", type=int, default=-1)
-    parser.add_argument("--method", type=str, default="random")
+    parser.add_argument("--sampling_method", type=str, default="random")
     parser.add_argument("--distance_matrix", type=str, default=None)
     parser.add_argument("--dataset", type=str, default="kdd_nsl")
     parser.add_argument("--train_size", type=int, default=100)
     parser.add_argument("--test_size", type=int, default=100)
     parser.add_argument("--optimizer", type=str, default="accuracy")
+    parser.add_argument("--precompressed", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     main(args)
