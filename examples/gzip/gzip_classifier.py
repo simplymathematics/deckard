@@ -421,8 +421,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
 class GzipKNN(GzipClassifier):
     
-    def __init__(self, k:int=2, precompute=False, **kwargs):
-        super().__init__(clf_=KNeighborsClassifier(n_neighbors=k, metric="precomputed"), precompute = precompute, **kwargs)
+    def __init__(self, k=2, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
+        
+        super().__init__(precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
+        self.clf_ = KNeighborsClassifier(n_neighbors=k, metric=self._distance, **kwargs) if precompute is True else None
         self.k = k
         
         
@@ -521,32 +523,41 @@ class GzipKNN(GzipClassifier):
             
 
 class GzipLogisticRegressor(GzipClassifier):
-    def __init__(self, **kwargs):
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
         precompute = kwargs.pop("precompute", True)
-        super().__init__(clf_=LogisticRegression(), precompute=precompute, **kwargs)
+        clf = LogisticRegression(**kwargs)
+        super().__init__(clf_=clf, precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
         
 
 class GzipSVC(GzipClassifier):
-        
-    def __init__(self, kernel="rbf", **kwargs):
+    
+    def __init__(self, kernel="rbf", m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
         precompute = kwargs.pop("precompute", True)
-        super().__init__(clf_=SVC(kernel=kernel), precompute=precompute, **kwargs)
+        clf = SVC(kernel=kernel, **kwargs)
+        super().__init__(clf_=clf, precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
         self.kernel = kernel
+    
+    
 
 class GzipRidge(GzipClassifier):
-    def __init__(self, **kwargs):
+    
+    def __init__(self, solver="cholesky", m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
         precompute = kwargs.pop("precompute", True)
-        super().__init__(clf_=Ridge(), precompute=precompute, **kwargs)
+        super().__init__(clf_=Ridge(solver=solver), precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
+    
+    
     
 class GzipElasticNet(GzipClassifier):
-    def __init__(self, **kwargs):
+    
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
         precompute = kwargs.pop("precompute", True)
-        super().__init__(clf_=ElasticNet(), precompute=precompute, **kwargs)
-
+        super().__init__(clf_=ElasticNet(), precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
+        
+        
 class GzipLasso(GzipClassifier):
-    def __init__(self, **kwargs):
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
         precompute = kwargs.pop("precompute", True)
-        super().__init__(clf_=Lasso(), precompute=precompute, **kwargs)
+        super().__init__(clf_=Lasso(), precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
 
         
 
