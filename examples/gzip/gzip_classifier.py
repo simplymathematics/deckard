@@ -410,7 +410,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             Cx2 = Parallel(n_jobs=-1)(delayed(compressor)(x) for x in tqdm(X, desc="Compressing samples", leave=False, dynamic_ncols=True))
             assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
             assert len(self.X_) == len(self.Cx_), f"Expected {len(self.X_)} == {len(self.Cx_)}"
-            distance_matrix = self._calculate_square_distance_matrix( x1=X, Cx1=Cx2, x2=self.X_, Cx2=self.Cx_, n_jobs=-1)
+            distance_matrix = self._calculate_square_distance_matrix( x2=X, Cx2=Cx2, x1=self.X_, Cx1=self.Cx_, n_jobs=-1)
         else:
             distance_matrix = self._calculate_square_distance_matrix(self.X_, X, n_jobs=-1)
         y_pred = self.clf_.predict(distance_matrix)
@@ -425,10 +425,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
 class GzipKNN(GzipClassifier):
     
-    def __init__(self, k=2, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
-        
-        super().__init__(precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
-        self.clf_ = KNeighborsClassifier(n_neighbors=k, metric=self._distance, **kwargs) if precompute is True else None
+    def __init__(self, k:int=2, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
+        super().__init__(clf_=KNeighborsClassifier(n_neighbors=k, metric="precomputed", **kwargs), sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, precompute=precompute, **kwargs)
         self.k = k
         
         
@@ -445,13 +443,12 @@ class GzipKNN(GzipClassifier):
         assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
         logger.info(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
-        self.X_ = self.X_.astype(str)
         encoder = LabelEncoder()
         self.y_ = encoder.fit_transform(y)
         self.n_classes_ = len(unique_labels(y))
         counts = np.bincount(self.y_)
         logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
-        self.n_features_ = X.shape[1] if len(X.shape) > 1 else 1
+        self.n_features_ = X.shape[1]
         self.classes_ = range(len(unique_labels(y)))
         
         if self.metric in compressors.keys():
@@ -470,6 +467,7 @@ class GzipKNN(GzipClassifier):
             self.y_ = self.y_[indices]
             if self.Cx_ is not None:
                 self.Cx_ = self.Cx_[indices]
+            # Compress samples not working
         elif self.m == -1:
             indices = list(range(len(self.X_)))
             self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
@@ -507,6 +505,7 @@ class GzipKNN(GzipClassifier):
             distance_matrix = self._calculate_square_distance_matrix( x1=X, Cx1=Cx2, x2=self.X_, Cx2=self.Cx_, n_jobs=n_jobs)
         else:
             distance_matrix = self._calculate_square_distance_matrix(self.X_, X, n_jobs=n_jobs)
+        assert distance_matrix.shape == (len(X), len(self.X_)), f"Expected {distance_matrix.shape} == ({len(X)}, {len(self.X_)})"
         y_pred = []
         if self.precompute is True:
             y_pred = self.clf_.predict(distance_matrix)
@@ -674,10 +673,9 @@ def main(args:argparse.Namespace):
     params = vars(args)
     params.pop("dataset")
     params.pop("precompressed")
-    items_ = list(params.items())
-    for k,v in items_:
-        if v is None:
-            params.pop(k)
+    kwarg_args = params.pop("kwargs")
+    # conver list of key-value pairs to dictionary
+    kwarg_args = dict([arg.split("=") for arg in kwarg_args])
     X = np.array(X) if not isinstance(X, np.ndarray) else X
     y = np.array(y) if not isinstance(y, np.ndarray) else y
     test_model(X, y, **params)
@@ -685,10 +683,9 @@ def main(args:argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", type=str, default="knn")
-    parser.add_argument("--precompute", type=bool, default=False)
-    parser.add_argument("--symmetric", type=bool, default=False)
+    parser.add_argument("--precompute", action="store_true")
+    parser.add_argument("--symmetric", action="store_true")
     parser.add_argument("--metric", type=str, default='gzip', choices=all_metrics)
-    parser.add_argument("--k", type=int, default=None)
     parser.add_argument("--m", type=int, default=-1)
     parser.add_argument("--sampling_method", type=str, default="random")
     parser.add_argument("--distance_matrix", type=str, default=None)
@@ -697,6 +694,7 @@ if __name__ == "__main__":
     parser.add_argument("--test_size", type=int, default=100)
     parser.add_argument("--optimizer", type=str, default="accuracy")
     parser.add_argument("--precompressed", action="store_true")
+    parser.add_argument("kwargs", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     main(args)
