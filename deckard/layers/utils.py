@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import re
 
 from hydra.errors import OverrideParseException
 from omegaconf import OmegaConf
@@ -7,10 +8,17 @@ from omegaconf import SCMode
 from copy import deepcopy
 import yaml
 from hydra import initialize_config_dir, compose
+import dvc.api
+from hydra.utils import instantiate
+from dulwich.errors import NotGitRepository
+import yaml
+from hydra import compose, initialize_config_dir
+from copy import deepcopy
+from omegaconf import OmegaConf
 
 
 from numpy import nan
-from ..base.utils import my_hash
+from ..base.utils import my_hash, flatten_dict, unflatten_dict
 
 logger = logging.getLogger(__name__)
 
@@ -151,3 +159,200 @@ def save_params_file(
     logger.info(f"Saved params file to {params_file}")
     assert Path(params_file).exists(), f"Failed to save params file to {params_file}"
     return None
+
+
+
+
+def get_dvc_stage_params(
+    stage,
+    params_file="params.yaml",
+    pipeline_file="dvc.yaml",
+    directory=".",
+    name=None,
+):
+    logger.info(
+        f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
+    )
+    params = dvc.api.params_show(stages=stage, repo=directory)
+    params.update({"_target_": "deckard.base.experiment.Experiment"})
+    params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
+    flat_params = flatten_dict(params)
+    pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)['stages'][stage]
+    file_list = []
+    for key in ["metrics", "deps", "outs", "plots"]:
+        param_string = str(pipe_params.get(key, {}))
+        # find all values within ${} and add them to file_list
+        file_list.extend(re.findall(r"\${(.*?)}", param_string))
+    file_dict = {}
+    for k in file_list:
+        if k in flat_params:
+            file_dict[k] = flat_params[k]
+        else:
+            raise ValueError(f"File {k} not found in {pipe_params.keys()}")
+    file_dict = unflatten_dict(file_dict)
+    params['files'] = file_dict.pop("files", {})
+    params['files']['stage'] = stage
+    # Merge remaining params
+    params = OmegaConf.merge(params, file_dict)
+    params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
+    if name is not None:
+        params["files"]["name"] = name
+    return params
+
+
+# def get_dvc_stage_params(
+#     stage,
+#     params_file="params.yaml",
+#     pipeline_file="dvc.yaml",
+#     directory=".",
+#     name=None,
+# ):
+#     logger.info(
+#         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
+#     )
+#     params = dvc.api.params_show(stages=stage)
+#     params.update({"_target_": "deckard.base.experiment.Experiment"})
+#     pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
+#     pipe_params = unflatten_dict(pipe_params)
+#     params["files"] = dict(pipe_params.pop("files", pipe_params))
+#     params["files"]["_target_"] = "deckard.base.files.FileConfig"
+#     params["files"]["stage"] = stage
+#     params["stage"] = stage
+#     if name is not None:
+#         params["files"]["name"] = name
+#     # Merge remaining params
+#     params = OmegaConf.merge(params, pipe_params)
+#     return params
+
+def prepare_files(params_file, stage, params, id_):
+    # Turns the dictionary into a FileConfig object. 
+    # This creates a new directory at files.directory
+    # It also creates a new directory at files.directory/files.data_dir
+    # It also creates a new directory at files.directory/files.reports_dir
+    # If a stage is specified, it also creates a new directory at files.directory/files.reports/stage
+    params['files']['_target_'] = "deckard.base.files.FileConfig"
+    params['files']['stage'] = stage
+    params['files']['name'] = id_ if params['files'].get("name", None) is None else params['files']['name']
+    params['files']['params_file'] = Path(params_file).name
+    # This creates a the object
+    files = instantiate(params['files'])
+    # Which will return the dictionary of the files
+    files = files.get_filenames()
+    # If the params_file is in the files, then the params_file is the params_file
+    if "params_file" in files:
+        params_file = files["params_file"]
+    # Otherwise we take the folder of the score_dict_file and change the name to whatever the params_file is
+    elif "score_dict_file" in files:
+        params_file = Path(files["score_dict_file"]).with_name(params_file)
+    else:
+        raise ValueError(f"Neither params_file nor score_dict_file found in {list(files.keys())}.")
+    
+    # Save the params to the params_file
+    Path(params_file).parent.mkdir(exist_ok=True, parents=True)
+    with Path(params_file).open("w") as f:
+        yaml.dump(params, f)
+    return files
+
+
+def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
+    try:
+        def_stages = list(
+            dvc.api.params_show(pipeline_file, repo=repo)["stages"].keys(),
+        )
+    except NotGitRepository:
+        raise ValueError(
+            f"Directory {repo} is not a dvc repository. Please run `dvc init` in {repo} and try again.",
+        )
+    if stages is None or stages == []:
+        logger.info("No stages specified. Running default from hydra configuration")
+        stages = [None]
+    elif isinstance(stages, str):
+        stages = [stages]
+    else:
+        assert isinstance(stages, list), f"args.stage is of type {type(stages)}"
+        for stage in stages:
+            assert (
+                stage in def_stages
+            ), f"Stage {stage} not found in {pipeline_file}. Available stages: {def_stages}"
+    return stages
+
+def get_params_from_disk(params_file, pipeline_file, directory, stage, config_dir, config_file):
+    if stage is not None:
+        params = get_dvc_stage_params(
+            stage=stage,
+            params_file=params_file,
+            pipeline_file=pipeline_file,
+            directory=directory,
+        )
+    else:
+        # Use hydras compose to get the params
+        assert config_dir is not None, "config_dir must be specified if stage is None"
+        with initialize_config_dir(config_dir=config_dir, job_name=Path(config_file).stem, version_base="1.3"):
+            cfg = compose(config_name=config_file)
+        params = OmegaConf.to_container(cfg, resolve=True)
+        params["files"] = dict(params.pop("files", params))
+        params["files"]["_target_"] = "deckard.base.files.FileConfig"
+        params["files"]["stage"] = None
+        params["stage"] = stage
+    return params
+
+
+def run_stage(
+    params_file="params.yaml",
+    pipeline_file="dvc.yaml",
+    directory=".",
+    stage=None,
+    overrides=None,
+    config_dir=None,
+    config_file=None,
+    sub_dict=None,
+):
+    logger.info(
+        f"Running stage {stage} with params_file: {params_file} and pipeline_file: {pipeline_file} in directory {directory}",
+    )
+    params = get_params_from_disk(params_file, pipeline_file, directory, stage, config_dir, config_file)
+    params = add_overrides(overrides, params)
+    if sub_dict is None:
+        params["_target_"] = "deckard.experiment.Experiment"
+        exp = instantiate(params)
+        id_ = exp.name
+        _ = prepare_files(params_file, stage, params, id_)
+        score = exp()
+    else:
+        target = f"deckard.{sub_dict}.{sub_dict.capitalize()}"
+        params['_target_'] = target
+        exp = instantiate(params[sub_dict])
+        id_ = exp.name
+        files = prepare_files(params_file, stage, params[sub_dict], id_)
+        score = exp(**files)
+    return id_, score
+
+def add_overrides(overrides, params):
+    old_params = deepcopy(params)   
+    if overrides is not None and len(overrides) > 0:
+        # convert from dot notation to nested dict
+        overrides = OmegaConf.from_dotlist(overrides)
+        params = OmegaConf.merge(params, overrides)
+        params = OmegaConf.to_container(params, resolve=True)
+        assert params != old_params, f"Params are the same as before overrides: {overrides}"
+    params = OmegaConf.create(params)
+    params = OmegaConf.to_container(params, resolve=True)
+    return params
+
+
+
+def run_stages(stages, pipeline_file="dvc.yaml", params_file="params.yaml", repo=None, config_dir=None, config_file=None, sub_dict=None):
+    results = {}
+    stages = get_stages(stages=stages, pipeline_file=pipeline_file, repo=repo)
+    for stage in stages:
+        id_, score = run_stage(
+            stage=stage,
+            pipeline_file=pipeline_file,
+            params_file=params_file,
+            directory=repo,
+            config_dir=config_dir,
+            config_file=config_file,
+            sub_dict=sub_dict,
+        )
+        results[id_] = score
+    return results

@@ -141,6 +141,8 @@ class ModelTrainer:
             nb_classes = len(np.unique(data[2]))
             if nb_classes < 2:
                 nb_classes = 2
+            data[2] = np.squeeze(data[2])
+            data[3] = np.squeeze(data[3])
             data[2] = to_categorical(data[2], nb_classes=nb_classes)
             data[3] = to_categorical(data[3], nb_classes=nb_classes)
             start = process_time_ns()
@@ -156,6 +158,7 @@ class ModelTrainer:
                 if nb_classes < 2:
                     nb_classes = 2
                 data[2] = to_categorical(data[2], nb_classes=nb_classes)
+                data[3] = to_categorical(data[3], nb_classes=nb_classes)
                 start = process_time_ns()
                 start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
@@ -327,10 +330,11 @@ class Model:
         probabilities_file=None,
         time_dict_file=None,
         losses_file=None,
+        **kwargs,
     ):
         result_dict = {}
         
-        result_dict["data"] = data
+        
         if isinstance(model, Model):
             data, model = model.initialize(data)
         elif isinstance(model, type(None)):
@@ -338,7 +342,18 @@ class Model:
             assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         elif isinstance(model, (str, Path)):
             model = self.load(model)
-            data = self.data(data)
+            if isinstance(data, Data):
+                data = data(data_file=data_file)
+            elif isinstance(data, type(None)):
+                data = self.data.initialize(data_file)
+            elif isinstance(data, (str, Path)):
+                data = self.data.load(data)
+            else:
+                assert len(data) == 4, f"Data {data} is not a tuple of length 4."
+            assert isinstance(
+                data,
+                (list, tuple),
+            ), f"Data {data} is not a list. It is of type {type(data)}."
         elif hasattr(model, ("fit", "fit_generator")):
             assert hasattr(model, "predict") or hasattr(
                 model,
@@ -358,6 +373,7 @@ class Model:
             raise ValueError(f"Model {model} is not a valid model.")
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        result_dict["data"] = data
         result_dict["model"] = model
 
         if predictions_file is not None and Path(predictions_file).exists():
