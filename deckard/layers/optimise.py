@@ -200,11 +200,14 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     files = params["files"]
     file_list = list(files.keys())
     for key in file_list:
-        template_string = "${files." + key + "}"
-        if template_string in file_string:
-            pass
-        else:
-            params["files"].pop(key)
+        if key == "params.yaml":
+            continue
+        if (key.endswith("_file") or key.endswith("_dir")):
+            template_string = "${files." + key + "}"
+            if template_string in file_string:
+                pass
+            else:
+                params["files"].pop(key)
     params = get_files(params, stage)
     return params
 
