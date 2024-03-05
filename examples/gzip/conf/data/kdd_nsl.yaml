@@ -4,16 +4,7 @@ sample:
     _target_: deckard.base.data.SklearnDataSampler
     random_state : 0
     stratify: True
-    train_size : 10
-    test_size :  10
+    train_size : 100
+    test_size :  100
 name: raw_data/kdd_nsl.csv
 target: label
-sklearn_pipeline:
-    encoder:
-        name : sklearn.preprocessing.OrdinalEncoder
-        handle_unknown : use_encoded_value
-        unknown_value : -1
-    preprocessor:
-        name: sklearn.preprocessing.StandardScaler
-        with_mean: True
-        with_std: True

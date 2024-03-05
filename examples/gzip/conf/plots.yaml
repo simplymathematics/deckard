@@ -3,7 +3,7 @@ line_plot:
   hue: model.init.method
   title: #"Accuracy vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: accuracy
   ylabel: Accuracy
   hue_order:
@@ -20,7 +20,7 @@ line_plot:
   hue: model.init.metric
   title: #"Accuracy vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: accuracy
   ylabel: Accuracy
   hue_order:
@@ -39,7 +39,7 @@ line_plot:
   hue: model.init.compressor
   title: #"Accuracy vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: accuracy
   ylabel: Accuracy
   hue_order:
@@ -48,14 +48,14 @@ line_plot:
   - BZ2
   - Zstd
   legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  xlim: [10, 500]
+  xlim: [10, 503]
   errorbar: se
   err_style: bars
 - file: method_vs_train_time.pdf
   hue: model.init.method
   title: #"Training Time vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: train_time
   ylabel: Training Time (s)
   y_scale : log
@@ -73,7 +73,7 @@ line_plot:
   hue: model.init.metric
   title: #"Training Time vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: train_time
   ylabel: Training Time (s)
   y_scale : log
@@ -93,7 +93,7 @@ line_plot:
   hue: model.init.compressor
   title: #"Training Time vs $m$-best samples"
   x: model.init.m
-  xlabel: $m$-best Samples
+  xlabel: $m$-best Samples per Class
   y: train_time
   ylabel: Training Time (s)
   hue_order:
@@ -240,5 +240,81 @@ cat_plot:
     - BZ2
     - Zstd
     legend: {"bbox_to_anchor": [1.05, .5], "loc" : "left center"}
+    # set:
+    #   yscale: log
+  - file: models_vs_accuracy.pdf
+    x : model_name
+    y : accuracy
+    hue : model.init.m
+    errorbar: se
+    kind : bar
+    titles :
+    xlabels : Model
+    ylabels : Accuracy
+    legend_title: "Samples"
+    
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    set:
+      yscale: linear
+      ylim: [0, 1]
+    rotation: 90
+  - file: models_vs_train_time.pdf
+    x : model_name
+    y : train_time
+    hue : model.init.m
+    errorbar: se
+    kind : bar
+    titles :
+    xlabels : Model
+    ylabels : Training Time (s)
+    legend_title: "Samples"
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    set:
+      yscale: log
+  - file: models_vs_predict_time.pdf
+    x : model_name
+    y : predict_time
+    hue : model.init.m
+    errorbar: se
+    kind : bar
+    titles :
+    xlabels : Model
+    ylabels : Prediction Time (s)
+    legend_title: "Samples"
+    
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    set:
+      yscale: log
+    rotation: 90
+  - file: precompute_vs_accuracy.pdf
+    x: model.init.precompute
+    y: accuracy
+    hue: model.init.m
+    errorbar: se
+    kind: bar
+    titles:
+    xlabels: Sklearn Implementation?
+    ylabels: Accuracy
+  - file: precompute_vs_train_time.pdf
+    x: model.init.precompute
+    y: train_time
+    hue: model.init.m
+    errorbar: se
+    kind: bar
+    titles:
+    xlabels: Sklearn Implementation?
+    ylabels: Training Time (s)
+    set:
+      yscale: log
+  - file: precompute_vs_predict_time.pdf
+    x: model.init.precompute
+    y: predict_time
+    hue: model.init.m
+    errorbar: se
+    kind: bar
+    titles:
+    xlabels: Sklearn Implementation?
+    ylabels: Prediction Time (s)
     set:
       yscale: log

@@ -5,8 +5,6 @@ init:
     name : gzip_classifier.GzipKNN
     k : 1
     m: -1
-    method : null
-    distance_matrix : 
     metric : gzip
     symmetric : false
 _target_: deckard.base.model.Model

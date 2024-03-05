@@ -4,8 +4,6 @@ init:
     _target_: deckard.base.model.ModelInitializer
     name : gzip_classifier.GzipLogisticRegressor
     m: -1
-    method : null
-    distance_matrix : 
     metric : gzip
     symmetric : false
 _target_: deckard.base.model.Model

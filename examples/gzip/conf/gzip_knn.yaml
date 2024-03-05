@@ -2,49 +2,60 @@ defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
     - data: ???
-    - model: ???
+    - model: gzip_knn
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : tpe
     - override hydra/launcher : joblib
 dataset : ???
-model_name : ???
+model_name : gzip_knn
 stage : train
 direction : 
   - maximize
-  - minimize
 optimizers: 
    - accuracy
-   - predict_time
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
     dir: ${dataset}/logs/${stage}/
   sweep:
-    dir: ${dataset}/logs/classifiers/${hydra.sweeper.study_name}/
-    subdir : ${hydra.job.id}
+    dir: ???
+    subdir : ${hydra.job.num}
+  callbacks:
+    study_dump:
+      _target_ : database.OptunaStudyDumpCallback
+      storage : ${hydra.sweeper.storage}
+      study_name : ${hydra.sweeper.study_name}
+      directions : ${direction}
+      metric_names : ${optimizers}
+      output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
+      seed : ???
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ???
+    study_name: ${dataset}_${model_name}_${stage}
     storage: sqlite:///optuna.db
     n_jobs: 1
-    n_trials : 1
+    n_trials : 2
     params:
-      model.init.m : 10,20,30,50,100,200,300,500
-      model.init.method: random,svc,medoid,sum,knn
+      model.init.k : 1,3,5,7,11
+      +model.init.weights : uniform,distance
+      +model.init.algorithm : ball_tree,brute
       model.init.symmetric : True,False
-      model.init.compressor : gzip,zstd,pkl,bz2  #,lzma
+      ++model.init.precompute : True
+      model.init.metric : gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
+      model_name : ${model_name}
+      ++data.sample.random_state: int(interval(1, 10000))
     direction: ${direction}
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: -1
+    n_jobs: 8
     prefer : processes
     verbose: 1
     timeout: null
-    pre_dispatch: n_jobs
+    pre_dispatch: ${hydra.sweeper.n_jobs}
     batch_size: auto
     temp_folder: /tmp/deckard
     max_nbytes: 100000

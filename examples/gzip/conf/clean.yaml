@@ -1,14 +1,14 @@
-params:
-  control:
-    data.sample.train_size: 100
-  defaults:
-    model.init.m : -1
-fillna:
-  model.init.compressor : "None"
-  model.init.metric : "ncd"
-  model.init.method : "random"
-  model.init.m : -1
-  # model.init.precompute : "False"
+# params:
+  # control:
+  #   data.sample.train_size: 100
+  # defaults:
+  #   model.init.m : -1
+# fillna:
+#   model.init.compressor : "None"
+#   model.init.metric : "ncd"
+#   model.init.method : "random"
+#   model.init.m : ${data.sample.random_state}
+#   model.init.precompute : "False"
 replace:
   model.init.metric:
     jaro: "Jaro"
@@ -18,16 +18,11 @@ replace:
     ratio: "Ratio"
     seqRatio: "SeqRatio"
     hamming: "Hamming"
-  model.init.method:
-    svc: "SVC"
-    knn: "KNN"
-    medoid: "Medoid"
-    sum: "Sum"
-    random: "Random"
-  model.init.compressor:
     gzip: "Gzip"
     pkl: "Pickle"
     bz2: "BZ2"
     zstd: "Zstd"
-  model.init.m:
-    "-1" : "1000"
+  model_name:
+    gzip_svc : "k-SVC"
+    gzip_logistic : "k-Logistic"
+    gzip_knn : "k-KNN"

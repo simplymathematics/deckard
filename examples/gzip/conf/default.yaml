@@ -13,10 +13,8 @@ model_name : gzip_knn
 stage : train
 direction : 
   - maximize
-  - minimize
 optimizers: 
    - accuracy
-   - predict_time
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
@@ -24,9 +22,17 @@ hydra:
   sweep:
     dir: ${files.directory}/logs/
     subdir : ${hydra.sweeper.study_name}/${hydra.job.id}
+  callbacks:
+      study_dump:
+        _target_ : database.OptunaStudyDumpCallback
+        storage : ${hydra.sweeper.storage}
+        study_name : ${hydra.sweeper.study_name}
+        directions : ${direction}
+        metric_names : ${optimizers}
+        output_file : ${files.directory}/${hydra.sweep.dir}/${hydra.sweeper.study_name}.csv
   sweeper:
     sampler:
-      _target_: optuna.samplers.GridSampler
+      _target_: optuna.samplers.TPESampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${model_name}_${dataset}
     storage: sqlite:///optuna.db
@@ -40,7 +46,7 @@ hydra:
     prefer : processes
     verbose: 1
     timeout: null
-    pre_dispatch: n_jobs
+    pre_dispatch: n_jobs*2
     batch_size: auto
     temp_folder: /tmp/deckard
     max_nbytes: 100000
