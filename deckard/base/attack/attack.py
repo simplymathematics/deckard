@@ -138,6 +138,7 @@ class EvasionAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
+        **kwargs,
     ):
         time_dict = {}
         results = {}
@@ -300,6 +301,7 @@ class PoisoningAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
+        **kwargs,
     ):
         time_dict = {}
         results = {}
@@ -487,6 +489,7 @@ class InferenceAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
+        **kwargs,
     ):
         data_shape = data[0][0].shape
         time_dict = {}
@@ -606,6 +609,7 @@ class ExtractionAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
+        **kwargs,
     ):
         results = {}
         time_dict = {}
@@ -798,10 +802,9 @@ class Attack:
         adv_predictions_file=None,
         adv_probabilities_file=None,
         adv_losses_file=None,
+        **kwargs,
     ):
         name = self.init.name
-        kwargs = deepcopy(self.kwargs)
-        kwargs.update({"init": self.init.kwargs})
         data = self.data()
         data, model = self.model.initialize(data)
         if "art" not in str(type(model)):
@@ -812,7 +815,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **kwargs,
+                **self.init.kwargs,
             )
             result = attack(
                 data,
@@ -828,7 +831,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **kwargs,
+                **self.init.kwargs,
             )
             result = attack(
                 data,
@@ -844,7 +847,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **kwargs,
+                **self.init.kwargs,
             )
             result = attack(
                 data,
@@ -860,7 +863,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **kwargs,
+                **self.init.kwargs,
             )
             result = attack(
                 data,
