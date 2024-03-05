@@ -66,7 +66,7 @@ class Data:
                 else SklearnDataSampler(**sample)
             )
         else:
-            self.sample = SklearnDataSampler()
+            self.sample = None
         if sklearn_pipeline is not None:
             
             sklearn_pipeline = OmegaConf.to_container(
@@ -82,7 +82,7 @@ class Data:
         self.drop = drop
         self.target = target
         self.name = name if name is not None else my_hash(self)
-        logger.debug(f"Instantiating Data with id: {self.get_name()}")
+        logger.info(f"Instantiating Data with id: {self.get_name()}")
 
     def get_name(self):
         """Get the name of the data object."""
@@ -140,6 +140,8 @@ class Data:
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
+        elif suffix in [".npz"]:
+            data = np.load(filename)
         else:  # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return data
@@ -174,7 +176,7 @@ class Data:
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 with open(filename, "w") as f:
-                    json.dump(data, f)
+                    json.dump(data, f, indent=4, sort_keys=True)
             elif suffix in [".csv"]:
                 assert isinstance(
                     data,
@@ -184,6 +186,8 @@ class Data:
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
                     pickle.dump(data, f)
+            elif suffix in [".npz"]:
+                np.savez(filename, data)
             else:  # pragma: no cover
                 raise ValueError(f"Unknown file type {type(suffix)} for {suffix}")
             assert Path(filename).exists()
@@ -193,6 +197,7 @@ class Data:
         data_file=None,
         train_labels_file=None,
         test_labels_file=None,
+        **kwargs,
     ) -> list:
         """Loads data from file if it exists, otherwise generates data and saves it to file. Returns X_train, X_test, y_train, y_test as a list of arrays, typed according to the framework.
         :param filename: str
