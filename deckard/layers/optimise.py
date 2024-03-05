@@ -239,7 +239,7 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 
 def optimise(cfg: DictConfig) -> None:
-    cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
+    cfg = OmegaConf.to_container(OmegaConf.create(cfg))
     raise_exception = cfg.pop("raise_exception", False)
     working_dir = Path(config_path).parent
     direction = cfg.get("direction", "minimize")
@@ -292,7 +292,9 @@ def optimise(cfg: DictConfig) -> None:
         if raise_exception:
             raise e
     if len(scores) == 1:
-        scores = scores[0]
+        scores = float(scores[0])
+    else:
+        scores = [float(x) for x in scores]
     return scores
 
 
