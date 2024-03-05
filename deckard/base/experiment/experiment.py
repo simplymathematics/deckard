@@ -84,7 +84,7 @@ class Experiment:
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
             file_dict = OmegaConf.to_container(files, resolve=True)
-            self.files = FileConfig(**file_dict)
+            self.files = FileConfig(**file_dict, files=files)
         elif isinstance(files, FileConfig):
             self.files = files
         else:  # pragma: no cover
