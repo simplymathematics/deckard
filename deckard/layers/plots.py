@@ -353,14 +353,23 @@ if __name__ == "__main__":
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
         i += 1
-        cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        try:
+          cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        except Exception as e:
+          logger.error(f"Error in plot {i} with params {dict_}")
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1
-        line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        try:
+          line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        except Exception as e:
+          logger.error(f"Error in plot {i} with params {dict_}")
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         i += 1
-        scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        try:
+          scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+        except Exception as e:
+          logger.error(f"Error in plot {i} with params {dict_}")
