@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def flatten_dict(dictionary: dict, separator: str = ".", prefix: str = ""):
     """
-    Flattens a dictionary into a list of dictionarieswith keys separated by the separator.
+    Flattens a dictionary into a list of dictionarie swith keys separated by the separator.
     :param dictionary: The dictionary to flatten.
     :param separator: The separator to use when flattening the dictionary.
     :param prefix: The prefix to use when flattening the dictionary.
@@ -27,7 +27,6 @@ def flatten_dict(dictionary: dict, separator: str = ".", prefix: str = ""):
                 logger.debug(f"Adding {val} to {new_key}")
                 flat_dict[new_key] = val
     return flat_dict
-
 
 def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> object:
     """

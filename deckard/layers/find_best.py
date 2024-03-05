@@ -5,7 +5,7 @@ from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
 import argparse
 import yaml
-from ..base.utils import flatten_dict
+from ..base.utils import flatten_dict, unflatten_dict
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +31,39 @@ def find_optuna_best(
         direction=direction,
     )
     df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
-    Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
     if study_csv is not None:
+        Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(study_csv)
+    # To dotlist
     best_params = flatten_dict(study.best_params)
     more_params = flatten_dict(study.best_trial.user_attrs)
     even_more_params = flatten_dict(study.best_trial.system_attrs)
     logger.debug(f"Best params: {best_params}")
     logger.debug(f"Best user params: {more_params}")
     logger.debug(f"Best system params: {even_more_params}")
-    best_params = {**more_params, **best_params}
-    cfg = override_default_with_best(config_folder, default_config, best_params)
-    params = cfg.get(config_subdir, cfg)
+    # Merge all the params
+    best_params = OmegaConf.to_container(OmegaConf.merge(best_params, more_params, even_more_params), resolve=False)
+    # to dotlist
+    best_params = flatten_dict(best_params)
+    overrides = []
+    # Changing the keys to hydra override format
+    for key, value in best_params.items():
+        if key.startswith("++") or  key.startswith("~~") or key.startswith("--"): # reserved meaning
+            pass
+        elif key.startswith("+"): #appends to config
+            key = "++" + key[1:] # force override
+        else:
+            key = "++" + key # force override
+        if config_subdir is None:
+            overrides.append(f"{key}={value}")
+        else: # if we are using a subdir, we need to remove the directory from the key
+            if key.startswith(f"++{config_subdir}.") or key.startswith(f"~~{config_subdir}.") or key.startswith(f"--{config_subdir}."):
+                key = key.replace(f"{config_subdir}.", "")
+                overrides.append(f"{key}={value}")
+                logger.info(f"Adding {key} to param list")
+            else:
+                logger.debug(f"Skipping {key} because it is not in {config_subdir}")
+    params = override_default_with_best(config_folder, default_config, overrides, config_subdir=config_subdir)
     if params_file is not None:
         params_file = create_new_config_in_subdir(params_file, config_folder, default_config, config_subdir, params)
     return params
@@ -75,11 +96,10 @@ def create_new_config_in_subdir(params_file, config_folder, default_config, conf
     
     return params_file
 
-def override_default_with_best(config_folder, default_config, best_params):
-    overrides = []
-    for key, value in best_params.items():
-        logger.info(f"Overriding {key} with {value}")
-        overrides.append(f"{key}={value}")
+def override_default_with_best(config_folder, default_config, overrides, config_subdir=None):
+    if config_subdir is not None:
+        config_folder = Path(config_folder, config_subdir)
+        config_folder = config_folder.resolve().as_posix()
     with initialize_config_dir(config_dir=config_folder, version_base="1.3"):
         cfg = compose(config_name=default_config, overrides=overrides)
     cfg = OmegaConf.to_container(cfg, resolve=False)

@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 from copy import deepcopy
 from omegaconf import OmegaConf
 from ..utils import my_hash
@@ -13,13 +13,13 @@ __all__ = ["FileConfig"]
 
 @dataclass
 class FileConfig:
-    reports: str = "reports"
-    data_dir: str = "data"
-    model_dir: str = "models"
-    attack_dir = "attacks"
-    name: str = None
-    stage: str = None
-    files: dict = field(default_factory=dict)
+    reports: Union[str, None] = "reports"
+    data_dir: Union[str, None] = "data"
+    model_dir: Union[str, None] = "models"
+    attack_dir: Union[str, None] = "attacks"
+    name: Union[str, None] = None
+    stage: Union[str, None] = None
+    files: dict = field(default_factory=dict) 
 
     def __init__(
         self,
@@ -71,10 +71,13 @@ class FileConfig:
             if directory
             else None
         )
-        self.name = name if name else None
         self.stage = stage if stage else None
         self.files = files if files else {}
         logger.debug(f"FileConfig init: {self.files}")
+        if name is None:
+            self.name = my_hash(self)
+        else:
+            self.name = name
 
     def __call__(self):
         files = dict(self.get_filenames())

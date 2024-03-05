@@ -1,4 +1,5 @@
-/best_m_gzip_classifier_truthseeker.yaml
-/best_m_gzip_classifier_kdd_nsl.yaml
-/best_k_gzip_classifier_kdd_nsl.yaml
-/best_k_gzip_classifier_truthseeker.yaml
+/best_gzip_knn_kdd_nsl.yaml
+/best_gzip_svc_kdd_nsl.yaml
+/best_gzip_logistic_kdd_nsl.yaml
+/best_gzip_knn_truthseeker.yaml
+/best_gzip_svc_truthseeker.yaml
