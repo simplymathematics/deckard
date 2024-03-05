@@ -79,14 +79,20 @@ def read_file(file, results):
     if folder not in results:
         results[folder] = {}
     if suffix == ".json":
-        with open(file, "r") as f:
-            try:
+        try:
+            retries = locals().get("retries", 0)
+            with open(file, "r") as f:
                 dict_ = json.load(f)
-            except json.decoder.JSONDecodeError as e:
-                logger.error(f"Error reading {file}")
-                print(f"Error reading {file}")
-                input("Press Enter to raise the error.")
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f"Error reading {file}")
+            print(f"Error reading {file}. Please fix the file and press Enter.")
+            input("Press Enter to continue. The next failure on this file will raise an error.")
+            if retries > 1:
                 raise e
+            else:
+                with open(file, "r") as f:
+                    dict_ = json.load(f)
+                retries += 1
     elif suffix == ".yaml":
         with open(file, "r") as f:
             try:
