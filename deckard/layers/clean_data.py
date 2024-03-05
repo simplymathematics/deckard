@@ -220,10 +220,6 @@ def merge_defences(
         "model.art.transformer.name",
         "model.art.trainer.name",
     ],
-    control_variable=["model_layers"],
-    defaults={
-        "model.trainer.nb_epoch": 20,
-    },
 ):
     """
     The function `merge_defences` merges different defence columns in a DataFrame and assigns a unique
@@ -245,8 +241,6 @@ def merge_defences(
     """
     defences = []
     def_gens = []
-    for control in control_variable:
-        assert control in results, f"{control} not in results.columns"
     for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
         defence = []
         i = 0
@@ -256,21 +250,7 @@ def merge_defences(
             else:
                 pass
             i += 1
-        for k, v in defaults.items():
-            if (
-                k in entry
-                and v != entry[k]
-                and not isnan(pd.to_numeric(entry[k]))
-                and len(defence) == 0
-            ):
-                defence.append(k)
-            else:
-                pass
-        for col in control_variable:
-            if col in entry and entry[col] not in nones and len(defence) == 0:
-                defence.append(col)
-            else:
-                pass
+
         ############################################################################################################
         if len(defence) > 1:
             def_gen = [str(x).split(".")[-1] for x in defence]
@@ -529,7 +509,10 @@ def clean_data_for_plotting(
         data.dropna(axis=0, subset=["atk_gen"], inplace=True)
     data, fillna = format_control_parameter(data, control_dict, fillna)
     for k,v in fillna.items():
-        data[k] = data[k].fillna(v)
+        if k in data.columns:
+            data[k] = data[k].fillna(v)
+        else:
+            data[k] = str(v)
     data = replace_strings_in_data(data, replace_dict)
     if len(pareto_dict) > 0:
         data = pareto_set(data, pareto_dict)
