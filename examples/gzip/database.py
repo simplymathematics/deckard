@@ -1,0 +1,80 @@
+# Script to query the database
+
+from omegaconf import DictConfig, ListConfig, OmegaConf
+from dataclasses import dataclass
+import optuna
+from pathlib import Path
+from hydra.experimental.callback import Callback
+import argparse 
+import random
+import os
+
+storage = 'sqlite:///optuna.db'
+study_name = 'gzip_knn_20-0'
+metric_names = ["accuracy"]
+directions = ["maximize"]
+output_file = "optuna.csv"
+
+
+@dataclass
+class OptunaStudyDumpCallback(Callback):
+    def __init__(self, storage: str, study_name: str, metric_names: list, directions: list, output_file: str, seed=42):
+        self.storage = storage
+        self.study_name = study_name
+        if isinstance(metric_names, ListConfig):
+            self.metric_names = OmegaConf.to_container(metric_names, resolve=True)
+        elif isinstance(metric_names, list):
+            self.metric_names = metric_names
+        else:
+            self.metric_names = [metric_names]
+        if isinstance(directions, ListConfig):
+            self.metric_names = OmegaConf.to_container(directions, resolve=True)
+        elif isinstance(directions, list):
+            self.directions = directions
+        else:
+            self.directions = [directions]
+        self.output_file = output_file
+        super().__init__()
+        
+        
+    def on_multirun_end(self, *args, **kwargs) -> None:
+        studies = optuna.get_all_study_summaries(self.storage)
+        study_names = [study.study_name for study in studies]
+        assert self.study_name in study_names, f"Study {self.study_name} not found in {study_names}"
+        study = optuna.load_study(self.study_name, storage=self.storage)
+        if hasattr(study, "set_metric_names"):
+            study.set_metric_names(self.metric_names)
+        df = study.trials_dataframe()
+        metric_names = [f"value_{metric}" for metric in self.metric_names]
+        if len(metric_names) == 1:
+            df = df.sort_values(metric_names[0], ascending=False)
+        else:
+            df = df.sort_values(metric_names, ascending=False)
+        suffix = Path(self.output_file).suffix
+        if suffix in [".csv"]:
+            df.to_csv(self.output_file, index=False)
+        elif suffix in [".json"]:
+            df.to_json(self.output_file, orient="records")
+        else:
+            raise ValueError(f"Unknown file type {suffix}")
+
+        assert Path(self.output_file).exists(), f"File {self.output_file} not found"
+        
+        
+        
+if __name__ == "__main__":
+    arts = argparse.ArgumentParser()
+    arts.add_argument("--storage", type=str, default=storage)
+    arts.add_argument("--study_name", type=str, default=study_name)
+    arts.add_argument("--metric_names", type=str, nargs="+", default=metric_names)
+    arts.add_argument("--directions", type=str, nargs="+", default=directions)
+    arts.add_argument("--output_file", type=str, default=output_file)
+    args = arts.parse_args()
+    storage = args.storage
+    study_name = args.study_name
+    metric_names = args.metric_names if isinstance(args.metric_names, list) else [args.metric_names]
+    directions = args.directions if isinstance(args.directions, list) else [args.directions]
+    output_file = args.output_file
+    
+    callback = OptunaStudyDumpCallback(storage, study_name, metric_names, directions, output_file)
+    callback.on_multirun_end()
