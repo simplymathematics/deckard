@@ -13,7 +13,7 @@ python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --dist
 # These lines will be used to install the dependencies needed for this file
 # You might need to install pip with:
 # sudo apt-get install python3-pip
-# python -m pip install numpy scikit-learn tqdm scikit-learn-extra pandas
+# python -m pip install numpy scikit-learn tqdm scikit-learn-extra pandas imbalanced-learn
 
 import numpy as np
 import gzip
@@ -26,20 +26,19 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import accuracy_score, r2_score
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_20newsgroups, make_classification
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression, ElasticNet, Lasso, Ridge
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
 from sklearn_extra.cluster import KMedoids
+from imblearn.under_sampling import CondensedNearestNeighbour, NearMiss, InstanceHardnessThreshold
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
+
 from joblib import Parallel, delayed
 from typing import Literal
 
@@ -160,7 +159,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     distance_matrix_ : ndarray, shape (n_samples, n_samples)
     """
 
-    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):  
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):  
         """
         Initialize the GzipClassifier object.
 
@@ -196,7 +195,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         
         self.symmetric = symmetric  
         if self.symmetric is True: 
-            self._calculate_distance_matrix = self._calculate_triangular_distance_matrix
+            self._calculate_distance_matrix = self._calculate_lower_triangular_distance_matrix
         else:
             self._calculate_distance_matrix = self._calculate_rectangular_distance_matrix
         self.precompute = precompute # If True, the distance matrix will be precomputed and stored in self.distance_matrix during the fit method and a sklearn KNeighborsClassifier object will be created and stored in self.clf_.
@@ -232,7 +231,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     
     
     
-    def _calculate_triangular_distance_matrix(self, x1, x2, Cx1=None, Cx2=None, n_jobs=-1):
+    def _calculate_lower_triangular_distance_matrix(self, x1, x2, Cx1=None, Cx2=None, n_jobs=-1):
         """
         Calculate the distance matrix between two sets of objects, treating them as strings. Assuming the d(a,b) = d(b,a)
         Args:
@@ -254,6 +253,23 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 matrix_[i, :i] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(i))
             # Copy the lower triangular part to the upper triangular part
             matrix_[i, :i] = matrix_[:i, i]
+            pbar.update(1)
+        pbar.close()
+        assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        return matrix_
+    
+    def calculate_upper_triangular_distance_matrix(self, x1, x2, Cx1=None, Cx2=None, n_jobs=-1):
+        matrix_ = np.zeros((len(x1), len(x2)))
+        pbar = tqdm(total=len(x1), desc="Calculating symmetric distance metrix.", leave=False, dynamic_ncols=True)
+        Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
+        Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
+        for i in range(len(x1)):
+            if self.metric in compressors.keys():
+                matrix_[i, i:] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], cx1=Cx1[i], cx2=Cx2[j], method=self.metric) for j in range(i, len(x2)))
+            else:
+                matrix_[i, i:] = Parallel(n_jobs=n_jobs)(delayed(self._distance)(x1[i], x2[j], method=self.metric) for j in range(i, len(x2)))
+            # copy the upper triangular part to the lower triangular part
+            matrix_[i, i:] = matrix_[i:, i]
             pbar.update(1)
         pbar.close()
         assert matrix_.shape == (len(x1), len(x2)), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
@@ -307,50 +323,71 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 m = 1
         else:
             m = self.m
-        if method == "sum":
-            for label in range(self.n_classes_):
-                label_idx = np.where(self.y_ == label)[0]
-                label_distance_matrix = distance_matrix[label_idx, :]
-                summed_matrix = np.sum(label_distance_matrix, axis=0)
-                sorted_idx = np.argsort(summed_matrix)
-                indices.extend(sorted_idx[: m])
-        elif method == "medoid":
-            for label in range(self.n_classes_):
-                kmedoids = KMedoids(n_clusters=m, metric="precomputed").fit(distance_matrix)
-                indices.extend(kmedoids.medoid_indices_)
-        elif method == "random":
-            for label in range(self.n_classes_):
-                label_idx = np.where(self.y_ == label)[0]
-                random_idx = np.random.choice(label_idx, m)
-                indices.extend(random_idx)
-        elif method == "knn":
-            for label in self.classes_:
-                label_idx = np.where(self.y_ == label)[0]
-                assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
-                assert len(self.X_) == len(distance_matrix), f"Expected {len(self.X_)} == {len(distance_matrix)}"
-                label_distance_matrix = distance_matrix[label_idx, :][:, label_idx]
-                min_ = min(m, len(label_idx))
-                nn = NearestNeighbors(n_neighbors=min_, metric="precomputed").fit(label_distance_matrix)
-                distances, knn_indices = nn.kneighbors(label_distance_matrix, n_neighbors=1, return_distance=True)
-                distances = np.squeeze(distances)
-                knn_indices = np.squeeze(knn_indices)
-                best_indices = distances.argsort()
-                best_indices = best_indices[:min_]
-                best_indices = np.squeeze(best_indices)
-                subset = label_idx[best_indices]
-                indices.extend(subset.tolist())
-        elif method == "svc":
-            svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
-            support_idx = svc.support_
-            summed_matrix = np.sum(distance_matrix, axis=0)
-            for label in range(self.n_classes_):
-                sub_idx = np.where(self.y_[support_idx] == label)[0]
-                sorted_idx = np.argsort(summed_matrix[sub_idx]) # Sort the support vectors by the sum of their distances
-                indices.extend(support_idx[sorted_idx][: m])
+            
+        n_classes = len(unique_labels(self.y_))
+        if method in ["sum", "medoid", "svc", "random"]:
+            if method == "sum":
+                for label in np.unique(self.y_):
+                    label_idx = np.where(self.y_ == label)[0]
+                    label_distance_matrix = distance_matrix[label_idx, :]
+                    summed_matrix = np.sum(label_distance_matrix, axis=0)
+                    sorted_idx = np.argsort(summed_matrix)
+                    indices.extend(sorted_idx[: m])
+            elif method == "medoid":
+                for label in np.unique(self.y_):
+                    label_idx = np.where(self.y_ == label)[0]
+                    min_ = min(m, len(label_idx))
+                    assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
+                    assert len(self.X_) == len(distance_matrix), f"Expected {len(self.X_)} == {len(distance_matrix)}"
+                    label_distance_matrix = distance_matrix[label_idx, :][:, label_idx]
+                    kmedoids = KMedoids(n_clusters=min_, metric="precomputed").fit(label_distance_matrix)
+                    indices.extend(kmedoids.medoid_indices_[:m])
+            elif method == "svc":
+                svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
+                support_idx = svc.support_
+                summed_matrix = np.sum(distance_matrix, axis=0)
+                sorted_idx = np.argsort(summed_matrix[support_idx])[::-1] # Sort in descending order
+                indices.extend(sorted_idx[: m * n_classes])
+            elif method == "random":    
+                keys = np.unique(self.y_)
+                values = [m] * len(keys)
+                dict_ = dict(zip(keys, values))
+                for label in np.unique(self.y_):
+                    label_idx = np.where(self.y_ == label)[0]
+                    if len(label_idx) < m:
+                        random_idx = np.random.choice(label_idx, m, replace=True)
+                    else:
+                        random_idx = np.random.choice(label_idx, m, replace=False)
+                    indices.extend(random_idx)
+            else:
+                raise NotImplementedError(f"Method {method} not supported")
+        elif method in ["hardness", "nearmiss", "knn"]:
+            if method == "hardness":
+                keys = np.unique(self.y_)
+                values = [m] * len(keys)
+                dict_ = dict(zip(keys, values))
+                model = InstanceHardnessThreshold(sampling_strategy=dict_)
+            elif method == "nearmiss":
+                keys = np.unique(self.y_)
+                values = [m] * len(keys)
+                dict_ = dict(zip(keys, values))
+                model = NearMiss(sampling_strategy=dict_)
+            elif method == "knn":
+                distance_matrix = pd.DataFrame(distance_matrix, columns = range(len(distance_matrix)))
+                y = pd.DataFrame(self.y_, columns=["y"])
+                y.index = list(range(len(y)))
+                model = CondensedNearestNeighbour(sampling_strategy="not majority")
+            else:
+                raise NotImplementedError(f"Method {method} not supported")
+            distance_matrix = pd.DataFrame(distance_matrix, columns = list(range(len(distance_matrix))))
+            y = pd.DataFrame(self.y_, columns=["y"])
+            y.index = list(range(len(y)))
+            distance_matrix, y = model.fit_resample(distance_matrix, y)
+            indices = y.index[:m * n_classes]
         else:
             raise NotImplementedError(f"Method {method} not supported")
         return indices
-    
+       
     
     def fit(self, X:np.ndarray, y:np.ndarray, n_jobs=-1):
         """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.sampling_method.
@@ -463,64 +500,11 @@ class BatchedGzipClassifier(GzipClassifier, BatchedMixin):
     
 class GzipKNN(GzipClassifier):
     
-    def __init__(self, k:int=2, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
+    def __init__(self, k:int=2, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):
         super().__init__( sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, precompute=precompute, **kwargs)
         self.clf_ = KNeighborsClassifier(n_neighbors=k, metric="precomputed", **kwargs)
         self.k = k
         
-        
-    def fit(self, X:np.ndarray, y:np.ndarray, n_jobs=-1):
-        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.sampling_method.
-
-        Args:
-            X (np.ndarray): The input data
-            y (np.ndarray): The target labels
-
-        Returns:
-            GzipClassifier: The fitted model
-        """
-        assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
-        logger.info(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
-        self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
-        encoder = LabelEncoder()
-        self.y_ = encoder.fit_transform(y)
-        self.n_classes_ = len(unique_labels(y))
-        counts = np.bincount(self.y_)
-        logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
-        self.n_features_ = X.shape[1]
-        self.classes_ = range(len(unique_labels(y)))
-        
-        if self.metric in compressors.keys():
-            compressor = compressors[self.metric]
-            Cx_ = Parallel(n_jobs=n_jobs)(delayed(compressor)(x) for x in self.X_)
-            self.Cx_ = np.array(Cx_) if not isinstance(Cx_, np.ndarray) else Cx_
-        else:
-            self.Cx_ = None
-            self.X_ = self.X_.astype(str)
-            
-        if self.m > 0:
-            assert isinstance(self.m, (int, float)), f"Expected {self.m} to be an integer"
-            assert isinstance(self.sampling_method, (str, type(None))), f"Expected {self.sampling_method} to be a string or None"
-            indices = self._find_best_samples(self.sampling_method)
-            self.X_ = self.X_[indices]
-            self.y_ = self.y_[indices]
-            if self.Cx_ is not None:
-                self.Cx_ = self.Cx_[indices]
-            # Compress samples not working
-        elif self.m == -1:
-            indices = list(range(len(self.X_)))
-            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
-        elif self.m is None or self.m==0:
-            indices = list(range(len(self.X_)))
-        else:
-            raise ValueError(f"Expected {self.m} to be -1, 0, or a positive integer")
-        if self.precompute is True:
-            distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
-            self.distance_matrix = distance_matrix_[indices, :][:, indices]
-            self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
-        else:
-            pass
-        return self
 
 
     def predict(self, X:np.ndarray, n_jobs=-1):
@@ -568,8 +552,8 @@ class BatchedGzipKNN(GzipKNN, BatchedMixin):
             
 
 class GzipLogisticRegressor(GzipClassifier):
-    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
-        precompute = kwargs.pop("precompute", True)
+    def __init__(self, m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):
+        self.precompute = precompute
         clf = LogisticRegression(**kwargs)
         super().__init__(clf_=clf, precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
 
@@ -578,8 +562,8 @@ class BatchedGzipLogisticRegressor(GzipLogisticRegressor, BatchedMixin):
 
 class GzipSVC(GzipClassifier):
     
-    def __init__(self, kernel="rbf", m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=False, **kwargs):
-        precompute = kwargs.pop("precompute", True)
+    def __init__(self, kernel="rbf", m=0, sampling_method="random", distance_matrix=None, metric='gzip', symmetric=False, precompute=True, **kwargs):
+        self.precompute = precompute
         clf = SVC(kernel=kernel, **kwargs)
         super().__init__(clf_=clf, precompute = precompute, sampling_method=sampling_method, m=m, distance_matrix=distance_matrix, metric=metric, symmetric=symmetric, **kwargs)
         self.kernel = kernel
@@ -729,22 +713,23 @@ def main(args:argparse.Namespace):
     y = np.array(y) if not isinstance(y, np.ndarray) else y
     test_model( X_train, X_test, y_train, y_test, **params)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_type", type=str, default="knn")
+parser.add_argument("--precompute", action="store_true")
+parser.add_argument("--symmetric", action="store_true")
+parser.add_argument("--metric", type=str, default='gzip', choices=all_metrics)
+parser.add_argument("--m", type=int, default=-1)
+parser.add_argument("--sampling_method", type=str, default="random")
+parser.add_argument("--distance_matrix", type=str, default=None)
+parser.add_argument("--dataset", type=str, default="kdd_nsl")
+parser.add_argument("--train_size", type=int, default=100)
+parser.add_argument("--test_size", type=int, default=100)
+parser.add_argument("--optimizer", type=str, default="accuracy")
+parser.add_argument("--precompressed", action="store_true")
+parser.add_argument("--random_state", type=int, default=42)
+parser.add_argument("kwargs", nargs=argparse.REMAINDER)
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_type", type=str, default="knn")
-    parser.add_argument("--precompute", action="store_true")
-    parser.add_argument("--symmetric", action="store_true")
-    parser.add_argument("--metric", type=str, default='gzip', choices=all_metrics)
-    parser.add_argument("--m", type=int, default=-1)
-    parser.add_argument("--sampling_method", type=str, default="random")
-    parser.add_argument("--distance_matrix", type=str, default=None)
-    parser.add_argument("--dataset", type=str, default="kdd_nsl")
-    parser.add_argument("--train_size", type=int, default=100)
-    parser.add_argument("--test_size", type=int, default=100)
-    parser.add_argument("--optimizer", type=str, default="accuracy")
-    parser.add_argument("--precompressed", action="store_true")
-    parser.add_argument("--random_state", type=int, default=42)
-    parser.add_argument("kwargs", nargs=argparse.REMAINDER)
+    
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     main(args)

@@ -8,11 +8,11 @@ from deckard.layers.compile import save_results
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["merge_run"]
+__all__ = ["merge_csv", "merge_main", "merge_parser"]
 
-def merge_run(big_dir, little_dir,  output_file="merged", data_file = "raw.csv", little_dir_data_file = None, fillna = {}, how='outer', **kwargs):
+def merge_csv(big_dir, little_dir,  output_file="merged", data_file = "raw.csv", little_dir_data_file = None, fillna = {}, how='outer', **kwargs):
     """
-    The function `merge_run` merges two CSV files, one from a big directory and one from a little
+    The function `merge_csv` merges two CSV files, one from a big directory and one from a little
     directory, and saves the merged file.
     
     Args:
@@ -70,14 +70,14 @@ def merge_main(args):
     output_file = Path(args.output_folder) / args.output_file
     if isinstance(args.little_dir_data_file, list):
         for little in args.little_dir_data_file:
-            merge_run(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=little, fillna=fillna, output_file=output_file)
+            merge_csv(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=little, fillna=fillna, output_file=output_file)
             args.big_dir = Path(args.output_folder)
             args.data_file = Path(args.output_file).name
             print(f"Big dir: {args.big_dir}")
             print(f"Data file: {args.data_file}")
             print(f"Output file: {args.output_file}")
     else:
-        merge_run(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=args.little_dir_data_file, fillna=fillna, output_file=output_file, how='outer', )
+        merge_csv(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=args.little_dir_data_file, fillna=fillna, output_file=output_file, how='outer', )
 
 
 merge_parser = argparse.ArgumentParser()
@@ -89,10 +89,7 @@ merge_parser.add_argument("--output_folder", type=str, help="Name of the output 
 merge_parser.add_argument("--little_dir_data_file", type=str, help="Name(s) of the files to merge into the big file.", required=False, nargs="*")
 merge_parser.add_argument("--config", type=str, help="Name of file containing a 'fillna' config dictionary.", required=False)
 
-
-
 if __name__ == "__main__":
-    
     args = merge_parser.parse_args()
-    merge_main(merge_run, args)
+    merge_main(merge_csv, args)
 
