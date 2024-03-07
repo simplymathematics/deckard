@@ -2,8 +2,8 @@ vars:
   - conf/default.yaml:hydra
   - conf/plots.yaml:line_plot
   - conf/plots.yaml:cat_plot
-  - conf/clean.yaml:params
-  - conf/clean.yaml:fillna
+  # - conf/clean.yaml:params
+  # - conf/clean.yaml:fillna
   - conf/clean.yaml:replace
 stages:
   ##############################################################################
@@ -32,14 +32,28 @@ stages:
     cmd: python data_prep.py
     outs:
       - raw_data/
-    
+    deps:
+      - data_prep.py
+  parse_params:
+    cmd: python -m deckard.layers.parse
+    deps:
+      - conf/default.yaml
+      - conf/data/default.yaml
+      - conf/model/default.yaml
+      - conf/files/default.yaml
+      - conf/scorers/default.yaml
+    outs:
+      - params.yaml:
+          cache: true
+          desc : "Parsed parameters for the experiment"
+          persist: true
+          push : true
+  
   train:
     cmd: python -m deckard.layers.experiment train
     metrics:
     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
-    # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
     - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
     params:
     - data
@@ -49,129 +63,32 @@ stages:
     - dataset
     - model_name
     - device_id
-  ##############################################################################
-  test_symmetric_methods:
-    matrix:
-      symmetric: [true, false]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=train 
-      model.init.method=random
-      model.init.m=10 
-      files.name=symmetric_${item.symmetric}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      dataset=${item.dataset}
-      model_name=${model_name}
-      model.init.symmetric=${item.symmetric}
-      hydra.run.dir=${item.dataset}/logs/symmetric/${item.symmetric}
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/symmetric_${item.symmetric}.npz
-      ++raise_exception=True 
     deps:
     - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    - raw_data/
-    outs:
-    - ${item.dataset}/${files.reports}/train/symmetric_${item.symmetric}/${files.score_dict_file}
-    - ${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/symmetric_${item.symmetric}.npz:
-        cache: true
-        persist: true
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
+    - raw_data/ # Raw data
   ##############################################################################
-  test_each_method:
+  test_each_dataset:
     matrix:
-      method: [knn, svc, medoid, sum, random]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [ddos, truthseeker, sms_spam, kdd_nsl]
+      model_name : [gzip_knn, gzip_svc, gzip_logistic]
     cmd : >-
       python -m deckard.layers.optimise 
-      stage=train 
-      model.init.method=${item.method} 
-      model.init.m=10 
-      files.name=${item.method}
+      stage=train
+      files.name=${item.model_name}
+      data.sample.train_size=100
       files.directory=${item.dataset}
       data=${item.dataset}
       dataset=${item.dataset}
-      model_name=${model_name}
-      hydra.run.dir=${item.dataset}/logs/method/${item.method}
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.method}.npz
+      model_name=${item.model_name}
+      model=${item.model_name}
+      hydra.run.dir=${item.dataset}/logs/train/${item.model_name}
       ++raise_exception=True 
     deps:
     - params.yaml
     - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
     outs:
-    - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
-  ##############################################################################
-  test_each_compressor:
-    matrix:
-      compressor: [gzip,  zstd, pkl, bz2, lzma]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=train 
-      files.name=${item.compressor}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      dataset=${item.dataset}
-      model_name=${model_name}
-      model.init.method=random
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.compressor}.npz
-      model.init.compressor=${item.compressor} 
-      model.init.m=10
-      hydra.run.dir=${item.dataset}/logs/compressor/${item.compressor}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/train/${item.compressor}/${files.score_dict_file}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
-  ##############################################################################
-  test_each_precompute:
-    matrix:
-      precompute: ["True", "False",]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=train 
-      files.name=precompute_${item.precompute}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      dataset=${item.dataset}
-      model_name=${model_name}
-      model.init.method=random
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.method}/${item.precompute}.npz
-      +model.init.precompute=${item.precompute} 
-      model.init.m=10 
-      hydra.run.dir=${item.dataset}/logs/precompute/${item.precompute}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/train/precompute_${item.precompute}/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/train/${item.model_name}/${files.score_dict_file}
+    - ${item.dataset}/logs/train/${item.model_name}
     params:
       - data
       - model
@@ -183,26 +100,30 @@ stages:
   ##############################################################################
   test_each_metric:
     matrix:
-      metric: [levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio, ncd]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      metric: [gzip,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      model : [gzip_knn,] # gzip_svc, gzip_logistic
+      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+      train_size: [20] #100, 1000, 10000
     cmd : >-
       python -m deckard.layers.optimise 
-      stage=train 
-      model.init.metric=${item.metric} 
-      files.name=${item.metric}
+      stage=test_each_metric 
+      files.name=${item.model}/${item.metric}/${item.train_size}
       files.directory=${item.dataset}
       data=${item.dataset}
+      data.sample.train_size=${item.train_size}
       dataset=${item.dataset}
+      model=${item.model}
       model_name=${model_name}
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${model_name}/${model.init.metric}/${item.metric}.npz
-      hydra.sweeper.n_jobs=1
-      hydra.run.dir=${item.dataset}/logs/metric/${item.metric}
+      model.init.metric=${item.metric} 
+      model.init.m=-1
+      hydra.run.dir=${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
       ++raise_exception=True 
     deps:
     - params.yaml
     - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
     outs:
-    - ${item.dataset}/${files.reports}/train/${item.metric}/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/test_each_metric/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+    - ${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
     params:
       - data
       - model
@@ -211,28 +132,33 @@ stages:
       - dataset
       - model_name
       - device_id
-  ##############################################################################
+  # ##############################################################################
   test_each_model:
     matrix:
-      model_name: [gzip_knn, gzip_logistic, gzip_svc, gzip_ridge, gzip_lasso, gzip_elasticnet]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      metric: [gzip] #,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
+      model : [gzip_knn, gzip_svc, gzip_logistic] 
+      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+      train_size: [20] #100, 1000, 10000
     cmd : >-
       python -m deckard.layers.optimise 
-      stage=train 
-      model_name=${item.model_name}
-      files.name=${item.model_name}
+      stage=test_each_model 
+      files.name=${item.model}/${item.metric}/${item.train_size}
       files.directory=${item.dataset}
       data=${item.dataset}
+      data.sample.train_size=${item.train_size}
       dataset=${item.dataset}
-      model.init.method=random
-      model.init.distance_matrix=${item.dataset}/${files.model_dir}/${item.model_name}/${model.init.method}/${item.model_name}.npz
-      hydra.run.dir=${item.dataset}/logs/model/${item.model_name}
+      model=${item.model}
+      model_name=${model_name}
+      model.init.metric=${item.metric} 
+      model.init.m=-1
+      hydra.run.dir=${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
       ++raise_exception=True 
     deps:
     - params.yaml
     - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
     outs:
-    - ${item.dataset}/${files.reports}/train/${item.model_name}/${files.score_dict_file}
+    - ${item.dataset}/${files.reports}/test_each_model/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+    - ${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
     params:
       - data
       - model
@@ -242,12 +168,11 @@ stages:
       - model_name
       - device_id
   ##############################################################################
-  grid_search_knn:
+  grid_search:
     matrix: 
-      random_state: [0] #[0,1,2,3,4,5,6,7,8,9] 
-      train_size: [1000]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos] 
-      configs: [  metrics, compressors, sklearn_knn] 
+      train_size: [20, 100,  300, 1000] #
+      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+      configs: [gzip_knn, gzip_logistic, gzip_svc] 
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -256,145 +181,179 @@ stages:
       data.sample.train_size=${item.train_size}
       data.sample.test_size=100
       model_name=${item.configs}
-      data.sample.random_state=${item.random_state}
-      hydra.sweeper.study_name=${item.train_size}_${item.random_state}
+      hydra.sweeper.study_name=${item.configs}_${item.dataset}
       hydra.sweeper.n_trials=128
-      hydra.sweeper.n_jobs=1
+      hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=${item.dataset}/logs/${item.configs}/${item.train_size}
+      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.configs}/${item.train_size}/study.csv
+      files.directory=${item.dataset}
+      files.reports=${files.reports}/${item.configs}/${item.train_size}
+      hydra.launcher.n_jobs=16
+      ++raise_exception=True               
       --config-name ${item.configs}
       --multirun
     deps:
       - params.yaml
       - conf/${item.configs}.yaml
     outs:
-        - ${item.dataset}/logs/${item.configs}/${item.train_size}_${item.random_state}
+        - ${item.dataset}/logs/${item.configs}/${item.train_size}
+        - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/train/:
+            cache: true
+            persist: true
+            push: true
     params:
       - conf/${item.configs}.yaml:
           - hydra
           - model_name
   ##############################################################################
-  grid_search_classifiers:
-    matrix: 
-      random_state: [0] #[0,1,2,3,4,5,6,7,8,9] 
-      train_size: [1000]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos] 
-      model: [gzip_logistic, gzip_svc] # gzip_knn,  run above
+  find_best_model:
+    matrix:
+      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+      model : [gzip_knn, gzip_svc, gzip_logistic]
+    deps:
+      - ${item.dataset}/logs/${item.model}/
+    cmd: >-
+         python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name ${item.model}_${item.dataset} --config_subdir model --params_file best_${item.model}_${item.dataset} --default_config ${item.model}
+    outs:
+      - conf/model/best_${item.model}_${item.dataset}.yaml
+  #############################################################################
+  test_each_method:
+    matrix:
+      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+      method: [medoid, sum, svc, hardness, nearmiss,random,knn] 
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=train 
+      +model.init.sampling_method=${item.method} 
+      model.init.m=3
+      data.sample.train_size=100
+      files.name=${item.method}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      dataset=${item.dataset}
+      model_name=${item.method}
+      hydra.run.dir=${item.dataset}/logs/method/${item.method}
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
+    - ${item.dataset}/logs/method/${item.method}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
+  ##############################################################################
+  condense:
+    matrix:
+      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+      model_name : [gzip_knn, gzip_svc, gzip_logistic]
+    deps:
+      - conf/model/best_${item.model_name}_${item.dataset}.yaml
+      - ${item.dataset}/logs/method/
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
       data=${item.dataset}
       dataset=${item.dataset}
-      data.sample.train_size=${item.train_size}
-      data.sample.test_size=100
-      model_name=${item.model}
-      model=${item.model}
-      data.sample.random_state=${item.random_state}
+      data.sample.test_size=1000
+      model_name=${item.model_name}
+      model=${item.model_name}
+      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
       hydra.sweeper.n_trials=128
-      hydra.sweeper.n_jobs=1
-      hydra.sweeper.study_name=${item.model}_${item.train_size}_${item.random_state}
-      --config-name classifiers
+      hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/
+      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.model_name}/study.csv
+      model.init.m='tag(log, interval(.01, .1))'
+      ++data.sample.train_size=1000
+      ++data.sample.random_state='int(interval(10000, 20000))'
+      model.init.m='tag(log, interval(.01, .1))'
+      +model.init.sampling_method=medoid,sum,svc,random,hardness,nearmiss,knn
+      files.directory=${item.dataset}
+      files.reports=${files.reports}/condense/${item.model_name}/
+      hydra.launcher.n_jobs=16
+      --config-name ${item.model_name}
       --multirun
-    deps:
-      - params.yaml
-      - conf/classifiers.yaml
     outs:
-        - ${item.dataset}/logs/classifiers/${item.model}_${item.train_size}_${item.random_state}
+        - ${item.dataset}/logs/condense/${item.model_name}/
+        - ${item.dataset}/${files.reports}/condense/${item.model_name}/:
+            cache: true
+            persist: true
+            push: true
     params:
-      - conf/classifiers.yaml:
+      - conf/condense.yaml:
           - hydra
-          - model_name
-  ##############################################################################
-  grid_search_regressors:
-    matrix: 
-      random_state: [0] #[0,1,2,3,4,5,6,7,8,9] 
-      train_size: [100]
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos] 
-      model: [gzip_ridge, gzip_lasso, gzip_elasticnet] 
-    cmd: >-
-      python -m deckard.layers.optimise
-      stage=train
-      data=${item.dataset}
-      dataset=${item.dataset}
-      data.sample.train_size=${item.train_size}
-      data.sample.test_size=100
-      model_name=${item.model}
-      model=${item.model}
-      data.sample.random_state=${item.random_state}
-      hydra.sweeper.n_trials=128
-      hydra.sweeper.n_jobs=1
-      hydra.sweeper.study_name=${item.model}_${item.train_size}_${item.random_state}
-      ++raise_exception=True
-      --config-name regressors
-      --multirun
-    deps:
-      - params.yaml
-      - conf/regressors.yaml
-    outs:
-        - ${item.dataset}/logs/regressors/${item.model}_${item.train_size}_${item.random_state}
-    params:
-      - conf/regressors.yaml:
-          - hydra
-          - model_name
-  ##############################################################################
   compile:
     matrix:
       dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-      model_name : [gzip_knn]
-      stage : [train]
+      stage : [gzip_knn, gzip_svc, gzip_logistic]
     deps:
       - ${item.dataset}/${files.reports}/${item.stage}/
     outs:
-    - ${item.dataset}/${files.reports}/${item.stage}-${item.model_name}.csv
+    - ${item.dataset}/${files.reports}/${item.stage}.csv
     cmd: >-
      python -m deckard.layers.compile 
      --report_folder ${item.dataset}/${files.reports}/${item.stage} 
-     --results_file ${item.dataset}/${files.reports}/${item.stage}-${item.model_name}.csv
+     --results_file ${item.dataset}/${files.reports}/${item.stage}.csv
   ##############################################################################
   clean:
     matrix:
       dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-      model_name : [gzip_knn]
-      stage : [train]
+      stage : [gzip_knn, gzip_svc, gzip_logistic]
     deps:
-      - ${item.dataset}/${files.reports}/${item.stage}-${item.model_name}.csv
+      - ${item.dataset}/${files.reports}/${item.stage}.csv
     cmd: >-
       python -m deckard.layers.clean_data 
-      -i ${item.dataset}/${files.reports}/${item.stage}-${item.model_name}.csv
-      -o ${item.dataset}/plots/clean_${item.stage}-${item.model_name}.csv
+      -i ${item.dataset}/${files.reports}/${item.stage}.csv
+      -o ${item.dataset}/plots/clean_${item.stage}.csv
       -c conf/clean.yaml
     outs:
-      - ${item.dataset}/plots/clean_${item.stage}-${item.model_name}.csv
+      - ${item.dataset}/plots/clean_${item.stage}.csv
     params:
       - conf/clean.yaml:
-        - params
-        - fillna
         - replace
+  ##############################################################################
+  merge:
+    matrix:
+      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+    deps:
+      - ${item.dataset}/plots/clean_gzip_knn.csv
+      - ${item.dataset}/plots/clean_gzip_logistic.csv
+      - ${item.dataset}/plots/clean_gzip_svc.csv
+    cmd: >-
+      python merge.py
+      --big_dir ${item.dataset}/plots/
+      --data_file clean_gzip_knn.csv
+      --little_dir_data_file clean_gzip_logistic.csv clean_gzip_svc.csv
+      --output_folder ${item.dataset}/plots/
+      --output_file merged.csv
+    outs:
+      - ${item.dataset}/plots/merged.csv
   ##############################################################################
   plot:
     matrix:
       dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
-      model_name : [gzip_knn]
-      stage : [train]
     cmd: >-
       python -m deckard.layers.plots 
       --path ${item.dataset}/plots/ 
-      --file ${item.dataset}/plots/clean_${item.stage}-${item.model_name}.csv 
+      --file ${item.dataset}/plots/merged.csv 
       -c conf/plots.yaml
     deps:
-      - ${item.dataset}/plots/clean_${item.stage}-${item.model_name}.csv
+      - ${item.dataset}/plots/merged.csv
     plots:
       - ${item.dataset}/plots/${line_plot[0].file}
       - ${item.dataset}/plots/${line_plot[1].file}
       - ${item.dataset}/plots/${line_plot[2].file}
-      - ${item.dataset}/plots/${line_plot[3].file}
-      - ${item.dataset}/plots/${line_plot[4].file}
-      - ${item.dataset}/plots/${line_plot[5].file}
-      - ${item.dataset}/plots/${line_plot[6].file}
-      - ${item.dataset}/plots/${line_plot[7].file}
-      - ${item.dataset}/plots/${line_plot[8].file}
       - ${item.dataset}/plots/${cat_plot[0].file}
       - ${item.dataset}/plots/${cat_plot[1].file}
       - ${item.dataset}/plots/${cat_plot[2].file}
       - ${item.dataset}/plots/${cat_plot[3].file}
+      - ${item.dataset}/plots/${cat_plot[4].file}
     params:
       - conf/plots.yaml:
           - line_plot
