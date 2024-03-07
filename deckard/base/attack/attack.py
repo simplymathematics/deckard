@@ -8,6 +8,9 @@ from time import process_time_ns, time
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from art.utils import to_categorical, compute_success
+from sklearn.utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator
+from sklearn.exceptions import NotFittedError
 from random import randint
 from ..data import Data
 from ..model import Model
@@ -138,7 +141,6 @@ class EvasionAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
-        **kwargs,
     ):
         time_dict = {}
         results = {}
@@ -149,6 +151,11 @@ class EvasionAttack:
         if attack_file is not None and Path(attack_file).exists():
             samples = self.data.load(attack_file)
         else:
+            print(f"Type of self.init: {type(self.init)}")
+            print(f"Type of self.init.model: {type(self.init.model)}")
+            print(f"Type of model: {type(model)}")
+            
+                    
             atk = self.init(model=model, attack_size=self.attack_size)
 
             if targeted is True:
@@ -301,7 +308,6 @@ class PoisoningAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
-        **kwargs,
     ):
         time_dict = {}
         results = {}
@@ -489,7 +495,6 @@ class InferenceAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
-        **kwargs,
     ):
         data_shape = data[0][0].shape
         time_dict = {}
@@ -609,7 +614,6 @@ class ExtractionAttack:
         adv_probabilities_file=None,
         adv_predictions_file=None,
         adv_losses_file=None,
-        **kwargs,
     ):
         results = {}
         time_dict = {}
@@ -805,8 +809,16 @@ class Attack:
         **kwargs,
     ):
         name = self.init.name
+        kwargs = deepcopy(self.kwargs)
+        kwargs.update({"init": self.init.kwargs})
         data = self.data()
         data, model = self.model.initialize(data)
+        if isinstance(model, BaseEstimator):
+            try:
+                check_is_fitted(model), "Model must be fitted before calling attack."
+            except NotFittedError as e:
+                logger.warning(f"Model not fitted. Fitting model before attack. Error: {e}")
+                model, _ = self.model.fit(data=data, model=model)
         if "art" not in str(type(model)):
             model = self.model.art(model=model, data=data)
         if self.method == "evasion":
@@ -815,7 +827,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **self.init.kwargs,
+                **kwargs,
             )
             result = attack(
                 data,
@@ -831,7 +843,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **self.init.kwargs,
+                **kwargs,
             )
             result = attack(
                 data,
@@ -847,7 +859,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **self.init.kwargs,
+                **kwargs,
             )
             result = attack(
                 data,
@@ -863,7 +875,7 @@ class Attack:
                 data=self.data,
                 model=self.model,
                 attack_size=self.attack_size,
-                **self.init.kwargs,
+                **kwargs,
             )
             result = attack(
                 data,
