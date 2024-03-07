@@ -11,6 +11,46 @@ except ImportError:
     logger.info("Plotext not installed. Please install plotext to use the plotting functions. Will skip the plotting for now.")
     plot = False
 
+import pandas as pd
+from imblearn.under_sampling import RandomUnderSampler
+from pathlib import Path
+
+def undersample(df, target, n_samples=10000):
+    """
+    Undersamples the dataframe to balance the target column
+    """
+    y = df[target]
+    columns = list(df.columns)
+    X = df.drop(target, axis=1)
+    n_classes = y.value_counts().shape[0]
+    keys = y.value_counts().keys()
+    values = [n_samples // n_classes] * len(keys)
+    sampling_strategy = dict(zip(keys, values))
+    rus = RandomUnderSampler(random_state=0, sampling_strategy=sampling_strategy)
+    X_resampled, y_resampled = rus.fit_resample(X,y)
+    df_resampled = pd.concat([X_resampled, y_resampled], axis=1)
+    return df_resampled
+
+def undersample_datasets(datasets:list, targets:list, n_samples:list):
+    """
+    Undersamples the datasets to balance the target columns
+    """
+    assert len(datasets) == len(targets), "The number of datasets and targets must be the same"
+    for i in range(len(datasets)):
+        path = Path(datasets[i])
+        print(f"Undersampling {path.as_posix()}")
+        df = pd.read_csv(datasets[i])
+        df = undersample(df, targets[i], n_samples[i])
+        new_name = path.stem + f"_undersampled_{n_samples[i]}.csv"
+        new_name = path.parent / new_name
+        print(f"Renaming to {new_name}")
+        Path(new_name).parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(new_name, index=False)
+        print(f"Saved to {new_name}")
+
+
+
+
 if __name__ == "__main__":
     
     Path("raw_data").mkdir(parents=True, exist_ok=True)
@@ -75,6 +115,29 @@ if __name__ == "__main__":
         plt.show()
     else:
         logger.info("Label counts for DDoS: {}".format(counts))
+        
+    datasets = [
+    "raw_data/kdd_nsl.csv",
+    "raw_data/truthseeker.csv",
+    "raw_data/sms-spam.csv",
+    "raw_data/ddos.csv",
+    ]
+    targets = [
+        'label', # kdd_nsl
+        'BotScoreBinary', # truthseeker
+        'label', # sms_spam
+        'Label', # ddos
+    ]
+    n_samples = [
+        5000, # kdd_nsl
+        8000, # truthseeker
+        1450, # sms_spam
+        10000, # ddos
+    ]
+
+    paths = undersample_datasets(datasets, targets, n_samples)
+
+
         
     
     
