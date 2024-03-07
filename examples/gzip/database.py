@@ -36,19 +36,29 @@ class OptunaStudyDumpCallback(Callback):
         self.output_file = output_file
         super().__init__()
         
-        
-    def on_multirun_end(self, *args, **kwargs) -> None:
-        studies = optuna.get_all_study_summaries(self.storage)
-        study_names = [study.study_name for study in studies]
+    def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
+        studies = optuna.get_all_study_names(self.storage)
+        study_names = [study for study in studies]
+        # study_names = [study.study_name for study in studies]
         assert self.study_name in study_names, f"Study {self.study_name} not found in {study_names}"
         study = optuna.load_study(self.study_name, storage=self.storage)
         if hasattr(study, "set_metric_names"):
             study.set_metric_names(self.metric_names)
+        else:
+            print("Cannot set metric names")
+        
+        
+    def on_multirun_end(self, *args, **kwargs) -> None:
+        studies = optuna.get_all_study_names(self.storage)
+        study_names = [study for study in studies]
+        assert self.study_name in study_names, f"Study {self.study_name} not found in {study_names}"
+        study = optuna.load_study(self.study_name, storage=self.storage)
         df = study.trials_dataframe()
-        metric_names = [f"value_{metric}" for metric in self.metric_names]
-        if len(metric_names) == 1:
+        if len(self.metric_names) == 1:
+            metric_names = [f"value_{metric}" for metric in self.metric_names]
             df = df.sort_values(metric_names[0], ascending=False)
         else:
+            metric_names = [f"values_{metric}" for metric in self.metric_names]
             df = df.sort_values(metric_names, ascending=False)
         suffix = Path(self.output_file).suffix
         if suffix in [".csv"]:
