@@ -115,6 +115,10 @@ class ArtInitializer:
             model = SklearnModelInitializer(
                 data=data, model=model, library=library, **kwargs
             )()
+            model = self.model.fit(data[0], data[2])
+            if library in sklearn_dict and "art." not in str(type(model)):
+                est = sklearn_dict[library]
+                model = est(model, **kwargs)
         elif library in [
             "tf2",
             "tensorflowv2",

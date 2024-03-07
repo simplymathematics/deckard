@@ -223,10 +223,7 @@ class SklearnModelInitializer:
         self.data = data
         self.model = model
         self.library = library
-        params = deepcopy(kwargs)
-        # while "kwargs" in params:
-        #     params.update(**params.pop("kwargs"))
-        self.kwargs = params
+        self.kwargs = kwargs
         if len(pipeline) > 0:
             self.pipeline = SklearnModelPipeline(**pipeline)
         else:
@@ -234,44 +231,30 @@ class SklearnModelInitializer:
 
     def __call__(self):
         logger.debug(f"Initializing model {self.model} with kwargs {self.kwargs}")
-        data = self.data
         model = self.model
-        library = self.library
-        kwargs = {}
-        params = deepcopy(self.kwargs)
-        if "library" in kwargs:
-            library = kwargs.pop("library")
-        if "clip_values" in params:
-            clip_values = params.pop("clip_values")
-            kwargs["clip_values"] = tuple(clip_values)
+        if isinstance(model, BaseEstimator):
+            pass
+        elif isinstance(model, DictConfig):
+            model = OmegaConf.to_container(model, resolve=True)
+        elif isinstance(model, str):
+            model = {"name": model, **self.kwargs}
         else:
-            numeric = pd.DataFrame(data[0]).apply(pd.to_numeric, args=('coerce',))
-            min_ = np.min(numeric)
-            max_ = np.max(numeric)
-            kwargs["clip_values"] = (min_, max_)
-        if "preprocessing" not in params:
-            kwargs['preprocessing']= None
-        if "preprocessing_defences" in params:
-            preprocessing_defences = params.pop("preprocessing_defences")
-            kwargs["preprocessing_defences"] = preprocessing_defences
-        if "postprocessing_defences" in params:
-            postprocessing_defences = params.pop("postprocessing_defences")
-            kwargs["postprocessing_defences"] = postprocessing_defences
+            assert isinstance(model, dict), f"model must be a sklearn estimator, string, or dict. Got {type(model)}"
+        if isinstance(model, dict):
+            if "name" in model:
+                name = model.pop("name")
+            else:
+                name = model.pop("_target_")
+            
+            
+            
+
         if self.pipeline is not None:
-            obj = self.pipeline(model)
+            model = self.pipeline(model)
             assert isinstance(
-                obj,
+                model,
                 BaseEstimator,
             ), f"model must be a sklearn estimator. Got {type(model)}"
-        else:
-            obj = model
-        if library in sklearn_dict and "art." not in str(type(model)):
-            est = sklearn_dict[library]
-            model = est(obj, **kwargs)
-        elif "art." in str(type(model)):
-            model = obj
-        else:
-            raise ValueError(f"library must be one of {sklearn_models}. Got {library}")
         assert hasattr(
             model,
             "fit",

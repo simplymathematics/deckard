@@ -16,9 +16,6 @@ class SklearnDataPipelineStage:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
-        )
         self.name = name
         self.kwargs = kwargs
 
