@@ -34,7 +34,6 @@ class KerasLoss:
     def __call__(self):
         import tensorflow as tf
 
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if len(self.kwargs) > 0:
             config = {"class_name": self.name, "config": self.kwargs}
         else:
@@ -127,8 +126,6 @@ class KerasOptimizer:
 
     def __call__(self):
         import tensorflow as tf
-
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if len(self.kwargs) > 0:
             config = {"class_name": self.name, "config": self.kwargs}
         else:
