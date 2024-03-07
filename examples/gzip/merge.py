@@ -44,7 +44,10 @@ def merge_run(big_dir, little_dir,  output_file="merged", data_file = "raw.csv",
     logger.info(f"Shape of small: {small.shape}")
     merged = pd.merge(big, small, how=how, **kwargs)
     for k,v in fillna.items():
-        merged[k] = merged[k].fillna(v)
+        if k in merged.columns:
+            merged[k] = merged[k].fillna(v)
+        else:
+            merged[k] = v
     logger.info(f"Shape of merged: {merged.shape}")
     logger.info(f"Saving merged to {data_file}.")
     results_folder = Path(output_file).parent
@@ -56,17 +59,7 @@ def merge_run(big_dir, little_dir,  output_file="merged", data_file = "raw.csv",
     assert Path(saved_path).exists(), f"Saved path {saved_path} does not exist."
     return None
 
-merge_parser = argparse.ArgumentParser()
-merge_parser.add_argument("--big_dir", type=str, help="Directory of the big run", required=True)
-merge_parser.add_argument("--little_dir", type=str, help="Directory of the small run", required=False)
-merge_parser.add_argument("--data_file", type=str, help="Name of the data file", required=True)
-merge_parser.add_argument("--output_file", type=str, help="Name of the output file", default="merged.csv")
-merge_parser.add_argument("--output_folder", type=str, help="Name of the output folder", required=False)
-merge_parser.add_argument("--little_dir_data_file", type=str, help="Name of the output folder", required=False, nargs="*")
-merge_parser.add_argument("--config", type=str, help="Name of the output folder", required=False)
-
-
-def merge_main(merge_run, args):
+def merge_main(args):
     if args.config is not None:
         with  open(args.config, 'r') as stream:
             fillna = yaml.safe_load(stream).get("fillna", {})
@@ -84,7 +77,19 @@ def merge_main(merge_run, args):
             print(f"Data file: {args.data_file}")
             print(f"Output file: {args.output_file}")
     else:
-        merge_run(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=args.little_dir_data_file, fillna=fillna, output_file=output_file)
+        merge_run(args.big_dir, args.little_dir, data_file=args.data_file, little_dir_data_file=args.little_dir_data_file, fillna=fillna, output_file=output_file, how='outer', )
+
+
+merge_parser = argparse.ArgumentParser()
+merge_parser.add_argument("--big_dir", type=str, help="Directory of the big run", required=True)
+merge_parser.add_argument("--little_dir", type=str, help="Directory of the small run", required=False)
+merge_parser.add_argument("--data_file", type=str, help="Name of the data file", required=True)
+merge_parser.add_argument("--output_file", type=str, help="Name of the output file", default="merged.csv")
+merge_parser.add_argument("--output_folder", type=str, help="Name of the output folder", required=False)
+merge_parser.add_argument("--little_dir_data_file", type=str, help="Name(s) of the files to merge into the big file.", required=False, nargs="*")
+merge_parser.add_argument("--config", type=str, help="Name of file containing a 'fillna' config dictionary.", required=False)
+
+
 
 if __name__ == "__main__":
     
