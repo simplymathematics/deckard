@@ -42,50 +42,10 @@ class ModelInitializer:
 
     def __call__(self):
         params = self.kwargs
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "input_dim" in params:
-            if isinstance(params["input_dim"], list):
-                params["input_dim"] = tuple(params["input_dim"])
-            elif isinstance(params["input_dim"], int):
-                params["input_dim"] = params["input_dim"]
-            elif isinstance(params["input_dim"], ListConfig):
-                input_dim_list = tuple(
-                    OmegaConf.to_container(params["input_dim"], resolve=True),
-                )
-                if len(input_dim_list) == 1:
-                    params["input_dim"] = input_dim_list[0]
-                else:
-                    params["input_dim"] = tuple(input_dim_list)
-            else:  # pragma: no cover
-                raise ValueError(
-                    f"input_dim must be a list or tuple. Got {type(params['input_dim'])}",
-                )
-        if "output_dim" in params:
-            if isinstance(params["output_dim"], list):
-                params["output_dim"] = tuple(params["output_dim"])
-            elif isinstance(params["output_dim"], int):
-                params["output_dim"] = params["output_dim"]
-            elif isinstance(params["output_dim"], ListConfig):
-                output_dim_list = OmegaConf.to_container(
-                    params["output_dim"],
-                    resolve=True,
-                )
-                if len(output_dim_list) == 1:
-                    params["output_dim"] = output_dim_list[0]
-                else:
-                    params["output_dim"] = tuple(output_dim_list)
-            else:  # pragma: no cover
-                raise ValueError(
-                    f"output_dim must be a list or tuple. Got {type(params['output_dim'])}",
-                )
         name = params.pop("name", self.name)
         if self.pipeline is not None:
             pipeline = deepcopy(self.pipeline)
             obj = factory(name, **params)
-            # if isinstance(pipeline, DictConfig):
-            #     pipeline = OmegaConf.to_container(pipeline, resolve=True)
-            # elif isinstance(pipeline, dict):
-            #     pipeline = pipeline
             if is_dataclass(pipeline):
                 pipeline = asdict(pipeline)
             else:  # pragma: no cover
@@ -107,7 +67,6 @@ class ModelTrainer:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, **kwargs):
-        logger.info(f"Initializing model trainer with kwargs {kwargs}")
         self.kwargs = kwargs
 
     def __call__(self, data: list, model: object, library=None):
@@ -133,8 +92,6 @@ class ModelTrainer:
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns()
             end_timestamp = time()
-        
-        
         except np.AxisError:  # pragma: no cover
             from art.utils import to_categorical
 
@@ -153,7 +110,6 @@ class ModelTrainer:
         except ValueError as e:  # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
-
                 nb_classes = len(np.unique(data[2]))
                 if nb_classes < 2:
                     nb_classes = 2
@@ -187,18 +143,16 @@ class ModelTrainer:
             except Exception as e:
                 raise e
         except RuntimeError as e:  # pragma: no cover
-            if "eager mode" in str(e):
+            if "eager mode" in str(e) and library in tensorflow_dict.keys():
                 import tensorflow as tf
-
                 tf.config.run_functions_eagerly(True)
                 start = process_time_ns()
                 start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
-            elif "should be the same" in str(e).lower():
+            elif "should be the same" in str(e).lower() and library in torch_dict.keys():
                 import torch
-
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])
@@ -313,9 +267,6 @@ class Model:
         else:
             self.art = None
         self.name = my_hash(self) if name is None else str(name)
-        logger.info(
-            f"Initializing model with data {self.data}, init {self.init}, trainer {self.trainer}, art {self.art}",
-        )
 
     def __hash__(self):
         return int(my_hash(self), 16)
