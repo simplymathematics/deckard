@@ -22,7 +22,14 @@ replace:
     pkl: "Pickle"
     bz2: "BZ2"
     zstd: "Zstd"
+    lzma  : "Lzma"
   model_name:
     gzip_svc : "k-SVC"
     gzip_logistic : "k-Logistic"
     gzip_knn : "k-KNN"
+  model.init.symmetric:
+    True: "Symmetric"
+    False: "Asymmetric"
+drop_values:
+  accuracy : 0.00000000000
+  predict_time : 1.00000000000

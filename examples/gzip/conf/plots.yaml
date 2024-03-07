@@ -1,30 +1,17 @@
 line_plot:
-- file: method_vs_accuracy.pdf
-  hue: model.init.method
-  title: #"Accuracy vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
-  y: accuracy
-  ylabel: Accuracy
-  hue_order:
-  - Random
-  - Sum
-  - Medoid
-  - SVC
-  - KNN
-  xlim: [10, 500]
-  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  errorbar: se
-  err_style: bars
 - file: metric_vs_accuracy.pdf
   hue: model.init.metric
   title: #"Accuracy vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
   y: accuracy
   ylabel: Accuracy
   hue_order:
-  - NCD
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
   - Levenshtein
   - Ratio
   - Hamming
@@ -35,50 +22,20 @@ line_plot:
   err_style: bars
   xlim: [10, 500]
   legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}  
-- file: compressor_vs_accuracy.pdf
-  hue: model.init.compressor
-  title: #"Accuracy vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
-  y: accuracy
-  ylabel: Accuracy
-  hue_order:
-  - Gzip
-  - Pickle
-  - BZ2
-  - Zstd
-  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  xlim: [10, 503]
-  errorbar: se
-  err_style: bars
-- file: method_vs_train_time.pdf
-  hue: model.init.method
-  title: #"Training Time vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
-  y: train_time
-  ylabel: Training Time (s)
-  y_scale : log
-  hue_order:
-  - Random
-  - Sum
-  - Medoid
-  - SVC
-  - KNN
-  xlim: [10, 500]
-  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  errorbar: se
-  err_style: bars
 - file: metric_vs_train_time.pdf
   hue: model.init.metric
   title: #"Training Time vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
   y: train_time
   ylabel: Training Time (s)
   y_scale : log
   hue_order:
-  - NCD
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
   - Levenshtein
   - Ratio
   - Hamming
@@ -89,51 +46,20 @@ line_plot:
   err_style: bars
   xlim: [10, 500]
   legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-- file: compressor_vs_train_time.pdf
-  hue: model.init.compressor
-  title: #"Training Time vs $m$-best samples"
-  x: model.init.m
-  xlabel: $m$-best Samples per Class
-  y: train_time
-  ylabel: Training Time (s)
-  hue_order:
-  - Gzip
-  - Pickle
-  - BZ2
-  - Zstd
-  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  xlim: [10, 500]
-  errorbar: se
-  err_style: bars
-  y_scale : log
-- file: method_vs_predict_time.pdf
-  hue: model.init.method
-  title: #"Prediction Time vs $m$-best samples"
-  x: model.init.m
-  xlabel: Number of Training Samples
-  y: predict_time
-  ylabel: Prediction Time (s)
-  hue_order:
-  - Random
-  - Sum
-  - Medoid
-  - SVC
-  - KNN
-  xlim: [10, 500]
-  y_scale : log
-  legend: {"title": "Methods", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  errorbar: se
-  err_style: bars
 - file: metric_vs_predict_time.pdf
   hue: model.init.metric
   title: #"Prediction Time vs $m$-best samples"
-  x: model.init.m
+  x: data.sample.train_size
   xlabel: Number of Training Samples
   y: predict_time
   ylabel: Prediction Time (s)
   y_scale : log
   hue_order:
-  - NCD
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
   - Levenshtein
   - Ratio
   - Hamming
@@ -144,23 +70,6 @@ line_plot:
   err_style: bars
   xlim: [10, 500]
   legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-- file: compressor_vs_predict_time.pdf
-  hue: model.init.compressor
-  title: #"Prediction Time vs $m$-best samples"
-  x: model.init.m
-  xlim : [10, 500]
-  xlabel: Number of Training Samples
-  y: predict_time
-  ylabel: Prediction Time (s)
-  y_scale : log
-  hue_order:
-  - Gzip
-  - Pickle
-  - BZ2
-  - Zstd
-  legend: {"title": "Compressors", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-  errorbar: se
-  err_style: bars
 cat_plot:
   - file: symmetric_vs_metric.pdf
     x : model.init.symmetric
@@ -169,11 +78,15 @@ cat_plot:
     errorbar: se
     kind : bar
     titles : 
-    xlabels : Assume Symmetric
+    xlabels : ""
     ylabels : Accuracy
     legend_title: "Metrics"
     hue_order:
-    - NCD
+    - Gzip
+    - Pickle
+    - BZ2
+    - Zstd
+    - Lzma
     - Levenshtein
     - Ratio
     - Hamming
@@ -181,25 +94,6 @@ cat_plot:
     - Jaro-Winkler 
     - SeqRatio
     legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
-    set:
-      yscale: linear
-      ylim: [0, 1]
-  - file: symmetric_vs_compressor.pdf
-    x : model.init.symmetric
-    y : accuracy
-    hue : model.init.compressor
-    errorbar: se
-    kind : bar
-    titles : 
-    xlabels : Assume Symmetric
-    ylabels : Accuracy
-    legend_title: "Compressors"
-    hue_order:
-    - Gzip
-    - Pickle
-    - BZ2
-    - Zstd
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "left center"}
     set:
       yscale: linear
       ylim: [0, 1]
@@ -210,11 +104,15 @@ cat_plot:
     errorbar: se
     kind : bar
     titles : 
-    xlabels : Assume Symmetric
+    xlabels : ""
     ylabels : Training Time (s)
     legend_title: "Metrics"
     hue_order:
-    - NCD
+    - Gzip
+    - Pickle
+    - BZ2
+    - Zstd
+    - Lzma
     - Levenshtein
     - Ratio
     - Hamming
@@ -224,30 +122,12 @@ cat_plot:
     legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
     set:
       yscale: log
-  - file: symmetric_vs_compressor_train_time.pdf
-    x : model.init.symmetric
-    y : train_time
-    hue : model.init.compressor
-    errorbar: se
-    kind : bar
-    titles : 
-    xlabels : Assume Symmetric
-    ylabels : Training Time (s)
-    legend_title: "Compressors"
-    hue_order:
-    - Gzip
-    - Pickle
-    - BZ2
-    - Zstd
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "left center"}
-    # set:
-    #   yscale: log
   - file: models_vs_accuracy.pdf
     x : model_name
     y : accuracy
-    hue : model.init.m
+    hue : data.sample.train_size
     errorbar: se
-    kind : bar
+    kind : boxen
     titles :
     xlabels : Model
     ylabels : Accuracy
@@ -260,8 +140,8 @@ cat_plot:
     rotation: 90
   - file: models_vs_train_time.pdf
     x : model_name
-    y : train_time
-    hue : model.init.m
+    y : accuracy
+    hue : data.sample.train_size
     errorbar: se
     kind : bar
     titles :
@@ -274,8 +154,8 @@ cat_plot:
       yscale: log
   - file: models_vs_predict_time.pdf
     x : model_name
-    y : predict_time
-    hue : model.init.m
+    y : accuracy
+    hue : data.sample.train_size
     errorbar: se
     kind : bar
     titles :
@@ -287,34 +167,3 @@ cat_plot:
     set:
       yscale: log
     rotation: 90
-  - file: precompute_vs_accuracy.pdf
-    x: model.init.precompute
-    y: accuracy
-    hue: model.init.m
-    errorbar: se
-    kind: bar
-    titles:
-    xlabels: Sklearn Implementation?
-    ylabels: Accuracy
-  - file: precompute_vs_train_time.pdf
-    x: model.init.precompute
-    y: train_time
-    hue: model.init.m
-    errorbar: se
-    kind: bar
-    titles:
-    xlabels: Sklearn Implementation?
-    ylabels: Training Time (s)
-    set:
-      yscale: log
-  - file: precompute_vs_predict_time.pdf
-    x: model.init.precompute
-    y: predict_time
-    hue: model.init.m
-    errorbar: se
-    kind: bar
-    titles:
-    xlabels: Sklearn Implementation?
-    ylabels: Prediction Time (s)
-    set:
-      yscale: log

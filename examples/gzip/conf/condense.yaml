@@ -2,7 +2,7 @@ defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
     - data: ???
-    - model: gzip_knn
+    - model: ???
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
@@ -34,20 +34,29 @@ hydra:
       output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
   sweeper:
     sampler:
+      sampler:
       _target_: optuna.samplers.TPESampler
-      seed : ???
+      seed: 123
+      consider_prior: true
+      prior_weight: 1.0
+      consider_magic_clip: true
+      consider_endpoints: false
+      n_startup_trials: 10
+      n_ei_candidates: 24
+      multivariate: true
+      group: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}
     storage: sqlite:///optuna.db
-    n_jobs: 1
+    n_jobs: 2
     n_trials : 2
     direction: ${direction}
+    max_failure_rate: 1.0
     params: 
-      ++data.sample.train_size : tag(log, int(interval(100, 1000)))
+      ++data.sample.train_size : 1000
       ++data.sample.random_state: int(interval(10000, 20000))
-      model.init.m : tag(log, interval(.1, 1))
-      +model.init.sampling_method : knn,medoid,sum,svc,random
-      model.init.symmetric : True,False
+      model.init.m : tag(log, interval(.01, .1))
+      +model.init.sampling_method : medoid,sum,svc,random,hardness,nearmiss,knn
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8

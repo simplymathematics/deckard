@@ -1,10 +1,9 @@
 _target_: deckard.base.data.Data
-
 sample:
     _target_: deckard.base.data.SklearnDataSampler
     random_state : 0
     stratify: True
     train_size : 100
     test_size :  100
-name: raw_data/kdd_nsl.csv
+name: raw_data/kdd_nsl_undersampled_5000.csv
 target: label
