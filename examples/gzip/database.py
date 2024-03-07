@@ -87,4 +87,5 @@ if __name__ == "__main__":
     output_file = args.output_file
     
     callback = OptunaStudyDumpCallback(storage, study_name, metric_names, directions, output_file)
+    callback.on_multirun_start()
     callback.on_multirun_end()
