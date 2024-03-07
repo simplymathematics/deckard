@@ -72,14 +72,7 @@ class OptunaStudyDumpCallback(Callback):
         
         
         
-if __name__ == "__main__":
-    arts = argparse.ArgumentParser()
-    arts.add_argument("--storage", type=str, default=storage)
-    arts.add_argument("--study_name", type=str, default=study_name)
-    arts.add_argument("--metric_names", type=str, nargs="+", default=metric_names)
-    arts.add_argument("--directions", type=str, nargs="+", default=directions)
-    arts.add_argument("--output_file", type=str, default=output_file)
-    args = arts.parse_args()
+def multirun_call(args):
     storage = args.storage
     study_name = args.study_name
     metric_names = args.metric_names if isinstance(args.metric_names, list) else [args.metric_names]
@@ -89,3 +82,13 @@ if __name__ == "__main__":
     callback = OptunaStudyDumpCallback(storage, study_name, metric_names, directions, output_file)
     callback.on_multirun_start()
     callback.on_multirun_end()
+optuna_callback_parser = argparse.ArgumentParser()
+optuna_callback_parser.add_argument("--storage", type=str, default=storage)
+optuna_callback_parser.add_argument("--study_name", type=str, default=study_name)
+optuna_callback_parser.add_argument("--metric_names", type=str, nargs="+", default=metric_names)
+optuna_callback_parser.add_argument("--directions", type=str, nargs="+", default=directions)
+optuna_callback_parser.add_argument("--output_file", type=str, default=output_file)
+
+if __name__ == "__main__":
+    args = optuna_callback_parser.parse_args()
+    multirun_call(args)
