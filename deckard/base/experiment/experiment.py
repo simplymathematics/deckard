@@ -107,7 +107,6 @@ class Experiment:
         self.optimizers = optimizers
         self.kwargs = kwargs
         self.name = name if name is not None else self._set_name()
-        logger.info("Instantiating Experiment with id: {}".format(self.get_name()))
 
     def __hash__(self):
         name = str(self.name).encode("utf-8")
@@ -139,28 +138,12 @@ class Experiment:
         #########################################################################
         # Load or generate data
         #########################################################################
-        data_files = {
-            "data_file": files.get("data_file", None),
-            "train_labels_file": files.get("train_labels_file", None),
-            "test_labels_file": files.get("test_labels_file", None),
-            # "time_dict_file": files.get("score_dict_file", None),
-            # TODO data_score_file
-        }
-        data = self.data(**data_files)
+        data = self.data(**files)
         #########################################################################
         # Load or train model
         #########################################################################
         if self.model is not None:
-            model_files = {
-                "model_file": files.get("model_file", None),
-                "predictions_file": files.get("predictions_file", None),
-                "probabilities_file": files.get("probabilities_file", None),
-                "time_dict_file": files.get("score_dict_file", None),
-                "losses_file": files.get("losses_file", None),
-                # TODO train_score_file
-                # TODO test_score_file
-            }
-            model_results = self.model(data, **model_files)
+            model_results = self.model(data, **files)
             score_dict.update(**model_results.pop("time_dict", {}))
             score_dict.update(**model_results.pop("score_dict", {}))
             model = model_results["model"]
@@ -184,7 +167,7 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        else:  # For experiments without models
+        else:  # For experiments without models, e.g Mutual Information experiments on datasets
             preds = data[2]
         ##########################################################################
         # Load or run attack
@@ -193,10 +176,7 @@ class Experiment:
             adv_results = self.attack(
                 data,
                 model,
-                attack_file=files.get("attack_file", None),
-                adv_predictions_file=files.get("adv_predictions_file", None),
-                adv_probabilities_file=files.get("adv_probabilities_file", None),
-                adv_losses_file=files.get("adv_losses_file", None),
+                **files,
             )
             if "adv_predictions" in adv_results:
                 adv_preds = adv_results["adv_predictions"]
