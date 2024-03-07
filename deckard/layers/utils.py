@@ -293,7 +293,7 @@ def get_params_from_disk(params_file, pipeline_file, directory, stage, config_di
         params["files"] = dict(params.pop("files", params))
         params["files"]["_target_"] = "deckard.base.files.FileConfig"
         params["files"]["stage"] = None
-        params["stage"] = stage
+        params["stage"] = None
     return params
 
 
@@ -319,10 +319,14 @@ def run_stage(
         _ = prepare_files(params_file, stage, params, id_)
         score = exp()
     else:
+        possible_subdicts = ["data", "model", "attack", "scorers", "plots", "files"]
+        assert sub_dict in possible_subdicts, f"sub_dict must be one of {possible_subdicts}"
         target = f"deckard.{sub_dict}.{sub_dict.capitalize()}"
         params['_target_'] = target
         exp = instantiate(params[sub_dict])
         id_ = exp.name
+        files = params['files']
+        params[sub_dict]['files'] = files
         files = prepare_files(params_file, stage, params[sub_dict], id_)
         score = exp(**files)
     return id_, score

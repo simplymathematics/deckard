@@ -14,10 +14,7 @@ hydra_parser.add_argument("--config_dir", type=str, default="conf")
 hydra_parser.add_argument("--config_file", type=str, default="default")
 hydra_parser.add_argument("--workdir", type=str, default=".")
 
-if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
-
-    args = hydra_parser.parse_args()
+def parse_hydra_config(args) -> None:
     logging.basicConfig(level=args.verbosity)
     config_dir = Path(Path(), args.config_dir).resolve().as_posix()
     OmegaConf.register_new_resolver("eval", eval)
@@ -32,3 +29,8 @@ if __name__ == "__main__":
     )
     os.environ["DECKARD_DEFAULT_CONFIG"] = args.config_file
     os.environ["DECKARD_CONFIG_PATH"] = args.config_dir
+    return None
+
+if __name__ == "__main__":
+    args = hydra_parser.parse_args()
+    parse_hydra_config(args)

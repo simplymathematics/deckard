@@ -284,42 +284,43 @@ def scatter_plot(
     return graph
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        help="Path to the plot folder",
-        required=True,
-    )
-    parser.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        help="Data file to read from",
-        required=True,
-    )
-    parser.add_argument(
-        "-t",
-        "--plotfiletype",
-        type=str,
-        help="Filetype of the plots",
-        default=".eps",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="conf/plots.yaml",
-    )
-    args = parser.parse_args()
+
+plot_parser = argparse.ArgumentParser()
+plot_parser.add_argument(
+    "-p",
+    "--path",
+    type=str,
+    help="Path to the plot folder",
+    required=True,
+)
+plot_parser.add_argument(
+    "-f",
+    "--file",
+    type=str,
+    help="Data file to read from",
+    required=True,
+)
+plot_parser.add_argument(
+    "-t",
+    "--plotfiletype",
+    type=str,
+    help="Filetype of the plots",
+    default=".eps",
+)
+plot_parser.add_argument(
+    "-v",
+    "--verbosity",
+    default="INFO",
+    help="Increase output verbosity",
+)
+plot_parser.add_argument(
+    "-c",
+    "--config",
+    help="Path to the config file",
+    default="conf/plots.yaml",
+)
+
+def plot_main(logger, cat_plot, line_plot, scatter_plot, args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
@@ -373,3 +374,7 @@ if __name__ == "__main__":
           scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
         except Exception as e:
           logger.error(f"Error in plot {i} with params {dict_}")
+
+if __name__ == "__main__":
+    args = plot_parser.parse_args()
+    plot_main(args)

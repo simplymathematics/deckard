@@ -263,9 +263,9 @@ def optimise(cfg: DictConfig) -> None:
                 scores.append(score_dict[optimizer])
             else:
                 if direction[i] == "minimize":
-                    scores.append(1e10)
+                    scores.append(1.00000000000)
                 elif direction[i] == "maximize":
-                    scores.append(-1e10)
+                    scores.append(0.00000000000)
                 else:
                     scores.append(None)
             i += 1
@@ -278,18 +278,19 @@ def optimise(cfg: DictConfig) -> None:
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
-        fake_scores = []
-        for direction in direction:
-            if direction == "minimize":
-                fake_scores.append(1e10)
-            elif direction == "maximize":
-                fake_scores.append(-1e10)
-            else:
-                fake_scores.append(None)
-        scores = fake_scores
-        logger.info(f"Optimizers: {optimizers}")
-        logger.info(f"Score: {scores}")
-        if raise_exception:
+        if not raise_exception:
+            fake_scores = []
+            for direction in direction:
+                if direction == "minimize":
+                    fake_scores.append(1.00000000000)
+                elif direction == "maximize":
+                    fake_scores.append(0.00000000000)
+                else:
+                    fake_scores.append(None)
+            scores = fake_scores
+            logger.info(f"Optimizers: {optimizers}")
+            logger.info(f"Score: {scores}")
+        else:
             raise e
     if len(scores) == 1:
         scores = float(scores[0])

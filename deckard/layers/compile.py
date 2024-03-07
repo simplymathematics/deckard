@@ -124,13 +124,13 @@ def save_results(results, results_file, results_folder) -> str:
     Path(results_file).parent.mkdir(exist_ok=True, parents=True)
     suffix = results_file.suffix
     if suffix == ".csv":
-        results.to_csv(results_file)
+        results.to_csv(results_file, index=False)
     elif suffix == ".xlsx":
-        results.to_excel(results_file)
+        results.to_excel(results_file, index=False)
     elif suffix == ".html":
-        results.to_html(results_file)
+        results.to_html(results_file, index=False)
     elif suffix == ".json":
-        results.to_json(results_file)
+        results.to_json(results_file, index=False, orient="records")
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(

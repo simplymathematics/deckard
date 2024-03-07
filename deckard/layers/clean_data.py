@@ -518,6 +518,11 @@ def clean_data_for_plotting(
         data = pareto_set(data, pareto_dict)
     return data
 
+def drop_values(data, drop_dict):
+    for k,v in drop_dict.items():
+        data = data[data[k] != v]
+    return data
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -602,6 +607,8 @@ if __name__ == "__main__":
     min_max = big_dict.get("min_max", [])
     replace_dict = big_dict.get("replace", {})
     pareto_dict = big_dict.get("pareto", {})
+    drop_dict = big_dict.pop("drop_values", {})
+    data = drop_values(data, drop_dict)
     results = clean_data_for_plotting(
         data,
         def_gen_dict,
