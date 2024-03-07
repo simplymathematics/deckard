@@ -48,9 +48,6 @@ class Data:
             sklearn_pipeline (SklearnDataPipeline, optional): The sklearn pipeline. Defaults to None.
             target (str, optional): The target column. Defaults to None.
         """
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and generate={generate} and sample={sample} and sklearn_pipeline={sklearn_pipeline} and target={target}",
-        )
         if generate is not None:
             self.generate = (
                 generate
@@ -66,7 +63,7 @@ class Data:
                 else SklearnDataSampler(**sample)
             )
         else:
-            self.sample = None
+            self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
             
             sklearn_pipeline = OmegaConf.to_container(
@@ -82,7 +79,6 @@ class Data:
         self.drop = drop
         self.target = target
         self.name = name if name is not None else my_hash(self)
-        logger.info(f"Instantiating Data with id: {self.get_name()}")
 
     def get_name(self):
         """Get the name of the data object."""
