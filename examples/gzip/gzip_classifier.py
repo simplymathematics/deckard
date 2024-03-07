@@ -376,6 +376,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.n_classes_ = y.shape[1]
             flat_y = np.argmax(y, axis=1)
         counts = np.bincount(flat_y)
+        self.counts_ = counts
         logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
         self.n_features_ = X.shape[1]
         self.classes_ = range(len(unique_labels(y)))
@@ -387,7 +388,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
-            
         if self.m > 0:
             assert isinstance(self.m, (int, float)), f"Expected {self.m} to be an integer"
             assert isinstance(self.sampling_method, (str, type(None))), f"Expected {self.sampling_method} to be a string or None"
@@ -396,17 +396,21 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.y_ = self.y_[indices]
             if self.Cx_ is not None:
                 self.Cx_ = self.Cx_[indices]
+            distance_matrix = self.distance_matrix[indices].T
+            distance_matrix = distance_matrix[indices]
+            self.distance_matrix = distance_matrix.T
+            logger.info(f"Selected {len(self.X_)} samples using method {self.sampling_method}.")
+            counts = np.bincount(np.argmax(self.y_, axis=1))
+            logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
         elif self.m == -1:
-            indices = list(range(len(self.X_)))
             distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
             self.distance_matrix = distance_matrix
         elif self.m is None or self.m == 0:
-            indices = list(range(len(self.X_)))
+            pass
         else:
             raise ValueError(f"Expected {self.m} to be -1, 0, or a positive integer")
         if self.precompute is True:
-            distance_matrix_ = self._prepare_training_matrix(n_jobs=n_jobs)
-            self.distance_matrix = distance_matrix_[indices, :][:, indices]
+            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
             self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
         else:
             raise NotImplementedError(f"Precompute {self.precompute} not supported for type(self.clf_) {type(self.clf_)}")

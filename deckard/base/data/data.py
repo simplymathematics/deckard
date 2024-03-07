@@ -132,7 +132,15 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename, delimiter=",", header=0)
+            data = read_csv(filename, delimiter=",", header=0, index_col=0)
+            if len(data.columns) == 4 and data.columns == ["X_train", "X_test", "y_train", "y_test"]:
+                for col in data.columns:
+                    data[col] = data[col].apply(lambda x: np.array(x))
+                X_train = data["X_train"].values
+                X_test = data["X_test"].values
+                y_train = data["y_train"].values
+                y_test = data["y_test"].values
+                data = [X_train, X_test, y_train, y_test]
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
@@ -174,11 +182,19 @@ class Data:
                 with open(filename, "w") as f:
                     json.dump(data, f, indent=4, sort_keys=True)
             elif suffix in [".csv"]:
+                if isinstance(data, list) and len(data) == 4:
+                    X_train, X_test, y_train, y_test = data
+                    X_train = Series(X_train.tolist())
+                    X_test = Series(X_test.tolist())
+                    y_train = Series(y_train.tolist())
+                    y_test = Series(y_test.tolist())
+                    data = {"X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test}
+                    data = DataFrame(data)
                 assert isinstance(
                     data,
                     (Series, DataFrame, dict, np.ndarray),
                 ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
-                DataFrame(data).to_csv(filename, index=False)
+                data.to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
                     pickle.dump(data, f)
@@ -218,4 +234,6 @@ class Data:
             assert Path(
                 test_labels_file,
             ).exists(), f"Error saving test labels to {test_labels_file}"
+        if data_file is not None:
+            self.save(data, data_file)
         return data
