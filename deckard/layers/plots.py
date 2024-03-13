@@ -169,7 +169,7 @@ def line_plot(
     else:
       file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    if "hue" in kwargs:
+    if "hue" in kwargs and kwargs.get("hue") in data.columns:
       hue = kwargs.get("hue")
       data = data.sort_values(by=[hue, x, y]) 
     else:
@@ -320,7 +320,7 @@ plot_parser.add_argument(
     default="conf/plots.yaml",
 )
 
-def plot_main(logger, cat_plot, line_plot, scatter_plot, args):
+def plot_main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
@@ -354,26 +354,17 @@ def plot_main(logger, cat_plot, line_plot, scatter_plot, args):
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
         i += 1
-        try:
-          cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
-        except Exception as e:
-          logger.error(f"Error in plot {i} with params {dict_}")
+        cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         i += 1
-        try:
-          line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
-        except Exception as e:
-          logger.error(f"Error in plot {i} with params {dict_}")
+        line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         i += 1
-        try:
-          scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
-        except Exception as e:
-          logger.error(f"Error in plot {i} with params {dict_}")
+        scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
 if __name__ == "__main__":
     args = plot_parser.parse_args()
