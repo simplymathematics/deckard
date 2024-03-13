@@ -239,11 +239,16 @@ class SklearnModelInitializer:
                 dict,
             ), f"model must be a sklearn estimator, string, or dict. Got {type(model)}"
         if isinstance(model, dict):
-            if "name" in model:
+            if "_target_" in model:
+                name = model.pop("_target_")
+            elif "name" in model:
                 name = model.pop("name")
             else:
-                name = model.pop("_target_")
-
+                raise ValueError(
+                    f"model must have a name attribute. Got {model}",
+                )
+            model["target"] = name
+        model = instantiate(model)
         if self.pipeline is not None:
             model = self.pipeline(model)
             assert isinstance(

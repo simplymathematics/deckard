@@ -4,8 +4,9 @@ from copy import deepcopy
 from typing import Union
 from sklearn.model_selection import train_test_split
 
-logger = logging.getLogger(__name__)
 from ..utils import my_hash
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["SklearnDataSampler"]
 

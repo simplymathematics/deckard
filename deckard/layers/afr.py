@@ -372,9 +372,7 @@ if "__main__" == __name__:
     csv_file = args.data_file
     FOLDER = args.plots_folder
     filename = (
-        Path(args.summary_file).as_posix()
-        if not args.summary_file is not None
-        else None
+        Path(args.summary_file).as_posix() if args.summary_file is not None else None
     )
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     Path(FOLDER).mkdir(exist_ok=True, parents=True)

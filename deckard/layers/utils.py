@@ -11,10 +11,6 @@ from hydra import initialize_config_dir, compose
 import dvc.api
 from hydra.utils import instantiate
 from dulwich.errors import NotGitRepository
-import yaml
-from hydra import compose, initialize_config_dir
-from copy import deepcopy
-from omegaconf import OmegaConf
 
 
 from numpy import nan

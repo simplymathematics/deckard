@@ -4,12 +4,11 @@ import numpy as np
 
 
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score, cross_val_predict, train_test_split
 import random
 
 # from gzip_classifier import GzipSVC, GzipKNN, GzipLogisticRegressor
 from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 import plotext
 
 logger = logging.getLogger(__name__)
@@ -118,7 +117,7 @@ class BatchedMixin:
                 n_batches = 1
             for i in range(n_batches):
                 if append is True:
-                    new_X = X[i * self.batch_size : (i + 1) * self.batch_size]
+                    new_X = X[i * self.batch_size : (i + 1) * self.batch_size]  #
                     new_y = y[i * self.batch_size : (i + 1) * self.batch_size]
                     indices = func(X=new_X, y=new_y, method=method, n_jobs=n_jobs)
                     # print("After finding best samples")

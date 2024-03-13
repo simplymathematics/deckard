@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, asdict, is_dataclass
 from pathlib import Path
 from time import process_time_ns, time
 from typing import Union, Dict
-from omegaconf import OmegaConf, DictConfig, ListConfig
+from omegaconf import OmegaConf, DictConfig
 from copy import deepcopy
 import numpy as np
 from sklearn.exceptions import NotFittedError

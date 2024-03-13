@@ -1,23 +1,18 @@
 import pandas as pd
 from pathlib import Path
 import logging
-
-logger = logging.getLogger(__name__)
-
+from imblearn.under_sampling import RandomUnderSampler
 
 try:
     import plotext as plt
 
     plot = True
 except ImportError:
-    logger.info(
-        "Plotext not installed. Please install plotext to use the plotting functions. Will skip the plotting for now.",
-    )
     plot = False
 
-import pandas as pd
-from imblearn.under_sampling import RandomUnderSampler
-from pathlib import Path
+logger = logging.getLogger(__name__)
+if plot is False:
+    logger.warning("plotext not installed. Skipping plots.")
 
 
 def undersample(df, target, n_samples=10000):
@@ -25,7 +20,6 @@ def undersample(df, target, n_samples=10000):
     Undersamples the dataframe to balance the target column
     """
     y = df[target]
-    columns = list(df.columns)
     X = df.drop(target, axis=1)
     n_classes = y.value_counts().shape[0]
     keys = y.value_counts().keys()

@@ -5,7 +5,7 @@ from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
 import argparse
 import yaml
-from ..base.utils import flatten_dict, unflatten_dict
+from ..base.utils import flatten_dict
 
 logger = logging.getLogger(__name__)
 

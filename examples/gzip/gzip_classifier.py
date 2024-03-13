@@ -33,7 +33,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn_extra.cluster import KMedoids
-from sklearn.metrics.pairwise import pairwise_distances
 from imblearn.under_sampling import (
     CondensedNearestNeighbour,
     NearMiss,
