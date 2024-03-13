@@ -323,37 +323,35 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 m = 1
         else:
             m = self.m
-            
-        n_classes = len(unique_labels(self.y_))
+        y = self.y_
+        n_classes = len(unique_labels(y))
         if method in ["sum", "medoid", "svc", "random"]:
             if method == "sum":
-                for label in np.unique(self.y_):
-                    label_idx = np.where(self.y_ == label)[0]
+                for label in np.unique(y):
+                    label_idx = np.where(y == label)[0]
                     label_distance_matrix = distance_matrix[label_idx, :]
                     summed_matrix = np.sum(label_distance_matrix, axis=0)
                     sorted_idx = np.argsort(summed_matrix)
                     indices.extend(sorted_idx[: m])
             elif method == "medoid":
-                for label in np.unique(self.y_):
-                    label_idx = np.where(self.y_ == label)[0]
+                for label in np.unique(y):
+                    label_idx = np.where(y == label)[0]
                     min_ = min(m, len(label_idx))
-                    assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}"
-                    assert len(self.X_) == len(distance_matrix), f"Expected {len(self.X_)} == {len(distance_matrix)}"
                     label_distance_matrix = distance_matrix[label_idx, :][:, label_idx]
                     kmedoids = KMedoids(n_clusters=min_, metric="precomputed").fit(label_distance_matrix)
                     indices.extend(kmedoids.medoid_indices_[:m])
             elif method == "svc":
-                svc = SVC(kernel="precomputed").fit(distance_matrix, self.y_)
+                svc = SVC(kernel="precomputed").fit(distance_matrix, y)
                 support_idx = svc.support_
                 summed_matrix = np.sum(distance_matrix, axis=0)
                 sorted_idx = np.argsort(summed_matrix[support_idx])[::-1] # Sort in descending order
                 indices.extend(sorted_idx[: m * n_classes])
             elif method == "random":    
-                keys = np.unique(self.y_)
+                keys = np.unique(y)
                 values = [m] * len(keys)
                 dict_ = dict(zip(keys, values))
-                for label in np.unique(self.y_):
-                    label_idx = np.where(self.y_ == label)[0]
+                for label in np.unique(y):
+                    label_idx = np.where(y == label)[0]
                     if len(label_idx) < m:
                         random_idx = np.random.choice(label_idx, m, replace=True)
                     else:
@@ -363,24 +361,24 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 raise NotImplementedError(f"Method {method} not supported")
         elif method in ["hardness", "nearmiss", "knn"]:
             if method == "hardness":
-                keys = np.unique(self.y_)
+                keys = np.unique(y)
                 values = [m] * len(keys)
                 dict_ = dict(zip(keys, values))
                 model = InstanceHardnessThreshold(sampling_strategy=dict_)
             elif method == "nearmiss":
-                keys = np.unique(self.y_)
+                keys = np.unique(y)
                 values = [m] * len(keys)
                 dict_ = dict(zip(keys, values))
                 model = NearMiss(sampling_strategy=dict_)
             elif method == "knn":
                 distance_matrix = pd.DataFrame(distance_matrix, columns = range(len(distance_matrix)))
-                y = pd.DataFrame(self.y_, columns=["y"])
+                y = pd.DataFrame(y, columns=["y"])
                 y.index = list(range(len(y)))
                 model = CondensedNearestNeighbour(sampling_strategy="not majority")
             else:
                 raise NotImplementedError(f"Method {method} not supported")
             distance_matrix = pd.DataFrame(distance_matrix, columns = list(range(len(distance_matrix))))
-            y = pd.DataFrame(self.y_, columns=["y"])
+            y = pd.DataFrame(y, columns=["y"])
             y.index = list(range(len(y)))
             distance_matrix, y = model.fit_resample(distance_matrix, y)
             indices = y.index[:m * n_classes]
@@ -436,13 +434,28 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         elif self.m is None or self.m == 0:
             pass
         else:
-            raise ValueError(f"Expected {self.m} to be -1, 0, or a positive integer")
+            raise ValueError(f"Expected {self.m} to be -1, 0, a positive integer or a float between 0 and 1. Got type {type(self.m)}")
         if self.precompute is True:
             self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
             self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
         else:
             raise NotImplementedError(f"Precompute {self.precompute} not supported for type(self.clf_) {type(self.clf_)}")
         return self
+
+    def _set_best_indices(self, indices):
+        self.X_ = self.X_[indices]
+        self.y_ = self.y_[indices]
+        if self.Cx_ is not None:
+            self.Cx_ = self.Cx_[indices]
+            # This is a hack that allows us to deal with n-dimensional arrays using the normal matrix[:, indices][indices, :] breaks if n>2
+        distance_matrix = self.distance_matrix[indices].T # select the rows at the indices and transpose the matrix
+        distance_matrix = distance_matrix[indices] # select the transposed columns at the indices
+        self.distance_matrix = distance_matrix.T # transpose the matrix again
+        logger.info(f"Selected {len(self.X_)} samples using method {self.sampling_method}.")
+        counts = np.bincount(np.argmax(self.y_, axis=1))
+        logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
+        assert len(self.X_) == len(self.y_), f"Expected {len(self.X_)} == {len(self.y_)}" 
+        assert distance_matrix.shape == (len(self.X_), len(self.X_)), f"Expected {distance_matrix.shape} == ({len(self.X_)}, {len(self.X_)})"
     
     
     def predict(self, X:np.ndarray):
@@ -700,6 +713,7 @@ def main(args:argparse.Namespace):
     # conver list of key-value pairs to dictionary
     kwarg_args = dict([arg.split("=") for arg in kwarg_args])
     params.update(**kwarg_args)
+    params['precompute'] = True
     X = np.array(X) if not isinstance(X, np.ndarray) else X
     y = np.array(y) if not isinstance(y, np.ndarray) else y
     test_model( X_train, X_test, y_train, y_test, **params)
