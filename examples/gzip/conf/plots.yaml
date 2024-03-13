@@ -21,7 +21,7 @@ line_plot:
   errorbar: se
   err_style: bars
   xlim: [10, 500]
-  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}  
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}  
 - file: metric_vs_train_time.pdf
   hue: model.init.metric
   title: #"Training Time vs $m$-best samples"
@@ -29,7 +29,7 @@ line_plot:
   xlabel: Number of Training Samples
   y: train_time
   ylabel: Training Time (s)
-  y_scale : log
+  y_scale: linear
   hue_order:
   - Gzip
   - Pickle
@@ -45,7 +45,7 @@ line_plot:
   errorbar: se
   err_style: bars
   xlim: [10, 500]
-  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
 - file: metric_vs_predict_time.pdf
   hue: model.init.metric
   title: #"Prediction Time vs $m$-best samples"
@@ -53,7 +53,7 @@ line_plot:
   xlabel: Number of Training Samples
   y: predict_time
   ylabel: Prediction Time (s)
-  y_scale : log
+  y_scale: linear
   hue_order:
   - Gzip
   - Pickle
@@ -69,7 +69,7 @@ line_plot:
   errorbar: se
   err_style: bars
   xlim: [10, 500]
-  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
 cat_plot:
   - file: symmetric_vs_metric.pdf
     x : model.init.symmetric
@@ -93,7 +93,7 @@ cat_plot:
     - Jaro
     - Jaro-Winkler 
     - SeqRatio
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
     set:
       yscale: linear
       ylim: [0, 1]
@@ -119,7 +119,7 @@ cat_plot:
     - Jaro
     - Jaro-Winkler 
     - SeqRatio
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
     set:
       yscale: log
   - file: models_vs_accuracy.pdf
@@ -133,7 +133,7 @@ cat_plot:
     ylabels : Accuracy
     legend_title: "Samples"
     
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
     set:
       yscale: linear
       ylim: [0, 1]
@@ -149,7 +149,7 @@ cat_plot:
     ylabels : Training Time (s)
     legend_title: "Samples"
     rotation: 90
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
     set:
       yscale: log
   - file: models_vs_predict_time.pdf
@@ -163,7 +163,7 @@ cat_plot:
     ylabels : Prediction Time (s)
     legend_title: "Samples"
     
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left"}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
     set:
       yscale: log
     rotation: 90

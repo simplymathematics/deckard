@@ -24,9 +24,9 @@ replace:
     zstd: "Zstd"
     lzma  : "Lzma"
   model_name:
-    gzip_svc : "k-SVC"
-    gzip_logistic : "k-Logistic"
-    gzip_knn : "k-KNN"
+    GzipSVC : "k-SVC"
+    GzipLogisticRegressor : "k-Logistic"
+    GzipKNN : "k-KNN"
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"

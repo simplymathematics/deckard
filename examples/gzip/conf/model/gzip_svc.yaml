@@ -4,7 +4,7 @@ init:
     _target_: deckard.base.model.ModelInitializer
     name : gzip_classifier.GzipSVC
     m: -1
-    distance_matrix : 
+    distance_matrix : ${files.directory}/${files.model_dir}/${model.init.metric}/${data.sample.train_size}-${data.sample.test_size}/${data.sample.random_state}.npz
     metric : gzip
     symmetric : false
 _target_: deckard.base.model.Model

@@ -7,4 +7,5 @@ init:
     m: -1
     metric : gzip
     symmetric : false
+    distance_matrix :  ${files.directory}/${files.model_dir}/${model.init.metric}/${data.sample.train_size}-${data.sample.test_size}/${data.sample.random_state}.npz
 _target_: deckard.base.model.Model
