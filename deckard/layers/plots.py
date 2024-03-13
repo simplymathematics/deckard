@@ -73,22 +73,28 @@ def cat_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     if hue is not None:
-      data = data.sort_values(by=[hue, x, y])
-      logger.debug(
-        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
-      )
-      graph = sns.catplot(
-          data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
-      )
+        data = data.sort_values(by=[hue, x, y])
+        logger.debug(
+            f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
+        )
+        graph = sns.catplot(
+            data=data,
+            x=x,
+            y=y,
+            hue=hue,
+            kind=kind,
+            hue_order=hue_order,
+            **kwargs,
+        )
     else:
-      data = data.sort_values(by=[x, y])
-      logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
-      graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
+        data = data.sort_values(by=[x, y])
+        logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
+        graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
@@ -96,9 +102,9 @@ def cat_plot(
         graph.legend.set_title(title=legend_title)
     else:
         if graph.legend is not None:
-          graph.legend.remove()
+            graph.legend.remove()
         else:
-          pass
+            pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -165,15 +171,15 @@ def line_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     if "hue" in kwargs and kwargs.get("hue") in data.columns:
-      hue = kwargs.get("hue")
-      data = data.sort_values(by=[hue, x, y]) 
+        hue = kwargs.get("hue")
+        data = data.sort_values(by=[hue, x, y])
     else:
-      data.sort_values(by=[x, y])
+        data.sort_values(by=[x, y])
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
     graph = sns.lineplot(data=data, x=x, y=y, **kwargs)
@@ -255,9 +261,9 @@ def scatter_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
@@ -282,7 +288,6 @@ def scatter_plot(
     logger.info(f"Saved graph to {Path(folder) / file}")
     plt.gcf().clear()
     return graph
-
 
 
 parser = argparse.ArgumentParser()
@@ -319,6 +324,7 @@ parser.add_argument(
     help="Path to the config file",
     default="conf/plots.yaml",
 )
+
 
 def main(args):
     logging.basicConfig(level=args.verbosity)
@@ -365,6 +371,7 @@ def main(args):
     for dict_ in scatter_plot_list:
         i += 1
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+
 
 if __name__ == "__main__":
     args = parser.parse_args()

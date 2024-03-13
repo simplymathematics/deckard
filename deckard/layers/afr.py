@@ -62,6 +62,7 @@ def plot_aft(
     plt.gcf().clear()
     return ax, aft
 
+
 def fit_aft(df, event_col, duration_col, mtype, kwargs):
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
@@ -107,7 +108,10 @@ def plot_partial_effects(
     plt.gcf().clear()
     file = Path(folder, file).with_suffix(filetype)
     partial_effects = aft.plot_partial_effects_on_outcome(
-        covariate_array, values_array, cmap=cmap, **kwargs
+        covariate_array,
+        values_array,
+        cmap=cmap,
+        **kwargs,
     )
     labels = partial_effects.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -200,7 +204,7 @@ def clean_data_for_aft(
     logger.info(f"Shape of dirty data: {subset.shape}")
     cleaned = pd.DataFrame()
     covariate_list.append(target)
-    
+
     logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
         assert kwarg in subset.columns, f"{kwarg} not in data.columns"
@@ -271,7 +275,9 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
         score = score_model(aft, X_train, X_test)
         for partial_effect_dict in partial_effect_list:
             partial_effect_plot = plot_partial_effects(
-                aft=aft, **partial_effect_dict, folder=folder
+                aft=aft,
+                **partial_effect_dict,
+                folder=folder,
             )
             plots.append(partial_effect_plot)
     return aft, plots, score
@@ -329,7 +335,8 @@ def render_all_afr_plots(
 
 def set_matplotlib_vars(matplotlib_dict=None):
     if matplotlib_dict is None:
-        matplotlib_dict = {"font": {
+        matplotlib_dict = {
+            "font": {
                 "family": "Times New Roman",
                 "weight": "bold",
                 "size": 22,
@@ -337,11 +344,13 @@ def set_matplotlib_vars(matplotlib_dict=None):
         }
     matplotlib.rc(**matplotlib_dict)
 
+
 def fillna(data, config):
     fillna = config.pop("fillna", {})
     for k, v in fillna.items():
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
+
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
@@ -362,12 +371,16 @@ if "__main__" == __name__:
     # Filesystem stuff
     csv_file = args.data_file
     FOLDER = args.plots_folder
-    filename = Path(args.summary_file).as_posix() if not args.summary_file is not None else None
+    filename = (
+        Path(args.summary_file).as_posix()
+        if not args.summary_file is not None
+        else None
+    )
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
     assert Path(FOLDER).exists(), f"{FOLDER} does not exist."
     assert Path(csv_file).exists(), f"{csv_file} does not exist."
-    
+
     # Reading compiled csv file
     data = pd.read_csv(csv_file, index_col=0)
     logger.info(f"Shape of data: {data.shape}")
@@ -375,14 +388,14 @@ if "__main__" == __name__:
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
     fillna(data, config)
-    
+
     # Strip whitespace from strings
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    
+
     # Check if covariates are specified
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
-    
+
     # Cannot fit AFT models with missing values
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)

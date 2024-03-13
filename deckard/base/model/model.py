@@ -110,6 +110,7 @@ class ModelTrainer:
         except ValueError as e:  # pragma: no cover
             if "Shape of labels" in str(e):
                 from art.utils import to_categorical
+
                 nb_classes = len(np.unique(data[2]))
                 if nb_classes < 2:
                     nb_classes = 2
@@ -122,6 +123,7 @@ class ModelTrainer:
                 end_timestamp = time()
             if "must be greater than or equal to 2" in str(e):
                 from art.utils import to_categorical
+
                 data[2] = to_categorical(data[2], nb_classes=nb_classes)
                 start = process_time_ns()
                 start_timestamp = time()
@@ -145,14 +147,18 @@ class ModelTrainer:
         except RuntimeError as e:  # pragma: no cover
             if "eager mode" in str(e) and library in tensorflow_dict.keys():
                 import tensorflow as tf
+
                 tf.config.run_functions_eagerly(True)
                 start = process_time_ns()
                 start_timestamp = time()
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
-            elif "should be the same" in str(e).lower() and library in torch_dict.keys():
+            elif (
+                "should be the same" in str(e).lower() and library in torch_dict.keys()
+            ):
                 import torch
+
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])
@@ -284,8 +290,7 @@ class Model:
         **kwargs,
     ):
         result_dict = {}
-        
-        
+
         if isinstance(model, Model):
             data, model = model.initialize(data)
         elif isinstance(model, type(None)):

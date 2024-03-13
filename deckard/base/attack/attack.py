@@ -120,7 +120,13 @@ class EvasionAttack:
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
-        self, name: str, data: Data, model: Model, init: dict, attack_size=-1, **kwargs
+        self,
+        name: str,
+        data: Data,
+        model: Model,
+        init: dict,
+        attack_size=-1,
+        **kwargs,
     ):
         self.name = name
         self.data = data
@@ -154,8 +160,7 @@ class EvasionAttack:
             print(f"Type of self.init: {type(self.init)}")
             print(f"Type of self.init.model: {type(self.init.model)}")
             print(f"Type of model: {type(model)}")
-            
-                    
+
             atk = self.init(model=model, attack_size=self.attack_size)
 
             if targeted is True:
@@ -474,7 +479,13 @@ class InferenceAttack:
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
-        self, name: str, data: Data, model: Model, init: dict, attack_size=-1, **kwargs
+        self,
+        name: str,
+        data: Data,
+        model: Model,
+        init: dict,
+        attack_size=-1,
+        **kwargs,
     ):
         self.name = name
         self.data = data
@@ -585,7 +596,13 @@ class ExtractionAttack:
     kwargs: Union[dict, None] = field(default_factory=dict)
 
     def __init__(
-        self, name: str, data: Data, model: Model, init: dict, attack_size=-1, **kwargs
+        self,
+        name: str,
+        data: Data,
+        model: Model,
+        init: dict,
+        attack_size=-1,
+        **kwargs,
     ):
         self.name = name
         self.data = data
@@ -817,7 +834,9 @@ class Attack:
             try:
                 check_is_fitted(model), "Model must be fitted before calling attack."
             except NotFittedError as e:
-                logger.warning(f"Model not fitted. Fitting model before attack. Error: {e}")
+                logger.warning(
+                    f"Model not fitted. Fitting model before attack. Error: {e}",
+                )
                 model, _ = self.model.fit(data=data, model=model)
         if "art" not in str(type(model)):
             model = self.model.art(model=model, data=data)

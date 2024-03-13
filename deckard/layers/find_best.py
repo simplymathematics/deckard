@@ -42,61 +42,92 @@ def find_optuna_best(
     logger.debug(f"Best user params: {more_params}")
     logger.debug(f"Best system params: {even_more_params}")
     # Merge all the params
-    best_params = OmegaConf.to_container(OmegaConf.merge(best_params, more_params, even_more_params), resolve=False)
+    best_params = OmegaConf.to_container(
+        OmegaConf.merge(best_params, more_params, even_more_params),
+        resolve=False,
+    )
     # to dotlist
     best_params = flatten_dict(best_params)
     overrides = []
     # Changing the keys to hydra override format
     for key, value in best_params.items():
-        if key.startswith("++") or  key.startswith("~~") or key.startswith("--"): # reserved meaning
+        if (
+            key.startswith("++") or key.startswith("~~") or key.startswith("--")
+        ):  # reserved meaning
             pass
-        elif key.startswith("+"): #appends to config
-            key = "++" + key[1:] # force override
+        elif key.startswith("+"):  # appends to config
+            key = "++" + key[1:]  # force override
         else:
-            key = "++" + key # force override
+            key = "++" + key  # force override
         if config_subdir is None:
             overrides.append(f"{key}={value}")
-        else: # if we are using a subdir, we need to remove the directory from the key
-            if key.startswith(f"++{config_subdir}.") or key.startswith(f"~~{config_subdir}.") or key.startswith(f"--{config_subdir}."):
+        else:  # if we are using a subdir, we need to remove the directory from the key
+            if (
+                key.startswith(f"++{config_subdir}.")
+                or key.startswith(f"~~{config_subdir}.")
+                or key.startswith(f"--{config_subdir}.")
+            ):
                 key = key.replace(f"{config_subdir}.", "")
                 overrides.append(f"{key}={value}")
                 logger.info(f"Adding {key} to param list")
             else:
                 logger.debug(f"Skipping {key} because it is not in {config_subdir}")
-    params = override_default_with_best(config_folder, default_config, overrides, config_subdir=config_subdir)
+    params = override_default_with_best(
+        config_folder,
+        default_config,
+        overrides,
+        config_subdir=config_subdir,
+    )
     if params_file is not None:
-        params_file = create_new_config_in_subdir(params_file, config_folder, default_config, config_subdir, params)
+        params_file = create_new_config_in_subdir(
+            params_file,
+            config_folder,
+            default_config,
+            config_subdir,
+            params,
+        )
     return params
 
-def create_new_config_in_subdir(params_file, config_folder, default_config, config_subdir, params):
+
+def create_new_config_in_subdir(
+    params_file,
+    config_folder,
+    default_config,
+    config_subdir,
+    params,
+):
     if params_file is True:
         if config_subdir is not None:
             params_file = Path(
-                    config_folder,
-                    f"{config_subdir}",
-                    f"{default_config}.yaml",
-                )
+                config_folder,
+                f"{config_subdir}",
+                f"{default_config}.yaml",
+            )
         else:
             params_file = Path(config_folder, f"{default_config}.yaml")
     else:
         if config_subdir is not None:
             params_file = Path(
-                    config_folder,
-                    f"{config_subdir}",
-                    f"{params_file}.yaml",
-                )
+                config_folder,
+                f"{config_subdir}",
+                f"{params_file}.yaml",
+            )
         else:
             params_file = Path(config_folder, f"{params_file}.yaml")
     params_file.parent.mkdir(parents=True, exist_ok=True)
     with open(params_file.with_suffix(".yaml"), "w") as f:
         yaml.dump(params, f)
-    assert (
-            params_file.exists()
-        ), f"{params_file.resolve().as_posix()} does not exist."
-    
+    assert params_file.exists(), f"{params_file.resolve().as_posix()} does not exist."
+
     return params_file
 
-def override_default_with_best(config_folder, default_config, overrides, config_subdir=None):
+
+def override_default_with_best(
+    config_folder,
+    default_config,
+    overrides,
+    config_subdir=None,
+):
     if config_subdir is not None:
         config_folder = Path(config_folder, config_subdir)
         config_folder = config_folder.resolve().as_posix()
@@ -110,7 +141,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_file", type=str, default=True)
-    
+
     parser.add_argument("--study_csv", type=str, default=None)
     parser.add_argument("--config_folder", type=str, default=Path(Path(), "conf"))
     parser.add_argument("--default_config", type=str, default="default")

@@ -28,7 +28,7 @@ class Data:
     )
     target: Union[str, None] = None
     name: Union[str, None] = None
-    drop : list = field(default_factory=list)
+    drop: list = field(default_factory=list)
 
     def __init__(
         self,
@@ -65,7 +65,7 @@ class Data:
         else:
             self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
-            
+
             sklearn_pipeline = OmegaConf.to_container(
                 OmegaConf.create(sklearn_pipeline),
             )
@@ -99,7 +99,7 @@ class Data:
             result = self.generate()
         else:
             result = self.load(self.name)
-        
+
         if isinstance(result, DataFrame):
             assert self.target is not None, "Target is not specified"
             y = result[self.target]
@@ -108,10 +108,12 @@ class Data:
                 X = X.drop(self.drop, axis=1)
             X = X.to_numpy()
             y = y.to_numpy()
-            result = [X, y] 
+            result = [X, y]
         else:
             if self.drop != []:
-                raise ValueError(f"Drop is not supported for non-DataFrame data. Data is type {type(result)}")
+                raise ValueError(
+                    f"Drop is not supported for non-DataFrame data. Data is type {type(result)}",
+                )
         if len(result) == 2:
             result = self.sample(*result)
         assert (
@@ -133,7 +135,12 @@ class Data:
                 data = json.load(f)
         elif suffix in [".csv"]:
             data = read_csv(filename, delimiter=",", header=0, index_col=0)
-            if len(data.columns) == 4 and data.columns == ["X_train", "X_test", "y_train", "y_test"]:
+            if len(data.columns) == 4 and data.columns == [
+                "X_train",
+                "X_test",
+                "y_train",
+                "y_test",
+            ]:
                 for col in data.columns:
                     data[col] = data[col].apply(lambda x: np.array(x))
                 X_train = data["X_train"].values
@@ -160,7 +167,7 @@ class Data:
             suffix = Path(filename).suffix
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
             if isinstance(data, dict):
-                for k,v in data.items():
+                for k, v in data.items():
                     v = str(v)
                     data[k] = v
             if suffix in [".json"]:
@@ -188,7 +195,12 @@ class Data:
                     X_test = Series(X_test.tolist())
                     y_train = Series(y_train.tolist())
                     y_test = Series(y_test.tolist())
-                    data = {"X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test}
+                    data = {
+                        "X_train": X_train,
+                        "X_test": X_test,
+                        "y_train": y_train,
+                        "y_test": y_test,
+                    }
                     data = DataFrame(data)
                 assert isinstance(
                     data,

@@ -28,6 +28,7 @@ def flatten_dict(dictionary: dict, separator: str = ".", prefix: str = ""):
                 flat_dict[new_key] = val
     return flat_dict
 
+
 def factory(module_class_string, *args, super_cls: type = None, **kwargs) -> object:
     """
     :param module_class_string: full name of the class to create an object of

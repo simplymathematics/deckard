@@ -13,12 +13,15 @@ from sklearn.datasets import (
     make_circles,
 )
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
-from pathlib import Path
 
-try: 
+logger = logging.getLogger(__name__)
+
+try:  # pragma: no cover
     from torchvision.io import read_image, read_file
-except:
-    pass
+except ImportError:
+    logger.warning(
+        "torchvision not installed. Please install torchvision to use TorchImageLoader and TorchTextLoader. This is not an issue if you are not using these classes.",
+    )
 
 
 from ..utils import my_hash
@@ -29,7 +32,6 @@ __all__ = [
     "KerasDataGenerator",
     "DataGenerator",
 ]
-logger = logging.getLogger(__name__)
 
 SKLEARN_DATASETS = [
     "classification",
@@ -246,13 +248,13 @@ class DataGenerator:
 
 @dataclass
 class TorchBaseLoader:
-    name : str = "data/"
-    labels : str = "labels.csv"
+    name: str = "data/"
+    labels: str = "labels.csv"
     transform = Union[Callable, None]
     target_transform = Union[Callable, None]
     regex = "*"
-    
-    def __init__(self, name, labels, transform=None, target_transform=None, regex = "*"):
+
+    def __init__(self, name, labels, transform=None, target_transform=None, regex="*"):
         self.name = name
         self.labels = read_file(labels)
         self.files = list(Path(self.name).glob(regex))
@@ -260,18 +262,21 @@ class TorchBaseLoader:
         self.target_transform = target_transform
         self.regex = regex
         assert len(self.files) > 0, f"No files found in {self.name} with regex {regex}"
-        assert len(self.files) == len(self.labels), f"Number of files {len(self.files)} does not match number of labels {len(self.labels)}"
-    
+        assert len(self.files) == len(
+            self.labels,
+        ), f"Number of files {len(self.files)} does not match number of labels {len(self.labels)}"
+
     def __getitem__(self, idx):
         raise NotImplementedError("This method is not implemented yet.")
-    
+
     def __len__(self):
         return len(self.files)
-    
+
     def __call__(self):
-        for X,y in self:
-            yield X,y
-    
+        for X, y in self:
+            yield X, y
+
+
 @dataclass
 class TorchImageLoader(TorchBaseLoader):
     def __getitem__(self, idx):
@@ -284,8 +289,9 @@ class TorchImageLoader(TorchBaseLoader):
             label = self.target_transform(label)
         return image, label
 
+
 @dataclass
-class TorchTextLoader(TorchBaseLoader):    
+class TorchTextLoader(TorchBaseLoader):
     def __getitem__(self, idx):
         file_path = self.files[idx]
         with file_path.open("r") as f:
@@ -296,8 +302,3 @@ class TorchTextLoader(TorchBaseLoader):
         if self.target_transform:
             label = self.target_transform(label)
         return text, label
-    
-
-    
-        
-        

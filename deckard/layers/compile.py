@@ -86,7 +86,9 @@ def read_file(file, results):
         except json.decoder.JSONDecodeError as e:
             logger.error(f"Error reading {file}")
             print(f"Error reading {file}. Please fix the file and press Enter.")
-            input("Press Enter to continue. The next failure on this file will raise an error.")
+            input(
+                "Press Enter to continue. The next failure on this file will raise an error.",
+            )
             if retries > 1:
                 raise e
             else:

@@ -32,8 +32,8 @@ def get_files(
     stage,
 ):
     """
-    Gets the file names from cfg and calculates the hash of the attack, model and data, and files objects. 
-    If "files.name == 'default'", the name is set to the hash of the cfg. 
+    Gets the file names from cfg and calculates the hash of the attack, model and data, and files objects.
+    If "files.name == 'default'", the name is set to the hash of the cfg.
     For attack, model and data, the file name is set to the hash of the respective object.
     """
     if isinstance(cfg, dict):
@@ -76,7 +76,9 @@ def get_files(
     cfg["files"]["_target_"] = "deckard.base.files.FileConfig"
     id_ = my_hash(cfg)
     cfg["name"] = id_
-    cfg["files"]["name"] = id_ if cfg['files']['name'] == 'default' else cfg['files']['name']
+    cfg["files"]["name"] = (
+        id_ if cfg["files"]["name"] == "default" else cfg["files"]["name"]
+    )
     if stage is not None:
         cfg["files"]["stage"] = stage
     return cfg
@@ -202,7 +204,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     for key in file_list:
         if key == "params.yaml":
             continue
-        if (key.endswith("_file") or key.endswith("_dir")):
+        if key.endswith("_file") or key.endswith("_dir"):
             template_string = "${files." + key + "}"
             if template_string in file_string:
                 pass

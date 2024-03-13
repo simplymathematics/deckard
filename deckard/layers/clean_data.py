@@ -5,7 +5,6 @@ from paretoset import paretoset
 import pandas as pd
 import seaborn as sns
 import yaml
-from math import isnan
 import numpy as np
 from tqdm import tqdm
 
@@ -429,12 +428,16 @@ def format_control_parameter(data, control_dict, fillna):
         assert "atk_value" in data.columns, "atk_value not in data.columns"
     return data, fillna
 
+
 def replace_strings_in_data(data, replace_dict):
-    for k,v in replace_dict.items():
+    for k, v in replace_dict.items():
         logger.info(f"Replacing strings in {k}...")
-        assert isinstance(v, dict), f"Value for key {k} in replace_dict is not a dictionary."
+        assert isinstance(
+            v,
+            dict,
+        ), f"Value for key {k} in replace_dict is not a dictionary."
         assert k in data.columns, f"Key {k} not in data.columns."
-        for k1,v1 in v.items():
+        for k1, v1 in v.items():
             logger.info(f"Replacing {k1} with {v1} in {k}...")
             k1 = str(k1)
             v1 = str(v1)
@@ -442,6 +445,7 @@ def replace_strings_in_data(data, replace_dict):
             data.loc[:, k] = data.loc[:, k].str.replace(k1, v1)
         logger.info(f"Unique values after replacement: {data[k].unique()}")
     return data
+
 
 def clean_data_for_plotting(
     data,
@@ -507,7 +511,7 @@ def clean_data_for_plotting(
         data.atk_gen = atk_gen
         data.dropna(axis=0, subset=["atk_gen"], inplace=True)
     data, fillna = format_control_parameter(data, control_dict, fillna)
-    for k,v in fillna.items():
+    for k, v in fillna.items():
         if k in data.columns:
             data[k] = data[k].fillna(v)
         else:
@@ -517,8 +521,9 @@ def clean_data_for_plotting(
         data = pareto_set(data, pareto_dict)
     return data
 
+
 def drop_values(data, drop_dict):
-    for k,v in drop_dict.items():
+    for k, v in drop_dict.items():
         data = data[data[k] != v]
     return data
 
@@ -618,7 +623,7 @@ def main(args):
         replace_dict=replace_dict,
         pareto_dict=pareto_dict,
     )
-    
+
     if "adv_accuracy" in results.columns:
         results = calculate_failure_rate(results)
 
@@ -633,7 +638,8 @@ def main(args):
     ).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
     logger.info(f"Saved results to {output_file}")
 
+
 if __name__ == "__main__":
-    
+
     args = parser.parse_args()
     main(args)

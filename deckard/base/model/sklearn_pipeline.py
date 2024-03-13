@@ -239,15 +239,15 @@ class SklearnModelInitializer:
         elif isinstance(model, str):
             model = {"name": model, **self.kwargs}
         else:
-            assert isinstance(model, dict), f"model must be a sklearn estimator, string, or dict. Got {type(model)}"
+            assert isinstance(
+                model,
+                dict,
+            ), f"model must be a sklearn estimator, string, or dict. Got {type(model)}"
         if isinstance(model, dict):
             if "name" in model:
                 name = model.pop("name")
             else:
                 name = model.pop("_target_")
-            
-            
-            
 
         if self.pipeline is not None:
             model = self.pipeline(model)

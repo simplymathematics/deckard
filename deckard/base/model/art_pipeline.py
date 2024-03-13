@@ -113,7 +113,10 @@ class ArtInitializer:
             and not isinstance(model, tuple(sklearn_dict.values()))
         ):
             model = SklearnModelInitializer(
-                data=data, model=model, library=library, **kwargs
+                data=data,
+                model=model,
+                library=library,
+                **kwargs,
             )()
             model = self.model.fit(data[0], data[2])
             if library in sklearn_dict and "art." not in str(type(model)):
@@ -127,7 +130,10 @@ class ArtInitializer:
             "tfv2",
         ] and not isinstance(model, tuple(tensorflow_dict.values())):
             model = TensorflowV2Initializer(
-                data=data, model=model, library=library, **kwargs
+                data=data,
+                model=model,
+                library=library,
+                **kwargs,
             )()
         elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(
             model,

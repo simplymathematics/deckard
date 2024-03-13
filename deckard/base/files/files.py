@@ -19,7 +19,7 @@ class FileConfig:
     attack_dir: Union[str, None] = "attacks"
     name: Union[str, None] = None
     stage: Union[str, None] = None
-    files: dict = field(default_factory=dict) 
+    files: dict = field(default_factory=dict)
 
     def __init__(
         self,

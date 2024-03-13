@@ -126,6 +126,7 @@ class KerasOptimizer:
 
     def __call__(self):
         import tensorflow as tf
+
         if len(self.kwargs) > 0:
             config = {"class_name": self.name, "config": self.kwargs}
         else:
