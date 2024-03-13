@@ -1,27 +1,4 @@
 repos:
-- repo: https://github.com/iterative/dvc
-  rev: 3.48.4
-  hooks:
-  - id: dvc-pre-commit
-    additional_dependencies:
-    - .[all]
-    language_version: python3
-    stages:
-    - commit
-  - id: dvc-pre-push
-    additional_dependencies:
-    - .[all]
-    language_version: python3
-    stages:
-    - push
-  - id: dvc-post-checkout
-    additional_dependencies:
-    - .[all]
-    language_version: python3
-    stages:
-    - post-checkout
-    always_run: true
-
 - repo: https://github.com/asottile/add-trailing-comma
   rev: v3.1.0
   hooks:
