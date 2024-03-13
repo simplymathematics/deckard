@@ -429,16 +429,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             assert isinstance(self.m, (int, float)), f"Expected {self.m} to be an integer"
             assert isinstance(self.sampling_method, (str, type(None))), f"Expected {self.sampling_method} to be a string or None"
             indices = self._find_best_samples(self.sampling_method)
-            self.X_ = self.X_[indices]
-            self.y_ = self.y_[indices]
-            if self.Cx_ is not None:
-                self.Cx_ = self.Cx_[indices]
-            distance_matrix = self.distance_matrix[indices].T
-            distance_matrix = distance_matrix[indices]
-            self.distance_matrix = distance_matrix.T
-            logger.info(f"Selected {len(self.X_)} samples using method {self.sampling_method}.")
-            counts = np.bincount(np.argmax(self.y_, axis=1))
-            logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
+            self._set_best_indices(indices)
         elif self.m == -1:
             distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
             self.distance_matrix = distance_matrix
