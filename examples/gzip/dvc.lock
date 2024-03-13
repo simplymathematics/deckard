@@ -6675,17 +6675,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -6710,7 +6710,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -6740,13 +6740,13 @@ stages:
     outs:
     - path: ddos/logs/method/random
       hash: md5
-      md5: ff1f493467b5b0da0f051bdfe25aef26.dir
-      size: 10123
+      md5: 18434358b58a2ae37082759eb3c0b4c5.dir
+      size: 8476
       nfiles: 4
     - path: ddos/reports/train/random/score_dict.json
       hash: md5
-      md5: 58b82877334dd0b19c2f740051caf1db
-      size: 281
+      md5: 581901609980fc39e3fae7e7bf70e1ee
+      size: 487
   test_each_method@ddos-medoid:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=medoid  model.init.m=3
       data.sample.train_size=100 files.name=medoid files.directory=ddos data=ddos
@@ -6754,17 +6754,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -6789,7 +6789,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -6819,13 +6819,13 @@ stages:
     outs:
     - path: ddos/logs/method/medoid
       hash: md5
-      md5: e800aed4b1d76e681e1dbbaa7632e58b.dir
-      size: 10148
+      md5: af7d2cf05bfddebbddecb6ed052c3289.dir
+      size: 8504
       nfiles: 4
     - path: ddos/reports/train/medoid/score_dict.json
       hash: md5
-      md5: 08d75ef95bf68d7de6728692a3eb9575
-      size: 280
+      md5: 613af553377fef61e59d0ace8383235c
+      size: 488
   test_each_method@ddos-sum:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=sum  model.init.m=3
       data.sample.train_size=100 files.name=sum files.directory=ddos data=ddos dataset=ddos
@@ -6833,17 +6833,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -6868,7 +6868,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -6898,13 +6898,13 @@ stages:
     outs:
     - path: ddos/logs/method/sum
       hash: md5
-      md5: 4259e1d6f109364c575f92ba587fe585.dir
-      size: 10086
+      md5: 21f994c64f6d005354dd022ca784186a.dir
+      size: 8444
       nfiles: 4
     - path: ddos/reports/train/sum/score_dict.json
       hash: md5
-      md5: a59703025d62ec2faf74ba8983c1f7a0
-      size: 281
+      md5: c13b3fede7f357aa739ad2b1594d5b4c
+      size: 488
   test_each_method@ddos-svc:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=svc  model.init.m=3
       data.sample.train_size=100 files.name=svc files.directory=ddos data=ddos dataset=ddos
@@ -6912,17 +6912,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -6947,7 +6947,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -6977,13 +6977,13 @@ stages:
     outs:
     - path: ddos/logs/method/svc
       hash: md5
-      md5: 6dcd2c18d30a5358eacdab8168c0f1fc.dir
-      size: 10088
+      md5: 029c7891104c1612a83e728fa8206787.dir
+      size: 8443
       nfiles: 4
     - path: ddos/reports/train/svc/score_dict.json
       hash: md5
-      md5: 6019d20bf153c5b34efc5dba3afd0ab5
-      size: 283
+      md5: 0fedc26bb015fc90336ca538261c83e1
+      size: 487
   test_each_method@ddos-condensed:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=condensed  model.init.m=1
       files.name=condensed files.directory=ddos data=ddos dataset=ddos model_name=condensed
@@ -7070,17 +7070,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -7105,7 +7105,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -7135,13 +7135,13 @@ stages:
     outs:
     - path: ddos/logs/method/hardness
       hash: md5
-      md5: d1e36ebb9b1dc315843cfc603678d88e.dir
-      size: 10192
+      md5: c9749bb1b1ee77e8c6e65157cae6f50d.dir
+      size: 8544
       nfiles: 4
     - path: ddos/reports/train/hardness/score_dict.json
       hash: md5
-      md5: de7065b3ae3f1a89244ad727cd5b8c4b
-      size: 282
+      md5: e65cdd87d3f68b498ec89e21beb3067f
+      size: 488
   test_each_method@ddos-nearmiss:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=nearmiss  model.init.m=3
       data.sample.train_size=100 files.name=nearmiss files.directory=ddos data=ddos
@@ -7149,17 +7149,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -7184,7 +7184,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -7214,13 +7214,13 @@ stages:
     outs:
     - path: ddos/logs/method/nearmiss
       hash: md5
-      md5: e35226f6ef50850a6029a4a5db80d0f3.dir
-      size: 10192
+      md5: ca2401901fdd50951c149621a4b0e235.dir
+      size: 8542
       nfiles: 4
     - path: ddos/reports/train/nearmiss/score_dict.json
       hash: md5
-      md5: ee49e79c37b930005c0d654ffbde6a78
-      size: 282
+      md5: eeab94c1904a4595bbc686489a3db012
+      size: 486
   test_each_method@truthseeker-svc:
     cmd: 'python -m deckard.layers.optimise  stage=train  +model.init.sampling_method=svc  model.init.m=3
       data.sample.train_size=100 files.name=svc files.directory=truthseeker data=truthseeker
@@ -7788,17 +7788,17 @@ stages:
     deps:
     - path: kdd_nsl/reports/train/default/score_dict.json
       hash: md5
-      md5: 064e5bb42979e36c917c538b2a7bc0cc
-      size: 489
+      md5: 29ab1887ca13b11fa6895a3d3888f01e
+      size: 490
     - path: params.yaml
       hash: md5
-      md5: 8e937140db56a135e97c05461c573520
-      size: 1345
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
     params:
       params.yaml:
         data:
           _target_: deckard.base.data.Data
-          name: raw_data/kdd_nsl.csv
+          name: raw_data/kdd_nsl_undersampled_5000.csv
           sample:
             _target_: deckard.base.data.SklearnDataSampler
             random_state: 0
@@ -7823,7 +7823,7 @@ stages:
           _target_: deckard.base.model.Model
           data:
             _target_: deckard.base.data.Data
-            name: raw_data/kdd_nsl.csv
+            name: raw_data/kdd_nsl_undersampled_5000.csv
             sample:
               _target_: deckard.base.data.SklearnDataSampler
               random_state: 0
@@ -7853,13 +7853,13 @@ stages:
     outs:
     - path: ddos/logs/method/knn
       hash: md5
-      md5: 352c64d9819e53769e8d36fb83b45b66.dir
-      size: 10089
+      md5: 7d537d66b1b5cf86b9032b820da49b0d.dir
+      size: 8446
       nfiles: 4
     - path: ddos/reports/train/knn/score_dict.json
       hash: md5
-      md5: 78616ed6b3370a8e953c28e2f07999c3
-      size: 284
+      md5: 7c09a32ed27008a9b3094df219ac4d42
+      size: 490
   condense@sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
       data.sample.test_size=100 model_name=gzip_logistic model=gzip_logistic hydra.sweeper.study_name=condense_gzip_logistic_sms_spam
@@ -8224,176 +8224,176 @@ stages:
     deps:
     - path: sms_spam/reports/gzip_knn/
       hash: md5
-      md5: 38c0cad7b59bf73926190c02477c4522.dir
-      size: 2225944
-      nfiles: 1156
+      md5: 0b3c413023f8eb9c93f058fb8b4b4465.dir
+      size: 1749711
+      nfiles: 1655
     outs:
     - path: sms_spam/reports/gzip_knn.csv
       hash: md5
-      md5: 2b0d4f908e2594d5b9845690298581a7
-      size: 574252
+      md5: 575e2e8df08136f96dc4d80271787354
+      size: 825874
   compile@truthseeker-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/gzip_knn  --results_file
       truthseeker/reports/gzip_knn.csv
     deps:
     - path: truthseeker/reports/gzip_knn/
       hash: md5
-      md5: 4cf25ef922211d37e19599a896676c1a.dir
-      size: 3213846
-      nfiles: 1679
+      md5: b4fc2cbcc1d7fe39002e7f84cd0f2dca.dir
+      size: 1630019
+      nfiles: 1645
     outs:
     - path: truthseeker/reports/gzip_knn.csv
       hash: md5
-      md5: 6ba7561cd39180787ac956633517a321
-      size: 867197
+      md5: 309caaf64052cf85ab733959f6c64e42
+      size: 831334
   compile@kdd_nsl-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_knn  --results_file
       kdd_nsl/reports/gzip_knn.csv
     deps:
     - path: kdd_nsl/reports/gzip_knn/
       hash: md5
-      md5: 26844b83475cc89ccf3e8f98b926a4af.dir
-      size: 4882146
-      nfiles: 2549
+      md5: 450308fe881e120445f7d7e0aa7c7371.dir
+      size: 2612524
+      nfiles: 2329
     outs:
     - path: kdd_nsl/reports/gzip_knn.csv
       hash: md5
-      md5: 5e3a6a02802d5e2fc57142ee367e7b0f
-      size: 1297878
+      md5: 9787208801b626bfad81a5c917738097
+      size: 1220920
   compile@truthseeker-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/gzip_svc  --results_file
       truthseeker/reports/gzip_svc.csv
     deps:
     - path: truthseeker/reports/gzip_svc/
       hash: md5
-      md5: 643c0afcb0e41897bd1b1d6a839a99c5.dir
-      size: 2286448
-      nfiles: 1172
+      md5: e6e273bb143c7a8949d5be4acca87eb9.dir
+      size: 1536370
+      nfiles: 1725
     outs:
     - path: truthseeker/reports/gzip_svc.csv
       hash: md5
-      md5: 53bad1dc701714e6024ca8678976378f
-      size: 600439
+      md5: 48d789061ce01b3d97c8d548a42f371e
+      size: 851842
   compile@truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/gzip_logistic  --results_file
       truthseeker/reports/gzip_logistic.csv
     deps:
     - path: truthseeker/reports/gzip_logistic/
       hash: md5
-      md5: 4677ee579fda13aa8b7b5c14702e8971.dir
-      size: 2992473
-      nfiles: 1474
+      md5: 0e6c36459a7eb502e20633cdcc90d85e.dir
+      size: 1679620
+      nfiles: 1361
     outs:
     - path: truthseeker/reports/gzip_logistic.csv
       hash: md5
-      md5: 742bfe9e8ffb58494c90cc0c04d0195a
-      size: 811740
+      md5: 90d424f725034f74b270e86288995193
+      size: 732030
   compile@ddos-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_logistic  --results_file
       ddos/reports/gzip_logistic.csv
     deps:
     - path: ddos/reports/gzip_logistic/
       hash: md5
-      md5: 0507b35c33d9b85b8ec7da67b8933aab.dir
-      size: 2351373
-      nfiles: 1153
+      md5: 2f62473353ef75037c2d8019f116ce0b.dir
+      size: 3621790
+      nfiles: 3086
     outs:
     - path: ddos/reports/gzip_logistic.csv
       hash: md5
-      md5: ece12a4d8c4bd9cc612ff5be8681e74c
-      size: 600963
+      md5: 37f5199b0b94abe6df95b53c1c039de3
+      size: 1656638
   compile@ddos-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_knn  --results_file
       ddos/reports/gzip_knn.csv
     deps:
     - path: ddos/reports/gzip_knn/
       hash: md5
-      md5: 5c8f1f9a65c9fb63748a895e72d717bc.dir
-      size: 2238924
-      nfiles: 1156
+      md5: cc6da80658ec21e2272ad7089f38a28d.dir
+      size: 4284328
+      nfiles: 4123
     outs:
     - path: ddos/reports/gzip_knn.csv
       hash: md5
-      md5: 8b72c02c68f19558148b00d45f687065
-      size: 574796
+      md5: a0a57e372c5c4d2a2a986f20e9246057
+      size: 2106704
   compile@kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_logistic  --results_file
       kdd_nsl/reports/gzip_logistic.csv
     deps:
     - path: kdd_nsl/reports/gzip_logistic/
       hash: md5
-      md5: 3aeb5c48705ab27b778a9491eed59809.dir
-      size: 4497613
-      nfiles: 2264
+      md5: 429cd3d22120752c0f33f058bd295297.dir
+      size: 2661113
+      nfiles: 2518
     outs:
     - path: kdd_nsl/reports/gzip_logistic.csv
       hash: md5
-      md5: 6cc3ab785e209db15bc691bd420dbf21
-      size: 1204370
+      md5: d1b903d640f6a7e9aaa097ec06edbe48
+      size: 1331588
   compile@kdd_nsl-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_svc  --results_file
       kdd_nsl/reports/gzip_svc.csv
     deps:
     - path: kdd_nsl/reports/gzip_svc/
       hash: md5
-      md5: ad0c1ca59562640bc26f992a29c9c7fc.dir
-      size: 4197696
-      nfiles: 2176
+      md5: 0f46b49f2460ec47f185ee31766d67be.dir
+      size: 2585159
+      nfiles: 2863
     outs:
     - path: kdd_nsl/reports/gzip_svc.csv
       hash: md5
-      md5: 005010c2ae2b28474dd9ed2b072129fe
-      size: 1113249
+      md5: f1836fd21f8f2924a7f78454e4c43138
+      size: 1434242
   compile@sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/gzip_logistic  --results_file
       sms_spam/reports/gzip_logistic.csv
     deps:
     - path: sms_spam/reports/gzip_logistic/
       hash: md5
-      md5: 97a5527f07a609bebd4f30e0a383d03e.dir
-      size: 2293677
-      nfiles: 1121
+      md5: d6eae73bb974e016d7060965e782ec64.dir
+      size: 1681973
+      nfiles: 1579
     outs:
     - path: sms_spam/reports/gzip_logistic.csv
       hash: md5
-      md5: 3442281f20f9c036d095937294f2edd9
-      size: 586377
+      md5: 71abce1c8611089c18d0f773b569e1c5
+      size: 804780
   compile@ddos-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_svc  --results_file
       ddos/reports/gzip_svc.csv
     deps:
     - path: ddos/reports/gzip_svc/
       hash: md5
-      md5: fa7187512fc8375d97128988d2e6d98d.dir
-      size: 2256153
-      nfiles: 1156
+      md5: 4121e6859c881a309541a9fadde270e0.dir
+      size: 3335579
+      nfiles: 3218
     outs:
     - path: ddos/reports/gzip_svc.csv
       hash: md5
-      md5: d87f95d978b2b19b70941ce7552c06e6
-      size: 577202
+      md5: e3ba2e61b8a1cd1c0fe3438284c5c145
+      size: 1642578
   compile@sms_spam-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/gzip_svc  --results_file
       sms_spam/reports/gzip_svc.csv
     deps:
     - path: sms_spam/reports/gzip_svc/
       hash: md5
-      md5: 5f00d39d739b5377637c8b7d2b218fda.dir
-      size: 2282179
-      nfiles: 1177
+      md5: 5698fc82ad97df949f080080ea2380c5.dir
+      size: 1350919
+      nfiles: 1536
     outs:
     - path: sms_spam/reports/gzip_svc.csv
       hash: md5
-      md5: 00ad300e01df9a3d13b8f11261ee0d51
-      size: 586255
+      md5: e51bb0e58704d792c07a808638116f92
+      size: 735689
   clean@truthseeker-gzip_svc:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_svc.csv
-      -o truthseeker/plots/clean_gzip_svc.csv -c conf/clean.yaml
+      -o truthseeker/plots/clean/gzip_svc.csv -c conf/clean.yaml
     deps:
     - path: truthseeker/reports/gzip_svc.csv
       hash: md5
-      md5: 53bad1dc701714e6024ca8678976378f
-      size: 600439
+      md5: 48d789061ce01b3d97c8d548a42f371e
+      size: 851842
     params:
       conf/clean.yaml:
         replace:
@@ -8411,25 +8411,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: truthseeker/plots/clean_gzip_svc.csv
+    - path: truthseeker/plots/clean/gzip_svc.csv
       hash: md5
-      md5: b0b9b96aa9cfe04d5ef4aeb7d3161c21
-      size: 469207
+      md5: 98f028919aea0e75d0448a0458b4bb5a
+      size: 660018
   clean@kdd_nsl-gzip_svc:
-    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_svc.csv -o kdd_nsl/plots/clean_gzip_svc.csv
+    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_svc.csv -o kdd_nsl/plots/clean/gzip_svc.csv
       -c conf/clean.yaml
     deps:
     - path: kdd_nsl/reports/gzip_svc.csv
       hash: md5
-      md5: 005010c2ae2b28474dd9ed2b072129fe
-      size: 1113249
+      md5: f1836fd21f8f2924a7f78454e4c43138
+      size: 1434242
     params:
       conf/clean.yaml:
         replace:
@@ -8447,25 +8447,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: kdd_nsl/plots/clean_gzip_svc.csv
+    - path: kdd_nsl/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 3eab27465c8dace737ffdae86ccbd512
-      size: 859049
+      md5: 7ab8245dbf6413a621c903e52b10f051
+      size: 1115497
   clean@kdd_nsl-gzip_knn:
-    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_knn.csv -o kdd_nsl/plots/clean_gzip_knn.csv
+    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_knn.csv -o kdd_nsl/plots/clean/gzip_knn.csv
       -c conf/clean.yaml
     deps:
     - path: kdd_nsl/reports/gzip_knn.csv
       hash: md5
-      md5: 5e3a6a02802d5e2fc57142ee367e7b0f
-      size: 1297878
+      md5: 9787208801b626bfad81a5c917738097
+      size: 1220920
     params:
       conf/clean.yaml:
         replace:
@@ -8483,25 +8483,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: kdd_nsl/plots/clean_gzip_knn.csv
+    - path: kdd_nsl/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 1c001f5a7008b439ee4c7946998cbe25
-      size: 1002255
+      md5: a103ce34b10219cd410669a3bad3acb1
+      size: 666119
   clean@ddos-gzip_knn:
-    cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_knn.csv -o ddos/plots/clean_gzip_knn.csv
+    cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_knn.csv -o ddos/plots/clean/gzip_knn.csv
       -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_knn.csv
       hash: md5
-      md5: 8b72c02c68f19558148b00d45f687065
-      size: 574796
+      md5: a0a57e372c5c4d2a2a986f20e9246057
+      size: 2106704
     params:
       conf/clean.yaml:
         replace:
@@ -8519,25 +8519,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: ddos/plots/clean_gzip_knn.csv
+    - path: ddos/plots/clean/gzip_knn.csv
       hash: md5
-      md5: c730af75faf35ba958b15b2da82b25be
-      size: 451405
+      md5: 43e4847f50bc8e8d8e010eefbec80c4b
+      size: 1314108
   clean@ddos-gzip_svc:
-    cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_svc.csv -o ddos/plots/clean_gzip_svc.csv
+    cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_svc.csv -o ddos/plots/clean/gzip_svc.csv
       -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_svc.csv
       hash: md5
-      md5: d87f95d978b2b19b70941ce7552c06e6
-      size: 577202
+      md5: e3ba2e61b8a1cd1c0fe3438284c5c145
+      size: 1642578
     params:
       conf/clean.yaml:
         replace:
@@ -8555,25 +8555,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: ddos/plots/clean_gzip_svc.csv
+    - path: ddos/plots/clean/gzip_svc.csv
       hash: md5
-      md5: df1bab8cf7ac0a2c4d38f322d8cdb672
-      size: 442682
+      md5: a1b9b61655aa3f3ecf093f9efafc335e
+      size: 1036280
   clean@kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_logistic.csv
-      -o kdd_nsl/plots/clean_gzip_logistic.csv -c conf/clean.yaml
+      -o kdd_nsl/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: kdd_nsl/reports/gzip_logistic.csv
       hash: md5
-      md5: 6cc3ab785e209db15bc691bd420dbf21
-      size: 1204370
+      md5: d1b903d640f6a7e9aaa097ec06edbe48
+      size: 1331588
     params:
       conf/clean.yaml:
         replace:
@@ -8591,25 +8591,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: kdd_nsl/plots/clean_gzip_logistic.csv
+    - path: kdd_nsl/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 9d085b1fc1b5f70a6dd12c32037c62cd
-      size: 894862
+      md5: 782b9bad66f41af0e1a8ecad539bbd7e
+      size: 917447
   clean@truthseeker-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_knn.csv
-      -o truthseeker/plots/clean_gzip_knn.csv -c conf/clean.yaml
+      -o truthseeker/plots/clean/gzip_knn.csv -c conf/clean.yaml
     deps:
     - path: truthseeker/reports/gzip_knn.csv
       hash: md5
-      md5: 6ba7561cd39180787ac956633517a321
-      size: 867197
+      md5: 309caaf64052cf85ab733959f6c64e42
+      size: 831334
     params:
       conf/clean.yaml:
         replace:
@@ -8627,25 +8627,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: truthseeker/plots/clean_gzip_knn.csv
+    - path: truthseeker/plots/clean/gzip_knn.csv
       hash: md5
-      md5: ff0162ac672b57d59126b965580901d9
-      size: 620009
+      md5: 3814e076ca981a9f1e55aceffda9f354
+      size: 544799
   clean@ddos-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_logistic.csv -o
-      ddos/plots/clean_gzip_logistic.csv -c conf/clean.yaml
+      ddos/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_logistic.csv
       hash: md5
-      md5: ece12a4d8c4bd9cc612ff5be8681e74c
-      size: 600963
+      md5: 37f5199b0b94abe6df95b53c1c039de3
+      size: 1656638
     params:
       conf/clean.yaml:
         replace:
@@ -8663,25 +8663,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: ddos/plots/clean_gzip_logistic.csv
+    - path: ddos/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 13ea685881d149d7a461d96500d30ce2
-      size: 440028
+      md5: 135eed7b506e0a23aa90a069247788de
+      size: 929319
   clean@sms_spam-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_knn.csv -o
-      sms_spam/plots/clean_gzip_knn.csv -c conf/clean.yaml
+      sms_spam/plots/clean/gzip_knn.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_knn.csv
       hash: md5
-      md5: 2b0d4f908e2594d5b9845690298581a7
-      size: 574252
+      md5: 575e2e8df08136f96dc4d80271787354
+      size: 825874
     params:
       conf/clean.yaml:
         replace:
@@ -8699,25 +8699,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: sms_spam/plots/clean_gzip_knn.csv
+    - path: sms_spam/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 13a5803849f7dfdefe18ba16b0a5010f
-      size: 448070
+      md5: 39432f9d5d44d7d81a0dcfbda787b658
+      size: 470395
   clean@sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_logistic.csv
-      -o sms_spam/plots/clean_gzip_logistic.csv -c conf/clean.yaml
+      -o sms_spam/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_logistic.csv
       hash: md5
-      md5: 3442281f20f9c036d095937294f2edd9
-      size: 586377
+      md5: 71abce1c8611089c18d0f773b569e1c5
+      size: 804780
     params:
       conf/clean.yaml:
         replace:
@@ -8735,25 +8735,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: sms_spam/plots/clean_gzip_logistic.csv
+    - path: sms_spam/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: d4a3634c577b059cc78bb2c5881ad97b
-      size: 417456
+      md5: e153331d3ee2e0d7be84d0445d6ee9ee
+      size: 531054
   clean@sms_spam-gzip_svc:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_svc.csv -o
-      sms_spam/plots/clean_gzip_svc.csv -c conf/clean.yaml
+      sms_spam/plots/clean/gzip_svc.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_svc.csv
       hash: md5
-      md5: 00ad300e01df9a3d13b8f11261ee0d51
-      size: 586255
+      md5: e51bb0e58704d792c07a808638116f92
+      size: 735689
     params:
       conf/clean.yaml:
         replace:
@@ -8771,25 +8771,25 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: sms_spam/plots/clean_gzip_svc.csv
+    - path: sms_spam/plots/clean/gzip_svc.csv
       hash: md5
-      md5: eafe99a7a63b5cbf8cc5b0350914e329
-      size: 457290
+      md5: 68c45d51239b5901f7be4e957bd40450
+      size: 568172
   clean@truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_logistic.csv
-      -o truthseeker/plots/clean_gzip_logistic.csv -c conf/clean.yaml
+      -o truthseeker/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: truthseeker/reports/gzip_logistic.csv
       hash: md5
-      md5: 742bfe9e8ffb58494c90cc0c04d0195a
-      size: 811740
+      md5: 90d424f725034f74b270e86288995193
+      size: 732030
     params:
       conf/clean.yaml:
         replace:
@@ -8807,53 +8807,53 @@ stages:
             zstd: Zstd
             lzma: Lzma
           model_name:
-            gzip_svc: k-SVC
-            gzip_logistic: k-Logistic
-            gzip_knn: k-KNN
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
           model.init.symmetric:
             true: Symmetric
             false: Asymmetric
     outs:
-    - path: truthseeker/plots/clean_gzip_logistic.csv
+    - path: truthseeker/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 873c41dfb698b326eb07c943479815cd
-      size: 487547
+      md5: 4fc564c72834d8c0df0ce9b37c0075a9
+      size: 406060
   copy@sms_spam:
     cmd: 'rm -rf ~/Gzip-KNN/figs/sms_spam/ && mkdir -p ~/Gzip-KNN/figs/sms_spam/ &&
       cp -r sms_spam/plots/* ~/Gzip-KNN/figs/sms_spam/ '
     deps:
     - path: sms_spam/plots/
       hash: md5
-      md5: fdd45f66ef3f19a6534f5c17c462e51d.dir
-      size: 2793144
-      nfiles: 12
+      md5: b4562b1ad06e680bf0247d4e8dab85c1.dir
+      size: 10160120
+      nfiles: 19
   copy@truthseeker:
     cmd: 'rm -rf ~/Gzip-KNN/figs/truthseeker/ && mkdir -p ~/Gzip-KNN/figs/truthseeker/
       && cp -r truthseeker/plots/* ~/Gzip-KNN/figs/truthseeker/ '
     deps:
     - path: truthseeker/plots/
       hash: md5
-      md5: 0f9bcee5cc68e6112b25a3951283fd0c.dir
-      size: 3300727
-      nfiles: 12
+      md5: 47a062972487c796e962fa241d4bf108.dir
+      size: 8761443
+      nfiles: 18
   copy@kdd_nsl:
     cmd: 'rm -rf ~/Gzip-KNN/figs/kdd_nsl/ && mkdir -p ~/Gzip-KNN/figs/kdd_nsl/ &&
       cp -r kdd_nsl/plots/* ~/Gzip-KNN/figs/kdd_nsl/ '
     deps:
     - path: kdd_nsl/plots/
       hash: md5
-      md5: 0f5448bc5a774cdf6bc5bebc8a9b1b81.dir
-      size: 5639869
-      nfiles: 12
+      md5: 526bfd7a3ffd1b1cee332632d79a96f8.dir
+      size: 13281984
+      nfiles: 18
   copy@ddos:
     cmd: 'rm -rf ~/Gzip-KNN/figs/ddos/ && mkdir -p ~/Gzip-KNN/figs/ddos/ && cp -r
       ddos/plots/* ~/Gzip-KNN/figs/ddos/ '
     deps:
     - path: ddos/plots/
       hash: md5
-      md5: d8b78aa870552a659236fb9ef896a11a.dir
-      size: 2860891
-      nfiles: 15
+      md5: 22ac4455d4f24b7a0624f5d670f81e24.dir
+      size: 15551940
+      nfiles: 19
   condense@truthseeker-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
       data.sample.test_size=100 model_name=gzip_knn model=best_gzip_knn_truthseeker
@@ -9946,101 +9946,101 @@ stages:
       md5: 775c0bdfc7d9524f1e63b8879ddefccd
       size: 21590
   merge@truthseeker:
-    cmd: python merge.py --big_dir truthseeker/plots/ --data_file clean_gzip_knn.csv
-      --little_dir_data_file clean_gzip_logistic.csv clean_gzip_svc.csv --output_folder
-      truthseeker/plots/ --output_file merged.csv
+    cmd: python merge.py --big_dir truthseeker/plots/ --data_file clean/gzip_knn.csv
+      --little_dir_data_file clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder
+      truthseeker/plots --output_file merged.csv
     deps:
-    - path: truthseeker/plots/clean_gzip_knn.csv
+    - path: truthseeker/plots/clean/gzip_knn.csv
       hash: md5
-      md5: ff0162ac672b57d59126b965580901d9
-      size: 620009
-    - path: truthseeker/plots/clean_gzip_logistic.csv
+      md5: 3814e076ca981a9f1e55aceffda9f354
+      size: 544799
+    - path: truthseeker/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 873c41dfb698b326eb07c943479815cd
-      size: 487547
-    - path: truthseeker/plots/clean_gzip_svc.csv
+      md5: 4fc564c72834d8c0df0ce9b37c0075a9
+      size: 406060
+    - path: truthseeker/plots/clean/gzip_svc.csv
       hash: md5
-      md5: b0b9b96aa9cfe04d5ef4aeb7d3161c21
-      size: 469207
+      md5: 98f028919aea0e75d0448a0458b4bb5a
+      size: 660018
     outs:
     - path: truthseeker/plots/merged.csv
       hash: md5
-      md5: 8c62eb2b88334fccea1e7fcf0328e286
-      size: 1551248
+      md5: 8b3f20dbebbff2e560dc5072ef5c880e
+      size: 1665641
   merge@sms_spam:
-    cmd: python merge.py --big_dir sms_spam/plots/ --data_file clean_gzip_knn.csv
-      --little_dir_data_file clean_gzip_logistic.csv clean_gzip_svc.csv --output_folder
-      sms_spam/plots/ --output_file merged.csv
+    cmd: python merge.py --big_dir sms_spam/plots/ --data_file clean/gzip_knn.csv
+      --little_dir_data_file clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder
+      sms_spam/plots --output_file merged.csv
     deps:
-    - path: sms_spam/plots/clean_gzip_knn.csv
+    - path: sms_spam/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 13a5803849f7dfdefe18ba16b0a5010f
-      size: 448070
-    - path: sms_spam/plots/clean_gzip_logistic.csv
+      md5: 39432f9d5d44d7d81a0dcfbda787b658
+      size: 470395
+    - path: sms_spam/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: d4a3634c577b059cc78bb2c5881ad97b
-      size: 417456
-    - path: sms_spam/plots/clean_gzip_svc.csv
+      md5: e153331d3ee2e0d7be84d0445d6ee9ee
+      size: 531054
+    - path: sms_spam/plots/clean/gzip_svc.csv
       hash: md5
-      md5: eafe99a7a63b5cbf8cc5b0350914e329
-      size: 457290
+      md5: 68c45d51239b5901f7be4e957bd40450
+      size: 568172
     outs:
     - path: sms_spam/plots/merged.csv
       hash: md5
-      md5: 37ee37633fda4b5f9ee82bd1ceb4c227
-      size: 1297715
+      md5: a2b908fc3bcd6685e71c05af12d1f343
+      size: 1624136
   merge@ddos:
-    cmd: python merge.py --big_dir ddos/plots/ --data_file clean_gzip_knn.csv --little_dir_data_file
-      clean_gzip_logistic.csv clean_gzip_svc.csv --output_folder ddos/plots/ --output_file
+    cmd: python merge.py --big_dir ddos/plots/ --data_file clean/gzip_knn.csv --little_dir_data_file
+      clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder ddos/plots --output_file
       merged.csv
     deps:
-    - path: ddos/plots/clean_gzip_knn.csv
+    - path: ddos/plots/clean/gzip_knn.csv
       hash: md5
-      md5: c730af75faf35ba958b15b2da82b25be
-      size: 451405
-    - path: ddos/plots/clean_gzip_logistic.csv
+      md5: 43e4847f50bc8e8d8e010eefbec80c4b
+      size: 1314108
+    - path: ddos/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 13ea685881d149d7a461d96500d30ce2
-      size: 440028
-    - path: ddos/plots/clean_gzip_svc.csv
+      md5: 135eed7b506e0a23aa90a069247788de
+      size: 929319
+    - path: ddos/plots/clean/gzip_svc.csv
       hash: md5
-      md5: df1bab8cf7ac0a2c4d38f322d8cdb672
-      size: 442682
+      md5: a1b9b61655aa3f3ecf093f9efafc335e
+      size: 1036280
     outs:
     - path: ddos/plots/merged.csv
       hash: md5
-      md5: 403fa24d39db98be8839bf28950d486f
-      size: 1308400
+      md5: 1f53fd3ca7f2249cd2e157b79d3781b9
+      size: 3392540
   merge@kdd_nsl:
-    cmd: python merge.py --big_dir kdd_nsl/plots/ --data_file clean_gzip_knn.csv --little_dir_data_file
-      clean_gzip_logistic.csv clean_gzip_svc.csv --output_folder kdd_nsl/plots/ --output_file
+    cmd: python merge.py --big_dir kdd_nsl/plots/ --data_file clean/gzip_knn.csv --little_dir_data_file
+      clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder kdd_nsl/plots --output_file
       merged.csv
     deps:
-    - path: kdd_nsl/plots/clean_gzip_knn.csv
+    - path: kdd_nsl/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 1c001f5a7008b439ee4c7946998cbe25
-      size: 1002255
-    - path: kdd_nsl/plots/clean_gzip_logistic.csv
+      md5: a103ce34b10219cd410669a3bad3acb1
+      size: 666119
+    - path: kdd_nsl/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 9d085b1fc1b5f70a6dd12c32037c62cd
-      size: 894862
-    - path: kdd_nsl/plots/clean_gzip_svc.csv
+      md5: 782b9bad66f41af0e1a8ecad539bbd7e
+      size: 917447
+    - path: kdd_nsl/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 3eab27465c8dace737ffdae86ccbd512
-      size: 859049
+      md5: 7ab8245dbf6413a621c903e52b10f051
+      size: 1115497
     outs:
     - path: kdd_nsl/plots/merged.csv
       hash: md5
-      md5: 6b1695ffa807df0dfc018091e6530286
-      size: 2704298
+      md5: 677c23c80060a7c7d5c5f0b5c591927b
+      size: 2789429
   plot@kdd_nsl:
     cmd: python -m deckard.layers.plots  --path kdd_nsl/plots/  --file kdd_nsl/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: kdd_nsl/plots/merged.csv
       hash: md5
-      md5: 6b1695ffa807df0dfc018091e6530286
-      size: 2704298
+      md5: 677c23c80060a7c7d5c5f0b5c591927b
+      size: 2789429
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10071,6 +10071,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10103,6 +10105,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_accuracy.pdf
@@ -10120,6 +10124,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10142,6 +10148,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_predict_time.pdf
@@ -10159,6 +10167,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
           rotation: 90
@@ -10193,6 +10203,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_train_time.pdf
           hue: model.init.metric
           title:
@@ -10200,7 +10212,7 @@ stages:
           xlabel: Number of Training Samples
           y: train_time
           ylabel: Training Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10224,6 +10236,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_predict_time.pdf
           hue: model.init.metric
           title:
@@ -10231,7 +10245,7 @@ stages:
           xlabel: Number of Training Samples
           y: predict_time
           ylabel: Prediction Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10255,47 +10269,49 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
     outs:
     - path: kdd_nsl/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: 121120b8a2e9858ff4685486c63efe0e
-      size: 23176
+      md5: 3a4aaeb583cae0912520f139f9aab386
+      size: 24419
     - path: kdd_nsl/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: ba7301da0f57d672a8f6b0c312dd0085
-      size: 22877
+      md5: 56dcdadbbe3de910b6938a15a5e7f9d4
+      size: 22989
     - path: kdd_nsl/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: 6d82438ed9cc7b11f12ecee234f30c57
-      size: 22832
+      md5: 34cb35dfaf12a0e80220bbf4bba17ec2
+      size: 23428
     - path: kdd_nsl/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: 1c6e19118695948c2ed0569698e6179f
-      size: 25010
+      md5: 4cb5fe99edb86b584bb1ac5d7b540299
+      size: 21754
     - path: kdd_nsl/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: d117deeef1f2f9bdaf2d3c7305403126
-      size: 20794
+      md5: a527153f584dbcd379e212b2fc812b02
+      size: 18798
     - path: kdd_nsl/plots/models_vs_train_time.pdf
       hash: md5
-      md5: a84044c489b2540b5377638eb0eef95d
-      size: 20368
+      md5: e99bce817a45d0aa4400b7e3a82a1199
+      size: 18373
     - path: kdd_nsl/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: e86decc816d7792ffaa5bdaea9cd207d
-      size: 22222
+      md5: ce7d236858e5ac790c7d91414b523c5a
+      size: 22233
     - path: kdd_nsl/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: 62d04dbddf1cf59ff361e9ae4919b486
-      size: 22126
+      md5: 66c1c8dbc6e37464289aa7ee1369da38
+      size: 21611
   plot@truthseeker:
     cmd: python -m deckard.layers.plots  --path truthseeker/plots/  --file truthseeker/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: truthseeker/plots/merged.csv
       hash: md5
-      md5: 8c62eb2b88334fccea1e7fcf0328e286
-      size: 1551248
+      md5: 8b3f20dbebbff2e560dc5072ef5c880e
+      size: 1665641
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10326,6 +10342,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10358,6 +10376,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_accuracy.pdf
@@ -10375,6 +10395,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10397,6 +10419,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_predict_time.pdf
@@ -10414,6 +10438,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
           rotation: 90
@@ -10448,6 +10474,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_train_time.pdf
           hue: model.init.metric
           title:
@@ -10455,7 +10483,7 @@ stages:
           xlabel: Number of Training Samples
           y: train_time
           ylabel: Training Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10479,6 +10507,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_predict_time.pdf
           hue: model.init.metric
           title:
@@ -10486,7 +10516,7 @@ stages:
           xlabel: Number of Training Samples
           y: predict_time
           ylabel: Prediction Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10510,47 +10540,49 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
     outs:
     - path: truthseeker/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: 5cf9c958859967e3c615533045593908
-      size: 23503
+      md5: 65457f0310e5814a2b61243c8a70fb97
+      size: 23824
     - path: truthseeker/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: 83766dcb156fa3edbca2d862c7ac9816
-      size: 22823
+      md5: b7aceaea511fdf31b0ce4e9d59250f3c
+      size: 22984
     - path: truthseeker/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: bd8f939e95f05272f1b3797f71622729
-      size: 22308
+      md5: b1e430a453843c270b10148952f47e3a
+      size: 23404
     - path: truthseeker/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: e559d8f7a6dba235f2382f30a8b1f65e
-      size: 20504
+      md5: 245dc727a79469ff80f72ec696bf9b0f
+      size: 20437
     - path: truthseeker/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: bed8e2895380f440eb0291e5017840cf
-      size: 20083
+      md5: 784522384f91bd4d24ef08d97d0f12b5
+      size: 18174
     - path: truthseeker/plots/models_vs_train_time.pdf
       hash: md5
-      md5: a2cc864f1d9ba95643c8d6c88106022a
-      size: 19666
+      md5: 2dec545386ab2f487167b61a97a7994d
+      size: 17745
     - path: truthseeker/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: 5d84fded0f889e23cef9bfc7653a2c1f
-      size: 22228
+      md5: 1405d72aaf3fc50b6c94b959820a97eb
+      size: 22192
     - path: truthseeker/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: 5ce5e92218d99e3c3da728d7c817018f
-      size: 21601
+      md5: bcb2938ec124441479dccdf06791f4bb
+      size: 21586
   plot@sms_spam:
     cmd: python -m deckard.layers.plots  --path sms_spam/plots/  --file sms_spam/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: sms_spam/plots/merged.csv
       hash: md5
-      md5: 37ee37633fda4b5f9ee82bd1ceb4c227
-      size: 1297715
+      md5: a2b908fc3bcd6685e71c05af12d1f343
+      size: 1624136
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10581,6 +10613,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10613,6 +10647,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_accuracy.pdf
@@ -10630,6 +10666,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10652,6 +10690,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_predict_time.pdf
@@ -10669,6 +10709,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
           rotation: 90
@@ -10703,6 +10745,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_train_time.pdf
           hue: model.init.metric
           title:
@@ -10710,7 +10754,7 @@ stages:
           xlabel: Number of Training Samples
           y: train_time
           ylabel: Training Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10734,6 +10778,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_predict_time.pdf
           hue: model.init.metric
           title:
@@ -10741,7 +10787,7 @@ stages:
           xlabel: Number of Training Samples
           y: predict_time
           ylabel: Prediction Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10765,47 +10811,49 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
     outs:
     - path: sms_spam/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: 7da57ee42851335ad0dbebee2507e99d
-      size: 22876
+      md5: 7f58103a723b523a655257fdc0cadad8
+      size: 24365
     - path: sms_spam/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: dab5b9cf40da2a0e03298fc0874f117b
-      size: 22144
+      md5: eb03feb9e45d4e22be04714b58a912e3
+      size: 23764
     - path: sms_spam/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: ed3532fc421c775cea5bf6e551807499
-      size: 22096
+      md5: 613eeba0b0ffd2470dc3ba8d3aa6004d
+      size: 23220
     - path: sms_spam/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: ce1bc080d051c202dded50d93bb246b4
-      size: 22620
+      md5: 8dc2177a206c9950ff881b4267581bfe
+      size: 19460
     - path: sms_spam/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: 6e0a18406525e3c71e871d5dc43bc698
-      size: 19130
+      md5: c8f9d6657c5c766ab0704ba2e4045644
+      size: 18067
     - path: sms_spam/plots/models_vs_train_time.pdf
       hash: md5
-      md5: 30b81edd5a38d77c0e435a5382c3d64a
-      size: 18699
+      md5: 39460825f69ffcc6fb04aa2495205d4a
+      size: 17645
     - path: sms_spam/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: 91d274fe5d7b43cb56fc0f217f8b3380
-      size: 22217
+      md5: aa17f95ce6d6ee0ea5ee54efc7943b24
+      size: 22237
     - path: sms_spam/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: 59282e618c5d2d4e1a78646d7fda53f8
-      size: 22831
+      md5: 63ec0d09e9fb43d41e903090ce3613a3
+      size: 21578
   plot@ddos:
     cmd: python -m deckard.layers.plots  --path ddos/plots/  --file ddos/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: ddos/plots/merged.csv
       hash: md5
-      md5: 403fa24d39db98be8839bf28950d486f
-      size: 1308400
+      md5: 1f53fd3ca7f2249cd2e157b79d3781b9
+      size: 3392540
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10836,6 +10884,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10868,6 +10918,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_accuracy.pdf
@@ -10885,6 +10937,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: linear
             ylim:
@@ -10907,6 +10961,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
         - file: models_vs_predict_time.pdf
@@ -10924,6 +10980,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
           set:
             yscale: log
           rotation: 90
@@ -10958,6 +11016,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_train_time.pdf
           hue: model.init.metric
           title:
@@ -10965,7 +11025,7 @@ stages:
           xlabel: Number of Training Samples
           y: train_time
           ylabel: Training Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -10989,6 +11049,8 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
         - file: metric_vs_predict_time.pdf
           hue: model.init.metric
           title:
@@ -10996,7 +11058,7 @@ stages:
           xlabel: Number of Training Samples
           y: predict_time
           ylabel: Prediction Time (s)
-          y_scale: log
+          y_scale: linear
           hue_order:
           - Gzip
           - Pickle
@@ -11020,39 +11082,41 @@ stages:
             - 1.05
             - 0.5
             loc: center left
+            prop:
+              size: 14
     outs:
     - path: ddos/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: d6c48181947786290d7892642a3e019b
-      size: 22886
+      md5: a3fe1af653e12fc8da2299b2f0b23d1b
+      size: 24790
     - path: ddos/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: 6b4b67904fff009af4edb71d00106c19
-      size: 22664
+      md5: 6194c72b4c4041ad617b48ded6389002
+      size: 24326
     - path: ddos/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: 428ea333166e3d9f07a55c0239570552
-      size: 22156
+      md5: bf805f05ec265d8a041de6ca8ea330c9
+      size: 22948
     - path: ddos/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: 8ca13025efb9ec7a1b65b1f91438960c
-      size: 21643
+      md5: 04d79b1fc519e643f3b5c63f6beceed7
+      size: 23072
     - path: ddos/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: f10c1255422a2598081c2e55b6a7694e
-      size: 20499
+      md5: 85ea7dae3d5ec3acb9ca611502750ab7
+      size: 19438
     - path: ddos/plots/models_vs_train_time.pdf
       hash: md5
-      md5: 0663e594773e9a271336fae4f41d35c8
-      size: 20074
+      md5: f283bcfe2c161873943c1f6fe2b72ac4
+      size: 19015
     - path: ddos/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: 3dbfc687130c2c1549fba477f0c4ade3
-      size: 22221
+      md5: 102b53eded0214fdd7971baa9ab7c2a2
+      size: 22227
     - path: ddos/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: 73decc1bce68e1bfae76a8a5dcd887c4
-      size: 21594
+      md5: 1de81513181654716b2f0aa83e4ed05b
+      size: 21615
   condense@truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
       data.sample.test_size=100 model_name=gzip_logistic model=best_gzip_logistic_truthseeker
@@ -13599,15 +13663,15 @@ stages:
       size: 26
   grid_search@20-kdd_nsl-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_knn/20
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_knn/20/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=kdd_nsl/logs/gzip_knn/20 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_knn/20/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
-      md5: 04d89b3026f5179935abcfe121130ee2
+      md5: a58015cd6f327e171842b045a2524bfd
       size: 2062
     - path: params.yaml
       hash: md5
@@ -13646,7 +13710,7 @@ stages:
             study_name: ${dataset}_${model_name}_${stage}
             n_trials: 2
             n_jobs: 2
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
             params:
               model.init.k: 1,3,5,7,11
               +model.init.weights: uniform,distance
@@ -13671,25 +13735,26 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_knn/20
       hash: md5
-      md5: fd2c63b6b83cd609f8a5ff70441440b7.dir
-      size: 1280146
+      md5: 366c6335d50e8616bb174c833aa8bc7d.dir
+      size: 1378803
       nfiles: 514
     - path: kdd_nsl/reports/gzip_knn/20/train/
       hash: md5
-      md5: 6efc672c0a7a16d9959e63170b8ac946.dir
-      size: 659524
-      nfiles: 693
+      md5: db562e62674bfdf3834f24982e4863c5.dir
+      size: 1442091
+      nfiles: 1344
   grid_search@20-kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
       data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=kdd_nsl/logs/gzip_logistic/20 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_logistic/20/study.csv
-      files.directory=kdd_nsl files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=16
+      model.init.distance_matrix=null hydra.sweeper.study_name=gzip_logistic_kdd_nsl
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_logistic/20
+      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_logistic/20/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
       hash: md5
-      md5: 44c28c02d3f21a9722a1a0fd8303c73d
+      md5: 847d4d804fff0b6f2533f90820eebd04
       size: 2205
     - path: params.yaml
       hash: md5
@@ -13740,7 +13805,7 @@ stages:
               model_name: ${model_name}
               data.sample.random_state: int(interval(1, 10000))
             direction: ${direction}
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -13756,25 +13821,25 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_logistic/20
       hash: md5
-      md5: b4216adc48cd99c7ade3293d10202701.dir
-      size: 1370231
+      md5: 13208b904974e74a36e3f348d3c77cb6.dir
+      size: 1544105
       nfiles: 514
     - path: kdd_nsl/reports/gzip_logistic/20/train/
       hash: md5
-      md5: 4dc8f90ff3774faf695b03a66ef14d42.dir
-      size: 718779
-      nfiles: 683
+      md5: d3129b6ec0089c29f2587295c5b0b9ca.dir
+      size: 1517999
+      nfiles: 1417
   grid_search@20-kdd_nsl-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_svc/20
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_svc/20/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=kdd_nsl/logs/gzip_svc/20 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_svc/20/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
-      md5: 7ddf265f5fcac5ad38482d43becb6240
+      md5: 957922cb6993eb99866232d944a4a106
       size: 2131
     - path: params.yaml
       hash: md5
@@ -13825,7 +13890,7 @@ stages:
               model_name: ${model_name}
               data.sample.random_state: int(interval(1, 10000))
             direction: ${direction}
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -13841,25 +13906,25 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_svc/20
       hash: md5
-      md5: 8d5f651e084623c455ba635861bcdcd0.dir
-      size: 1351901
+      md5: da52590b8dceaaeebe1abdfbe7a6e4ca.dir
+      size: 1494603
       nfiles: 514
     - path: kdd_nsl/reports/gzip_svc/20/train/
       hash: md5
-      md5: 2f595222a4597d23a6ee93d81968d50d.dir
-      size: 854665
-      nfiles: 943
+      md5: 842cf9225a259971bd112b1b67e317b0.dir
+      size: 1545527
+      nfiles: 1711
   grid_search@20-truthseeker-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_truthseeker
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_knn/20
-      hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_knn/20/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=16
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_truthseeker hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=truthseeker/logs/gzip_knn/20 hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_knn/20/study.csv
+      files.directory=truthseeker files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
-      md5: 04d89b3026f5179935abcfe121130ee2
+      md5: a58015cd6f327e171842b045a2524bfd
       size: 2062
     - path: params.yaml
       hash: md5
@@ -13898,7 +13963,7 @@ stages:
             study_name: ${dataset}_${model_name}_${stage}
             n_trials: 2
             n_jobs: 2
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
             params:
               model.init.k: 1,3,5,7,11
               +model.init.weights: uniform,distance
@@ -13923,26 +13988,26 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_knn/20
       hash: md5
-      md5: 115a729630ae2a354f18335c364d5a2f.dir
-      size: 1271289
-      nfiles: 513
+      md5: 612dc9a25828750e2b83f5423fd3f2a0.dir
+      size: 1355419
+      nfiles: 514
     - path: truthseeker/reports/gzip_knn/20/train/
       hash: md5
-      md5: 8db00017c13521b76a4709ad5ee5e203.dir
-      size: 342229
-      nfiles: 376
+      md5: 96f7cd8073d76dd06ebdb42e81c8ee97.dir
+      size: 691265
+      nfiles: 748
   grid_search@20-truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
       data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_truthseeker hydra.sweeper.n_trials=128
-      hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_logistic/20 
+      model.init.distance_matrix=null hydra.sweeper.study_name=gzip_logistic_truthseeker
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16 hydra.sweep.dir=truthseeker/logs/gzip_logistic/20
       hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_logistic/20/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=16
+      files.directory=truthseeker files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
       hash: md5
-      md5: 44c28c02d3f21a9722a1a0fd8303c73d
+      md5: 847d4d804fff0b6f2533f90820eebd04
       size: 2205
     - path: params.yaml
       hash: md5
@@ -13993,7 +14058,7 @@ stages:
               model_name: ${model_name}
               data.sample.random_state: int(interval(1, 10000))
             direction: ${direction}
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -14009,25 +14074,25 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_logistic/20
       hash: md5
-      md5: 0a275db0038a8bee22a86c237108038d.dir
-      size: 1365861
-      nfiles: 513
+      md5: c9b4c2481886b7050b45336790232208.dir
+      size: 1392529
+      nfiles: 514
     - path: truthseeker/reports/gzip_logistic/20/train/
       hash: md5
-      md5: 467a611bd7c270cff5043eaa2a15a990.dir
-      size: 361274
-      nfiles: 375
+      md5: 7e9fec97b937202d11408392a76d1ff8.dir
+      size: 824349
+      nfiles: 687
   grid_search@20-truthseeker-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_truthseeker
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_svc/20
-      hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_svc/20/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=16
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_truthseeker hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=truthseeker/logs/gzip_svc/20 hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_svc/20/study.csv
+      files.directory=truthseeker files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
-      md5: 7ddf265f5fcac5ad38482d43becb6240
+      md5: 957922cb6993eb99866232d944a4a106
       size: 2131
     - path: params.yaml
       hash: md5
@@ -14078,7 +14143,7 @@ stages:
               model_name: ${model_name}
               data.sample.random_state: int(interval(1, 10000))
             direction: ${direction}
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -14094,25 +14159,25 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_svc/20
       hash: md5
-      md5: 4db1c3259d3d70481edab40bc5846d13.dir
-      size: 1306695
-      nfiles: 513
+      md5: 0d3472387b2383c0c86453d0c8bad1d8.dir
+      size: 1412257
+      nfiles: 514
     - path: truthseeker/reports/gzip_svc/20/train/
       hash: md5
-      md5: bf2ebabbd5f570522f98155ed69cae1a.dir
-      size: 512646
-      nfiles: 576
+      md5: 1ad2d5bba40bda952a707e6591b219e8.dir
+      size: 854342
+      nfiles: 960
   grid_search@20-sms_spam-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_sms_spam
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/gzip_knn/20
-      hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_knn/20/study.csv files.directory=sms_spam
-      files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_sms_spam hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=sms_spam/logs/gzip_knn/20 hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_knn/20/study.csv
+      files.directory=sms_spam files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
-      md5: 04d89b3026f5179935abcfe121130ee2
+      md5: a58015cd6f327e171842b045a2524bfd
       size: 2062
     - path: params.yaml
       hash: md5
@@ -14151,7 +14216,7 @@ stages:
             study_name: ${dataset}_${model_name}_${stage}
             n_trials: 2
             n_jobs: 2
-            max_failure_rate: 0.5
+            max_failure_rate: 1.0
             params:
               model.init.k: 1,3,5,7,11
               +model.init.weights: uniform,distance
@@ -14176,20 +14241,21 @@ stages:
     outs:
     - path: sms_spam/logs/gzip_knn/20
       hash: md5
-      md5: 0d3b237e0586ff4d6c95e704ef742a2f.dir
-      size: 1258236
-      nfiles: 513
+      md5: cd7d38828e668932edb465aab8f669b9.dir
+      size: 1368286
+      nfiles: 514
     - path: sms_spam/reports/gzip_knn/20/train/
       hash: md5
-      md5: 5af399c77dc9be22edae692aa5a0429b.dir
-      size: 339883
-      nfiles: 374
+      md5: 34f87eea72260df92dfc11828d1704d9.dir
+      size: 1011221
+      nfiles: 987
   grid_search@20-sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
       data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_sms_spam hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=sms_spam/logs/gzip_logistic/20 hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_logistic/20/study.csv
-      files.directory=sms_spam files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=16
+      model.init.distance_matrix=null hydra.sweeper.study_name=gzip_logistic_sms_spam
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/gzip_logistic/20
+      hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_logistic/20/study.csv
+      files.directory=sms_spam files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -14261,21 +14327,21 @@ stages:
     outs:
     - path: sms_spam/logs/gzip_logistic/20
       hash: md5
-      md5: cb3485ab935ddf05a786385f686a75ff.dir
-      size: 1396472
+      md5: c71b401cee3353f28af948a5c81c2aef.dir
+      size: 1481666
       nfiles: 514
     - path: sms_spam/reports/gzip_logistic/20/train/
       hash: md5
-      md5: 55e8dc65a0d6cc808ad887c5119b75c9.dir
-      size: 567210
-      nfiles: 544
+      md5: 880ce756ce89fc78cbc8db2f90599ce7.dir
+      size: 1260566
+      nfiles: 1168
   grid_search@20-sms_spam-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
-      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_sms_spam
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/gzip_svc/20
-      hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_svc/20/study.csv files.directory=sms_spam
-      files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      data.sample.train_size=20 data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_sms_spam hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=sms_spam/logs/gzip_svc/20 hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_svc/20/study.csv
+      files.directory=sms_spam files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
@@ -14346,21 +14412,21 @@ stages:
     outs:
     - path: sms_spam/logs/gzip_svc/20
       hash: md5
-      md5: 72490b67a2f121f85f75b4a35828fc24.dir
-      size: 1300497
-      nfiles: 513
+      md5: f26f2634b0feb17505fdce186f608a7a.dir
+      size: 1423049
+      nfiles: 514
     - path: sms_spam/reports/gzip_svc/20/train/
       hash: md5
-      md5: b92aa2acab580e30d3c3cba5afb6bc98.dir
-      size: 337764
-      nfiles: 384
+      md5: a0abcb613fd0a6bd694beca6a6547966.dir
+      size: 1012876
+      nfiles: 1152
   grid_search@20-ddos-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=20
-      data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_knn/20
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_knn/20/study.csv files.directory=ddos
-      files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_knn/20 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_knn/20/study.csv
+      files.directory=ddos files.reports=reports/gzip_knn/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
@@ -14428,20 +14494,20 @@ stages:
     outs:
     - path: ddos/logs/gzip_knn/20
       hash: md5
-      md5: e4948d5aac40e040df43fbafbc7e8431.dir
-      size: 1258111
-      nfiles: 513
+      md5: aba9aa0bc386925b6640d3694e172307.dir
+      size: 1500275
+      nfiles: 514
     - path: ddos/reports/gzip_knn/20/train/
       hash: md5
-      md5: fdc33a01f1f3ed629e9a409ab724f28a.dir
-      size: 336976
-      nfiles: 383
+      md5: 68277948d27497ac28c2da134e1ede49.dir
+      size: 1031000
+      nfiles: 1153
   grid_search@20-ddos-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=20
-      data.sample.test_size=100 model_name=gzip_logistic hydra.sweeper.study_name=gzip_logistic_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_logistic/20
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/20/study.csv
-      files.directory=ddos files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=16
+      data.sample.test_size=100 model_name=gzip_logistic model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_logistic_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_logistic/20 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/20/study.csv
+      files.directory=ddos files.reports=reports/gzip_logistic/20 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -14513,21 +14579,21 @@ stages:
     outs:
     - path: ddos/logs/gzip_logistic/20
       hash: md5
-      md5: cedf81e12298ca376d0aad71c89a2474.dir
-      size: 1338544
-      nfiles: 513
+      md5: 661dda680a5873aa7bd6706e4fe84aba.dir
+      size: 1595239
+      nfiles: 514
     - path: ddos/reports/gzip_logistic/20/train/
       hash: md5
-      md5: 392510c47d7267e45400b1aeff4989de.dir
-      size: 383763
-      nfiles: 362
+      md5: de7c5055afceca3fefe4d1c056135fca.dir
+      size: 1046533
+      nfiles: 995
   grid_search@20-ddos-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=20
-      data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_svc/20
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_svc/20/study.csv files.directory=ddos
-      files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_svc/20 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_svc/20/study.csv
+      files.directory=ddos files.reports=reports/gzip_svc/20 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
@@ -14598,21 +14664,21 @@ stages:
     outs:
     - path: ddos/logs/gzip_svc/20
       hash: md5
-      md5: e722c155006dfb1d63d8027918059631.dir
-      size: 1295050
-      nfiles: 513
+      md5: 29f2100d018a3a1cbc73245d8c852843.dir
+      size: 1523497
+      nfiles: 514
     - path: ddos/reports/gzip_svc/20/train/
       hash: md5
-      md5: 03c17016e53ec85735281044e44a3da9.dir
-      size: 342574
-      nfiles: 384
+      md5: e2e8b8ef8171fa462ebc336c94662112.dir
+      size: 1027981
+      nfiles: 1152
   grid_search@100-kdd_nsl-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_knn/100
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_knn/100/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=kdd_nsl/logs/gzip_knn/100 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_knn/100/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
@@ -14680,20 +14746,21 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_knn/100
       hash: md5
-      md5: 0655c027ad35a4c39917f6c86a647fee.dir
-      size: 1284154
+      md5: ae62d41d63c00203168aba1bc6f23d7f.dir
+      size: 1377586
       nfiles: 514
     - path: kdd_nsl/reports/gzip_knn/100/train/
       hash: md5
-      md5: 09ea1ef591933be60985fc4a918af0e3.dir
-      size: 375404
-      nfiles: 344
+      md5: f9b9f5cb3a5d5e8f152fd8a3e1170cf1.dir
+      size: 756846
+      nfiles: 684
   grid_search@100-kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
       data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=kdd_nsl/logs/gzip_logistic/100 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_logistic/100/study.csv
-      files.directory=kdd_nsl files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=16
+      model.init.distance_matrix=null hydra.sweeper.study_name=gzip_logistic_kdd_nsl
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16 hydra.sweep.dir=kdd_nsl/logs/gzip_logistic/100
+      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_logistic/100/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -14765,21 +14832,21 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_logistic/100
       hash: md5
-      md5: 8688739ebbaf1ecfb0cee7351653dcdd.dir
-      size: 1419973
+      md5: dbf0afc908592f45f19b5d0d3c9e99a2.dir
+      size: 1515165
       nfiles: 514
     - path: kdd_nsl/reports/gzip_logistic/100/train/
       hash: md5
-      md5: b048f1724da91fc0129001ea52c6afbc.dir
-      size: 369539
-      nfiles: 373
+      md5: f0a9505ca09a5f5ba802e07e82585195.dir
+      size: 764297
+      nfiles: 733
   grid_search@100-kdd_nsl-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_svc/100
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_svc/100/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=kdd_nsl/logs/gzip_svc/100 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_svc/100/study.csv
+      files.directory=kdd_nsl files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
@@ -14850,20 +14917,20 @@ stages:
     outs:
     - path: kdd_nsl/logs/gzip_svc/100
       hash: md5
-      md5: ac5abf43ecd7219df0538e4eabc38483.dir
-      size: 1375408
+      md5: a4658e054fa447543681d65de2c9c00a.dir
+      size: 1470574
       nfiles: 514
     - path: kdd_nsl/reports/gzip_svc/100/train/
       hash: md5
-      md5: ce44eb636a676d860b6a74c1e2b7bd6d.dir
-      size: 346387
-      nfiles: 384
+      md5: 33ef67ff70192fa7addf64029c8551fd.dir
+      size: 692554
+      nfiles: 768
   grid_search@100-truthseeker-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_truthseeker
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_knn/100
-      hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_knn/100/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=16
+      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_truthseeker hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=truthseeker/logs/gzip_knn/100 hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_knn/100/study.csv
+      files.directory=truthseeker files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
@@ -14932,21 +14999,21 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_knn/100
       hash: md5
-      md5: 96fbe48b38147ee5490e4032082c70a9.dir
-      size: 1262746
-      nfiles: 513
+      md5: 1f1341402b490a0def78814bc901c378.dir
+      size: 1352213
+      nfiles: 514
     - path: truthseeker/reports/gzip_knn/100/train/
       hash: md5
-      md5: b3277c4473c19eabcd4de8c4912963e5.dir
-      size: 350712
-      nfiles: 367
+      md5: 9d6689140e0a0d71876cf4f866ed32e9.dir
+      size: 730849
+      nfiles: 702
   grid_search@100-truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
       data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_truthseeker hydra.sweeper.n_trials=128
-      hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_logistic/100 
+      model.init.distance_matrix=null hydra.sweeper.study_name=gzip_logistic_truthseeker
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16 hydra.sweep.dir=truthseeker/logs/gzip_logistic/100
       hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_logistic/100/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=16
+      files.directory=truthseeker files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -15018,20 +15085,20 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_logistic/100
       hash: md5
-      md5: 0b884276bd5e5665a1f6f1da70ce0c0a.dir
-      size: 1363656
-      nfiles: 513
+      md5: 1eed504bee679829bc0dd3da571952b6.dir
+      size: 1419722
+      nfiles: 514
     - path: truthseeker/reports/gzip_logistic/100/train/
       hash: md5
-      md5: b8787116e05d1f7cd360fcb656d8bc0d.dir
-      size: 373739
-      nfiles: 368
+      md5: bba8e74c61d89a36d976580c4bc35c5f.dir
+      size: 855271
+      nfiles: 674
   grid_search@100-truthseeker-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_truthseeker
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/gzip_svc/100
-      hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_svc/100/study.csv
-      files.directory=truthseeker files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=16
+      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_truthseeker hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=truthseeker/logs/gzip_svc/100 hydra.callbacks.study_dump.output_file=truthseeker/logs/gzip_svc/100/study.csv
+      files.directory=truthseeker files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
@@ -15103,20 +15170,20 @@ stages:
     outs:
     - path: truthseeker/logs/gzip_svc/100
       hash: md5
-      md5: efaa084603e8b096ac56f090dd4cbe59.dir
-      size: 1370808
+      md5: 26f9b8831beeacd18ec56aca02107721.dir
+      size: 1444462
       nfiles: 514
     - path: truthseeker/reports/gzip_svc/100/train/
       hash: md5
-      md5: 0fabc50448b4518eed20dfedd637ff89.dir
-      size: 342354
-      nfiles: 384
+      md5: 0f2ffd9e14e2f5c7e125a8584f8b730d.dir
+      size: 682028
+      nfiles: 765
   grid_search@100-sms_spam-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_sms_spam
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/gzip_knn/100
-      hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_knn/100/study.csv
-      files.directory=sms_spam files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=16
+      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_sms_spam hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=16
+      hydra.sweep.dir=sms_spam/logs/gzip_knn/100 hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_knn/100/study.csv
+      files.directory=sms_spam files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
@@ -15185,38 +15252,84 @@ stages:
     outs:
     - path: sms_spam/logs/gzip_knn/100
       hash: md5
-      md5: ddc0cead734b37c40b25087975af51b6.dir
-      size: 1292137
+      md5: 607fa44665618028479ae1fd21964182.dir
+      size: 1345464
       nfiles: 514
     - path: sms_spam/reports/gzip_knn/100/train/
       hash: md5
-      md5: ada083e1fe8057db8a72fefda6189c00.dir
-      size: 358548
-      nfiles: 342
-  grid_search@100-sms_spam-gzip_logistic:
-    cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_sms_spam hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=sms_spam/logs/gzip_logistic/100 hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_logistic/100/study.csv
-      files.directory=sms_spam files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=16
-      ++raise_exception=True                --config-name gzip_logistic --multirun
+      md5: c8fcfdd70f97267337a81d808eee8adb.dir
+      size: 738490
+      nfiles: 668
+  find_best_model@ddos-gzip_knn:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_knn_ddos --config_subdir model --params_file best_gzip_knn_ddos --default_config
+      gzip_knn
     deps:
-    - path: conf/gzip_logistic.yaml
+    - path: ddos/logs/gzip_knn/
       hash: md5
-      md5: 847d4d804fff0b6f2533f90820eebd04
-      size: 2205
-    - path: params.yaml
+      md5: d2c6441e85e3509b8968240a48196d07.dir
+      size: 4193267
+      nfiles: 1542
+    outs:
+    - path: conf/model/best_gzip_knn_ddos.yaml
       hash: md5
-      md5: 9a178db02b5ad8f990c7a557790a36c7
-      size: 1381
+      md5: bdea475d3a2bc59106f27dccd0fc27fc
+      size: 419
+  find_best_model@ddos-gzip_svc:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_svc_ddos --config_subdir model --params_file best_gzip_svc_ddos --default_config
+      gzip_svc
+    deps:
+    - path: ddos/logs/gzip_svc/
+      hash: md5
+      md5: 17e1bf2ac43401d7f9e105bb6d4b2654.dir
+      size: 5409327
+      nfiles: 2056
+    outs:
+    - path: conf/model/best_gzip_svc_ddos.yaml
+      hash: md5
+      md5: 3a7f27dd470ec9e55c10403814f550f2
+      size: 442
+  find_best_model@ddos-gzip_logistic:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_logistic_ddos --config_subdir model --params_file best_gzip_logistic_ddos
+      --default_config gzip_logistic
+    deps:
+    - path: ddos/logs/gzip_logistic/
+      hash: md5
+      md5: 4ba5ce081a1bc364ed7e3f3f8c42dfd6.dir
+      size: 4431235
+      nfiles: 1542
+    outs:
+    - path: conf/model/best_gzip_logistic_ddos.yaml
+      hash: md5
+      md5: d5e603d6386dd6cf1167088eaecbdde5
+      size: 498
+  condense@ddos-knn:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
+      data.sample.test_size=100 model_name=condensed_knn model=gzip_knn files.directory=ddos
+      files.reports=reports/condense/knn/ hydra.sweeper.study_name=condense_knn_ddos
+      hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/condense/knn/
+      hydra.callbacks.study_dump.output_file=ddos/logs/knn/study.csv hydra.launcher.n_jobs=-1
+      --config-name condense_knn --multirun
+    deps:
+    - path: conf/model/best_gzip_knn_ddos.yaml
+      hash: md5
+      md5: bdea475d3a2bc59106f27dccd0fc27fc
+      size: 419
+    - path: ddos/logs/method/
+      hash: md5
+      md5: a09dd0467b0e8a142d6f32a38f205159.dir
+      size: 59399
+      nfiles: 28
     params:
-      conf/gzip_logistic.yaml:
+      conf/condense.yaml:
         hydra:
           run:
-            dir: ${dataset}/logs/${stage}/
+            dir: ${dataset}/logs/condense/
           sweep:
             dir: ???
-            subdir: ${hydra.job.id}
+            subdir: ${hydra.job.num}
           callbacks:
             study_dump:
               _target_: database.OptunaStudyDumpCallback
@@ -15237,24 +15350,17 @@ stages:
               n_ei_candidates: 24
               multivariate: true
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            study_name: ${dataset}_${model_name}_${stage}
+            study_name: ${dataset}_${model_name}
             storage: sqlite:///optuna.db
-            n_jobs: 1
-            n_trials: 1
-            params:
-              +model.init.solver: saga
-              +model.init.penalty: l2,l1,l2,none
-              +model.init.tol: 1e-4,1e-3,1e-2
-              +model.init.C: 1e-2,1e-1,1e0,1e1,1e2
-              +model.init.fit_intercept: True,False
-              +model.init.class_weight: balanced,None
-              model.init.symmetric: True,False
-              ++model.init.precompute: true
-              model.init.metric: gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
-              model_name: ${model_name}
-              data.sample.random_state: int(interval(1, 10000))
+            n_jobs: 2
+            n_trials: 2
             direction: ${direction}
             max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -15266,51 +15372,49 @@ stages:
             temp_folder: /tmp/deckard
             max_nbytes: 100000
             mmap_mode: r
-        model_name: gzip_logistic
     outs:
-    - path: sms_spam/logs/gzip_logistic/100
+    - path: ddos/logs/condense/knn/
       hash: md5
-      md5: fef64da3e42fb4af8fa4f94b2a23a75f.dir
-      size: 1428456
-      nfiles: 514
-    - path: sms_spam/reports/gzip_logistic/100/train/
+      md5: 75bcfe601591f87c8ab1492553f86b0a.dir
+      size: 10904119
+      nfiles: 4097
+    - path: ddos/reports/condense/knn/
       hash: md5
-      md5: 605532e5cdbf53556d7dc350ed96d1f2.dir
-      size: 368029
-      nfiles: 369
-  grid_search@100-sms_spam-gzip_svc:
-    cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
-      data.sample.train_size=100 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_sms_spam
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/gzip_svc/100
-      hydra.callbacks.study_dump.output_file=sms_spam/logs/gzip_svc/100/study.csv
-      files.directory=sms_spam files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=16
-      ++raise_exception=True                --config-name gzip_svc --multirun
+      md5: 18b11d46fd07e34dad7540abc72d8b83.dir
+      size: 5612497
+      nfiles: 6108
+  condense@ddos-svc:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
+      data.sample.test_size=100 model_name=condensed_svc model=gzip_svc files.directory=ddos
+      files.reports=reports/condense/svc/ hydra.sweeper.study_name=condense_svc_ddos
+      hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/condense/svc/
+      hydra.callbacks.study_dump.output_file=ddos/logs/svc/study.csv hydra.launcher.n_jobs=-1
+      --config-name condense_svc --multirun
     deps:
-    - path: conf/gzip_svc.yaml
+    - path: conf/model/best_gzip_svc_ddos.yaml
       hash: md5
-      md5: 957922cb6993eb99866232d944a4a106
-      size: 2131
-    - path: params.yaml
+      md5: 3a7f27dd470ec9e55c10403814f550f2
+      size: 442
+    - path: ddos/logs/method/
       hash: md5
-      md5: 9a178db02b5ad8f990c7a557790a36c7
-      size: 1381
+      md5: a09dd0467b0e8a142d6f32a38f205159.dir
+      size: 59399
+      nfiles: 28
     params:
-      conf/gzip_svc.yaml:
+      conf/condense.yaml:
         hydra:
           run:
-            dir: ${dataset}/logs/${stage}/
+            dir: ${dataset}/logs/condense/
           sweep:
             dir: ???
-            subdir: ${hydra.job.id}
+            subdir: ${hydra.job.num}
           callbacks:
             study_dump:
               _target_: database.OptunaStudyDumpCallback
               storage: ${hydra.sweeper.storage}
               study_name: ${hydra.sweeper.study_name}
-              directions:
-              - maximize
-              metric_names:
-              - accuracy
+              directions: ${direction}
+              metric_names: ${optimizers}
               output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
           sweeper:
             sampler:
@@ -15324,22 +15428,17 @@ stages:
               n_ei_candidates: 24
               multivariate: true
             _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            study_name: ${dataset}_${model_name}_${stage}
+            study_name: ${dataset}_${model_name}
             storage: sqlite:///optuna.db
             n_jobs: 2
             n_trials: 2
-            params:
-              +model.init.kernel: rbf,precomputed
-              +model.init.C: 1e-2,1e-1,1e0,1e1,1e2
-              +model.init.gamma: scale,auto
-              +model.init.class_weight: balanced,null
-              model.init.symmetric: True,False
-              ++model.init.precompute: true
-              model.init.metric: gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
-              model_name: ${model_name}
-              data.sample.random_state: int(interval(1, 10000))
             direction: ${direction}
             max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
           launcher:
             _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
             n_jobs: 8
@@ -15351,25 +15450,102 @@ stages:
             temp_folder: /tmp/deckard
             max_nbytes: 100000
             mmap_mode: r
-        model_name: gzip_svc
     outs:
-    - path: sms_spam/logs/gzip_svc/100
+    - path: ddos/logs/condense/svc/
       hash: md5
-      md5: dd065d6caa95d958e2497b16b75ee668.dir
-      size: 1354661
-      nfiles: 514
-    - path: sms_spam/reports/gzip_svc/100/train/
+      md5: 6a15cfc205c7382b8d7d6d67d35ddfb0.dir
+      size: 11072739
+      nfiles: 4097
+    - path: ddos/reports/condense/svc/
       hash: md5
-      md5: 39da5fb6785659650ef9929bcee4dbbf.dir
-      size: 338043
-      nfiles: 384
+      md5: daaf428c939e9bfcc233bf88ee39f9fb.dir
+      size: 2819182
+      nfiles: 3072
+  condense@ddos-logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
+      data.sample.test_size=100 model_name=condensed_logistic model=gzip_logistic
+      files.directory=ddos files.reports=reports/condense/logistic/ hydra.sweeper.study_name=condense_logistic_ddos
+      hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/condense/logistic/
+      hydra.callbacks.study_dump.output_file=ddos/logs/logistic/study.csv hydra.launcher.n_jobs=-1
+      --config-name condense_logistic --multirun
+    deps:
+    - path: conf/model/best_gzip_logistic_ddos.yaml
+      hash: md5
+      md5: d5e603d6386dd6cf1167088eaecbdde5
+      size: 498
+    - path: ddos/logs/method/
+      hash: md5
+      md5: a09dd0467b0e8a142d6f32a38f205159.dir
+      size: 59399
+      nfiles: 28
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: ddos/logs/condense/logistic/
+      hash: md5
+      md5: 064e5768d0155635c9bc6287914ac9f7.dir
+      size: 11690343
+      nfiles: 4097
+    - path: ddos/reports/condense/logistic/
+      hash: md5
+      md5: 7ce841278929a90690417685b7c7f143.dir
+      size: 5929815
+      nfiles: 5888
   grid_search@100-ddos-gzip_knn:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
-      data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_knn/100
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_knn/100/study.csv files.directory=ddos
-      files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_knn/100 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_knn/100/study.csv
+      files.directory=ddos files.reports=reports/gzip_knn/100 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
@@ -15437,20 +15613,20 @@ stages:
     outs:
     - path: ddos/logs/gzip_knn/100
       hash: md5
-      md5: 7df3b9dd5c7798760f5d79dd3ede6482.dir
-      size: 1310012
+      md5: 29f6a9f688470b87b539d70c56e91727.dir
+      size: 1527909
       nfiles: 514
     - path: ddos/reports/gzip_knn/100/train/
       hash: md5
-      md5: d9aaf8c127764ea612a1761c0fc77623.dir
-      size: 337641
-      nfiles: 383
+      md5: fcd697bacc852fe936422048af37c74b.dir
+      size: 995947
+      nfiles: 1116
   grid_search@100-ddos-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
-      data.sample.test_size=100 model_name=gzip_logistic hydra.sweeper.study_name=gzip_logistic_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_logistic/100
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/100/study.csv
-      files.directory=ddos files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=16
+      data.sample.test_size=100 model_name=gzip_logistic model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_logistic_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_logistic/100 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/100/study.csv
+      files.directory=ddos files.reports=reports/gzip_logistic/100 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -15522,21 +15698,21 @@ stages:
     outs:
     - path: ddos/logs/gzip_logistic/100
       hash: md5
-      md5: eb116966604146f1c23f72b295acd44b.dir
-      size: 1403955
+      md5: 654769a893015d88037f238957d153de.dir
+      size: 1622748
       nfiles: 514
     - path: ddos/reports/gzip_logistic/100/train/
       hash: md5
-      md5: 13d0d7a7623802c124ed258c25dd4c26.dir
-      size: 371115
-      nfiles: 370
+      md5: bbfc0d4d7cdc3c831587a3bf84a0c38c.dir
+      size: 999456
+      nfiles: 964
   grid_search@100-ddos-gzip_svc:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=100
-      data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_ddos
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=ddos/logs/gzip_svc/100
-      hydra.callbacks.study_dump.output_file=ddos/logs/gzip_svc/100/study.csv files.directory=ddos
-      files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_svc/100 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_svc/100/study.csv
+      files.directory=ddos files.reports=reports/gzip_svc/100 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
@@ -15607,21 +15783,1456 @@ stages:
     outs:
     - path: ddos/logs/gzip_svc/100
       hash: md5
-      md5: af3620f05c26e12c596d37e675e50136.dir
-      size: 1353491
+      md5: 8777b87f577cf3f54ed76c5a9e21db1a.dir
+      size: 1553628
       nfiles: 514
     - path: ddos/reports/gzip_svc/100/train/
       hash: md5
-      md5: 906f43db55d1fc4d31392cd6162df91d.dir
-      size: 343722
-      nfiles: 384
-  grid_search@300-kdd_nsl-gzip_knn:
+      md5: 2856fb3e87aa94a1c09a5e4e655b5c31.dir
+      size: 1027811
+      nfiles: 1149
+  find_best_model@kdd_nsl-gzip_knn:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_knn_kdd_nsl --config_subdir model --params_file best_gzip_knn_kdd_nsl --default_config
+      gzip_knn
+    deps:
+    - path: kdd_nsl/logs/gzip_knn/
+      hash: md5
+      md5: 6418750af32f15be9c6f35e0975b3276.dir
+      size: 4024441
+      nfiles: 1542
+    outs:
+    - path: conf/model/best_gzip_knn_kdd_nsl.yaml
+      hash: md5
+      md5: f9ad25a19931041146b4b1eab45fda68
+      size: 420
+  find_best_model@kdd_nsl-gzip_svc:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_svc_kdd_nsl --config_subdir model --params_file best_gzip_svc_kdd_nsl --default_config
+      gzip_svc
+    deps:
+    - path: kdd_nsl/logs/gzip_svc/
+      hash: md5
+      md5: 381879c377b6eeccbb9d1aa42f78fec2.dir
+      size: 4366326
+      nfiles: 1542
+    outs:
+    - path: conf/model/best_gzip_svc_kdd_nsl.yaml
+      hash: md5
+      md5: 0542c20ce7b5a74a20d4ab1c38fdf213
+      size: 434
+  find_best_model@kdd_nsl-gzip_logistic:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_logistic_kdd_nsl --config_subdir model --params_file best_gzip_logistic_kdd_nsl
+      --default_config gzip_logistic
+    deps:
+    - path: kdd_nsl/logs/gzip_logistic/
+      hash: md5
+      md5: 34325e24d16a4af0ec3286ec4b034e14.dir
+      size: 4504884
+      nfiles: 1542
+    outs:
+    - path: conf/model/best_gzip_logistic_kdd_nsl.yaml
+      hash: md5
+      md5: e21d828b4b1ad122d7755e986de5b93d
+      size: 353
+  find_best_model@sms_spam-gzip_knn:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_knn_sms_spam --config_subdir model --params_file best_gzip_knn_sms_spam
+      --default_config gzip_knn
+    deps:
+    - path: sms_spam/logs/gzip_knn/
+      hash: md5
+      md5: 689c69db8c621101649ddef5bd0c1bb5.dir
+      size: 2713750
+      nfiles: 1028
+    outs:
+    - path: conf/model/best_gzip_knn_sms_spam.yaml
+      hash: md5
+      md5: 41fad710bcb8b8b8dd548d669b2ed748
+      size: 419
+  find_best_model@sms_spam-gzip_svc:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_svc_sms_spam --config_subdir model --params_file best_gzip_svc_sms_spam
+      --default_config gzip_svc
+    deps:
+    - path: sms_spam/logs/gzip_svc/
+      hash: md5
+      md5: b91e15f0eb5ee57aed8aeb5a5d6feeab.dir
+      size: 2777710
+      nfiles: 1028
+    outs:
+    - path: conf/model/best_gzip_svc_sms_spam.yaml
+      hash: md5
+      md5: bb3008613c3311a696d32fb683732c00
+      size: 442
+  find_best_model@sms_spam-gzip_logistic:
+    cmd: python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name
+      gzip_logistic_sms_spam --config_subdir model --params_file best_gzip_logistic_sms_spam
+      --default_config gzip_logistic
+    deps:
+    - path: sms_spam/logs/gzip_logistic/
+      hash: md5
+      md5: 89191dbe147b40192129776ef2652900.dir
+      size: 1649284
+      nfiles: 578
+    outs:
+    - path: conf/model/best_gzip_logistic_sms_spam.yaml
+      hash: md5
+      md5: fd1d0481be57844d935aea28e995a369
+      size: 485
+  condense@kdd_nsl-knn:
     cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=300 data.sample.test_size=100 model_name=gzip_knn hydra.sweeper.study_name=gzip_knn_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_knn/300
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_knn/300/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_knn/300 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_knn --multirun
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_knn
+      model=gzip_knn files.directory=kdd_nsl files.reports=reports/condense/knn/ hydra.sweeper.study_name=condense_knn_kdd_nsl
+      hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/condense/knn/
+      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/knn/study.csv hydra.launcher.n_jobs=-1
+      --config-name condense_knn --multirun
+    deps:
+    - path: conf/model/best_gzip_knn_kdd_nsl.yaml
+      hash: md5
+      md5: f9ad25a19931041146b4b1eab45fda68
+      size: 420
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: kdd_nsl/logs/condense/knn/
+      hash: md5
+      md5: 81f50250e51650881283dcf68d43234c.dir
+      size: 10952920
+      nfiles: 4097
+    - path: kdd_nsl/reports/condense/knn/
+      hash: md5
+      md5: 3f8eb680f1f8960490e4581bfa16cfd2.dir
+      size: 2869636
+      nfiles: 3011
+  condense@kdd_nsl-svc:
+    cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_svc
+      model=gzip_svc files.directory=kdd_nsl files.reports=reports/condense/svc/ hydra.sweeper.study_name=condense_svc_kdd_nsl
+      hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/condense/svc/
+      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/svc/study.csv hydra.launcher.n_jobs=-1
+      --config-name condense_svc --multirun
+    deps:
+    - path: conf/model/best_gzip_svc_kdd_nsl.yaml
+      hash: md5
+      md5: 0542c20ce7b5a74a20d4ab1c38fdf213
+      size: 434
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: kdd_nsl/logs/condense/svc/
+      hash: md5
+      md5: 750792529270826f12739d2cc4f4bc9b.dir
+      size: 11071948
+      nfiles: 4097
+    - path: kdd_nsl/reports/condense/svc/
+      hash: md5
+      md5: 7e8ad0f094b919a7de208497f9614399.dir
+      size: 5715509
+      nfiles: 6083
+  condense@kdd_nsl-logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_logistic
+      model=gzip_logistic files.directory=kdd_nsl files.reports=reports/condense/logistic/
+      hydra.sweeper.study_name=condense_logistic_kdd_nsl hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/condense/logistic/ hydra.callbacks.study_dump.output_file=kdd_nsl/logs/logistic/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_logistic --multirun
+    deps:
+    - path: conf/model/best_gzip_logistic_kdd_nsl.yaml
+      hash: md5
+      md5: e21d828b4b1ad122d7755e986de5b93d
+      size: 353
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: kdd_nsl/logs/condense/logistic/
+      hash: md5
+      md5: 0ce56c12dc58fe66c1fa6fec867b2cf5.dir
+      size: 11710344
+      nfiles: 4097
+    - path: kdd_nsl/reports/condense/logistic/
+      hash: md5
+      md5: ae358823518ca6759ddfa8d1c738e367.dir
+      size: 3101125
+      nfiles: 2948
+  condense@truthseeker-knn:
+    cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_knn
+      model=gzip_knn files.directory=truthseeker files.reports=reports/condense/knn/
+      hydra.sweeper.study_name=condense_knn_truthseeker hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/condense/knn/ hydra.callbacks.study_dump.output_file=truthseeker/logs/knn/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_knn --multirun
+    deps:
+    - path: conf/model/best_gzip_knn_truthseeker.yaml
+      hash: md5
+      md5: 79baf4709c4a5f2535059ef8d1b6a082
+      size: 258
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: truthseeker/logs/condense/knn/
+      hash: md5
+      md5: 3e8b9011ee1c591904115e67db9a1a50.dir
+      size: 11038890
+      nfiles: 4097
+    - path: truthseeker/reports/condense/knn/
+      hash: md5
+      md5: 1565eb2348976cc6ac9108396141080b.dir
+      size: 2831604
+      nfiles: 3016
+  condense@truthseeker-svc:
+    cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_svc
+      model=gzip_svc files.directory=truthseeker files.reports=reports/condense/svc/
+      hydra.sweeper.study_name=condense_svc_truthseeker hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/condense/svc/ hydra.callbacks.study_dump.output_file=truthseeker/logs/svc/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_svc --multirun
+    deps:
+    - path: conf/model/best_gzip_svc_truthseeker.yaml
+      hash: md5
+      md5: 97d9d5857744b1cc077513ac5a659f62
+      size: 302
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: truthseeker/logs/condense/svc/
+      hash: md5
+      md5: 845724e35dc3a54bea549410a35d6afd.dir
+      size: 11192018
+      nfiles: 4097
+    - path: truthseeker/reports/condense/svc/
+      hash: md5
+      md5: 6cbdc47d51df656dcf7e8ae6221795b3.dir
+      size: 2825163
+      nfiles: 3064
+  condense@truthseeker-logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_logistic
+      model=gzip_logistic files.directory=truthseeker files.reports=reports/condense/logistic/
+      hydra.sweeper.study_name=condense_logistic_truthseeker hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8 hydra.sweep.dir=truthseeker/logs/condense/logistic/ hydra.callbacks.study_dump.output_file=truthseeker/logs/logistic/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_logistic --multirun
+    deps:
+    - path: conf/model/best_gzip_logistic_truthseeker.yaml
+      hash: md5
+      md5: 448e12c542f48c074057e9374743d61e
+      size: 326
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: truthseeker/logs/condense/logistic/
+      hash: md5
+      md5: f7e754346e500d1b007b519d86f4c608.dir
+      size: 11847643
+      nfiles: 4097
+    - path: truthseeker/reports/condense/logistic/
+      hash: md5
+      md5: 8bd6876fc856ea5bd1e95b54093aedb8.dir
+      size: 2976098
+      nfiles: 3011
+  condense@sms_spam-knn:
+    cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_knn
+      model=gzip_knn files.directory=sms_spam files.reports=reports/condense/knn/
+      hydra.sweeper.study_name=condense_knn_sms_spam hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=sms_spam/logs/condense/knn/ hydra.callbacks.study_dump.output_file=sms_spam/logs/knn/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_knn --multirun
+    deps:
+    - path: conf/model/best_gzip_knn_sms_spam.yaml
+      hash: md5
+      md5: 41fad710bcb8b8b8dd548d669b2ed748
+      size: 419
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: sms_spam/logs/condense/knn/
+      hash: md5
+      md5: dbca2ef697396b673fbf6f1d3fc33909.dir
+      size: 10956283
+      nfiles: 4097
+    - path: sms_spam/reports/condense/knn/
+      hash: md5
+      md5: 1b368af057a2a858b18ca74b1ba9f336.dir
+      size: 2797813
+      nfiles: 3016
+  condense@sms_spam-svc:
+    cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_svc
+      model=gzip_svc files.directory=sms_spam files.reports=reports/condense/svc/
+      hydra.sweeper.study_name=condense_svc_sms_spam hydra.sweeper.n_trials=1024 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=sms_spam/logs/condense/svc/ hydra.callbacks.study_dump.output_file=sms_spam/logs/svc/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_svc --multirun
+    deps:
+    - path: conf/model/best_gzip_svc_sms_spam.yaml
+      hash: md5
+      md5: bb3008613c3311a696d32fb683732c00
+      size: 442
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: sms_spam/logs/condense/svc/
+      hash: md5
+      md5: a8901468d2857bb8b59c082c0f802eb7.dir
+      size: 11109821
+      nfiles: 4097
+    - path: sms_spam/reports/condense/svc/
+      hash: md5
+      md5: fd7f8d975462fb720becc9d3d2cd9e5c.dir
+      size: 2790761
+      nfiles: 3065
+  condense@sms_spam-logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=sms_spam dataset=sms_spam
+      data.sample.train_size=100 data.sample.test_size=100 model_name=condensed_logistic
+      model=gzip_logistic files.directory=sms_spam files.reports=reports/condense/logistic/
+      hydra.sweeper.study_name=condense_logistic_sms_spam hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8 hydra.sweep.dir=sms_spam/logs/condense/logistic/ hydra.callbacks.study_dump.output_file=sms_spam/logs/logistic/study.csv
+      hydra.launcher.n_jobs=-1 --config-name condense_logistic --multirun
+    deps:
+    - path: conf/model/best_gzip_logistic_sms_spam.yaml
+      hash: md5
+      md5: fd1d0481be57844d935aea28e995a369
+      size: 485
+    params:
+      conf/condense.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/condense/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}
+            storage: sqlite:///optuna.db
+            n_jobs: 2
+            n_trials: 2
+            direction: ${direction}
+            max_failure_rate: 1.0
+            params:
+              ++data.sample.train_size: 1000
+              ++data.sample.random_state: int(interval(10000, 20000))
+              model.init.m: tag(log, interval(.01, .1))
+              +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: sms_spam/logs/condense/logistic/
+      hash: md5
+      md5: f61bee237255f66d921df9281943e60f.dir
+      size: 11764986
+      nfiles: 4097
+    - path: sms_spam/reports/condense/logistic/
+      hash: md5
+      md5: e618499d3730db0c39319e82ee7807f7.dir
+      size: 2942227
+      nfiles: 3011
+  compile@sms_spam-condense/logistic:
+    cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/condense/logistic  --results_file
+      sms_spam/reports/condense/logistic.csv
+    deps:
+    - path: sms_spam/reports/condense/logistic/
+      hash: md5
+      md5: e618499d3730db0c39319e82ee7807f7.dir
+      size: 2942227
+      nfiles: 3011
+    outs:
+    - path: sms_spam/reports/condense/logistic.csv
+      hash: md5
+      md5: a0fa06c80b37e446a0d01d894227fdf5
+      size: 1605690
+  compile@kdd_nsl-condense/svc:
+    cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/condense/svc  --results_file
+      kdd_nsl/reports/condense/svc.csv
+    deps:
+    - path: kdd_nsl/reports/condense/svc/
+      hash: md5
+      md5: 7e8ad0f094b919a7de208497f9614399.dir
+      size: 5715509
+      nfiles: 6083
+    outs:
+    - path: kdd_nsl/reports/condense/svc.csv
+      hash: md5
+      md5: da3da9364069ab309277a3ddc970f77d
+      size: 3240799
+  compile@kdd_nsl-condense/logistic:
+    cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/condense/logistic  --results_file
+      kdd_nsl/reports/condense/logistic.csv
+    deps:
+    - path: kdd_nsl/reports/condense/logistic/
+      hash: md5
+      md5: ae358823518ca6759ddfa8d1c738e367.dir
+      size: 3101125
+      nfiles: 2948
+    outs:
+    - path: kdd_nsl/reports/condense/logistic.csv
+      hash: md5
+      md5: 4b91546f39a3097a8568c90d2e3ddd87
+      size: 1643961
+  compile@ddos-condense/svc:
+    cmd: python -m deckard.layers.compile  --report_folder ddos/reports/condense/svc  --results_file
+      ddos/reports/condense/svc.csv
+    deps:
+    - path: ddos/reports/condense/svc/
+      hash: md5
+      md5: daaf428c939e9bfcc233bf88ee39f9fb.dir
+      size: 2819182
+      nfiles: 3072
+    outs:
+    - path: ddos/reports/condense/svc.csv
+      hash: md5
+      md5: 2b2e966947db80caaea3d445003927ce
+      size: 1580858
+  compile@truthseeker-condense/knn:
+    cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/condense/knn  --results_file
+      truthseeker/reports/condense/knn.csv
+    deps:
+    - path: truthseeker/reports/condense/knn/
+      hash: md5
+      md5: 1565eb2348976cc6ac9108396141080b.dir
+      size: 2831604
+      nfiles: 3016
+    outs:
+    - path: truthseeker/reports/condense/knn.csv
+      hash: md5
+      md5: b4ec50d98f613984be6261a059120255
+      size: 1595839
+  compile@truthseeker-condense/svc:
+    cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/condense/svc  --results_file
+      truthseeker/reports/condense/svc.csv
+    deps:
+    - path: truthseeker/reports/condense/svc/
+      hash: md5
+      md5: 6cbdc47d51df656dcf7e8ae6221795b3.dir
+      size: 2825163
+      nfiles: 3064
+    outs:
+    - path: truthseeker/reports/condense/svc.csv
+      hash: md5
+      md5: 4cdede4407c88bcda2afc8bbeae91ace
+      size: 1617655
+  compile@ddos-condense/knn:
+    cmd: python -m deckard.layers.compile  --report_folder ddos/reports/condense/knn  --results_file
+      ddos/reports/condense/knn.csv
+    deps:
+    - path: ddos/reports/condense/knn/
+      hash: md5
+      md5: 18b11d46fd07e34dad7540abc72d8b83.dir
+      size: 5612497
+      nfiles: 6108
+    outs:
+    - path: ddos/reports/condense/knn.csv
+      hash: md5
+      md5: 3a94d5640ae948e799f5e348affd8ee9
+      size: 3129268
+  compile@sms_spam-condense/svc:
+    cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/condense/svc  --results_file
+      sms_spam/reports/condense/svc.csv
+    deps:
+    - path: sms_spam/reports/condense/svc/
+      hash: md5
+      md5: fd7f8d975462fb720becc9d3d2cd9e5c.dir
+      size: 2790761
+      nfiles: 3065
+    outs:
+    - path: sms_spam/reports/condense/svc.csv
+      hash: md5
+      md5: f782069f1e30657943077f18e0229f17
+      size: 1574629
+  compile@kdd_nsl-condense/knn:
+    cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/condense/knn  --results_file
+      kdd_nsl/reports/condense/knn.csv
+    deps:
+    - path: kdd_nsl/reports/condense/knn/
+      hash: md5
+      md5: 3f8eb680f1f8960490e4581bfa16cfd2.dir
+      size: 2869636
+      nfiles: 3011
+    outs:
+    - path: kdd_nsl/reports/condense/knn.csv
+      hash: md5
+      md5: 29211ec6d9b2b1a5e9193eaabfff3488
+      size: 1608857
+  compile@truthseeker-condense/logistic:
+    cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/condense/logistic  --results_file
+      truthseeker/reports/condense/logistic.csv
+    deps:
+    - path: truthseeker/reports/condense/logistic/
+      hash: md5
+      md5: 8bd6876fc856ea5bd1e95b54093aedb8.dir
+      size: 2976098
+      nfiles: 3011
+    outs:
+    - path: truthseeker/reports/condense/logistic.csv
+      hash: md5
+      md5: 5c01852f352ac96150fb36c2df9bcbbf
+      size: 1648856
+  compile@sms_spam-condense/knn:
+    cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/condense/knn  --results_file
+      sms_spam/reports/condense/knn.csv
+    deps:
+    - path: sms_spam/reports/condense/knn/
+      hash: md5
+      md5: 1b368af057a2a858b18ca74b1ba9f336.dir
+      size: 2797813
+      nfiles: 3016
+    outs:
+    - path: sms_spam/reports/condense/knn.csv
+      hash: md5
+      md5: c5ba2fd1f928dec2e287c053c44ed0b5
+      size: 1552833
+  compile@ddos-condense/logistic:
+    cmd: python -m deckard.layers.compile  --report_folder ddos/reports/condense/logistic  --results_file
+      ddos/reports/condense/logistic.csv
+    deps:
+    - path: ddos/reports/condense/logistic/
+      hash: md5
+      md5: 7ce841278929a90690417685b7c7f143.dir
+      size: 5929815
+      nfiles: 5888
+    outs:
+    - path: ddos/reports/condense/logistic.csv
+      hash: md5
+      md5: b24764aed957fdf6d2ccb541ef490d37
+      size: 3150984
+  clean@sms_spam-condense/svc:
+    cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/condense/svc.csv
+      -o sms_spam/plots/clean/condense/svc.csv -c conf/clean.yaml
+    deps:
+    - path: sms_spam/reports/condense/svc.csv
+      hash: md5
+      md5: f782069f1e30657943077f18e0229f17
+      size: 1574629
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: sms_spam/plots/clean/condense/svc.csv
+      hash: md5
+      md5: 4b13295237a1603355019ee1c2d42887
+      size: 1222176
+  clean@ddos-condense/knn:
+    cmd: python -m deckard.layers.clean_data  -i ddos/reports/condense/knn.csv -o
+      ddos/plots/clean/condense/knn.csv -c conf/clean.yaml
+    deps:
+    - path: ddos/reports/condense/knn.csv
+      hash: md5
+      md5: 3a94d5640ae948e799f5e348affd8ee9
+      size: 3129268
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: ddos/plots/clean/condense/knn.csv
+      hash: md5
+      md5: 1ee153e232bd181b8eae3dd68b4ec009
+      size: 2418027
+  clean@truthseeker-condense/svc:
+    cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/condense/svc.csv
+      -o truthseeker/plots/clean/condense/svc.csv -c conf/clean.yaml
+    deps:
+    - path: truthseeker/reports/condense/svc.csv
+      hash: md5
+      md5: 4cdede4407c88bcda2afc8bbeae91ace
+      size: 1617655
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: truthseeker/plots/clean/condense/svc.csv
+      hash: md5
+      md5: a17c0cdb6a3fbfae5bd4fcfca1938a96
+      size: 1257671
+  clean@kdd_nsl-condense/knn:
+    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/condense/knn.csv
+      -o kdd_nsl/plots/clean/condense/knn.csv -c conf/clean.yaml
+    deps:
+    - path: kdd_nsl/reports/condense/knn.csv
+      hash: md5
+      md5: 29211ec6d9b2b1a5e9193eaabfff3488
+      size: 1608857
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: kdd_nsl/plots/clean/condense/knn.csv
+      hash: md5
+      md5: 23789b08b0fd1616555611d0e7971db9
+      size: 1204868
+  clean@kdd_nsl-condense/svc:
+    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/condense/svc.csv
+      -o kdd_nsl/plots/clean/condense/svc.csv -c conf/clean.yaml
+    deps:
+    - path: kdd_nsl/reports/condense/svc.csv
+      hash: md5
+      md5: da3da9364069ab309277a3ddc970f77d
+      size: 3240799
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: kdd_nsl/plots/clean/condense/svc.csv
+      hash: md5
+      md5: 8747871ca7abc0cb1c0d31e8d820d182
+      size: 2512569
+  clean@kdd_nsl-condense/logistic:
+    cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/condense/logistic.csv
+      -o kdd_nsl/plots/clean/condense/logistic.csv -c conf/clean.yaml
+    deps:
+    - path: kdd_nsl/reports/condense/logistic.csv
+      hash: md5
+      md5: 4b91546f39a3097a8568c90d2e3ddd87
+      size: 1643961
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: kdd_nsl/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: ad001459daa8dc818570974749f661d2
+      size: 1174954
+  clean@sms_spam-condense/knn:
+    cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/condense/knn.csv
+      -o sms_spam/plots/clean/condense/knn.csv -c conf/clean.yaml
+    deps:
+    - path: sms_spam/reports/condense/knn.csv
+      hash: md5
+      md5: c5ba2fd1f928dec2e287c053c44ed0b5
+      size: 1552833
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: sms_spam/plots/clean/condense/knn.csv
+      hash: md5
+      md5: aab291fa1ff741983e7cc88067edda8e
+      size: 1156386
+  clean@sms_spam-condense/logistic:
+    cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/condense/logistic.csv
+      -o sms_spam/plots/clean/condense/logistic.csv -c conf/clean.yaml
+    deps:
+    - path: sms_spam/reports/condense/logistic.csv
+      hash: md5
+      md5: a0fa06c80b37e446a0d01d894227fdf5
+      size: 1605690
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: sms_spam/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: 6f209fdc864f17d784deb0f872142bc5
+      size: 1203196
+  clean@truthseeker-condense/logistic:
+    cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/condense/logistic.csv
+      -o truthseeker/plots/clean/condense/logistic.csv -c conf/clean.yaml
+    deps:
+    - path: truthseeker/reports/condense/logistic.csv
+      hash: md5
+      md5: 5c01852f352ac96150fb36c2df9bcbbf
+      size: 1648856
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: truthseeker/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: 9710addb440069a5ea884d90ed4c394a
+      size: 1237939
+  clean@truthseeker-condense/knn:
+    cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/condense/knn.csv
+      -o truthseeker/plots/clean/condense/knn.csv -c conf/clean.yaml
+    deps:
+    - path: truthseeker/reports/condense/knn.csv
+      hash: md5
+      md5: b4ec50d98f613984be6261a059120255
+      size: 1595839
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: truthseeker/plots/clean/condense/knn.csv
+      hash: md5
+      md5: a0c8deb8fe7617477ec43fae2a851b4d
+      size: 1191230
+  clean@ddos-condense/svc:
+    cmd: python -m deckard.layers.clean_data  -i ddos/reports/condense/svc.csv -o
+      ddos/plots/clean/condense/svc.csv -c conf/clean.yaml
+    deps:
+    - path: ddos/reports/condense/svc.csv
+      hash: md5
+      md5: 2b2e966947db80caaea3d445003927ce
+      size: 1580858
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: ddos/plots/clean/condense/svc.csv
+      hash: md5
+      md5: a1e99fce84430014ccb657065a752e59
+      size: 1238056
+  clean@ddos-condense/logistic:
+    cmd: python -m deckard.layers.clean_data  -i ddos/reports/condense/logistic.csv
+      -o ddos/plots/clean/condense/logistic.csv -c conf/clean.yaml
+    deps:
+    - path: ddos/reports/condense/logistic.csv
+      hash: md5
+      md5: b24764aed957fdf6d2ccb541ef490d37
+      size: 3150984
+    params:
+      conf/clean.yaml:
+        replace:
+          model.init.metric:
+            jaro: Jaro
+            _winkler: -Winkler
+            levenshtein: Levenshtein
+            ncd: NCD
+            ratio: Ratio
+            seqRatio: SeqRatio
+            hamming: Hamming
+            gzip: Gzip
+            pkl: Pickle
+            bz2: BZ2
+            zstd: Zstd
+            lzma: Lzma
+          model_name:
+            GzipSVC: k-SVC
+            GzipLogisticRegressor: k-Logistic
+            GzipKNN: k-KNN
+          model.init.symmetric:
+            true: Symmetric
+            false: Asymmetric
+    outs:
+    - path: ddos/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: bfca6e865bca11a25fa1e42dfbdea0ad
+      size: 2331762
+  merge_condense@ddos:
+    cmd: python merge.py --big_dir ddos/plots/ --data_file clean/condense/knn.csv
+      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
+      ddos/plots/ --output_file condensed_merged.csv
+    deps:
+    - path: ddos/plots/clean/condense/knn.csv
+      hash: md5
+      md5: 1ee153e232bd181b8eae3dd68b4ec009
+      size: 2418027
+    - path: ddos/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: bfca6e865bca11a25fa1e42dfbdea0ad
+      size: 2331762
+    - path: ddos/plots/clean/condense/svc.csv
+      hash: md5
+      md5: a1e99fce84430014ccb657065a752e59
+      size: 1238056
+    outs:
+    - path: ddos/plots/condensed_merged.csv
+      hash: md5
+      md5: df343f65be99173e907fc729ee3775d7
+      size: 6185422
+  merge_condense@kdd_nsl:
+    cmd: python merge.py --big_dir kdd_nsl/plots/ --data_file clean/condense/knn.csv
+      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
+      kdd_nsl/plots/ --output_file condensed_merged.csv
+    deps:
+    - path: kdd_nsl/plots/clean/condense/knn.csv
+      hash: md5
+      md5: 23789b08b0fd1616555611d0e7971db9
+      size: 1204868
+    - path: kdd_nsl/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: ad001459daa8dc818570974749f661d2
+      size: 1174954
+    - path: kdd_nsl/plots/clean/condense/svc.csv
+      hash: md5
+      md5: 8747871ca7abc0cb1c0d31e8d820d182
+      size: 2512569
+    outs:
+    - path: kdd_nsl/plots/condensed_merged.csv
+      hash: md5
+      md5: eff71fc31dcce006f32a52431b295800
+      size: 5047655
+  merge_condense@sms_spam:
+    cmd: python merge.py --big_dir sms_spam/plots/ --data_file clean/condense/knn.csv
+      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
+      sms_spam/plots/ --output_file condensed_merged.csv
+    deps:
+    - path: sms_spam/plots/clean/condense/knn.csv
+      hash: md5
+      md5: aab291fa1ff741983e7cc88067edda8e
+      size: 1156386
+    - path: sms_spam/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: 6f209fdc864f17d784deb0f872142bc5
+      size: 1203196
+    - path: sms_spam/plots/clean/condense/svc.csv
+      hash: md5
+      md5: 4b13295237a1603355019ee1c2d42887
+      size: 1222176
+    outs:
+    - path: sms_spam/plots/condensed_merged.csv
+      hash: md5
+      md5: 6ec12ab823fc26dfc49b4041eac3f31e
+      size: 3700462
+  merge_condense@truthseeker:
+    cmd: python merge.py --big_dir truthseeker/plots/ --data_file clean/condense/knn.csv
+      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
+      truthseeker/plots/ --output_file condensed_merged.csv
+    deps:
+    - path: truthseeker/plots/clean/condense/knn.csv
+      hash: md5
+      md5: a0c8deb8fe7617477ec43fae2a851b4d
+      size: 1191230
+    - path: truthseeker/plots/clean/condense/logistic.csv
+      hash: md5
+      md5: 9710addb440069a5ea884d90ed4c394a
+      size: 1237939
+    - path: truthseeker/plots/clean/condense/svc.csv
+      hash: md5
+      md5: a17c0cdb6a3fbfae5bd4fcfca1938a96
+      size: 1257671
+    outs:
+    - path: truthseeker/plots/condensed_merged.csv
+      hash: md5
+      md5: 738dc93bfff1b9c167949e722ee79665
+      size: 3805499
+  grid_search@300-ddos-gzip_knn:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=300
+      data.sample.test_size=100 model_name=gzip_knn model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_knn_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_knn/300 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_knn/300/study.csv
+      files.directory=ddos files.reports=reports/gzip_knn/300 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_knn --multirun
     deps:
     - path: conf/gzip_knn.yaml
       hash: md5
@@ -15687,22 +17298,355 @@ stages:
             mmap_mode: r
         model_name: gzip_knn
     outs:
-    - path: kdd_nsl/logs/gzip_knn/300
+    - path: ddos/logs/gzip_knn/300
       hash: md5
-      md5: b0d9756ae481106fa18cad713328a119.dir
-      size: 1268052
+      md5: a4a0fd7ea7720fbc96b1206438fe2712.dir
+      size: 1553431
       nfiles: 514
-    - path: kdd_nsl/reports/gzip_knn/300/train/
+    - path: ddos/reports/gzip_knn/300/train/
       hash: md5
-      md5: 8a50e0763b3d1689d8cdf2dfb3b6bf4d.dir
-      size: 413587
-      nfiles: 301
-  grid_search@300-kdd_nsl-gzip_logistic:
-    cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=300 data.sample.test_size=100 model_name=gzip_logistic
-      hydra.sweeper.study_name=gzip_logistic_kdd_nsl hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=kdd_nsl/logs/gzip_logistic/300 hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_logistic/300/study.csv
-      files.directory=kdd_nsl files.reports=reports/gzip_logistic/300 hydra.launcher.n_jobs=16
+      md5: d030d7f5b45dfbf0309fee6493df528b.dir
+      size: 1112786
+      nfiles: 1022
+  plot_condense@sms_spam:
+    cmd: python -m deckard.layers.plots  --path sms_spam/plots/  --file sms_spam/plots/condensed_merged.csv  -c
+      conf/condensed_plots.yaml
+    deps:
+    - path: sms_spam/plots/condensed_merged.csv
+      hash: md5
+      md5: 6ec12ab823fc26dfc49b4041eac3f31e
+      size: 3700462
+    params:
+      conf/condensed_plots.yaml:
+        line_plot:
+        - file: sampling_method_vs_accuracy.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: accuracy
+          ylabel: Accuracy
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          y_scale: linear
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_train_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: train_time
+          ylabel: Training Time (s)
+          y_scale: linear
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_predict_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: predict_time
+          ylabel: Prediction Time (s)
+          y_scale: log
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+    outs:
+    - path: sms_spam/plots/sampling_method_vs_accuracy.pdf
+      hash: md5
+      md5: b91d62604bc4eca1da8cd7d9e7c1c319
+      size: 18158
+    - path: sms_spam/plots/sampling_method_vs_predict_time.pdf
+      hash: md5
+      md5: d33142cbc5288beba6ef9ac3d28e404f
+      size: 43922
+    - path: sms_spam/plots/sampling_method_vs_train_time.pdf
+      hash: md5
+      md5: 524c4067f99c0c6d24ca907cda380431
+      size: 40023
+  plot_condense@ddos:
+    cmd: python -m deckard.layers.plots  --path ddos/plots/  --file ddos/plots/condensed_merged.csv  -c
+      conf/condensed_plots.yaml
+    deps:
+    - path: ddos/plots/condensed_merged.csv
+      hash: md5
+      md5: df343f65be99173e907fc729ee3775d7
+      size: 6185422
+    params:
+      conf/condensed_plots.yaml:
+        line_plot:
+        - file: sampling_method_vs_accuracy.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: accuracy
+          ylabel: Accuracy
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          y_scale: linear
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_train_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: train_time
+          ylabel: Training Time (s)
+          y_scale: linear
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_predict_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: predict_time
+          ylabel: Prediction Time (s)
+          y_scale: log
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+    outs:
+    - path: ddos/plots/sampling_method_vs_accuracy.pdf
+      hash: md5
+      md5: 0e64274ba7447d169b9b7fef910bb4e4
+      size: 46125
+    - path: ddos/plots/sampling_method_vs_predict_time.pdf
+      hash: md5
+      md5: f8a83cf6cccb92814a44e1ad7d7f9301
+      size: 60094
+    - path: ddos/plots/sampling_method_vs_train_time.pdf
+      hash: md5
+      md5: 2e552ed77b8ba5700b5bfbcb1fb00677
+      size: 51427
+  plot_condense@kdd_nsl:
+    cmd: python -m deckard.layers.plots  --path kdd_nsl/plots/  --file kdd_nsl/plots/condensed_merged.csv  -c
+      conf/condensed_plots.yaml
+    deps:
+    - path: kdd_nsl/plots/condensed_merged.csv
+      hash: md5
+      md5: eff71fc31dcce006f32a52431b295800
+      size: 5047655
+    params:
+      conf/condensed_plots.yaml:
+        line_plot:
+        - file: sampling_method_vs_accuracy.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: accuracy
+          ylabel: Accuracy
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          y_scale: linear
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_train_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: train_time
+          ylabel: Training Time (s)
+          y_scale: linear
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_predict_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: predict_time
+          ylabel: Prediction Time (s)
+          y_scale: log
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+    outs:
+    - path: kdd_nsl/plots/sampling_method_vs_accuracy.pdf
+      hash: md5
+      md5: e459cde81391759d021dfb99692508fa
+      size: 40354
+    - path: kdd_nsl/plots/sampling_method_vs_predict_time.pdf
+      hash: md5
+      md5: 16711a242196202803d0de6362ba68a0
+      size: 53546
+    - path: kdd_nsl/plots/sampling_method_vs_train_time.pdf
+      hash: md5
+      md5: abf834909d63d7cc0b67100cd55db563
+      size: 49165
+  grid_search@300-ddos-gzip_logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=300
+      data.sample.test_size=100 model_name=gzip_logistic model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_logistic_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_logistic/300 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/300/study.csv
+      files.directory=ddos files.reports=reports/gzip_logistic/300 hydra.launcher.n_jobs=-1
       ++raise_exception=True                --config-name gzip_logistic --multirun
     deps:
     - path: conf/gzip_logistic.yaml
@@ -15772,23 +17716,23 @@ stages:
             mmap_mode: r
         model_name: gzip_logistic
     outs:
-    - path: kdd_nsl/logs/gzip_logistic/300
+    - path: ddos/logs/gzip_logistic/300
       hash: md5
-      md5: 4d74db40f71d31d7f977492b30a70aa8.dir
-      size: 1445614
+      md5: 38ac50d973afc2026ae6b5714bfc4048.dir
+      size: 1658747
       nfiles: 514
-    - path: kdd_nsl/reports/gzip_logistic/300/train/
+    - path: ddos/reports/gzip_logistic/300/train/
       hash: md5
-      md5: 1f57f30d53a0524b474e6b4e8c1fc17f.dir
-      size: 378817
-      nfiles: 368
-  grid_search@300-kdd_nsl-gzip_svc:
-    cmd: python -m deckard.layers.optimise stage=train data=kdd_nsl dataset=kdd_nsl
-      data.sample.train_size=300 data.sample.test_size=100 model_name=gzip_svc hydra.sweeper.study_name=gzip_svc_kdd_nsl
-      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 hydra.sweep.dir=kdd_nsl/logs/gzip_svc/300
-      hydra.callbacks.study_dump.output_file=kdd_nsl/logs/gzip_svc/300/study.csv files.directory=kdd_nsl
-      files.reports=reports/gzip_svc/300 hydra.launcher.n_jobs=16 ++raise_exception=True                --config-name
-      gzip_svc --multirun
+      md5: 79748d4125b570bfd7d688f05f37c87e.dir
+      size: 873257
+      nfiles: 611
+  grid_search@300-ddos-gzip_svc:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=300
+      data.sample.test_size=100 model_name=gzip_svc model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_svc_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_svc/300 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_svc/300/study.csv
+      files.directory=ddos files.reports=reports/gzip_svc/300 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_svc --multirun
     deps:
     - path: conf/gzip_svc.yaml
       hash: md5
@@ -15857,13 +17801,209 @@ stages:
             mmap_mode: r
         model_name: gzip_svc
     outs:
-    - path: kdd_nsl/logs/gzip_svc/300
+    - path: ddos/logs/gzip_svc/300
       hash: md5
-      md5: 17a5ddfde60c4fd582db29a255f2c8ac.dir
-      size: 1401149
+      md5: a08476ed2bdb4c4666383a19228bd261.dir
+      size: 1585843
       nfiles: 514
-    - path: kdd_nsl/reports/gzip_svc/300/train/
+    - path: ddos/reports/gzip_svc/300/train/
       hash: md5
-      md5: 97f15b6f23c53190b4f93cd9dc1fe764.dir
-      size: 347078
-      nfiles: 384
+      md5: f914a08ba59f4501c96b42973aa4a87b.dir
+      size: 839350
+      nfiles: 661
+  plot_condense@truthseeker:
+    cmd: python -m deckard.layers.plots  --path truthseeker/plots/  --file truthseeker/plots/condensed_merged.csv  -c
+      conf/condensed_plots.yaml
+    deps:
+    - path: truthseeker/plots/condensed_merged.csv
+      hash: md5
+      md5: 738dc93bfff1b9c167949e722ee79665
+      size: 3805499
+    params:
+      conf/condensed_plots.yaml:
+        line_plot:
+        - file: sampling_method_vs_accuracy.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: accuracy
+          ylabel: Accuracy
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          y_scale: linear
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_train_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: train_time
+          ylabel: Training Time (s)
+          y_scale: linear
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+        - file: sampling_method_vs_predict_time.pdf
+          hue: model.init.sampling_method
+          title:
+          x: model.init.m
+          xlabel: Percentage of Samples per Class
+          y: predict_time
+          ylabel: Prediction Time (s)
+          y_scale: log
+          hue_order:
+          - random
+          - svc
+          - knn
+          - sum
+          - medoid
+          - nearmiss
+          - hardness
+          errorbar: se
+          err_style: bars
+          xlim:
+          - 0
+          - 1
+          legend:
+            title: Sampling Method
+            bbox_to_anchor:
+            - 1.05
+            - 0.5
+            loc: center left
+            prop:
+              size: 14
+    outs:
+    - path: truthseeker/plots/sampling_method_vs_accuracy.pdf
+      hash: md5
+      md5: 9f02f0c655f891028a58bb682ec0845f
+      size: 18158
+    - path: truthseeker/plots/sampling_method_vs_predict_time.pdf
+      hash: md5
+      md5: 7d351f14ede44f25a095b5123935c936
+      size: 45092
+    - path: truthseeker/plots/sampling_method_vs_train_time.pdf
+      hash: md5
+      md5: 881af9b7d5d4c2820418d30b90c5000b
+      size: 39796
+  grid_search@500-ddos-gzip_logistic:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=500
+      data.sample.test_size=100 model_name=gzip_logistic model.init.distance_matrix=null
+      hydra.sweeper.study_name=gzip_logistic_ddos hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=ddos/logs/gzip_logistic/500 hydra.callbacks.study_dump.output_file=ddos/logs/gzip_logistic/500/study.csv
+      files.directory=ddos files.reports=reports/gzip_logistic/500 hydra.launcher.n_jobs=-1
+      ++raise_exception=True                --config-name gzip_logistic --multirun
+    deps:
+    - path: conf/gzip_logistic.yaml
+      hash: md5
+      md5: 847d4d804fff0b6f2533f90820eebd04
+      size: 2205
+    - path: params.yaml
+      hash: md5
+      md5: 9a178db02b5ad8f990c7a557790a36c7
+      size: 1381
+    params:
+      conf/gzip_logistic.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/${stage}/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.id}
+          callbacks:
+            study_dump:
+              _target_: database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions: ${direction}
+              metric_names: ${optimizers}
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: false
+              n_startup_trials: 10
+              n_ei_candidates: 24
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            study_name: ${dataset}_${model_name}_${stage}
+            storage: sqlite:///optuna.db
+            n_jobs: 1
+            n_trials: 1
+            params:
+              +model.init.solver: saga
+              +model.init.penalty: l2,l1,l2,none
+              +model.init.tol: 1e-4,1e-3,1e-2
+              +model.init.C: 1e-2,1e-1,1e0,1e1,1e2
+              +model.init.fit_intercept: True,False
+              +model.init.class_weight: balanced,None
+              model.init.symmetric: True,False
+              ++model.init.precompute: true
+              model.init.metric: gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
+              model_name: ${model_name}
+              data.sample.random_state: int(interval(1, 10000))
+            direction: ${direction}
+            max_failure_rate: 1.0
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: 8
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+        model_name: gzip_logistic
+    outs:
+    - path: ddos/logs/gzip_logistic/500
+      hash: md5
+      md5: 3fd6ac1a706098dca5fc2b14d197e45c.dir
+      size: 1684594
+      nfiles: 514
+    - path: ddos/reports/gzip_logistic/500/train/
+      hash: md5
+      md5: 7893687a203cd8da60df79034b110e86.dir
+      size: 404909
+      nfiles: 352
