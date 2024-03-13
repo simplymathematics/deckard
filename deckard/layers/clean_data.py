@@ -250,7 +250,6 @@ def merge_defences(
             else:
                 pass
             i += 1
-
         ############################################################################################################
         if len(defence) > 1:
             def_gen = [str(x).split(".")[-1] for x in defence]
@@ -524,59 +523,60 @@ def drop_values(data, drop_dict):
     return data
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i",
-        "--input_file",
-        type=str,
-        help="Data file to read from",
-        required=True,
-    )
-    parser.add_argument(
-        "-o",
-        "--output_file",
-        type=str,
-        help="Data file to read from",
-        required=True,
-    )
-    parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="clean.yaml",
-    )
-    parser.add_argument(
-        "-s",
-        "--subset",
-        help="Subset of data you would like to plot",
-        default=None,
-        nargs="?",
-    )
-    parser.add_argument(
-        "-d",
-        "--drop_if_empty",
-        help="Drop row if this columns is empty",
-        nargs="+",
-        type=str,
-        default=[
-            "accuracy",
-            "train_time",
-            "predict_time",
-        ],
-    )
-    parser.add_argument(
-        "--pareto_dict",
-        help="Path to (optional) pareto set dictionary.",
-        default=None,
-    )
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-i",
+    "--input_file",
+    type=str,
+    help="Data file to read from",
+    required=True,
+)
+parser.add_argument(
+    "-o",
+    "--output_file",
+    type=str,
+    help="Data file to read from",
+    required=True,
+)
+parser.add_argument(
+    "-v",
+    "--verbosity",
+    default="INFO",
+    help="Increase output verbosity",
+)
+parser.add_argument(
+    "-c",
+    "--config",
+    help="Path to the config file",
+    default="clean.yaml",
+)
+parser.add_argument(
+    "-s",
+    "--subset",
+    help="Subset of data you would like to plot",
+    default=None,
+    nargs="?",
+)
+parser.add_argument(
+    "-d",
+    "--drop_if_empty",
+    help="Drop row if this columns is empty",
+    nargs="+",
+    type=str,
+    default=[
+        "accuracy",
+        "train_time",
+        "predict_time",
+    ],
+)
+parser.add_argument(
+    "--pareto_dict",
+    help="Path to (optional) pareto set dictionary.",
+    default=None,
+)
+
+
+def main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.input_file,
@@ -632,3 +632,8 @@ if __name__ == "__main__":
         output_file,
     ).exists(), f"File {output_file} does not exist. Please specify a valid file using the -o flag."
     logger.info(f"Saved results to {output_file}")
+
+if __name__ == "__main__":
+    
+    args = parser.parse_args()
+    main(args)
