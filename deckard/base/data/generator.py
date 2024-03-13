@@ -12,19 +12,12 @@ from sklearn.datasets import (
     make_moons,
     make_circles,
 )
+from torchvision.io import read_image, read_file
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
+from ..utils import my_hash
 
 logger = logging.getLogger(__name__)
 
-try:  # pragma: no cover
-    from torchvision.io import read_image, read_file
-except ImportError:
-    logger.warning(
-        "torchvision not installed. Please install torchvision to use TorchImageLoader and TorchTextLoader. This is not an issue if you are not using these classes.",
-    )
-
-
-from ..utils import my_hash
 
 __all__ = [
     "SklearnDataGenerator",

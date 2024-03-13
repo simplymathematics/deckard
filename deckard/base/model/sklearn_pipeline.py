@@ -1,13 +1,9 @@
 import logging
-from sklearn.utils.validation import check_is_fitted
 from typing import Dict, Union
 from dataclasses import dataclass, asdict, field, is_dataclass
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from copy import deepcopy
-import numpy as np
-import pandas as pd
-from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
@@ -26,7 +22,6 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
-from art.utils import to_categorical
 
 
 from ..utils import my_hash
