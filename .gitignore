@@ -139,3 +139,6 @@ env/
 
 # screenlog
 screenlog.*
+
+# tmp.py
+tmp.py
