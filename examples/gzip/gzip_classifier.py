@@ -1036,7 +1036,6 @@ parser.add_argument("--precompressed", action="store_true")
 parser.add_argument("--random_state", type=int, default=42)
 parser.add_argument("kwargs", nargs=argparse.REMAINDER)
 if __name__ == "__main__":
-
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     main(args)

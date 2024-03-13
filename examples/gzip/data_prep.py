@@ -52,7 +52,6 @@ def undersample_datasets(datasets: list, targets: list, n_samples: list):
 
 
 if __name__ == "__main__":
-
     Path("raw_data").mkdir(parents=True, exist_ok=True)
     df = pd.read_csv(
         "https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/kdd_nsl.csv",

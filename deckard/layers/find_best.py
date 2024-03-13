@@ -138,7 +138,6 @@ def override_default_with_best(
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_file", type=str, default=True)
 
