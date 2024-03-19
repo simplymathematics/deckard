@@ -117,8 +117,8 @@ class BatchedMixin:
                 n_batches = 1
             for i in range(n_batches):
                 if append is True:
-                    new_X = X[i * self.batch_size: (i + 1) * self.batch_size]
-                    new_y = y[i * self.batch_size: (i + 1) * self.batch_size]
+                    new_X = X[i * self.batch_size : (i + 1) * self.batch_size]
+                    new_y = y[i * self.batch_size : (i + 1) * self.batch_size]
                     indices = func(X=new_X, y=new_y, method=method, n_jobs=n_jobs)
                     # print("After finding best samples")
                     # print(f"Length of indices is {len(indices)}")
