@@ -4,7 +4,6 @@ from typing import Literal, Callable, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 import numpy as np
-from validators import url
 from sklearn.datasets import (
     make_classification,
     make_regression,
