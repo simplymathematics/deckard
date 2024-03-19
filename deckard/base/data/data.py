@@ -7,6 +7,7 @@ from typing import Union
 import numpy as np
 from pandas import DataFrame, read_csv, Series
 from omegaconf import OmegaConf
+from validators import url
 from ..utils import my_hash
 from .generator import DataGenerator
 from .sampler import SklearnDataSampler
@@ -37,6 +38,7 @@ class Data:
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
         drop: list = [],
+        **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
 
@@ -176,6 +178,8 @@ class Data:
                     data,
                     (Series, DataFrame, dict, np.ndarray),
                 ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
+                if isinstance(data, (np.ndarray)):
+                    data = DataFrame(data)
                 data.to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
@@ -197,7 +201,7 @@ class Data:
         :param filename: str
         :return: list
         """
-        if Path(self.name).is_file():
+        if Path(self.name).is_file() or url(self.name):
             new_data_file = data_file
             data_file = self.name
         else:

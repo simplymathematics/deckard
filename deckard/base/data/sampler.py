@@ -48,6 +48,7 @@ class SklearnDataSampler:
         test_size = params.pop("test_size")
         train_size = params.pop("train_size")
         time_series = params.pop("time_series")
+        _ = params.pop("_target_")
         if time_series is not True:
             # if train_size + test_size == 1:
             X_train, X_test, y_train, y_test = train_test_split(

@@ -232,8 +232,6 @@ class DataGenerator:
             return KerasDataGenerator(self.name, **self.kwargs)()
         elif isinstance(self.name, str) and Path(self.name).exists():
             return SklearnDataGenerator(self.name, **self.kwargs)()
-        elif url(self.name):
-            return SklearnDataGenerator(self.name, **self.kwargs)()
         else:  # pragma: no cover
             raise ValueError(
                 f"Invalid name {self.name}. Please choose from {ALL_DATASETS}",

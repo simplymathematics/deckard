@@ -6,7 +6,7 @@ from hydra.utils import instantiate
 from copy import deepcopy
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
-
+from art.estimators import BaseEstimator as ArtEstimator
 from art.estimators.classification.scikitlearn import (
     ScikitlearnAdaBoostClassifier,
     ScikitlearnBaggingClassifier,
@@ -234,21 +234,24 @@ class SklearnModelInitializer:
         elif isinstance(model, str):
             model = {"name": model, **self.kwargs}
         else:
-            assert isinstance(
-                model,
-                dict,
-            ), f"model must be a sklearn estimator, string, or dict. Got {type(model)}"
+            assert "art." in str(type(model)), f"model must be a string, dict, or sklearn estimator. Got {type(model)}"
         if isinstance(model, dict):
-            if "_target_" in model:
-                name = model.pop("_target_")
-            elif "name" in model:
+            if "name" in model:
                 name = model.pop("name")
             else:
                 raise ValueError(
                     f"model must have a name attribute. Got {model}",
                 )
-            model["target"] = name
-        model = instantiate(model)
+            model["_target_"] = name
+            model = instantiate(model)
+        else:
+            if hasattr(model, "model"):
+                assert isinstance(model.model, BaseEstimator), f"model must be a sklearn estimator. Got {type(model.model)}"
+            else:
+                assert isinstance(
+                    model,
+                    BaseEstimator,
+                ), f"model must be a sklearn estimator. Got {type(model)}"
         if self.pipeline is not None:
             model = self.pipeline(model)
             assert isinstance(
