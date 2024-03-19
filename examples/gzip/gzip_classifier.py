@@ -965,7 +965,7 @@ def load_data(dataset, precompressed):
         X = df.drop("Label", axis=1)
     else:
         raise ValueError(
-            f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos."
+            f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos.",
         )
     if precompressed is True:
         X = pd.DataFrame(X).applymap(lambda x: len(gzip.compress(str(x).encode())))
