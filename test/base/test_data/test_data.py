@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from shutil import rmtree
 import os
-import numpy as np
+from numpy import ndarray
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 from pandas import DataFrame, Series
@@ -35,10 +35,10 @@ class testSklearnData(unittest.TestCase):
     def test_call(self):
         filename = Path(self.directory, self.data_file + self.data_type).as_posix()
         X_train, X_test, y_train, y_test = self.data(data_file=filename)
-        self.assertIsInstance(X_train, np.ndarray)
-        self.assertIsInstance(X_test, np.ndarray)
-        self.assertIsInstance(y_train, np.ndarray)
-        self.assertIsInstance(y_test, np.ndarray)
+        self.assertIsInstance(X_train, ndarray)
+        self.assertIsInstance(X_test, ndarray)
+        self.assertIsInstance(y_train, ndarray)
+        self.assertIsInstance(y_test, ndarray)
         self.assertEqual(X_train.shape[0], y_train.shape[0])
         self.assertEqual(X_test.shape[0], y_test.shape[0])
         self.assertTrue(Path(filename).exists())

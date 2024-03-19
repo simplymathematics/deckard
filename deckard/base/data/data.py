@@ -201,7 +201,7 @@ class Data:
             new_data_file = data_file
             data_file = self.name
         else:
-            new_data_file = None
+            new_data_file = data_file
         result_dict = {}
         data = self.initialize(data_file)
         result_dict["data"] = data

@@ -19,6 +19,7 @@ class SklearnDataSampler:
     shuffle: bool = True
     stratify: bool = False
     time_series: bool = False
+    _target_:str = "deckard.base.data.sampler.SklearnDataSampler"
 
     def __init__(
         self,
