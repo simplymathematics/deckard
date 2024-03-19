@@ -234,7 +234,9 @@ class SklearnModelInitializer:
         elif isinstance(model, str):
             model = {"name": model, **self.kwargs}
         else:
-            assert "art." in str(type(model)), f"model must be a string, dict, or sklearn estimator. Got {type(model)}"
+            assert "art." in str(
+                type(model)
+            ), f"model must be a string, dict, or sklearn estimator. Got {type(model)}"
         if isinstance(model, dict):
             if "name" in model:
                 name = model.pop("name")
@@ -246,7 +248,9 @@ class SklearnModelInitializer:
             model = instantiate(model)
         else:
             if hasattr(model, "model"):
-                assert isinstance(model.model, BaseEstimator), f"model must be a sklearn estimator. Got {type(model.model)}"
+                assert isinstance(
+                    model.model, BaseEstimator
+                ), f"model must be a sklearn estimator. Got {type(model.model)}"
             else:
                 assert isinstance(
                     model,

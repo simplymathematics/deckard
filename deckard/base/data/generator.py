@@ -46,7 +46,7 @@ class SklearnDataGenerator:
         "biclusters",
     ] = "classification"
     kwargs: dict = field(default_factory=dict)
-    _target_:str =  "deckard.base.data.generator.SklearnDataGenerator"
+    _target_: str = "deckard.base.data.generator.SklearnDataGenerator"
 
     def __init__(self, name, **kwargs):
         logger.info(
@@ -87,7 +87,7 @@ class TorchDataGenerator:
     ] = "torch_mnist"
     path = None
     kwargs: dict = field(default_factory=dict)
-    _target_:str = "deckard.base.data.generator.TorchDataGenerator"
+    _target_: str = "deckard.base.data.generator.TorchDataGenerator"
 
     def __init__(self, name, path=None, **kwargs):
         logger.info(
@@ -176,7 +176,7 @@ KERAS_DATASETS = ["keras_mnist", "keras_cifar10", "mnist", "cifar10", "diabetes"
 class KerasDataGenerator:
     name: Literal["mnist", "cifar10", "diabetes"] = "mnist"
     kwargs: dict = field(default_factory=dict)
-    _target_:str = "deckard.base.data.generator.KerasDataGenerator"
+    _target_: str = "deckard.base.data.generator.KerasDataGenerator"
 
     def __init__(self, name, **kwargs):
         logger.info(
@@ -217,7 +217,7 @@ ALL_DATASETS.extend(KERAS_DATASETS)
 class DataGenerator:
     name: str = "classification"
     kwargs: dict = field(default_factory=dict)
-    _target_:str = "deckard.base.data.generator.DataGenerator"
+    _target_: str = "deckard.base.data.generator.DataGenerator"
 
     def __init__(self, name, **kwargs):
         self.name = name
@@ -248,7 +248,7 @@ class TorchBaseLoader:
     transform = Union[Callable, None]
     target_transform = Union[Callable, None]
     regex = "*"
-    _target_:str = "deckard.base.data.generator.TorchBaseLoader"
+    _target_: str = "deckard.base.data.generator.TorchBaseLoader"
 
     def __init__(self, name, labels, transform=None, target_transform=None, regex="*"):
         self.name = name
@@ -275,7 +275,8 @@ class TorchBaseLoader:
 
 @dataclass
 class TorchImageLoader(TorchBaseLoader):
-    _target_:str = "deckard.base.data.generator.TorchImageLoader"
+    _target_: str = "deckard.base.data.generator.TorchImageLoader"
+
     def __getitem__(self, idx):
         file_path = self.files[idx]
         image = read_image(file_path)
@@ -289,7 +290,8 @@ class TorchImageLoader(TorchBaseLoader):
 
 @dataclass
 class TorchTextLoader(TorchBaseLoader):
-    _target_:str = "deckard.base.data.generator.TorchTextLoader"
+    _target_: str = "deckard.base.data.generator.TorchTextLoader"
+
     def __getitem__(self, idx):
         file_path = self.files[idx]
         with file_path.open("r") as f:
