@@ -8232,42 +8232,42 @@ stages:
     deps:
     - path: sms_spam/reports/gzip_knn/
       hash: md5
-      md5: 0b3c413023f8eb9c93f058fb8b4b4465.dir
-      size: 1749711
-      nfiles: 1655
+      md5: 89e3b68400367dee648064784adb9796.dir
+      size: 1499301
+      nfiles: 1337
     outs:
     - path: sms_spam/reports/gzip_knn.csv
       hash: md5
-      md5: da904257e2960610d63acf13526cbf79
-      size: 846170
+      md5: ee7ee47f5ee27acca9e58b9249ecb954
+      size: 695526
   compile@truthseeker-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/gzip_knn  --results_file
       truthseeker/reports/gzip_knn.csv
     deps:
     - path: truthseeker/reports/gzip_knn/
       hash: md5
-      md5: b4fc2cbcc1d7fe39002e7f84cd0f2dca.dir
-      size: 1630019
-      nfiles: 1645
+      md5: e5702237f62021b85240717035b53d81.dir
+      size: 1537318
+      nfiles: 1325
     outs:
     - path: truthseeker/reports/gzip_knn.csv
       hash: md5
-      md5: af1854d1cd5b4b0655887ac1109e207b
-      size: 850607
+      md5: 183afe36078f60e3e478f3813b1b52a7
+      size: 711959
   compile@kdd_nsl-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_knn  --results_file
       kdd_nsl/reports/gzip_knn.csv
     deps:
     - path: kdd_nsl/reports/gzip_knn/
       hash: md5
-      md5: 450308fe881e120445f7d7e0aa7c7371.dir
-      size: 2612524
-      nfiles: 2329
+      md5: 4dfe630ff7f6f036220f2b9aa5b3c6b1.dir
+      size: 4225577
+      nfiles: 3608
     outs:
     - path: kdd_nsl/reports/gzip_knn.csv
       hash: md5
-      md5: 6285023da5e50a23731d4475bb1404a6
-      size: 1249928
+      md5: 17f27e4404093a5b50a74ca0af24e4db
+      size: 1964725
   compile@truthseeker-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/gzip_svc  --results_file
       truthseeker/reports/gzip_svc.csv
@@ -8288,112 +8288,112 @@ stages:
     deps:
     - path: truthseeker/reports/gzip_logistic/
       hash: md5
-      md5: 0e6c36459a7eb502e20633cdcc90d85e.dir
-      size: 1679620
-      nfiles: 1361
+      md5: 5074027dccab644424973514ae7c8922.dir
+      size: 2225784
+      nfiles: 1473
     outs:
     - path: truthseeker/reports/gzip_logistic.csv
       hash: md5
-      md5: 276fcd9d025d60418d6a92db6bee859e
-      size: 748894
+      md5: ed858c429ea35f3dac4eca9c52e036ce
+      size: 786129
   compile@ddos-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_logistic  --results_file
       ddos/reports/gzip_logistic.csv
     deps:
     - path: ddos/reports/gzip_logistic/
       hash: md5
-      md5: e426fd815b0da69824d56417074be0b3.dir
-      size: 4026699
-      nfiles: 3438
+      md5: 6ce8a2aa8cc08ccde4467403dec1a124.dir
+      size: 6278656
+      nfiles: 4845
     outs:
     - path: ddos/reports/gzip_logistic.csv
       hash: md5
-      md5: 9bafc1f829af480f0ebbb4bcda1bd366
-      size: 1843691
+      md5: 7ff452295887d9c84250c7375b7ea58a
+      size: 2606734
   compile@ddos-gzip_knn:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_knn  --results_file
       ddos/reports/gzip_knn.csv
     deps:
     - path: ddos/reports/gzip_knn/
       hash: md5
-      md5: 99b1e1c225a2dadff3edd2a609550da0.dir
-      size: 4335018
-      nfiles: 4165
+      md5: ce89d46c7a34959f9d39a3d1e6ad8911.dir
+      size: 5724814
+      nfiles: 5690
     outs:
     - path: ddos/reports/gzip_knn.csv
       hash: md5
-      md5: a3b64da10cda5c9c994bec09e8d5b0e6
-      size: 2128419
+      md5: fe28ae14c5cc37ee8eb5e705c3610da8
+      size: 2899113
   compile@kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_logistic  --results_file
       kdd_nsl/reports/gzip_logistic.csv
     deps:
     - path: kdd_nsl/reports/gzip_logistic/
       hash: md5
-      md5: 429cd3d22120752c0f33f058bd295297.dir
-      size: 2661113
-      nfiles: 2518
+      md5: bca1b51ebae4e3ef166f9424a0f8c1ff.dir
+      size: 4923952
+      nfiles: 3945
     outs:
     - path: kdd_nsl/reports/gzip_logistic.csv
       hash: md5
-      md5: 727c23835b7ba317dcc36afbf2de3105
-      size: 1360794
+      md5: 07859f070e6b9246456e860d63ab4438
+      size: 2149350
   compile@kdd_nsl-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/gzip_svc  --results_file
       kdd_nsl/reports/gzip_svc.csv
     deps:
     - path: kdd_nsl/reports/gzip_svc/
       hash: md5
-      md5: 0f46b49f2460ec47f185ee31766d67be.dir
-      size: 2585159
-      nfiles: 2863
+      md5: 907ec439b02a0d2b3ba36d54e250ff89.dir
+      size: 4798455
+      nfiles: 4393
     outs:
     - path: kdd_nsl/reports/gzip_svc.csv
       hash: md5
-      md5: 24a87a19e20f82414ba9e475a49321dd
-      size: 1465890
+      md5: b25b5925936e935b62cdc6bd5b96d8d3
+      size: 2257942
   compile@sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/gzip_logistic  --results_file
       sms_spam/reports/gzip_logistic.csv
     deps:
     - path: sms_spam/reports/gzip_logistic/
       hash: md5
-      md5: d6eae73bb974e016d7060965e782ec64.dir
-      size: 1681973
-      nfiles: 1579
+      md5: c70a60ca7e7e433d1cbd21bfddd26320.dir
+      size: 2212768
+      nfiles: 1438
     outs:
     - path: sms_spam/reports/gzip_logistic.csv
       hash: md5
-      md5: a99713adc14fd7ac5983391cf7bda5f0
-      size: 823294
+      md5: 34643e6fbb37caef6b6f9054cb1b5203
+      size: 754980
   compile@ddos-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/gzip_svc  --results_file
       ddos/reports/gzip_svc.csv
     deps:
     - path: ddos/reports/gzip_svc/
       hash: md5
-      md5: 8c61e597b802901485987689fed66bc4.dir
-      size: 3679614
-      nfiles: 3602
+      md5: 3b3fdb3e3d2321e8ee5dc36311626231.dir
+      size: 6101649
+      nfiles: 5283
     outs:
     - path: ddos/reports/gzip_svc.csv
       hash: md5
-      md5: e34dcd6d17649ab2bf7492baf87579ef
-      size: 1833852
+      md5: 7bd491b47bf7d5f373cb825e9e3d0c4c
+      size: 2689051
   compile@sms_spam-gzip_svc:
     cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/gzip_svc  --results_file
       sms_spam/reports/gzip_svc.csv
     deps:
     - path: sms_spam/reports/gzip_svc/
       hash: md5
-      md5: 5698fc82ad97df949f080080ea2380c5.dir
-      size: 1350919
+      md5: 52af2b025a2aafa3e4a78db0bf221f59.dir
+      size: 2173475
       nfiles: 1536
     outs:
     - path: sms_spam/reports/gzip_svc.csv
       hash: md5
-      md5: c238c67e2f0f01daf8dbce14ece43a79
-      size: 752586
+      md5: 12c2eec80495a5fb326dbed7c4cfe382
+      size: 758618
   clean@truthseeker-gzip_svc:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_svc.csv
       -o truthseeker/plots/clean/gzip_svc.csv -c conf/clean.yaml
@@ -8436,8 +8436,8 @@ stages:
     deps:
     - path: kdd_nsl/reports/gzip_svc.csv
       hash: md5
-      md5: 24a87a19e20f82414ba9e475a49321dd
-      size: 1465890
+      md5: b25b5925936e935b62cdc6bd5b96d8d3
+      size: 2257942
     params:
       conf/clean.yaml:
         replace:
@@ -8464,16 +8464,16 @@ stages:
     outs:
     - path: kdd_nsl/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 65196bc22dfea7f27cb74773fe2e2db1
-      size: 1146924
+      md5: a359fb46b83265dec352e0af17f19cb2
+      size: 1771361
   clean@kdd_nsl-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_knn.csv -o kdd_nsl/plots/clean/gzip_knn.csv
       -c conf/clean.yaml
     deps:
     - path: kdd_nsl/reports/gzip_knn.csv
       hash: md5
-      md5: 6285023da5e50a23731d4475bb1404a6
-      size: 1249928
+      md5: 17f27e4404093a5b50a74ca0af24e4db
+      size: 1964725
     params:
       conf/clean.yaml:
         replace:
@@ -8500,16 +8500,16 @@ stages:
     outs:
     - path: kdd_nsl/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 3651ef417b97379cc03a49ce79f998e0
-      size: 684973
+      md5: 686b0f04494630491244a6ead99949b7
+      size: 996268
   clean@ddos-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_knn.csv -o ddos/plots/clean/gzip_knn.csv
       -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_knn.csv
       hash: md5
-      md5: a3b64da10cda5c9c994bec09e8d5b0e6
-      size: 2128419
+      md5: fe28ae14c5cc37ee8eb5e705c3610da8
+      size: 2899113
     params:
       conf/clean.yaml:
         replace:
@@ -8536,16 +8536,16 @@ stages:
     outs:
     - path: ddos/plots/clean/gzip_knn.csv
       hash: md5
-      md5: f005c0048529f08a13e6f70a8827a7c3
-      size: 1324520
+      md5: ad6773d0af82535d3c525f8bf405bbfe
+      size: 1919757
   clean@ddos-gzip_svc:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_svc.csv -o ddos/plots/clean/gzip_svc.csv
       -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_svc.csv
       hash: md5
-      md5: e34dcd6d17649ab2bf7492baf87579ef
-      size: 1833852
+      md5: 7bd491b47bf7d5f373cb825e9e3d0c4c
+      size: 2689051
     params:
       conf/clean.yaml:
         replace:
@@ -8572,16 +8572,16 @@ stages:
     outs:
     - path: ddos/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 3ccafa0a189002b2b105531b696748f5
-      size: 1182340
+      md5: 45515bad8f1a4167a7a64d0a3d62464e
+      size: 1842449
   clean@kdd_nsl-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i kdd_nsl/reports/gzip_logistic.csv
       -o kdd_nsl/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: kdd_nsl/reports/gzip_logistic.csv
       hash: md5
-      md5: 727c23835b7ba317dcc36afbf2de3105
-      size: 1360794
+      md5: 07859f070e6b9246456e860d63ab4438
+      size: 2149350
     params:
       conf/clean.yaml:
         replace:
@@ -8608,16 +8608,16 @@ stages:
     outs:
     - path: kdd_nsl/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 8f696890e6f657c6647e687059458255
-      size: 942175
+      md5: 82d8bddbe4db8eb6835d00931af7fc12
+      size: 1456814
   clean@truthseeker-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_knn.csv
       -o truthseeker/plots/clean/gzip_knn.csv -c conf/clean.yaml
     deps:
     - path: truthseeker/reports/gzip_knn.csv
       hash: md5
-      md5: af1854d1cd5b4b0655887ac1109e207b
-      size: 850607
+      md5: 183afe36078f60e3e478f3813b1b52a7
+      size: 711959
     params:
       conf/clean.yaml:
         replace:
@@ -8644,16 +8644,16 @@ stages:
     outs:
     - path: truthseeker/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 1f46e4b3afd875ee11939b23bd1c0852
-      size: 560551
+      md5: dbbbb4c6ab13f540b1b4d9ee23d4a91a
+      size: 354842
   clean@ddos-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/gzip_logistic.csv -o
       ddos/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: ddos/reports/gzip_logistic.csv
       hash: md5
-      md5: 9bafc1f829af480f0ebbb4bcda1bd366
-      size: 1843691
+      md5: 7ff452295887d9c84250c7375b7ea58a
+      size: 2606734
     params:
       conf/clean.yaml:
         replace:
@@ -8680,16 +8680,16 @@ stages:
     outs:
     - path: ddos/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 3c254a06696b871d0384318ae4f63b66
-      size: 1046045
+      md5: a7d5cf7362711724ae19bba3becf66d2
+      size: 1523208
   clean@sms_spam-gzip_knn:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_knn.csv -o
       sms_spam/plots/clean/gzip_knn.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_knn.csv
       hash: md5
-      md5: da904257e2960610d63acf13526cbf79
-      size: 846170
+      md5: ee7ee47f5ee27acca9e58b9249ecb954
+      size: 695526
     params:
       conf/clean.yaml:
         replace:
@@ -8716,16 +8716,16 @@ stages:
     outs:
     - path: sms_spam/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 1863a43ae2b762a4f31c9bea33876ca6
-      size: 484431
+      md5: 020bbec4f2594935bd33efdcdf90eba7
+      size: 358497
   clean@sms_spam-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_logistic.csv
       -o sms_spam/plots/clean/gzip_logistic.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_logistic.csv
       hash: md5
-      md5: a99713adc14fd7ac5983391cf7bda5f0
-      size: 823294
+      md5: 34643e6fbb37caef6b6f9054cb1b5203
+      size: 754980
     params:
       conf/clean.yaml:
         replace:
@@ -8752,16 +8752,16 @@ stages:
     outs:
     - path: sms_spam/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 2fd64e6cd0d7bec9215c75109fdfc025
-      size: 546146
+      md5: d9a1be37cfb498a7d87c116db6f553e2
+      size: 497702
   clean@sms_spam-gzip_svc:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/gzip_svc.csv -o
       sms_spam/plots/clean/gzip_svc.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/gzip_svc.csv
       hash: md5
-      md5: c238c67e2f0f01daf8dbce14ece43a79
-      size: 752586
+      md5: 12c2eec80495a5fb326dbed7c4cfe382
+      size: 758618
     params:
       conf/clean.yaml:
         replace:
@@ -8788,8 +8788,8 @@ stages:
     outs:
     - path: sms_spam/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 154e8d00da292ae852e409e333e6b50f
-      size: 585079
+      md5: 4455964d2014f4705b4ea3191cef40b2
+      size: 588874
   clean@truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/gzip_logistic.csv
       -o truthseeker/plots/clean/gzip_logistic.csv -c conf/clean.yaml
@@ -9982,21 +9982,21 @@ stages:
     deps:
     - path: sms_spam/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 1863a43ae2b762a4f31c9bea33876ca6
-      size: 484431
+      md5: 020bbec4f2594935bd33efdcdf90eba7
+      size: 358497
     - path: sms_spam/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 2fd64e6cd0d7bec9215c75109fdfc025
-      size: 546146
+      md5: d9a1be37cfb498a7d87c116db6f553e2
+      size: 497702
     - path: sms_spam/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 154e8d00da292ae852e409e333e6b50f
-      size: 585079
+      md5: 4455964d2014f4705b4ea3191cef40b2
+      size: 588874
     outs:
     - path: sms_spam/plots/merged.csv
       hash: md5
-      md5: f9ab93b0623233d440a9121d44e66b52
-      size: 1670149
+      md5: 3e3e63943b3d62dddc79e554cb691405
+      size: 1492939
   merge@ddos:
     cmd: python merge.py --big_dir ddos/plots/ --data_file clean/gzip_knn.csv --little_dir_data_file
       clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder ddos/plots --output_file
@@ -10004,21 +10004,21 @@ stages:
     deps:
     - path: ddos/plots/clean/gzip_knn.csv
       hash: md5
-      md5: f005c0048529f08a13e6f70a8827a7c3
-      size: 1324520
+      md5: ad6773d0af82535d3c525f8bf405bbfe
+      size: 1919757
     - path: ddos/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 3c254a06696b871d0384318ae4f63b66
-      size: 1046045
+      md5: a7d5cf7362711724ae19bba3becf66d2
+      size: 1523208
     - path: ddos/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 3ccafa0a189002b2b105531b696748f5
-      size: 1182340
+      md5: 45515bad8f1a4167a7a64d0a3d62464e
+      size: 1842449
     outs:
     - path: ddos/plots/merged.csv
       hash: md5
-      md5: a7ee4068fbe7322489d01968f4d1b058
-      size: 3674771
+      md5: 2fd123789b3c749a653aa9c142d23858
+      size: 5465498
   merge@kdd_nsl:
     cmd: python merge.py --big_dir kdd_nsl/plots/ --data_file clean/gzip_knn.csv --little_dir_data_file
       clean/gzip_logistic.csv clean/gzip_svc.csv --output_folder kdd_nsl/plots --output_file
@@ -10026,29 +10026,29 @@ stages:
     deps:
     - path: kdd_nsl/plots/clean/gzip_knn.csv
       hash: md5
-      md5: 3651ef417b97379cc03a49ce79f998e0
-      size: 684973
+      md5: 686b0f04494630491244a6ead99949b7
+      size: 996268
     - path: kdd_nsl/plots/clean/gzip_logistic.csv
       hash: md5
-      md5: 8f696890e6f657c6647e687059458255
-      size: 942175
+      md5: 82d8bddbe4db8eb6835d00931af7fc12
+      size: 1456814
     - path: kdd_nsl/plots/clean/gzip_svc.csv
       hash: md5
-      md5: 65196bc22dfea7f27cb74773fe2e2db1
-      size: 1146924
+      md5: a359fb46b83265dec352e0af17f19cb2
+      size: 1771361
     outs:
     - path: kdd_nsl/plots/merged.csv
       hash: md5
-      md5: d5941c6021b734061fdfc222b947c546
-      size: 2864416
+      md5: 7817c0dd6f149eb072f4a5c787fa9655
+      size: 4361588
   plot@kdd_nsl:
     cmd: python -m deckard.layers.plots  --path kdd_nsl/plots/  --file kdd_nsl/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: kdd_nsl/plots/merged.csv
       hash: md5
-      md5: d5941c6021b734061fdfc222b947c546
-      size: 2864416
+      md5: 7817c0dd6f149eb072f4a5c787fa9655
+      size: 4361588
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10282,36 +10282,36 @@ stages:
     outs:
     - path: kdd_nsl/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: eea766d5158fa6591ff936219cd7d4c8
-      size: 24419
+      md5: 2abfc1441c3515f07d2e28459e730a4f
+      size: 24689
     - path: kdd_nsl/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: bd4668087118c05bff0114fa370b9b9b
-      size: 22989
+      md5: d91c94bf17617b79b2a417710efb9dfc
+      size: 23239
     - path: kdd_nsl/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: 84cca48c20c321118dccf45a0cf33c17
-      size: 23428
+      md5: d2c40b3e36886868c650917d02015be4
+      size: 24227
     - path: kdd_nsl/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: 5654063aed15bc2167b722f894377435
-      size: 21754
+      md5: c6807ba0356e42159d683a2b3ab610a9
+      size: 23546
     - path: kdd_nsl/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: f2fc7ed7b59b5a223beb0563355b3beb
-      size: 18777
+      md5: 2f6d79e1a5164884b87ef3f40bdafeeb
+      size: 19370
     - path: kdd_nsl/plots/models_vs_train_time.pdf
       hash: md5
-      md5: 291577cb4222ebccb98ca828c2b94643
-      size: 18352
+      md5: 30ed28915c3ff6de16fffbf8c6bdda45
+      size: 18949
     - path: kdd_nsl/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: e6ff57eb8c3565e77e8684668ac5fd4b
-      size: 22233
+      md5: 1d0bb7d03823bb54b5b12b50dbc6615c
+      size: 22232
     - path: kdd_nsl/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: 6d7cc69c574e4035a11b4c7afdd0f211
-      size: 21611
+      md5: 802d5119895198601ba2ee24b3cc9528
+      size: 21618
   plot@truthseeker:
     cmd: python -m deckard.layers.plots  --path truthseeker/plots/  --file truthseeker/plots/merged.csv  -c
       conf/plots.yaml
@@ -10589,8 +10589,8 @@ stages:
     deps:
     - path: sms_spam/plots/merged.csv
       hash: md5
-      md5: f9ab93b0623233d440a9121d44e66b52
-      size: 1670149
+      md5: 3e3e63943b3d62dddc79e554cb691405
+      size: 1492939
     params:
       conf/plots.yaml:
         cat_plot:
@@ -10824,44 +10824,44 @@ stages:
     outs:
     - path: sms_spam/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: 3ca8d95549fde3ef65660b11f501e655
-      size: 24365
+      md5: 695e96d374959cef893859230a15f1a7
+      size: 24667
     - path: sms_spam/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: f02c9e71c59143a390b19f25ac3dab9d
-      size: 23764
+      md5: 857505ffce8416303759a76cb29b26a3
+      size: 23552
     - path: sms_spam/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: 82c9ff3718f8f91df0266a74d45d3791
-      size: 23220
+      md5: 98b34d861b84d36cb30f58c763445eb7
+      size: 23637
     - path: sms_spam/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: fe87b5551dcee35fa9aed545f935849b
-      size: 19460
+      md5: 3d9cda5e091398ec195ff1c763fb0b5a
+      size: 23033
     - path: sms_spam/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: dd1b2fc5d40f111cabf23c8cf8f3ed4d
-      size: 18046
+      md5: 06ae4883133a4f2bb4c19f531c693fdd
+      size: 19365
     - path: sms_spam/plots/models_vs_train_time.pdf
       hash: md5
-      md5: 89ff042f1ac1c4c5a5ba5d01e85b2a1e
-      size: 17622
+      md5: f8af33a8abf0caf4fc83a69b6af565a0
+      size: 18945
     - path: sms_spam/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: 66998ea75f39daf23f13119a617cc855
-      size: 22237
+      md5: 43b4f4865931fca59079491745c20f1c
+      size: 22231
     - path: sms_spam/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: d1396c4df85e10df1cdbeea17f7f7760
-      size: 21578
+      md5: 4f5b0a9ac3efe2e0daa225f79fe0e40c
+      size: 21606
   plot@ddos:
     cmd: python -m deckard.layers.plots  --path ddos/plots/  --file ddos/plots/merged.csv  -c
       conf/plots.yaml
     deps:
     - path: ddos/plots/merged.csv
       hash: md5
-      md5: a7ee4068fbe7322489d01968f4d1b058
-      size: 3674771
+      md5: 2fd123789b3c749a653aa9c142d23858
+      size: 5465498
     params:
       conf/plots.yaml:
         cat_plot:
@@ -11095,36 +11095,36 @@ stages:
     outs:
     - path: ddos/plots/metric_vs_accuracy.pdf
       hash: md5
-      md5: b7ffb6a511c04857db554afed7199f69
-      size: 24822
+      md5: 3b2f9c2885d331a0cadd339177318f3f
+      size: 24827
     - path: ddos/plots/metric_vs_predict_time.pdf
       hash: md5
-      md5: 9fcbf6c389f2541b6b52122f79467178
-      size: 24346
+      md5: 56c78e45d5932c61b339753810a6fed1
+      size: 24347
     - path: ddos/plots/metric_vs_train_time.pdf
       hash: md5
-      md5: d7e2d0822100ff80a8e7e03d48c53a56
-      size: 22973
+      md5: 7ba195f1f39c450c7ebd9165eee97f32
+      size: 22962
     - path: ddos/plots/models_vs_accuracy.pdf
       hash: md5
-      md5: 8a53781e49369297898415b2caa70538
-      size: 23665
+      md5: 4e5e04199aa08c3098632cf8fad2c744
+      size: 23780
     - path: ddos/plots/models_vs_predict_time.pdf
       hash: md5
-      md5: de1af1e61a88909b7bc8523f6a836af9
-      size: 19533
+      md5: 41c0c84e0b3b737273692f10c366b275
+      size: 19529
     - path: ddos/plots/models_vs_train_time.pdf
       hash: md5
-      md5: afdc39b96159b14d9eb9f191e014f5da
-      size: 19111
+      md5: 38dd71a6ac8cd50294d5b81bffd8425b
+      size: 19106
     - path: ddos/plots/symmetric_vs_metric.pdf
       hash: md5
-      md5: 2d5a9c5382ec5d979f5c1ba16f638b29
-      size: 22228
+      md5: 72331f97089e5465a2df8a071f6dcf10
+      size: 22223
     - path: ddos/plots/symmetric_vs_metric_train_time.pdf
       hash: md5
-      md5: fda3535bbaf9bdd5bb2fd55f17d05012
-      size: 22139
+      md5: 3014b61ef7c5fe2e5276149ecd20625b
+      size: 22143
   condense@truthseeker-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=truthseeker dataset=truthseeker
       data.sample.test_size=100 model_name=gzip_logistic model=best_gzip_logistic_truthseeker
@@ -16589,14 +16589,14 @@ stages:
     deps:
     - path: sms_spam/reports/condense/logistic/
       hash: md5
-      md5: e618499d3730db0c39319e82ee7807f7.dir
-      size: 2942227
-      nfiles: 3011
+      md5: 05562ae582796b70d35ae7062a5030d7.dir
+      size: 9597627
+      nfiles: 6388
     outs:
     - path: sms_spam/reports/condense/logistic.csv
       hash: md5
-      md5: a0fa06c80b37e446a0d01d894227fdf5
-      size: 1605690
+      md5: 7094b26a582820cc1f88512573ce8c25
+      size: 3430438
   compile@kdd_nsl-condense/svc:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/condense/svc  --results_file
       kdd_nsl/reports/condense/svc.csv
@@ -16617,28 +16617,28 @@ stages:
     deps:
     - path: kdd_nsl/reports/condense/logistic/
       hash: md5
-      md5: ae358823518ca6759ddfa8d1c738e367.dir
-      size: 3101125
-      nfiles: 2948
+      md5: df73404e3f7d00371dd55b40e76fa9e0.dir
+      size: 3112185
+      nfiles: 2954
     outs:
     - path: kdd_nsl/reports/condense/logistic.csv
       hash: md5
-      md5: 4b91546f39a3097a8568c90d2e3ddd87
-      size: 1643961
+      md5: 4193461c63aca8b61956fc443f5bcd3d
+      size: 1649004
   compile@ddos-condense/svc:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/condense/svc  --results_file
       ddos/reports/condense/svc.csv
     deps:
     - path: ddos/reports/condense/svc/
       hash: md5
-      md5: daaf428c939e9bfcc233bf88ee39f9fb.dir
-      size: 2819182
-      nfiles: 3072
+      md5: b40b878f7eca11a9eae0c19e054bee47.dir
+      size: 8854939
+      nfiles: 7199
     outs:
     - path: ddos/reports/condense/svc.csv
       hash: md5
-      md5: 2b2e966947db80caaea3d445003927ce
-      size: 1580858
+      md5: 76b35c3e1dfa2d0476a737f9a41c25c4
+      size: 3771755
   compile@truthseeker-condense/knn:
     cmd: python -m deckard.layers.compile  --report_folder truthseeker/reports/condense/knn  --results_file
       truthseeker/reports/condense/knn.csv
@@ -16673,28 +16673,28 @@ stages:
     deps:
     - path: ddos/reports/condense/knn/
       hash: md5
-      md5: 18b11d46fd07e34dad7540abc72d8b83.dir
-      size: 5612497
-      nfiles: 6108
+      md5: 9b6918814be3bea732abc71b8684fd8d.dir
+      size: 8458502
+      nfiles: 9157
     outs:
     - path: ddos/reports/condense/knn.csv
       hash: md5
-      md5: 3a94d5640ae948e799f5e348affd8ee9
-      size: 3129268
+      md5: 0cd0ff58f94fb06093779ff81d37d2bf
+      size: 4723182
   compile@sms_spam-condense/svc:
     cmd: python -m deckard.layers.compile  --report_folder sms_spam/reports/condense/svc  --results_file
       sms_spam/reports/condense/svc.csv
     deps:
     - path: sms_spam/reports/condense/svc/
       hash: md5
-      md5: fd7f8d975462fb720becc9d3d2cd9e5c.dir
-      size: 2790761
-      nfiles: 3065
+      md5: 200cad31398ec4545e7a490011218c47.dir
+      size: 4416840
+      nfiles: 3068
     outs:
     - path: sms_spam/reports/condense/svc.csv
       hash: md5
-      md5: f782069f1e30657943077f18e0229f17
-      size: 1574629
+      md5: 32f06cbea623f845dcfa7400d707abad
+      size: 1573621
   compile@kdd_nsl-condense/knn:
     cmd: python -m deckard.layers.compile  --report_folder kdd_nsl/reports/condense/knn  --results_file
       kdd_nsl/reports/condense/knn.csv
@@ -16729,14 +16729,14 @@ stages:
     deps:
     - path: sms_spam/reports/condense/knn/
       hash: md5
-      md5: 1b368af057a2a858b18ca74b1ba9f336.dir
-      size: 2797813
-      nfiles: 3016
+      md5: 84b8fcb1e78a8685141409736c6d6afa.dir
+      size: 4713599
+      nfiles: 4258
     outs:
     - path: sms_spam/reports/condense/knn.csv
       hash: md5
-      md5: c5ba2fd1f928dec2e287c053c44ed0b5
-      size: 1552833
+      md5: c8d4f7036e0c3e1cf8fa5a0b922c6ecc
+      size: 2287605
   compile@ddos-condense/logistic:
     cmd: python -m deckard.layers.compile  --report_folder ddos/reports/condense/logistic  --results_file
       ddos/reports/condense/logistic.csv
@@ -16757,8 +16757,8 @@ stages:
     deps:
     - path: sms_spam/reports/condense/svc.csv
       hash: md5
-      md5: f782069f1e30657943077f18e0229f17
-      size: 1574629
+      md5: 32f06cbea623f845dcfa7400d707abad
+      size: 1573621
     params:
       conf/clean.yaml:
         replace:
@@ -16785,16 +16785,16 @@ stages:
     outs:
     - path: sms_spam/plots/clean/condense/svc.csv
       hash: md5
-      md5: 4b13295237a1603355019ee1c2d42887
-      size: 1222176
+      md5: 92b8648f6759e0a56c65aeec4a15aa92
+      size: 1223675
   clean@ddos-condense/knn:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/condense/knn.csv -o
       ddos/plots/clean/condense/knn.csv -c conf/clean.yaml
     deps:
     - path: ddos/reports/condense/knn.csv
       hash: md5
-      md5: 3a94d5640ae948e799f5e348affd8ee9
-      size: 3129268
+      md5: 0cd0ff58f94fb06093779ff81d37d2bf
+      size: 4723182
     params:
       conf/clean.yaml:
         replace:
@@ -16821,8 +16821,8 @@ stages:
     outs:
     - path: ddos/plots/clean/condense/knn.csv
       hash: md5
-      md5: 1ee153e232bd181b8eae3dd68b4ec009
-      size: 2418027
+      md5: d214914ecfbba6afbd4ff9a61cb96bb1
+      size: 3652514
   clean@truthseeker-condense/svc:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/condense/svc.csv
       -o truthseeker/plots/clean/condense/svc.csv -c conf/clean.yaml
@@ -16937,8 +16937,8 @@ stages:
     deps:
     - path: kdd_nsl/reports/condense/logistic.csv
       hash: md5
-      md5: 4b91546f39a3097a8568c90d2e3ddd87
-      size: 1643961
+      md5: 4193461c63aca8b61956fc443f5bcd3d
+      size: 1649004
     params:
       conf/clean.yaml:
         replace:
@@ -16965,16 +16965,16 @@ stages:
     outs:
     - path: kdd_nsl/plots/clean/condense/logistic.csv
       hash: md5
-      md5: ad001459daa8dc818570974749f661d2
-      size: 1174954
+      md5: 55a0ac50149a3e3d93b69c63ccd0d7a3
+      size: 1174964
   clean@sms_spam-condense/knn:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/condense/knn.csv
       -o sms_spam/plots/clean/condense/knn.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/condense/knn.csv
       hash: md5
-      md5: c5ba2fd1f928dec2e287c053c44ed0b5
-      size: 1552833
+      md5: c8d4f7036e0c3e1cf8fa5a0b922c6ecc
+      size: 2287605
     params:
       conf/clean.yaml:
         replace:
@@ -17001,16 +17001,16 @@ stages:
     outs:
     - path: sms_spam/plots/clean/condense/knn.csv
       hash: md5
-      md5: aab291fa1ff741983e7cc88067edda8e
-      size: 1156386
+      md5: 7dda620e8ae59aab14ac83c0071a8b96
+      size: 1268504
   clean@sms_spam-condense/logistic:
     cmd: python -m deckard.layers.clean_data  -i sms_spam/reports/condense/logistic.csv
       -o sms_spam/plots/clean/condense/logistic.csv -c conf/clean.yaml
     deps:
     - path: sms_spam/reports/condense/logistic.csv
       hash: md5
-      md5: a0fa06c80b37e446a0d01d894227fdf5
-      size: 1605690
+      md5: 7094b26a582820cc1f88512573ce8c25
+      size: 3430438
     params:
       conf/clean.yaml:
         replace:
@@ -17037,8 +17037,8 @@ stages:
     outs:
     - path: sms_spam/plots/clean/condense/logistic.csv
       hash: md5
-      md5: 6f209fdc864f17d784deb0f872142bc5
-      size: 1203196
+      md5: 1f89cfa87c87f195079e49eb5d6e7ce5
+      size: 2461824
   clean@truthseeker-condense/logistic:
     cmd: python -m deckard.layers.clean_data  -i truthseeker/reports/condense/logistic.csv
       -o truthseeker/plots/clean/condense/logistic.csv -c conf/clean.yaml
@@ -17117,8 +17117,8 @@ stages:
     deps:
     - path: ddos/reports/condense/svc.csv
       hash: md5
-      md5: 2b2e966947db80caaea3d445003927ce
-      size: 1580858
+      md5: 76b35c3e1dfa2d0476a737f9a41c25c4
+      size: 3771755
     params:
       conf/clean.yaml:
         replace:
@@ -17145,8 +17145,8 @@ stages:
     outs:
     - path: ddos/plots/clean/condense/svc.csv
       hash: md5
-      md5: a1e99fce84430014ccb657065a752e59
-      size: 1238056
+      md5: 102b712883464d547a4d2119f6c5df60
+      size: 2968961
   clean@ddos-condense/logistic:
     cmd: python -m deckard.layers.clean_data  -i ddos/reports/condense/logistic.csv
       -o ddos/plots/clean/condense/logistic.csv -c conf/clean.yaml
@@ -17190,21 +17190,21 @@ stages:
     deps:
     - path: ddos/plots/clean/condense/knn.csv
       hash: md5
-      md5: 1ee153e232bd181b8eae3dd68b4ec009
-      size: 2418027
+      md5: d214914ecfbba6afbd4ff9a61cb96bb1
+      size: 3652514
     - path: ddos/plots/clean/condense/logistic.csv
       hash: md5
       md5: bfca6e865bca11a25fa1e42dfbdea0ad
       size: 2331762
     - path: ddos/plots/clean/condense/svc.csv
       hash: md5
-      md5: a1e99fce84430014ccb657065a752e59
-      size: 1238056
+      md5: 102b712883464d547a4d2119f6c5df60
+      size: 2968961
     outs:
     - path: ddos/plots/condensed_merged.csv
       hash: md5
-      md5: df343f65be99173e907fc729ee3775d7
-      size: 6185422
+      md5: dc147a2e9c585b39c5e212a46ade70ac
+      size: 9306964
   merge_condense@kdd_nsl:
     cmd: python merge.py --big_dir kdd_nsl/plots/ --data_file clean/condense/knn.csv
       --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
@@ -17216,8 +17216,8 @@ stages:
       size: 1204868
     - path: kdd_nsl/plots/clean/condense/logistic.csv
       hash: md5
-      md5: ad001459daa8dc818570974749f661d2
-      size: 1174954
+      md5: 55a0ac50149a3e3d93b69c63ccd0d7a3
+      size: 1174964
     - path: kdd_nsl/plots/clean/condense/svc.csv
       hash: md5
       md5: c9b2ff8546f531fa439c664c63fc06fd
@@ -17225,8 +17225,8 @@ stages:
     outs:
     - path: kdd_nsl/plots/condensed_merged.csv
       hash: md5
-      md5: 10ecfbc2b390d9f598fefa6f1eda1e61
-      size: 4543753
+      md5: 1ddcee7de7db0c1a7d4898de4a03d7b7
+      size: 4543759
   merge_condense@sms_spam:
     cmd: python merge.py --big_dir sms_spam/plots/ --data_file clean/condense/knn.csv
       --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
@@ -17234,21 +17234,21 @@ stages:
     deps:
     - path: sms_spam/plots/clean/condense/knn.csv
       hash: md5
-      md5: aab291fa1ff741983e7cc88067edda8e
-      size: 1156386
+      md5: 7dda620e8ae59aab14ac83c0071a8b96
+      size: 1268504
     - path: sms_spam/plots/clean/condense/logistic.csv
       hash: md5
-      md5: 6f209fdc864f17d784deb0f872142bc5
-      size: 1203196
+      md5: 1f89cfa87c87f195079e49eb5d6e7ce5
+      size: 2461824
     - path: sms_spam/plots/clean/condense/svc.csv
       hash: md5
-      md5: 4b13295237a1603355019ee1c2d42887
-      size: 1222176
+      md5: 92b8648f6759e0a56c65aeec4a15aa92
+      size: 1223675
     outs:
     - path: sms_spam/plots/condensed_merged.csv
       hash: md5
-      md5: 6ec12ab823fc26dfc49b4041eac3f31e
-      size: 3700462
+      md5: 8f549743001ca622a6c7c8cbb2b3d17d
+      size: 5114716
   merge_condense@truthseeker:
     cmd: python merge.py --big_dir truthseeker/plots/ --data_file clean/condense/knn.csv
       --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv --output_folder
@@ -17359,8 +17359,8 @@ stages:
     deps:
     - path: sms_spam/plots/condensed_merged.csv
       hash: md5
-      md5: 6ec12ab823fc26dfc49b4041eac3f31e
-      size: 3700462
+      md5: 8f549743001ca622a6c7c8cbb2b3d17d
+      size: 5114716
     params:
       conf/condensed_plots.yaml:
         line_plot:
@@ -17454,24 +17454,24 @@ stages:
     outs:
     - path: sms_spam/plots/sampling_method_vs_accuracy.pdf
       hash: md5
-      md5: 6d1656f19c65df657e5ca84112ab55b5
-      size: 18158
+      md5: 8d3c7b03379f2f16bdb6de450083608b
+      size: 40643
     - path: sms_spam/plots/sampling_method_vs_predict_time.pdf
       hash: md5
-      md5: bea453e14d1849a3204c29bdd8e4f053
-      size: 43922
+      md5: 095622e64533aedee66d72079f141c0d
+      size: 53902
     - path: sms_spam/plots/sampling_method_vs_train_time.pdf
       hash: md5
-      md5: 1295cbc7cbba84fa94ae50b912b3080c
-      size: 40023
+      md5: da26bd3fc967c9925975f6c8ad189a88
+      size: 50367
   plot_condense@ddos:
     cmd: python -m deckard.layers.plots  --path ddos/plots/  --file ddos/plots/condensed_merged.csv  -c
       conf/condensed_plots.yaml
     deps:
     - path: ddos/plots/condensed_merged.csv
       hash: md5
-      md5: df343f65be99173e907fc729ee3775d7
-      size: 6185422
+      md5: dc147a2e9c585b39c5e212a46ade70ac
+      size: 9306964
     params:
       conf/condensed_plots.yaml:
         line_plot:
@@ -17565,24 +17565,24 @@ stages:
     outs:
     - path: ddos/plots/sampling_method_vs_accuracy.pdf
       hash: md5
-      md5: 34eef2cf161db173932c000f2b5e9f6c
-      size: 46125
+      md5: 09737e6b272979bf7fc879ece10d25e5
+      size: 57907
     - path: ddos/plots/sampling_method_vs_predict_time.pdf
       hash: md5
-      md5: 424b3d3ef47f852810d8db461d4980cf
-      size: 60094
+      md5: 78e2e0111219f86d189dfb952d81cdba
+      size: 78230
     - path: ddos/plots/sampling_method_vs_train_time.pdf
       hash: md5
-      md5: 03f359f67e4af94d8459bb4eec2bc6e8
-      size: 51427
+      md5: ab34ce0b71b6c0153525b0194178ecaf
+      size: 64512
   plot_condense@kdd_nsl:
     cmd: python -m deckard.layers.plots  --path kdd_nsl/plots/  --file kdd_nsl/plots/condensed_merged.csv  -c
       conf/condensed_plots.yaml
     deps:
     - path: kdd_nsl/plots/condensed_merged.csv
       hash: md5
-      md5: 10ecfbc2b390d9f598fefa6f1eda1e61
-      size: 4543753
+      md5: 1ddcee7de7db0c1a7d4898de4a03d7b7
+      size: 4543759
     params:
       conf/condensed_plots.yaml:
         line_plot:
@@ -17676,16 +17676,16 @@ stages:
     outs:
     - path: kdd_nsl/plots/sampling_method_vs_accuracy.pdf
       hash: md5
-      md5: b01d71021f9a09222ae930c1e2e4fefe
-      size: 38550
+      md5: 1c673220cd32e3f9bd2aa92516d0b20e
+      size: 38546
     - path: kdd_nsl/plots/sampling_method_vs_predict_time.pdf
       hash: md5
-      md5: e82855f6e69e29f2f9c2bb3785112bd9
+      md5: 4bcb086fcd47e05d2b79e30a12d15869
       size: 50187
     - path: kdd_nsl/plots/sampling_method_vs_train_time.pdf
       hash: md5
-      md5: 5cc177c762f84adf29106f28a6d31c6b
-      size: 45959
+      md5: 2b3e91d9b656ba35d06f8e97d1e8359d
+      size: 45992
   grid_search@300-ddos-gzip_logistic:
     cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=300
       data.sample.test_size=100 model_name=gzip_logistic model.init.distance_matrix=null

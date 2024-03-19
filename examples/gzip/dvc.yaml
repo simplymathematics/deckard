@@ -291,7 +291,7 @@ stages:
           - hydra
   compile:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
       stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
     deps:
       - ${item.dataset}/${files.reports}/${item.stage}/
@@ -304,7 +304,7 @@ stages:
   ##############################################################################
   clean:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
       stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
     deps:
       - ${item.dataset}/${files.reports}/${item.stage}.csv
@@ -321,7 +321,7 @@ stages:
   ##############################################################################
   merge:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
     deps:
       - ${item.dataset}/plots/clean/gzip_knn.csv
       - ${item.dataset}/plots/clean/gzip_logistic.csv
@@ -338,7 +338,7 @@ stages:
   ##############################################################################
   merge_condense:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
     deps:
       - ${item.dataset}/plots/clean/condense/knn.csv
       - ${item.dataset}/plots/clean/condense/logistic.csv
@@ -355,7 +355,7 @@ stages:
   ##############################################################################
   plot:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
     cmd: >-
       python -m deckard.layers.plots 
       --path ${item.dataset}/plots/ 
@@ -379,7 +379,7 @@ stages:
   ##############################################################################
   plot_condense:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+      dataset : [kdd_nsl, sms_spam, ddos]
     cmd: >-
       python -m deckard.layers.plots 
       --path ${item.dataset}/plots/ 
