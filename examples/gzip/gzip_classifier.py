@@ -55,27 +55,22 @@ def _gzip_compressor(x):
 
 def _lzma_compressor(x):
     import lzma
-
     return len(lzma.compress(str(x).encode()))
 
 
 def _bz2_compressor(x):
     import bz2
-
     return len(bz2.compress(str(x).encode()))
 
 
 def _zstd_compressor(x):
     import zstd
-
     return len(zstd.compress(str(x).encode()))
 
 
 def _pickle_compressor(x):
     import pickle
-
     return len(pickle.dumps(x))
-
 
 compressors = {
     "gzip": _gzip_compressor,
@@ -555,7 +550,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         counts = np.bincount(flat_y)
         self.counts_ = counts
         logger.info(f"Num Classes: {self.n_classes_}, counts: {counts}")
-        self.n_features_ = X.shape[1]
+        self.n_features_ = X.shape[1] if len(X.shape) > 1 else 1
         self.classes_ = range(len(unique_labels(y)))
 
         if self.metric in compressors.keys():
@@ -664,6 +659,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(self.X_),
         ), f"Expected {distance_matrix.shape} == ({len(X)}, {len(self.X_)})"
         y_pred = self.clf_.predict(distance_matrix)
+        
+        if len(np.squeeze(y_pred).shape) == 1:
+            encoder = LabelBinarizer()
+            y_pred = encoder.fit(self.y_).transform(y_pred)
+        else:
+            encoder = LabelEncoder()
+            y_pred = encoder.fit(self.y_).transform(y_pred)
         return y_pred
 
     def score(self, X: np.ndarray, y: np.ndarray):
@@ -949,7 +951,7 @@ def load_data(dataset, precompressed):
         y = df["BotScoreBinary"]
         X = df.drop("BotScoreBinary", axis=1)
     elif dataset == "sms-spam":
-        df = pd.read_csv("raw_data/sms-spam.csv")
+        df = pd.read_csv("raw_data/sms-spam_undersampled_1450.csv")
         y = df["label"]
         X = df.drop("label", axis=1)
     elif dataset == "ddos":
@@ -957,7 +959,7 @@ def load_data(dataset, precompressed):
         y = df["Label"]
         X = df.drop("Label", axis=1)
     else:
-        raise ValueError(f"Dataset {dataset} not found")
+        raise ValueError(f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos.")
     if precompressed is True:
         X = pd.DataFrame(X).applymap(lambda x: len(gzip.compress(str(x).encode())))
         X = np.array(X)
@@ -1035,6 +1037,7 @@ parser.add_argument("--optimizer", type=str, default="accuracy")
 parser.add_argument("--precompressed", action="store_true")
 parser.add_argument("--random_state", type=int, default=42)
 parser.add_argument("kwargs", nargs=argparse.REMAINDER)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)

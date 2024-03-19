@@ -242,11 +242,13 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
-    raise_exception = cfg.pop("raise_exception", False)
+    raise_exception = cfg.pop("raise_exception", True)
     working_dir = Path(config_path).parent
     direction = cfg.get("direction", "minimize")
     direction = [direction] if not isinstance(direction, list) else direction
     optimizers = cfg.get("optimizers", None)
+    optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
+    assert len(optimizers) == len(direction)
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -274,13 +276,14 @@ def optimise(cfg: DictConfig) -> None:
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
-        logger.warning(
-            f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
-        )
+        
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
         if not raise_exception:
+            logger.warning(
+                f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
+            )
             fake_scores = []
             for direction in direction:
                 if direction == "minimize":

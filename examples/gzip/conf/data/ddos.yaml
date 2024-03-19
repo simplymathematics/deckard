@@ -3,6 +3,7 @@ name: raw_data/ddos_undersampled_10000.csv
 target: 'Label'
 drop:
   - 'Timestamp' # Drop the timestamp column
+  - 'Unnamed: 0' # Drop the index column
 sample:
     random_state : 0
     train_size : 100

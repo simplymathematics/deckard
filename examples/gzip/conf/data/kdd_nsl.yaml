@@ -1,4 +1,6 @@
 _target_: deckard.base.data.Data
+drop:
+    - id
 sample:
     _target_: deckard.base.data.SklearnDataSampler
     random_state : 0

@@ -290,7 +290,6 @@ class Model:
         **kwargs,
     ):
         result_dict = {}
-
         if isinstance(model, Model):
             data, model = model.initialize(data)
         elif isinstance(model, type(None)):
