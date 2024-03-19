@@ -276,7 +276,6 @@ def optimise(cfg: DictConfig) -> None:
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
-        
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())

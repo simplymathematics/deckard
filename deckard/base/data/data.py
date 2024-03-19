@@ -4,7 +4,6 @@ import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
-from validators import url
 import numpy as np
 from pandas import DataFrame, read_csv, Series
 from omegaconf import OmegaConf

@@ -55,22 +55,27 @@ def _gzip_compressor(x):
 
 def _lzma_compressor(x):
     import lzma
+
     return len(lzma.compress(str(x).encode()))
 
 
 def _bz2_compressor(x):
     import bz2
+
     return len(bz2.compress(str(x).encode()))
 
 
 def _zstd_compressor(x):
     import zstd
+
     return len(zstd.compress(str(x).encode()))
 
 
 def _pickle_compressor(x):
     import pickle
+
     return len(pickle.dumps(x))
+
 
 compressors = {
     "gzip": _gzip_compressor,
@@ -659,7 +664,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(self.X_),
         ), f"Expected {distance_matrix.shape} == ({len(X)}, {len(self.X_)})"
         y_pred = self.clf_.predict(distance_matrix)
-        
+
         if len(np.squeeze(y_pred).shape) == 1:
             encoder = LabelBinarizer()
             y_pred = encoder.fit(self.y_).transform(y_pred)
@@ -959,7 +964,9 @@ def load_data(dataset, precompressed):
         y = df["Label"]
         X = df.drop("Label", axis=1)
     else:
-        raise ValueError(f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos.")
+        raise ValueError(
+            f"Dataset {dataset} not found. Options are: 20newsgroups, kdd_nsl, make_classification, truthseeker, sms-spam, ddos."
+        )
     if precompressed is True:
         X = pd.DataFrame(X).applymap(lambda x: len(gzip.compress(str(x).encode())))
         X = np.array(X)
