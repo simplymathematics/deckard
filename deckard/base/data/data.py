@@ -93,12 +93,10 @@ class Data:
         """
         if filename is not None and Path(filename).exists():
             result = self.load(filename)
-            assert len(result) == 4, f"Data is not generated: {self.name}"
         elif self.generate is not None:
             result = self.generate()
         else:
             result = self.load(self.name)
-
         if isinstance(result, DataFrame):
             assert self.target is not None, "Target is not specified"
             y = result[self.target]
@@ -133,20 +131,7 @@ class Data:
             with open(filename, "r") as f:
                 data = json.load(f)
         elif suffix in [".csv"]:
-            data = read_csv(filename, delimiter=",", header=0, index_col=0)
-            if len(data.columns) == 4 and data.columns == [
-                "X_train",
-                "X_test",
-                "y_train",
-                "y_test",
-            ]:
-                for col in data.columns:
-                    data[col] = data[col].apply(lambda x: np.array(x))
-                X_train = data["X_train"].values
-                X_test = data["X_test"].values
-                y_train = data["y_train"].values
-                y_test = data["y_test"].values
-                data = [X_train, X_test, y_train, y_test]
+            data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
@@ -188,19 +173,6 @@ class Data:
                 with open(filename, "w") as f:
                     json.dump(data, f, indent=4, sort_keys=True)
             elif suffix in [".csv"]:
-                if isinstance(data, list) and len(data) == 4:
-                    X_train, X_test, y_train, y_test = data
-                    X_train = Series(X_train.tolist())
-                    X_test = Series(X_test.tolist())
-                    y_train = Series(y_train.tolist())
-                    y_test = Series(y_test.tolist())
-                    data = {
-                        "X_train": X_train,
-                        "X_test": X_test,
-                        "y_train": y_train,
-                        "y_test": y_test,
-                    }
-                    data = DataFrame(data)
                 assert isinstance(
                     data,
                     (Series, DataFrame, dict, np.ndarray),
@@ -226,14 +198,13 @@ class Data:
         :param filename: str
         :return: list
         """
-        result_dict = {}
-        if data_file is not None and Path(data_file).exists() and not url(data_file):
-            data = self.load(data_file)
-            assert len(data) == 4, f"Some data is missing: {self.name}"
+        if Path(self.name).is_file():
+            new_data_file = data_file
+            data_file = self.name
         else:
-            data = self.initialize(filename=data_file)
-            assert len(data) == 4, f"Some data is missing: {self.name}"
-            data_file = self.save(data, data_file)
+            new_data_file = None
+        result_dict = {}
+        data = self.initialize(data_file)
         result_dict["data"] = data
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
@@ -245,6 +216,6 @@ class Data:
             assert Path(
                 test_labels_file,
             ).exists(), f"Error saving test labels to {test_labels_file}"
-        if data_file is not None:
-            self.save(data, data_file)
+        if new_data_file is not None:
+            self.save(data, new_data_file)
         return data
