@@ -25,7 +25,7 @@ def cat_plot(
     hue_order=None,
     rotation=0,
     set={},
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -66,27 +66,45 @@ def cat_plot(
     plot. You can pass any valid keyword arguments that are accepted by the `set()` method of the
     `seaborn.FacetGrid` object. These properties can be used to customize the appearance of the plot,
       filetype: The `filetype` parameter is used to specify the file extension for saving the graph. By
-    default, it is set to ".pdf", but you can change it to any other valid file extension such as
-    ".png", ".jpg", etc. Defaults to .pdf
+    default, it is set to ".eps", but you can change it to any other valid file extension such as
+    ".png", ".jpg", etc. Defaults to .eps
     """
 
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+        file = Path(file)
+    else:
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    logger.debug(
-        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
-    )
-    graph = sns.catplot(
-        data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
-    )
+    if hue is not None:
+        data = data.sort_values(by=[hue, x, y])
+        logger.debug(
+            f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
+        )
+        graph = sns.catplot(
+            data=data,
+            x=x,
+            y=y,
+            hue=hue,
+            kind=kind,
+            hue_order=hue_order,
+            **kwargs,
+        )
+    else:
+        data = data.sort_values(by=[x, y])
+        logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
+        graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:
-        graph.legend.remove()
+        if graph.legend is not None:
+            graph.legend.remove()
+        else:
+            pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -99,7 +117,6 @@ def line_plot(
     data,
     x,
     y,
-    hue,
     xlabel,
     ylabel,
     title,
@@ -108,8 +125,7 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order=None,
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -146,21 +162,35 @@ def line_plot(
     variable in the plot. It is a list that determines the order in which the different categories of
     the `hue` variable will be plotted.
       filetype: The `filetype` parameter specifies the file type of the saved graph. In the given code,
-    the default value is set to ".pdf", indicating that the graph will be saved as a PDF file. However,
-    you can change the value of `filetype` to save the graph in a different. Defaults to .pdf
+    the default value is set to ".eps", indicating that the graph will be saved as a PDF file. However,
+    you can change the value of `filetype` to save the graph in a different. Defaults to .eps
 
     Returns:
       the line plot graph object.
     """
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+        file = Path(file)
+    else:
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
+    if "hue" in kwargs and kwargs.get("hue") in data.columns:
+        hue = kwargs.get("hue")
+        data = data.sort_values(by=[hue, x, y])
+    else:
+        data.sort_values(by=[x, y])
+    xlim = kwargs.pop("xlim", None)
+    ylim = kwargs.pop("ylim", None)
+    graph = sns.lineplot(data=data, x=x, y=y, **kwargs)
     graph.legend(**legend)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
+    if xlim is not None:
+        graph.set_xlim(xlim)
+    if ylim is not None:
+        graph.set_ylim(ylim)
     if y_scale is not None:
         graph.set_yscale(y_scale)
     if x_scale is not None:
@@ -186,7 +216,7 @@ def scatter_plot(
     x_scale=None,
     legend={},
     hue_order=None,
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     """
@@ -221,15 +251,19 @@ def scatter_plot(
     variable in the scatter plot. By default, the levels of the `hue` variable are ordered based on the
     order in which they appear in the data. However, if you want to specify a specific
       filetype: The `filetype` parameter is a string that specifies the file type of the saved graph. It
-    is used to determine the file extension of the saved graph file. By default, it is set to ".pdf",
-    indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .pdf
+    is used to determine the file extension of the saved graph file. By default, it is set to ".eps",
+    indicating that the graph will be saved as a PDF file. However, you can change. Defaults to .eps
 
     Returns:
       the scatter plot graph object.
     """
 
     plt.gcf().clear()
-    file = Path(file).with_suffix(filetype)
+    suffix = Path(file).suffix
+    if suffix is not None:
+        file = Path(file)
+    else:
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
     graph = sns.scatterplot(
@@ -240,8 +274,10 @@ def scatter_plot(
         hue_order=hue_order,
         **kwargs,
     )
-    graph.set_yscale(y_scale)
-    graph.set_xscale(x_scale)
+    if y_scale is not None:
+        graph.set_yscale(y_scale)
+    if x_scale is not None:
+        graph.set_xscale(x_scale)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)
@@ -254,42 +290,43 @@ def scatter_plot(
     return graph
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        help="Path to the plot folder",
-        required=True,
-    )
-    parser.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        help="Data file to read from",
-        required=True,
-    )
-    parser.add_argument(
-        "-t",
-        "--plotfiletype",
-        type=str,
-        help="Filetype of the plots",
-        default=".pdf",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="conf/plots.yaml",
-    )
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-p",
+    "--path",
+    type=str,
+    help="Path to the plot folder",
+    required=True,
+)
+parser.add_argument(
+    "-f",
+    "--file",
+    type=str,
+    help="Data file to read from",
+    required=True,
+)
+parser.add_argument(
+    "-t",
+    "--plotfiletype",
+    type=str,
+    help="Filetype of the plots",
+    default=".eps",
+)
+parser.add_argument(
+    "-v",
+    "--verbosity",
+    default="INFO",
+    help="Increase output verbosity",
+)
+parser.add_argument(
+    "-c",
+    "--config",
+    help="Path to the config file",
+    default="conf/plots.yaml",
+)
+
+
+def main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
@@ -334,3 +371,8 @@ if __name__ == "__main__":
     for dict_ in scatter_plot_list:
         i += 1
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(args)

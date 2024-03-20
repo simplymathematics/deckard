@@ -1,387 +1,598 @@
 schema: '2.0'
 stages:
-  train:
-    cmd: python -m deckard.layers.experiment train --config_file cifar100.yaml
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i cifar100/reports/attack.csv -o cifar100/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: cifar100/reports/attack.csv
+      md5: e1e1b67a591afdb5c9ea8f35003e5394
+      size: 36167864
     params:
       params.yaml:
-        data:
-          _target_: deckard.base.data.Data
-          generate:
-            name: torch_cifar100
-            path: original_data
-          sample:
-            random_state: 0
-            stratify: true
-          sklearn_pipeline:
-            preprocessor:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-        files:
-          _target_: deckard.base.files.FileConfig
-          adv_predictions_file: adv_predictions.json
-          attack_dir: attacks
-          attack_file: attack
-          attack_type: .pkl
-          data_dir: data
-          data_file: data
-          data_type: .pkl
-          directory: cifar100
-          model_dir: models
-          model_file: model
-          model_type: .pt
-          name: default
-          params_file: params.yaml
-          predictions_file: predictions.json
-          reports: reports
-          score_dict_file: score_dict.json
-        model:
-          _target_: deckard.base.model.Model
-          art:
-            _target_: deckard.base.model.art_pipeline.ArtPipeline
-            data:
-              _target_: deckard.base.data.Data
-              generate:
-                name: torch_cifar100
-                path: original_data
-              sample:
-                random_state: 0
-                stratify: true
-              sklearn_pipeline:
-                preprocessor:
-                  name: sklearn.preprocessing.StandardScaler
-                  with_mean: true
-                  with_std: true
-            initialize:
-              clip_values:
-              - 0
-              - 255
-              criterion:
-                name: torch.nn.CrossEntropyLoss
-              optimizer:
-                lr: 0.01
-                momentum: 0.9
-                name: torch.optim.SGD
-            library: pytorch
-          data:
-            _target_: deckard.base.data.Data
-            generate:
-              name: torch_cifar100
-              path: original_data
-            sample:
-              random_state: 0
-              stratify: true
-            sklearn_pipeline:
-              preprocessor:
-                name: sklearn.preprocessing.StandardScaler
-                with_mean: true
-                with_std: true
-          init:
-            _target_: deckard.base.model.ModelInitializer
-            name: torch_example.ResNet18
-            num_channels: 3
-            num_classes: 100
-          library: pytorch
-          trainer:
-            batch_size: 1024
-            nb_epoch: 10
-        scorers:
-          _target_: deckard.base.scorer.ScorerDict
-          accuracy:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: maximize
-            name: sklearn.metrics.accuracy_score
-          log_loss:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: minimize
-            name: sklearn.metrics.log_loss
+        files.directory: cifar100
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          Epochs: 10
+        params:
+          Deep: attack.init.nb_grads
+          FGM: attack.init.eps
+          HSJ: attack.init.max_iter
+          Pixel: attack.init.th
+          PGD: attack.init.eps
+          Thresh: attack.init.th
+          Gauss-out: model.art.postprocessor.params.scale
+          Conf: model.art.postprocessor.params.cutoff
+          FSQ: model.art.preprocessor.params.bit_depth
+          Gauss-in: model.art.preprocessor.params.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          control:
+            model_layers: 18
+          defaults:
+            Epochs: 10
     outs:
-    - path: cifar100/reports/train/default/predictions.json
-      md5: aeaec96d96a661f5185062898e19fd0d
-      size: 24404547
-    - path: cifar100/reports/train/default/score_dict.json
-      md5: f3070a3adef622cd7899e813660957a8
-      size: 898
-  attack:
-    cmd: python -m deckard.layers.experiment attack --config_file cifar100.yaml
+    - path: cifar100/reports/clean_attack.csv
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
+  afr:
+    cmd: python -m deckard.layers.afr --dataset cifar100 --data_file cifar100/reports/clean_attack.csv  --target
+      adv_accuracy --duration_col predict_time --dataset cifar100 --config_file conf/afr.yaml
+      --plots_folder cifar100/plots/
     deps:
-    - path: cifar100/reports/train/default/predictions.json
-      md5: aeaec96d96a661f5185062898e19fd0d
-      size: 24404547
+    - path: cifar100/reports/clean_attack.csv
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
     params:
       params.yaml:
-        attack:
-          _target_: deckard.base.attack.Attack
-          attack_size: 10
-          data:
-            _target_: deckard.base.data.Data
-            generate:
-              name: torch_cifar100
-              path: original_data
-            sample:
-              random_state: 0
-              stratify: true
-            sklearn_pipeline:
-              preprocessor:
-                name: sklearn.preprocessing.StandardScaler
-                with_mean: true
-                with_std: true
-          init:
-            _target_: deckard.base.attack.AttackInitializer
-            model:
-              _target_: deckard.base.model.Model
-              art:
-                _target_: deckard.base.model.art_pipeline.ArtPipeline
-                data:
-                  _target_: deckard.base.data.Data
-                  generate:
-                    name: torch_cifar100
-                    path: original_data
-                  sample:
-                    random_state: 0
-                    stratify: true
-                  sklearn_pipeline:
-                    preprocessor:
-                      name: sklearn.preprocessing.StandardScaler
-                      with_mean: true
-                      with_std: true
-                initialize:
-                  clip_values:
-                  - 0
-                  - 255
-                  criterion:
-                    name: torch.nn.CrossEntropyLoss
-                  optimizer:
-                    lr: 0.01
-                    momentum: 0.9
-                    name: torch.optim.SGD
-                library: pytorch
-              data:
-                _target_: deckard.base.data.Data
-                generate:
-                  name: torch_cifar100
-                  path: original_data
-                sample:
-                  random_state: 0
-                  stratify: true
-                sklearn_pipeline:
-                  preprocessor:
-                    name: sklearn.preprocessing.StandardScaler
-                    with_mean: true
-                    with_std: true
-              init:
-                _target_: deckard.base.model.ModelInitializer
-                name: torch_example.ResNet18
-                num_channels: 3
-                num_classes: 100
-              library: pytorch
-              trainer:
-                batch_size: 1024
-                nb_epoch: 10
-            name: art.attacks.evasion.HopSkipJump
-          method: evasion
-          model:
-            _target_: deckard.base.model.Model
-            art:
-              _target_: deckard.base.model.art_pipeline.ArtPipeline
-              data:
-                _target_: deckard.base.data.Data
-                generate:
-                  name: torch_cifar100
-                  path: original_data
-                sample:
-                  random_state: 0
-                  stratify: true
-                sklearn_pipeline:
-                  preprocessor:
-                    name: sklearn.preprocessing.StandardScaler
-                    with_mean: true
-                    with_std: true
-              initialize:
-                clip_values:
-                - 0
-                - 255
-                criterion:
-                  name: torch.nn.CrossEntropyLoss
-                optimizer:
-                  lr: 0.01
-                  momentum: 0.9
-                  name: torch.optim.SGD
-              library: pytorch
-            data:
-              _target_: deckard.base.data.Data
-              generate:
-                name: torch_cifar100
-                path: original_data
-              sample:
-                random_state: 0
-                stratify: true
-              sklearn_pipeline:
-                preprocessor:
-                  name: sklearn.preprocessing.StandardScaler
-                  with_mean: true
-                  with_std: true
-            init:
-              _target_: deckard.base.model.ModelInitializer
-              name: torch_example.ResNet18
-              num_channels: 3
-              num_classes: 100
-            library: pytorch
-            trainer:
-              batch_size: 1024
-              nb_epoch: 10
-        data:
-          _target_: deckard.base.data.Data
-          generate:
-            name: torch_cifar100
-            path: original_data
-          sample:
-            random_state: 0
-            stratify: true
-          sklearn_pipeline:
-            preprocessor:
-              name: sklearn.preprocessing.StandardScaler
-              with_mean: true
-              with_std: true
-        files:
-          _target_: deckard.base.files.FileConfig
-          adv_predictions_file: adv_predictions.json
-          attack_dir: attacks
-          attack_file: attack
-          attack_type: .pkl
-          data_dir: data
-          data_file: data
-          data_type: .pkl
-          directory: cifar100
-          model_dir: models
-          model_file: model
-          model_type: .pt
-          name: default
-          params_file: params.yaml
-          predictions_file: predictions.json
-          reports: reports
-          score_dict_file: score_dict.json
-        model:
-          _target_: deckard.base.model.Model
-          art:
-            _target_: deckard.base.model.art_pipeline.ArtPipeline
-            data:
-              _target_: deckard.base.data.Data
-              generate:
-                name: torch_cifar100
-                path: original_data
-              sample:
-                random_state: 0
-                stratify: true
-              sklearn_pipeline:
-                preprocessor:
-                  name: sklearn.preprocessing.StandardScaler
-                  with_mean: true
-                  with_std: true
-            initialize:
-              clip_values:
-              - 0
-              - 255
-              criterion:
-                name: torch.nn.CrossEntropyLoss
-              optimizer:
-                lr: 0.01
-                momentum: 0.9
-                name: torch.optim.SGD
-            library: pytorch
-          data:
-            _target_: deckard.base.data.Data
-            generate:
-              name: torch_cifar100
-              path: original_data
-            sample:
-              random_state: 0
-              stratify: true
-            sklearn_pipeline:
-              preprocessor:
-                name: sklearn.preprocessing.StandardScaler
-                with_mean: true
-                with_std: true
-          init:
-            _target_: deckard.base.model.ModelInitializer
-            name: torch_example.ResNet18
-            num_channels: 3
-            num_classes: 100
-          library: pytorch
-          trainer:
-            batch_size: 1024
-            nb_epoch: 10
-        scorers:
-          _target_: deckard.base.scorer.ScorerDict
-          accuracy:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: maximize
-            name: sklearn.metrics.accuracy_score
-          log_loss:
-            _target_: deckard.base.scorer.ScorerConfig
-            direction: minimize
-            name: sklearn.metrics.log_loss
+        files.directory: cifar100
+      conf/afr.yaml:
+        covariates:
+        - adv_fit_time
+        - accuracy
+        - train_time
+        - atk_value
+        - def_value
+        - data.sample.random_state
+        - model_layers
+        - model.trainer.nb_epoch
+        - predict_time
+        log_logistic:
+          plot:
+            file: log_logistic_aft.eps
+            title: Log logistic AFR Model
+          labels:
+            'Intercept: beta_': $\beta$
+            'Intercept: alpha_': $\alpha$
+            'data.sample.random_state: alpha_': Random State
+            'atk_value: alpha_': Attack Strength
+            'train_time: alpha_': $t_{train}$
+            'predict_proba_time: alpha_': $t_{predict}$
+            'adv_accuracy: alpha_': Adv. Accuracy
+            'accuracy: alpha_': Ben. Accuracy
+            'adv_fit_time: alpha_': $t_{attack}$
+            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
+            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: alpha_': No. of Epochs
+            'model.trainer.batch_size: alpha_': Batch Size
+            def_gen: Defence
+            'model_layers: alpha_': Layers
+            'def_value: alpha_': Defence Strength
+            'predict_time: alpha_': $t_{predict}$
+          partial_effect:
+          - file: log_logistic_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_logistic_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Log Logistic AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+        log_normal:
+          plot:
+            file: log_normal_aft.eps
+            title: Log Normal AFR Model
+          labels:
+            'Intercept: sigma_': $\rho$
+            'Intercept: mu_': $\mu$
+            'data.sample.random_state: mu_': Random State
+            'atk_value: mu_': Attack Strength
+            'train_time: mu_': $t_{train}$
+            'predict_proba_time: mu_': $t_{predict}$
+            'adv_accuracy: mu_': Adv. Accuracy
+            'accuracy: mu_': Ben. Accuracy
+            'adv_fit_time: mu_': $t_{attack}$
+            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
+            'failure_rate: mu_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: mu_': No. of Epochs
+            'model.trainer.batch_size: mu_': Batch Size
+            def_gen: Defence
+            'model_layers: mu_': Layers
+            'def_value: mu_': Defence Strength
+            'predict_time: mu_': $t_{predict}$
+          partial_effect:
+          - file: log_normal_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Log-Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: log_normal_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Log Normal AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
+              bbox_to_anchor:
+              - 1.05
+              - 1
+        weibull:
+          plot:
+            file: weibull_aft.eps
+            title: Weibull AFR Model
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $h_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $h_{ben.}(t;\theta)$
+            'model.trainer.nb_epoch: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+            'model_layers: lambda_': Layers
+            'def_value: lambda_': Defence Strength
+            'predict_time: lambda_': $t_{predict}$
+          partial_effect:
+          - file: weibull_epochs_partial_effect.eps
+            covariate_array: model.trainer.nb_epoch
+            values_array:
+            - 1
+            - 10
+            - 25
+            - 50
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Epochs
+              labels:
+              - '1'
+              - '10'
+              - '25'
+              - '50'
+          - file: weibull_layers_partial_effect.eps
+            covariate_array: model_layers
+            values_array:
+            - 18
+            - 34
+            - 50
+            - 101
+            - 152
+            title: $S(t)$ for Weibull AFR
+            ylabel: Expectation of $S(t)$
+            xlabel: Time $T$ (seconds)
+            legend_kwargs:
+              title: Layers
+              labels:
+              - '18'
+              - '34'
+              - '50'
+              - '101'
+              - '152'
     outs:
-    - path: cifar100/attacks/attack.pkl
-      md5: 5317760d3c6f266ece07523e98517d46
-      size: 123046
-    - path: cifar100/reports/attack/default/adv_predictions.json
-      md5: 18a846aed49541df9c48131c8f8ebc91
-      size: 21453
-    - path: cifar100/reports/attack/default/score_dict.json
-      md5: e7b9599098942b56f82f1f66c1c53280
-      size: 1166
-  attacks@ResNet18:
-    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet18
-      stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet18.db
-      --config-name cifar100.yaml
+    - path: cifar100/plots/aft_comparison.csv
+      md5: 9c486aa8ca1b035f2d501971353760b0
+      size: 381
+    - path: cifar100/plots/aft_comparison.tex
+      md5: b8d8117defa391250aeaace7a9d0f31d
+      size: 420
+    - path: cifar100/plots/log_logistic_aft.eps
+      md5: 25570be7c47838516dc2ce6737ea23cf
+      size: 43150
+    - path: cifar100/plots/log_logistic_epochs_partial_effect.eps
+      md5: dce601a023295267b4219a3d344c6390
+      size: 42195
+    - path: cifar100/plots/log_logistic_layers_partial_effect.eps
+      md5: 422b035d3bffc50166597ad26e175400
+      size: 43155
+    - path: cifar100/plots/log_normal_aft.eps
+      md5: 2cf3e5852ca6cd9bee9aa66974db1ad7
+      size: 44116
+    - path: cifar100/plots/log_normal_epochs_partial_effect.eps
+      md5: 0cb86ef85c693118c8b6abc83a503ac3
+      size: 42931
+    - path: cifar100/plots/log_normal_layers_partial_effect.eps
+      md5: 4386a26119906fa28709501875c95660
+      size: 43230
+    - path: cifar100/plots/weibull_aft.eps
+      md5: 9509c6ffd09f15d01d411d76074695d3
+      size: 41413
+    - path: cifar100/plots/weibull_epochs_partial_effect.eps
+      md5: 65e05f0fee7247d061ce52014821d3dd
+      size: 41438
+    - path: cifar100/plots/weibull_layers_partial_effect.eps
+      md5: 8903ae7d7c4fd97247d80abde3febaed
+      size: 42657
+  plot:
+    cmd: python -m deckard.layers.plots --path cifar100/plots/ --file cifar100/reports/clean_attack.csv
+      -c conf/plots.yaml
     deps:
-    - path: attacks.sh
-      md5: d78e6d6b697480fbccfb58bd791af506
-      size: 2897
-    - path: cifar100/reports/attack/default/score_dict.json
-      md5: 5d129878ac159ae1b3dbd9b135511973
-      size: 1172
-    - path: models.sh
-      md5: d477bb16f5082498a19285ded1a782e5
-      size: 1522
+    - path: cifar100/reports/clean_attack.csv
+      md5: 1e74314d258faf3aa6cd57f4f0aee4d4
+      size: 30258589
+    params:
+      params.yaml:
+        files.directory: cifar100
+        files.reports: reports
+      conf/plots.yaml:
+        cat_plot:
+        - file: adv_accuracy_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: linear
+          titles: Adv. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_accuracy_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          titles: Ben. Accuracy vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: accuracy
+          ylabels: Ben. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failures_per_train_time_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{ben.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_failure
+          ylabels: $\bar{C}_{ben.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_train_time_vs_attack_type.eps
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $\bar{C}_{adv.}$ vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: training_time_per_adv_failure
+          ylabels: $\bar{C}_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_failures_per_test_time_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: $f_{adv}$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_failure_rate
+          ylabels: $f_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: adv_accuracy_vs_attack_type.eps
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          titles: Adv. Accuracy vs Attack Type
+          x: atk_gen
+          xlabels: Attack Type
+          y: adv_accuracy
+          ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        - file: ben_failure_rate_vs_defence_type.eps
+          hue: model_name
+          kind: boxen
+          legend_title: Model Name
+          set:
+            yscale: log
+          titles: $f_{ben}(t; \theta)$ vs Defence Type
+          x: def_gen
+          xlabels: Defence Type
+          y: failure_rate
+          ylabels: $f_{ben}(t; \theta)$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+        line_plot:
+        - file: def_param_vs_accuracy.eps
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Ben. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: accuracy
+          y_scale:
+          ylabel: Ben. Accuracy
+          hue_order:
+          - Control
+          - Conf
+          - Epochs
+          - Gauss-in
+          - Gauss-out
+          - Conf
+          - FSQ
+          errorbar: se
+          err_style: bars
+        - file: def_param_vs_adv_accuracy.eps
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: Adv. Accuracy vs Defence Strength
+          x: def_value
+          x_scale: linear
+          xlabel: Defence Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+          hue_order:
+          - Control
+          - Conf
+          - Epochs
+          - Gauss-in
+          - Gauss-out
+          - Conf
+          - FSQ
+          errorbar: se
+          err_style: bars
+        - file: def_param_vs_adv_failure_rate.eps
+          hue: def_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+            title: Defence
+          title: $f_{adv}$ vs Defence Strength
+          x: def_value
+          x_scale: log
+          xlabel: Defence Control Parameter
+          y: adv_failure_rate
+          y_scale: log
+          ylabel: $f_{adv.}$
+          hue_order:
+          - Control
+          - Conf
+          - Epochs
+          - Gauss-in
+          - Gauss-out
+          - Conf
+          - FSQ
+          errorbar: se
+          err_style: bars
+        - file: atk_param_vs_accuracy.eps
+          hue: atk_gen
+          legend:
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          title: Adv. Accuracy vs Attack Strength
+          x: atk_value
+          x_scale: linear
+          xlabel: Attack Control Parameter
+          y: adv_accuracy
+          y_scale:
+          ylabel: Adv. Accuracy
+          hue_order:
+          - FGM
+          - PGD
+          - Deep
+          - HSJ
+          - Pixel
+          - Thresh
+          errorbar: se
+          err_style: bars
+        scatter_plot:
+        - x: train_time_per_sample
+          y: adv_failure_rate
+          hue: model_name
+          xlabel: $t_{train}$
+          ylabel: $f_{adv}$
+          title: $f_{adv}$ vs $t_{train}$
+          file: adv_failure_rate_vs_train_time.eps
+          y_scale: linear
+          x_scale: log
+          legend:
+            title: Model Name
+            bbox_to_anchor:
+            - 1.05
+            - 1
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
     outs:
-    - path: cifar100/reports/attack/ResNet18.db
-      md5: 2ba685aa1d1cd9ec621eb3a1b767a090
-      size: 4087808
-  attacks@ResNet34:
-    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet34
-      stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet34.db
-      --config-name cifar100.yaml
+    - path: cifar100/plots/adv_accuracy_vs_attack_type.eps
+      md5: c8da4b76e14a314a366460692dc783c5
+      size: 110928
+    - path: cifar100/plots/adv_accuracy_vs_defence_type.eps
+      md5: 28fc6c3ec076122c0817ff72bf445724
+      size: 89728
+    - path: cifar100/plots/adv_failure_rate_vs_train_time.eps
+      md5: 6b120de323dda22b1d1f7c865a3fee40
+      size: 1197829
+    - path: cifar100/plots/adv_failures_per_test_time_vs_defence_type.eps
+      md5: 992a14b470a5297898effaacef21da58
+      size: 117343
+    - path: cifar100/plots/adv_failures_per_train_time_vs_attack_type.eps
+      md5: da342b3a5f817de813e3831fb704a137
+      size: 135357
+    - path: cifar100/plots/adv_failures_per_train_time_vs_defence_type.eps
+      md5: 02573bd82b9a8e91f222b223265d4c88
+      size: 110305
+    - path: cifar100/plots/atk_param_vs_accuracy.eps
+      md5: 3a9ee8b1f8d7632d5e5346ee98fd7302
+      size: 38228
+    - path: cifar100/plots/ben_accuracy_vs_defence_type.eps
+      md5: a87ff0bfe4abeb62c8a11b14625094c6
+      size: 100131
+    - path: cifar100/plots/ben_failure_rate_vs_defence_type.eps
+      md5: 353409db77a5e01b3e1cace395724747
+      size: 118669
+    - path: cifar100/plots/ben_failures_per_train_time_vs_defence_type.eps
+      md5: c5b1247944a237ece405e2cc6d8d5f17
+      size: 109170
+    - path: cifar100/plots/def_param_vs_accuracy.eps
+      md5: a1d1bca25b228523ca3518e85407d9f9
+      size: 38880
+    - path: cifar100/plots/def_param_vs_adv_accuracy.eps
+      md5: 361afc1a730165a3c05d80ad16fe4c66
+      size: 37677
+    - path: cifar100/plots/def_param_vs_adv_failure_rate.eps
+      md5: cd8cc762d8541f690335ea6118eff227
+      size: 41408
+  copy_results:
+    cmd: mkdir -p ~/ml_afr/cifar100 &&  cp -r cifar100/plots/* ~/ml_afr/cifar100
     deps:
-    - path: attacks.sh
-      md5: d78e6d6b697480fbccfb58bd791af506
-      size: 2897
-    - path: cifar100/reports/attack/default/score_dict.json
-      md5: 5d129878ac159ae1b3dbd9b135511973
-      size: 1172
-    - path: models.sh
-      md5: d477bb16f5082498a19285ded1a782e5
-      size: 1522
-    outs:
-    - path: cifar100/reports/attack/ResNet34.db
-      md5: ed1216c4d9bbfa4f0b6e343783970074
-      size: 3174400
-  attacks@ResNet50:
-    cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.ResNet50
-      stage=attack ++hydra.sweeper.storage=sqlite:///cifar100/reports/attack/ResNet50.db
-      --config-name cifar100.yaml
-    deps:
-    - path: attacks.sh
-      md5: d78e6d6b697480fbccfb58bd791af506
-      size: 2897
-    - path: cifar100/reports/attack/default/score_dict.json
-      md5: 5d129878ac159ae1b3dbd9b135511973
-      size: 1172
-    - path: models.sh
-      md5: d477bb16f5082498a19285ded1a782e5
-      size: 1522
-    outs:
-    - path: cifar100/reports/attack/ResNet50.db
-      md5: 4915a611bc8eed14feb13e4e5fcf7bc1
-      size: 2863104
+    - path: cifar100/plots/
+      md5: 5862826c5918c815b4814de0b1d5e53b.dir
+      size: 2876717
+      nfiles: 27

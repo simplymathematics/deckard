@@ -20,7 +20,7 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     for col in tqdm(df.columns, desc="Flattening columns"):
         if isinstance(df[col][0], dict):
-            tmp = pd.json_normalize(df[col])
+            tmp = pd.json_normalize(df[col].fillna({i: {} for i in df[col].index}))
             tmp.columns = [f"{col}.{subcol}" for subcol in tmp.columns]
             tmp.index = df.index
             df = pd.merge(df, tmp, left_index=True, how="outer", right_index=True)
@@ -79,14 +79,31 @@ def read_file(file, results):
     if folder not in results:
         results[folder] = {}
     if suffix == ".json":
-        with open(file, "r") as f:
-            try:
+        try:
+            retries = locals().get("retries", 0)
+            with open(file, "r") as f:
                 dict_ = json.load(f)
-            except json.decoder.JSONDecodeError as e:
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f"Error reading {file}")
+            print(f"Error reading {file}. Please fix the file and press Enter.")
+            input(
+                "Press Enter to continue. The next failure on this file will raise an error.",
+            )
+            if retries > 1:
                 raise e
+            else:
+                with open(file, "r") as f:
+                    dict_ = json.load(f)
+                retries += 1
     elif suffix == ".yaml":
         with open(file, "r") as f:
-            dict_ = yaml.safe_load(f)
+            try:
+                dict_ = yaml.safe_load(f)
+            except Exception as e:
+                logger.error(f"Error reading {file}")
+                print(f"Error reading {file}")
+                input("Press Enter to raise the error.")
+                raise e
     else:
         raise ValueError(f"File type {suffix} not supported.")
     results[folder]["stage"] = stage
@@ -106,16 +123,16 @@ def save_results(results, results_file, results_folder) -> str:
     """
     results_file = Path(results_folder, results_file)
     logger.info(f"Saving data to {results_file}")
-    Path(results_folder).mkdir(exist_ok=True, parents=True)
+    Path(results_file).parent.mkdir(exist_ok=True, parents=True)
     suffix = results_file.suffix
     if suffix == ".csv":
-        results.to_csv(results_file)
+        results.to_csv(results_file, index=True)
     elif suffix == ".xlsx":
-        results.to_excel(results_file)
+        results.to_excel(results_file, index=True)
     elif suffix == ".html":
-        results.to_html(results_file)
+        results.to_html(results_file, index=True)
     elif suffix == ".json":
-        results.to_json(results_file)
+        results.to_json(results_file, index=True, orient="records")
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(
@@ -155,7 +172,6 @@ if __name__ == "__main__":
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
     parser.add_argument("--results_folder", type=str, default=".")
-    parser.add_argument("--config", type=str, default="conf/compile.yaml")
     parser.add_argument("--exclude", type=list, default=None, nargs="*")
     parser.add_argument("--verbose", type=str, default="INFO")
     args = parser.parse_args()

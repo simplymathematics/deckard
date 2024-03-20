@@ -1,6 +1,6 @@
 import logging
 
-from typing import Literal
+from typing import Literal, Callable, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 import numpy as np
@@ -11,8 +11,12 @@ from sklearn.datasets import (
     make_moons,
     make_circles,
 )
+from torchvision.io import read_image, read_file
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
 from ..utils import my_hash
+
+logger = logging.getLogger(__name__)
+
 
 __all__ = [
     "SklearnDataGenerator",
@@ -20,7 +24,6 @@ __all__ = [
     "KerasDataGenerator",
     "DataGenerator",
 ]
-logger = logging.getLogger(__name__)
 
 SKLEARN_DATASETS = [
     "classification",
@@ -222,6 +225,8 @@ class DataGenerator:
             return TorchDataGenerator(self.name, **self.kwargs)()
         elif self.name in KERAS_DATASETS:
             return KerasDataGenerator(self.name, **self.kwargs)()
+        elif isinstance(self.name, str) and Path(self.name).exists():
+            return SklearnDataGenerator(self.name, **self.kwargs)()
         else:  # pragma: no cover
             raise ValueError(
                 f"Invalid name {self.name}. Please choose from {ALL_DATASETS}",
@@ -229,3 +234,63 @@ class DataGenerator:
 
     def __hash__(self):
         return int(my_hash(self), 16)
+
+
+@dataclass
+class TorchBaseLoader:
+    name: str = "data/"
+    labels: str = "labels.csv"
+    transform = Union[Callable, None]
+    target_transform = Union[Callable, None]
+    regex = "*"
+
+    def __init__(self, name, labels, transform=None, target_transform=None, regex="*"):
+        self.name = name
+        self.labels = read_file(labels)
+        self.files = list(Path(self.name).glob(regex))
+        self.transform = transform
+        self.target_transform = target_transform
+        self.regex = regex
+        assert len(self.files) > 0, f"No files found in {self.name} with regex {regex}"
+        assert len(self.files) == len(
+            self.labels,
+        ), f"Number of files {len(self.files)} does not match number of labels {len(self.labels)}"
+
+    def __getitem__(self, idx):
+        raise NotImplementedError("This method is not implemented yet.")
+
+    def __len__(self):
+        return len(self.files)
+
+    def __call__(self):
+        for X, y in self:
+            yield X, y
+
+
+@dataclass
+class TorchImageLoader(TorchBaseLoader):
+
+    def __getitem__(self, idx):
+        file_path = self.files[idx]
+        image = read_image(file_path)
+        label = self.labels[idx]
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+        return image, label
+
+
+@dataclass
+class TorchTextLoader(TorchBaseLoader):
+
+    def __getitem__(self, idx):
+        file_path = self.files[idx]
+        with file_path.open("r") as f:
+            text = f.read()
+        label = self.labels[idx]
+        if self.transform:
+            text = self.transform(text)
+        if self.target_transform:
+            label = self.target_transform(label)
+        return text, label

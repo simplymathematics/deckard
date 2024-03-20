@@ -3,10 +3,10 @@
 # This script is used to generate the models for the sklearn example.
 
 # # Default model
-# echo "python -m deckard.layers.optimise ++model.trainer.nb_epoch:1,10,30,50,100" $@ "--multirun" 
-# python -m deckard.layers.optimise ++model.trainer.nb_epoch:1,10,30,50,100  $@ --multirun
+echo "python -m deckard.layers.optimise ++model.trainer.nb_epoch=1,10,30,50,100" $@ "--multirun" 
+python -m deckard.layers.optimise ++model.trainer.nb_epoch=1,10,30,50,100  $@ --multirun
 
-# # This line generates the model and adds the FeatureSqueezing preprocessing defence.
+# This line generates the model and adds the FeatureSqueezing preprocessing defence.
 python -m deckard.layers.optimise \
   ++model.art.preprocessor.name=art.defences.preprocessor.FeatureSqueezing \
   +model.art.preprocessor.params.bit_depth=4,8,16,32,64 \
@@ -24,7 +24,7 @@ python -m deckard.layers.optimise \
 # # # # Gaussian Noise (Output)
 python -m deckard.layers.optimise \
   ++model.art.postprocessor.name=art.defences.postprocessor.GaussianNoise \
-  ++model.art.postprocessor.params.scale=.01,.1,.3,.5,1 \W
+  ++model.art.postprocessor.params.scale=.01,.1,.3,.5,1 \
   ++hydra.sweeper.study_name=gauss-out $@ --multirun
 
 # # # # High Confidence

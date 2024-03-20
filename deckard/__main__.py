@@ -1,5 +1,4 @@
-""""Runs a submodule passed as an arg."""
-
+#!/usr/bin/env python3
 import argparse
 import subprocess
 import logging
@@ -44,9 +43,11 @@ def parse_and_repro(args, default_config="default.yaml", config_dir="conf"):
     if len(args) == 0:
         assert (
             save_params_file(
-                config_dir=Path(Path(), config_dir)
-                if not Path(config_dir).is_absolute()
-                else Path(config_dir),
+                config_dir=(
+                    Path(Path(), config_dir)
+                    if not Path(config_dir).is_absolute()
+                    else Path(config_dir)
+                ),
                 config_file=default_config,
             )
             is None

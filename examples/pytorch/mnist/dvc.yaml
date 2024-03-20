@@ -128,34 +128,30 @@ stages:
       - ${files.directory}/plots/${cat_plot[5].file}
       - ${files.directory}/plots/${cat_plot[6].file}
       - ${files.directory}/plots/${cat_plot[7].file}
-      - ${files.directory}/plots/${cat_plot[8].file}
       - ${files.directory}/plots/${line_plot[0].file}
       - ${files.directory}/plots/${line_plot[1].file}
       - ${files.directory}/plots/${line_plot[2].file}
       - ${files.directory}/plots/${line_plot[3].file}
       - ${files.directory}/plots/${scatter_plot[0].file}
     params:
-      - files.directory
-      - files.reports
       - conf/plots.yaml:
         - line_plot
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --target adv_accuracy --duration_col predict_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
-      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
-      - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_epochs_partial_effect.pdf
-      - ${files.directory}/plots/weibull_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_layers_partial_effect.pdf
+      - ${files.directory}/plots/weibull_aft.eps
+      - ${files.directory}/plots/weibull_epochs_partial_effect.eps
+      - ${files.directory}/plots/weibull_layers_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_aft.eps
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.eps
+      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_normal_layers_partial_effect.eps
     metrics:
       - ${files.directory}/plots/aft_comparison.csv
     outs:
@@ -168,6 +164,7 @@ stages:
         - log_logistic
         - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
+      cmd: mkdir -p ~/ml_afr/mnist/ && cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
       deps:
+        - ${files.directory}/plots/
         - ${files.directory}/plots/

@@ -12,7 +12,7 @@ vars:
   - conf/clean.yaml:fillna
 stages:
   train:
-    cmd: python -m deckard.layers.experiment train --config_file cifar10.yaml
+    cmd: python -m deckard.layers.experiment train --config_file cifar.yaml
     params:
       - data
       - model
@@ -29,7 +29,7 @@ stages:
     metrics:
       - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file cifar10.yaml
+    cmd: python -m deckard.layers.experiment attack --config_file cifar.yaml
     params:
       - data
       - model
@@ -55,7 +55,7 @@ stages:
   #     # - ResNet101
   #     # - ResNet152
   #   do: # This script configures eazch defence
-  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar10.yaml 
+  #     cmd: bash models.sh ++model.init.name=torch_example.${item} stage=train ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/train/${item}.db --config-name cifar.yaml 
   #     deps:
   #     - models.sh
   #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
@@ -72,7 +72,7 @@ stages:
       - ResNet101
       - ResNet152
     do:
-      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name cifar10.yaml
+      cmd: bash attacks.sh ++attack.attack_size=100 ++model.init.name=torch_example.${item} stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${files.reports}/attack/${item}.db --config-name cifar.yaml
       deps:
       - models.sh # This script configures each defence
       - attacks.sh # This script configures each attack
@@ -94,7 +94,7 @@ stages:
       - ${files.directory}/${files.reports}/${item}/ResNet34.db
       - ${files.directory}/${files.reports}/${item}/ResNet50.db
       - ${files.directory}/${files.reports}/${item}/ResNet101.db
-      # - ${files.directory}/${files.reports}/${item}/ResNet152.db
+      - ${files.directory}/${files.reports}/${item}/ResNet152.db
       outs:
       - ${files.directory}/${files.reports}/${item}.csv
   clean:
@@ -128,7 +128,6 @@ stages:
       - ${files.directory}/plots/${cat_plot[5].file}
       - ${files.directory}/plots/${cat_plot[6].file}
       - ${files.directory}/plots/${cat_plot[7].file}
-      - ${files.directory}/plots/${cat_plot[8].file}
       - ${files.directory}/plots/${line_plot[0].file}
       - ${files.directory}/plots/${line_plot[1].file}
       - ${files.directory}/plots/${line_plot[2].file}
@@ -142,20 +141,19 @@ stages:
         - scatter_plot
         - cat_plot
   afr:
-    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --duration_col adv_fit_time --dataset mnist --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
+    cmd: python -m deckard.layers.afr --dataset ${files.directory} --data_file ${files.directory}/${files.reports}/clean_attack.csv  --target adv_accuracy --duration_col predict_time --dataset cifar --config_file conf/afr.yaml --plots_folder ${files.directory}/plots/
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
-      - ${files.directory}/plots/${cat_plot[0].file}
     plots:
-      - ${files.directory}/plots/weibull_aft.pdf
-      - ${files.directory}/plots/weibull_epochs_partial_effect.pdf
-      - ${files.directory}/plots/weibull_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_aft.pdf
-      - ${files.directory}/plots/log_logistic_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_logistic_layers_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_aft.pdf
-      - ${files.directory}/plots/log_normal_epochs_partial_effect.pdf
-      - ${files.directory}/plots/log_normal_layers_partial_effect.pdf
+      - ${files.directory}/plots/weibull_aft.eps
+      - ${files.directory}/plots/weibull_epochs_partial_effect.eps
+      - ${files.directory}/plots/weibull_layers_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_aft.eps
+      - ${files.directory}/plots/log_logistic_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_logistic_layers_partial_effect.eps
+      - ${files.directory}/plots/log_normal_aft.eps
+      - ${files.directory}/plots/log_normal_epochs_partial_effect.eps
+      - ${files.directory}/plots/log_normal_layers_partial_effect.eps
     params:
       - files.directory
       - conf/afr.yaml:
@@ -164,6 +162,7 @@ stages:
         - log_logistic
         - log_normal
   copy_results:
-      cmd: cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
+      cmd: mkdir -p ~/ml_afr/cifar/ && cp -r ${files.directory}/plots/* ~/ml_afr/cifar/
       deps:
         - ${files.directory}/plots/
+  

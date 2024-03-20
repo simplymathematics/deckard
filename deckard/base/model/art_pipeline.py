@@ -7,6 +7,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
 from random import randint
+from art.utils import to_categorical
 from .keras_models import KerasInitializer, keras_dict  # noqa F401
 from .tensorflow_models import (  # noqa F401
     TensorflowV1Initializer,
@@ -113,8 +114,22 @@ class ArtInitializer:
             and not isinstance(model, tuple(sklearn_dict.values()))
         ):
             model = SklearnModelInitializer(
-                data=data, model=model, library=library, **kwargs
+                data=data,
+                model=model,
+                library=library,
+                **kwargs,
             )()
+            try:
+                model.fit(data[0], data[2])
+            except np.AxisError:
+                # Turn column vector, data[2], into a 2D array
+                nb_classes = len(np.unique(data[2])) if len(data[2]) > 2 else 2
+                data[2] = to_categorical(data[2], nb_classes=nb_classes)
+                data[3] = to_categorical(data[3], nb_classes=nb_classes)
+                model.fit(data[0], data[2])
+            if library in sklearn_dict and "art." not in str(type(model)):
+                est = sklearn_dict[library]
+                model = est(model, **kwargs)
         elif library in [
             "tf2",
             "tensorflowv2",
@@ -123,7 +138,10 @@ class ArtInitializer:
             "tfv2",
         ] and not isinstance(model, tuple(tensorflow_dict.values())):
             model = TensorflowV2Initializer(
-                data=data, model=model, library=library, **kwargs
+                data=data,
+                model=model,
+                library=library,
+                **kwargs,
             )()
         elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(
             model,

@@ -30,11 +30,40 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype=".pdf",
+    filetype=".eps",
     folder=".",
+    legend={},
     **kwargs,
 ):
     file = Path(folder, file).with_suffix(filetype)
+    aft = fit_aft(df, event_col, duration_col, mtype, kwargs)
+    columns = list(df.columns)
+    columns.remove(event_col)
+    columns.remove(duration_col)
+    ax = aft.plot(columns=columns)
+    labels = ax.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    values = ax.get_yticks().tolist()
+    # sort labels by values
+    labels = [x for _, x in sorted(zip(values, labels))]
+    values = [x for x, _ in sorted(zip(values, labels))]
+    ax.set_yticks(values)
+    ax.set_yticklabels(labels, fontsize=12)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(**legend)
+    ax.get_figure().tight_layout()
+    ax.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.show()
+    plt.gcf().clear()
+    return ax, aft
+
+
+def fit_aft(df, event_col, duration_col, mtype, kwargs):
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
     elif mtype == "log_normal":
@@ -51,22 +80,14 @@ def plot_aft(
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
     plt.gcf().clear()
-    aft.fit(df, duration_col=duration_col, event_col=event_col)
-    ax = aft.plot()
-    labels = ax.get_yticklabels()
-    labels = [label.get_text() for label in labels]
-    for k, v in replacement_dict.items():
-        labels = [label.replace(k, v) for label in labels]
-    ax.set_yticklabels(labels)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.get_figure().tight_layout()
-    ax.get_figure().savefig(file)
-    logger.info(f"Saved graph to {file}")
-    plt.show()
-    plt.gcf().clear()
-    return ax, aft
+    assert duration_col in df.columns, f"{duration_col} not in df.columns"
+    assert event_col in df.columns, f"{event_col} not in df.columns"
+    aft.fit(
+        df,
+        duration_col=duration_col,
+        event_col=event_col,
+    )
+    return aft
 
 
 def plot_partial_effects(
@@ -74,35 +95,40 @@ def plot_partial_effects(
     covariate_array,
     values_array,
     title=None,
-    file="partial_effects.pdf",
+    file="partial_effects.eps",
     xlabel="Covariate",
     ylabel="Failure rate",
     legend_kwargs={"loc": "upper left"},
     replacement_dict={},
     cmap="coolwarm",
     folder=".",
-    filetype=".pdf",
+    filetype=".eps",
     **kwargs,
 ):
     plt.gcf().clear()
     file = Path(folder, file).with_suffix(filetype)
-    pareto = aft.plot_partial_effects_on_outcome(
-        covariate_array, values_array, cmap=cmap, **kwargs
+    partial_effects = aft.plot_partial_effects_on_outcome(
+        covariate_array,
+        values_array,
+        cmap=cmap,
+        **kwargs,
     )
-    labels = pareto.get_yticklabels()
+    labels = partial_effects.get_yticklabels()
     labels = [label.get_text() for label in labels]
+    values = partial_effects.get_yticks().tolist()
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
-    pareto.set_yticklabels(labels)
-    pareto.legend(**legend_kwargs)
-    pareto.set_ylabel(ylabel)
-    pareto.set_xlabel(xlabel)
-    pareto.set_title(title)
-    pareto.get_figure().tight_layout()
-    pareto.get_figure().savefig(file)
+    partial_effects.set_yticks(values)
+    partial_effects.set_yticklabels(labels)
+    partial_effects.legend(**legend_kwargs)
+    partial_effects.set_ylabel(ylabel)
+    partial_effects.set_xlabel(xlabel)
+    partial_effects.set_title(title)
+    partial_effects.get_figure().tight_layout()
+    partial_effects.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
     plt.gcf().clear()
-    return pareto
+    return partial_effects
 
 
 def score_model(aft, train, test):
@@ -113,15 +139,20 @@ def score_model(aft, train, test):
     return scores
 
 
-def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
-    pd.set_option("display.float_format", lambda x: "%.3f" % x)
+def make_afr_table(
+    score_list,
+    aft_dict,
+    dataset,
+    X_train,
+    folder=".",
+    filename="aft_comparison",
+):
     assert len(score_list) == len(
         aft_dict,
     ), "Length of score list and aft dict must be equal"
     folder = Path(folder)
     aft_data = pd.DataFrame()
-    aft_data.index.name = "Model"
-    aft_data.index = aft_dict.keys()
+
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
@@ -131,20 +162,31 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     ]
     # aft_data["Train LL"] = [x["train_score"] for x in score_list]
     # aft_data["Test LL"] = [x["test_score"] for x in score_list]
-    aft_data["Mean $S(t;\\theta)$"] = [
+    aft_data[r"Mean $S(t;\theta)$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data["Median $S(t;\\theta)$"] = [
+    aft_data[r"Median $S(t;\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
-    aft_data.to_csv(folder / "aft_comparison.csv")
+    label = f"tab:{dataset}"
+    upper = dataset.upper()
+    aft_data.index.name = "Distribution"
+    aft_data.index = [str(k).replace("_", " ").capitalize() for k in aft_dict.keys()]
+    aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
-    aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
-        folder / "aft_comparison.tex",
+        buf=folder / f"{filename}.tex",
         float_format="%.3g",
-        label=f"tab:{dataset}",
-        caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+        na_rep="--",
+        label=label,
+        index_names=True,
+        caption=f"Comparison of AFR Models on the {upper} dataset.",
+        escape=False,
+    )
+    aft_data.to_csv(
+        Path(folder / f"{filename}.csv"),
+        index_label="Distribution",
+        na_rep="--",
     )
 
     return aft_data
@@ -153,7 +195,7 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
 def clean_data_for_aft(
     data,
     covariate_list,
-    target="adv_failure_rate",
+    target="adv_accuracy",
 ):
     subset = data.copy()
     assert (
@@ -162,17 +204,22 @@ def clean_data_for_aft(
     logger.info(f"Shape of dirty data: {subset.shape}")
     cleaned = pd.DataFrame()
     covariate_list.append(target)
+
     logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
         assert kwarg in subset.columns, f"{kwarg} not in data.columns"
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
+    cleaned.index = subset.index
+    # remove rows with -1e10 or 1e10, which are placeholders for run-time errors depending on the direction of optimization
     for col in cols:
         cleaned = cleaned[cleaned[col] != -1e10]
         cleaned = cleaned[cleaned[col] != 1e10]
-    cleaned.dropna(inplace=True, how="any", axis=0)
+    # Convert categorical variables to C-1 dummy variables where C is the number of categories
     cleaned = pd.get_dummies(cleaned)
+    # de-duplicate index
+    cleaned = cleaned.loc[~cleaned.index.duplicated(keep="first")]
     assert (
         target in cleaned
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
@@ -204,6 +251,8 @@ def split_data_for_aft(
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
     X_train = X_train.dropna(axis=0, how="any")
     X_test = X_test.dropna(axis=0, how="any")
+    X_train = pd.DataFrame(X_train, columns=cleaned.columns)
+    X_test = pd.DataFrame(X_test, columns=cleaned.columns)
     return X_train, X_test
 
 
@@ -226,7 +275,9 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
         score = score_model(aft, X_train, X_test)
         for partial_effect_dict in partial_effect_list:
             partial_effect_plot = plot_partial_effects(
-                aft=aft, **partial_effect_dict, folder=folder
+                aft=aft,
+                **partial_effect_dict,
+                folder=folder,
             )
             plots.append(partial_effect_plot)
     return aft, plots, score
@@ -239,6 +290,7 @@ def render_all_afr_plots(
     data,
     dataset,
     test_size=0.8,
+    filename="aft_comparison",
     folder=".",
 ):
     covariate_list = config.pop("covariates", [])
@@ -266,12 +318,38 @@ def render_all_afr_plots(
             folder=folder,
         )
     score_list = list(scores.values())
-    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
+    aft_data = make_afr_table(
+        score_list,
+        models,
+        dataset,
+        X_train,
+        folder=folder,
+        filename=filename,
+    )
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
     print("*" * 80)
     print(f"{aft_data}")
     print("*" * 80)
+
+
+def set_matplotlib_vars(matplotlib_dict=None):
+    if matplotlib_dict is None:
+        matplotlib_dict = {
+            "font": {
+                "family": "Times New Roman",
+                "weight": "bold",
+                "size": 22,
+            },
+        }
+    matplotlib.rc(**matplotlib_dict)
+
+
+def fillna(data, config):
+    fillna = config.pop("fillna", {})
+    for k, v in fillna.items():
+        assert k in data.columns, f"{k} not in data"
+        data[k] = data[k].fillna(v)
 
 
 if "__main__" == __name__:
@@ -282,46 +360,62 @@ if "__main__" == __name__:
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
+    afr_parser.add_argument("--summary_file", type=str, default="aft_comparison")
     args = afr_parser.parse_args()
     target = args.target
     duration_col = args.duration_col
     dataset = args.dataset
     logging.basicConfig(level=logging.INFO)
-    font = {
-        "family": "Times New Roman",
-        "weight": "bold",
-        "size": 22,
-    }
+    set_matplotlib_vars()
 
-    matplotlib.rc("font", **font)
-
+    # Filesystem stuff
     csv_file = args.data_file
     FOLDER = args.plots_folder
+    filename = (
+        Path(args.summary_file).as_posix() if args.summary_file is not None else None
+    )
+    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
+    assert Path(FOLDER).exists(), f"{FOLDER} does not exist."
+    assert Path(csv_file).exists(), f"{csv_file} does not exist."
+
+    # Reading compiled csv file
     data = pd.read_csv(csv_file, index_col=0)
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
-    fillna = config.pop("fillna", {})
-    for k, v in fillna.items():
-        assert k in data.columns, f"{k} not in data"
-        data[k] = data[k].fillna(v)
+    fillna(data, config)
+
+    # Strip whitespace from strings
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
+
+    # Check if covariates are specified
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
+
+    # Cannot fit AFT models with missing values
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
+    # Converting accuracy to unnormalized count, if needed
+    if "adv_failures" in covariates and "adv_failures" in data.columns:
+        logger.info("Adding adv_failures to data")
+        assert "adv_accuracy" in data.columns, "adv_accuracy not in data"
+        assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
+        data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+            :,
+            "attack.attack_size",
+        ]
+    if "ben_failures" in covariates:
+        logger.info("Adding ben_failures to data")
+        assert "accuracy" in data.columns, "accuracy not in data"
+        assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
+        data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+            :,
+            "data.sample.test_size",
+        ]
+    # Plotting AFT models
     render_all_afr_plots(
         config,
         duration_col,
@@ -330,4 +424,5 @@ if "__main__" == __name__:
         dataset,
         test_size=0.8,
         folder=FOLDER,
+        filename=filename,
     )

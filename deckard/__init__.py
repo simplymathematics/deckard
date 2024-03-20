@@ -46,7 +46,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "deckard": {"handlers": ["default"]},
+        "deckard": {"handlers": ["default"], "level": "INFO", "propagate": True},
         "tests": {"handlers": ["test"], "level": "DEBUG", "propagate": True},
     },
 }

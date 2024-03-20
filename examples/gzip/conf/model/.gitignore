@@ -1,0 +1,12 @@
+/best_gzip_knn_kdd_nsl.yaml
+/best_gzip_svc_kdd_nsl.yaml
+/best_gzip_logistic_kdd_nsl.yaml
+/best_gzip_knn_truthseeker.yaml
+/best_gzip_svc_truthseeker.yaml
+/best_gzip_logistic_truthseeker.yaml
+/best_gzip_knn_ddos.yaml
+/best_gzip_svc_ddos.yaml
+/best_gzip_logistic_ddos.yaml
+/best_gzip_knn_sms_spam.yaml
+/best_gzip_svc_sms_spam.yaml
+/best_gzip_logistic_sms_spam.yaml

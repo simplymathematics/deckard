@@ -29,7 +29,6 @@ hydra:
     params:
       ++data.sample.random_state: choice(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
       ++model.art.initialize.optimizer.lr: choice(10, 1, 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
-      ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

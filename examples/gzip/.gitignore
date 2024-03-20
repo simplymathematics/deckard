@@ -1,0 +1,11 @@
+output
+*.db
+kdd_nsl
+truthseeker
+ddos
+sms_spam
+/raw_data
+.dvc/config
+2-22/
+2-28/
+/params.yaml

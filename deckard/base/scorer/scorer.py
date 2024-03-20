@@ -156,7 +156,11 @@ class ScorerDict:
         return scores
 
     def __call__(
-        self, *args, score_dict_file=None, labels_file=None, predictions_file=None
+        self,
+        *args,
+        score_dict_file=None,
+        labels_file=None,
+        predictions_file=None,
     ):
         new_scores = {}
         args = list(args)

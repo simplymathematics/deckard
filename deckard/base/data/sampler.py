@@ -3,10 +3,12 @@ from dataclasses import dataclass, asdict
 from copy import deepcopy
 from typing import Union
 from sklearn.model_selection import train_test_split
+
 from ..utils import my_hash
 
-__all__ = ["SklearnDataSampler"]
 logger = logging.getLogger(__name__)
+
+__all__ = ["SklearnDataSampler"]
 
 
 @dataclass
@@ -27,9 +29,6 @@ class SklearnDataSampler:
         stratify=False,
         time_series=False,
     ):
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with params {asdict(self)}",
-        )
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
