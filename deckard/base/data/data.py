@@ -58,7 +58,6 @@ class Data:
         else:
             self.generate = None
         if sample is not None:
-            sample.pop("_target_", None)
             self.sample = (
                 sample
                 if isinstance(sample, (SklearnDataSampler))
