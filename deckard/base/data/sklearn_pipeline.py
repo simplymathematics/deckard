@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 class SklearnDataPipelineStage:
     name: str
     kwargs: dict = field(default_factory=dict)
-    _target_: str = "deckard.base.data.sklearn_pipeline.SklearnDataPipelineStage"
 
     def __init__(self, name, **kwargs):
         self.name = name
@@ -36,7 +35,6 @@ class SklearnDataPipelineStage:
 @dataclass
 class SklearnDataPipeline:
     pipeline: Union[dict, None] = field(default_factory=dict)
-    _target_: str = "deckard.base.data.sklearn_pipeline.SklearnDataPipeline"
 
     def __init__(self, **kwargs):
         pipe = kwargs.pop("pipeline", {})
