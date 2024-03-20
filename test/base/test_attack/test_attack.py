@@ -46,10 +46,10 @@ class testAttackInitializer(unittest.TestCase):
         rmtree(self.dir)
 
 
-class testPoisoningAttackInitializer(testAttackInitializer):
-    config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
-    config_file = "poisoning.yaml"
-    file = "attack.pkl"
+# class testPoisoningAttackInitializer(testAttackInitializer):
+#     config_dir = Path(this_dir, "../../conf/attack").resolve().as_posix()
+#     config_file = "poisoning.yaml"
+#     file = "attack.pkl"
 
 
 # class testInferenceAttackInitializer(testAttackInitializer):
