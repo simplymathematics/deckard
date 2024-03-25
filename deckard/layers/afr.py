@@ -64,7 +64,6 @@ def plot_aft(
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
-    plt.show()
     plt.gcf().clear()
     return ax, aft
 
@@ -109,7 +108,6 @@ def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
     scores = {"train_score": train_score, "test_score": test_score}
-    plt.show()
     return scores
 
 
@@ -131,20 +129,21 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     ]
     # aft_data["Train LL"] = [x["train_score"] for x in score_list]
     # aft_data["Test LL"] = [x["test_score"] for x in score_list]
-    aft_data["Mean $S(t;\\theta)$"] = [
+    aft_data[r"Mean $S(t;\theta)$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data["Median $S(t;\\theta)$"] = [
+    aft_data[r"Median $S(t;\theta)$"] = [
         x.predict_median(X_train).median() for x in aft_dict.values()
     ]
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
-    aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
-        folder / "aft_comparison.tex",
+        buf = Path(folder / "aft_comparison.tex").as_posix(),
         float_format="%.3g",
         label=f"tab:{dataset}",
+        na_rep="--",
         caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+        escape=False,
     )
 
     return aft_data
@@ -276,8 +275,8 @@ def render_all_afr_plots(
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
+    afr_parser.add_argument("--target", type=str, required=True, help="Target column for AFR model.")
+    afr_parser.add_argument("--duration_col", type=str, required=True, help="Duration column for AFR model.")
     afr_parser.add_argument("--dataset", type=str, default="mnist")
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
