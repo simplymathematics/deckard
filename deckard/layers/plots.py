@@ -10,6 +10,21 @@ logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
+def set_matplotlib_vars(matplotlib_dict=None):
+    if matplotlib_dict is None:
+        matplotlib_dict = {
+            "font": {
+                "family": "Times New Roman",
+                "weight": "bold",
+                "size": 22,
+            },
+        }
+    else:
+        assert isinstance(matplotlib_dict, dict), "matplotlib_dict must be a dictionary"
+    for k, v in matplotlib_dict.items():
+        plt.rc(k, **v)
+
+
 def cat_plot(
     data,
     x,
@@ -266,6 +281,9 @@ def scatter_plot(
         file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
+    assert hue in data.columns, f"{hue} not in data columns"
+    assert x in data.columns, f"{x} not in data columns"
+    assert y in data.columns, f"{y} not in data columns"
     graph = sns.scatterplot(
         data=data,
         x=x,
@@ -356,20 +374,16 @@ def main(args):
         logger.info(f"Creating folder {FOLDER}")
         FOLDER.mkdir(parents=True, exist_ok=True)
 
-    i = 0
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
-        i += 1
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
-        i += 1
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
-        i += 1
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
 

@@ -7,6 +7,7 @@ covariates:
   - data.sample.random_state
   - adv_fit_time
   - attack.init.eps
+  - adv_failures
 fillna:
   model.trainer.nb_epoch: 20
   model.trainer.batch_size: 1024
@@ -35,8 +36,8 @@ weibull:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -65,8 +66,8 @@ cox:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -95,8 +96,8 @@ log_logistic:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -125,8 +126,8 @@ log_normal:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]

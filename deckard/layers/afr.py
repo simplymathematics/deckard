@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-
+import logging
+import yaml
+import argparse
+import seaborn as sns
 import matplotlib.pyplot as plt
-
 from sklearn.model_selection import train_test_split
 from lifelines import (
     WeibullAFTFitter,
@@ -12,12 +14,12 @@ from lifelines import (
     CoxPHFitter,
 )
 from .clean_data import drop_frames_without_results
-import matplotlib
-import logging
-import yaml
-import argparse
+from .plots import set_matplotlib_vars
+
 
 logger = logging.getLogger(__name__)
+
+sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
 def plot_aft(
@@ -30,12 +32,11 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype=".eps",
     folder=".",
     legend={},
     **kwargs,
 ):
-    file = Path(folder, file).with_suffix(filetype)
+    file = Path(folder, file)
     aft = fit_aft(df, event_col, duration_col, mtype, kwargs)
     columns = list(df.columns)
     columns.remove(event_col)
@@ -58,7 +59,6 @@ def plot_aft(
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
-    plt.show()
     plt.gcf().clear()
     return ax, aft
 
@@ -102,11 +102,10 @@ def plot_partial_effects(
     replacement_dict={},
     cmap="coolwarm",
     folder=".",
-    filetype=".eps",
     **kwargs,
 ):
     plt.gcf().clear()
-    file = Path(folder, file).with_suffix(filetype)
+    file = Path(folder, file)
     partial_effects = aft.plot_partial_effects_on_outcome(
         covariate_array,
         values_array,
@@ -135,7 +134,6 @@ def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
     scores = {"train_score": train_score, "test_score": test_score}
-    plt.show()
     return scores
 
 
@@ -175,7 +173,7 @@ def make_afr_table(
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf=folder / f"{filename}.tex",
+        buf=Path(folder / "aft_comparison.tex").as_posix(),
         float_format="%.3g",
         na_rep="--",
         label=label,
@@ -203,16 +201,13 @@ def clean_data_for_aft(
     ), f"Target {target} not in dataframe with columns {subset.columns}"
     logger.info(f"Shape of dirty data: {subset.shape}")
     cleaned = pd.DataFrame()
-    covariate_list.append(target)
-
+    if target not in covariate_list:
+        covariate_list.append(target)
     logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
         assert kwarg in subset.columns, f"{kwarg} not in data.columns"
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
-    cols = cleaned.columns
-    cleaned = pd.DataFrame(subset, columns=cols)
-    cleaned.index = subset.index
-    # remove rows with -1e10 or 1e10, which are placeholders for run-time errors depending on the direction of optimization
+    cols = list(cleaned.columns)
     for col in cols:
         cleaned = cleaned[cleaned[col] != -1e10]
         cleaned = cleaned[cleaned[col] != 1e10]
@@ -249,8 +244,8 @@ def split_data_for_aft(
     assert (
         duration_col in cleaned
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
-    X_train = X_train.dropna(axis=0, how="any")
-    X_test = X_test.dropna(axis=0, how="any")
+    # X_train = X_train.dropna(axis=0, how="any")
+    # X_test = X_test.dropna(axis=0, how="any")
     X_train = pd.DataFrame(X_train, columns=cleaned.columns)
     X_test = pd.DataFrame(X_test, columns=cleaned.columns)
     return X_train, X_test
@@ -333,18 +328,6 @@ def render_all_afr_plots(
     print("*" * 80)
 
 
-def set_matplotlib_vars(matplotlib_dict=None):
-    if matplotlib_dict is None:
-        matplotlib_dict = {
-            "font": {
-                "family": "Times New Roman",
-                "weight": "bold",
-                "size": 22,
-            },
-        }
-    matplotlib.rc(**matplotlib_dict)
-
-
 def fillna(data, config):
     fillna = config.pop("fillna", {})
     for k, v in fillna.items():
@@ -354,9 +337,19 @@ def fillna(data, config):
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
-    afr_parser.add_argument("--dataset", type=str, default="mnist")
+    afr_parser.add_argument(
+        "--target",
+        type=str,
+        help="Failure count column",
+        required=True,
+    )
+    afr_parser.add_argument(
+        "--duration_col",
+        type=str,
+        help="Duration column",
+        required=True,
+    )
+    afr_parser.add_argument("--dataset", type=str, help="Dataset name", required=True)
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
@@ -394,12 +387,8 @@ if "__main__" == __name__:
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
 
-    # Cannot fit AFT models with missing values
-    logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data = drop_frames_without_results(data, covariates)
-    logger.info(f"Shape of data before data before dropping na: {data.shape}")
     # Converting accuracy to unnormalized count, if needed
-    if "adv_failures" in covariates and "adv_failures" in data.columns:
+    if "adv_failures" in covariates:
         logger.info("Adding adv_failures to data")
         assert "adv_accuracy" in data.columns, "adv_accuracy not in data"
         assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
@@ -415,6 +404,10 @@ if "__main__" == __name__:
             :,
             "data.sample.test_size",
         ]
+    # Cannot fit AFT models with missing values
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
+    data = drop_frames_without_results(data, covariates)
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
     # Plotting AFT models
     render_all_afr_plots(
         config,
