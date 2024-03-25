@@ -338,10 +338,16 @@ def fillna(data, config):
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
     afr_parser.add_argument(
-        "--target", type=str, help="Failure count column", required=True
+        "--target",
+        type=str,
+        help="Failure count column",
+        required=True,
     )
     afr_parser.add_argument(
-        "--duration_col", type=str, help="Duration column", required=True
+        "--duration_col",
+        type=str,
+        help="Duration column",
+        required=True,
     )
     afr_parser.add_argument("--dataset", type=str, help="Dataset name", required=True)
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
