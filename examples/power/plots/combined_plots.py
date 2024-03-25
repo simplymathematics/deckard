@@ -2,12 +2,15 @@ import pandas as pd
 from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
+from deckard.layers.plots import set_matplotlib_vars
+
+set_matplotlib_vars()
 
 normal_dir = "data"
 datasets = ["mnist", "cifar", "cifar100"]
 extra_data_dir = "bit_depth"
 
-
+# 
 big_df = pd.DataFrame()
 for data in datasets:
     df = pd.read_csv(
@@ -16,7 +19,6 @@ for data in datasets:
         low_memory=False,
     )
     df["dataset"] = data
-    print(f"Shape of {data} is {df.shape}")
     big_df = pd.concat([big_df, df], axis=0)
     if Path(normal_dir, extra_data_dir, data, "power.csv").exists():
         extra_df = pd.read_csv(
@@ -25,7 +27,6 @@ for data in datasets:
             low_memory=False,
         )
         extra_df["dataset"] = data
-        print(f"Shape of {extra_data_dir}/{data} is {extra_df.shape}")
         big_df = pd.concat([big_df, extra_df], axis=0)
 
 
@@ -44,9 +45,6 @@ big_df["adv_fit_time"] = big_df["adv_fit_time"] / big_df["adv_pred_samples"]
 big_df["train_power"] = big_df["train_power"] / big_df["ben_train_samples"]
 big_df["predict_power"] = big_df["predict_power"] / big_df["ben_pred_samples"]
 big_df["adv_fit_power"] = big_df["adv_fit_power"] / big_df["adv_pred_samples"]
-
-
-plt.hist(big_df["predict_time"])
 
 
 memory_bandwith = {
@@ -102,15 +100,11 @@ big_df.loc[:, "memory_per_batch"] = (
 big_df["Device"] = big_df["device_id"].str.replace("-", " ").str.title()
 big_df = big_df.reset_index(drop=True)
 Path("data/combined").mkdir(parents=True, exist_ok=True)
+Path("plots/combined").mkdir(parents=True, exist_ok=True)
 big_df.to_csv("data/combined/combined.csv")
 big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False)
 
-
-# acc_melt = pd.melt(big_df, id_vars=['name', 'device_id', 'dataset'], value_vars=['accuracy', 'adv_accuracy'], var_name='accuracy_type', value_name='accuracy_melt')
-# pow_melt = pd.melt(big_df, id_vars=['name'], value_vars=['predict_power', 'train_power', 'adv_fit_power', 'adv_predict_power'], var_name='power_type', value_name='power_melt')
-# time_melt = pd.melt(big_df, id_vars=['name'], value_vars=['predict_time', 'train_time', 'adv_fit_time', 'adv_predict_time'], var_name='time_type', value_name='time_melt')
-
-
+# Accuracy Plot
 fig, ax = plt.subplots(1, 2, figsize=(8, 5))
 ben_acc = sns.boxenplot(
     data=big_df,
@@ -118,11 +112,11 @@ ben_acc = sns.boxenplot(
     y="accuracy",
     hue="Device",
     ax=ax[0],
-    legend=False,
 )
-ben_acc.set_title("Average Accuracy on Benign Samples")
+ben_acc.set_title("")
 ben_acc.set_ylabel("Ben. Accuracy")
 ben_acc.set_xlabel("Dataset")
+ben_acc.legend().remove()
 adv_acc = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -130,14 +124,16 @@ adv_acc = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-adv_acc.set_title("Average Accuracy on Adversarial Samples")
+adv_acc.set_title("")
 adv_acc.set_ylabel("Adv. Accuracy")
 adv_acc.set_xlabel("Dataset")
-
-Path("plots/combined").mkdir(parents=True, exist_ok=True)
+adv_acc.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
+for _, ax in enumerate(fig.axes):
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+fig.tight_layout()
 fig.savefig("plots/combined/acc.pdf")
 
-
+# Time Plot
 fig, ax = plt.subplots(1, 3, figsize=(16, 5))
 train_time = sns.boxenplot(
     data=big_df,
@@ -146,9 +142,10 @@ train_time = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_time.set_title("Average Training Time per Sample")
+train_time.set_title("")
 train_time.set_ylabel("$t_{t}$ (seconds)")
 train_time.set_xlabel("Dataset")
+train_time.legend().remove()
 predict_time = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -156,9 +153,10 @@ predict_time = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-predict_time.set_title("Average Inference Time per Sample")
+predict_time.set_title("")
 predict_time.set_ylabel("$t_{i}$ (seconds)")
 predict_time.set_xlabel("Dataset")
+predict_time.legend().remove()
 adv_fit_time = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -166,12 +164,14 @@ adv_fit_time = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_time.set_title("Average Attack Time per Sample")
+adv_fit_time.set_title("")
 adv_fit_time.set_ylabel("$t_{a}$ (seconds)")
 adv_fit_time.set_xlabel("Dataset")
+adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
+fig.tight_layout()
 fig.savefig("plots/combined/time.pdf")
 
-
+# Power Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
 train_time = sns.boxenplot(
     data=big_df,
@@ -180,9 +180,10 @@ train_time = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_time.set_title("Average Training Power per Sample")
+train_time.set_title("")
 train_time.set_ylabel("$P_{t}$ (Watts)")
 train_time.set_xlabel("Dataset")
+train_time.legend().remove()
 predict_time = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -190,9 +191,10 @@ predict_time = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-predict_time.set_title("Average Inference Power per Sample")
+predict_time.set_title("")
 predict_time.set_ylabel("$P_{i}$ (Watts)")
 predict_time.set_xlabel("Dataset")
+predict_time.legend().remove()
 adv_fit_time = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -200,12 +202,14 @@ adv_fit_time = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_time.set_title("Average Attack Power per Sample")
+adv_fit_time.set_title("")
 adv_fit_time.set_ylabel("$P_{a}$ (Watts)")
 adv_fit_time.set_xlabel("Dataset")
+adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
+fig.tight_layout()
 fig.savefig("plots/combined/power.pdf")
 
-
+# Cost Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
 train_cost = sns.boxenplot(
     data=big_df,
@@ -214,20 +218,21 @@ train_cost = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_cost.set_title("Average Training Cost per Sample")
+train_cost.set_title("")
 train_cost.set_ylabel("$C_{t}$ (USD)")
 train_cost.set_xlabel("Dataset")
+train_cost.legend().remove()
 predict_cost = sns.boxenplot(
     data=big_df,
     x="dataset",
     y="predict_cost",
     hue="Device",
     ax=ax[1],
-    legend=False,
 )
-predict_cost.set_title("Average Inference Cost per Sample")
+predict_cost.set_title("")
 predict_cost.set_ylabel("$C_{i}$ (USD)")
 predict_cost.set_xlabel("Dataset")
+predict_cost.legend().remove()
 adv_fit_cost = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -235,7 +240,9 @@ adv_fit_cost = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_cost.set_title("Average Attack Cost per Sample")
+adv_fit_cost.set_title("")
 adv_fit_cost.set_ylabel("$C_{a}$ (USD)")
 adv_fit_cost.set_xlabel("Dataset")
+adv_fit_cost.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
+fig.tight_layout()
 fig.savefig("plots/combined/cost.pdf")

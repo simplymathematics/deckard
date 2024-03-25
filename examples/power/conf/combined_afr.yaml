@@ -7,11 +7,7 @@ covariates:
   - attack.init.eps
   - data.sample.random_state
   - adv_fit_time
-  # - model.art.preprocessor.bit_depth
-  # - train_power
-  # - predict_power
-  # - n_pixels
-  # - n_channels
+  - adv_failures
 fillna:
   model.trainer.nb_epoch: 20
   model.trainer.batch_size: 1024
@@ -40,8 +36,8 @@ weibull:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50, 100]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -50,8 +46,8 @@ weibull:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,100, 1000]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
@@ -60,8 +56,8 @@ weibull:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -70,8 +66,8 @@ weibull:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -80,8 +76,8 @@ weibull:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -110,8 +106,8 @@ cox:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -120,8 +116,8 @@ cox:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
@@ -130,8 +126,8 @@ cox:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -140,8 +136,8 @@ cox:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -150,8 +146,8 @@ cox:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Cox AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -180,8 +176,8 @@ log_logistic:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -190,8 +186,8 @@ log_logistic:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
@@ -200,8 +196,8 @@ log_logistic:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -210,8 +206,8 @@ log_logistic:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -220,8 +216,8 @@ log_logistic:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -250,8 +246,8 @@ log_normal:
       "covariate_array": "model.trainer.nb_epoch"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Epochs",
           "labels": ["1", "10", "25", "50"]
@@ -260,8 +256,8 @@ log_normal:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1,10,25,50]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
@@ -270,8 +266,8 @@ log_normal:
       "covariate_array": "model.trainer.batch_size"
       "values_array": [1, 10, 100, 1000]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$T_t$",
           "labels": ["1", "10", "100", "1000"]
@@ -280,8 +276,8 @@ log_normal:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$t_i$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
@@ -290,8 +286,8 @@ log_normal:
       "covariate_array" : predict_proba_time
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "Expectation of $S(t)$"
-      "xlabel": "Time $T$ (seconds)"
+      "ylabel": "$\\mathbb{P}~(T>t)$"
+      "xlabel": "Time $t$ (seconds)"
       "legend_kwargs": {
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']

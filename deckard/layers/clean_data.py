@@ -626,7 +626,6 @@ def main(args):
 
     if "adv_accuracy" in results.columns:
         results = calculate_failure_rate(results)
-
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
         results,
