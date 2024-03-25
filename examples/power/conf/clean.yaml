@@ -1,12 +1,18 @@
 attacks:
   FastGradientMethod: FGM
+  ProjectedGradientDescent: PGD
+  HopSkipJump: HSJ
+  DeepFool: Deep
 defences:
   Control: Control
   FeatureSqueezing: FSQ
-  nb_epoch: Epochs
+  Epochs: Epochs
   model_layers: Control
 params:
   FGM: attack.init.eps
+  PGD: attack.init.eps
+  HSJ: attack.init.eps
+  DeepFool: attack.init.eps
   FSQ: model.art.preprocessor.bit_depth
   Control: model_layers
   Epochs: model.trainer.nb_epoch
