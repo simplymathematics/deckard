@@ -57,10 +57,6 @@ stages:
           cache : false
       - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}:
           cache : false
-      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}:
-      #     cache : false
-      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}:
-      #     cache : false
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}:  # logit outputs for our model
           cache : false 
     deps:
@@ -76,14 +72,3 @@ stages:
        # This outputs a database file for each model
       - ${files.directory}/${data.generate.name}.db:
           cache: false
-  plot_all_data_and_hardware:
-    deps:
-     - plots/dvc.yaml
-     - conf/afr.yaml
-     - conf/clean.yaml
-     - conf/combined_afr.yaml
-     - conf/plots.yaml
-    cmd: cd plots && dvc repro
-    outs:
-      - plots/data
-      - plots/plots

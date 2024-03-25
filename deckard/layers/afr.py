@@ -172,7 +172,7 @@ def make_afr_table(
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf=folder / f"{filename}.tex",
+        buf = Path(folder / "aft_comparison.tex").as_posix(),
         float_format="%.3g",
         na_rep="--",
         label=label,

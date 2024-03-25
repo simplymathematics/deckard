@@ -6,6 +6,9 @@ from deckard.layers.plots import set_matplotlib_vars
 
 set_matplotlib_vars()
 
+
+sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
+
 normal_dir = "data"
 datasets = ["mnist", "cifar", "cifar100"]
 extra_data_dir = "bit_depth"
@@ -77,9 +80,9 @@ batch_size = "model.trainer.batch_size"
 bit_depth = "model.art.preprocessor.bit_depth"
 resolution = "n_pixels"
 
-
+# Add Metadata
 for device in big_df.device_id.unique():
-    big_df.loc[big_df.device_id == device, "peak_memory_bandwith"] = float(
+    big_df.loc[big_df.device_id == device, "peak_memory_bandwidth"] = float(
         memory_bandwith[device],
     )
     big_df.loc[big_df.device_id == device, "cost"] = float(cost[device])
@@ -93,7 +96,6 @@ for dataset in big_df.dataset.unique():
     big_df.loc[big_df.dataset == dataset, "n_channels"] = int(dataset_channels[dataset])
     big_df.loc[big_df.dataset == dataset, "n_classes"] = int(dataset_classes[dataset])
 
-big_df["peak_memory_bandwith"] = big_df["peak_memory_bandwith"].astype(float)
 big_df.loc[:, "memory_per_batch"] = (
     big_df[batch_size] * big_df[resolution] * big_df[resolution] * big_df[bit_depth] / 8
 ).values

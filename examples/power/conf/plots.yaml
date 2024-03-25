@@ -26,8 +26,9 @@ line_plot:
   y_scale: 
   ylabel: $Ben. Accuracy$
   hue_order:
-  - nvidia-tesla-v100
-  - nvidia-tesla-p100
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
+  - "Nvidia L4"
 scatter_plot:
 - x: train_time_per_sample
   y: adv_failure_rate
@@ -42,8 +43,8 @@ scatter_plot:
     title: Hardware Device
     bbox_to_anchor: [1.05, 1]
   hue_order:
-  - nvidia-tesla-v100
-  - nvidia-tesla-p100
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
 - x: train_time_per_sample
   y: failure_rate
   hue: device_id
@@ -57,5 +58,6 @@ scatter_plot:
     title: Hardware Device
     bbox_to_anchor: [1.05, 1]
   hue_order:
-  - nvidia-tesla-v100
-  - nvidia-tesla-p100
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
+  - 

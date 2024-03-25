@@ -279,6 +279,9 @@ def scatter_plot(
         file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
+    assert hue in data.columns, f"{hue} not in data columns"
+    assert x in data.columns, f"{x} not in data columns"
+    assert y in data.columns, f"{y} not in data columns"
     graph = sns.scatterplot(
         data=data,
         x=x,
@@ -369,20 +372,16 @@ def main(args):
         logger.info(f"Creating folder {FOLDER}")
         FOLDER.mkdir(parents=True, exist_ok=True)
 
-    i = 0
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
-        i += 1
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
-        i += 1
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
-        i += 1
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
 
