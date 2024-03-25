@@ -15,7 +15,6 @@ install_requires = [
     "numba",
     "pillow",
     "pandas",
-    "pre-commit",
     "PyYAML",
     "pytest",
     "validators",
@@ -28,6 +27,7 @@ install_requires = [
     "lifelines",
     "seaborn",
     "jinja2",
+    "paretoset",
 ]
 test_requires = [
     "pytest",
@@ -35,6 +35,7 @@ test_requires = [
     "torch",
     "torchvision",
     "tensorflow",
+    "pre-commit",
 ]
 test_requires += install_requires
 docs_require = [
