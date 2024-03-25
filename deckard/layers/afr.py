@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
+
 def plot_aft(
     df,
     file,
@@ -172,7 +173,7 @@ def make_afr_table(
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf = Path(folder / "aft_comparison.tex").as_posix(),
+        buf=Path(folder / "aft_comparison.tex").as_posix(),
         float_format="%.3g",
         na_rep="--",
         label=label,
@@ -327,9 +328,6 @@ def render_all_afr_plots(
     print("*" * 80)
 
 
-
-
-
 def fillna(data, config):
     fillna = config.pop("fillna", {})
     for k, v in fillna.items():
@@ -339,8 +337,12 @@ def fillna(data, config):
 
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, help="Failure count column", required=True)
-    afr_parser.add_argument("--duration_col", type=str, help="Duration column", required=True)
+    afr_parser.add_argument(
+        "--target", type=str, help="Failure count column", required=True
+    )
+    afr_parser.add_argument(
+        "--duration_col", type=str, help="Duration column", required=True
+    )
     afr_parser.add_argument("--dataset", type=str, help="Dataset name", required=True)
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
@@ -379,25 +381,24 @@ if "__main__" == __name__:
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
 
-   
     # Converting accuracy to unnormalized count, if needed
-    if 'adv_failures' in covariates:
+    if "adv_failures" in covariates:
         logger.info("Adding adv_failures to data")
         assert "adv_accuracy" in data.columns, "adv_accuracy not in data"
         assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
-        data.loc[:, 'adv_failures'] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+        data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
             :,
             "attack.attack_size",
         ]
-    if 'ben_failures' in covariates:
+    if "ben_failures" in covariates:
         logger.info("Adding ben_failures to data")
         assert "accuracy" in data.columns, "accuracy not in data"
         assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
-        data.loc[:, 'ben_failures'] = (1 - data.loc[:, "accuracy"]) * data.loc[
+        data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
             :,
             "data.sample.test_size",
         ]
-     # Cannot fit AFT models with missing values
+    # Cannot fit AFT models with missing values
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")

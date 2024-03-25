@@ -13,7 +13,7 @@ normal_dir = "data"
 datasets = ["mnist", "cifar", "cifar100"]
 extra_data_dir = "bit_depth"
 
-# 
+#
 big_df = pd.DataFrame()
 for data in datasets:
     df = pd.read_csv(

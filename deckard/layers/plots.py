@@ -9,6 +9,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
+
 def set_matplotlib_vars(matplotlib_dict=None):
     if matplotlib_dict is None:
         matplotlib_dict = {
@@ -20,8 +21,9 @@ def set_matplotlib_vars(matplotlib_dict=None):
         }
     else:
         assert isinstance(matplotlib_dict, dict), "matplotlib_dict must be a dictionary"
-    for k,v in matplotlib_dict.items():
+    for k, v in matplotlib_dict.items():
         plt.rc(k, **v)
+
 
 def cat_plot(
     data,
