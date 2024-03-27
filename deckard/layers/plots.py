@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import yaml
-from pathlib import Path
+from math import isnan
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -128,8 +128,7 @@ def cat_plot(
     logger.info(f"Saved graph to {folder / file}")
 
 
-def line_plot(
-    data,
+def line_plot(data,
     x,
     y,
     xlabel,
@@ -217,7 +216,7 @@ def line_plot(
     return graph
 
 
-def scatter_plot(
+def scatter_plot( 
     data,
     x,
     y,
@@ -363,6 +362,7 @@ def main(args):
     logger.info(f"Creating folder {FOLDER}")
     FOLDER.mkdir(parents=True, exist_ok=True)
     logger.info(f"Saving data to {FOLDER }")
+    logger.info(f"Saving data to {FOLDER }")
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")
@@ -382,6 +382,7 @@ def main(args):
     for dict_ in line_plot_list:
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
+    scatter_plot_list = big_dict.get("scatter_plot", [])
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)

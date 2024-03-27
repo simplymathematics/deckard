@@ -49,6 +49,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     path_gen.sort()
     path_gen = list(set(path_gen))
     path_gen.sort()
+    path_gen = list(set(path_gen))
+    path_gen.sort()
     folder_gen = map(lambda x: x.parent, path_gen)
     folder_gen = set(folder_gen)
     results = {}
@@ -57,6 +59,8 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     for folder in tqdm(folder_gen, desc="Adding other files to results"):
         results = add_file(folder, path_gen, results)
     df = pd.DataFrame(results).T
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     df.columns = df.columns.str.strip()
     return df
@@ -167,7 +171,6 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)

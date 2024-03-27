@@ -5,9 +5,11 @@ cat_plot:
   set:
     yscale: linear
   titles: Adv. Accuracy vs Defence Type
+  titles: Adv. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: adv_accuracy
+  ylabels: Adv. Accuracy
   ylabels: Adv. Accuracy
   rotation : 90
   hue_order:
@@ -20,9 +22,11 @@ cat_plot:
   hue: model_name
   kind: boxen
   titles: Ben. Accuracy vs Defence Type
+  titles: Ben. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: accuracy
+  ylabels: Ben. Accuracy
   ylabels: Ben. Accuracy
   rotation : 90
   hue_order:
@@ -104,9 +108,11 @@ cat_plot:
   kind: boxen
   legend_title: Model Name
   titles: Adv. Accuracy vs Attack Type
+  titles: Adv. Accuracy vs Attack Type
   x: atk_gen
   xlabels: Attack Type
   y: adv_accuracy
+  ylabels: Adv. Accuracy
   ylabels: Adv. Accuracy
   rotation : 90
   hue_order:
@@ -198,11 +204,13 @@ line_plot:
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}
   title: Adv. Accuracy vs Attack Strength
+  title: Adv. Accuracy vs Attack Strength
   x: atk_value
   x_scale: linear 
   xlabel: Attack Control Parameter
   y: adv_accuracy
   y_scale: 
+  ylabel: Adv. Accuracy
   ylabel: Adv. Accuracy
   hue_order:
   - FGM

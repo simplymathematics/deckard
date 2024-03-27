@@ -115,7 +115,26 @@ stages:
           - defences
           - params
           - fillna
+  clean:
+    foreach: # iterates through each stage
+      # - train 
+      - attack
+    do:
+      cmd: python -m deckard.layers.clean_data -i ${files.directory}/${files.reports}/${item}.csv -o ${files.directory}/${files.reports}/clean_${item}.csv -c conf/clean.yaml
+      deps:
+      - ${files.directory}/${files.reports}/${item}.csv
+      outs:
+      - ${files.directory}/${files.reports}/clean_${item}.csv
+      params:
+        - files.directory
+        - files.reports
+        - conf/clean.yaml:
+          - attacks
+          - defences
+          - params
+          - fillna
   plot:
+    cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/clean_attack.csv -c conf/plots.yaml
     cmd : python -m deckard.layers.plots --path ${files.directory}/plots/ --file ${files.directory}/${files.reports}/clean_attack.csv -c conf/plots.yaml
     deps:
       - ${files.directory}/${files.reports}/clean_attack.csv
@@ -163,8 +182,14 @@ stages:
         - weibull
         - log_logistic
         - log_normal
+    params:
+      - files.directory
+      - conf/afr.yaml:
+        - covariates
+        - weibull
+        - log_logistic
+        - log_normal
   copy_results:
       cmd: mkdir -p ~/ml_afr/mnist/ && cp -r ${files.directory}/plots/* ~/ml_afr/mnist/
       deps:
-        - ${files.directory}/plots/
         - ${files.directory}/plots/
