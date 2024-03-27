@@ -128,7 +128,8 @@ def cat_plot(
     logger.info(f"Saved graph to {folder / file}")
 
 
-def line_plot(data,
+def line_plot(
+    data,
     x,
     y,
     xlabel,
@@ -216,7 +217,7 @@ def line_plot(data,
     return graph
 
 
-def scatter_plot( 
+def scatter_plot(
     data,
     x,
     y,

@@ -171,6 +171,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_file", type=str, default="results.csv")
     parser.add_argument("--report_folder", type=str, default="reports", required=True)
