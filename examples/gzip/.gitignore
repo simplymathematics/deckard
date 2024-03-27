@@ -4,4 +4,8 @@
 3-7/*
 gzip/*
 ddos/*
+kdd_nsl/*
+sm
+sms_spam/*
+truthseeker/*
 conf/*/best_*.yaml
