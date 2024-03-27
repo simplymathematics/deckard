@@ -1,0 +1,9 @@
+_target_: deckard.base.data.Data
+name: raw_data/sms-spam_undersampled_1450.csv
+target: 'label'
+sample:
+    random_state : 0
+    train_size : 100
+    test_size : 100
+    stratify: True
+    shuffle : True

@@ -10,6 +10,21 @@ logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
+def set_matplotlib_vars(matplotlib_dict=None):
+    if matplotlib_dict is None:
+        matplotlib_dict = {
+            "font": {
+                "family": "Times New Roman",
+                "weight": "bold",
+                "size": 22,
+            },
+        }
+    else:
+        assert isinstance(matplotlib_dict, dict), "matplotlib_dict must be a dictionary"
+    for k, v in matplotlib_dict.items():
+        plt.rc(k, **v)
+
+
 def cat_plot(
     data,
     x,
@@ -73,24 +88,38 @@ def cat_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    logger.debug(
-        f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
-    )
-    graph = sns.catplot(
-        data=data, x=x, y=y, hue=hue, kind=kind, hue_order=hue_order, **kwargs
-    )
+    if hue is not None:
+        data = data.sort_values(by=[hue, x, y])
+        logger.debug(
+            f"Data sorted by x:{x}, y:{y}, hue:{hue}, kind:{kind}, hue_order:{hue_order}, and kwargs:{kwargs}.",
+        )
+        graph = sns.catplot(
+            data=data,
+            x=x,
+            y=y,
+            hue=hue,
+            kind=kind,
+            hue_order=hue_order,
+            **kwargs,
+        )
+    else:
+        data = data.sort_values(by=[x, y])
+        logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
+        graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
     graph.set_xlabels(xlabels)
     graph.set_ylabels(ylabels)
     graph.set_titles(titles)
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:
-        graph.legend.remove()
+        if graph.legend is not None:
+            graph.legend.remove()
+        else:
+            pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     graph.tight_layout()
@@ -103,7 +132,6 @@ def line_plot(
     data,
     x,
     y,
-    hue,
     xlabel,
     ylabel,
     title,
@@ -112,7 +140,6 @@ def line_plot(
     y_scale=None,
     x_scale=None,
     legend={},
-    hue_order=None,
     filetype=".eps",
     **kwargs,
 ):
@@ -159,16 +186,26 @@ def line_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
-    data = data.sort_values(by=[hue, x, y])
-    graph = sns.lineplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order, **kwargs)
+    if "hue" in kwargs and kwargs.get("hue") in data.columns:
+        hue = kwargs.get("hue")
+        data = data.sort_values(by=[hue, x, y])
+    else:
+        data.sort_values(by=[x, y])
+    xlim = kwargs.pop("xlim", None)
+    ylim = kwargs.pop("ylim", None)
+    graph = sns.lineplot(data=data, x=x, y=y, **kwargs)
     graph.legend(**legend)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.set_title(title)
+    if xlim is not None:
+        graph.set_xlim(xlim)
+    if ylim is not None:
+        graph.set_ylim(ylim)
     if y_scale is not None:
         graph.set_yscale(y_scale)
     if x_scale is not None:
@@ -239,11 +276,14 @@ def scatter_plot(
     plt.gcf().clear()
     suffix = Path(file).suffix
     if suffix is not None:
-      file = Path(file)
+        file = Path(file)
     else:
-      file = Path(file).with_suffix(filetype)
+        file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = data.sort_values(by=[hue, x, y])
+    assert hue in data.columns, f"{hue} not in data columns"
+    assert x in data.columns, f"{x} not in data columns"
+    assert y in data.columns, f"{y} not in data columns"
     graph = sns.scatterplot(
         data=data,
         x=x,
@@ -268,42 +308,43 @@ def scatter_plot(
     return graph
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        help="Path to the plot folder",
-        required=True,
-    )
-    parser.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        help="Data file to read from",
-        required=True,
-    )
-    parser.add_argument(
-        "-t",
-        "--plotfiletype",
-        type=str,
-        help="Filetype of the plots",
-        default=".eps",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbosity",
-        default="INFO",
-        help="Increase output verbosity",
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        help="Path to the config file",
-        default="conf/plots.yaml",
-    )
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-p",
+    "--path",
+    type=str,
+    help="Path to the plot folder",
+    required=True,
+)
+parser.add_argument(
+    "-f",
+    "--file",
+    type=str,
+    help="Data file to read from",
+    required=True,
+)
+parser.add_argument(
+    "-t",
+    "--plotfiletype",
+    type=str,
+    help="Filetype of the plots",
+    default=".eps",
+)
+parser.add_argument(
+    "-v",
+    "--verbosity",
+    default="INFO",
+    help="Increase output verbosity",
+)
+parser.add_argument(
+    "-c",
+    "--config",
+    help="Path to the config file",
+    default="conf/plots.yaml",
+)
+
+
+def main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
@@ -333,18 +374,19 @@ if __name__ == "__main__":
         logger.info(f"Creating folder {FOLDER}")
         FOLDER.mkdir(parents=True, exist_ok=True)
 
-    i = 0
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
-        i += 1
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
-        i += 1
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
-        i += 1
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(args)

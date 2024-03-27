@@ -10,28 +10,24 @@ data:
         n_redundant: 0
         n_repeated: 0
     sample:
-            _target_: deckard.base.data.sampler.SklearnDataSampler
-            random_state : 0
-            stratify: True
-            train_size : .8
-            test_size : .2
+        random_state : 0
+        stratify: True
+        train_size : .8
+        test_size : .2
 model:
     data : ${data}
     init:
-        _target_: deckard.base.model.ModelInitializer
         name: torch_example.LogisticRegression
         input_dim :
             - ${data.generate.n_features}
         output_dim :
              - ${data.generate.n_classes}
-    _target_: deckard.base.model.Model
     trainer:
         nb_epoch: 1
         batch_size: 1024
     library : torch
     art:
         library : torch
-        _target_ : deckard.base.model.art_pipeline.ArtPipeline
         initialize:
             criterion:
                 name : "torch.nn.CrossEntropyLoss"
@@ -40,7 +36,6 @@ model:
                 lr : 0.01
                 momentum : 0.9
             nb_classes : ${data.generate.n_classes}
-_target_ : deckard.base.attack.Attack
 init:
     name:  art.attacks.poisoning.GradientMatchingAttack
     model: ${model}

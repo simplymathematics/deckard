@@ -1,5 +1,11 @@
 vars:
   - conf/default.yaml:hydra
+  - conf/plots.yaml:line_plot
+  - conf/plots.yaml:cat_plot
+  # - conf/condensed_plots.yaml:line_plot
+  # - conf/clean.yaml:params
+  # - conf/clean.yaml:fillna
+  - conf/clean.yaml:replace
 stages:
   ##############################################################################
   # These stages use the dvc API to run a single experiment at a time using a
@@ -8,86 +14,426 @@ stages:
   # This can be used to define a stage that runs a single experiment, or a stage for the
   # optimisation using the optimise.py script and the hydrasweeper API. This API is primarily used for
   # development and testing, as it is easier to run a single experiment at a time and debug it using
-  # DVC's git-like features to track changes and minimise run time.
+  # DVC's git-like features to track changes and minimise run time. 
+
+  # This stage will parse the conf/default.yaml file and save it to params.yaml
+  # In addition, it will define a schema stage that will will 
+  # 1. Determine the file paths for the data and model files (if specified)
+  # 2. Run the experiment with the given parameters
+  # 3. Save the results to the given file paths (will always save a score_dict_file, and a params_file to files.directory/files.reports/stage/)
+  # 4. Save a 'params.yaml' file with the scores (Always)
+  # 5. Save the predictions to the given file paths (if specified)
+  # 6. Save the probabilities to the given file paths (if specified)
+  # 7. Save the (final) losses to the given file paths (if specified)
+  # 8. Save the train/test labels to the given file paths (if specified)
+
+  # You can arbitrarily define parameters in the 'conf' folder.
+  # To parse the parameters, you can use the 'hydra' API to define a schema for the parameters
+  # Or run `deckard.layers.parse` to parse the parameters and save them to a file.  
+  ##############################################################################
+  data:
+    desc: "This stage will parse the conf/default.yaml file and save it to params.yaml"
+    cmd: python data_prep.py
+    outs:
+      - raw_data/
+    deps:
+      - data_prep.py
+  parse_params:
+    cmd: python -m deckard.layers.parse
+    deps:
+      - conf/default.yaml
+      - conf/data/default.yaml
+      - conf/model/default.yaml
+      - conf/files/default.yaml
+      - conf/scorers/default.yaml
+    outs:
+      - params.yaml:
+          cache: true
+          desc : "Parsed parameters for the experiment"
+          persist: true
+          push : true
+  
   train:
     cmd: python -m deckard.layers.experiment train
     metrics:
     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+    - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
     params:
     - data
     - model
     - scorers
     - files
-  # attack:
-  #   cmd: python -m deckard.layers.experiment attack
-  #   deps:
-  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #   metrics:
-  #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
-  #   outs:
-  #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
-  #   params:
-  #   - data
-  #   - model
-  #   - attack
-  #   - scorers
-  #   - files
-  ##############################################################################
-  model_optimise:
-    cmd: python -m deckard.layers.optimise  ++data.sample.random_state=0,1,2,3,4,5,6,7,8,9 data.sample.train_size=10,100,1000,.8 dataset=${dataset} data=${dataset} model=${model_name} model_name=${model_name} --multirun 
-    deps:
-    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-    - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-    outs:
-    - ${dataset}.db
-    - ${files.directory}/logs/${dataset}/${model_name}
-    params:
-    - conf/default.yaml:
-      - hydra
     - dataset
     - model_name
-  find_best_model:
-    cmd: python -m deckard.layers.find_best --study_name ${model_name} --config_folder conf  --config_subdir model  --params_file best_${model_name} --study_csv ${files.directory}/${files.reports}/summaries/${model_name}_${dataset}.csv --study_name ${model_name}
+    - device_id
     deps:
-    - ${dataset}.db
+    - params.yaml
+    - raw_data/ # Raw data
+  ##############################################################################
+  test_each_dataset:
+    matrix:
+      dataset : [ddos, truthseeker, sms_spam, kdd_nsl]
+      model_name : [gzip_knn, gzip_svc, gzip_logistic]
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=train
+      files.name=${item.model_name}
+      data.sample.train_size=100
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      dataset=${item.dataset}
+      model_name=${item.model_name}
+      model=${item.model_name}
+      hydra.run.dir=${item.dataset}/logs/train/${item.model_name}
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
     outs:
-    - conf/model/best_${model_name}.yaml
+    - ${item.dataset}/${files.reports}/train/${item.model_name}/${files.score_dict_file}
+    - ${item.dataset}/logs/train/${item.model_name}
     params:
-    - conf/default.yaml:
-      - hydra
-    - model_name
-    - dataset
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
   ##############################################################################
-  # attack_optimise:
-  #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
-  #   deps:
-  #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-  #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #   - conf/model/best.yaml
-  #   outs:
-  #   - attack.db
-  #   params:
-  #   - conf/attack.yaml:
-  #     - hydra
-  # find_best_attack:
-  #   cmd: python -m deckard.layers.find_best attack.yaml
-  #   deps:
-  #   - attack.db
-  #   outs:
-  #   - conf/attack/best.yaml
+  test_each_metric:
+    matrix:
+      metric: [gzip,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      model : [gzip_knn,] # gzip_svc, gzip_logistic
+      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+      train_size: [20] #100, 1000, 10000
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=test_each_metric 
+      files.name=${item.model}/${item.metric}/${item.train_size}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      model=${item.model}
+      model_name=${model_name}
+      model.init.metric=${item.metric} 
+      model.init.m=-1
+      hydra.run.dir=${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/test_each_metric/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+    - ${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
+  # ##############################################################################
+  test_each_model:
+    matrix:
+      metric: [gzip] #,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
+      model : [gzip_knn, gzip_svc, gzip_logistic] 
+      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+      train_size: [20] #100, 1000, 10000
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=test_each_model 
+      files.name=${item.model}/${item.metric}/${item.train_size}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      model=${item.model}
+      model_name=${model_name}
+      model.init.metric=${item.metric} 
+      model.init.m=-1
+      hydra.run.dir=${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/test_each_model/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+    - ${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
   ##############################################################################
-  # defend:
-  #   cmd : bash models.sh
+  grid_search:
+    matrix: 
+      train_size: [20, 100,  300, 500] #  
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
+      configs: [gzip_knn, gzip_logistic, gzip_svc] 
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      data=${item.dataset}
+      dataset=${item.dataset}
+      data.sample.train_size=${item.train_size}
+      data.sample.test_size=100
+      model_name=${item.configs}
+      model.init.distance_matrix=null
+      hydra.sweeper.study_name=${item.configs}_${item.dataset}
+      hydra.sweeper.n_trials=128
+      hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=${item.dataset}/logs/${item.configs}/${item.train_size}
+      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.configs}/${item.train_size}/study.csv
+      files.directory=${item.dataset}
+      files.reports=${files.reports}/${item.configs}/${item.train_size}
+      hydra.launcher.n_jobs=-1
+      ++raise_exception=True               
+      --config-name ${item.configs}
+      --multirun
+    deps:
+      - params.yaml
+      - conf/${item.configs}.yaml
+    outs:
+        - ${item.dataset}/logs/${item.configs}/${item.train_size}
+        - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/train/:
+            cache: true
+            persist: true
+            push: true
+    params:
+      - conf/${item.configs}.yaml:
+          - hydra
+          - model_name
+  ##############################################################################
+  # find_best_model: # This isn't actually used in later steps, but it's handy to have these configs ready for a line search instead of a massive grid search
+  #   matrix:
+  #     dataset : [ddos, kdd_nsl, sms_spam,] #  
+  #     model : [gzip_knn, gzip_svc, gzip_logistic]
   #   deps:
-  #   - model.db
+  #     - ${item.dataset}/logs/${item.model}/
+  #   cmd: >-
+  #        python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name ${item.model}_${item.dataset} --config_subdir model --params_file best_${item.model}_${item.dataset} --default_config ${item.model}
   #   outs:
-  #   - multirun
-  # attack-again:
-  #   cmd : bash attacks.sh
+  #     - conf/model/best_${item.model}_${item.dataset}.yaml
+  #############################################################################
+  test_each_method:
+    matrix:
+      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+      method: [medoid, sum, svc, hardness, nearmiss,random,knn] 
+    cmd : >-
+      python -m deckard.layers.optimise 
+      stage=train 
+      +model.init.sampling_method=${item.method} 
+      model.init.m=3
+      data.sample.train_size=100
+      files.name=${item.method}
+      files.directory=${item.dataset}
+      data=${item.dataset}
+      dataset=${item.dataset}
+      model_name=${item.method}
+      hydra.run.dir=${item.dataset}/logs/method/${item.method}
+      ++raise_exception=True 
+    deps:
+    - params.yaml
+    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+    outs:
+    - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
+    - ${item.dataset}/logs/method/${item.method}
+    params:
+      - data
+      - model
+      - scorers
+      - files
+      - dataset
+      - model_name
+      - device_id
+  ##############################################################################
+  condense:
+    matrix:
+      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] # kdd_nsl, truthseeker, sms_spam, 
+      model_name : [knn, svc, logistic]
+    deps:
+      - params.yaml
+      - conf/condense_${item.model_name}.yaml
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      data=${item.dataset}
+      dataset=${item.dataset}
+      data.sample.train_size=100
+      data.sample.test_size=100
+      model_name=condensed_${item.model_name}
+      model=gzip_${item.model_name}
+      files.directory=${item.dataset}
+      files.reports=${files.reports}/condense/${item.model_name}/
+      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
+      hydra.sweeper.n_trials=1024
+      hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/
+      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.model_name}/study.csv
+      hydra.launcher.n_jobs=-1
+      --config-name condense_${item.model_name}
+      --multirun
+    outs:
+        - ${item.dataset}/logs/condense/${item.model_name}/
+        - ${item.dataset}/${files.reports}/condense/${item.model_name}/:
+            cache: true
+            persist: true
+            push: true
+    params:
+      - conf/condense.yaml:
+          - hydra
+  compile:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
+    deps:
+      - ${item.dataset}/${files.reports}/${item.stage}/
+    outs:
+    - ${item.dataset}/${files.reports}/${item.stage}.csv
+    cmd: >-
+     python -m deckard.layers.compile 
+     --report_folder ${item.dataset}/${files.reports}/${item.stage} 
+     --results_file ${item.dataset}/${files.reports}/${item.stage}.csv
+  ##############################################################################
+  clean:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
+    deps:
+      - ${item.dataset}/${files.reports}/${item.stage}.csv
+    cmd: >-
+      python -m deckard.layers.clean_data 
+      -i ${item.dataset}/${files.reports}/${item.stage}.csv
+      -o ${item.dataset}/plots/clean/${item.stage}.csv
+      -c conf/clean.yaml
+    outs:
+      - ${item.dataset}/plots/clean/${item.stage}.csv
+    params:
+      - conf/clean.yaml:
+        - replace
+  ##############################################################################
+  merge:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+    deps:
+      - ${item.dataset}/plots/clean/gzip_knn.csv
+      - ${item.dataset}/plots/clean/gzip_logistic.csv
+      - ${item.dataset}/plots/clean/gzip_svc.csv
+    cmd: >-
+      python merge.py
+      --big_dir ${item.dataset}/plots/
+      --data_file clean/gzip_knn.csv
+      --little_dir_data_file clean/gzip_logistic.csv clean/gzip_svc.csv
+      --output_folder ${item.dataset}/plots
+      --output_file merged.csv
+    outs:
+      - ${item.dataset}/plots/merged.csv
+  ##############################################################################
+  merge_condense:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+    deps:
+      - ${item.dataset}/plots/clean/condense/knn.csv
+      - ${item.dataset}/plots/clean/condense/logistic.csv
+      - ${item.dataset}/plots/clean/condense/svc.csv
+    cmd: >-
+      python merge.py
+      --big_dir ${item.dataset}/plots/
+      --data_file clean/condense/knn.csv
+      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv
+      --output_folder ${item.dataset}/plots/
+      --output_file condensed_merged.csv
+    outs:
+      - ${item.dataset}/plots/condensed_merged.csv
+  ##############################################################################
+  plot:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+    cmd: >-
+      python -m deckard.layers.plots 
+      --path ${item.dataset}/plots/ 
+      --file ${item.dataset}/plots/merged.csv 
+      -c conf/plots.yaml
+    deps:
+      - ${item.dataset}/plots/merged.csv
+    plots:
+      - ${item.dataset}/plots/${line_plot[0].file}
+      - ${item.dataset}/plots/${line_plot[1].file}
+      - ${item.dataset}/plots/${line_plot[2].file}
+      - ${item.dataset}/plots/${cat_plot[0].file}
+      - ${item.dataset}/plots/${cat_plot[1].file}
+      - ${item.dataset}/plots/${cat_plot[2].file}
+      - ${item.dataset}/plots/${cat_plot[3].file}
+      - ${item.dataset}/plots/${cat_plot[4].file}
+    params:
+      - conf/plots.yaml:
+          - line_plot
+          - cat_plot
+  ##############################################################################
+  plot_condense:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos]
+    cmd: >-
+      python -m deckard.layers.plots 
+      --path ${item.dataset}/plots/ 
+      --file ${item.dataset}/plots/condensed_merged.csv 
+      -c conf/condensed_plots.yaml
+    deps:
+      - ${item.dataset}/plots/condensed_merged.csv
+    plots:
+      - ${item.dataset}/plots/sampling_method_vs_accuracy.pdf
+      - ${item.dataset}/plots/sampling_method_vs_train_time.pdf
+      - ${item.dataset}/plots/sampling_method_vs_predict_time.pdf
+    params:
+      - conf/condensed_plots.yaml:
+          - line_plot
+  # copy:
+  #   matrix:
+  #     dataset : [kdd_nsl, truthseeker, sms_spam, ddos]
+  #   cmd: >-
+  #     rm -rf ~/Gzip-KNN/figs/${item.dataset}/ &&
+  #     mkdir -p ~/Gzip-KNN/figs/${item.dataset}/ &&
+  #     cp -r ${item.dataset}/plots/* ~/Gzip-KNN/figs/${item.dataset}/ 
   #   deps:
-  #   - attack.db
+  #     - ${item.dataset}/plots/
+  # ##############################################################################
+  # # attack:
+  # #   cmd: python -m deckard.layers.experiment attack
+  # #   deps:
+  # #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  # #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  # #   metrics:
+  # #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+  # #   outs:
+  # #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
+  # #   params:
+  # #   - data
+  # #   - model
+  # #   - attack
+  # #   - scorers
+  # #   - files
+  # ##############################################################################
+  # # attack_optimise:
+  # #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
+  # #   deps:
+  # #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
+  # #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
+  # #   - conf/model/best.yaml
+  # #   outs:
+  # #   - attack.db
+  # #   params:
+  # #   - conf/attack.yaml:
+  # #     - hydra
+  # # find_best_attack:
+  # #   cmd: python -m deckard.layers.find_best attack.yaml
+  # #   deps:
+  # #   - attack.db
+  # #   outs:
+  # #   - conf/attack/best.yaml

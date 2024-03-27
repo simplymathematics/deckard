@@ -1,16 +1,11 @@
 import logging
-from sklearn.utils.validation import check_is_fitted
 from typing import Dict, Union
 from dataclasses import dataclass, asdict, field, is_dataclass
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from copy import deepcopy
-import numpy as np
-import pandas as pd
-from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
-
 from art.estimators.classification.scikitlearn import (
     ScikitlearnAdaBoostClassifier,
     ScikitlearnBaggingClassifier,
@@ -26,7 +21,6 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
-from art.utils import to_categorical
 
 
 from ..utils import my_hash
@@ -223,10 +217,7 @@ class SklearnModelInitializer:
         self.data = data
         self.model = model
         self.library = library
-        params = deepcopy(kwargs)
-        # while "kwargs" in params:
-        #     params.update(**params.pop("kwargs"))
-        self.kwargs = params
+        self.kwargs = kwargs
         if len(pipeline) > 0:
             self.pipeline = SklearnModelPipeline(**pipeline)
         else:
@@ -234,67 +225,43 @@ class SklearnModelInitializer:
 
     def __call__(self):
         logger.debug(f"Initializing model {self.model} with kwargs {self.kwargs}")
-        data = self.data
         model = self.model
-        library = self.library
-        kwargs = {}
-        params = deepcopy(self.kwargs)
-        if "library" in kwargs:
-            library = kwargs.pop("library")
-        if "clip_values" in params:
-            clip_values = params.pop("clip_values")
-            kwargs["clip_values"] = tuple(clip_values)
+        if isinstance(model, BaseEstimator):
+            pass
+        elif isinstance(model, DictConfig):
+            model = OmegaConf.to_container(model, resolve=True)
+        elif isinstance(model, str):
+            model = {"name": model, **self.kwargs}
         else:
-            numeric = pd.DataFrame(data[0]).apply(pd.to_numeric, args=('coerce',))
-            min_ = np.min(numeric)
-            max_ = np.max(numeric)
-            kwargs["clip_values"] = (min_, max_)
-        if "preprocessing" not in params:
-            kwargs['preprocessing']= None
-        if "preprocessing_defences" in params:
-            preprocessing_defences = params.pop("preprocessing_defences")
-            kwargs["preprocessing_defences"] = preprocessing_defences
-        if "postprocessing_defences" in params:
-            postprocessing_defences = params.pop("postprocessing_defences")
-            kwargs["postprocessing_defences"] = postprocessing_defences
+            assert "art." in str(
+                type(model),
+            ), f"model must be a string, dict, or sklearn estimator. Got {type(model)}"
+        if isinstance(model, dict):
+            if "name" in model:
+                name = model.pop("name")
+            else:
+                raise ValueError(
+                    f"model must have a name attribute. Got {model}",
+                )
+            model["_target_"] = name
+            model = instantiate(model)
+        else:
+            if hasattr(model, "model"):
+                assert isinstance(
+                    model.model,
+                    BaseEstimator,
+                ), f"model must be a sklearn estimator. Got {type(model.model)}"
+            else:
+                assert isinstance(
+                    model,
+                    BaseEstimator,
+                ), f"model must be a sklearn estimator. Got {type(model)}"
         if self.pipeline is not None:
-            obj = self.pipeline(model)
+            model = self.pipeline(model)
             assert isinstance(
-                obj,
+                model,
                 BaseEstimator,
             ), f"model must be a sklearn estimator. Got {type(model)}"
-        else:
-            obj = model
-        if library in sklearn_dict and "art." not in str(type(model)):
-            est = sklearn_dict[library]
-            try:
-                check_is_fitted(obj)
-            except NotFittedError:
-                try:
-                    obj.fit(data[0], data[2])
-                except np.AxisError as e:
-                    logger.warning(e)
-                    logger.warning(
-                        "Error while fitting model. Attempting to reshape data",
-                    )
-                    if len(np.squeeze(data[2]).shape) > 1:
-                        nb_classes = np.squeeze(data[2]).shape[1]
-                    else:
-                        nb_classes = len(np.unique(data[2]))
-                    y_train = to_categorical(data[2], nb_classes)
-                    obj.fit(data[0], y_train)
-                except ValueError as e:
-                    if "Found array with dim 3. Estimator expected <= 2." in str(e):
-                        obj.fit(data[0].reshape(data[0].shape[0], -1), data[2])
-                    elif "y should be a 1d array, got an array of shape" in str(e):
-                        obj.fit(data[0], np.argmax(data[2], axis=1))
-                    else:
-                        raise e
-            model = est(obj, **kwargs)
-        elif "art." in str(type(model)):
-            model = obj
-        else:
-            raise ValueError(f"library must be one of {sklearn_models}. Got {library}")
         assert hasattr(
             model,
             "fit",

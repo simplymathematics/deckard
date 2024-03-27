@@ -1,19 +1,169 @@
-cat_plot:
-- file: summary.pdf
-  hue: model.init.method
-  kind: "point"
-  set:
-    yscale: linear
-  titles: 
+line_plot:
+- file: metric_vs_accuracy.pdf
+  hue: model.init.metric
+  title: #"Accuracy vs $m$-best samples"
   x: data.sample.train_size
-  xlabels: train_size
+  xlabel: Number of Training Samples
   y: accuracy
-  ylabels: Accuracy
-  rotation : 90
+  ylabel: Accuracy
   hue_order:
-  - random
-  - medoid
-  - knn
-  - svc
-  row : model.init.m
-  col : model.init.k
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}  
+- file: metric_vs_train_time.pdf
+  hue: model.init.metric
+  title: #"Training Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: train_time
+  ylabel: Training Time (s)
+  y_scale: linear
+  hue_order:
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+- file: metric_vs_predict_time.pdf
+  hue: model.init.metric
+  title: #"Prediction Time vs $m$-best samples"
+  x: data.sample.train_size
+  xlabel: Number of Training Samples
+  y: predict_time
+  ylabel: Prediction Time (s)
+  y_scale: linear
+  hue_order:
+  - Gzip
+  - Pickle
+  - BZ2
+  - Zstd
+  - Lzma
+  - Levenshtein
+  - Ratio
+  - Hamming
+  - Jaro
+  - Jaro-Winkler 
+  - SeqRatio
+  errorbar: se
+  err_style: bars
+  xlim: [10, 500]
+  legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+cat_plot:
+  - file: symmetric_vs_metric.pdf
+    x : model.init.symmetric
+    y : accuracy
+    hue : model.init.metric
+    errorbar: se
+    kind : bar
+    titles : 
+    xlabels : ""
+    ylabels : Accuracy
+    legend_title: "Metrics"
+    hue_order:
+    - Gzip
+    - Pickle
+    - BZ2
+    - Zstd
+    - Lzma
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    set:
+      yscale: linear
+      ylim: [0, 1]
+  - file: symmetric_vs_metric_train_time.pdf
+    x : model.init.symmetric
+    y : train_time
+    hue : model.init.metric
+    errorbar: se
+    kind : bar
+    titles : 
+    xlabels : ""
+    ylabels : Training Time (s)
+    legend_title: "Metrics"
+    hue_order:
+    - Gzip
+    - Pickle
+    - BZ2
+    - Zstd
+    - Lzma
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler 
+    - SeqRatio
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    set:
+      yscale: log
+  - file: models_vs_accuracy.pdf
+    x : model_name
+    y : accuracy
+    hue : data.sample.train_size
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : Model
+    ylabels : Accuracy
+    legend_title: "Samples"
+    
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    set:
+      yscale: linear
+      ylim: [0, 1]
+    rotation: 90
+  - file: models_vs_train_time.pdf
+    x : model_name
+    y : accuracy
+    hue : data.sample.train_size
+    errorbar: se
+    kind : bar
+    titles :
+    xlabels : Model
+    ylabels : Training Time (s)
+    legend_title: "Samples"
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    set:
+      yscale: log
+  - file: models_vs_predict_time.pdf
+    x : model_name
+    y : accuracy
+    hue : data.sample.train_size
+    errorbar: se
+    kind : bar
+    titles :
+    xlabels : Model
+    ylabels : Prediction Time (s)
+    legend_title: "Samples"
+    
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    set:
+      yscale: log
+    rotation: 90

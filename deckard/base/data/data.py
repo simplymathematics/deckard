@@ -4,10 +4,10 @@ import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
-from validators import url
 import numpy as np
 from pandas import DataFrame, read_csv, Series
 from omegaconf import OmegaConf
+from validators import url
 from ..utils import my_hash
 from .generator import DataGenerator
 from .sampler import SklearnDataSampler
@@ -28,7 +28,7 @@ class Data:
     )
     target: Union[str, None] = None
     name: Union[str, None] = None
-    drop : list = field(default_factory=list)
+    drop: list = field(default_factory=list)
 
     def __init__(
         self,
@@ -37,7 +37,8 @@ class Data:
         sample: SklearnDataSampler = None,
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
-        drop: list = None,
+        drop: list = [],
+        **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
 
@@ -48,9 +49,6 @@ class Data:
             sklearn_pipeline (SklearnDataPipeline, optional): The sklearn pipeline. Defaults to None.
             target (str, optional): The target column. Defaults to None.
         """
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and generate={generate} and sample={sample} and sklearn_pipeline={sklearn_pipeline} and target={target}",
-        )
         if generate is not None:
             self.generate = (
                 generate
@@ -68,7 +66,6 @@ class Data:
         else:
             self.sample = SklearnDataSampler()
         if sklearn_pipeline is not None:
-            
             sklearn_pipeline = OmegaConf.to_container(
                 OmegaConf.create(sklearn_pipeline),
             )
@@ -82,7 +79,6 @@ class Data:
         self.drop = drop
         self.target = target
         self.name = name if name is not None else my_hash(self)
-        logger.debug(f"Instantiating Data with id: {self.get_name()}")
 
     def get_name(self):
         """Get the name of the data object."""
@@ -98,7 +94,6 @@ class Data:
         """
         if filename is not None and Path(filename).exists():
             result = self.load(filename)
-            assert len(result) == 4, f"Data is not generated: {self.name}"
         elif self.generate is not None:
             result = self.generate()
         else:
@@ -108,18 +103,21 @@ class Data:
             assert self.target is not None, "Target is not specified"
             y = result[self.target]
             X = result.drop(self.target, axis=1)
-            if self.drop is not None:
+            if self.drop != []:
                 X = X.drop(self.drop, axis=1)
+            X = X.to_numpy()
+            y = y.to_numpy()
+            result = [X, y]
         else:
-            if self.drop is not None:
-                X = DataFrame(X).drop(self.drop, axis=1)
-        result = [X, y]
+            if self.drop != []:
+                raise ValueError(
+                    f"Drop is not supported for non-DataFrame data. Data is type {type(result)}",
+                )
         if len(result) == 2:
             result = self.sample(*result)
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
-        
         if self.sklearn_pipeline is not None:
             result = self.sklearn_pipeline(*result)
         return result
@@ -139,6 +137,8 @@ class Data:
         elif suffix in [".pkl", ".pickle"]:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
+        elif suffix in [".npz"]:
+            data = np.load(filename)
         else:  # pragma: no cover
             raise ValueError(f"Unknown file type {suffix}")
         return data
@@ -152,6 +152,10 @@ class Data:
             logger.info(f"Saving data to {filename}")
             suffix = Path(filename).suffix
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    v = str(v)
+                    data[k] = v
             if suffix in [".json"]:
                 if isinstance(data, (Series, DataFrame)):
                     data = data.to_dict()
@@ -169,16 +173,20 @@ class Data:
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 with open(filename, "w") as f:
-                    json.dump(data, f)
+                    json.dump(data, f, indent=4, sort_keys=True)
             elif suffix in [".csv"]:
                 assert isinstance(
                     data,
                     (Series, DataFrame, dict, np.ndarray),
                 ), f"Data must be a Series, DataFrame, or dict, not {type(data)} to save to {filename}"
-                DataFrame(data).to_csv(filename, index=False)
+                if isinstance(data, (np.ndarray)):
+                    data = DataFrame(data)
+                data.to_csv(filename, index=False)
             elif suffix in [".pkl", ".pickle"]:
                 with open(filename, "wb") as f:
                     pickle.dump(data, f)
+            elif suffix in [".npz"]:
+                np.savez(filename, data)
             else:  # pragma: no cover
                 raise ValueError(f"Unknown file type {type(suffix)} for {suffix}")
             assert Path(filename).exists()
@@ -188,19 +196,19 @@ class Data:
         data_file=None,
         train_labels_file=None,
         test_labels_file=None,
+        **kwargs,
     ) -> list:
         """Loads data from file if it exists, otherwise generates data and saves it to file. Returns X_train, X_test, y_train, y_test as a list of arrays, typed according to the framework.
         :param filename: str
         :return: list
         """
-        result_dict = {}
-        if data_file is not None and Path(data_file).exists() and not url(data_file):
-            data = self.load(data_file)
-            assert len(data) == 4, f"Some data is missing: {self.name}"
+        if Path(self.name).is_file() or url(self.name):
+            new_data_file = data_file
+            data_file = self.name
         else:
-            data = self.initialize(filename=data_file)
-            assert len(data) == 4, f"Some data is missing: {self.name}"
-            data_file = self.save(data, data_file)
+            new_data_file = data_file
+        result_dict = {}
+        data = self.initialize(data_file)
         result_dict["data"] = data
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
@@ -212,4 +220,6 @@ class Data:
             assert Path(
                 test_labels_file,
             ).exists(), f"Error saving test labels to {test_labels_file}"
+        if new_data_file is not None:
+            self.save(data, new_data_file)
         return data

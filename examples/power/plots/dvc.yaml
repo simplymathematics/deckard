@@ -8,19 +8,19 @@ vars:
   - ../conf/clean.yaml:fillna
 stages:
   # compile:
-    # foreach: # iterates through each stage
-    #   - mnist
-    #   - cifar
-    #   - cifar100
-    #   - bit_depth/mnist/
-    #   - bit_depth/cifar/
-    #   - bit_depth/cifar100/
-    # do:
-    #   cmd: python -m deckard.layers.compile --report_folder /result/${item}/reports/attack/ --results_file raw.csv --results_folder data/${item} --config "../conf/compile.yaml"
-    #   deps:
-    #    - /result/${item}/reports/attack/
-    #   outs:
-    #   - data/${item}/raw.csv
+  #   foreach: # iterates through each stage
+  #     - mnist
+  #     - cifar
+  #     - cifar100
+  #     - bit_depth/mnist/
+  #     - bit_depth/cifar/
+  #     - bit_depth/cifar100/
+  #   do:
+  #     cmd: python -m deckard.layers.compile --report_folder /result/${item}/reports/attack/ --results_file raw.csv --results_folder data/${item} --config "../conf/compile.yaml"
+  #     deps:
+  #      - /result/${item}/reports/attack/
+  #     outs:
+  #     - data/${item}/raw.csv
   # get_power_data:
   #   foreach:
   #     - mnist
@@ -28,25 +28,24 @@ stages:
   #     - cifar100
   #     - bit_depth/mnist/
   #     - bit_depth/cifar/
+  #     - bit_depth/cifar100/
   #   do:
   #     cmd: python -m deckard.layers.query_kepler --input_file data/${item}/raw.csv --output_file data/${item}/power.csv
   #     deps:
   #       -  data/bit_depth/${item}/raw.csv
-  #       # -  data/${item}/raw.csv
+  #       -  data/${item}/raw.csv
   #     outs:
-  #       # - data/${item}/power.csv
-  #       - data/bit_depth/${item}/power.csv
-
+  #       - data/${item}/power.csv
   merge:
     foreach:
        - mnist
        - cifar
        - cifar100
     do:
-      cmd : python merge.py  --big_dir data/bit_depth/${item} --little_dir data/${item} --config ../conf/afr.yaml --data_file raw.csv --output_folder plots/${item}/ --output_file merged.csv
+      cmd : python merge.py  --big_dir data/bit_depth/${item} --little_dir data/${item} --config ../conf/afr.yaml --data_file power.csv --output_folder plots/${item}/ --output_file merged.csv
       deps:
-        -  data/bit_depth/${item}/raw.csv
-        -  data/${item}/raw.csv
+        -  data/bit_depth/${item}/power.csv
+        -  data/${item}/power.csv
         - ../conf/clean.yaml
       outs:
         - plots/${item}/merged.csv
@@ -71,28 +70,13 @@ stages:
           - defences
           - params
           - fillna
-  plot:
-    foreach:
-       - mnist
-       - cifar
-       - cifar100
-    do:
-      cmd: python -m deckard.layers.plots --path plots/${item} --file plots/${item}/clean.csv  -c "../conf/plots.yaml" 
-      deps:
-        - plots/${item}/clean.csv 
-        - "../conf/plots.yaml"
-      plots:
-        - plots/${item}/${scatter_plot[0].file} # You can use the file specified in each list entry from the parameters specified above in vars
-        - plots/${item}/${scatter_plot[1].file}
-        - plots/${item}/${line_plot[0].file}
-        # - plots/${item}/${cat_plot[0].file}
   afr:
     foreach:
        - mnist
        - cifar
        - cifar100
     do:
-      cmd: python -m deckard.layers.afr --dataset ${item} --data_file plots/${item}/clean.csv --config_file "../conf/afr.yaml" --plots_folder plots/${item}/ 
+      cmd: python -m deckard.layers.afr --dataset ${item} --data_file plots/${item}/clean.csv --config_file "../conf/afr.yaml" --plots_folder plots/${item}/ --target adv_failures --duration_col adv_fit_time
       deps:
         - plots/${item}/clean.csv
         - ../conf/afr.yaml
@@ -115,6 +99,7 @@ stages:
       - plots/mnist/aft_comparison.csv
       - plots/cifar/aft_comparison.csv
       - plots/cifar100/aft_comparison.csv
+      - combined_plots.py
     outs:
       - data/combined/combined.csv
     plots:
@@ -136,7 +121,7 @@ stages:
        - params
        - fillna
   combined_afr:
-    cmd: python -m deckard.layers.afr --dataset Combined --data_file plots/combined/clean.csv --config_file "../conf/combined_afr.yaml" --plots_folder plots/combined/ 
+    cmd: python -m deckard.layers.afr --dataset Combined --data_file plots/combined/clean.csv --config_file "../conf/combined_afr.yaml" --plots_folder plots/combined/ --target adv_failures --duration_col adv_fit_time
     deps:
       - plots/combined/clean.csv
       - ../conf/combined_afr.yaml

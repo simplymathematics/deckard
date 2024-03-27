@@ -88,11 +88,11 @@ class TorchInitializer:
         kwargs.update(**kwargs.pop("kwargs", {}))
         data = self.data
         optimizer = TorchOptimizer(
-            **kwargs.pop("optimizer", {"name": "torch.optim.Adam"})
+            **kwargs.pop("optimizer", {"name": "torch.optim.Adam"}),
         )(model)
         kwargs.update({"optimizer": optimizer})
         criterion = TorchCriterion(
-            **kwargs.pop("criterion", {"name": "torch.nn.CrossEntropyLoss"})
+            **kwargs.pop("criterion", {"name": "torch.nn.CrossEntropyLoss"}),
         )()
         kwargs.update({"loss": criterion})
         if "input_shape" not in kwargs:

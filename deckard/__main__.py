@@ -1,5 +1,4 @@
-""""Runs a submodule passed as an arg."""
-
+#!/usr/bin/env python3
 import argparse
 import subprocess
 import logging

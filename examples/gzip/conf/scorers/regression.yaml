@@ -1,0 +1,13 @@
+_target_: deckard.base.scorer.ScorerDict
+explained_variance:
+    _target_: deckard.base.scorer.ScorerConfig
+    name: sklearn.metrics.explained_variance_score
+    direction: maximize
+r2:
+    _target_: deckard.base.scorer.ScorerConfig
+    name: sklearn.metrics.r2_score
+    direction: maximize
+mse:
+    _target_: deckard.base.scorer.ScorerConfig
+    name: sklearn.metrics.mean_squared_error
+    direction: minimize

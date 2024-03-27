@@ -79,15 +79,31 @@ def read_file(file, results):
     if folder not in results:
         results[folder] = {}
     if suffix == ".json":
-        with open(file, "r") as f:
-            try:
+        try:
+            retries = locals().get("retries", 0)
+            with open(file, "r") as f:
                 dict_ = json.load(f)
-            except json.decoder.JSONDecodeError as e:
-                logger.error(f"Error reading {file}")
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f"Error reading {file}")
+            print(f"Error reading {file}. Please fix the file and press Enter.")
+            input(
+                "Press Enter to continue. The next failure on this file will raise an error.",
+            )
+            if retries > 1:
                 raise e
+            else:
+                with open(file, "r") as f:
+                    dict_ = json.load(f)
+                retries += 1
     elif suffix == ".yaml":
         with open(file, "r") as f:
-            dict_ = yaml.safe_load(f)
+            try:
+                dict_ = yaml.safe_load(f)
+            except Exception as e:
+                logger.error(f"Error reading {file}")
+                print(f"Error reading {file}")
+                input("Press Enter to raise the error.")
+                raise e
     else:
         raise ValueError(f"File type {suffix} not supported.")
     results[folder]["stage"] = stage
@@ -110,13 +126,13 @@ def save_results(results, results_file, results_folder) -> str:
     Path(results_file).parent.mkdir(exist_ok=True, parents=True)
     suffix = results_file.suffix
     if suffix == ".csv":
-        results.to_csv(results_file)
+        results.to_csv(results_file, index=True)
     elif suffix == ".xlsx":
-        results.to_excel(results_file)
+        results.to_excel(results_file, index=True)
     elif suffix == ".html":
-        results.to_html(results_file)
+        results.to_html(results_file, index=True)
     elif suffix == ".json":
-        results.to_json(results_file)
+        results.to_json(results_file, index=True, orient="records")
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(

@@ -32,7 +32,9 @@ def get_files(
     stage,
 ):
     """
-    Gets the file names from
+    Gets the file names from cfg and calculates the hash of the attack, model and data, and files objects.
+    If "files.name == 'default'", the name is set to the hash of the cfg.
+    For attack, model and data, the file name is set to the hash of the respective object.
     """
     if isinstance(cfg, dict):
         pass
@@ -74,7 +76,9 @@ def get_files(
     cfg["files"]["_target_"] = "deckard.base.files.FileConfig"
     id_ = my_hash(cfg)
     cfg["name"] = id_
-    cfg["files"]["name"] = id_
+    cfg["files"]["name"] = (
+        id_ if cfg["files"]["name"] == "default" else cfg["files"]["name"]
+    )
     if stage is not None:
         cfg["files"]["stage"] = stage
     return cfg
@@ -165,36 +169,6 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     else:
         assert isinstance(stage, list), f"args.stage is of type {type(stage)}"
         stages = stage
-    # if params is None:
-    #     with open(Path(path, "params.yaml"), "r") as f:
-    #         default_params = yaml.load(f, Loader=yaml.FullLoader)
-    #     key_list = []
-    #     for stage in stages:
-    #         with open(Path(path, "dvc.yaml"), "r") as f:
-    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-    #                 "params"
-    #             ]
-    #         key_list.extend(new_keys)
-    #     params = read_subset_of_params(key_list, params)
-    #     params = merge_params(default_params, params)
-    # elif isinstance(params, str) and Path(params).is_file() and Path(params).exists():
-    #     with open(Path(params), "r") as f:
-    #         params = yaml.load(f, Loader=yaml.FullLoader)
-    #     assert isinstance(
-    #         params,
-    #         dict,
-    #     ), f"Params in file {params} must be a dict. It is a {type(params)}."
-    #     key_list = []
-    #     for stage in stages:
-    #         with open(Path(path, "dvc.yaml"), "r") as f:
-    #             new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-    #                 "params"
-    #             ]
-    #         key_list.extend(new_keys)
-    #     with open(Path(path, "params.yaml"), "r") as f:
-    #         all_params = yaml.load(f, Loader=yaml.FullLoader)
-    #     default_params = read_subset_of_params(key_list, all_params)
-    #     params = merge_params(default_params, params)
     if isinstance(params, dict):
         key_list = []
         for stage in stages:
@@ -228,11 +202,14 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     files = params["files"]
     file_list = list(files.keys())
     for key in file_list:
-        template_string = "${files." + key + "}"
-        if template_string in file_string:
-            pass
-        else:
-            params["files"].pop(key)
+        if key == "params.yaml":
+            continue
+        if key.endswith("_file") or key.endswith("_dir"):
+            template_string = "${files." + key + "}"
+            if template_string in file_string:
+                pass
+            else:
+                params["files"].pop(key)
     params = get_files(params, stage)
     return params
 
@@ -265,11 +242,13 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
-    raise_exception = cfg.pop("raise_exception", False)
+    raise_exception = cfg.pop("raise_exception", True)
     working_dir = Path(config_path).parent
     direction = cfg.get("direction", "minimize")
     direction = [direction] if not isinstance(direction, list) else direction
     optimizers = cfg.get("optimizers", None)
+    optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
+    assert len(optimizers) == len(direction)
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
@@ -288,36 +267,39 @@ def optimise(cfg: DictConfig) -> None:
                 scores.append(score_dict[optimizer])
             else:
                 if direction[i] == "minimize":
-                    scores.append(1e10)
+                    scores.append(1.00000000000)
                 elif direction[i] == "maximize":
-                    scores.append(-1e10)
+                    scores.append(0.00000000000)
                 else:
                     scores.append(None)
             i += 1
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
-        logger.warning(
-            f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
-        )
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
-        fake_scores = []
-        for direction in direction:
-            if direction == "minimize":
-                fake_scores.append(1e10)
-            elif direction == "maximize":
-                fake_scores.append(-1e10)
-            else:
-                fake_scores.append(None)
-        scores = fake_scores
-        logger.info(f"Optimizers: {optimizers}")
-        logger.info(f"Score: {scores}")
-        if raise_exception:
+        if not raise_exception:
+            logger.warning(
+                f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
+            )
+            fake_scores = []
+            for direction in direction:
+                if direction == "minimize":
+                    fake_scores.append(1.00000000000)
+                elif direction == "maximize":
+                    fake_scores.append(0.00000000000)
+                else:
+                    fake_scores.append(None)
+            scores = fake_scores
+            logger.info(f"Optimizers: {optimizers}")
+            logger.info(f"Score: {scores}")
+        else:
             raise e
     if len(scores) == 1:
-        scores = scores[0]
+        scores = float(scores[0])
+    else:
+        scores = [float(x) for x in scores]
     return scores
 
 

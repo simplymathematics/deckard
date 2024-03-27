@@ -1,4 +1,35 @@
-defences:
-  Control: Control
-params:
-  Control: data.sample.train_size
+# params:
+  # control:
+  #   data.sample.train_size: 100
+  # defaults:
+  #   model.init.m : -1
+# fillna:
+#   model.init.compressor : "None"
+#   model.init.metric : "ncd"
+#   model.init.method : "random"
+#   model.init.m : ${data.sample.random_state}
+#   model.init.precompute : "False"
+replace:
+  model.init.metric:
+    jaro: "Jaro"
+    _winkler: "-Winkler"
+    levenshtein: "Levenshtein"
+    ncd: "NCD"
+    ratio: "Ratio"
+    seqRatio: "SeqRatio"
+    hamming: "Hamming"
+    gzip: "Gzip"
+    pkl: "Pickle"
+    bz2: "BZ2"
+    zstd: "Zstd"
+    lzma  : "Lzma"
+  model_name:
+    GzipSVC : "k-SVC"
+    GzipLogisticRegressor : "k-Logistic"
+    GzipKNN : "k-KNN"
+  model.init.symmetric:
+    True: "Symmetric"
+    False: "Asymmetric"
+drop_values:
+  accuracy : 0.00000000000
+  predict_time : 1.00000000000

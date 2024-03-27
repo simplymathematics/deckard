@@ -129,4 +129,16 @@ deckard/deckard.egg-info/*
 
 
 # envs
-env310/
+env/
+
+
+# random pdfs
+*.pdf
+# random pngs
+*.png
+
+# screenlog
+screenlog.*
+
+# tmp.py
+tmp.py

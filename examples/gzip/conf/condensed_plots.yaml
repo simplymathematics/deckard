@@ -1,0 +1,61 @@
+line_plot:
+  - file : sampling_method_vs_accuracy.pdf
+    hue: model.init.sampling_method
+    title: #"Accuracy vs Sampling Method"
+    x : model.init.m
+    xlabel: Percentage of Samples per Class
+    y : accuracy
+    ylabel: Accuracy
+    hue_order:
+    - random
+    - svc
+    - knn
+    - sum
+    - medoid
+    - nearmiss
+    - hardness
+    errorbar: se
+    err_style: bars
+    xlim : [0, 1]
+    y_scale : linear
+    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: sampling_method_vs_train_time.pdf
+    hue: model.init.sampling_method
+    title: #"Training Time vs Sampling Method"
+    x : model.init.m
+    xlabel: Percentage of Samples per Class
+    y : train_time
+    ylabel: Training Time (s)
+    y_scale : linear
+    hue_order:
+    - random
+    - svc
+    - knn
+    - sum
+    - medoid
+    - nearmiss
+    - hardness
+    errorbar: se
+    err_style: bars
+    xlim : [0, 1]
+    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file : sampling_method_vs_predict_time.pdf
+    hue: model.init.sampling_method
+    title: #"Prediction Time vs Sampling Method"
+    x : model.init.m
+    xlabel: Percentage of Samples per Class
+    y : predict_time
+    ylabel: Prediction Time (s)
+    y_scale : log
+    hue_order:
+    - random
+    - svc
+    - knn
+    - sum
+    - medoid
+    - nearmiss
+    - hardness
+    errorbar: se
+    err_style: bars
+    xlim : [0, 1]
+    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}

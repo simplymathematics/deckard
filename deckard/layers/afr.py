@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-
+import logging
+import yaml
+import argparse
+import seaborn as sns
 import matplotlib.pyplot as plt
-
 from sklearn.model_selection import train_test_split
 from lifelines import (
     WeibullAFTFitter,
@@ -12,12 +14,12 @@ from lifelines import (
     CoxPHFitter,
 )
 from .clean_data import drop_frames_without_results
-import matplotlib
-import logging
-import yaml
-import argparse
+from .plots import set_matplotlib_vars
+
 
 logger = logging.getLogger(__name__)
+
+sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
 def plot_aft(
@@ -30,12 +32,38 @@ def plot_aft(
     xlabel=None,
     ylabel=None,
     replacement_dict={},
-    filetype=".eps",
     folder=".",
     legend={},
     **kwargs,
 ):
-    file = Path(folder, file).with_suffix(filetype)
+    file = Path(folder, file)
+    aft = fit_aft(df, event_col, duration_col, mtype, kwargs)
+    columns = list(df.columns)
+    columns.remove(event_col)
+    columns.remove(duration_col)
+    ax = aft.plot(columns=columns)
+    labels = ax.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    values = ax.get_yticks().tolist()
+    # sort labels by values
+    labels = [x for _, x in sorted(zip(values, labels))]
+    values = [x for x, _ in sorted(zip(values, labels))]
+    ax.set_yticks(values)
+    ax.set_yticklabels(labels, fontsize=12)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(**legend)
+    ax.get_figure().tight_layout()
+    ax.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    plt.gcf().clear()
+    return ax, aft
+
+
+def fit_aft(df, event_col, duration_col, mtype, kwargs):
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
     elif mtype == "log_normal":
@@ -58,32 +86,8 @@ def plot_aft(
         df,
         duration_col=duration_col,
         event_col=event_col,
-        # robust=True,
     )
-    columns = list(df.columns)
-    columns.remove(event_col)
-    columns.remove(duration_col)
-    ax = aft.plot(columns=columns)
-    labels = ax.get_yticklabels()
-    labels = [label.get_text() for label in labels]
-    for k, v in replacement_dict.items():
-        labels = [label.replace(k, v) for label in labels]
-    values = ax.get_yticks().tolist()
-    # sort labels by values
-    labels = [x for _, x in sorted(zip(values, labels))]
-    values = [x for x, _ in sorted(zip(values, labels))]
-    ax.set_yticks(values)
-    ax.set_yticklabels(labels, fontsize=12)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.legend(**legend)
-    ax.get_figure().tight_layout()
-    ax.get_figure().savefig(file)
-    logger.info(f"Saved graph to {file}")
-    plt.show()
-    plt.gcf().clear()
-    return ax, aft
+    return aft
 
 
 def plot_partial_effects(
@@ -98,37 +102,38 @@ def plot_partial_effects(
     replacement_dict={},
     cmap="coolwarm",
     folder=".",
-    filetype=".eps",
     **kwargs,
 ):
     plt.gcf().clear()
-    file = Path(folder, file).with_suffix(filetype)
-    pareto = aft.plot_partial_effects_on_outcome(
-        covariate_array, values_array, cmap=cmap, **kwargs
+    file = Path(folder, file)
+    partial_effects = aft.plot_partial_effects_on_outcome(
+        covariate_array,
+        values_array,
+        cmap=cmap,
+        **kwargs,
     )
-    labels = pareto.get_yticklabels()
+    labels = partial_effects.get_yticklabels()
     labels = [label.get_text() for label in labels]
-    values = pareto.get_yticks().tolist()
+    values = partial_effects.get_yticks().tolist()
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
-    pareto.set_yticks(values)
-    pareto.set_yticklabels(labels)
-    pareto.legend(**legend_kwargs)
-    pareto.set_ylabel(ylabel)
-    pareto.set_xlabel(xlabel)
-    pareto.set_title(title)
-    pareto.get_figure().tight_layout()
-    pareto.get_figure().savefig(file)
+    partial_effects.set_yticks(values)
+    partial_effects.set_yticklabels(labels)
+    partial_effects.legend(**legend_kwargs)
+    partial_effects.set_ylabel(ylabel)
+    partial_effects.set_xlabel(xlabel)
+    partial_effects.set_title(title)
+    partial_effects.get_figure().tight_layout()
+    partial_effects.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
     plt.gcf().clear()
-    return pareto
+    return partial_effects
 
 
 def score_model(aft, train, test):
     train_score = aft.score(train)
     test_score = aft.score(test)
     scores = {"train_score": train_score, "test_score": test_score}
-    plt.show()
     return scores
 
 
@@ -168,7 +173,7 @@ def make_afr_table(
     aft_data.to_csv(folder / "aft_comparison.csv", na_rep="--")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data.to_latex(
-        buf=folder / f"{filename}.tex",
+        buf=Path(folder / "aft_comparison.tex").as_posix(),
         float_format="%.3g",
         na_rep="--",
         label=label,
@@ -196,18 +201,17 @@ def clean_data_for_aft(
     ), f"Target {target} not in dataframe with columns {subset.columns}"
     logger.info(f"Shape of dirty data: {subset.shape}")
     cleaned = pd.DataFrame()
-    covariate_list.append(target)
+    if target not in covariate_list:
+        covariate_list.append(target)
     logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
         assert kwarg in subset.columns, f"{kwarg} not in data.columns"
         cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
-    cols = cleaned.columns
-    cleaned = pd.DataFrame(subset, columns=cols)
-    cleaned.index = subset.index
+    cols = list(cleaned.columns)
     for col in cols:
         cleaned = cleaned[cleaned[col] != -1e10]
         cleaned = cleaned[cleaned[col] != 1e10]
-
+    # Convert categorical variables to C-1 dummy variables where C is the number of categories
     cleaned = pd.get_dummies(cleaned)
     # de-duplicate index
     cleaned = cleaned.loc[~cleaned.index.duplicated(keep="first")]
@@ -240,8 +244,8 @@ def split_data_for_aft(
     assert (
         duration_col in cleaned
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
-    X_train = X_train.dropna(axis=0, how="any")
-    X_test = X_test.dropna(axis=0, how="any")
+    # X_train = X_train.dropna(axis=0, how="any")
+    # X_test = X_test.dropna(axis=0, how="any")
     X_train = pd.DataFrame(X_train, columns=cleaned.columns)
     X_test = pd.DataFrame(X_test, columns=cleaned.columns)
     return X_train, X_test
@@ -266,7 +270,9 @@ def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder
         score = score_model(aft, X_train, X_test)
         for partial_effect_dict in partial_effect_list:
             partial_effect_plot = plot_partial_effects(
-                aft=aft, **partial_effect_dict, folder=folder
+                aft=aft,
+                **partial_effect_dict,
+                folder=folder,
             )
             plots.append(partial_effect_plot)
     return aft, plots, score
@@ -322,11 +328,28 @@ def render_all_afr_plots(
     print("*" * 80)
 
 
+def fillna(data, config):
+    fillna = config.pop("fillna", {})
+    for k, v in fillna.items():
+        assert k in data.columns, f"{k} not in data"
+        data[k] = data[k].fillna(v)
+
+
 if "__main__" == __name__:
     afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
-    afr_parser.add_argument("--dataset", type=str, default="mnist")
+    afr_parser.add_argument(
+        "--target",
+        type=str,
+        help="Failure count column",
+        required=True,
+    )
+    afr_parser.add_argument(
+        "--duration_col",
+        type=str,
+        help="Duration column",
+        required=True,
+    )
+    afr_parser.add_argument("--dataset", type=str, help="Dataset name", required=True)
     afr_parser.add_argument("--data_file", type=str, default="data.csv")
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
@@ -336,42 +359,56 @@ if "__main__" == __name__:
     duration_col = args.duration_col
     dataset = args.dataset
     logging.basicConfig(level=logging.INFO)
-    font = {
-        "family": "Times New Roman",
-        "weight": "bold",
-        "size": 22,
-    }
+    set_matplotlib_vars()
 
-    matplotlib.rc("font", **font)
-
+    # Filesystem stuff
     csv_file = args.data_file
     FOLDER = args.plots_folder
-    filename = Path(args.summary_file).as_posix()
+    filename = (
+        Path(args.summary_file).as_posix() if args.summary_file is not None else None
+    )
+    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
+    assert Path(FOLDER).exists(), f"{FOLDER} does not exist."
+    assert Path(csv_file).exists(), f"{csv_file} does not exist."
+
+    # Reading compiled csv file
     data = pd.read_csv(csv_file, index_col=0)
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
     with Path(args.config_file).open("r") as f:
         config = yaml.safe_load(f)
-    fillna = config.pop("fillna", {})
-    for k, v in fillna.items():
-        assert k in data.columns, f"{k} not in data"
-        data[k] = data[k].fillna(v)
+    fillna(data, config)
+
+    # Strip whitespace from strings
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
+
+    # Check if covariates are specified
     covariates = config.get("covariates", [])
     assert len(covariates) > 0, "No covariates specified in config file"
+
+    # Converting accuracy to unnormalized count, if needed
+    if "adv_failures" in covariates:
+        logger.info("Adding adv_failures to data")
+        assert "adv_accuracy" in data.columns, "adv_accuracy not in data"
+        assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
+        data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+            :,
+            "attack.attack_size",
+        ]
+    if "ben_failures" in covariates:
+        logger.info("Adding ben_failures to data")
+        assert "accuracy" in data.columns, "accuracy not in data"
+        assert "attack.attack_size" in data.columns, "attack.attack_size not in data"
+        data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+            :,
+            "data.sample.test_size",
+        ]
+    # Cannot fit AFT models with missing values
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
     data = drop_frames_without_results(data, covariates)
     logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
+    # Plotting AFT models
     render_all_afr_plots(
         config,
         duration_col,

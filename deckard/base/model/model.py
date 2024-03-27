@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, asdict, is_dataclass
 from pathlib import Path
 from time import process_time_ns, time
 from typing import Union, Dict
-from omegaconf import OmegaConf, DictConfig, ListConfig
+from omegaconf import OmegaConf, DictConfig
 from copy import deepcopy
 import numpy as np
 from sklearn.exceptions import NotFittedError
@@ -42,50 +42,10 @@ class ModelInitializer:
 
     def __call__(self):
         params = self.kwargs
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
-        if "input_dim" in params:
-            if isinstance(params["input_dim"], list):
-                params["input_dim"] = tuple(params["input_dim"])
-            elif isinstance(params["input_dim"], int):
-                params["input_dim"] = params["input_dim"]
-            elif isinstance(params["input_dim"], ListConfig):
-                input_dim_list = tuple(
-                    OmegaConf.to_container(params["input_dim"], resolve=True),
-                )
-                if len(input_dim_list) == 1:
-                    params["input_dim"] = input_dim_list[0]
-                else:
-                    params["input_dim"] = tuple(input_dim_list)
-            else:  # pragma: no cover
-                raise ValueError(
-                    f"input_dim must be a list or tuple. Got {type(params['input_dim'])}",
-                )
-        if "output_dim" in params:
-            if isinstance(params["output_dim"], list):
-                params["output_dim"] = tuple(params["output_dim"])
-            elif isinstance(params["output_dim"], int):
-                params["output_dim"] = params["output_dim"]
-            elif isinstance(params["output_dim"], ListConfig):
-                output_dim_list = OmegaConf.to_container(
-                    params["output_dim"],
-                    resolve=True,
-                )
-                if len(output_dim_list) == 1:
-                    params["output_dim"] = output_dim_list[0]
-                else:
-                    params["output_dim"] = tuple(output_dim_list)
-            else:  # pragma: no cover
-                raise ValueError(
-                    f"output_dim must be a list or tuple. Got {type(params['output_dim'])}",
-                )
         name = params.pop("name", self.name)
         if self.pipeline is not None:
             pipeline = deepcopy(self.pipeline)
             obj = factory(name, **params)
-            # if isinstance(pipeline, DictConfig):
-            #     pipeline = OmegaConf.to_container(pipeline, resolve=True)
-            # elif isinstance(pipeline, dict):
-            #     pipeline = pipeline
             if is_dataclass(pipeline):
                 pipeline = asdict(pipeline)
             else:  # pragma: no cover
@@ -107,7 +67,6 @@ class ModelTrainer:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, **kwargs):
-        logger.info(f"Initializing model trainer with kwargs {kwargs}")
         self.kwargs = kwargs
 
     def __call__(self, data: list, model: object, library=None):
@@ -129,6 +88,7 @@ class ModelTrainer:
         try:
             start = process_time_ns()
             start_timestamp = time()
+            logger.info(f"Fitting type(model): {type(model)} with kwargs {trainer}")
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns()
             end_timestamp = time()
@@ -136,6 +96,10 @@ class ModelTrainer:
             from art.utils import to_categorical
 
             nb_classes = len(np.unique(data[2]))
+            if nb_classes < 2:
+                nb_classes = 2
+            data[2] = np.squeeze(data[2])
+            data[3] = np.squeeze(data[3])
             data[2] = to_categorical(data[2], nb_classes=nb_classes)
             data[3] = to_categorical(data[3], nb_classes=nb_classes)
             start = process_time_ns()
@@ -148,6 +112,18 @@ class ModelTrainer:
                 from art.utils import to_categorical
 
                 nb_classes = len(np.unique(data[2]))
+                if nb_classes < 2:
+                    nb_classes = 2
+                data[2] = to_categorical(data[2], nb_classes=nb_classes)
+                data[3] = to_categorical(data[3], nb_classes=nb_classes)
+                start = process_time_ns()
+                start_timestamp = time()
+                model.fit(data[0], data[2], **trainer)
+                end = process_time_ns()
+                end_timestamp = time()
+            if "must be greater than or equal to 2" in str(e):
+                from art.utils import to_categorical
+
                 data[2] = to_categorical(data[2], nb_classes=nb_classes)
                 start = process_time_ns()
                 start_timestamp = time()
@@ -169,7 +145,7 @@ class ModelTrainer:
             except Exception as e:
                 raise e
         except RuntimeError as e:  # pragma: no cover
-            if "eager mode" in str(e):
+            if "eager mode" in str(e) and library in tensorflow_dict.keys():
                 import tensorflow as tf
 
                 tf.config.run_functions_eagerly(True)
@@ -178,7 +154,9 @@ class ModelTrainer:
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
-            elif "should be the same" in str(e).lower():
+            elif (
+                "should be the same" in str(e).lower() and library in torch_dict.keys()
+            ):
                 import torch
 
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -295,9 +273,6 @@ class Model:
         else:
             self.art = None
         self.name = my_hash(self) if name is None else str(name)
-        logger.info(
-            f"Initializing model with data {self.data}, init {self.init}, trainer {self.trainer}, art {self.art}",
-        )
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -312,20 +287,9 @@ class Model:
         probabilities_file=None,
         time_dict_file=None,
         losses_file=None,
+        **kwargs,
     ):
         result_dict = {}
-        if isinstance(data, Data):
-            data = data.initialize(data_file)
-        elif isinstance(data, type(None)):
-            data = self.data.initialize(data_file)
-        elif isinstance(data, (str, Path)):
-            data = self.load(data)
-        assert isinstance(
-            data,
-            (type(None), list, tuple),
-        ), f"Data {data} is not a list. It is of type {type(data)}."
-        assert len(data) == 4, f"Data {data} is not a tuple of length 4."
-        result_dict["data"] = data
         if isinstance(model, Model):
             data, model = model.initialize(data)
         elif isinstance(model, type(None)):
@@ -333,13 +297,38 @@ class Model:
             assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         elif isinstance(model, (str, Path)):
             model = self.load(model)
+            if isinstance(data, Data):
+                data = data(data_file=data_file)
+            elif isinstance(data, type(None)):
+                data = self.data.initialize(data_file)
+            elif isinstance(data, (str, Path)):
+                data = self.data.load(data)
+            else:
+                assert len(data) == 4, f"Data {data} is not a tuple of length 4."
+            assert isinstance(
+                data,
+                (list, tuple),
+            ), f"Data {data} is not a list. It is of type {type(data)}."
         elif hasattr(model, ("fit", "fit_generator")):
             assert hasattr(model, "predict") or hasattr(
                 model,
                 "predict_proba",
             ), f"Model {model} does not have a predict or predict_proba method."
+            if isinstance(data, Data):
+                data = data.initialize(data_file)
+            elif isinstance(data, type(None)):
+                data = self.data.initialize(data_file)
+            elif isinstance(data, (str, Path)):
+                data = self.load(data)
+            assert isinstance(
+                data,
+                (type(None), list, tuple),
+            ), f"Data {data} is not a list. It is of type {type(data)}."
         else:  # pragma: no cover
             raise ValueError(f"Model {model} is not a valid model.")
+        assert len(data) == 4, f"Data {data} is not a tuple of length 4."
+        assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+        result_dict["data"] = data
         result_dict["model"] = model
 
         if predictions_file is not None and Path(predictions_file).exists():
@@ -419,13 +408,7 @@ class Model:
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
             else:
-                probs, prob_time_dict = self.predict_proba(
-                    data=data,
-                    model=model,
-                    probabilities_file=probabilities_file,
-                )
-                result_dict["probabilities"] = probs
-                result_dict["time_dict"].update(**prob_time_dict)
+                pass
             # Predicting loss
             if losses_file is not None:
                 loss, loss_time_dict = self.predict_log_loss(
@@ -440,14 +423,7 @@ class Model:
                 loss = self.data.load(losses_file)
                 result_dict["losses"] = loss
             else:
-                loss, loss_time_dict = self.predict_log_loss(
-                    data=data,
-                    model=model,
-                    losses_file=losses_file,
-                )
-                time_dict.update(**loss_time_dict)
-                result_dict["losses"] = loss
-                result_dict["time_dict"].update(**loss_time_dict)
+                pass
             if time_dict_file is not None:
                 if Path(time_dict_file).exists():
                     old_time_dict = self.data.load(time_dict_file)
