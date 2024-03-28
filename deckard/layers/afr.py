@@ -34,7 +34,7 @@ def fit_aft(
     summary_file=None,
     summary_plot=None,
     folder=None,
-    replacement_dict = {},
+    replacement_dict={},
     **kwargs,
 ):
 
@@ -81,13 +81,16 @@ def fit_aft(
             logger.info(f"Saved summary to {summary_file}")
     if summary_plot is not None:
         plot_summary(
-            aft = aft,
-            title = kwargs.get("title", f"{mtype} AFT Summary".replace("_", " ").replace("-","").title()),
-            file = summary_plot,
-            xlabel = kwargs.get("xlabel", "Covariate"),
-            ylabel = kwargs.get("ylabel", "p-value"),
-            replacement_dict = replacement_dict,
-            folder = folder,
+            aft=aft,
+            title=kwargs.get(
+                "title",
+                f"{mtype} AFT Summary".replace("_", " ").replace("-", "").title(),
+            ),
+            file=summary_plot,
+            xlabel=kwargs.get("xlabel", "Covariate"),
+            ylabel=kwargs.get("ylabel", "p-value"),
+            replacement_dict=replacement_dict,
+            folder=folder,
             filetype=".pdf",
         )
     return aft
@@ -181,8 +184,8 @@ def plot_summary(
     ax.get_figure().savefig(file)
     plt.gcf().clear()
     return ax
-    
-    
+
+
 def plot_qq(
     aft,
     title,
@@ -290,7 +293,7 @@ def make_afr_table(
     aft_data["Mean $S(t;\\theta|x_{t})$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data['Mean $S(t;\\theta|x_{i})$'] = [
+    aft_data["Mean $S(t;\\theta|x_{i})$"] = [
         x.predict_expectation(X_test).mean() for x in aft_dict.values()
     ]
     aft_data = aft_data.round(2)
@@ -421,7 +424,8 @@ def render_afr_plot(
                 aft=univariate_aft,
                 title=config.get(
                     "title",
-                    f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFT QQ Plot",
+                    f"{mtype}".replace("_", " ").replace("-", " ").title()
+                    + " AFT QQ Plot",
                 ),
                 file=config.get("file", f"{mtype}_qq.pdf"),
                 xlabel=label_dict.get("xlabel", "Theoretical Quantiles"),
