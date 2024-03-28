@@ -32,7 +32,9 @@ def fit_aft(
     duration_col,
     mtype,
     summary_file=None,
+    summary_plot=None,
     folder=None,
+    replacement_dict = {},
     **kwargs,
 ):
 
@@ -77,6 +79,17 @@ def fit_aft(
             logger.warning(f"suffix {suffix} not recognized. Saving to csv")
             summary.to_csv(summary_file)
             logger.info(f"Saved summary to {summary_file}")
+    if summary_plot is not None:
+        plot_summary(
+            aft = aft,
+            title = kwargs.get("title", f"{mtype} AFT Summary".replace("_", " ").replace("-","").title()),
+            file = summary_plot,
+            xlabel = kwargs.get("xlabel", "Covariate"),
+            ylabel = kwargs.get("ylabel", "p-value"),
+            replacement_dict = replacement_dict,
+            folder = folder,
+            filetype=".pdf",
+        )
     return aft
 
 
