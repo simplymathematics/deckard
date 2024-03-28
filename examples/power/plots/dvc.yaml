@@ -129,26 +129,18 @@ stages:
       - plots/combined/weibull_aft.pdf # You can also define them manually
       - plots/combined/weibull_epochs_partial_effect.pdf
       - plots/combined/weibull_batch_size_partial_effect.pdf
-      - plots/combined/weibull_train_time_partial_effect.pdf
-      - plots/combined/weibull_predict_time_partial_effect.pdf
       - plots/combined/weibull_attack_eps_partial_effect.pdf
       - plots/combined/cox_aft.pdf
       - plots/combined/cox_epochs_partial_effect.pdf
       - plots/combined/cox_batch_size_partial_effect.pdf
-      - plots/combined/cox_train_time_partial_effect.pdf
-      - plots/combined/cox_predict_time_partial_effect.pdf
       - plots/combined/cox_attack_eps_partial_effect.pdf
       - plots/combined/log_logistic_aft.pdf
       - plots/combined/log_logistic_epochs_partial_effect.pdf
       - plots/combined/log_logistic_batch_size_partial_effect.pdf
-      - plots/combined/log_logistic_train_time_partial_effect.pdf
-      - plots/combined/log_logistic_predict_time_partial_effect.pdf
       - plots/combined/log_logistic_attack_eps_partial_effect.pdf
       - plots/combined/log_normal_aft.pdf
       - plots/combined/log_normal_epochs_partial_effect.pdf
       - plots/combined/log_normal_batch_size_partial_effect.pdf
-      - plots/combined/log_normal_train_time_partial_effect.pdf
-      - plots/combined/log_normal_predict_time_partial_effect.pdf
       - plots/combined/log_normal_attack_eps_partial_effect.pdf
       
     metrics:

@@ -5,12 +5,19 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 from lifelines import (
     WeibullAFTFitter,
     LogNormalAFTFitter,
     LogLogisticAFTFitter,
     CoxPHFitter,
+    WeibullFitter,
+    LogNormalFitter,
+    LogLogisticFitter,
+    plotting,
+    
 )
+
 from .clean_data import drop_frames_without_results
 import matplotlib
 import logging
@@ -20,21 +27,13 @@ import argparse
 logger = logging.getLogger(__name__)
 
 
-def plot_aft(
+def fit_aft(
     df,
-    file,
     event_col,
     duration_col,
-    title,
     mtype,
-    xlabel=None,
-    ylabel=None,
-    replacement_dict={},
-    filetype = ".pdf",
-    folder = ".",
     **kwargs,
 ):
-    file = Path(folder, file).with_suffix(filetype)
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
     elif mtype == "log_normal":
@@ -50,8 +49,18 @@ def plot_aft(
         assert (
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    aft.fit(df, event_col=event_col, duration_col=duration_col)
+    return aft
+
+def plot_aft(aft, title, file, xlabel, ylabel, replacement_dict={}, folder=None, filetype=".pdf"):
+    suffix = Path(file).suffix
+    if suffix == "":
+        file = Path(file).with_suffix(filetype)
+    else:
+        file = Path(file)
+    if folder is not None:
+        file = Path(folder, file)
     plt.gcf().clear()
-    aft.fit(df, duration_col=duration_col, event_col=event_col)
     ax = aft.plot()
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -64,10 +73,31 @@ def plot_aft(
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     logger.info(f"Saved graph to {file}")
-    plt.show()
-    plt.gcf().clear()
-    return ax, aft
+    return ax
 
+
+def plot_qq(aft, title, file, xlabel=None, ylabel=None, replacement_dict={}, folder=None, filetype=".pdf", ax=None,):
+    suffix = Path(file).suffix
+    if suffix == "":
+        file = Path(file).with_suffix(filetype)
+    else:
+        file = Path(file)
+    if folder is not None:
+        file = Path(folder, file)
+    plt.gcf().clear()
+    ax = plotting.qq_plot(aft, ax=ax)
+    labels = ax.get_yticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    ax.set_yticklabels(labels)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.get_figure().tight_layout()
+    ax.get_figure().savefig(file)
+    logger.info(f"Saved graph to {file}")
+    return ax
 
 def plot_partial_effects(
     aft,
@@ -106,17 +136,14 @@ def plot_partial_effects(
 
 
 def score_model(aft, train, test):
-    train_score = aft.score(train)
-    test_score = aft.score(test)
+    train_score = aft.score(train, scoring_method="concordance_index")
+    test_score = aft.score(test, scoring_method="concordance_index")
     scores = {"train_score": train_score, "test_score": test_score}
     plt.show()
     return scores
 
 
-def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
-    assert len(score_list) == len(
-        aft_dict,
-    ), "Length of score list and aft dict must be equal"
+def make_afr_table(aft_dict, dataset, X_train, X_test, folder=".", event_col="adv_failures", duration_col="adv_fit_time"):
     folder = Path(folder)
     aft_data = pd.DataFrame()
     aft_data.index.name = "Model"
@@ -124,18 +151,18 @@ def make_afr_table(score_list, aft_dict, dataset, X_train, folder="."):
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    aft_data["Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
+    aft_data["Training Set Concordance"] = [x.concordance_index_ for x in aft_dict.values()]
+    aft_data["Test Set Concordance"] = [x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()]
     aft_data["BIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    # aft_data["Train LL"] = [x["train_score"] for x in score_list]
-    # aft_data["Test LL"] = [x["test_score"] for x in score_list]
     aft_data["Mean $S(t;\\theta)$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data["Median $S(t;\\theta)$"] = [
-        x.predict_median(X_train).median() for x in aft_dict.values()
-    ]
+    means = []
+    stds = []
+    combined = pd.concat([X_train, X_test])
+    
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
@@ -166,7 +193,7 @@ def clean_data_for_aft(
     logger.info(f"Covariates : {covariate_list}")
     for kwarg in covariate_list:
         assert kwarg in subset.columns, f"{kwarg} not in data.columns"
-        cleaned = pd.concat([cleaned, subset[kwarg]], axis=1)
+        cleaned[kwarg] = subset[kwarg]
     cols = cleaned.columns
     cleaned = pd.DataFrame(subset, columns=cols)
     for col in cols:
@@ -174,7 +201,7 @@ def clean_data_for_aft(
         cleaned = cleaned[cleaned[col] != 1e10]
     cleaned.dropna(inplace=True, how="any", axis=0)
     assert (
-        target in cleaned
+        target in cleaned.columns
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     logger.info(f"Shape of cleaned data: {cleaned.shape}")
     return cleaned
@@ -184,11 +211,10 @@ def split_data_for_aft(
     data,
     target,
     duration_col,
-    covariate_list,
     test_size=0.2,
     random_state=42,
 ):  
-    cleaned = clean_data_for_aft(data, covariate_list, target=target)
+    cleaned = pd.get_dummies(data, prefix="dummy", prefix_sep="_", drop_first=True)
     X_train, X_test = train_test_split(
         cleaned,
         train_size=(1 - test_size),
@@ -196,46 +222,98 @@ def split_data_for_aft(
         random_state=random_state,
     )
     assert (
-        target in cleaned
+        target in cleaned.columns
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
     assert (
-        duration_col in cleaned
+        duration_col in cleaned.columns
     ), f"Duration {duration_col} not in dataframe with columns {cleaned.columns}"
     X_train = X_train.dropna(axis=0, how="any")
     X_test = X_test.dropna(axis=0, how="any")
     return X_train, X_test
 
 
-def render_afr_plot(mtype, config, X_train, X_test, target, duration_col, folder="."):
+def render_afr_plot(mtype, config, X_train, target, duration_col, X_test=None,  folder="."):
     if len(config.keys()) > 0:
         plots = []
-        plot_dict = config.get("plot", {})
-        label_dict = config.get("labels", [])
-        partial_effect_list = config.get("partial_effect", [])
-        afr_plot, aft = plot_aft(
-            X_train,
+        plot_dict = config.pop("plot", {})
+        label_dict = plot_dict.pop("labels", plot_dict.get("labels", {}))
+        partial_effect_list = config.pop("partial_effect", [])
+        model_config = config.pop("model", {})
+        
+        aft = fit_aft(
+            df=X_train,
             event_col=target,
             duration_col=duration_col,
             mtype=mtype,
-            folder=folder,
-            **plot_dict,
-            replacement_dict=label_dict,
+            **model_config,
         )
+        afr_plot = plot_aft(
+            aft=aft,
+            title=config.get("title", f"{mtype} AFT".replace("_", " ").replace("-", " ").title()),
+            file=config.get("file", f"{mtype}_aft.pdf"),
+            xlabel=label_dict.get("xlabel", "Time"),
+            ylabel=label_dict.get("ylabel", "Survival Probability"),
+            replacement_dict=label_dict,
+            folder=folder,
+        )
+        if mtype == "cox":
+            logger.warning("Cox model does not have a CDF plot")
+        else:
+            if mtype == "weibull":
+                univariate_aft = WeibullFitter()
+            elif mtype == "log_normal":
+                univariate_aft = LogNormalFitter()
+            elif mtype == "log_logistic":
+                univariate_aft = LogLogisticFitter()
+            else:
+                raise ValueError(f"Model {mtype} not recognized")
+            univariate_aft.fit(X_train[duration_col], X_train[target])
+            cdf_plot = plot_qq(
+                aft=univariate_aft,
+                title=config.get("title", f"{mtype} AFT QQ Plot".replace("_", " ").replace("-", " ").title()),
+                file=config.get("file", f"{mtype}_qq.pdf"),
+                xlabel=label_dict.get("xlabel", "Time"),
+                ylabel=label_dict.get("ylabel", "Survival Probability"),
+                replacement_dict=label_dict,
+                folder=folder,
+            )
+            plots.append(cdf_plot)
         plots.append(afr_plot)
-        score = score_model(aft, X_train, X_test)
+        if X_test is not None:
+            test_aft = fit_aft(
+                df=X_test,
+                event_col=target,
+                duration_col=duration_col,
+                mtype=mtype,
+                **model_config,
+            )
+            test_afr_plot = plot_aft(
+                aft=test_aft,
+                title=config.get("title", f"{mtype} AFT".replace("_", " ").replace("-", " ").title()),
+                file=config.get("file", f"{mtype}_aft_test.pdf"),
+                xlabel=label_dict.get("xlabel", "Time"),
+                ylabel=label_dict.get("ylabel", "Survival Probability"),
+                replacement_dict=label_dict,
+                folder=folder,
+            )
+            plots.append(test_afr_plot)
         for partial_effect_dict in partial_effect_list:
-            partial_effect_plot = plot_partial_effects(aft=aft, **partial_effect_dict, folder=folder)
+            file = partial_effect_dict.pop("file", "partial_effects.pdf")
+            partial_effect_plot = plot_partial_effects(aft=aft, file=file, **partial_effect_dict, folder=folder)
             plots.append(partial_effect_plot)
-    return aft, plots, score
+    return aft, plots
+
 
 
 def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8, folder="."):
     covariate_list = config.pop("covariates", [])
+    cleaned = clean_data_for_aft(data, covariate_list, target=target)
+    assert target in cleaned.columns, f"{target} not in data.columns"
+    assert duration_col in cleaned.columns, f"{duration_col} not in data.columns"
     X_train, X_test = split_data_for_aft(
-        data,
+        cleaned,
         target,
         duration_col,
-        covariate_list,
         test_size=test_size,
         random_state=42,
     )
@@ -245,7 +323,7 @@ def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=
     mtypes = list(config.keys())
     for mtype in mtypes:
         sub_config = config.get(mtype, {})
-        models[mtype], plots[mtype], scores[mtype] = render_afr_plot(
+        models[mtype], plots[mtype] = render_afr_plot(
             mtype=mtype,
             config=sub_config,
             X_train=X_train,
@@ -254,8 +332,7 @@ def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=
             duration_col=duration_col,
             folder = folder,
         )
-    score_list = list(scores.values())
-    aft_data = make_afr_table(score_list, models, dataset, X_train, folder=folder)
+    aft_data = make_afr_table(models, dataset, X_train, X_test, folder=folder)
     print("*"*80)
     print("*"*34+"  RESULTS   "+"*"*34)
     print("*"*80)
@@ -263,15 +340,35 @@ def render_all_afr_plots(config, duration_col, target, data, dataset, test_size=
     print("*"*80)
 
 
-if "__main__" == __name__:
-    afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
-    afr_parser.add_argument("--dataset", type=str, default="mnist")
-    afr_parser.add_argument("--data_file", type=str, default="data.csv")
-    afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
-    afr_parser.add_argument("--plots_folder", type=str, default="plots")
-    args = afr_parser.parse_args()
+def prepare_aft_data(args, data, config):
+    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
+    covariates = config.get("covariates", [])
+    assert len(covariates) > 0, "No covariates specified in config file"
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
+    logger.info(f"Shape of data before data before dropping na: {data.shape}")
+    if "adv_failures" in covariates and "adv_failures" not in data.columns:
+        data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
+            :,
+            "attack.attack_size",
+        ]
+    if "ben_failures" in covariates and "ben_failures" not in data.columns:
+        if "predict_time" in data.columns:
+            data['n_samples'] = data['predict_time'] / data['predict_time_per_sample'].astype(int)
+        elif "predict_proba_time" in data.columns:
+            data['n_samples'] = data['predict_proba_time'] / data['predict_time_per_sample'].astype(int)
+        elif "predict_loss_time" in data.columns:
+            data['n_samples'] = data['predict_loss_time'] / data['predict_time_per_sample'].astype(int)
+        else:
+            assert "n_samples" in data.columns, "n_samples not in data"
+        data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
+            :,
+            "n_samples",
+        ]
+    data = drop_frames_without_results(data, covariates)
+    return data
+
+def main(args):
     target = args.target
     duration_col = args.duration_col
     dataset = args.dataset
@@ -296,19 +393,18 @@ if "__main__" == __name__:
     for k,v in fillna.items():
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
-    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
-    covariates = config.get("covariates", [])
-    assert len(covariates) > 0, "No covariates specified in config file"
-    logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data = drop_frames_without_results(data, covariates)
-    logger.info(f"Shape of data before data before dropping na: {data.shape}")
-    data.loc[:, "adv_failures"] = (1 - data.loc[:, "adv_accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
-    data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
-        :,
-        "attack.attack_size",
-    ]
+    data = prepare_aft_data(args, data, config)
+    assert target in data.columns, f"{target} not in data.columns"
+    assert duration_col in data.columns, f"{duration_col} not in data.columns"
     render_all_afr_plots(config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER)
+
+if "__main__" == __name__:
+    afr_parser = argparse.ArgumentParser()
+    afr_parser.add_argument("--target", type=str, default="adv_failures")
+    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
+    afr_parser.add_argument("--dataset", type=str, default="mnist")
+    afr_parser.add_argument("--data_file", type=str, default="data.csv")
+    afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
+    afr_parser.add_argument("--plots_folder", type=str, default="plots")
+    args = afr_parser.parse_args()
+    main(args)
