@@ -52,7 +52,14 @@ def fit_aft(
 
 
 def plot_aft(
-    aft, title, file, xlabel, ylabel, replacement_dict={}, folder=None, filetype=".pdf"
+    aft,
+    title,
+    file,
+    xlabel,
+    ylabel,
+    replacement_dict={},
+    folder=None,
+    filetype=".pdf",
 ):
     suffix = Path(file).suffix
     if suffix == "":
@@ -256,7 +263,13 @@ def split_data_for_aft(
 
 
 def render_afr_plot(
-    mtype, config, X_train, target, duration_col, X_test=None, folder="."
+    mtype,
+    config,
+    X_train,
+    target,
+    duration_col,
+    X_test=None,
+    folder=".",
 ):
     if len(config.keys()) > 0:
         plots = []
@@ -275,7 +288,8 @@ def render_afr_plot(
         afr_plot = plot_aft(
             aft=aft,
             title=config.get(
-                "title", f"{mtype} AFT".replace("_", " ").replace("-", " ").title()
+                "title",
+                f"{mtype} AFT".replace("_", " ").replace("-", " ").title(),
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
             xlabel=label_dict.get("xlabel", "Time"),
@@ -320,7 +334,8 @@ def render_afr_plot(
             test_afr_plot = plot_aft(
                 aft=test_aft,
                 title=config.get(
-                    "title", f"{mtype} AFT".replace("_", " ").replace("-", " ").title()
+                    "title",
+                    f"{mtype} AFT".replace("_", " ").replace("-", " ").title(),
                 ),
                 file=config.get("file", f"{mtype}_aft_test.pdf"),
                 xlabel=label_dict.get("xlabel", "Time"),
@@ -332,14 +347,23 @@ def render_afr_plot(
         for partial_effect_dict in partial_effect_list:
             file = partial_effect_dict.pop("file", "partial_effects.pdf")
             partial_effect_plot = plot_partial_effects(
-                aft=aft, file=file, **partial_effect_dict, folder=folder
+                aft=aft,
+                file=file,
+                **partial_effect_dict,
+                folder=folder,
             )
             plots.append(partial_effect_plot)
     return aft, plots
 
 
 def render_all_afr_plots(
-    config, duration_col, target, data, dataset, test_size=0.8, folder="."
+    config,
+    duration_col,
+    target,
+    data,
+    dataset,
+    test_size=0.8,
+    folder=".",
 ):
     covariate_list = config.pop("covariates", [])
     cleaned = clean_data_for_aft(data, covariate_list, target=target)
@@ -438,7 +462,13 @@ def main(args):
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     render_all_afr_plots(
-        config, duration_col, target, data, dataset, test_size=0.8, folder=FOLDER
+        config,
+        duration_col,
+        target,
+        data,
+        dataset,
+        test_size=0.8,
+        folder=FOLDER,
     )
 
 
