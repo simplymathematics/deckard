@@ -1,6 +1,6 @@
 covariates:
   - accuracy
-  - train_time
+  # - train_time
   - predict_proba_time
   - model.trainer.nb_epoch
   - model.trainer.batch_size

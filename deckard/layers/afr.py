@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 from sklearn.model_selection import train_test_split
 from lifelines import (
     WeibullAFTFitter,
@@ -28,14 +28,13 @@ logger = logging.getLogger(__name__)
 def fit_aft(
     df,
     event_col,
-    
     duration_col,
     mtype,
     summary_file=None,
     folder=None,
     **kwargs,
 ):
-   
+
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
     elif mtype == "log_normal":
@@ -308,7 +307,7 @@ def render_afr_plot(
         model_config = config.pop("model", {})
 
         aft = fit_aft(
-            summary_file = config.get("summary_file", f"{mtype}_summary.csv"),
+            summary_file=config.get("summary_file", f"{mtype}_summary.csv"),
             folder=folder,
             df=X_train,
             event_col=target,
@@ -323,8 +322,8 @@ def render_afr_plot(
                 f"{mtype} AFT".replace("_", " ").replace("-", " ").title(),
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
-            xlabel=label_dict.get("xlabel", "Time"),
-            ylabel=label_dict.get("ylabel", "Survival Probability"),
+            xlabel=label_dict.get("xlabel", "Time (s)"),
+            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"),
             replacement_dict=label_dict,
             folder=folder,
         )

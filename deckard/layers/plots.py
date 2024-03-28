@@ -125,9 +125,9 @@ def cat_plot(
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
     if x_lim is not None:
-      graph.set(xlim=x_lim)
+        graph.set(xlim=x_lim)
     if y_lim is not None:
-      graph.set(ylim=y_lim)
+        graph.set(ylim=y_lim)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
