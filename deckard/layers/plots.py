@@ -37,6 +37,8 @@ def cat_plot(
     file,
     folder,
     legend_title=None,
+    x_lim=None,
+    y_lim=None,
     hue_order=None,
     rotation=0,
     set={},
@@ -122,6 +124,10 @@ def cat_plot(
             pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
+    if x_lim is not None:
+        graph.set(xlim=x_lim)
+    if y_lim is not None:
+        graph.set(ylim=y_lim)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
@@ -229,6 +235,8 @@ def scatter_plot(
     folder,
     y_scale=None,
     x_scale=None,
+    x_lim=None,
+    y_lim=None,
     legend={},
     hue_order=None,
     filetype=".eps",
@@ -296,6 +304,10 @@ def scatter_plot(
         graph.set_yscale(y_scale)
     if x_scale is not None:
         graph.set_xscale(x_scale)
+    if x_lim is not None:
+        graph.set_xlim(x_lim)
+    if y_lim is not None:
+        graph.set_ylim(y_lim)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)
@@ -363,6 +375,7 @@ def main(args):
     logger.info(f"Creating folder {FOLDER}")
     FOLDER.mkdir(parents=True, exist_ok=True)
     logger.info(f"Saving data to {FOLDER }")
+    logger.info(f"Saving data to {FOLDER }")
     IMAGE_FILETYPE = (
         args.plotfiletype
         if args.plotfiletype.startswith(".")
@@ -382,6 +395,7 @@ def main(args):
     for dict_ in line_plot_list:
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
+    scatter_plot_list = big_dict.get("scatter_plot", [])
     scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)

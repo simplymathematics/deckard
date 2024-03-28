@@ -32,8 +32,7 @@ for data in datasets:
         extra_df["dataset"] = data
         big_df = pd.concat([big_df, extra_df], axis=0)
 
-
-# if "l4" in big_df.device_id.str.lower().unique():
+# Normalize the times by sample size
 ben_train_samples = pd.Series(big_df["train_time"] / big_df["train_time_per_sample"])
 ben_pred_samples = pd.Series(big_df["predict_time"] / big_df["predict_time_per_sample"])
 adv_pred_samples = pd.Series(
@@ -43,13 +42,13 @@ big_df = big_df.assign(ben_pred_samples=ben_pred_samples.values)
 big_df = big_df.assign(adv_pred_samples=adv_pred_samples.values)
 big_df = big_df.assign(ben_train_samples=ben_train_samples.values)
 big_df["train_time"] = big_df["train_time"] / big_df["ben_train_samples"]
-big_df["predict_time"] = big_df["predict_time"] / (big_df["ben_pred_samples"] * 0.25)
+big_df["predict_time"] = big_df["predict_time"] / (big_df["ben_pred_samples"])
 big_df["adv_fit_time"] = big_df["adv_fit_time"] / big_df["adv_pred_samples"]
 big_df["train_power"] = big_df["train_power"] / big_df["ben_train_samples"]
 big_df["predict_power"] = big_df["predict_power"] / big_df["ben_pred_samples"]
 big_df["adv_fit_power"] = big_df["adv_fit_power"] / big_df["adv_pred_samples"]
 
-
+# Device Metadata
 memory_bandwith = {
     "nvidia-tesla-p100": 732,
     "nvidia-tesla-v100": 900,
@@ -102,12 +101,12 @@ big_df.loc[:, "memory_per_batch"] = (
 big_df["Device"] = big_df["device_id"].str.replace("-", " ").str.title()
 big_df = big_df.reset_index(drop=True)
 Path("data/combined").mkdir(parents=True, exist_ok=True)
-Path("plots/combined").mkdir(parents=True, exist_ok=True)
+Path("combined").mkdir(parents=True, exist_ok=True)
 big_df.to_csv("data/combined/combined.csv")
 big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False)
 
 # Accuracy Plot
-fig, ax = plt.subplots(1, 2, figsize=(8, 5))
+fig, ax = plt.subplots(1, 2, figsize=(5, 5))
 ben_acc = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -133,7 +132,7 @@ adv_acc.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 for _, ax in enumerate(fig.axes):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 fig.tight_layout()
-fig.savefig("plots/combined/acc.pdf")
+fig.savefig("combined/acc.pdf")
 
 # Time Plot
 fig, ax = plt.subplots(1, 3, figsize=(16, 5))
@@ -171,7 +170,7 @@ adv_fit_time.set_ylabel("$t_{a}$ (seconds)")
 adv_fit_time.set_xlabel("Dataset")
 adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/time.pdf")
+fig.savefig("combined/time.pdf")
 
 # Power Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
@@ -209,7 +208,7 @@ adv_fit_time.set_ylabel("$P_{a}$ (Watts)")
 adv_fit_time.set_xlabel("Dataset")
 adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/power.pdf")
+fig.savefig("combined/power.pdf")
 
 # Cost Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
@@ -247,4 +246,4 @@ adv_fit_cost.set_ylabel("$C_{a}$ (USD)")
 adv_fit_cost.set_xlabel("Dataset")
 adv_fit_cost.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/cost.pdf")
+fig.savefig("combined/cost.pdf")
