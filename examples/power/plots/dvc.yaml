@@ -165,6 +165,6 @@ stages:
       - combined
     do:
       cmd: >-
-        rm -rf ~/kepler-ml/data/${item} && mkdir -p ~/kepler-ml/data/${item}/ && cp -r ${item}/* ~/kepler_ml/data/
+        rm -rf ~/kepler-ml/plots/${item}/ && mkdir -p ~/kepler-ml/plots/${item}/ && cp -r ${item}/* ~/kepler-ml/plots/${item}/
       deps:
         - ${item}/

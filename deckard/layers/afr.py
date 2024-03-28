@@ -179,7 +179,6 @@ def plot_summary(
         labels = [label.replace(k, v) for label in labels]
     ax.set_xticklabels(labels, rotation=90)
     ax.set_yscale("log")
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
     plt.tight_layout()
     ax.get_figure().savefig(file)
     plt.gcf().clear()
