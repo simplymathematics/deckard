@@ -102,7 +102,7 @@ big_df.loc[:, "memory_per_batch"] = (
 big_df["Device"] = big_df["device_id"].str.replace("-", " ").str.title()
 big_df = big_df.reset_index(drop=True)
 Path("data/combined").mkdir(parents=True, exist_ok=True)
-Path("plots/combined").mkdir(parents=True, exist_ok=True)
+Path("combined").mkdir(parents=True, exist_ok=True)
 big_df.to_csv("data/combined/combined.csv")
 big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False)
 
@@ -133,7 +133,7 @@ adv_acc.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 for _, ax in enumerate(fig.axes):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
 fig.tight_layout()
-fig.savefig("plots/combined/acc.pdf")
+fig.savefig("combined/acc.pdf")
 
 # Time Plot
 fig, ax = plt.subplots(1, 3, figsize=(16, 5))
@@ -171,7 +171,7 @@ adv_fit_time.set_ylabel("$t_{a}$ (seconds)")
 adv_fit_time.set_xlabel("Dataset")
 adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/time.pdf")
+fig.savefig("combined/time.pdf")
 
 # Power Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
@@ -209,7 +209,7 @@ adv_fit_time.set_ylabel("$P_{a}$ (Watts)")
 adv_fit_time.set_xlabel("Dataset")
 adv_fit_time.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/power.pdf")
+fig.savefig("combined/power.pdf")
 
 # Cost Plot
 fig, ax = plt.subplots(1, 3, figsize=(18, 5))
@@ -247,4 +247,4 @@ adv_fit_cost.set_ylabel("$C_{a}$ (USD)")
 adv_fit_cost.set_xlabel("Dataset")
 adv_fit_cost.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 fig.tight_layout()
-fig.savefig("plots/combined/cost.pdf")
+fig.savefig("combined/cost.pdf")
