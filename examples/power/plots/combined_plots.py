@@ -38,15 +38,15 @@ ben_pred_samples = pd.Series(big_df["predict_time"] / big_df["predict_time_per_s
 adv_pred_samples = pd.Series(
     big_df["adv_predict_time"] / big_df["adv_predict_time_per_sample"],
 )
-big_df = big_df.assign(ben_pred_samples=ben_pred_samples.values)
-big_df = big_df.assign(adv_pred_samples=adv_pred_samples.values)
-big_df = big_df.assign(ben_train_samples=ben_train_samples.values)
-big_df["train_time"] = big_df["train_time"] / big_df["ben_train_samples"]
-big_df["predict_time"] = big_df["predict_time"] / (big_df["ben_pred_samples"])
-big_df["adv_fit_time"] = big_df["adv_fit_time"] / big_df["adv_pred_samples"]
-big_df["train_power"] = big_df["train_power"] / big_df["ben_train_samples"]
-big_df["predict_power"] = big_df["predict_power"] / big_df["ben_pred_samples"]
-big_df["adv_fit_power"] = big_df["adv_fit_power"] / big_df["adv_pred_samples"]
+# big_df = big_df.assign(ben_pred_samples=ben_pred_samples.values)
+# big_df = big_df.assign(adv_pred_samples=adv_pred_samples.values)
+# big_df = big_df.assign(ben_train_samples=ben_train_samples.values)
+# big_df["train_time"] = big_df["train_time"] / big_df["ben_train_samples"]
+# big_df["predict_time"] = big_df["predict_time"] / (big_df["ben_pred_samples"])
+# big_df["adv_fit_time"] = big_df["adv_fit_time"] / big_df["adv_pred_samples"]
+# big_df["train_power"] = big_df["train_power"] / big_df["ben_train_samples"]
+# big_df["predict_power"] = big_df["predict_power"] / big_df["ben_pred_samples"]
+# big_df["adv_fit_power"] = big_df["adv_fit_power"] / big_df["adv_pred_samples"]
 
 # Device Metadata
 memory_bandwith = {
