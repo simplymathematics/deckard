@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+
 # import seaborn as sns
 from sklearn.model_selection import train_test_split
 from lifelines import (
@@ -323,7 +324,7 @@ def render_afr_plot(
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
             xlabel=label_dict.get("xlabel", "Time (s)"),
-            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"),
+            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"), # noqa W605
             replacement_dict=label_dict,
             folder=folder,
         )
