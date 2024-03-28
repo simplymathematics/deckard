@@ -126,6 +126,49 @@ def plot_aft(
     return ax
 
 
+def plot_summary(
+    aft,
+    title,
+    file,
+    xlabel,
+    ylabel,
+    replacement_dict={},
+    folder=None,
+    filetype=".pdf",
+):
+    suffix = Path(file).suffix
+    if suffix == "":
+        file = Path(file).with_suffix(filetype)
+    else:
+        file = Path(file)
+    if folder is not None:
+        file = Path(folder, file)
+    plt.gcf().clear()
+    summary = aft.summary.copy()
+    summary = pd.DataFrame(summary)
+    try:
+        cov = summary.index.get_level_values(1)
+        # print(list(set(cov)))
+        # input("List of covariates. Press Enter to continue...")
+        par = summary.index.get_level_values(0)
+        covariates = [f"{c}: {p}" for p, c in zip(par, cov)]
+    except IndexError:
+        covariates = summary.index
+    ax = sns.barplot(data=summary, x=covariates, y="p")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    labels = ax.get_xticklabels()
+    labels = [label.get_text() for label in labels]
+    for k, v in replacement_dict.items():
+        labels = [label.replace(k, v) for label in labels]
+    ax.set_xticklabels(labels, rotation=90)
+    ax.set_yscale("log")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
+    plt.tight_layout()
+    ax.get_figure().savefig(file)
+    plt.gcf().clear()
+    return ax
 def plot_qq(
     aft,
     title,
