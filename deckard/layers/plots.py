@@ -37,6 +37,8 @@ def cat_plot(
     file,
     folder,
     legend_title=None,
+    x_lim=None,
+    y_lim=None,
     hue_order=None,
     rotation=0,
     set={},
@@ -122,6 +124,10 @@ def cat_plot(
             pass
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     graph.set(**set)
+    if x_lim is not None:
+      graph.set(xlim=x_lim)
+    if y_lim is not None:
+      graph.set(ylim=y_lim)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
@@ -229,6 +235,8 @@ def scatter_plot(
     folder,
     y_scale=None,
     x_scale=None,
+    x_lim=None,
+    y_lim=None,
     legend={},
     hue_order=None,
     filetype=".eps",
@@ -296,6 +304,10 @@ def scatter_plot(
         graph.set_yscale(y_scale)
     if x_scale is not None:
         graph.set_xscale(x_scale)
+    if x_lim is not None:
+        graph.set_xlim(x_lim)
+    if y_lim is not None:
+        graph.set_ylim(y_lim)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)
