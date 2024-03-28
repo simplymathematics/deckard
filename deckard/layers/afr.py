@@ -111,7 +111,18 @@ def plot_aft(
     if folder is not None:
         file = Path(folder, file)
     plt.gcf().clear()
-    ax = aft.plot()
+    # Only plot the covariates, skipping the intercept and dummy variables
+    # Dummy variables can be examined using the plot_partial_effects function
+    try:
+        columns = aft.summary.index.get_level_values(1)
+    except IndexError:
+        columns = aft.summary.index
+    for col in columns:
+        if col.startswith("Intercept:"):
+            columns = columns.drop(col)
+        if col.startswith("dummy_"):
+            columns = columns.drop(col)
+    ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
@@ -197,8 +208,8 @@ def plot_qq(
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
     ax.set_yticklabels(labels)
-    # ax.set_xlabel(xlabel)
-    # ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
@@ -267,17 +278,20 @@ def make_afr_table(
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    aft_data["Training Set Concordance"] = [
+    aft_data["Concordance for $x_t$"] = [
         x.concordance_index_ for x in aft_dict.values()
     ]
-    aft_data["Test Set Concordance"] = [
+    aft_data["Concordance for $x_i$"] = [
         x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()
     ]
     aft_data["BIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    aft_data["Mean $S(t;\\theta)$"] = [
+    aft_data["Mean $S(t;\\theta|x_{t})$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
+    ]
+    aft_data['Mean $S(t;\\theta|x_{i})$'] = [
+        x.predict_expectation(X_test).mean() for x in aft_dict.values()
     ]
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
@@ -363,10 +377,9 @@ def render_afr_plot(
         label_dict = plot_dict.pop("labels", plot_dict.get("labels", {}))
         partial_effect_list = config.pop("partial_effect", [])
         model_config = config.pop("model", {})
-        pretty_mtype = mtype.replace("_", " ").replace("-", " ").title()
         aft = fit_aft(
-            summary_file=config.get("summary_file", f"{pretty_mtype}_summary.csv"),
-            summary_plot=config.get("summary_plot", f"{pretty_mtype}_summary.pdf"),
+            summary_file=config.get("summary_file", f"{mtype}_summary.csv"),
+            summary_plot=config.get("summary_plot", f"{mtype}_summary.pdf"),
             folder=folder,
             df=X_train,
             event_col=target,
@@ -411,8 +424,8 @@ def render_afr_plot(
                     f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFT QQ Plot",
                 ),
                 file=config.get("file", f"{mtype}_qq.pdf"),
-                xlabel=label_dict.get("xlabel", "Time"),
-                ylabel=label_dict.get("ylabel", "Survival Probability"),
+                xlabel=label_dict.get("xlabel", "Theoretical Quantiles"),
+                ylabel=label_dict.get("ylabel", "Empirical Quantiles"),
                 replacement_dict=label_dict,
                 folder=folder,
             )
