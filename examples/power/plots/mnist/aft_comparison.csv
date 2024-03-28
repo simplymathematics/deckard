@@ -1,5 +1,0 @@
-,AIC,Training Set Concordance,Test Set Concordance,BIC,Mean $S(t;\theta)$
-weibull,-1631.26,0.9,0.89,-1631.26,0.15
-cox,,0.9,0.89,,0.11
-log_logistic,-1842.71,0.9,0.9,-1842.71,0.14
-log_normal,-1799.93,0.9,0.9,-1799.93,0.14
