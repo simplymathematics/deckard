@@ -28,10 +28,14 @@ logger = logging.getLogger(__name__)
 def fit_aft(
     df,
     event_col,
+    
     duration_col,
     mtype,
+    summary_file=None,
+    folder=None,
     **kwargs,
 ):
+   
     if mtype == "weibull":
         aft = WeibullAFTFitter(**kwargs)
     elif mtype == "log_normal":
@@ -48,6 +52,31 @@ def fit_aft(
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
     aft.fit(df, event_col=event_col, duration_col=duration_col)
+    if summary_file is not None:
+        summary = pd.DataFrame(aft.summary)
+        suffix = Path(summary_file).suffix
+        if folder is not None:
+            summary_file = Path(folder, summary_file)
+        if suffix == "":
+            Path(summary_file).parent.mkdir(exist_ok=True, parents=True)
+            summary.to_csv(summary_file)
+            logger.info(f"Saved summary to {summary_file}")
+        elif suffix == ".csv":
+            summary.to_csv(summary_file)
+            logger.info(f"Saved summary to {summary_file}")
+        elif suffix == ".tex":
+            summary.to_latex(summary_file, float_format="%.2f")
+            logger.info(f"Saved summary to {summary_file}")
+        elif suffix == ".json":
+            summary.to_json(summary_file)
+            logger.info(f"Saved summary to {summary_file}")
+        elif suffix == ".html":
+            summary.to_html(summary_file)
+            logger.info(f"Saved summary to {summary_file}")
+        else:
+            logger.warning(f"suffix {suffix} not recognized. Saving to csv")
+            summary.to_csv(summary_file)
+            logger.info(f"Saved summary to {summary_file}")
     return aft
 
 
