@@ -324,7 +324,7 @@ def render_afr_plot(
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
             xlabel=label_dict.get("xlabel", "Time (s)"),
-            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"), # noqa W605
+            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"),  # noqa W605
             replacement_dict=label_dict,
             folder=folder,
         )
