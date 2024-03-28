@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from lifelines import (
     WeibullAFTFitter,
@@ -273,7 +273,7 @@ def split_data_for_aft(
     test_size=0.2,
     random_state=42,
 ):
-    cleaned = pd.get_dummies(data, prefix="dummy", prefix_sep="_", drop_first=True)
+    cleaned = pd.get_dummies(data, prefix="dummy", prefix_sep="_")
     X_train, X_test = train_test_split(
         cleaned,
         train_size=(1 - test_size),
@@ -308,6 +308,8 @@ def render_afr_plot(
         model_config = config.pop("model", {})
 
         aft = fit_aft(
+            summary_file = config.get("summary_file", f"{mtype}_summary.csv"),
+            folder=folder,
             df=X_train,
             event_col=target,
             duration_col=duration_col,
@@ -326,6 +328,7 @@ def render_afr_plot(
             replacement_dict=label_dict,
             folder=folder,
         )
+        plots.append(afr_plot)
         if mtype == "cox":
             logger.warning("Cox model does not have a CDF plot")
         else:
@@ -337,7 +340,11 @@ def render_afr_plot(
                 univariate_aft = LogLogisticFitter()
             else:
                 raise ValueError(f"Model {mtype} not recognized")
-            univariate_aft.fit(X_train[duration_col], X_train[target])
+            if X_test is not None:
+                data = X_test
+            else:
+                data = X_train
+            univariate_aft.fit(data[duration_col], data[target])
             cdf_plot = plot_qq(
                 aft=univariate_aft,
                 title=config.get(
@@ -351,28 +358,6 @@ def render_afr_plot(
                 folder=folder,
             )
             plots.append(cdf_plot)
-        plots.append(afr_plot)
-        if X_test is not None:
-            test_aft = fit_aft(
-                df=X_test,
-                event_col=target,
-                duration_col=duration_col,
-                mtype=mtype,
-                **model_config,
-            )
-            test_afr_plot = plot_aft(
-                aft=test_aft,
-                title=config.get(
-                    "title",
-                    f"{mtype} AFT".replace("_", " ").replace("-", " ").title(),
-                ),
-                file=config.get("file", f"{mtype}_aft_test.pdf"),
-                xlabel=label_dict.get("xlabel", "Time"),
-                ylabel=label_dict.get("ylabel", "Survival Probability"),
-                replacement_dict=label_dict,
-                folder=folder,
-            )
-            plots.append(test_afr_plot)
         for partial_effect_dict in partial_effect_list:
             file = partial_effect_dict.pop("file", "partial_effects.pdf")
             partial_effect_plot = plot_partial_effects(
