@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-# import seaborn as sns
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from lifelines import (
     WeibullAFTFitter,
@@ -122,6 +122,7 @@ def plot_aft(
     ax.set_title(title)
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
+    plt.gcf().clear()
     logger.info(f"Saved graph to {file}")
     return ax
 
@@ -169,6 +170,8 @@ def plot_summary(
     ax.get_figure().savefig(file)
     plt.gcf().clear()
     return ax
+    
+    
 def plot_qq(
     aft,
     title,
@@ -194,8 +197,8 @@ def plot_qq(
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
     ax.set_yticklabels(labels)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    # ax.set_xlabel(xlabel)
+    # ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
@@ -256,8 +259,6 @@ def make_afr_table(
     X_train,
     X_test,
     folder=".",
-    event_col="adv_failures",
-    duration_col="adv_fit_time",
 ):
     folder = Path(folder)
     aft_data = pd.DataFrame()
@@ -362,13 +363,15 @@ def render_afr_plot(
         label_dict = plot_dict.pop("labels", plot_dict.get("labels", {}))
         partial_effect_list = config.pop("partial_effect", [])
         model_config = config.pop("model", {})
-
+        pretty_mtype = mtype.replace("_", " ").replace("-", " ").title()
         aft = fit_aft(
-            summary_file=config.get("summary_file", f"{mtype}_summary.csv"),
+            summary_file=config.get("summary_file", f"{pretty_mtype}_summary.csv"),
+            summary_plot=config.get("summary_plot", f"{pretty_mtype}_summary.pdf"),
             folder=folder,
             df=X_train,
             event_col=target,
             duration_col=duration_col,
+            replacement_dict=label_dict,
             mtype=mtype,
             **model_config,
         )
@@ -379,8 +382,8 @@ def render_afr_plot(
                 f"{mtype} AFT".replace("_", " ").replace("-", " ").title(),
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
-            xlabel=label_dict.get("xlabel", "Time (s)"),
-            ylabel=label_dict.get("ylabel", "$\mathcal{P}~(T>t)$"),  # noqa W605
+            xlabel=label_dict.get("xlabel", "Coefficient"),
+            ylabel=label_dict.get("ylabel", r"$\mathbb{P}~(T>t)$"),  # noqa W605
             replacement_dict=label_dict,
             folder=folder,
         )
@@ -405,7 +408,7 @@ def render_afr_plot(
                 aft=univariate_aft,
                 title=config.get(
                     "title",
-                    f"{mtype} AFT QQ Plot".replace("_", " ").replace("-", " ").title(),
+                    f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFT QQ Plot",
                 ),
                 file=config.get("file", f"{mtype}_qq.pdf"),
                 xlabel=label_dict.get("xlabel", "Time"),
