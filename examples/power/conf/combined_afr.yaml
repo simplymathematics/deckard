@@ -65,6 +65,15 @@ weibull:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
+    - file : weibull_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Weibull AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
 # cox:
 #   plot:
 #     file : cox_aft.pdf
@@ -165,6 +174,15 @@ log_logistic:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
+    - file : log_logistic_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Log-Logistic AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
 log_normal:
   plot:
     file : log_normal_aft.pdf
@@ -216,3 +234,12 @@ log_normal:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
+    - file : log_normal_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Log-Normal AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
