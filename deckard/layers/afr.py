@@ -15,7 +15,7 @@ from lifelines import (
     LogNormalAFTFitter,
     LogLogisticAFTFitter,
     CoxPHFitter,
-    CRCSplineFitter
+    CRCSplineFitter,
 )
 from lifelines.utils import CensoringType
 from lifelines.fitters import RegressionFitter
@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
-def survival_probability_calibration(model: RegressionFitter, df: pd.DataFrame, t0: float, ax=None):
+def survival_probability_calibration(
+    model: RegressionFitter, df: pd.DataFrame, t0: float, ax=None
+):
     r"""
     Smoothed calibration curves for time-to-event models. This is analogous to
     calibration curves for classification models, extended to handle survival probabilities
@@ -66,15 +68,26 @@ def survival_probability_calibration(model: RegressionFitter, df: pd.DataFrame, 
     T = model.duration_col
     E = model.event_col
 
-    predictions_at_t0 = np.clip(1 - model.predict_survival_function(df, times=[t0]).T.squeeze(), 1e-10, 1 - 1e-10)
+    predictions_at_t0 = np.clip(
+        1 - model.predict_survival_function(df, times=[t0]).T.squeeze(),
+        1e-10,
+        1 - 1e-10,
+    )
 
     # create new dataset with the predictions
-    prediction_df = pd.DataFrame({"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]})
+    prediction_df = pd.DataFrame(
+        {"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]}
+    )
 
     # fit new dataset to flexible spline model
     # this new model connects prediction probabilities and actual survival. It should be very flexible, almost to the point of overfitting. It's goal is just to smooth out the data!
     n_knots = 3
-    regressors = {"beta_": ["ccl_at_%d" % t0], "gamma0_": "1", "gamma1_": "1", "gamma2_": "1"}
+    regressors = {
+        "beta_": ["ccl_at_%d" % t0],
+        "gamma0_": "1",
+        "gamma1_": "1",
+        "gamma2_": "1",
+    }
 
     # this model is from examples/royson_crowther_clements_splines.py
     crc = CRCSplineFitter(n_baseline_knots=n_knots, penalizer=0.000001)
@@ -88,8 +101,17 @@ def survival_probability_calibration(model: RegressionFitter, df: pd.DataFrame, 
             crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
 
     # predict new model at values 0 to 1, but remember to ccl it!
-    x = np.linspace(np.clip(predictions_at_t0.min() - 0.01, 0, 1), np.clip(predictions_at_t0.max() + 0.01, 0, 1), 100)
-    y = 1 - crc.predict_survival_function(pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}), times=[t0]).T.squeeze()
+    x = np.linspace(
+        np.clip(predictions_at_t0.min() - 0.01, 0, 1),
+        np.clip(predictions_at_t0.max() + 0.01, 0, 1),
+        100,
+    )
+    y = (
+        1
+        - crc.predict_survival_function(
+            pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}), times=[t0]
+        ).T.squeeze()
+    )
 
     # plot our results
 
@@ -103,17 +125,18 @@ def survival_probability_calibration(model: RegressionFitter, df: pd.DataFrame, 
     ax.plot(x, x, c="k", ls="--")
     ax.legend()
 
-
     plt.tight_layout()
 
-    deltas = ((1 - crc.predict_survival_function(prediction_df, times=[t0])).T.squeeze() - predictions_at_t0).abs()
+    deltas = (
+        (1 - crc.predict_survival_function(prediction_df, times=[t0])).T.squeeze()
+        - predictions_at_t0
+    ).abs()
     ICI = deltas.mean()
     E50 = np.percentile(deltas, 50)
     # print("ICI = ", ICI)
     # print("E50 = ", E50)
 
     return ax, ICI, E50
-
 
 
 def fit_aft(
@@ -255,14 +278,14 @@ def plot_summary(
     summary = pd.DataFrame(summary)
     if isinstance(summary.index, pd.MultiIndex):
         covariates = list(summary.index.get_level_values(1))
-        summary['covariate'] = covariates
+        summary["covariate"] = covariates
         params = list(summary.index.get_level_values(0))
     else:
         covariates = list(summary.index)
-        summary['covariate'] = covariates  
-    summary = summary[summary['covariate']!= 'Intercept']
-    summary = summary[summary['covariate'].str.startswith('dummy_') == False]
-    ax = sns.barplot(data=summary, x='covariate', y="p")
+        summary["covariate"] = covariates
+    summary = summary[summary["covariate"] != "Intercept"]
+    summary = summary[summary["covariate"].str.startswith("dummy_") == False]
+    ax = sns.barplot(data=summary, x="covariate", y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -297,7 +320,7 @@ def plot_qq(
     if folder is not None:
         file = Path(folder, file)
     plt.gcf().clear()
-    ax, ici, e50 = survival_probability_calibration(aft, X_test, t0=.35, ax=ax)
+    ax, ici, e50 = survival_probability_calibration(aft, X_test, t0=0.35, ax=ax)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -353,7 +376,12 @@ def score_model(aft, train, test):
     test_score = aft.score(test, scoring_method="concordance_index")
     train_ll = aft.score(train, scoring_method="log_likelihood")
     test_ll = aft.score(test, scoring_method="log_likelihood")
-    scores = {"train_score": train_score, "test_score": test_score, "train_ll": train_ll, "test_ll": test_ll}
+    scores = {
+        "train_score": train_score,
+        "test_score": test_score,
+        "train_ll": train_ll,
+        "test_ll": test_ll,
+    }
     return scores
 
 
@@ -370,7 +398,9 @@ def make_afr_table(
     folder = Path(folder)
     aft_data = pd.DataFrame()
     aft_data.index.name = "Model"
-    model_names = [x.replace("-", " ").replace("_", " ").title() for x in aft_dict.keys()]
+    model_names = [
+        x.replace("-", " ").replace("_", " ").title() for x in aft_dict.keys()
+    ]
     aft_data.index = model_names
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
@@ -381,12 +411,16 @@ def make_afr_table(
     aft_data["Concordance"] = [
         x.score(X_train, scoring_method="concordance_index") for x in aft_dict.values()
     ]
-    aft_data['Test Concordance'] = [
+    aft_data["Test Concordance"] = [
         x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()
     ]
     aft_data["ICI"] = icis
     aft_data["E50"] = e50s
-    pretty_dataset = dataset.upper() if dataset in ["combined", "Combined", "COMBINED"] else dataset.upper()
+    pretty_dataset = (
+        dataset.upper()
+        if dataset in ["combined", "Combined", "COMBINED"]
+        else dataset.upper()
+    )
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFR comparison to {folder / 'aft_comparison.csv'}")
@@ -394,15 +428,17 @@ def make_afr_table(
     aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
         folder / "aft_comparison.tex",
-        float_format="%.2f", # Two decimal places, since we have 100 adversarial examples
-        label=f"tab:{dataset.lower()}", # Label for cross-referencing
+        float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
+        label=f"tab:{dataset.lower()}",  # Label for cross-referencing
         caption=f"Comparison of AFR Models on the {pretty_dataset} dataset.",
     )
     # Change to table* if span_columns is True
     if span_columns is True:
         with open(folder / "aft_comparison.tex", "r") as f:
             tex_data = f.read()
-        tex_data = tex_data.replace(r"\begin{table}", r"\begin{table*}"+"\n"+r"\centering")
+        tex_data = tex_data.replace(
+            r"\begin{table}", r"\begin{table*}" + "\n" + r"\centering"
+        )
         tex_data = tex_data.replace(r"\end{table}", r"\end{table*}")
         with open(folder / "aft_comparison.tex", "w") as f:
             f.write(tex_data)
@@ -493,7 +529,7 @@ def run_afr_experiment(
             aft=aft,
             title=config.get(
                 "title",
-                f"{mtype}".replace("_", " ").replace("-", " ").title()+ " AFR",
+                f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFR",
             ),
             file=config.get("file", f"{mtype}_aft.pdf"),
             xlabel=label_dict.get("xlabel", "Acceleration Factor"),
@@ -502,19 +538,18 @@ def run_afr_experiment(
             folder=folder,
         )
         plots.append(afr_plot)
-        qq_plot, ici, e50 =  plot_qq(
-                X_test=X_test,
-                aft=aft,
-                title=config.get(
-                    "title",
-                    f"{mtype}".replace("_", " ").replace("-", " ").title()
-                    + " AFR QQ Plot",
-                ),
-                file=config.get("file", f"{mtype}_qq.pdf"),
-                xlabel=label_dict.get("xlabel", "Observed Quantiles"),
-                ylabel=label_dict.get("ylabel", "Predicted Quantiles"),
-                folder=folder,
-            )
+        qq_plot, ici, e50 = plot_qq(
+            X_test=X_test,
+            aft=aft,
+            title=config.get(
+                "title",
+                f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFR QQ Plot",
+            ),
+            file=config.get("file", f"{mtype}_qq.pdf"),
+            xlabel=label_dict.get("xlabel", "Observed Quantiles"),
+            ylabel=label_dict.get("ylabel", "Predicted Quantiles"),
+            folder=folder,
+        )
         plots.append(qq_plot)
         for partial_effect_dict in partial_effect_list:
             file = partial_effect_dict.pop("file", "partial_effects.pdf")
@@ -550,8 +585,8 @@ def render_all_afr_plots(
     )
     plots = {}
     models = {}
-    icis=[]
-    e50s=[]
+    icis = []
+    e50s = []
     mtypes = list(config.keys())
     for mtype in mtypes:
         sub_config = config.get(mtype, {})
@@ -566,8 +601,10 @@ def render_all_afr_plots(
         )
         icis.append(ici)
         e50s.append(e50)
-        
-    aft_data = make_afr_table(models, dataset, X_train, X_test, folder=folder, icis=icis, e50s=e50s)
+
+    aft_data = make_afr_table(
+        models, dataset, X_train, X_test, folder=folder, icis=icis, e50s=e50s
+    )
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
     print("*" * 80)
