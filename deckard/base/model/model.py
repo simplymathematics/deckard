@@ -619,7 +619,7 @@ class Model:
             predictions,
             {
                 "predict_proba_time": (end - start) / 1e9,
-                "predict_proba_time_per_sample": (end - start) / (len(data[0]) * 1e9),
+                "predict_proba_time_per_sample": (end - start) / (len(data[1]) * 1e9),
                 "predict_proba_start_time": start_timestamp,
                 "predict_proba_end_time": end_timestamp,
                 "predict_proba_device": device,
