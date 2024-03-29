@@ -26,7 +26,10 @@ logger = logging.getLogger(__name__)
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
 def survival_probability_calibration(
-    model: RegressionFitter, df: pd.DataFrame, t0: float, ax=None
+    model: RegressionFitter,
+    df: pd.DataFrame,
+    t0: float,
+    ax=None,
 ):
     r"""
     Smoothed calibration curves for time-to-event models. This is analogous to
@@ -76,7 +79,7 @@ def survival_probability_calibration(
 
     # create new dataset with the predictions
     prediction_df = pd.DataFrame(
-        {"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]}
+        {"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]},
     )
 
     # fit new dataset to flexible spline model
@@ -109,7 +112,8 @@ def survival_probability_calibration(
     y = (
         1
         - crc.predict_survival_function(
-            pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}), times=[t0]
+            pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}),
+            times=[t0],
         ).T.squeeze()
     )
 
@@ -280,16 +284,19 @@ def plot_summary(
         covariates = list(summary.index.get_level_values(1))
         summary["covariate"] = covariates
         params = list(summary.index.get_level_values(0))
+        fullnames = [f"{cov}: {param}" for cov, param in zip(covariates, params)]
     else:
         covariates = list(summary.index)
         summary["covariate"] = covariates
+        fullnames = covariates
+    summary['fullnames'] = fullnames
     summary = summary[summary["covariate"] != "Intercept"]
     summary = summary[summary["covariate"].str.startswith("dummy_") == False]
     ax = sns.barplot(data=summary, x="covariate", y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    labels = ax.get_xticklabels()
+    labels = fullnames
     labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
@@ -437,7 +444,8 @@ def make_afr_table(
         with open(folder / "aft_comparison.tex", "r") as f:
             tex_data = f.read()
         tex_data = tex_data.replace(
-            r"\begin{table}", r"\begin{table*}" + "\n" + r"\centering"
+            r"\begin{table}",
+            r"\begin{table*}" + "\n" + r"\centering",
         )
         tex_data = tex_data.replace(r"\end{table}", r"\end{table*}")
         with open(folder / "aft_comparison.tex", "w") as f:
@@ -603,7 +611,13 @@ def render_all_afr_plots(
         e50s.append(e50)
 
     aft_data = make_afr_table(
-        models, dataset, X_train, X_test, folder=folder, icis=icis, e50s=e50s
+        models,
+        dataset,
+        X_train,
+        X_test,
+        folder=folder,
+        icis=icis,
+        e50s=e50s,
     )
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
