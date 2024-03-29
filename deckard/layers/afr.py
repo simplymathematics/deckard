@@ -161,15 +161,16 @@ def plot_summary(
     plt.gcf().clear()
     summary = aft.summary.copy()
     summary = pd.DataFrame(summary)
-    try:
-        cov = summary.index.get_level_values(1)
-        # print(list(set(cov)))
-        # input("List of covariates. Press Enter to continue...")
-        par = summary.index.get_level_values(0)
-        covariates = [f"{c}: {p}" for p, c in zip(par, cov)]
-    except IndexError:
-        covariates = summary.index
-    ax = sns.barplot(data=summary, x=covariates, y="p")
+    if isinstance(summary.index, pd.MultiIndex):
+        covariates = list(summary.index.get_level_values(1))
+        summary['covariate'] = covariates
+        params = list(summary.index.get_level_values(0))
+    else:
+        covariates = list(summary.index)
+        summary['covariate'] = covariates  
+    summary = summary[summary['covariate']!= 'Intercept']
+    summary = summary[summary['covariate'].str.startswith('dummy_') == False]
+    ax = sns.barplot(data=summary, x='covariate', y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
