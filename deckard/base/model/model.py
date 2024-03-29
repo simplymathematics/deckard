@@ -565,7 +565,7 @@ class Model:
             predictions,
             {
                 "predict_time": (end - start) / 1e9,
-                "predict_time_per_sample": (end - start) / (len(data[0]) * 1e9),
+                "predict_time_per_sample": (end - start) / (len(data[1]) * 1e9),
                 "predict_start_time": start_timestamp,
                 "predict_end_time": end_timestamp,
                 "predict_device": device,
@@ -683,7 +683,7 @@ class Model:
             {
                 "predict_log_proba_time": (end - start) / 1e9,
                 "predict_log_proba_time_per_sample": (end - start)
-                / (len(data[0]) * 1e9),
+                / (len(data[1]) * 1e9),
                 "predict_log_proba_start_time": start_timestamp,
                 "predict_log_proba_end_time": end_timestamp,
                 "predict_log_device": device,
