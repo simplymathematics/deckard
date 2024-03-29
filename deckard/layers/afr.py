@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import warnings
-import matplotlib.pyplot as plt
-
-
+from pathlib import Path
 import pandas as pd
 import numpy as np
-from pathlib import Path
-
+import matplotlib
+import logging
+import yaml
+import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
@@ -15,25 +15,13 @@ from lifelines import (
     LogNormalAFTFitter,
     LogLogisticAFTFitter,
     CoxPHFitter,
-    WeibullFitter,
-    LogNormalFitter,
-    LogLogisticFitter,
-    plotting,
+    CRCSplineFitter
 )
 from lifelines.utils import CensoringType
 from lifelines.fitters import RegressionFitter
-from lifelines import CRCSplineFitter
 from .clean_data import drop_frames_without_results
-import matplotlib
-import logging
-import yaml
-import argparse
 
 logger = logging.getLogger(__name__)
-
-
-
-
 
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
