@@ -117,14 +117,14 @@ def plot_aft(
     # Only plot the covariates, skipping the intercept and dummy variables
     # Dummy variables can be examined using the plot_partial_effects function
     try:
-        columns = aft.summary.index.get_level_values(1)
+        columns = list(aft.summary.index.get_level_values(1))
     except IndexError:
-        columns = aft.summary.index
+        columns = list(aft.summary.index)
     for col in columns:
-        if col.startswith("Intercept:"):
-            columns = columns.drop(col)
+        while "Intercept" in columns:
+            columns.remove("Intercept")
         if col.startswith("dummy_"):
-            columns = columns.drop(col)
+            columns.remove(col)
     ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -272,29 +272,29 @@ def make_afr_table(
     X_train,
     X_test,
     folder=".",
+    span_columns=True,
 ):
     folder = Path(folder)
     aft_data = pd.DataFrame()
     aft_data.index.name = "Model"
-    aft_data.index = aft_dict.keys()
+    model_names = [x.replace("-", " ").replace("_", " ").title() for x in aft_dict.keys()]
+    aft_data.index = model_names
     aft_data["AIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    aft_data["Concordance for $x_t$"] = [
+    aft_data["Concordance"] = [
         x.concordance_index_ for x in aft_dict.values()
-    ]
-    aft_data["Concordance for $x_i$"] = [
-        x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()
     ]
     aft_data["BIC"] = [
         x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
     ]
-    aft_data["Mean $S(t;\\theta|x_{t})$"] = [
+    aft_data["Mean $S(t;\\theta)$"] = [
         x.predict_expectation(X_train).mean() for x in aft_dict.values()
     ]
-    aft_data["Mean $S(t;\\theta|x_{i})$"] = [
-        x.predict_expectation(X_test).mean() for x in aft_dict.values()
+    aft_data["Median $S(t; \\theta)$"] = [
+        x.predict_expectation(X_train).median() for x in aft_dict.values()
     ]
+    pretty_dataset = dataset.upper() if dataset != "combined" else "combined"
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
@@ -302,11 +302,18 @@ def make_afr_table(
     aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
         folder / "aft_comparison.tex",
-        float_format="%.2f",
-        label=f"tab:{dataset}",
-        caption=f"Comparison of AFR Models on the {dataset.upper()} dataset.",
+        float_format="%.2f", # Two decimal places, since we have 100 adversarial examples
+        label=f"tab:{dataset}", # Label for cross-referencing
+        caption=f"Comparison of AFR Models on the {pretty_dataset} dataset.",
     )
-
+    # Change to table* if span_columns is True
+    if span_columns is True:
+        with open(folder / "aft_comparison.tex", "r") as f:
+            tex_data = f.read()
+        tex_data = tex_data.replace(r"\begin{table}", r"\begin{table*}"+"\n"+r"\centering")
+        tex_data = tex_data.replace(r"\end{table}", r"\end{table*}")
+        with open(folder / "aft_comparison.tex", "w") as f:
+            f.write(tex_data)
     return aft_data
 
 
