@@ -199,7 +199,9 @@ def fit_aft(
             logger.info(f"Saved summary to {summary_file}")
     if summary_plot is not None:
         if summary_title is None:
-            summary_title = f"{mtype} AFR Summary".replace("_", " ").replace("-", "").title()
+            summary_title = (
+                f"{mtype} AFR Summary".replace("_", " ").replace("-", "").title()
+            )
         plot_summary(
             aft=aft,
             title=summary_title,
@@ -289,10 +291,10 @@ def plot_summary(
         covariates = list(summary.index)
         summary["covariate"] = covariates
         fullnames = covariates
-    summary['covariate'] = covariates
-    summary['fullnames'] = fullnames
+    summary["covariate"] = covariates
+    summary["fullnames"] = fullnames
     summary = summary[summary["covariate"] != "Intercept"]
-    summary = summary[summary["covariate"].str.startswith("dummy_") != True]
+    summary = summary[summary["covariate"].str.startswith("dummy_") != True] # noqa E712
     ax = sns.barplot(data=summary, x="covariate", y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
