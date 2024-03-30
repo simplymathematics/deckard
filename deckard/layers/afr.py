@@ -150,6 +150,7 @@ def fit_aft(
     mtype,
     summary_file=None,
     summary_plot=None,
+    summary_title=None,
     folder=None,
     replacement_dict={},
     **kwargs,
@@ -197,12 +198,11 @@ def fit_aft(
             summary.to_csv(summary_file)
             logger.info(f"Saved summary to {summary_file}")
     if summary_plot is not None:
+        if summary_title is None:
+            summary_title = f"{mtype} AFR Summary".replace("_", " ").replace("-", "").title()
         plot_summary(
             aft=aft,
-            title=kwargs.get(
-                "title",
-                f"{mtype} AFR Summary".replace("_", " ").replace("-", "").title(),
-            ),
+            title=summary_title,
             file=summary_plot,
             xlabel=kwargs.get("xlabel", "Covariate"),
             ylabel=kwargs.get("ylabel", "p-value"),
@@ -289,15 +289,15 @@ def plot_summary(
         covariates = list(summary.index)
         summary["covariate"] = covariates
         fullnames = covariates
-    summary["fullnames"] = fullnames
+    summary['covariate'] = covariates
+    summary['fullnames'] = fullnames
     summary = summary[summary["covariate"] != "Intercept"]
-    summary = summary[summary["covariate"].str.startswith("dummy_") is False]
+    summary = summary[summary["covariate"].str.startswith("dummy_") != True]
     ax = sns.barplot(data=summary, x="covariate", y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     labels = fullnames
-    labels = [label.get_text() for label in labels]
     for k, v in replacement_dict.items():
         labels = [label.replace(k, v) for label in labels]
     ax.set_xticklabels(labels, rotation=90)
@@ -523,23 +523,24 @@ def run_afr_experiment(
         partial_effect_list = config.pop("partial_effect", [])
         model_config = config.pop("model", {})
         aft = fit_aft(
-            summary_file=config.get("summary_file", f"{mtype}_summary.csv"),
-            summary_plot=config.get("summary_plot", f"{mtype}_summary.pdf"),
+            summary_file=plot_dict.get("summary_file", f"{mtype}_summary.csv"),
+            summary_plot=plot_dict.get("summary_plot", f"{mtype}_summary.pdf"),
             folder=folder,
             df=X_train,
             event_col=target,
             duration_col=duration_col,
             replacement_dict=label_dict,
             mtype=mtype,
+            summary_title=plot_dict.get("summary_title", f"{mtype} AFR Summary"),
             **model_config,
         )
         afr_plot = plot_aft(
             aft=aft,
-            title=config.get(
-                "title",
+            title=plot_dict.get(
+                "qq_title",
                 f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFR",
             ),
-            file=config.get("file", f"{mtype}_aft.pdf"),
+            file=plot_dict.get("plot", f"{mtype}_aft.pdf"),
             xlabel=label_dict.get("xlabel", "Acceleration Factor"),
             ylabel=label_dict.get("ylabel", ""),  # noqa W605
             replacement_dict=label_dict,
@@ -549,11 +550,11 @@ def run_afr_experiment(
         qq_plot, ici, e50 = plot_qq(
             X_test=X_test,
             aft=aft,
-            title=config.get(
+            title=plot_dict.get(
                 "title",
                 f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFR QQ Plot",
             ),
-            file=config.get("file", f"{mtype}_qq.pdf"),
+            file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
             xlabel=label_dict.get("xlabel", "Observed Quantiles"),
             ylabel=label_dict.get("ylabel", "Predicted Quantiles"),
             folder=folder,
