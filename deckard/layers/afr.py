@@ -294,9 +294,9 @@ def plot_summary(
     summary["covariate"] = covariates
     summary["fullnames"] = fullnames
     summary = summary[summary["covariate"] != "Intercept"]
-    summary = summary[ # noqa E712
-        summary["covariate"].str.startswith("dummy_") != True
-    ]  
+    summary = summary[  # noqa E712
+        summary["covariate"].str.startswith("dummy_") != True # noqa E712
+    ]
     ax = sns.barplot(data=summary, x="covariate", y="p")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
