@@ -1,6 +1,6 @@
 _target_: deckard.base.data.Data
 generate:
-    name: torch_cifar10
+    name: torch_cifar100
 sample:
     random_state : 0
     stratify: True

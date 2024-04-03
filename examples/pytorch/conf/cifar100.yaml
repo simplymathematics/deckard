@@ -1,9 +1,9 @@
 defaults:
     - _self_
-    - data: torch_mnist
-    - model: torch_mnist
+    - data: torch_cifar100
+    - model: torch_cifar100
     - attack: default
-    - files: mnist
+    - files: cifar100
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : grid
@@ -35,10 +35,11 @@ hydra:
     params:
       ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
       ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
+      ++model.trainer.batch_size: choice(32, 64, 128, 256, 512, 1024)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 1
+    n_jobs: 8
     prefer : processes
     verbose: 10
     timeout: null

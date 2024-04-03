@@ -8,6 +8,16 @@ init:
     num_classes: 10
 _target_: deckard.base.model.Model
 trainer:
-    nb_epoch: 100
-    batch_size: 1024
+    nb_epoch: 1
+    batch_size: 128
+    verbose: True
 library : pytorch
+art:
+    initialize:
+        criterion:
+        name : torch.nn.CrossEntropyLoss
+    optimizer:
+        name : torch.optim.SGD
+        lr : 0.01
+        momentum : 0.9
+    clip_values : [0, 255]
