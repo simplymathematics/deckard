@@ -98,7 +98,6 @@ class Data:
             result = self.generate()
         else:
             result = self.load(self.name)
-        
         if isinstance(result, DataFrame):
             assert self.target is not None, "Target is not specified"
             y = result[self.target]

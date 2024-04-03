@@ -26,6 +26,8 @@ class SklearnDataPipelineStage:
         name = self.kwargs.pop("_target_", self.name)
         dict_ = {"_target_": name}
         dict_.update(**self.kwargs)
+        while "kwargs" in dict_:
+            dict_.update(**dict_.pop("kwargs"))
         obj = instantiate(dict_)
         X_train = obj.fit(X_train).transform(X_train)
         X_test = obj.transform(X_test)

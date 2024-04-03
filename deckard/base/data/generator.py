@@ -4,7 +4,6 @@ from typing import Literal, Callable, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 import numpy as np
-from validators import url
 from sklearn.datasets import (
     make_classification,
     make_regression,
@@ -12,7 +11,10 @@ from sklearn.datasets import (
     make_moons,
     make_circles,
 )
-from torchvision.io import read_image, read_file
+try:
+    from torchvision.io import read_image, read_file
+except ImportError:
+    pass
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
 from ..utils import my_hash
 
@@ -65,32 +67,6 @@ class SklearnDataGenerator:
             X, y = make_moons(**self.kwargs)
         elif self.name in "circles":
             X, y = make_circles(**self.kwargs)
-        elif isinstance(self.name, str) and Path(self.name).exists():
-            suffix = Path(self.name).suffix
-            if suffix == ".npz":
-                with np.load(self.name) as data:
-                    X = data["X"]
-                    y = data["y"]
-            elif suffix == ".csv":
-                import pandas as pd
-
-                df = pd.read_csv(self.name)
-                X = df.iloc[:, :-1].values
-                y = df.iloc[:, -1].values
-            elif suffix == ".json":
-                import json
-
-                with open(self.name, "r") as f:
-                    data = json.load(f)
-                X = data["X"]
-                y = data["y"]
-            elif suffix in [".pkl", ".pickle"]:
-                import pickle
-
-                with open(self.name, "rb") as f:
-                    data = pickle.load(f)
-                X = data["X"]
-                y = data["y"]
         else:  # pragma: no cover
             raise ValueError(f"Unknown dataset name {self.name}")
         return [X, y]

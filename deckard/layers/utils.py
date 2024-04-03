@@ -175,20 +175,25 @@ def get_dvc_stage_params(
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
     flat_params = flatten_dict(params)
-    pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)[
-        "stages"
-    ][stage]
-    file_list = []
-    for key in ["metrics", "deps", "outs", "plots"]:
-        param_string = str(pipe_params.get(key, {}))
-        # find all values within ${} and add them to file_list
-        file_list.extend(re.findall(r"\${(.*?)}", param_string))
-    file_dict = {}
-    for k in file_list:
-        if k in flat_params:
-            file_dict[k] = flat_params[k]
-        else:
-            raise ValueError(f"File {k} not found in {pipe_params.keys()}")
+    keys = dvc.api.params_show(pipeline_file, stages=stage, repo=directory).keys()
+    if "stages" in keys:
+        pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)[
+            "stages"
+        ][stage]
+        file_list = []
+        for key in ["metrics", "deps", "outs", "plots"]:
+            param_string = str(pipe_params.get(key, {}))
+            # find all values within ${} and add them to file_list
+            file_list.extend(re.findall(r"\${(.*?)}", param_string))
+        file_dict = {}
+        for k in file_list:
+            if k in flat_params:
+                file_dict[k] = flat_params[k]
+            else:
+                raise ValueError(f"File {k} not found in {pipe_params.keys()}")
+    else:
+        pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
+        file_dict = unflatten_dict(pipe_params)
     file_dict = unflatten_dict(file_dict)
     params["files"] = file_dict.pop("files", {})
     params["files"]["stage"] = stage
