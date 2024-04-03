@@ -1,4 +1,0 @@
-name : art.defences.preprocessor.GaussianAugmentation
-clip_values : ${model.art.initialize.clip_values}
-sigma : 1
-ratio : .5
