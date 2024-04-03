@@ -105,7 +105,7 @@ def find_optuna_best(
     # Changing the keys to hydra override format
     for key, value in best_params.items():
         if (
-            key.startswith("++") or key.startswith("~~") or key.startswith("--")
+            key.startswith("++") or key.startswith("~") or key.startswith("--")
         ):  # reserved meaning
             pass
         elif key.startswith("+"):  # appends to config

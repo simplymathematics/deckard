@@ -81,8 +81,8 @@ def get_overrides(overrides=None):
                     overrides[k] = v
                 elif k.startswith("+"):
                     overrides[f"++{k[1:]}"] = v
-                elif k.startswith("~~"):
-                    overrides[f"~~{k[2:]}"] = v
+                elif k.startswith("~"):
+                    overrides[f"~{k[2:]}"] = v
                 else:
                     overrides[f"++{k}"] = v
 
