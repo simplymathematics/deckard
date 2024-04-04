@@ -6,6 +6,8 @@ covariates:
   - model.trainer.batch_size
   - attack.init.eps
   - data.sample.random_state
+  - dataset
+  - device_id
   - adv_fit_time
   - adv_failures
 fillna:
@@ -16,21 +18,22 @@ weibull:
   plot:
     file : weibull_aft.pdf
     title : Weibull AFR Model
-  labels:
-    "Intercept: rho_": "$\\rho$"
-    "Intercept: lambda_": "$\\lambda$" 
-    "data.sample.random_state: lambda_": "Random State"
-    "atk_value: lambda_": "Attack Strength"
-    "train_time: lambda_": "$t_{train}$"
-    "predict_proba_time: lambda_": "$t_{predict}$"
-    "adv_accuracy: lambda_": "Adv. Accuracy"
-    "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$t_{attack}$"
-    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
-    "model.trainer.batch_size: lambda_": "Batch Size"
-    "def_gen": "Defence"
+    labels:
+      "Intercept: rho_": "$\\rho$"
+      "Intercept: lambda_": "$\\lambda$" 
+      "data.sample.random_state: lambda_": "Random State"
+      "atk_value: lambda_": "Attack Strength"
+      "train_time: lambda_": "$T_{t}$"
+      "predict_proba_time: lambda_": "$T_{i}$"
+      "adv_accuracy: lambda_": "Adv. Accuracy"
+      "accuracy: lambda_": "Ben. Accuracy"
+      "adv_fit_time: lambda_": "$T_{a}$"
+      "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
+      "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
+      "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+      "model.trainer.batch_size: lambda_": "Batch Size"
+      "def_gen": "Defence"
+      "attack.init.eps: lambda_": "$\\varepsilon$"
   partial_effect:
     - "file": "weibull_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.nb_epoch"
@@ -52,28 +55,8 @@ weibull:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
-    - "file": "weibull_train_time_partial_effect.pdf"
-      "covariate_array": "model.trainer.batch_size"
-      "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$T_t$",
-          "labels": ["1", "10", "100", "1000"]
-      }
-    - "file" : weibull_predict_time_partial_effect.pdf
-      "covariate_array" : predict_proba_time
-      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Weibull AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$t_i$",
-          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
-      }
     - "file" : weibull_attack_eps_partial_effect.pdf
-      "covariate_array" : predict_proba_time
+      "covariate_array" : attack.init.eps
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Weibull AFR"
       "ylabel": "$\\mathbb{P}~(T>t)$"
@@ -82,95 +65,84 @@ weibull:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
-cox:
-  plot:
-    file : cox_aft.pdf
-    title : Cox AFR Model
-  labels:
-    "Intercept: rho_": "$\\rho$"
-    "Intercept: lambda_": "$\\lambda$" 
-    "data.sample.random_state: lambda_": "Random State"
-    "atk_value: lambda_": "Attack Strength"
-    "train_time: lambda_": "$t_{train}$"
-    "predict_proba_time: lambda_": "$t_{predict}$"
-    "adv_accuracy: lambda_": "Adv. Accuracy"
-    "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$t_{attack}$"
-    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
-    "model.trainer.batch_size: lambda_": "Batch Size"
-    "def_gen": "Defence"
-  partial_effect:
-    - "file": "cox_epochs_partial_effect.pdf"
-      "covariate_array": "model.trainer.nb_epoch"
-      "values_array": [1,10,25,50]
-      "title": "$S(t)$ for Cox AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "Epochs",
-          "labels": ["1", "10", "25", "50"]
-      }
-    - "file": "cox_batch_size_partial_effect.pdf"
-      "covariate_array": "model.trainer.batch_size"
-      "values_array": [1,10,25,50]
-      "title": "$S(t)$ for Cox AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "Batch Size",
-          "labels": ["10", "100", "1000", "10000"]
-      }
-    - "file": "cox_train_time_partial_effect.pdf"
-      "covariate_array": "model.trainer.batch_size"
-      "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Cox AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$T_t$",
-          "labels": ["1", "10", "100", "1000"]
-      }
-    - "file" : cox_predict_time_partial_effect.pdf
-      "covariate_array" : predict_proba_time
-      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Cox AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$t_i$",
-          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
-      }
-    - "file" : cox_attack_eps_partial_effect.pdf
-      "covariate_array" : predict_proba_time
-      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Cox AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$\\varepsilon$",
-          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
-      }
+    - file : weibull_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Weibull AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
+# cox:
+#   plot:
+#     file : cox_aft.pdf
+#     title : Cox AFR Model
+#   labels:
+#     "data.sample.random_state": "Random State"
+#     "atk_value": "Attack Strength"
+#     "train_time": "$T_{t}$"
+#     "predict_proba_time": "$T_{i}$"
+#     "adv_accuracy": "Adv. Accuracy"
+#     "accuracy": "Ben. Accuracy"
+#     "adv_fit_time": "$T_{a}$"
+#     "adv_failure_rate": "$h_{adv.}(t;\\theta)$"
+#     "failure_rate": "$h_{ben.}(t;\\theta)$"
+#     "model.trainer.nb_epoch": "No. of Epochs"
+#     "model.trainer.batch_size": "Batch Size"
+#     "def_gen": "Defence"
+#     "attack.init.eps": "$\\varepsilon$"
+#   partial_effect:
+#     - "file": "cox_epochs_partial_effect.pdf"
+#       "covariate_array": "model.trainer.nb_epoch"
+#       "values_array": [1,10,25,50]
+#       "title": "$S(t)$ for Cox AFR"
+#       "ylabel": "$\\mathbb{P}~(T>t)$"
+#       "xlabel": "Time $t$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "Epochs",
+#           "labels": ["1", "10", "25", "50"]
+#       }
+#     - "file": "cox_batch_size_partial_effect.pdf"
+#       "covariate_array": "model.trainer.batch_size"
+#       "values_array": [1,10,25,50]
+#       "title": "$S(t)$ for Cox AFR"
+#       "ylabel": "$\\mathbb{P}~(T>t)$"
+#       "xlabel": "Time $t$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "Batch Size",
+#           "labels": ["10", "100", "1000", "10000"]
+#       }
+#     - "file" : cox_attack_eps_partial_effect.pdf
+#       "covariate_array" : attack.init.eps
+#       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
+#       "title": "$S(t)$ for Cox AFR"
+#       "ylabel": "$\\mathbb{P}~(T>t)$"
+#       "xlabel": "Time $t$ (seconds)"
+#       "legend_kwargs": {
+#           "title": "$\\varepsilon$",
+#           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
+#       }
 log_logistic:
   plot:
     file : log_logistic_aft.pdf
     title : Log logistic AFR Model
-  labels:
-    "Intercept: rho_": "$\\rho$"
-    "Intercept: lambda_": "$\\lambda$" 
-    "data.sample.random_state: lambda_": "Random State"
-    "atk_value: lambda_": "Attack Strength"
-    "train_time: lambda_": "$t_{train}$"
-    "predict_proba_time: lambda_": "$t_{predict}$"
-    "adv_accuracy: lambda_": "Adv. Accuracy"
-    "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$t_{attack}$"
-    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
-    "model.trainer.batch_size: lambda_": "Batch Size"
-    "def_gen": "Defence"
+    labels:
+      "Intercept: beta_": "$\\beta$"
+      "Intercept: alpha_": "$\\alpha$"
+      "data.sample.random_state: alpha_": "Random State"
+      "atk_value: alpha_": "Attack Strength"
+      "train_time: alpha_": "$T_{t}$"
+      "predict_proba_time: alpha_": "$T_{i}$"
+      "adv_accuracy: alpha_": "Adv. Accuracy"
+      "accuracy: alpha_": "Ben. Accuracy"
+      "adv_fit_time: alpha_": "$T_{a}$"
+      "adv_failure_rate: alpha_": "$h_{adv.}(t;\\theta)$"
+      "failure_rate: alpha_": "$h_{ben.}(t;\\theta)$"
+      "model.trainer.nb_epoch: alpha_": "No. of Epochs"
+      "model.trainer.batch_size: alpha_": "Batch Size"
+      "def_gen": "Defence"
+      "attack.init.eps: alpha_": "$\\varepsilon$"
   partial_effect:
     - "file": "log_logistic_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.nb_epoch"
@@ -192,28 +164,8 @@ log_logistic:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
-    - "file": "log_logistic_train_time_partial_effect.pdf"
-      "covariate_array": "model.trainer.batch_size"
-      "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$T_t$",
-          "labels": ["1", "10", "100", "1000"]
-      }
-    - "file" : log_logistic_predict_time_partial_effect.pdf
-      "covariate_array" : predict_proba_time
-      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Log-Logistic AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$t_i$",
-          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
-      }
     - "file" : log_logistic_attack_eps_partial_effect.pdf
-      "covariate_array" : predict_proba_time
+      "covariate_array" : attack.init.eps
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Logistic AFR"
       "ylabel": "$\\mathbb{P}~(T>t)$"
@@ -222,25 +174,35 @@ log_logistic:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
+    - file : log_logistic_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Log-Logistic AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
 log_normal:
   plot:
     file : log_normal_aft.pdf
     title : Log-Normal AFR Model
-  labels:
-    "Intercept: rho_": "$\\rho$"
-    "Intercept: lambda_": "$\\lambda$" 
-    "data.sample.random_state: lambda_": "Random State"
-    "atk_value: lambda_": "Attack Strength"
-    "train_time: lambda_": "$t_{train}$"
-    "predict_proba_time: lambda_": "$t_{predict}$"
-    "adv_accuracy: lambda_": "Adv. Accuracy"
-    "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$t_{attack}$"
-    "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
-    "model.trainer.batch_size: lambda_": "Batch Size"
-    "def_gen": "Defence"
+    labels:
+      "Intercept: sigma_": "$\\sigma$" 
+      "Intercept: mu_": "$\\mu$"
+      "atk_value: mu_": "Attack Strength"
+      "train_time: mu_": "$T_{t}$"
+      "predict_proba_time: mu_": "$T_{i}$"
+      "adv_accuracy: mu_": "Adv. Accuracy"
+      "accuracy: mu_": "Ben. Accuracy"
+      "adv_fit_time: mu_": "$T_{a}$"
+      "adv_failure_rate: mu_": "$h_{adv.}(t;\\theta)$"
+      "failure_rate: mu_": "$h_{ben.}(t;\\theta)$"
+      "model.trainer.nb_epoch: mu_": "No. of Epochs"
+      "model.trainer.batch_size: mu_": "Batch Size"
+      "def_gen": "Defence"
+      "attack.init.eps: mu_": "$\\varepsilon$"
+      "data.sample.random_state: mu_": "Random State"
   partial_effect:
     - "file": "log_normal_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.nb_epoch"
@@ -262,28 +224,8 @@ log_normal:
           "title": "Batch Size",
           "labels": ["10", "100", "1000", "10000"]
       }
-    - "file": "log_normal_train_time_partial_effect.pdf"
-      "covariate_array": "model.trainer.batch_size"
-      "values_array": [1, 10, 100, 1000]
-      "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$T_t$",
-          "labels": ["1", "10", "100", "1000"]
-      }
-    - "file" : log_normal_predict_time_partial_effect.pdf
-      "covariate_array" : predict_proba_time
-      "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-      "title": "$S(t)$ for Log-Normal AFR"
-      "ylabel": "$\\mathbb{P}~(T>t)$"
-      "xlabel": "Time $t$ (seconds)"
-      "legend_kwargs": {
-          "title": "$t_i$",
-          "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
-      }
     - "file" : log_normal_attack_eps_partial_effect.pdf
-      "covariate_array" : predict_proba_time
+      "covariate_array" : attack.init.eps
       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
       "title": "$S(t)$ for Log-Normal AFR"
       "ylabel": "$\\mathbb{P}~(T>t)$"
@@ -292,3 +234,12 @@ log_normal:
           "title": "$\\varepsilon$",
           "labels": ["1e-4", "1e-3", "1e-2", '1e-1', '1']
       }
+    - file : log_normal_accuracy_partial_effect.pdf
+      covariate_array : accuracy
+      values_array : [0.5, .9, .99, .999]
+      title: "$S(t)$ for Log-Normal AFR"
+      ylabel: "$\\mathbb{P}~(T>t)$"
+      xlabel: "Time $t$ (seconds)"
+      legend_kwargs:
+          title: "Benign Accuracy"
+          labels: [".5", ".9", ".99", ".999"]
