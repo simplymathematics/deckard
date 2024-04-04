@@ -88,44 +88,44 @@ stages:
     outs:
     - path: cifar100/aft_comparison.csv
       hash: md5
-      md5: 2257bff05cc3b1fbb36f3a73ccb90b78
-      size: 271
+      md5: b7c15ae615a33408a0b727601cab890a
+      size: 212
     - path: cifar100/aft_comparison.tex
       hash: md5
-      md5: d6648c4e2c632ab5b54354d8ea61b8a4
-      size: 530
+      md5: 3466f7e3a4024d83bbaa2ccc7b13da80
+      size: 472
     - path: cifar100/cox_aft.pdf
       hash: md5
-      md5: 9a20be4d8a7ba0972595f38a67e60235
-      size: 32152
+      md5: 8d4a1219efea2157e2dbd6c34f69c6bb
+      size: 28926
     - path: cifar100/cox_epochs_partial_effect.pdf
       hash: md5
-      md5: f9fcbdf407d7c9d56a2454692fdae1bd
+      md5: 6e8c834ceef716c83fb2636b2e5e2fb5
       size: 33262
     - path: cifar100/log_logistic_aft.pdf
       hash: md5
-      md5: ef7565193224d37495079be860534763
-      size: 34138
+      md5: c2831702b2c06647e434910fd396c72c
+      size: 29307
     - path: cifar100/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: be20812c13584796444702d1af43c8af
-      size: 27110
+      md5: e0210ef32a6a57ed272b59a810a7c240
+      size: 27155
     - path: cifar100/log_normal_aft.pdf
       hash: md5
-      md5: 3cc4acbfe69718aa196532d90834e313
-      size: 36607
+      md5: 2313759f670761c972d56b1ab44447de
+      size: 29841
     - path: cifar100/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: 929320c0cf4e235a44afd8383f55a3f9
-      size: 27990
+      md5: fe1c01462a182aec383408ff0082e7a7
+      size: 27993
     - path: cifar100/weibull_aft.pdf
       hash: md5
-      md5: d8618fb387e7c85479b19548e6220e99
-      size: 34233
+      md5: 6feac2da8227c48d81b4f50619f03518
+      size: 29018
     - path: cifar100/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: 12652d663bc6404d0baaabc85f7f0871
-      size: 27982
+      md5: 8447c8226062b6498c1df56a2f94f41e
+      size: 28027
   merge@cifar:
     cmd: python merge.py  --big_dir data/bit_depth/cifar --little_dir data/cifar --config
       ../conf/afr.yaml --data_file power.csv --output_folder cifar/ --output_file
@@ -242,44 +242,44 @@ stages:
     outs:
     - path: mnist/aft_comparison.csv
       hash: md5
-      md5: ad80e3681729313ec97819530d1cdd42
-      size: 269
+      md5: 83bac6dcedac880fa889c4eb997ef11b
+      size: 207
     - path: mnist/aft_comparison.tex
       hash: md5
-      md5: a07cff330b81c54a7f0013938df8a65e
-      size: 524
+      md5: 030489512539372044c8f958ce6bab22
+      size: 467
     - path: mnist/cox_aft.pdf
       hash: md5
-      md5: 920c1e03e024d507c659ad515d941406
-      size: 31798
+      md5: d7785b4b4e405064c88213aec92d1644
+      size: 28581
     - path: mnist/cox_epochs_partial_effect.pdf
       hash: md5
-      md5: 879987df1d9576fd1e7e64075c759199
+      md5: a5eb4c53909f58fd79fa72cd76de3407
       size: 32663
     - path: mnist/log_logistic_aft.pdf
       hash: md5
-      md5: a6a42df85fb2740525cdd24f90d1d958
-      size: 34388
+      md5: 915eb55ca3d44b0c97fc491d9f797425
+      size: 29342
     - path: mnist/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: e7a1024bf5711b1bb6894f8b02a095ad
-      size: 27213
+      md5: 6fed782e1b3acc31c925ad6747b50068
+      size: 27325
     - path: mnist/log_normal_aft.pdf
       hash: md5
-      md5: af07ade8cc413c777936d7fe859f4a68
-      size: 36004
+      md5: 3e78554ecd7648c6abd66d5c073359a1
+      size: 29874
     - path: mnist/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: 9705991df4b2241a1bd4147d8ce1217a
-      size: 28114
+      md5: c3e612dafecb517a3211549982730ab3
+      size: 28077
     - path: mnist/weibull_aft.pdf
       hash: md5
-      md5: 89cf11db7c661a1d22b3f62e9f072481
-      size: 33870
+      md5: f3011ee5be6f1854bbe3e75502f89ad0
+      size: 29062
     - path: mnist/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: 0aa3d0c8b7a5e4f383d27a812d088111
-      size: 26912
+      md5: 8aadd28ac46599dee591eaaa162f364d
+      size: 26910
   clean@cifar:
     cmd: python -m deckard.layers.clean_data --i cifar/merged.csv --o cifar/clean.csv
       --config "../conf/clean.yaml"
@@ -340,84 +340,84 @@ stages:
     outs:
     - path: cifar/aft_comparison.csv
       hash: md5
-      md5: 2227175517da80ba886a0074154ed1b9
-      size: 270
+      md5: 42dad9a57c0b74eee3caffbd85e177d0
+      size: 211
     - path: cifar/aft_comparison.tex
       hash: md5
-      md5: 9722d9549efabb9cca237c5b4b98a440
-      size: 524
+      md5: 112fb42d06cc47aee03cf203865133bf
+      size: 471
     - path: cifar/cox_aft.pdf
       hash: md5
-      md5: d5edfeb0291af42ff2fd3cfdfb664554
-      size: 32165
+      md5: 8a3e6c71760bc98fe64687f518ba0654
+      size: 28935
     - path: cifar/cox_epochs_partial_effect.pdf
       hash: md5
-      md5: 4cdc932bc4d01b83bb38bbc71968bac1
+      md5: c9ad760d1e59f90218ca4a7592bcd309
       size: 33196
     - path: cifar/log_logistic_aft.pdf
       hash: md5
-      md5: 088e71029a7cff65cf3ceb6c263952d8
-      size: 34161
+      md5: af4360e69eb314e5717407a543c9cd37
+      size: 29703
     - path: cifar/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: 98de225c30a610cd81cd6fe96f25b554
-      size: 27406
+      md5: 17fa89d624dd206070dd6669254e287f
+      size: 27433
     - path: cifar/log_normal_aft.pdf
       hash: md5
-      md5: b31b503b98648af6342a68e329fdca29
-      size: 36603
+      md5: f7aebd3a3cc48ef9f4c04279af54b2bc
+      size: 30232
     - path: cifar/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: b41fe0dbadb14fc98ee4dcb20a43b4a7
-      size: 28108
+      md5: f2d95584d261226817a894b895d276e7
+      size: 28162
     - path: cifar/weibull_aft.pdf
       hash: md5
-      md5: 155df863028296856bd080794542f77a
-      size: 33881
+      md5: 9c45ad78f653dcdfff593545c5c8921b
+      size: 28724
     - path: cifar/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: de43e7081c5b6bc34407132fba234551
-      size: 26982
+      md5: 8aa46a3fec32679b6a2e29fea439bb43
+      size: 28030
   combined_plots:
     cmd: python combined_plots.py
     deps:
     - path: cifar/aft_comparison.csv
       hash: md5
-      md5: 2227175517da80ba886a0074154ed1b9
-      size: 270
+      md5: 42dad9a57c0b74eee3caffbd85e177d0
+      size: 211
     - path: cifar100/aft_comparison.csv
       hash: md5
-      md5: 2257bff05cc3b1fbb36f3a73ccb90b78
-      size: 271
+      md5: b7c15ae615a33408a0b727601cab890a
+      size: 212
     - path: combined_plots.py
       hash: md5
-      md5: caec96ccfbae3aaec2f390c7fd959e88
-      size: 7151
+      md5: 7ea9df483b87b41bbe1195b55275bd6c
+      size: 7724
     - path: mnist/aft_comparison.csv
       hash: md5
-      md5: ad80e3681729313ec97819530d1cdd42
-      size: 269
+      md5: 83bac6dcedac880fa889c4eb997ef11b
+      size: 207
     outs:
     - path: combined/acc.pdf
       hash: md5
-      md5: 37fdbe264a3b8e614613b262d81530e1
-      size: 34267
+      md5: c379bcfd7e96effb55ac149fd16e1efe
+      size: 30390
     - path: combined/cost.pdf
       hash: md5
-      md5: 1a86f9967e23e37efb3d26f8c75c13cd
-      size: 45578
+      md5: cab8446b120746a4a9d8a54fcafa2f58
+      size: 39900
     - path: combined/power.pdf
       hash: md5
-      md5: f12c54cd9910c8fbce4bb88df20272e5
-      size: 44335
+      md5: 5034f0a136246c06c9fcb48e6f58c94b
+      size: 40090
     - path: combined/time.pdf
       hash: md5
-      md5: 225f6dab8cde97a6dab310da0baee421
-      size: 45499
+      md5: 71b708cc731f911d999db3c5d3fc977a
+      size: 40222
     - path: data/combined/combined.csv
       hash: md5
-      md5: d22720f16c4bc98dc65808923b99c642
-      size: 52360413
+      md5: 5373a0cba09196ebf00bbfbab9378398
+      size: 52639498
   combined_clean:
     cmd: python -m deckard.layers.clean_data --i data/combined/combined.csv --o combined/clean.csv
       --config "../conf/clean.yaml"
@@ -428,8 +428,8 @@ stages:
       size: 513
     - path: data/combined/combined.csv
       hash: md5
-      md5: d22720f16c4bc98dc65808923b99c642
-      size: 52360413
+      md5: 5373a0cba09196ebf00bbfbab9378398
+      size: 52639498
     params:
       ../conf/clean.yaml:
         attacks:
@@ -460,8 +460,8 @@ stages:
     outs:
     - path: combined/clean.csv
       hash: md5
-      md5: 9c8adccd19445c4a933a3b3d8892ff2e
-      size: 37144640
+      md5: 24f49787a6d20f9172dacf9edefff85f
+      size: 37298176
   combined_afr:
     cmd: python -m deckard.layers.afr --dataset Combined --data_file combined/clean.csv
       --config_file "../conf/combined_afr.yaml" --plots_folder combined/ --target
@@ -469,138 +469,146 @@ stages:
     deps:
     - path: ../conf/combined_afr.yaml
       hash: md5
-      md5: 589c50684ec03d7a423a6668943b8540
-      size: 7989
+      md5: 068c842adac014ff65cbf74d28e57263
+      size: 8923
     - path: combined/clean.csv
       hash: md5
-      md5: 9c8adccd19445c4a933a3b3d8892ff2e
-      size: 37144640
+      md5: 24f49787a6d20f9172dacf9edefff85f
+      size: 37298176
     outs:
     - path: combined/aft_comparison.csv
       hash: md5
-      md5: 3a0019b14a09be37adbd259de9dbad16
-      size: 247
+      md5: 238ff959f5768d165bddb38595db5d37
+      size: 188
     - path: combined/aft_comparison.tex
       hash: md5
-      md5: feb86ff3f9329c0b3b7c058ef7302a14
-      size: 491
+      md5: 14bc20405c6aadb2dfc4e421cd38ca10
+      size: 435
     - path: combined/log_logistic_aft.pdf
       hash: md5
-      md5: c9db22681bf3745778ea843d719721b0
-      size: 33880
+      md5: d7b9b3f4d713ff30a3ac12338b548a74
+      size: 26842
     - path: combined/log_logistic_attack_eps_partial_effect.pdf
       hash: md5
-      md5: cdb0049ea99584d23c278dd8592bd989
-      size: 27181
+      md5: 785a8d08bde202772f2127ee7d8c33de
+      size: 26868
     - path: combined/log_logistic_batch_size_partial_effect.pdf
       hash: md5
-      md5: 65e6391d402d097451047377b90adbeb
-      size: 29102
+      md5: 4facc4ccdd837b805a1e01d5bbaeaa97
+      size: 28790
     - path: combined/log_logistic_epochs_partial_effect.pdf
       hash: md5
-      md5: 8b25821be8ab1238fd0df4e3ffc04c9d
-      size: 29857
+      md5: 720b3775b9aacafde7db37012ceb54ff
+      size: 27938
     - path: combined/log_logistic_qq.pdf
       hash: md5
-      md5: 1cb4bc801e30781159a6257ae6fc85b1
-      size: 80192
+      md5: b3961143f38c1f19fe26aa05f2cb3ca4
+      size: 18763
     - path: combined/log_logistic_summary.csv
       hash: md5
-      md5: 6989c7b4f0a7c8ca3a7439e741102ca2
-      size: 1632
+      md5: c0cbc323a723516dbd3087bb9440caf1
+      size: 3486
     - path: combined/log_logistic_summary.pdf
       hash: md5
-      md5: 3dc8c0d448bc0e36c74c1a1f5cbc7bd5
-      size: 35524
+      md5: 283e08bfbb7f67667dd5126358f3d160
+      size: 29010
     - path: combined/log_normal_aft.pdf
       hash: md5
-      md5: c760153142ede9a15425be58b880a684
-      size: 35466
+      md5: ae6452dd66e6b5c2c4d493d2f2e2de27
+      size: 27359
     - path: combined/log_normal_attack_eps_partial_effect.pdf
       hash: md5
-      md5: 82274edbc7615827300fda871dccaf1e
-      size: 27961
+      md5: 982eb06fd39148ec8a540528b4a7886a
+      size: 27579
     - path: combined/log_normal_batch_size_partial_effect.pdf
       hash: md5
-      md5: e5b704ae750e4eb6a953605a8281725b
-      size: 29838
+      md5: af939d5bf9a83e5e606c5f09aaa481ba
+      size: 29598
     - path: combined/log_normal_epochs_partial_effect.pdf
       hash: md5
-      md5: aa0d6c3febb789ca68641151b3133032
-      size: 29034
+      md5: b3dd6798f6377a13ac425e53cf34bea8
+      size: 28603
     - path: combined/log_normal_qq.pdf
       hash: md5
-      md5: 31c7e37d8cb51050080abfb5cd291882
-      size: 80638
+      md5: 202f50d80f2be2a0a1dfafa691b99eb2
+      size: 19906
     - path: combined/log_normal_summary.csv
       hash: md5
-      md5: f0744e8379bac0a0216e96901095f342
-      size: 3113
+      md5: 9025cfe2f47a1a1aa0d9fb3575072712
+      size: 3445
     - path: combined/log_normal_summary.pdf
       hash: md5
-      md5: b5466fe064ffa39f6159f120bf792484
-      size: 35189
+      md5: af4ebf73e8d223c5fc6dcd274ff79b49
+      size: 27645
     - path: combined/weibull_aft.pdf
       hash: md5
-      md5: 7880981ca4a8b19e06604751251a2968
-      size: 33784
+      md5: 099c99556c6c16cd21714f6ea96790d9
+      size: 26881
     - path: combined/weibull_attack_eps_partial_effect.pdf
       hash: md5
-      md5: a6cad8a16922d9bbb052be3196d70b03
-      size: 26877
+      md5: cd9bdcb36c0012ac355a1ef9bf7260c8
+      size: 26258
     - path: combined/weibull_batch_size_partial_effect.pdf
       hash: md5
-      md5: 5d08cea34b926292ffce4db22c080eb2
-      size: 29041
+      md5: b98d5c459d73e65d994b2a23db1f71ec
+      size: 28543
     - path: combined/weibull_epochs_partial_effect.pdf
       hash: md5
-      md5: 4d01fcfc26dc51be5880e69ccc8b9358
-      size: 28314
+      md5: 8a34f173079fa7f7f5667d84d77d2768
+      size: 27623
     - path: combined/weibull_qq.pdf
       hash: md5
-      md5: 6dea1bd31c5d640dd116f82e667f24da
-      size: 79726
+      md5: 5dae104737074ab926ef947938254eda
+      size: 18121
     - path: combined/weibull_summary.csv
       hash: md5
-      md5: 546350a82b4ec0551907bfff1ef2a0b3
-      size: 2811
+      md5: 60e0589a5a15d42dff93363a7eb4321d
+      size: 3496
     - path: combined/weibull_summary.pdf
       hash: md5
-      md5: 50e1bd836cf02de0b737b7d172f93d8e
-      size: 35567
+      md5: c9a8302a6c526187170c7f2c3a0e2db8
+      size: 27676
   copy@mnist:
+    cmd: rm -rf ~/kepler-ml/plots/mnist/ && mkdir -p ~/kepler-ml/plots/mnist/ && cp
+      -r mnist/* ~/kepler-ml/plots/mnist/
     cmd: rm -rf ~/kepler-ml/plots/mnist/ && mkdir -p ~/kepler-ml/plots/mnist/ && cp
       -r mnist/* ~/kepler-ml/plots/mnist/
     deps:
     - path: mnist/
       hash: md5
-      md5: 0bb4ea08e80e765597832dc64485e118.dir
-      size: 25194927
-      nfiles: 23
+      md5: a31729c195d8a0130c0235f50240f8be.dir
+      size: 25145164
+      nfiles: 24
   copy@cifar:
+    cmd: rm -rf ~/kepler-ml/plots/cifar/ && mkdir -p ~/kepler-ml/plots/cifar/ && cp
+      -r cifar/* ~/kepler-ml/plots/cifar/
     cmd: rm -rf ~/kepler-ml/plots/cifar/ && mkdir -p ~/kepler-ml/plots/cifar/ && cp
       -r cifar/* ~/kepler-ml/plots/cifar/
     deps:
     - path: cifar/
       hash: md5
-      md5: d10b2f2706a58f75667b4ac487b1c8a1.dir
-      size: 25102765
-      nfiles: 23
+      md5: b407c30ea9d76581e3e6c2aba9c72c7d.dir
+      size: 25054465
+      nfiles: 24
   copy@cifar100:
+    cmd: rm -rf ~/kepler-ml/plots/cifar100/ && mkdir -p ~/kepler-ml/plots/cifar100/
+      && cp -r cifar100/* ~/kepler-ml/plots/cifar100/
     cmd: rm -rf ~/kepler-ml/plots/cifar100/ && mkdir -p ~/kepler-ml/plots/cifar100/
       && cp -r cifar100/* ~/kepler-ml/plots/cifar100/
     deps:
     - path: cifar100/
       hash: md5
-      md5: 836fbb072b87eba8ee7a4ab66aa0ef15.dir
-      size: 29910294
-      nfiles: 23
+      md5: 75185a117f2df768d81bf7005ad94a9f.dir
+      size: 29860670
+      nfiles: 24
   copy@combined:
+    cmd: rm -rf ~/kepler-ml/plots/combined/ && mkdir -p ~/kepler-ml/plots/combined/
+      && cp -r combined/* ~/kepler-ml/plots/combined/
     cmd: rm -rf ~/kepler-ml/plots/combined/ && mkdir -p ~/kepler-ml/plots/combined/
       && cp -r combined/* ~/kepler-ml/plots/combined/
     deps:
     - path: combined/
       hash: md5
-      md5: 3cd1bd6ec5475c44d40a394599d0f823.dir
-      size: 38119666
-      nfiles: 32
+      md5: fadbd9a0be85c67c2d8d384d201be0b8.dir
+      size: 38115902
+      nfiles: 35
