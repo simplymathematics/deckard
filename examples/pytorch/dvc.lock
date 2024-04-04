@@ -1,0 +1,539 @@
+schema: '2.0'
+stages:
+  parse:
+    cmd: python -m deckard.layers.parse --config_file mnist.yaml
+    deps:
+    - path: conf/attack
+      hash: md5
+      md5: 3d2342d495af9731a631f528014cfca4.dir
+      size: 267
+      nfiles: 1
+    - path: conf/data
+      md5: dd064579959aa79d88f1f021fa378b0f.dir
+      size: 618
+      nfiles: 4
+    - path: conf/files
+      hash: md5
+      md5: b10c002322e63c5ed04e88dda4f5b9fa.dir
+      size: 1530
+      nfiles: 3
+    - path: conf/mnist.yaml
+      hash: md5
+      md5: 53dd39927cf0e2403bf10dba7ce0b302
+      size: 1397
+    - path: conf/model
+      md5: 27fab44575ff928cfdf43d2947c79e3c.dir
+      size: 2088
+      nfiles: 10
+    - path: conf/scorers
+      md5: 1316006b6b9fbc05fd8ed56d46e15718.dir
+      size: 279
+      nfiles: 1
+    outs:
+    - path: params.yaml
+      hash: md5
+      md5: d5635428f286ee1ae94479a941d48b12
+      size: 5997
+  train:
+    cmd: python -m deckard.layers.experiment train --config_file mnist.yaml
+    params:
+      params.yaml:
+        atk_name: hsj
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+            test_size: 12000
+            train_size: 48000
+        dataset: mnist
+        def_name: control
+        device_id: gpu
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          directory: mnist
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            clip_values:
+            - 0
+            - 255
+            criterion:
+              name: torch.nn.CrossEntropyLoss
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+                test_size: 12000
+                train_size: 48000
+            initialize:
+              clip_values:
+              - 0
+              - 255
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+            optimizer:
+              lr: 0.01
+              momentum: 0.9
+              name: torch.optim.SGD
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+              test_size: 12000
+              train_size: 48000
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 1
+            num_classes: 10
+          library: pytorch
+          trainer:
+            batch_size: 128
+            nb_epoch: 1
+            verbose: true
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: 9d76a2d1c1473e6962c7adcb587c451e
+      size: 44781294
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 6b2feb639a5093f6568418dd9c71a93e
+      size: 44787138
+    - path: mnist/reports/train/default/predictions.json
+      hash: md5
+      md5: 702737a0c63d4329f8f46e859c96da40
+      size: 3540537
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: 1f39105cb2034e6c0bf64eabaff1f746
+      size: 513
+  attack:
+    cmd: python -m deckard.layers.experiment attack --config_file mnist.yaml
+    deps:
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 6b2feb639a5093f6568418dd9c71a93e
+      size: 44787138
+    params:
+      params.yaml:
+        atk_name: hsj
+        attack:
+          _target_: deckard.base.attack.Attack
+          attack_size: 10
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+              test_size: 12000
+              train_size: 48000
+          init:
+            _target_: deckard.base.attack.AttackInitializer
+            batch_size: 128
+            model:
+              _target_: deckard.base.model.Model
+              art:
+                _target_: deckard.base.model.art_pipeline.ArtPipeline
+                clip_values:
+                - 0
+                - 255
+                criterion:
+                  name: torch.nn.CrossEntropyLoss
+                data:
+                  _target_: deckard.base.data.Data
+                  generate:
+                    _target_: deckard.base.data.generator.DataGenerator
+                    name: torch_mnist
+                  sample:
+                    _target_: deckard.base.data.sampler.SklearnDataSampler
+                    random_state: 0
+                    stratify: true
+                    test_size: 12000
+                    train_size: 48000
+                initialize:
+                  clip_values:
+                  - 0
+                  - 255
+                  criterion:
+                    name: torch.nn.CrossEntropyLoss
+                  optimizer:
+                    lr: 0.01
+                    momentum: 0.9
+                    name: torch.optim.SGD
+                library: pytorch
+                optimizer:
+                  lr: 0.01
+                  momentum: 0.9
+                  name: torch.optim.SGD
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
+                sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
+                  random_state: 0
+                  stratify: true
+                  test_size: 12000
+                  train_size: 48000
+              init:
+                _target_: deckard.base.model.ModelInitializer
+                name: torch_example.ResNet18
+                num_channels: 1
+                num_classes: 10
+              library: pytorch
+              trainer:
+                batch_size: 128
+                nb_epoch: 1
+                verbose: true
+            name: art.attacks.evasion.HopSkipJump
+          method: evasion
+          model:
+            _target_: deckard.base.model.Model
+            art:
+              _target_: deckard.base.model.art_pipeline.ArtPipeline
+              clip_values:
+              - 0
+              - 255
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              data:
+                _target_: deckard.base.data.Data
+                generate:
+                  _target_: deckard.base.data.generator.DataGenerator
+                  name: torch_mnist
+                sample:
+                  _target_: deckard.base.data.sampler.SklearnDataSampler
+                  random_state: 0
+                  stratify: true
+                  test_size: 12000
+                  train_size: 48000
+              initialize:
+                clip_values:
+                - 0
+                - 255
+                criterion:
+                  name: torch.nn.CrossEntropyLoss
+                optimizer:
+                  lr: 0.01
+                  momentum: 0.9
+                  name: torch.optim.SGD
+              library: pytorch
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+                test_size: 12000
+                train_size: 48000
+            init:
+              _target_: deckard.base.model.ModelInitializer
+              name: torch_example.ResNet18
+              num_channels: 1
+              num_classes: 10
+            library: pytorch
+            trainer:
+              batch_size: 128
+              nb_epoch: 1
+              verbose: true
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            _target_: deckard.base.data.generator.DataGenerator
+            name: torch_mnist
+          sample:
+            _target_: deckard.base.data.sampler.SklearnDataSampler
+            random_state: 0
+            stratify: true
+            test_size: 12000
+            train_size: 48000
+        dataset: mnist
+        def_name: control
+        device_id: gpu
+        files:
+          _target_: deckard.base.files.FileConfig
+          adv_predictions_file: adv_predictions.json
+          attack_dir: attacks
+          attack_file: attack
+          attack_type: .pkl
+          directory: mnist
+          model_dir: models
+          model_file: model
+          model_type: .pt
+          name: default
+          params_file: params.yaml
+          predictions_file: predictions.json
+          reports: reports
+          score_dict_file: score_dict.json
+        model:
+          _target_: deckard.base.model.Model
+          art:
+            _target_: deckard.base.model.art_pipeline.ArtPipeline
+            clip_values:
+            - 0
+            - 255
+            criterion:
+              name: torch.nn.CrossEntropyLoss
+            data:
+              _target_: deckard.base.data.Data
+              generate:
+                _target_: deckard.base.data.generator.DataGenerator
+                name: torch_mnist
+              sample:
+                _target_: deckard.base.data.sampler.SklearnDataSampler
+                random_state: 0
+                stratify: true
+                test_size: 12000
+                train_size: 48000
+            initialize:
+              clip_values:
+              - 0
+              - 255
+              criterion:
+                name: torch.nn.CrossEntropyLoss
+              optimizer:
+                lr: 0.01
+                momentum: 0.9
+                name: torch.optim.SGD
+            library: pytorch
+            optimizer:
+              lr: 0.01
+              momentum: 0.9
+              name: torch.optim.SGD
+          data:
+            _target_: deckard.base.data.Data
+            generate:
+              _target_: deckard.base.data.generator.DataGenerator
+              name: torch_mnist
+            sample:
+              _target_: deckard.base.data.sampler.SklearnDataSampler
+              random_state: 0
+              stratify: true
+              test_size: 12000
+              train_size: 48000
+          init:
+            _target_: deckard.base.model.ModelInitializer
+            name: torch_example.ResNet18
+            num_channels: 1
+            num_classes: 10
+          library: pytorch
+          trainer:
+            batch_size: 128
+            nb_epoch: 1
+            verbose: true
+        scorers:
+          _target_: deckard.base.scorer.ScorerDict
+          accuracy:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: maximize
+            name: sklearn.metrics.accuracy_score
+          log_loss:
+            _target_: deckard.base.scorer.ScorerConfig
+            direction: minimize
+            name: sklearn.metrics.log_loss
+    outs:
+    - path: mnist/attacks/attack.pkl
+      hash: md5
+      md5: 6eebf65b31a9d0e8c58217489a8c18f7
+      size: 31517
+    - path: mnist/reports/attack/default/adv_predictions.json
+      hash: md5
+      md5: 7b5a48195be1a661e1aeecfe1dbce013
+      size: 3054
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: ec7bbe96f2c188ac24b6b0274c7be1d6
+      size: 830
+  models@ResNet18:
+    cmd: 'bash models.sh  data.sample.train_size=10 data.sample.test_size=10 ++model.init.name=torch_example.ResNet18  ~attack
+      atk_name="Benign" model_name=ResNet18 stage=train  --config-name mnist.yaml '
+    deps:
+    - path: mnist/models/model.optimizer.pt
+      hash: md5
+      md5: 52183a285a920f317f62a7685a615654
+      size: 44781294
+    - path: mnist/models/model.pt
+      hash: md5
+      md5: 08e696ad9b60ef6290ce6de8c469efed
+      size: 44787138
+    - path: models.sh
+      hash: md5
+      md5: 96135f3e598c295bcfb504f47e1b478d
+      size: 1314
+    outs:
+    - path: mnist/logs/train/ResNet18
+      hash: md5
+      md5: cc5b1f5a4c410085fb9084d26e7d291c.dir
+      size: 77195
+      nfiles: 21
+  attacks@ResNet18:
+    cmd: bash attacks.sh  data.sample.train_size=10 data.sample.test_size=10 ++attack.attack_size=10  ++model.init.name=torch_example.ResNet18  stage=attack  model_name=ResNet18
+      +direction="[maximize,maximize]" +optimizers="[accuracy,adv_accuracy]" --config-name
+      mnist.yaml
+    deps:
+    - path: attacks.sh
+      md5: f90b2f63063bdda85bd93d3ae1d8c595
+      size: 3098
+    - path: mnist/logs/train/ResNet18
+      hash: md5
+      md5: cc5b1f5a4c410085fb9084d26e7d291c.dir
+      size: 77195
+      nfiles: 21
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 5b3d7a81eb7ddc28c126abaee90cbbae
+      size: 848
+    - path: models.sh
+      hash: md5
+      md5: 96135f3e598c295bcfb504f47e1b478d
+      size: 1314
+    outs:
+    - path: mnist/logs/attack/ResNet18
+      hash: md5
+      md5: 60129e45fd8bf4b01392ba6ce9f7a4c5.dir
+      size: 568370
+      nfiles: 121
+  compile@train:
+    cmd: python -m deckard.layers.compile --report_folder mnist/reports/train --results_file
+      mnist/reports/train.csv
+    deps:
+    - path: mnist.db
+      hash: md5
+      md5: 29a2fc647bec15ac23a59980791ade0b
+      size: 397312
+    - path: mnist/reports/train/
+      hash: md5
+      md5: ea838d68cc81ad63fe683d84a77234c5.dir
+      size: 3603143
+      nfiles: 33
+    outs:
+    - path: mnist/reports/train.csv
+      hash: md5
+      md5: 531b3822c9462ba9317d1da580115b64
+      size: 23827
+  compile@attack:
+    cmd: python -m deckard.layers.compile --report_folder mnist/reports/attack --results_file
+      mnist/reports/attack.csv
+    deps:
+    - path: mnist.db
+      hash: md5
+      md5: 29a2fc647bec15ac23a59980791ade0b
+      size: 397312
+    - path: mnist/reports/attack/
+      hash: md5
+      md5: 0869a1085260c42963deb35a768480c7.dir
+      size: 594051
+      nfiles: 175
+    outs:
+    - path: mnist/reports/attack.csv
+      hash: md5
+      md5: bf6fcc2504048305b92f70d17db8aabe
+      size: 233429
+  clean@attack:
+    cmd: python -m deckard.layers.clean_data -i mnist/reports/attack.csv -o mnist/reports/clean_attack.csv
+      -c conf/clean.yaml
+    deps:
+    - path: mnist/reports/attack.csv
+      hash: md5
+      md5: bf6fcc2504048305b92f70d17db8aabe
+      size: 233429
+    params:
+      params.yaml:
+        files.directory: mnist
+        files.reports: reports
+      conf/clean.yaml:
+        attacks:
+          DeepFool: Deep
+          FastGradientMethod: FGM
+          HopSkipJump: HSJ
+          PixelAttack: Pixel
+          ProjectedGradientDescent: PGD
+          ThresholdAttack: Thresh
+        defences:
+          Control: Control
+          FeatureSqueezing: FSQ
+          GaussianAugmentation: Gauss-in
+          GaussianNoise: Gauss-out
+          HighConfidence: Conf
+          nb_epoch: Epochs
+          model_layers: Control
+        fillna:
+          model.trainer.nb_epoch: 20
+        params:
+          Deep: attack.init.kwargs.nb_grads
+          FGM: attack.init.kwargs.eps
+          HSJ: attack.init.kwargs.max_iter
+          Pixel: attack.init.kwargs.th
+          PGD: attack.init.kwargs.eps
+          Thresh: attack.init.kwargs.th
+          Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
+          Conf: model.art.pipeline.postprocessor.kwargs.cutoff
+          FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
+          Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+          Control: model_layers
+          Epochs: model.trainer.nb_epoch
+          control:
+            model_layers: 18
+          defaults:
+            model.trainer.nb_epoch: 20
+    outs:
+    - path: mnist/reports/clean_attack.csv
+      hash: md5
+      md5: 9ba812b5839ae88ff1c2e01df646666a
+      size: 196347

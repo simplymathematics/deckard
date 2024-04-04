@@ -5,6 +5,7 @@ data:  ${data}
 init:
     _target_: deckard.base.model.ModelInitializer
     num_channels : 1
+    num_classes : 10
     name : torch_example.ResNet18
 _target_: deckard.base.model.Model
 trainer:
@@ -13,8 +14,7 @@ trainer:
     verbose: True
 library : pytorch
 art:
-    initialize:
-        criterion:
+    criterion:
         name : torch.nn.CrossEntropyLoss
     optimizer:
         name : torch.optim.SGD

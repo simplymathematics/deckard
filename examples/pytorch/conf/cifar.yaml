@@ -11,6 +11,7 @@ defaults:
 def_name : control
 atk_name : hsj
 dataset : cifar
+model_name : ResNet18
 device_id : gpu
 stage : '???'
 direction : 
@@ -20,26 +21,25 @@ optimizers :
   - accuracy
 hydra:
   run:
-    dir: ${files.directory}/${files.reports}/${stage}/logs
+    dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/${stage}/${model.init.name}
-    subdir : ${hydra.sweeper.study_name}/${hydra.job.num}
+    dir: ${files.directory}/logs/${stage}/${model_name}
+    subdir : ${def_name}/${atk_name}/${hydra.job.num}
   sweeper:
     sampler:
       _target_: optuna.samplers.GridSampler
     direction: ${direction}
     study_name: ${def_name}_${atk_name}
-    storage: sqlite:///model.db
-    n_jobs: ${hydra.launcher.n_jobs}
-    n_trials : 32
+    storage: sqlite:///${dataset}.db
+    n_jobs: ???
+    max_failure_rate: 1.0
     params:
       ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
       ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
-      ++model.trainer.batch_size: choice(32, 64, 128, 256, 512, 1024)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 8
+    n_jobs: ${hydra.sweeper.n_jobs}
     prefer : processes
     verbose: 10
     timeout: null

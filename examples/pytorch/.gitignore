@@ -1,1 +1,6 @@
 .dvc/cache/
+old/
+mnist/
+cifar/
+cifar100/
+/params.yaml

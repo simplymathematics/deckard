@@ -13,8 +13,7 @@ trainer:
     verbose: True
 library : pytorch
 art:
-    initialize:
-        criterion:
+    criterion:
         name : torch.nn.CrossEntropyLoss
     optimizer:
         name : torch.optim.SGD
