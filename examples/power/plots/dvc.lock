@@ -571,6 +571,8 @@ stages:
   copy@mnist:
     cmd: rm -rf ~/kepler-ml/plots/mnist/ && mkdir -p ~/kepler-ml/plots/mnist/ && cp
       -r mnist/* ~/kepler-ml/plots/mnist/
+    cmd: rm -rf ~/kepler-ml/plots/mnist/ && mkdir -p ~/kepler-ml/plots/mnist/ && cp
+      -r mnist/* ~/kepler-ml/plots/mnist/
     deps:
     - path: mnist/
       hash: md5
@@ -578,6 +580,8 @@ stages:
       size: 25145164
       nfiles: 24
   copy@cifar:
+    cmd: rm -rf ~/kepler-ml/plots/cifar/ && mkdir -p ~/kepler-ml/plots/cifar/ && cp
+      -r cifar/* ~/kepler-ml/plots/cifar/
     cmd: rm -rf ~/kepler-ml/plots/cifar/ && mkdir -p ~/kepler-ml/plots/cifar/ && cp
       -r cifar/* ~/kepler-ml/plots/cifar/
     deps:
@@ -589,6 +593,8 @@ stages:
   copy@cifar100:
     cmd: rm -rf ~/kepler-ml/plots/cifar100/ && mkdir -p ~/kepler-ml/plots/cifar100/
       && cp -r cifar100/* ~/kepler-ml/plots/cifar100/
+    cmd: rm -rf ~/kepler-ml/plots/cifar100/ && mkdir -p ~/kepler-ml/plots/cifar100/
+      && cp -r cifar100/* ~/kepler-ml/plots/cifar100/
     deps:
     - path: cifar100/
       hash: md5
@@ -596,6 +602,8 @@ stages:
       size: 29860670
       nfiles: 24
   copy@combined:
+    cmd: rm -rf ~/kepler-ml/plots/combined/ && mkdir -p ~/kepler-ml/plots/combined/
+      && cp -r combined/* ~/kepler-ml/plots/combined/
     cmd: rm -rf ~/kepler-ml/plots/combined/ && mkdir -p ~/kepler-ml/plots/combined/
       && cp -r combined/* ~/kepler-ml/plots/combined/
     deps:
