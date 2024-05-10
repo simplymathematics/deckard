@@ -32,10 +32,11 @@ hydra:
     study_name: ${def_name}_${atk_name}
     storage: sqlite:///${dataset}.db
     n_jobs: ???
+    n_trials : 128
     max_failure_rate: 1.0
     params:
       ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
-      ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
+      ++model.trainer.nb_epoch: 20
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

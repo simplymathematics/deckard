@@ -202,7 +202,7 @@ class EvasionAttack:
             )
         except TypeError as e:
             logger.error(f"Failed to compute success rate. Error: {e}")
-        if attack_file is not None:
+        if attack_file is not None and not Path(attack_file).exists():
             self.data.save(samples, attack_file)
         if adv_predictions_file is not None and Path(adv_predictions_file).exists():
             adv_predictions = self.data.load(adv_predictions_file)
@@ -210,7 +210,7 @@ class EvasionAttack:
         else:
             adv_predictions = model.predict(samples)
             results["adv_predictions"] = np.array(adv_predictions)
-        if adv_predictions_file is not None:
+        if adv_predictions_file is not None and not Path(adv_predictions_file).exists():
             self.data.save(adv_predictions, adv_predictions_file)
         if adv_probabilities_file is not None and Path(adv_probabilities_file).exists():
             adv_probabilities = self.data.load(adv_probabilities_file)

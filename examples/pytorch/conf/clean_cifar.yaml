@@ -1,0 +1,36 @@
+attacks:
+  DeepFool: Deep
+  FastGradientMethod: FGM
+  HopSkipJump: HSJ
+  PixelAttack: Pixel
+  ProjectedGradientDescent: PGD
+  ThresholdAttack: Thresh
+defences:
+  Control: Control
+  FeatureSqueezing: FSQ
+  GaussianAugmentation: Gauss-in
+  GaussianNoise: Gauss-out
+  HighConfidence: Conf
+  nb_epoch : Epochs
+  model_layers: Control
+params:
+  Deep: attack.init.kwargs.nb_grads
+  FGM: attack.init.eps
+  HSJ: attack.init.kwargs.max_iter
+  Pixel: attack.init.kwargs.th
+  PGD: attack.init.eps
+  Thresh: attack.init.kwargs.th
+  Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
+  Conf: model.art.pipeline.postprocessor.kwargs.cutoff
+  FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
+  Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+  Control: model_layers
+  Epochs: model.trainer.nb_epoch
+  control:
+    model_layers: 18
+  defaults:
+    model.trainer.nb_epoch: 20
+fillna:
+  model.trainer.nb_epoch : 20
+replace_cols:
+  model.trainer.nb_epoch: Epochs

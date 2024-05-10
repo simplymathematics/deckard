@@ -31,11 +31,11 @@ def cat_plot(
     y,
     hue,
     kind,
-    titles,
-    xlabels,
-    ylabels,
     file,
     folder,
+    xlabels = None, 
+    ylabels = None,
+    titles = None,
     legend_title=None,
     x_lim=None,
     y_lim=None,
@@ -112,9 +112,12 @@ def cat_plot(
         data = data.sort_values(by=[x, y])
         logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
         graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
-    graph.set_xlabels(xlabels)
-    graph.set_ylabels(ylabels)
-    graph.set_titles(titles)
+    if xlabels is not None:
+      graph.set_xlabels(xlabels)
+    if ylabels is not None:
+      graph.set_ylabels(ylabels)
+    if titles is not None:
+      graph.set_titles(titles)
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:

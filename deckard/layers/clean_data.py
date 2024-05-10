@@ -7,15 +7,36 @@ import seaborn as sns
 import yaml
 import numpy as np
 from tqdm import tqdm
-
+from typing import Literal
 from .utils import deckard_nones as nones
-from .compile import save_results
+from .compile import save_results, load_results
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
-def drop_frames_without_results(
+def fill_train_time(data, match=["model.init.name", "model.trainer.nb_epoch", "model.art.preprocessor", "model.art.postprocessor", "def_name", "def_gen", "defence_name"]):
+    sort_by = []
+    for col in match:
+        # find out which columns have the string in match
+        if col in data.columns:
+            sort_by.append(col)
+        else:
+            pass
+    # Convert "train_time" to numeric
+    # Fill missing values in "train_time" with the max of the group
+    data["train_time"] = pd.to_numeric(data["train_time"], errors="coerce").astype(float)
+    # Group by everything in the "match" list
+    assert isinstance(data, pd.DataFrame), "data is not a pandas DataFrame"
+    # Sort by the entries in "match"
+    data = data.sort_values(by=sort_by)
+    data["train_time"] = data["train_time"].fillna(method="ffill")
+    data["train_time"] = data["train_time"].fillna(method="bfill")
+    return data
+
+
+
+def drop_rows_without_results(
     data,
     subset=[
         "accuracy",
@@ -27,7 +48,7 @@ def drop_frames_without_results(
     ],
 ):
     """
-    The function `drop_frames_without_results` drops rows from a DataFrame that have missing values in
+    The function `drop_rows_without_results` drops rows from a DataFrame that have missing values in
     specified columns.
 
     Args:
@@ -42,7 +63,18 @@ def drop_frames_without_results(
     """
 
     logger.info(f"Dropping frames without results for {subset}")
-    data.dropna(axis=0, subset=subset, inplace=True)
+    
+    for col in subset:
+        logger.info(f"Dropping frames without results for {col}")
+        before = data.shape[0]
+        logger.info(f"Shape of data before data before dropping na: {data.shape}")
+        data.dropna(axis=0, subset=[col], inplace=True)
+        after = data.shape[0]
+        logger.info(f"Shape of data before data after dropping na: {data.shape}")
+        percent_change = (before - after) / before * 100
+        if percent_change > 5:
+            # input(f"{percent_change:.2f}% of data dropped for {col}. Press any key to continue.")
+            logger.warning(f"{percent_change:.2f}% of data dropped for {col}")
     return data
 
 
@@ -59,8 +91,6 @@ def calculate_failure_rate(data):
     "failure_rate", "training_time_per_failure", and "training_time_per_adv_failure".
     """
     logger.info("Calculating failure rate")
-    data = data[data.columns.drop(list(data.filter(regex=r"\.1$")))]
-    data.columns.str.replace(" ", "")
     assert "accuracy" in data.columns, "accuracy not in data.columns"
     data.loc[:, "accuracy"] = pd.to_numeric(data.loc[:, "accuracy"])
     assert (
@@ -243,6 +273,7 @@ def merge_defences(
     for _, entry in tqdm(results.iterrows(), desc="Merging defences"):
         defence = []
         i = 0
+        # Explicit defences from ART
         for col in defence_columns:
             if col in entry and entry[col] not in nones:
                 defence.append(entry[col])
@@ -251,8 +282,8 @@ def merge_defences(
             i += 1
         ############################################################################################################
         if len(defence) > 1:
-            def_gen = [str(x).split(".")[-1] for x in defence]
-            defence = "_".join(defence)
+            def_gen = [str(str(x).split(".")[-1]) for x in defence]
+            defence = "_".join(str(defence))
             def_gen = "_".join(def_gen)
         elif len(defence) == 1 and defence[0] not in nones and defence[0] != np.nan:
             def_gen = str(defence[0]).split(".")[-1]
@@ -429,6 +460,8 @@ def format_control_parameter(data, control_dict, fillna):
     return data, fillna
 
 
+
+    
 def replace_strings_in_data(data, replace_dict):
     for k, v in replace_dict.items():
         logger.info(f"Replacing strings in {k}...")
@@ -447,14 +480,33 @@ def replace_strings_in_data(data, replace_dict):
     return data
 
 
+def replace_strings_in_columns(data, replace_dict):
+    cols = list(data.columns)
+    for k, v in replace_dict.items():
+        logger.debug(f"Replacing {k} with {v} in column names...")
+        for col in cols:
+            if k == col:
+                logger.debug(f"Replacing {k} with {v} in column names...")
+                data.rename(columns={k: v}, inplace=True)
+            else:
+                pass
+    after = list(data.columns)
+    if len(replace_dict) > 0:
+        logger.info(f"Columns after replacement: {after}")
+        assert cols != after, "Columns not replaced."
+        assert len(cols) == len(after), f"Length of columns before and after replacement not equal: {len(cols)} != {len(after)}."
+    return data
+
+
 def clean_data_for_plotting(
     data,
-    def_gen_dict,
-    atk_gen_dict,
-    control_dict,
-    fillna,
-    replace_dict,
-    pareto_dict,
+    def_gen_dict={},
+    atk_gen_dict={},
+    control_dict={},
+    fillna={},
+    replace_dict={},
+    col_replace_dict = {},
+    pareto_dict={},
 ):
     """
     The function `clean_data_for_plotting` cleans and formats data for plotting by dropping empty rows,
@@ -494,31 +546,46 @@ def clean_data_for_plotting(
         data = data.assign(model_layers=model_layers)
         logger.info(f"Model Names: {data.model_name.unique()}")
         logger.info(f"Model Layers: {data.model_layers.unique()}")
-
     logger.info("Replacing data.sample.random_state with random_state...")
     data["data.sample.random_state"].rename("random_state", inplace=True)
     if len(def_gen_dict) > 0:
         data = merge_defences(data)
     logger.info("Replacing attack and defence names with short names...")
     if hasattr(data, "def_gen"):
-        def_gen = data.def_gen.map(def_gen_dict)
-        data.def_gen = def_gen
-        data.dropna(axis=0, subset=["def_gen"], inplace=True)
+        shorten_defence_names(data, def_gen_dict)
     if "attack.init.name" in data:
         data = merge_attacks(data)
     if hasattr(data, "atk_gen"):
-        atk_gen = data.atk_gen.map(atk_gen_dict)
-        data.atk_gen = atk_gen
-        data.dropna(axis=0, subset=["atk_gen"], inplace=True)
+        shorten_attack_names(data, atk_gen_dict)
     data, fillna = format_control_parameter(data, control_dict, fillna)
+    data = fill_na(data, fillna)
+    data = replace_strings_in_data(data, replace_dict)
+    data = replace_strings_in_columns(data, col_replace_dict)
+    
+    if len(pareto_dict) > 0:
+        data = find_pareto_set(data, pareto_dict)
+    return data
+
+def shorten_defence_names(data, def_gen_dict):
+    def_gen = data.def_gen.map(def_gen_dict)
+    data.def_gen = def_gen
+    data.dropna(axis=0, subset=["def_gen"], inplace=True)
+
+def shorten_attack_names(data, atk_gen_dict):
+    atk_gen = data.atk_gen.map(atk_gen_dict)
+    data.atk_gen = atk_gen
+    data.dropna(axis=0, subset=["atk_gen"], inplace=True)
+
+def fill_na(data, fillna):
     for k, v in fillna.items():
         if k in data.columns:
             data[k] = data[k].fillna(v)
         else:
             data[k] = str(v)
-    data = replace_strings_in_data(data, replace_dict)
-    if len(pareto_dict) > 0:
-        data = pareto_set(data, pareto_dict)
+    return data
+
+def find_pareto_set(data, pareto_dict):
+    data = pareto_set(data, pareto_dict)
     return data
 
 
@@ -586,22 +653,20 @@ def main(args):
     assert Path(
         args.input_file,
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
-    data = pd.read_csv(args.input_file)
+    data = load_results(results_file=Path(args.input_file).name, results_folder=Path(args.input_file).parent)
     # Strip whitespace from column names
     trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # noqa E731
     data.rename(columns=trim_strings, inplace=True)
     # Strip whitespace from column values
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
-    assert "model.init.name" in data.columns, "model.init.name not in data.columns"
-
     if isinstance(args.drop_if_empty, str):
         args.drop_if_empty = args.drop_if_empty.split(",")
     else:
         assert isinstance(args.drop_if_empty, list)
-    for col in args.drop_if_empty:
-        assert col in data.columns, f"Column {col} not in data.columns"
-    data = drop_frames_without_results(data, subset=args.drop_if_empty)
+    
+    
+    
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -611,6 +676,7 @@ def main(args):
     fillna = big_dict.get("fillna", {})
     min_max = big_dict.get("min_max", [])
     replace_dict = big_dict.get("replace", {})
+    replace_cols = big_dict.get("replace_cols", {})
     pareto_dict = big_dict.get("pareto", {})
     drop_dict = big_dict.pop("drop_values", {})
     data = drop_values(data, drop_dict)
@@ -621,11 +687,16 @@ def main(args):
         control_dict,
         fillna=fillna,
         replace_dict=replace_dict,
+        col_replace_dict=replace_cols,
         pareto_dict=pareto_dict,
     )
-
+    for col in results.columns:
+        if "def" in col:
+            print(col)
     if "adv_accuracy" in results.columns:
         results = calculate_failure_rate(results)
+    results = fill_train_time(results)
+    results = drop_rows_without_results(results, subset=args.drop_if_empty)
     results = min_max_scaling(results, *min_max)
     output_file = save_results(
         results,

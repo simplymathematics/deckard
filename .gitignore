@@ -143,3 +143,7 @@ screenlog.*
 # tmp.py
 tmp.py
 env310/*
+examples/pytorch/.dvc/tmp/lock
+examples/pytorch/.dvc/tmp/lock
+examples/pytorch/.dvc/tmp/rwlock
+examples/pytorch/.dvc/tmp/rwlock.lock

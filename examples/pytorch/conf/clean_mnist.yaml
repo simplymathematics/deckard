@@ -25,10 +25,12 @@ params:
   FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
   Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
   Control: model_layers
-  Epochs: model.trainer.nb_epoch
+  Epochs: model.trainer.kwargs.nb_epoch
   control:
     model_layers: 18
   defaults:
-    model.trainer.nb_epoch: 20
+    model.trainer.kwargs.nb_epoch: 20
 fillna:
-  model.trainer.nb_epoch : 20
+  model.trainer.kwargs.nb_epoch : 20
+replace_cols:
+  model.trainer.kwargs.nb_epoch: Epochs

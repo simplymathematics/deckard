@@ -33,7 +33,7 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFrame:
+def parse_folder(folder, files=["params.yaml", "score_dict.json"], other_files=False) -> pd.DataFrame:
     """
     Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing files
@@ -56,11 +56,10 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     results = {}
     for file in tqdm(path_gen, desc="Parsing Specified files"):
         results = read_file(file, results)
-    for folder in tqdm(folder_gen, desc="Adding other files to results"):
-        results = add_file(folder, path_gen, results)
+    if other_files is True:
+        for folder in tqdm(folder_gen, desc="Adding other files to results"):
+            results = add_file(folder, path_gen, results)
     df = pd.DataFrame(results).T
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     df.columns = df.columns.str.strip()
     return df

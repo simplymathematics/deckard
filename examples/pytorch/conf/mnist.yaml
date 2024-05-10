@@ -32,6 +32,7 @@ hydra:
     study_name: ${def_name}_${atk_name}
     storage: sqlite:///${dataset}.db
     n_jobs: ???
+    n_trials: 1024
     max_failure_rate: 1.0
     params:
       ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
