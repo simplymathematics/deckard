@@ -187,7 +187,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ
@@ -206,7 +205,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ
@@ -227,7 +225,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ
