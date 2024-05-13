@@ -277,55 +277,55 @@ stages:
     outs:
     - path: plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: fa514f4b1cee200ed609c8f7e0833678
+      md5: 562677ede3cf9296da4f93339251d5c4
       size: 36004
     - path: plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 3c7d8d9141280186e6784109175aa21c
+      md5: 2895f72641fba1e82dfd58bf07b84b88
       size: 33276
     - path: plots/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: e59f1f1929edbb383def1ad5691b3997
+      md5: b8ec464ae5e3818ec6dfc3d86cd6c0d2
       size: 274151
     - path: plots/adv_failures_per_test_time_vs_defence_type.pdf
       hash: md5
-      md5: a8c8a23b1b2301039d25cf4c3941fa9d
+      md5: 5011cd17d8b00a931826afce6a5cb224
       size: 41545
     - path: plots/adv_failures_per_train_time_vs_attack_type.pdf
       hash: md5
-      md5: dae91980ffb28a306d6e3a8c96b532d6
+      md5: 97d021f011736ea54f749e9c4bfc6c8b
       size: 45731
     - path: plots/adv_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: b47b394e06359e2c5a2e624024404c78
+      md5: 615576d1cc214a21ec2b9fb6c4bdebb0
       size: 41717
     - path: plots/atk_param_vs_accuracy.pdf
       hash: md5
-      md5: e9488a3b75fd97bc26c73f7707577e29
+      md5: 375ff51223e073004080f83efac37560
       size: 21464
     - path: plots/ben_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 24033f16529de4d72db59818662ce301
+      md5: 09ad03a85695c5d1e389915f3a4fc893
       size: 34713
     - path: plots/ben_failure_rate_vs_defence_type.pdf
       hash: md5
-      md5: cc552ce0a02a8b500dc09d8e98716720
+      md5: 3b77a168c5a931012289055ddff05d8e
       size: 43727
     - path: plots/ben_failures_per_train_time_vs_defence_type.pdf
       hash: md5
-      md5: 521955aa073d75b50ceadd2f968f6cdf
+      md5: f2062b44413c54621b2aed04c3cf39a7
       size: 42200
     - path: plots/def_param_vs_accuracy.pdf
       hash: md5
-      md5: 422b68348b5ece91e608fd743d7f3591
+      md5: fd69f459559550b33dfc4bb41de9abc3
       size: 19260
     - path: plots/def_param_vs_adv_accuracy.pdf
       hash: md5
-      md5: b06430da1fefa3109994ba95642bf842
+      md5: ccdb51788408e29d2fcfd658d0b7bc80
       size: 18821
     - path: plots/def_param_vs_adv_failure_rate.pdf
       hash: md5
-      md5: cc27ec89faa39e1a7ec08370d9d411a8
+      md5: 516e198e0824d7d66dcfea32b3b5b8c8
       size: 22073
   afr:
     cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures
@@ -554,7 +554,7 @@ stages:
     deps:
     - path: plots/
       hash: md5
-      md5: 22fb7f550913d6cab3fc92ce7b447e0b.dir
+      md5: 99f5efc919f35ac9e7800ee6b6d14362.dir
       size: 1205224
       nfiles: 40
   clean:
