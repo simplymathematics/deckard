@@ -195,8 +195,12 @@ def fit_aft(
         assert (
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    start = df[duration_col].min() 
+    end = df[duration_col].max()
+    start = start - 0.01 * (end - start)
+    timeline = np.linspace(start, end, 1000)
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col)
+        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
@@ -204,7 +208,7 @@ def fit_aft(
         logger.info("Trying to fit with SLSQP")
         aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col)
+            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
         
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
@@ -375,8 +379,8 @@ def plot_qq(
         ax, _, _ = survival_probability_calibration(aft, X_test, t0=t0, ax=ax, color="blue")
     else:
         ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="blue")
-    # ax.set_xlim(0,1)
-    # ax.set_ylim(0,1)
+    ax.set_xlim(0,1)
+    ax.set_ylim(0,1)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
