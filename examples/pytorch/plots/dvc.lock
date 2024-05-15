@@ -357,6 +357,7 @@ stages:
           plot:
             file: cox_aft.pdf
             title: Cox Model
+            title: Cox Model
             qq_title: Cox QQ Plot
           t0: 0.3
           model:
@@ -452,6 +453,7 @@ stages:
             file: log_normal_aft.pdf
             title: Log Normal AFR Model
             qq_title: Log Normal QQ Plot
+          t0: 2
           t0: 2
           model:
             penalizer: 0.5

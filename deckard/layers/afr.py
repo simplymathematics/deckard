@@ -199,6 +199,10 @@ def fit_aft(
     end = df[duration_col].max()
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
+    start = df[duration_col].min() 
+    end = df[duration_col].max()
+    start = start - 0.01 * (end - start)
+    timeline = np.linspace(start, end, 1000)
     try:
         aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
     except TypeError as e:

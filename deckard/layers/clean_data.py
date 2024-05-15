@@ -147,7 +147,9 @@ def calculate_failure_rate(data):
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
     training_time_per_adv_failure = (
+        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
         data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
