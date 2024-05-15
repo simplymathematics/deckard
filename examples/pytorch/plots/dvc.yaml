@@ -127,6 +127,9 @@ stages:
         - line_plot
         - scatter_plot
         - cat_plot
+      - afr.yaml:
+        - covariates
+        - weibull
   copy_results:
       cmd: mkdir -p ~/ml_afr/plots &&  cp -r plots/* ~/ml_afr/plots/
       deps:
