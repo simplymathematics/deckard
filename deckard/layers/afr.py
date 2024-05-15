@@ -136,8 +136,8 @@ def survival_probability_calibration(
     # plot our results
 
     ax.plot(x, y, label="Calibration Curve", color=color)
-    ax.set_xlabel("Predicted probability of \nt ≤ %d mortality" % t0)
-    ax.set_ylabel("Observed probability of \nt ≤ %d mortality" % t0)
+    ax.set_xlabel("Predicted P(t ≤ %.2f )" % round(t0, 3))
+    ax.set_ylabel("Observed P(t ≤ %.2f )" % round(t0, 3))
     ax.tick_params(axis="y")
 
     # plot x=y line
@@ -200,11 +200,11 @@ def fit_aft(
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline, show_progress=True)
+        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
     except TypeError as e:
         if "AalenAdditiveFitter" in str(e):
-            logger.error("AalenAdditiveFitter does not support penalizer")
-            aft.fit(df, event_col=event_col, duration_col=duration_col, show_progress=True)
+            logger.debug("AalenAdditiveFitter does not support timeline")
+            aft.fit(df, event_col=event_col, duration_col=duration_col)
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
@@ -212,11 +212,12 @@ def fit_aft(
         logger.info("Trying to fit with SLSQP")
         aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline, show_progress=True)
-        
+            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
+        except AttributeError as e:
+            raise ConvergenceError(f"Could not fit {mtype} model with SLSQP")
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
-            raise e
+            raise ConvergenceError(f"Could not fit {mtype} model")
         
     else:
         logger.info(f"Fitted {mtype} model")
@@ -387,8 +388,10 @@ def plot_qq(
         ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
     ax.set_xlim(0,1)
     ax.set_ylim(0,1)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.legend().remove()
     ax.get_figure().tight_layout()
@@ -642,8 +645,8 @@ def run_afr_experiment(
             ),
             t0=t0,
             file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
-            xlabel=label_dict.pop("xlabel", "Observed Quantiles"),
-            ylabel=label_dict.pop("ylabel", "Predicted Quantiles"),
+            xlabel=label_dict.pop("xlabel", None),
+            ylabel=label_dict.pop("ylabel", None),
             folder=folder,
         )
         plots.append(qq_plot)
