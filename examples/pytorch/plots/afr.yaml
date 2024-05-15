@@ -23,6 +23,8 @@ weibull:
     title : Weibull AFR Model
     qq_title : Weibull QQ Plot
   t0: 1
+  model:
+    penalizer: .1
   labels:
     "Intercept: rho_": "$\\rho$"
     "Intercept: lambda_": "$\\lambda$" 
@@ -61,14 +63,16 @@ weibull:
   #     "xlabel": "Time $T$ (seconds)"
   #     "legend_kwargs": {
   #         "title": "Layers",
-  #         "labels": ["18", "34", "50", "101", "152"]
+  #         "labels": ["18", "34", "50", "101", "152"] 
   #     }
 cox:
   plot:
     file : cox_aft.pdf
-    title : Cox AFR Model
+    title : Cox Model
     qq_title : Cox QQ Plot
   t0: .3
+  model:
+    penalizer: .2
   labels:
     "Intercept: rho_": "$\\rho$"
     "Intercept: lambda_": "$\\lambda$" 
@@ -110,7 +114,9 @@ log_logistic:
     file : log_logistic_aft.pdf
     title : Log logistic AFR Model
     qq_title : Log Logistic QQ Plot
-  t0: 1
+  t0: .1
+  model:
+    penalizer: .1
   labels:
     "Intercept: beta_": "$\\beta$"
     "Intercept: alpha_": "$\\alpha$"
@@ -153,7 +159,7 @@ log_normal:
     file : log_normal_aft.pdf
     title : Log Normal AFR Model
     qq_title : Log Normal QQ Plot
-  t0: .1
+  t0: 2
   model:
     penalizer: .5
   labels:
@@ -198,8 +204,9 @@ gamma:
     file : gamma_aft.pdf
     title : Generalized Gamma Model
     qq_title : Gamma QQ Plot
-  t0: .1
-  penalizer : .3
+  t0: .3
+  model:
+    penalizer : .3
   labels:
     "Intercept: alpha_": "$\\alpha$"
     "Intercept: beta_": "$\\beta$"

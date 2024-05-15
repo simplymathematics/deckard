@@ -46,7 +46,7 @@ cat_plot:
     yscale: log
   x: def_gen
   xlabels: Defence Type
-  y: training_time_per_failure
+  y: c_ben
   ylabels: $\bar{C}_{ben.}$
   rotation : 90
   hue_order:
@@ -69,7 +69,7 @@ cat_plot:
     yscale: log
   x: def_gen
   xlabels: Defence Type
-  y: training_time_per_adv_failure
+  y: c_adv
   ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
@@ -92,7 +92,7 @@ cat_plot:
     yscale: log
   x: atk_gen
   xlabels: Attack Type
-  y: training_time_per_adv_failure
+  y: c_adv
   ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
@@ -187,7 +187,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ
@@ -206,7 +205,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ
@@ -227,7 +225,6 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
   - FSQ

@@ -39,10 +39,70 @@ stages:
       --output_file merged.csv
     outs:
       -  data/merged.csv
-  plot:
-    cmd : python -m deckard.layers.plots --path plots/ --file data/merged.csv -c plots.yaml
+  
+  afr:
+    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures --duration_col adv_fit_time  --config_file afr.yaml --plots_folder plots/
     deps:
       - data/merged.csv
+    plots:
+      - plots/weibull_aft.pdf
+      - plots/weibull_aft_dummies.pdf
+      - plots/weibull_qq.pdf
+      - plots/log_logistic_aft.pdf
+      - plots/log_logistic_aft_dummies.pdf
+      - plots/log_logistic_qq.pdf
+      - plots/log_normal_aft.pdf
+      - plots/log_normal_aft_dummies.pdf
+      - plots/log_normal_qq.pdf
+      - plots/gamma_aft.pdf
+      - plots/gamma_aft_dummies.pdf
+      - plots/gamma_qq.pdf
+      - plots/exponential_aft.pdf
+      - plots/exponential_aft_dummies.pdf
+      - plots/exponential_qq.pdf
+      - plots/cox_aft.pdf
+      - plots/cox_aft_dummies.pdf
+      - plots/cox_qq.pdf
+      
+
+    params:
+      - afr.yaml:
+        - covariates
+        - weibull
+        - log_logistic
+        - log_normal
+        # - gamma
+        # - exponential
+        - cox
+    metrics:
+      - plots/aft_comparison.csv
+    outs:
+      - plots/aft_comparison.tex
+      - plots/weibull_summary.csv
+      - plots/cox_summary.csv
+      - plots/log_logistic_summary.csv
+      - plots/log_normal_summary.csv
+      - plots/gamma_summary.csv
+      - plots/exponential_summary.csv
+  predict_survival_time:
+    cmd: >-
+      python predict_with_best.py 
+      --data data/merged.csv 
+      --config_file afr.yaml 
+      --model weibull 
+      --target adv_failures 
+      --duration_col adv_fit_time 
+      --output data/merged_afr.csv
+    deps:
+      - data/merged.csv
+      - afr.yaml
+      - plots/aft_comparison.tex
+    outs:
+      - data/merged_afr.csv
+  plot:
+    cmd : python -m deckard.layers.plots --path plots/ --file data/merged_afr.csv -c plots.yaml
+    deps:
+      - data/merged_afr.csv
       - plots.yaml
     plots:
       - plots/${cat_plot[0].file}
@@ -63,48 +123,6 @@ stages:
         - line_plot
         - scatter_plot
         - cat_plot
-  afr:
-    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures --duration_col adv_fit_time  --config_file afr.yaml --plots_folder plots/
-    deps:
-      - data/merged.csv
-    plots:
-      - plots/weibull_aft.pdf
-      - plots/weibull_aft_dummies.pdf
-      - plots/weibull_summary.csv
-      - plots/weibull_qq.pdf
-      - plots/log_logistic_aft.pdf
-      - plots/log_logistic_aft_dummies.pdf
-      - plots/log_logistic_qq.pdf
-      - plots/log_logistic_summary.csv
-      - plots/log_normal_aft.pdf
-      - plots/log_normal_aft_dummies.pdf
-      - plots/log_normal_qq.pdf
-      - plots/log_normal_summary.csv
-      - plots/gamma_aft.pdf
-      - plots/gamma_aft_dummies.pdf
-      - plots/gamma_qq.pdf
-      - plots/gamma_summary.csv
-      - plots/exponential_aft.pdf
-      - plots/exponential_aft_dummies.pdf
-      - plots/exponential_qq.pdf
-      - plots/exponential_summary.csv
-      - plots/cox_aft.pdf
-      - plots/cox_aft_dummies.pdf
-      - plots/cox_qq.pdf
-      - plots/cox_summary.csv
-    params:
-      - afr.yaml:
-        - covariates
-        - weibull
-        - log_logistic
-        - log_normal
-        # - gamma
-        # - exponential
-        - cox
-    metrics:
-      - plots/aft_comparison.csv
-    outs:
-      - plots/aft_comparison.tex
   copy_results:
       cmd: mkdir -p ~/ml_afr/plots &&  cp -r plots/* ~/ml_afr/plots/
       deps:

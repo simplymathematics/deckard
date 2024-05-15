@@ -195,8 +195,12 @@ def fit_aft(
         assert (
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    start = df[duration_col].min() 
+    end = df[duration_col].max()
+    start = start - 0.01 * (end - start)
+    timeline = np.linspace(start, end, 1000)
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col)
+        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
@@ -204,7 +208,7 @@ def fit_aft(
         logger.info("Trying to fit with SLSQP")
         aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col)
+            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
         
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
@@ -374,9 +378,9 @@ def plot_qq(
         ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
         ax, _, _ = survival_probability_calibration(aft, X_test, t0=t0, ax=ax, color="blue")
     else:
-        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="blue")
-    # ax.set_xlim(0,1)
-    # ax.set_ylim(0,1)
+        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
+    ax.set_xlim(0,1)
+    ax.set_ylim(0,1)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -659,8 +663,7 @@ def render_all_afr_plots(
     folder=".",
     dummy_dict={},
 ):
-    covariate_list = config.pop("covariates", [])
-    data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummy_dict)
+    
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     X_train, X_test = split_data_for_aft(
@@ -704,7 +707,7 @@ def render_all_afr_plots(
     print("*" * 80)
 
 
-def prepare_aft_data(args, data, config):
+def calculate_raw_failures(args, data, config):
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     covariates = config.get("covariates", [])
@@ -719,7 +722,7 @@ def prepare_aft_data(args, data, config):
     if "ben_failures" in covariates and "ben_failures" not in data.columns:
         data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
             :,
-            "data.sample.test_size",
+            "attack.attack_size",
         ]
         del data['accuracy']
     data = drop_rows_without_results(data, covariates)
@@ -743,6 +746,7 @@ def main(args):
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
     data = load_results(results_file = Path(csv_file).name, results_folder = Path(csv_file).parent)
+    
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
     if len(str(args.config_file).split(":")) > 1:
@@ -759,7 +763,9 @@ def main(args):
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
     dummies  = config.pop("dummies", {"atk_gen" : "Atk:", "def_gen" : "Def:", "id" : "Data:"})
-    data = prepare_aft_data(args, data, config)
+    data = calculate_raw_failures(args, data, config)
+    covariate_list = config.pop("covariates", [])
+    data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummies)
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     render_all_afr_plots(
