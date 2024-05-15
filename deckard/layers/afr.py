@@ -200,7 +200,11 @@ def fit_aft(
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
+        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline, show_progress=True)
+    except TypeError as e:
+        if "AalenAdditiveFitter" in str(e):
+            logger.error("AalenAdditiveFitter does not support penalizer")
+            aft.fit(df, event_col=event_col, duration_col=duration_col, show_progress=True)
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
@@ -208,7 +212,7 @@ def fit_aft(
         logger.info("Trying to fit with SLSQP")
         aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
+            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline, show_progress=True)
         
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
@@ -274,6 +278,7 @@ def plot_aft(
     plt.gcf().clear()
     logger.info(f"Saved graph to {file}")
     if len(dummy_cols) > 0:
+        plt.gcf().clear()
         logger.info(f"Dummy variables: {dummy_cols}")
         ax2 = aft.plot(columns=dummy_cols)
         labels = ax2.get_yticklabels()
@@ -299,6 +304,7 @@ def plot_aft(
         ax2.set_title(title)
         ax2.get_figure().tight_layout()
         ax2.get_figure().savefig(file.with_name(file.stem + "_dummies" + file.suffix))
+        plt.gcf().clear()
     return ax
 
 
