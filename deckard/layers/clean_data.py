@@ -113,6 +113,7 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
+        survival_time = data.loc[:, "predict_time"] * data.loc[:, "accuracy"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
             data.loc[:, "predict_proba_time"],
@@ -120,26 +121,30 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
+        surival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "accuracy"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    if "adv_fit_time" in data.columns:
-        assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
-        if "predict_time" in data.columns:
-            adv_failure_rate = (
-                (1 - data.loc[:, "adv_accuracy"])
-                * data.loc[:, "attack.attack_size"]
-                / data.loc[:, "adv_fit_time"]
-            )
-        elif "predict_proba_time" in data.columns:
-            adv_failure_rate = (
-                (1 - data.loc[:, "adv_accuracy"])
-                * data.loc[:, "attack.attack_size"]
-                / data.loc[:, "adv_fit_time"]
-            )
-        else:
-            raise ValueError("predict_time or predict_proba_time not in data.columns")
+    adv_failure_rate = (
+        (1 - data.loc[:, "adv_accuracy"])
+        * data.loc[:, "attack.attack_size"]
+        / data.loc[:, "predict_time"]
+    )
+
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
+    training_time_per_adv_failure = (
+        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
+    )
+    data = data.assign(training_time_per_failure=training_time_per_failure)
+    data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
+
+    assert (
+        "training_time_per_adv_failure" in data.columns
+    ), "training_time_per_adv_failure not in data.columns"
+    assert (
+        "training_time_per_failure" in data.columns
+    ), "training_time_per_failure not in data.columns"
     assert "adv_failure_rate" in data.columns, "adv_failure_rate not in data.columns"
     assert "failure_rate" in data.columns, "failure_rate not in data.columns"
     return data
