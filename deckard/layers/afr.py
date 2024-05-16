@@ -107,6 +107,8 @@ def survival_probability_calibration(
                 crc.fit_left_censoring(prediction_df, T, E, regressors=regressors)
             elif CensoringType.is_interval_censoring(model):
                 crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
+            else:
+                crc.fit(prediction_df, T, E, regressors=regressors)
         except ConvergenceError:
             crc._scipy_fit_method = "SLSQP"
             try:
@@ -116,6 +118,8 @@ def survival_probability_calibration(
                     crc.fit_left_censoring(prediction_df, T, E, regressors=regressors)
                 elif CensoringType.is_interval_censoring(model):
                     crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
+                else:
+                    crc.fit(prediction_df, T, E, regressors=regressors)
             except ConvergenceError as e:
                 return ax, np.nan, np.nan
 
@@ -136,8 +140,8 @@ def survival_probability_calibration(
     # plot our results
 
     ax.plot(x, y, label="Calibration Curve", color=color)
-    ax.set_xlabel("Predicted probability of \nt ≤ %d mortality" % t0)
-    ax.set_ylabel("Observed probability of \nt ≤ %d mortality" % t0)
+    ax.set_xlabel("Predicted P(t ≤ %.2f )" % round(t0, 3))
+    ax.set_ylabel("Observed P(t ≤ %.2f )" % round(t0, 3))
     ax.tick_params(axis="y")
 
     # plot x=y line
@@ -195,8 +199,20 @@ def fit_aft(
         assert (
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
+    start = df[duration_col].min() 
+    end = df[duration_col].max()
+    start = start - 0.01 * (end - start)
+    timeline = np.linspace(start, end, 1000)
+    start = df[duration_col].min() 
+    end = df[duration_col].max()
+    start = start - 0.01 * (end - start)
+    timeline = np.linspace(start, end, 1000)
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col)
+        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
+    except TypeError as e:
+        if "AalenAdditiveFitter" in str(e):
+            logger.debug("AalenAdditiveFitter does not support timeline")
+            aft.fit(df, event_col=event_col, duration_col=duration_col)
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
@@ -204,11 +220,12 @@ def fit_aft(
         logger.info("Trying to fit with SLSQP")
         aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col)
-        
+            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
+        except AttributeError as e:
+            raise ConvergenceError(f"Could not fit {mtype} model with SLSQP")
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
-            raise e
+            raise ConvergenceError(f"Could not fit {mtype} model")
         
     else:
         logger.info(f"Fitted {mtype} model")
@@ -270,6 +287,7 @@ def plot_aft(
     plt.gcf().clear()
     logger.info(f"Saved graph to {file}")
     if len(dummy_cols) > 0:
+        plt.gcf().clear()
         logger.info(f"Dummy variables: {dummy_cols}")
         ax2 = aft.plot(columns=dummy_cols)
         labels = ax2.get_yticklabels()
@@ -295,6 +313,7 @@ def plot_aft(
         ax2.set_title(title)
         ax2.get_figure().tight_layout()
         ax2.get_figure().savefig(file.with_name(file.stem + "_dummies" + file.suffix))
+        plt.gcf().clear()
     return ax
 
 
@@ -374,11 +393,13 @@ def plot_qq(
         ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
         ax, _, _ = survival_probability_calibration(aft, X_test, t0=t0, ax=ax, color="blue")
     else:
-        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="blue")
-    # ax.set_xlim(0,1)
-    # ax.set_ylim(0,1)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
+    ax.set_xlim(0,1)
+    ax.set_ylim(0,1)
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.legend().remove()
     ax.get_figure().tight_layout()
@@ -427,16 +448,20 @@ def plot_partial_effects(
     return pareto
 
 
-def score_model(aft, train, test):
-    train_score = aft.score(train, scoring_method="concordance_index")
-    test_score = aft.score(test, scoring_method="concordance_index")
-    train_ll = aft.score(train, scoring_method="log_likelihood")
-    test_ll = aft.score(test, scoring_method="log_likelihood")
+def score_model(aft, train, test, t0=0.35, method="concordance_index"):
+    train_score = aft.score(train, scoring_method=method)
+    test_score = aft.score(test, scoring_method=method)
+    ax, train_ici, train_e50 = survival_probability_calibration(aft, train, t0=t0)
+    ax, test_ici, test_e50 = survival_probability_calibration(aft, test, t0=t0, ax = ax)
     scores = {
         "train_score": train_score,
         "test_score": test_score,
-        "train_ll": train_ll,
-        "test_ll": test_ll,
+        "train_ici": train_ici,
+        "test_ici": test_ici,
+        "train_e50": train_e50,
+        "test_e50": test_e50,
+        "qq_plot": ax,
+        
     }
     return scores
 
@@ -458,10 +483,10 @@ def make_afr_table(
     ]
     aft_data.index = model_names
     aft_data["AIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter)) else np.nan for x in aft_dict.values()
     ]
     aft_data["BIC"] = [
-        x.AIC_ if not isinstance(x, CoxPHFitter) else np.nan for x in aft_dict.values()
+        x.AIC_ if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter)) else np.nan for x in aft_dict.values()
     ]
     aft_data["Concordance"] = [
         x.score(X_train, scoring_method="concordance_index") for x in aft_dict.values()
@@ -469,7 +494,7 @@ def make_afr_table(
     aft_data["Test Concordance"] = [
         x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()
     ]
-    icis = []
+    icis = [] 
     e50s = []
     for key in aft_dict.keys():
         model = aft_dict[key]
@@ -632,8 +657,8 @@ def run_afr_experiment(
             ),
             t0=t0,
             file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
-            xlabel=label_dict.pop("xlabel", "Observed Quantiles"),
-            ylabel=label_dict.pop("ylabel", "Predicted Quantiles"),
+            xlabel=label_dict.pop("xlabel", None),
+            ylabel=label_dict.pop("ylabel", None),
             folder=folder,
         )
         plots.append(qq_plot)
@@ -659,8 +684,7 @@ def render_all_afr_plots(
     folder=".",
     dummy_dict={},
 ):
-    covariate_list = config.pop("covariates", [])
-    data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummy_dict)
+    
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     X_train, X_test = split_data_for_aft(
@@ -704,7 +728,7 @@ def render_all_afr_plots(
     print("*" * 80)
 
 
-def prepare_aft_data(args, data, config):
+def calculate_raw_failures(args, data, config):
     data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     assert Path(args.config_file).exists(), f"{args.config_file} does not exist."
     covariates = config.get("covariates", [])
@@ -719,7 +743,7 @@ def prepare_aft_data(args, data, config):
     if "ben_failures" in covariates and "ben_failures" not in data.columns:
         data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
             :,
-            "data.sample.test_size",
+            "attack.attack_size",
         ]
         del data['accuracy']
     data = drop_rows_without_results(data, covariates)
@@ -743,6 +767,7 @@ def main(args):
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
     data = load_results(results_file = Path(csv_file).name, results_folder = Path(csv_file).parent)
+    
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
     if len(str(args.config_file).split(":")) > 1:
@@ -759,7 +784,9 @@ def main(args):
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
     dummies  = config.pop("dummies", {"atk_gen" : "Atk:", "def_gen" : "Def:", "id" : "Data:"})
-    data = prepare_aft_data(args, data, config)
+    data = calculate_raw_failures(args, data, config)
+    covariate_list = config.pop("covariates", [])
+    data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummies)
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     render_all_afr_plots(

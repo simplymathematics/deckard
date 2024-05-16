@@ -13,86 +13,88 @@ stages:
           cache: True
           persist: True
   train:
-    cmd: python -m deckard.layers.experiment train --config_file ${dataset}.yaml
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - def_name
-      - atk_name
-      - dataset
-      - device_id
-    outs:
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-    metrics:
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
+    foreach:
+      - mnist
+      - cifar
+      - cifar100
+    do:
+      cmd: python -m deckard.layers.experiment train --config_file ${item}.yaml
+      params:
+        - data
+        - model
+        - scorers
+        - files
+        - def_name
+        - atk_name
+        - device_id
+      outs:
+        - ${item}/${files.model_dir}/${files.model_file}${files.model_type}
+        - ${item}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
+      metrics:
+        - ${item}/${files.reports}/train/${files.name}/${files.score_dict_file}
   attack:
-    cmd: python -m deckard.layers.experiment attack --config_file ${dataset}.yaml
-    params:
-      - data
-      - model
-      - attack
-      - scorers
-      - files
-      - def_name
-      - atk_name
-      - dataset
-      - device_id
-    outs:
-      - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}
-    deps:
-      - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-    metrics:
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
+    foreach:
+      - mnist
+      - cifar
+      - cifar100
+    do:
+      cmd: python -m deckard.layers.experiment attack --config_file ${item}.yaml
+      params:
+        - data
+        - model
+        - attack
+        - scorers
+        - files
+        - def_name
+        - atk_name
+        - dataset
+        - device_id
+      outs:
+        - ${item}/${files.attack_dir}/${files.attack_file}${files.attack_type}
+      deps:
+        - ${item}/${files.model_dir}/${files.model_file}${files.model_type}
+      metrics:
+        - ${item}/${files.reports}/attack/${files.name}/${files.score_dict_file}
         ##############################################################################
   # models: # This is a loop over the ResNet models
-  #   foreach:
-  #     - ResNet18
-  #     # - ResNet34
-  #     # - ResNet50
-  #     # - ResNet101
-  #     # - ResNet152
-  #   do: # This script configures each defence
-  #     cmd: >-
-  #       bash models.sh 
-  #       hydra.sweeper.n_jobs=8
-  #       ++model.init.name=torch_example.${item} 
-  #       ~attack
-  #       atk_name="Benign"
-  #       model_name=${item}
-  #       stage=train 
-  #       --config-name ${dataset}.yaml 
-  #     deps:
+  #   matrix:
+  #     model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
+  #     dataset : [mnist, cifar, cifar100]
+  #   cmd: >-
+  #     bash models.sh 
+  #     hydra.sweeper.n_jobs=8
+  #     ++model.init.name=torch_example.${item.model} 
+  #     ~attack
+  #     atk_name="Benign"
+  #     model_name=${item.model}
+  #     dataset=${item.dataset}
+  #     data=${item.dataset}
+  #     stage=train 
+  #     --config-name ${item.dataset}.yaml
+  #   deps:
   #     - models.sh
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  #     - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-  #     outs:
-  #     - ${files.directory}/logs/train/${item}
-  # attacks:
-  #   foreach: # This is a loop over the ResNet models
-  #     - ResNet18
-  #     # - ResNet34
-  #     # - ResNet50
-  #     # - ResNet101
-  #     # - ResNet152
-  #   do:
-  #     cmd: >- 
-  #       bash attacks.sh 
-  #       ++model.init.name=torch_example.${item} 
-  #       stage=attack 
-  #       model_name=${item}
-  #       hydra.sweeper.n_jobs=8
-  #       attack.attack_size=100
-  #       +direction="[maximize,maximize]"
-  #       +optimizers="[accuracy,adv_accuracy]"
-  #       --config-name ${dataset}.yaml
-  #     deps:
-  #     - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
-  #     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-  #     outs:
-  #     - ${files.directory}/logs/attack/${item}
+  #     - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
+  #   outs:
+  #     - ${item.dataset}/${files.reports}/train/${item.model}/
+  attacks:
+    matrix:
+      model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
+      dataset : [mnist, cifar, cifar100]
+    cmd: >- 
+      bash attacks.sh 
+      ++model.init.name=torch_example.${item.model} 
+      stage=attack 
+      model_name=${item.model}
+      hydra.sweeper.n_jobs=8
+      attack.attack_size=100
+      +direction="[maximize,maximize]"
+      +optimizers="[accuracy,adv_accuracy]"
+      --config-name ${item.dataset}.yaml
+    deps:
+      - ${item.dataset}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+      - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
+    outs:
+      - ${item.dataset}/${files.reports}/attack/${item.model}/
   compile:
     matrix:
       dataset : [mnist, cifar, cifar100]
