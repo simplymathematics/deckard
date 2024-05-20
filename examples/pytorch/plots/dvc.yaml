@@ -101,6 +101,7 @@ stages:
       - data/merged.csv
       - afr.yaml
       - plots/aft_comparison.tex
+      - predict_with_best.py
     outs:
       - data/merged_afr.csv
   plot:

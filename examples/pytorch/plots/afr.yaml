@@ -90,7 +90,7 @@ weibull:
     file : weibull_aft.pdf
     title : Weibull AFR Model
     qq_title : Weibull QQ Plot
-  t0: .1
+  t0: .3
   model:
     penalizer: .1
   labels:
@@ -112,18 +112,8 @@ weibull:
     "def_value: lambda_" : "Defence Strength"
     "predict_time: lambda_" : "$t_{predict}$"
     ": lambda_" : ""
-
-exponential:
-
 exponential:
   plot:
-    file : exponential_aft.pdf
-    title : Exponential Model
-    qq_title : Exponential QQ Plot
-  t0: .1
-  model:
-    breakpoints:
-      - .1
     file : exponential_aft.pdf
     title : Exponential Model
     qq_title : Exponential QQ Plot
@@ -147,13 +137,12 @@ exponential:
     "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
     ": lambda_" : ""
-    ": lambda_" : ""
 log_logistic:
   plot:
     file : log_logistic_aft.pdf
     title : Log logistic AFR Model
     qq_title : Log Logistic QQ Plot
-  t0: .1
+  t0: .3
   model:
     penalizer: .2
   labels:
@@ -172,14 +161,11 @@ log_logistic:
     "model.trainer.batch_size: alpha_": "Batch Size"
     "def_gen": "Defence"
     "attack.init.eps: alpha_": "$\\varepsilon$"
-  
-  
 log_normal:
   plot:
     file : log_normal_aft.pdf
     title : Log Normal AFR Model
     qq_title : Log Normal QQ Plot
-  t0: 2
   t0: 2
   model:
     penalizer: .5

@@ -57,7 +57,7 @@ adv_survival_time = model.predict_expectation(data)
 df = df.assign(adv_survival_time=adv_survival_time)
 c_adv = df['train_time'] / df['adv_survival_time']
 data['atk_value'] = 0
-data[args.duration_col] = data['predict_time']
+data[args.duration_col] = 0
 ben_model = fit_aft(ben_data, event_col='ben_failures', duration_col=args.duration_col, **model_config, mtype=args.model)
 ben_survival_time = ben_model.predict_expectation(data)
 df = df.assign(ben_survival_time=ben_survival_time)
