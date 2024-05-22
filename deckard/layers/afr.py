@@ -273,6 +273,7 @@ def plot_aft(
         else:
             clean_cols.append(col)
     columns = clean_cols
+    
     ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -293,7 +294,6 @@ def plot_aft(
         labels = ax2.get_yticklabels()
         labels = [label.get_text() for label in labels]
         i = 0 
-        
         labels = [x.replace("dummy_", "") for x in labels]
         for k,v in dummy_dict.items():
             labels = [label.replace(k, v) for label in labels]
@@ -573,7 +573,8 @@ def clean_data_for_aft(
         subset = subset.drop(columns=list(dummy_dict.keys()))
         cleaned = pd.concat([subset, dummies], axis=1)
     else:
-        cleaned = pd.get_dummies(subset, prefix="dummy", prefix_sep="_")
+        cleaned = subset.astype(float)
+        cleaned = subset.dropna(axis=0, how="any")
     assert (
         target in cleaned.columns
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
@@ -738,14 +739,16 @@ def calculate_raw_failures(args, data, config):
             :,
             "attack.attack_size",
         ]
-        del data['adv_accuracy']
-        covariates.remove("adv_accuracy")
+        
+        if "adv_accuracy" in covariates:
+            covariates.remove("adv_accuracy")
     if "ben_failures" in covariates and "ben_failures" not in data.columns:
         data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
             :,
             "attack.attack_size",
         ]
-        del data['accuracy']
+        if "accuracy" in covariates:
+            covariates.remove("accuracy")
     data = drop_rows_without_results(data, covariates)
     return data
 
@@ -770,20 +773,14 @@ def main(args):
     
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
-    if len(str(args.config_file).split(":")) > 1:
-        subdict = str(args.config_file).split(":")[1]
-        config_file = str(args.config_file).split(":")[0]
-        with Path(config_file).open("r") as f:
-            config = yaml.safe_load(f)
-            config = config[subdict]
-    else:
-        with Path(args.config_file).open("r") as f:
+    with Path(args.config_file).open("r") as f:
             config = yaml.safe_load(f)
     fillna = config.pop("fillna", {})
     for k, v in fillna.items():
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
-    dummies  = config.pop("dummies", {"atk_gen" : "Atk:", "def_gen" : "Def:", "id" : "Data:"})
+    dummies  = config.pop("dummies", {})
+    # Default formerly: {"atk_gen" : "Atk:", "def_gen" : "Def:", "id" : "Data:"}
     data = calculate_raw_failures(args, data, config)
     covariate_list = config.pop("covariates", [])
     data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummies)

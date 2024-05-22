@@ -9,7 +9,7 @@ vars:
   - afr.yaml:gamma
   - afr.yaml:exponential
   - afr.yaml:cox
-  # - afr.yaml:aalen
+  - afr.yaml:dummies
 stages:
   clean:
     foreach:
@@ -64,11 +64,9 @@ stages:
       - plots/cox_aft.pdf
       - plots/cox_aft_dummies.pdf
       - plots/cox_qq.pdf
-      # - plots/aalen_aft.pdf
-      # - plots/aalen_aft_dummies.pdf
-      # - plots/aalen_qq.pdf
     params:
       - afr.yaml:
+        - dummies
         - covariates
         - weibull
         - log_logistic
@@ -76,7 +74,6 @@ stages:
         - gamma
         - exponential
         - cox
-        # - aalen
     metrics:
       - plots/aft_comparison.csv
     outs:
@@ -87,7 +84,6 @@ stages:
       - plots/log_normal_summary.csv
       - plots/gamma_summary.csv
       - plots/exponential_summary.csv
-      # - plots/aalen_summary.csv
   predict_survival_time:
     cmd: >-
       python predict_with_best.py 
