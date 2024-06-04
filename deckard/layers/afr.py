@@ -637,7 +637,7 @@ def run_afr_experiment(
         afr_plot = plot_aft(
             aft=aft,
             title=plot_dict.get(
-                "qq_title",
+                "title",
                 f"{mtype}".replace("_", " ").replace("-", " ").title(),
             ),
             file=plot_dict.get("plot", f"{mtype}_aft.pdf"),
@@ -653,8 +653,8 @@ def run_afr_experiment(
             X_test=X_test,
             aft=aft,
             title=plot_dict.get(
-                "title",
-                f"{mtype}".replace("_", " ").replace("-", " ").title() + " AFR QQ Plot",
+                "qq_title",
+                f"{mtype}".replace("_", " ").replace("-", " ").title() + " QQ Plot",
             ),
             t0=t0,
             file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),

@@ -113,7 +113,6 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
-        survival_time = data.loc[:, "predict_time"] * data.loc[:, "accuracy"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
             data.loc[:, "predict_proba_time"],
@@ -121,7 +120,6 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
-        surival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "accuracy"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
     adv_failure_rate = (
