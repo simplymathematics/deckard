@@ -91,9 +91,8 @@ class FileConfig:
     def _set_filenames(self, **kwargs):
         name = self.name
         stage = self.stage
-        if hasattr(self, "files"):
-            kwargs.update(self.files)
-        files = dict(kwargs)
+        files = self.files
+        files.update(**kwargs)
         new_files = {}
         directory = self.directory
         reports = self.reports
