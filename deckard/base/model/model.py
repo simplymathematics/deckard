@@ -76,7 +76,7 @@ class ModelTrainer:
         if library in sklearn_dict.keys():
             pass
         elif library in torch_dict.keys():
-            pass
+            trainer["nb_epochs"] = trainer.pop("nb_epochs", trainer.pop("epochs", trainer.pop("nb_epoch", 10)))
         elif library in keras_dict.keys():
             pass
         elif library in tensorflow_dict.keys():
