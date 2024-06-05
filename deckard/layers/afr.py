@@ -283,6 +283,8 @@ def plot_aft(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
+    # symlog-scale the x-axis
+    ax.set_xscale("symlog")
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     plt.gcf().clear()
@@ -533,6 +535,8 @@ def make_afr_table(
         float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
         label=f"tab:{dataset.lower()}" if dataset is not None else "tab:afr_models",  # Label for cross-referencing
         caption=f"Comparison of AFR Models on the {pretty_dataset} dataset." if pretty_dataset is not None else None,
+        index=True,
+        header=True,
     )
     # Change to table* if span_columns is True
     if span_columns is True:
