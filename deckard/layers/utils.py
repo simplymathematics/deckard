@@ -168,18 +168,25 @@ def get_dvc_stage_params(
     directory=".",
     name=None,
 ):
+    tmp_stage = stage.split("@")[0]
+    sub_stage = stage.split("@")[1] if tmp_stage != stage else None
     logger.info(
-        f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
+        f"Getting params for stage {tmp_stage} from {params_file} and {pipeline_file} in {directory}.",
     )
-    params = dvc.api.params_show(stages=stage, repo=directory)
+    params = dvc.api.params_show(stages=tmp_stage, repo=directory)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
     flat_params = flatten_dict(params)
     keys = dvc.api.params_show(pipeline_file, stages=stage, repo=directory).keys()
     if "stages" in keys:
+        
         pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)[
             "stages"
-        ][stage]
+        ]
+        if sub_stage is None:
+            pipe_params = pipe_params[stage]
+        else:
+            pipe_params = pipe_params[tmp_stage]['do']
         file_list = []
         for key in ["metrics", "deps", "outs", "plots"]:
             param_string = str(pipe_params.get(key, {}))
@@ -189,14 +196,17 @@ def get_dvc_stage_params(
         for k in file_list:
             if k in flat_params:
                 file_dict[k] = flat_params[k]
+            elif k == "item":
+                file_dict['directory'] = sub_stage
             else:
                 raise ValueError(f"File {k} not found in {pipe_params.keys()}")
+        file_dict = unflatten_dict(file_dict)
     else:
         pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
         file_dict = unflatten_dict(pipe_params)
-    file_dict = unflatten_dict(file_dict)
     params["files"] = file_dict.pop("files", {})
-    params["files"]["stage"] = stage
+    params['files'].update(file_dict)
+    params["files"]["stage"] = tmp_stage
     # Merge remaining params
     params = OmegaConf.merge(params, file_dict)
     params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
@@ -204,30 +214,6 @@ def get_dvc_stage_params(
         params["files"]["name"] = name
     return params
 
-
-# def get_dvc_stage_params(
-#     stage,
-#     params_file="params.yaml",
-#     pipeline_file="dvc.yaml",
-#     directory=".",
-#     name=None,
-# ):
-#     logger.info(
-#         f"Getting params for stage {stage} from {params_file} and {pipeline_file} in {directory}.",
-#     )
-#     params = dvc.api.params_show(stages=stage)
-#     params.update({"_target_": "deckard.base.experiment.Experiment"})
-#     pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
-#     pipe_params = unflatten_dict(pipe_params)
-#     params["files"] = dict(pipe_params.pop("files", pipe_params))
-#     params["files"]["_target_"] = "deckard.base.files.FileConfig"
-#     params["files"]["stage"] = stage
-#     params["stage"] = stage
-#     if name is not None:
-#         params["files"]["name"] = name
-#     # Merge remaining params
-#     params = OmegaConf.merge(params, pipe_params)
-#     return params
 
 
 def prepare_files(params_file, stage, params, id_):
@@ -237,7 +223,11 @@ def prepare_files(params_file, stage, params, id_):
     # It also creates a new directory at files.directory/files.reports_dir
     # If a stage is specified, it also creates a new directory at files.directory/files.reports/stage
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
-    params["files"]["stage"] = stage
+    tmp_stage = stage.split("@")[0]
+    sub_stage = stage.split("@")[1] if tmp_stage != stage else None
+    if sub_stage is not None:
+        params["files"]["directory"] = sub_stage
+    params["files"]["stage"] = tmp_stage
     params["files"]["name"] = (
         id_ if params["files"].get("name", None) is None else params["files"]["name"]
     )
@@ -266,9 +256,8 @@ def prepare_files(params_file, stage, params, id_):
 
 def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
     try:
-        def_stages = list(
-            dvc.api.params_show(pipeline_file, repo=repo)["stages"].keys(),
-        )
+       with open(pipeline_file, "r") as f:
+            def_stages = yaml.safe_load(f)["stages"].keys()
     except NotGitRepository:
         raise ValueError(
             f"Directory {repo} is not a dvc repository. Please run `dvc init` in {repo} and try again.",
@@ -281,8 +270,9 @@ def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
     else:
         assert isinstance(stages, list), f"args.stage is of type {type(stages)}"
         for stage in stages:
+            tmp_stage = stage.split("@")[0]
             assert (
-                stage in def_stages
+                tmp_stage in def_stages
             ), f"Stage {stage} not found in {pipeline_file}. Available stages: {def_stages}"
     return stages
 
@@ -345,8 +335,8 @@ def run_stage(
         params["_target_"] = "deckard.experiment.Experiment"
         exp = instantiate(params)
         id_ = exp.name
-        _ = prepare_files(params_file, stage, params, id_)
-        score = exp()
+        files = prepare_files(params_file, stage, params, id_)
+        score = exp(**files)
     else:
         possible_subdicts = ["data", "model", "attack", "scorers", "plots", "files"]
         assert (
