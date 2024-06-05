@@ -193,27 +193,28 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     params = read_subset_of_params(key_list, params)
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
-        file_list = []
-        for stage in stages:
-            if len(stage.split("@")) > 1:
-                sub_stage = stage.split("@")[1]
-                files['directory'] = sub_stage
-                 
-            else:
-                sub_stage = None
-            stage = stage.split("@")[0]
-            pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
-            if "do" in pipe:
-                pipe = pipe["do"]
-            if "deps" in pipe:
-                dep_list = [str(x).split(":")[0] for x in pipe["deps"]]
-                file_list.extend(dep_list)
-            if "outs" in pipe:
-                out_list = [str(x).split(":")[0] for x in pipe["outs"]]
-                file_list.extend(out_list)
-            if "metrics" in pipe:
-                metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
-                file_list.extend(metric_list)
+        pipe = yaml.load(f, Loader=yaml.FullLoader)
+    file_list = []
+    for stage in stages:
+        if len(stage.split("@")) > 1:
+            sub_stage = stage.split("@")[1]
+            files['directory'] = sub_stage
+                
+        else:
+            sub_stage = None
+        stage = stage.split("@")[0]
+        pipe = pipe["stages"][stage]
+        if "do" in pipe:
+            pipe = pipe["do"]
+        if "deps" in pipe:
+            dep_list = [str(x).split(":")[0] for x in pipe["deps"]]
+            file_list.extend(dep_list)
+        if "outs" in pipe:
+            out_list = [str(x).split(":")[0] for x in pipe["outs"]]
+            file_list.extend(out_list)
+        if "metrics" in pipe:
+            metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
+            file_list.extend(metric_list)
     file_string = str(file_list)
     files = params["files"]
     file_list = list(files.keys())

@@ -83,8 +83,9 @@ class FileConfig:
         files = dict(self.get_filenames())
         return files
 
-    def get_filenames(self):
+    def get_filenames(self, **kwargs):
         files = deepcopy(self.files)
+        files.update(**kwargs)
         files = self._set_filenames(**files)
         return files
 
