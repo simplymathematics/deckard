@@ -64,7 +64,7 @@ bash models.sh \
     stage=attack \
     attack=default \
     ++attack.init.name=art.attacks.evasion.ZooAttack \
-    ++attack.init.confidennce=.1,.3,.5,.9,.99 \
+    ++attack.init.binary_search_steps=1,2,3,5,10 \
     ++attack.init.abort_early=True \
     atk_name=Zoo $@
 # ####################################################
@@ -90,6 +90,6 @@ bash models.sh \
 #     ++attack.init.name=art.attacks.evasion.CarliniL2Method \
 #     ++attack.init.confidence=.1,.9,.99 \
 #     atk_name=Patch $@
-rm -rf mnist/models/*
-rm -rf cifar/models/*
-rm -rf cifar100/models/*
+# rm -rf mnist/models/*
+# rm -rf cifar/models/*
+# rm -rf cifar100/models/*

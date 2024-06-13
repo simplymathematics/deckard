@@ -1,24 +1,29 @@
 stages:
   parse:
-    cmd: python -m deckard.layers.parse --config_file ${dataset}.yaml
-    deps:
-      - conf/data
-      - conf/model
-      - conf/attack
-      - conf/scorers
-      - conf/files
-      - conf/${dataset}.yaml
-    outs:
-      - params.yaml :
-          cache: True
-          persist: True
+    foreach:  
+      - mnist
+      - cifar
+      - cifar100
+    do:
+      cmd: python -m deckard.layers.parse --config_file ${item}.yaml --params_file ${item}.yaml
+      deps:
+        - conf/data
+        - conf/model
+        - conf/attack
+        - conf/scorers
+        - conf/files
+        - conf/${item}.yaml
+      outs:
+        - ${item}.yaml :
+            cache: True
+            persist: True
   train:
     foreach:
       - mnist
       - cifar
       - cifar100
     do:
-      cmd: python -m deckard.layers.experiment train --config_file ${item}.yaml
+      cmd: python -m deckard.layers.experiment train@${item} --config_file ${item}.yaml --params_file ${item}.yaml
       params:
         - data
         - model
@@ -32,13 +37,15 @@ stages:
         - ${item}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
       metrics:
         - ${item}/${files.reports}/train/${files.name}/${files.score_dict_file}
+      deps:
+        - ${item}.yaml
   attack:
     foreach:
       - mnist
       - cifar
       - cifar100
     do:
-      cmd: python -m deckard.layers.experiment attack --config_file ${item}.yaml
+      cmd: python -m deckard.layers.experiment attack@${item} --config_file ${item}.yaml --params_file ${item}.yaml
       params:
         - data
         - model
@@ -53,6 +60,7 @@ stages:
         - ${item}/${files.attack_dir}/${files.attack_file}${files.attack_type}
       deps:
         - ${item}/${files.model_dir}/${files.model_file}${files.model_type}
+        - ${item}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
       metrics:
         - ${item}/${files.reports}/attack/${files.name}/${files.score_dict_file}
         ##############################################################################
@@ -69,7 +77,7 @@ stages:
   #     model_name=${item.model}
   #     dataset=${item.dataset}
   #     data=${item.dataset}
-  #     stage=train 
+  #     stage=train
   #     --config-name ${item.dataset}.yaml
   #   deps:
   #     - models.sh
@@ -78,15 +86,18 @@ stages:
   #     - ${item.dataset}/${files.reports}/train/${item.model}/
   attacks:
     matrix:
-      model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
       dataset : [mnist, cifar, cifar100]
+      model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
     cmd: >- 
       bash attacks.sh 
       ++model.init.name=torch_example.${item.model} 
-      stage=attack 
+      stage=attack
       model_name=${item.model}
-      hydra.sweeper.n_jobs=8
+      hydra.sweeper.n_jobs=1
+      hydra.sweeper.n_trials=1
       attack.attack_size=100
+      data=torch_${item.dataset}
+      model=torch_${item.dataset}
       +direction="[maximize,maximize]"
       +optimizers="[accuracy,adv_accuracy]"
       --config-name ${item.dataset}.yaml

@@ -4,3 +4,5 @@ mnist/
 cifar/
 cifar100/
 /params.yaml
+/mnist.yaml
+/cifar.yaml

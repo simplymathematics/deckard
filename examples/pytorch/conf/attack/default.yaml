@@ -6,5 +6,5 @@ init:
     _target_: deckard.base.attack.AttackInitializer
     name: art.attacks.evasion.HopSkipJump
     batch_size : ${model.trainer.batch_size}
-attack_size : 10
+attack_size : 100
 method : evasion
