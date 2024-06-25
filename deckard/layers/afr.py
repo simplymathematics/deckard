@@ -305,7 +305,10 @@ def plot_aft(
             labels = [label.replace(k, v) for label in labels]
         for label in labels:
             if label.startswith("Data:"):
-                dataset = label.split(":")[1].upper()
+                # if dataset is in all lowercase, make it uppercase
+                dataset = label.split(":")[1].strip()
+                if str(dataset).islower():
+                    dataset = dataset.upper()
                 new_label = f"Data: {dataset}"
             else:
                 new_label = label
