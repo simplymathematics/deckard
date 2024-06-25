@@ -598,7 +598,8 @@ def split_data_for_aft(
     test_size=0.25,
     random_state=42,
 ):
-    
+    assert isinstance(test_size, float), "Test size must be a float"
+    assert 0 < test_size < 1, "Test size must be between 0 and 1"
     X_train, X_test = train_test_split(
         data,
         train_size=(1 - test_size),
