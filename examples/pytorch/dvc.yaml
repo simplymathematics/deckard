@@ -93,26 +93,27 @@ stages:
       ++model.init.name=torch_example.${item.model} 
       stage=attack
       model_name=${item.model}
-      hydra.sweeper.n_jobs=1
-      hydra.sweeper.n_trials=1
       attack.attack_size=100
       data=torch_${item.dataset}
       model=torch_${item.dataset}
-      +direction="[maximize,maximize]"
-      +optimizers="[accuracy,adv_accuracy]"
+      +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]"
       --config-name ${item.dataset}.yaml
     deps:
       - ${item.dataset}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
-      - ${item.dataset}/${files.reports}/attack/${item.model}/
+      - ${item.dataset}/logs/attack/${item.model}/:
+          cache: True
+          persist: True
   compile:
     matrix:
       dataset : [mnist, cifar, cifar100]
       stage : [attack]
     cmd: python -m deckard.layers.compile --report_folder ${item.dataset}/${files.reports}/${item.stage} --results_file ${item.dataset}/${files.reports}/${item.stage}.csv
     deps:
-    - ${item.dataset}/${files.reports}/${item.stage}/
+    - ${item.dataset}/reports/${item.stage}/
+    - ${item.dataset}/logs/${item.stage}/
     outs:
     - ${item.dataset}/${files.reports}/${item.stage}.csv
   prepare_plot_folder:
