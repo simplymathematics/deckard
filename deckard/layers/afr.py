@@ -213,6 +213,8 @@ def fit_aft(
         if "AalenAdditiveFitter" in str(e):
             logger.debug("AalenAdditiveFitter does not support timeline")
             aft.fit(df, event_col=event_col, duration_col=duration_col)
+        else:
+            raise e
     except AttributeError as e:
         logger.error(f"Could not fit {mtype} model")
         raise e
