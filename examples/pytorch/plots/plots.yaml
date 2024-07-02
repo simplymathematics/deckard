@@ -39,30 +39,7 @@ cat_plot:
   #   - mnist
   #   - cifar
   #   - cifar100
-- file: ben_failures_per_train_time_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  set:
-    yscale: log
-  x: def_gen
-  xlabels: Defence Type
-  y: c_ben
-  ylabels: $\bar{C}_{ben.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-  # titles: "{col_name} dataset"
-  legend_title: "Model"
-  # col: 'id'
-  # col_order:
-  #   - mnist
-  #   - cifar
-  #   - cifar100
-- file: adv_failures_per_train_time_vs_defence_type.pdf
+- file: trash_score_vs_defence_type.pdf
   hue: model_name
   kind: boxen
   set:
@@ -85,7 +62,7 @@ cat_plot:
   #   - mnist
   #   - cifar
   #   - cifar100
-- file: adv_failures_per_train_time_vs_attack_type.pdf
+- file: trash_score_vs_attack_type.pdf
   hue: model_name
   kind: boxen
   set:
@@ -94,27 +71,6 @@ cat_plot:
   xlabels: Attack Type
   y: c_adv
   ylabels: $\bar{C}_{adv.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-  # titles: "{col_name} dataset"
-  legend_title: "Model"
-  # col: 'id'
-  # col_order:
-  #   - mnist
-  #   - cifar
-  #   - cifar100
-- file: adv_failures_per_test_time_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  x: def_gen
-  xlabels: Defence Type
-  y: adv_failure_rate
-  ylabels: $f_{adv.}$
   rotation : 90
   hue_order:
   - ResNet18
@@ -136,29 +92,6 @@ cat_plot:
   xlabels: Attack Type
   y: adv_accuracy
   ylabels: Adv. Accuracy
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-  # titles: "{col_name} dataset"
-  legend_title: "Model"
-  # col: 'id'
-  # col_order:
-  #   - mnist
-  #   - cifar
-  #   - cifar100
-- file: ben_failure_rate_vs_defence_type.pdf
-  hue: model_name
-  kind: boxen
-  set:
-    yscale: log
-  x: def_gen
-  xlabels: Defence Type
-  y: failure_rate
-  ylabels: $f_{ben}(t; \theta)$
   rotation : 90
   hue_order:
   - ResNet18

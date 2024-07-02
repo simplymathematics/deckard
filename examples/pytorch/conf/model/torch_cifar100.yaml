@@ -9,7 +9,7 @@ init:
 _target_: deckard.base.model.Model
 trainer:
     nb_epochs: 1
-    batch_size: 4096
+    batch_size: 128
     verbose: True
 library : pytorch
 art:

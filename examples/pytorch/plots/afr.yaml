@@ -1,10 +1,9 @@
 covariates:
-  - adv_fit_time
+  - adv_fit_time_per_sample
   - accuracy
   - train_time
   - atk_value
   - def_value
-  - data.sample.random_state
   - Epochs
   - model_layers
   - id
@@ -24,7 +23,7 @@ cox:
     qq_title : Cox QQ Plot
   t0: .3
   model:
-    penalizer: .1
+    penalizer: .2
   labels:
     "data.sample.random_state": "Random State"
     "atk_value": "Attack Strength"
@@ -34,11 +33,7 @@ cox:
     "def_value": "Defence Strength"
     "accuracy": "Ben. Accuracy"
     "model_layers": "Layers"
-    "adv_fit_time": "$T_{attack}$"
-    "adv_failure_rate": "$f_{adv.}(t;\\theta)$"
-    "failure_rate": "$f_{ben.}(t;\\theta)$"
     "Epochs": "No. of Epochs"
-    "model.trainer.batch_size": "Batch Size"
     "def_gen": "Defence"
 # aalen:
 #   plot:
@@ -57,7 +52,7 @@ cox:
 #     "predict_time": "$T_{predict}$"
 #     "adv_accuracy": "Adv. Accuracy"
 #     "accuracy": "Ben. Accuracy"
-#     "adv_fit_time": "$T_{attack}$"
+#     "adv_fit_time_per_sample": "$T_{attack}$"
 #     "adv_failure_rate": "$f_{adv.}(t;\\theta)$"
 #     "failure_rate": "$f_{ben.}(t;\\theta)$"
 #     "Epochs": "No. of Epochs"
@@ -68,7 +63,6 @@ gamma:
     file : gamma_aft.pdf
     title : Generalized Gamma Model
     qq_title : Gamma QQ Plot
-    
   t0: .3
   model:
     penalizer : .4
@@ -83,11 +77,7 @@ gamma:
     "predict_time: beta_": "$T_{predict}$"
     "adv_accuracy: beta_": "Adv. Accuracy"
     "accuracy: beta_": "Ben. Accuracy"
-    "adv_fit_time: beta_": "$T_{attack}$"
-    "adv_failure_rate: beta_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: beta_": "$h_{ben.}(t;\\theta)$"
     "Epochs: beta_": "No. of Epochs"
-    "model.trainer.batch_size: beta_": "Batch Size"
     "def_gen": "Defence"
     "attack.init.eps: beta_": "$\\varepsilon$"
 weibull:
@@ -108,9 +98,6 @@ weibull:
     "predict_time: lambda_": "$T_{predict}$"
     "adv_accuracy: lambda_": "Adv. Accuracy"
     "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$T_{attack}$"
-    "adv_failure_rate: lambda_": "$f_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$f_{ben.}(t;\\theta)$"
     "Epochs: lambda_": "No. of Epochs"
     "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
@@ -128,7 +115,6 @@ exponential:
   labels:
     "Intercept: rho_": "$\\rho$"
     "Intercept: lambda_": "$\\lambda$" 
-    "data.sample.random_state: lambda_": "Random State"
     "atk_value: lambda_": "Attack Strength"
     "def_value: lambda_": "Defence Strength"
     "model_layers: lambda_": "Layers"
@@ -136,11 +122,7 @@ exponential:
     "predict_time: lambda_": "$T_{predict}$"
     "adv_accuracy: lambda_": "Adv. Accuracy"
     "accuracy: lambda_": "Ben. Accuracy"
-    "adv_fit_time: lambda_": "$T_{attack}$"
-    "adv_failure_rate: lambda_": "$f_{adv.}(t;\\theta)$"
-    "failure_rate: lambda_": "$f_{ben.}(t;\\theta)$"
     "Epochs: lambda_": "No. of Epochs"
-    "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
     ": lambda_" : ""
 log_logistic:
@@ -162,13 +144,8 @@ log_logistic:
     "predict_time: alpha_": "$T_{predict}$"
     "adv_accuracy: alpha_": "Adv. Accuracy"
     "accuracy: alpha_": "Ben. Accuracy"
-    "adv_fit_time: alpha_": "$T_{attack}$"
-    "adv_failure_rate: alpha_": "$h_{adv.}(t;\\theta)$"
-    "failure_rate: alpha_": "$h_{ben.}(t;\\theta)$"
     "Epochs: alpha_": "No. of Epochs"
-    "model.trainer.batch_size: alpha_": "Batch Size"
     "def_gen": "Defence"
-    "attack.init.eps: alpha_": "$\\varepsilon$"
 log_normal:
   plot:
     file : log_normal_aft.pdf
@@ -187,7 +164,6 @@ log_normal:
     "predict_time: mu_": "$T_{predict}$"
     "adv_accuracy: mu_": "Adv. Accuracy"
     "accuracy: mu_": "Ben. Accuracy"
-    "adv_fit_time: mu_": "$T_{attack}$"
     "adv_failure_rate: mu_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: mu_": "$h_{ben.}(t;\\theta)$"
     "Epochs: mu_": "No. of Epochs"

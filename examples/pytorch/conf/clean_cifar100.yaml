@@ -31,6 +31,6 @@ params:
   defaults:
     model.trainer.nb_epoch: 10
 fillna:
-  model.trainer.nb_epoch : 20
+  model.trainer.nb_epoch : 10
 replace_cols:
   model.trainer.nb_epoch: Epochs
