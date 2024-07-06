@@ -5,8 +5,6 @@ import sys
 from dataclasses import dataclass
 from hydra.utils import instantiate
 import yaml
-from prometheus_api_client import PrometheusConnect
-
 try:
     from prometheus_api_client import PrometheusConnect
 except ImportError:

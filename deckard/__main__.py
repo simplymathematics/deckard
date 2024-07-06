@@ -30,7 +30,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("layer", help="The layers to run.")
 # The rest of the arguments are passed to the layer.
 parser.add_argument(
-    "args", nargs=argparse.REMAINDER, help="Arguments to pass to the layer."
+    "args",
+    nargs=argparse.REMAINDER,
+    help="Arguments to pass to the layer.",
 )
 # parse the layer to know which subparser to use.
 args = parser.parse_args()

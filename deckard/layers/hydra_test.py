@@ -43,7 +43,9 @@ def main():
         version_base = "1.3"
 
     @hydra.main(
-        version_base=version_base, config_path=config_path, config_name=config_file
+        version_base=version_base,
+        config_path=config_path,
+        config_name=config_file,
     )
     def hydra_main(cfg: DictConfig) -> None:
         print(OmegaConf.to_yaml(cfg))

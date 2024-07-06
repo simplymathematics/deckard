@@ -141,21 +141,6 @@ def find_optuna_best(
     return overrides
 
 
-def find_best_params(study):
-    best_params = flatten_dict(study.best_params)
-    more_params = flatten_dict(study.best_trial.user_attrs)
-    even_more_params = flatten_dict(study.best_trial.system_attrs)
-    logger.debug(f"Best params: {best_params}")
-    logger.debug(f"Best user params: {more_params}")
-    logger.debug(f"Best system params: {even_more_params}")
-    # Merge all the params
-    best_params = OmegaConf.to_container(
-        OmegaConf.merge(best_params, more_params, even_more_params),
-        resolve=False,
-    )
-    # to dotlist
-    best_params = flatten_dict(best_params)
-    return best_params
 
 
 
@@ -204,6 +189,8 @@ def find_best_params(study):
     # to dotlist
     best_params = flatten_dict(best_params)
     return best_params
+
+
 
 
 def save_study(study_csv, study):

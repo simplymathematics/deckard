@@ -309,7 +309,9 @@ def main():
         version_base = "1.3"
 
     @hydra.main(
-        config_path=config_dir, config_name=config_file, version_base=version_base
+        config_path=config_dir,
+        config_name=config_file,
+        version_base=version_base,
     )
     def hydra_prepare(cfg: DictConfig) -> float:
         exp, scorer, direction, folder, id_ = prepare_experiment_folder(cfg)
@@ -317,7 +319,7 @@ def main():
         assert isinstance(scorer, (str, list)), f"Expected list, got {type(scorer)}."
         assert isinstance(direction, str), f"Expected str, got {type(direction)}."
         assert len(scorer) == len(
-            direction
+            direction,
         ), "Length of scorer and direction must match."
         assert Path(
             folder,
