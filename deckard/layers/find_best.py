@@ -141,9 +141,6 @@ def find_optuna_best(
     return overrides
 
 
-
-
-
 def prepare_overrides(config_subdir, best_params):
     overrides = []
     # Changing the keys to hydra override format
@@ -189,8 +186,6 @@ def find_best_params(study):
     # to dotlist
     best_params = flatten_dict(best_params)
     return best_params
-
-
 
 
 def save_study(study_csv, study):
