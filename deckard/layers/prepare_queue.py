@@ -1,5 +1,5 @@
 import logging
-import os
+import sys
 from copy import deepcopy
 from pathlib import Path
 import yaml
@@ -273,27 +273,59 @@ def prepare_experiment_folder(cfg: DictConfig) -> None:
     return exp, scorer, direction, folder, id_
 
 
-if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
-    config_path = os.environ.pop(
-        "DECKARD_CONFIG_PATH",
-        str(Path(Path(), "conf").absolute().as_posix()),
-    )
-    config_name = os.environ.pop("DECKARD_DEFAULT_CONFIG", "default.yaml")
+def main():
+    # Use sys calls to look for --working_dir, --config_dir, and --config_file
+    args = sys.argv
+    global working_dir
+    if "--working_dir" in args:
+        working_dir = args[args.index("--working_dir") + 1]
+        # remove working_dir from args
+        args.pop(args.index("--working_dir"))
+        args.pop(args.index(working_dir))
+    else:
+        working_dir = Path(".").cwd()
+    print(working_dir)
+    if "--config_dir" in args:
+        config_dir = args[args.index("--config_dir") + 1]
+        # remove config_dir from args
+        args.pop(args.index("--config_dir"))
+        args.pop(args.index(config_dir))
+    else:
+        config_dir = "conf"
+    config_dir = Path(working_dir, config_dir).as_posix()
+    if "--config_file" in args:
+        config_file = args[args.index("--config_file") + 1]
+        # remove config_file from args
+        args.pop(args.index("--config_file"))
+        args.pop(args.index(config_file))
+    else:
+        config_file = "default"
+    if "--version_base" in args:
+        version_base = args[args.index("--version_base") + 1]
+        # remove version_base from args
+        args.pop(args.index("--version_base"))
+        args.pop(args.index(version_base))
+    else:
+        version_base = "1.3"
 
-    @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
+    @hydra.main(
+        config_path=config_dir, config_name=config_file, version_base=version_base
+    )
     def hydra_prepare(cfg: DictConfig) -> float:
         exp, scorer, direction, folder, id_ = prepare_experiment_folder(cfg)
         assert isinstance(exp, Experiment), f"Expected Experiment, got {type(exp)}."
         assert isinstance(scorer, (str, list)), f"Expected list, got {type(scorer)}."
         assert isinstance(direction, str), f"Expected str, got {type(direction)}."
-        assert direction in [
-            "minimize",
-            "maximize",
-        ], f"Expected 'minimize' or 'maximize', got {direction}."
+        assert len(scorer) == len(
+            direction
+        ), "Length of scorer and direction must match."
         assert Path(
             folder,
         ).exists(), f"Folder {folder} does not exist for experiment {id_}."
         return 0
 
-    hydra_prepare()
+    return hydra_prepare()
+
+
+if __name__ == "__main__":
+    main()

@@ -89,9 +89,15 @@ def find_optuna_best(
         ], f"Direction {direction} not recognized."
     directions = [False if x == "maximize" else True for x in directions]
     assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(df)}"
+    study = optuna.create_study(
+        study_name=study_name,
+        storage=storage_name,
+        load_if_exists=True,
+        direction=direction,
+    )
+
     if study_csv is not None:
-        Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(study_csv)
+        save_study(study_csv, study)
     # To dotlist
     best_params = flatten_dict(study.best_params)
     more_params = flatten_dict(study.best_trial.user_attrs)
@@ -115,6 +121,8 @@ def find_optuna_best(
             pass
         elif key.startswith("+"):  # appends to config
             key = "++" + key[1:]  # force override
+        elif key.startswith("~"):  # appends to config
+            pass
         else:
             key = "++" + key  # force override
         if config_subdir is None:
@@ -122,7 +130,7 @@ def find_optuna_best(
         else:  # if we are using a subdir, we need to remove the directory from the key
             if (
                 key.startswith(f"++{config_subdir}.")
-                or key.startswith(f"~~{config_subdir}.")
+                or key.startswith(f"~{config_subdir}.")
                 or key.startswith(f"--{config_subdir}.")
             ):
                 key = key.replace(f"{config_subdir}.", "")
@@ -130,21 +138,78 @@ def find_optuna_best(
                 logger.info(f"Adding {key} to param list")
             else:
                 logger.debug(f"Skipping {key} because it is not in {config_subdir}")
-    params = override_default_with_best(
-        config_folder,
-        default_config,
-        overrides,
-        config_subdir=config_subdir,
+    return overrides
+
+
+def find_best_params(study):
+    best_params = flatten_dict(study.best_params)
+    more_params = flatten_dict(study.best_trial.user_attrs)
+    even_more_params = flatten_dict(study.best_trial.system_attrs)
+    logger.debug(f"Best params: {best_params}")
+    logger.debug(f"Best user params: {more_params}")
+    logger.debug(f"Best system params: {even_more_params}")
+    # Merge all the params
+    best_params = OmegaConf.to_container(
+        OmegaConf.merge(best_params, more_params, even_more_params),
+        resolve=False,
     )
-    if params_file is not None:
-        params_file = create_new_config_in_subdir(
-            params_file,
-            config_folder,
-            default_config,
-            config_subdir,
-            params,
-        )
-    return params
+    # to dotlist
+    best_params = flatten_dict(best_params)
+    return best_params
+
+
+
+def prepare_overrides(config_subdir, best_params):
+    overrides = []
+    # Changing the keys to hydra override format
+    for key, value in best_params.items():
+        if (
+            key.startswith("++") or key.startswith("~") or key.startswith("--")
+        ):  # reserved meaning
+            pass
+        elif key.startswith("+"):  # appends to config
+            key = "++" + key[1:]  # force override
+        elif key.startswith("~"):  # appends to config
+            pass
+        else:
+            key = "++" + key  # force override
+        if config_subdir is None:
+            overrides.append(f"{key}={value}")
+        else:  # if we are using a subdir, we need to remove the directory from the key
+            if (
+                key.startswith(f"++{config_subdir}.")
+                or key.startswith(f"~{config_subdir}.")
+                or key.startswith(f"--{config_subdir}.")
+            ):
+                key = key.replace(f"{config_subdir}.", "")
+                overrides.append(f"{key}={value}")
+                logger.info(f"Adding {key} to param list")
+            else:
+                logger.debug(f"Skipping {key} because it is not in {config_subdir}")
+    return overrides
+
+
+def find_best_params(study):
+    best_params = flatten_dict(study.best_params)
+    more_params = flatten_dict(study.best_trial.user_attrs)
+    even_more_params = flatten_dict(study.best_trial.system_attrs)
+    logger.debug(f"Best params: {best_params}")
+    logger.debug(f"Best user params: {more_params}")
+    logger.debug(f"Best system params: {even_more_params}")
+    # Merge all the params
+    best_params = OmegaConf.to_container(
+        OmegaConf.merge(best_params, more_params, even_more_params),
+        resolve=False,
+    )
+    # to dotlist
+    best_params = flatten_dict(best_params)
+    return best_params
+
+
+def save_study(study_csv, study):
+    df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
+    Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(study_csv)
 
 
 def create_new_config_in_subdir(
@@ -180,7 +245,7 @@ def create_new_config_in_subdir(
     return params_file
 
 
-def override_default_with_best(
+def override_config(
     config_folder,
     default_config,
     overrides,
@@ -195,27 +260,25 @@ def override_default_with_best(
     return cfg
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--params_file", type=str, default=True)
+parser = argparse.ArgumentParser()
+parser.add_argument("--params_file", type=str, default=True)
 
-    parser.add_argument("--study_csv", type=str, default=None)
-    parser.add_argument("--config_folder", type=str, default=Path(Path(), "conf"))
-    parser.add_argument("--default_config", type=str, default="default")
-    parser.add_argument("--config_subdir", type=str, default=None)
-    parser.add_argument("--study_name", type=str, required=True)
-    parser.add_argument("--config_name", type=str)
-    parser.add_argument("--verbosity", type=str, default="INFO")
-    parser.add_argument("--storage_name", type=str, required=True)
-    parser.add_argument("--direction", type=str, default="maximize")
-    parser.add_argument("--study_type", type=str, default="optuna")
-    args = parser.parse_args()
+parser.add_argument("--study_csv", type=str, default=None)
+parser.add_argument("--config_folder", type=str, default=Path(Path(), "conf"))
+parser.add_argument("--default_config", type=str, default="default")
+parser.add_argument("--config_subdir", type=str, default=None)
+parser.add_argument("--study_name", type=str, required=True)
+parser.add_argument("--config_name", type=str)
+parser.add_argument("--verbosity", type=str, default="INFO")
+parser.add_argument("--storage_name", type=str, required=True)
+parser.add_argument("--direction", type=str, default="maximize")
+parser.add_argument("--study_type", type=str, default="optuna")
 
+
+def main(find_optuna_best, args):
     args.config_folder = Path(args.config_folder).resolve().as_posix()
     logging
     if args.study_type == "optuna":
-        study_name = args.study_name
-        storage_name = args.storage_name
         direction = args.direction
         if len(direction) == 1:
             direction = direction[0]
@@ -231,3 +294,8 @@ if __name__ == "__main__":
         )
     else:
         raise NotImplementedError(f"Study type {args.study_type} not implemented.")
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(find_optuna_best, args)

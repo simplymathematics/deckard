@@ -920,13 +920,14 @@ def main(args):
     )
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--target", type=str, default="adv_failures")
+parser.add_argument("--duration_col", type=str, default="adv_fit_time")
+parser.add_argument("--dataset", type=str, default="mnist")
+parser.add_argument("--data_file", type=str, default="data.csv")
+parser.add_argument("--config_file", type=str, default="afr.yaml")
+parser.add_argument("--plots_folder", type=str, default="plots")
+
 if "__main__" == __name__:
-    afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
-    afr_parser.add_argument("--dataset", type=str, default=None)
-    afr_parser.add_argument("--data_file", type=str, default="data.csv")
-    afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
-    afr_parser.add_argument("--plots_folder", type=str, default="plots")
-    args = afr_parser.parse_args()
+    args = parser.parse_args()
     main(args)

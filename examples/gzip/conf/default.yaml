@@ -5,9 +5,11 @@ defaults:
     - model: default
     - files: default
     - scorers: default
+    - device_id: ${oc.env:DECKARD_DEVICE_ID, "cpu"}
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
+devic_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 dataset : kdd_nsl
 model_name : gzip_knn
 stage : train

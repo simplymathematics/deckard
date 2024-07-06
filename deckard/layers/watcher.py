@@ -3,10 +3,10 @@ import json
 import logging
 import time
 from pathlib import Path
-
 import watchdog.events
 import watchdog.observers
 from gevent import joinall
+from hydra.utils import instantiate
 from pssh.clients import ParallelSSHClient
 
 PROGRESS_FILE = "progress.json"
@@ -23,28 +23,45 @@ def createSSHClient(hosts, port, user, password):
 
 
 class JSONHandler(watchdog.events.PatternMatchingEventHandler):
-    def __init__(self, servers, port, user, password, filename, destination, **kwargs):
+    def __init__(
+        self,
+        servers,
+        port,
+        user,
+        password,
+        filename,
+        destination,
+        regex,
+        total,
+        recursive=True,
+        completed=0,
+        transformer: dict = None,
+    ):
         # Set the patterns for PatternMatchingEventHandler
+        self.regex = regex
         watchdog.events.PatternMatchingEventHandler.__init__(
             self,
-            patterns=[REGEX],
+            patterns=[self.regex],
             ignore_directories=True,
             case_sensitive=False,
         )
+        self.total = total
         self.ssh = createSSHClient(servers, port, user, password)
         logger.info("Initiated SSH client")
         self.filename = filename
         self.destination = destination
-        self.recurse = kwargs["recursive"] if "recurse" in kwargs else False
+        self.recursive = recursive
+        self.transformer = transformer
         logger.info(
             "Source file is {} and destination is {}".format(
                 self.filename,
                 self.destination,
             ),
         )
-        logger.info("Regex is {}".format(REGEX))
+        logger.info("Regex is {}".format(self.regex))
 
     def on_created(self, event):
+        self.completed += 1
         logger.info("Watchdog received created event - % s." % event.src_path)
         events.append(event.src_path)
         self.filename = event.src_path
@@ -54,136 +71,115 @@ class JSONHandler(watchdog.events.PatternMatchingEventHandler):
         except Exception as e:
             logger.warning("Could not transform json")
             logger.warning(e)
-        if "TOTAL" and "QUEUE" in locals():
+        if self.destination is not None:
             try:
-                self.calculate_progress(TOTAL, QUEUE)
-                logger.info("Calculated progress")
+                self.send_json_with_scp()
+                logger.info("Sent JSON")
+            except KeyboardInterrupt as e:
+                logger.warning("Keyboard interrupt")
+                raise e
             except Exception as e:
-                logger.warning("Could not calculate progress")
+                logger.warning("Could not send json")
                 logger.warning(e)
-        try:
-            self.send_json_with_scp()
-            logger.info("Sent JSON")
-        except KeyboardInterrupt as e:
-            logger.warning("Keyboard interrupt")
-            raise e
-        except Exception as e:
-            logger.warning("Could not send json")
-            logger.warning(e)
-
-        # Event is created, you can process it now
-
-    def calculate_progress(total, queue):
-        progress = (total - queue) / total
-        dict_ = {"complete": progress, "remaining": 1 - progress}
-        with open(PROGRESS_FILE, "w") as f:
-            json.dump(dict_, f)
-        return dict_
 
     def transform_json(self):
-        pass
+        if self.transformer is None:
+            pass
+        else:
+            transformer = instantiate(self.transformer)
+            with open(self.filename, "r") as f:
+                data = json.load(f)
+            data = transformer(data)
+            with open(self.filename, "w") as f:
+                json.dump(data, f)
+        return 0
 
     def send_json_with_scp(self):
         remotename = Path(self.destination, self.filename).as_posix()
-        cmds = self.ssh.scp_send(self.filename, remotename, recurse=self.recurse)
+        cmds = self.ssh.scp_send(self.filename, remotename, recurse=self.recursive)
         joinall(cmds, raise_error=True)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Process some json files and send them to a server. Or send and then process. Your choice.",
-    )
-    parser.add_argument(
-        "--source",
-        "-i",
-        type=str,
-        required=True,
-        help="The source to watch for files.",
-    )
-    parser.add_argument(
-        "--destination",
-        "-o",
-        type=str,
-        required=True,
-        help="The destination to send the files to.",
-    )
-    parser.add_argument(
-        "--server",
-        "-s",
-        type=str,
-        required=True,
-        help="The server to send the files to.",
-    )
-    parser.add_argument("--port", "-p", type=int, help="The port to send the files to.")
-    parser.add_argument(
-        "--user",
-        "-u",
-        type=str,
-        required=True,
-        help="The user to send the files to.",
-    )
-    parser.add_argument(
-        "--password",
-        "-k",
-        type=str,
-        required=True,
-        help="The password to send the files to.",
-    )
-    parser.add_argument("--original", type=str, help="The original queue file.")
-    parser.add_argument("--queue", type=str, help="The current queue file.")
-    parser.add_argument(
-        "--regex",
-        "-e",
-        type=str,
-        required=True,
-        help="The regex to watch for.",
-    )
-    parser.add_argument(
-        "--recursive",
-        "-r",
-        type=bool,
-        default=True,
-        help="Whether to recurse or not.",
-    )
-    parser.add_argument(
-        "--n_jobs",
-        "-j",
-        type=int,
-        default=8,
-        help="The number of jobs to run in parallel.",
-    )
-    parser.add_argument(
-        "--log",
-        "-l",
-        type=int,
-        default=logging.INFO,
-        help="The log level.",
-    )
-    args = parser.parse_args()
-    # Set up logging
-    logging.basicConfig(
-        level=args.log,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    if args.regex is not None:
-        REGEX = args.regex
-    else:
-        raise ValueError("You must specify a regex to watch for.")
+parser = argparse.ArgumentParser(
+    description="Process some json files and send them to a server. Or send and then process. Your choice.",
+)
+parser.add_argument(
+    "--source",
+    "-i",
+    type=str,
+    required=True,
+    help="The source to watch for files.",
+)
+parser.add_argument(
+    "--destination",
+    "-o",
+    type=str,
+    required=True,
+    help="The destination to send the files to.",
+)
+parser.add_argument(
+    "--server",
+    "-s",
+    type=str,
+    required=True,
+    help="The server to send the files to.",
+)
+parser.add_argument("--port", "-p", type=int, help="The port to send the files to.")
+parser.add_argument(
+    "--user",
+    "-u",
+    type=str,
+    required=True,
+    help="The user to send the files to.",
+)
+parser.add_argument(
+    "--password",
+    "-k",
+    type=str,
+    required=True,
+    help="The password to send the files to.",
+)
+parser.add_argument("--original", type=str, help="The original completed file.")
+parser.add_argument(
+    "--regex",
+    "-e",
+    type=str,
+    required=True,
+    help="The regex to watch for.",
+)
+parser.add_argument(
+    "--recursive",
+    "-r",
+    type=bool,
+    default=True,
+    help="Whether to recurse or not.",
+)
+parser.add_argument(
+    "--n_jobs",
+    "-j",
+    type=int,
+    default=8,
+    help="The number of jobs to run in parallel.",
+)
+parser.add_argument(
+    "--log",
+    "-l",
+    type=int,
+    default=logging.INFO,
+    help="The log level.",
+)
+
+
+def main(args):
     # Assuming this is watching some long-running process (like a model training),
     # you may find it beneficial to watch the progress.
     # First, generate an "original" file that contains one line
     # for every experiment configuration you would like to test.
     # The contents don't matter. It only counts lines.
     # Then, when each experiment is complete, pop a line from that file.
-    # This is called the "queue" file.
+    # This is called the "completed" file.
     # If these files exist, you will get a log to stdout and a
     # progress.json file containing the "completed" and "remaining" amounts.
-    if args.original is not None:
-        with open(args.original, "r") as f:
-            TOTAL = len(f.readlines())
-    if args.queue is not None:
-        with open(args.queue, "r") as f:
-            QUEUE = len(f.readlines())
     # SUPPORTS PARALELL HOSTS. Specify n jobs or write a list of hosts here.
     hosts = [args.server] * args.n_jobs
     src_path = Path(args.source).parent
@@ -205,3 +201,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
+
+
+if __name__ == "__main__":
+
+    args = parser.parse_args()
+    main(args)

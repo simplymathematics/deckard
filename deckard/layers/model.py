@@ -9,18 +9,18 @@ from .utils import save_params_file, run_stages
 
 logger = logging.getLogger(__name__)
 
-model_parser = argparse.ArgumentParser()
-model_parser.add_argument("stage", type=str, nargs="*", default=None)
-model_parser.add_argument("--verbosity", type=str, default="INFO")
-model_parser.add_argument("--params_file", type=str, default="params.yaml")
-model_parser.add_argument("--pipeline_file", type=str, default="dvc.yaml")
-model_parser.add_argument("--config_dir", type=str, default="conf")
-model_parser.add_argument("--config_file", type=str, default="default")
-model_parser.add_argument("--workdir", type=str, default=".")
-model_parser.add_argument("--overrides", nargs="*", default=[], type=str)
+parser = argparse.ArgumentParser()
+parser.add_argument("stage", type=str, nargs="*", default=None)
+parser.add_argument("--verbosity", type=str, default="INFO")
+parser.add_argument("--params_file", type=str, default="params.yaml")
+parser.add_argument("--pipeline_file", type=str, default="dvc.yaml")
+parser.add_argument("--config_dir", type=str, default="conf")
+parser.add_argument("--config_file", type=str, default="default")
+parser.add_argument("--workdir", type=str, default=".")
+parser.add_argument("--overrides", nargs="*", default=[], type=str)
 
 
-def model_main(args):
+def main(args):
     config_dir = Path(args.workdir, args.config_dir).absolute().as_posix()
     logging.basicConfig(
         level=args.verbosity,
@@ -49,5 +49,5 @@ def model_main(args):
 
 
 if __name__ == "__main__":
-    args = model_parser.parse_args()
-    model_main(args)
+    args = parser.parse_args()
+    main(args)
