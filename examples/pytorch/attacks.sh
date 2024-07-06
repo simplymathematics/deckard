@@ -28,45 +28,48 @@ bash models.sh \
     attack=default \
     ++attack.init.name=art.attacks.evasion.DeepFool \
     ++attack.init.max_iter=10 \
+    ++attack.init.batch_size=4096 \
     ++attack.init.nb_grads=1,3,5,8,10 \
     atk_name=Deep $@
+# # #####################################################
+# # HopSkipJump
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.HopSkipJump \
+#     ++attack.init.max_iter=1,3,5,10,15 \
+#     ++attack.init.init_eval=10 \
+#     ++attack.init.batch_size=4096 \
+#     ++attack.init.max_eval=100 \
+#     ++attack.init.norm=2 \
+#     atk_name=HSJ $@
+# # #####################################################
+# # PixelAttack
+# bash models.sh \
+#     stage=attack \
+#     attack=default  \
+#     ++attack.init.name=art.attacks.evasion.PixelAttack \
+#     ~attack.init.batch_size \
+#     ++attack.init.th=1,4,16,64,256 \
+#     atk_name=Pixel $@
+# # #####################################################
+# # ThresholdAttack
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.ThresholdAttack \
+#     ~attack.init.batch_size \
+#     ++attack.init.th=1,4,16,64,256 \
+#     atk_name=Thresh $@
 # #####################################################
-# HopSkipJump
-bash models.sh \
-    stage=attack \
-    attack=default \
-    ++attack.init.name=art.attacks.evasion.HopSkipJump \
-    ++attack.init.max_iter=1,3,5,10,50 \
-    ++attack.init.init_eval=10 \
-    ++attack.init.norm=2 \
-    atk_name=HSJ $@
-# #####################################################
-# PixelAttack
-bash models.sh \
-    stage=attack \
-    attack=default  \
-    ++attack.init.name=art.attacks.evasion.PixelAttack \
-    ~attack.init.batch_size \
-    ++attack.init.th=1,4,16,64,256 \
-    atk_name=Pixel $@
-# #####################################################
-# ThresholdAttack
-bash models.sh \
-    stage=attack \
-    attack=default \
-    ++attack.init.name=art.attacks.evasion.ThresholdAttack \
-    ~attack.init.batch_size \
-    ++attack.init.th=1,4,16,64,256 \
-    atk_name=Thresh $@
-# #####################################################
-# ZooAttack
-bash models.sh \
-    stage=attack \
-    attack=default \
-    ++attack.init.name=art.attacks.evasion.ZooAttack \
-    ++attack.init.binary_search_steps=1,2,3,5,10 \
-    ++attack.init.abort_early=True \
-    atk_name=Zoo $@
+# # ZooAttack
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.ZooAttack \
+#     ++attack.init.binary_search_steps=1,2,3,5,10 \
+#     ++attack.init.abort_early=True \
+#     atk_name=Zoo $@
 # ####################################################
 # # Carlini L0 Method
 # bash models.sh \

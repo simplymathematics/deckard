@@ -92,7 +92,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -108,23 +108,23 @@ stages:
     outs:
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: 819be7ee1356bc05118c412a9cd5cfaf
+      md5: e16de4ab0b1f1a5808aaeb8cdd76553c
       size: 44781294
     - path: mnist/models/model.pt
       hash: md5
-      md5: b35eed5e7919110dbafd89f302763119
+      md5: ae8a80a475c5ccfbf50eaa62adb24e1e
       size: 44787138
     - path: mnist/reports/train/default/score_dict.json
       hash: md5
-      md5: f360441e2ece595105e607ff7606f817
-      size: 513
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
   train@cifar:
     cmd: python -m deckard.layers.experiment train@cifar --config_file cifar.yaml
       --params_file cifar.yaml
     deps:
     - path: cifar.yaml
       hash: md5
-      md5: 3d8ae172bf881902533add08c3320f22
+      md5: 15fc7cec034cfea8e390c77f0ebd2d26
       size: 5037
     params:
       params.yaml:
@@ -210,7 +210,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -226,24 +226,24 @@ stages:
     outs:
     - path: cifar/models/model.optimizer.pt
       hash: md5
-      md5: ae49c7fab3d672633b81ffdb3686da7c
+      md5: 325f6119d397c468be7d7fe01b9b04ea
       size: 44781294
     - path: cifar/models/model.pt
       hash: md5
-      md5: deb827ff6572444cd38e5c665f68cf86
+      md5: 64271d0a795a3bdf5a46951ea1e3ded9
       size: 44787138
     - path: cifar/reports/train/default/score_dict.json
       hash: md5
-      md5: 6de506b5586db5819216f27787f02602
-      size: 517
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
   train@cifar100:
     cmd: python -m deckard.layers.experiment train@cifar100 --config_file cifar100.yaml
       --params_file cifar100.yaml
     deps:
     - path: cifar100.yaml
       hash: md5
-      md5: 6789c3487460b36eba8b1fcce1c53bdf
-      size: 5286
+      md5: deb1b04848c71b5819cf21880b4368f0
+      size: 5282
     params:
       params.yaml:
         atk_name: hsj
@@ -328,7 +328,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -344,34 +344,34 @@ stages:
     outs:
     - path: cifar100/models/model.optimizer.pt
       hash: md5
-      md5: 9a8373a0c4f720033311a7af8928cd20
+      md5: b469db4312d99c3ccf8d198c9936f7ab
       size: 44781294
     - path: cifar100/models/model.pt
       hash: md5
-      md5: ca0763af9f104ca29fd73cd4e2505f46
+      md5: 76593e090e9815dfac73c6f9d1d84d57
       size: 44787138
     - path: cifar100/reports/train/default/score_dict.json
       hash: md5
-      md5: 2828de0759bcbc0b85177da75af2ef34
-      size: 517
+      md5: 41191be9e2760b49f21bfe27ccef654c
+      size: 514
   attack@mnist:
     cmd: python -m deckard.layers.experiment attack@mnist --config_file mnist.yaml
       --params_file mnist.yaml
     deps:
     - path: mnist/models/model.optimizer.pt
       hash: md5
-      md5: 819be7ee1356bc05118c412a9cd5cfaf
+      md5: e16de4ab0b1f1a5808aaeb8cdd76553c
       size: 44781294
     - path: mnist/models/model.pt
       hash: md5
-      md5: b35eed5e7919110dbafd89f302763119
+      md5: ae8a80a475c5ccfbf50eaa62adb24e1e
       size: 44787138
     params:
       params.yaml:
         atk_name: hsj
         attack:
           _target_: deckard.base.attack.Attack
-          attack_size: 128
+          attack_size: 100
           data:
             _target_: deckard.base.data.Data
             generate:
@@ -385,7 +385,7 @@ stages:
               train_size: 48000
           init:
             _target_: deckard.base.attack.AttackInitializer
-            batch_size: 4096
+            batch_size: 1024
             model:
               _target_: deckard.base.model.Model
               art:
@@ -439,7 +439,7 @@ stages:
                 num_classes: 10
               library: pytorch
               trainer:
-                batch_size: 4096
+                batch_size: 1024
                 nb_epochs: 1
                 verbose: true
             name: art.attacks.evasion.HopSkipJump
@@ -497,7 +497,7 @@ stages:
               num_classes: 10
             library: pytorch
             trainer:
-              batch_size: 4096
+              batch_size: 1024
               nb_epochs: 1
               verbose: true
         data:
@@ -582,7 +582,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -598,12 +598,12 @@ stages:
     outs:
     - path: mnist/attacks/attack.pkl
       hash: md5
-      md5: 2dadc586730977c9c09d8ae3e85b9260
-      size: 401574
+      md5: bb64f427b6df9067d9c59d5021937164
+      size: 313766
     - path: mnist/reports/attack/default/score_dict.json
       hash: md5
-      md5: 7ef1746c619bcd38777b3d8fe2493db1
-      size: 847
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
   parse@mnist:
     cmd: python -m deckard.layers.parse --config_file mnist.yaml --params_file mnist.yaml
     deps:
@@ -624,12 +624,12 @@ stages:
       nfiles: 3
     - path: conf/mnist.yaml
       hash: md5
-      md5: 0bbf6f3ec44e817e9ba0a183e6011f14
-      size: 1417
+      md5: ed726950d032472aedbb267ae88c0f9a
+      size: 1501
     - path: conf/model
       hash: md5
-      md5: ea1de23c4f814b6091cec3063d25ac62.dir
-      size: 2094
+      md5: 5a1ef81c82a950e745c930067d8c870d.dir
+      size: 2093
       nfiles: 10
     - path: conf/scorers
       hash: md5
@@ -651,8 +651,8 @@ stages:
       nfiles: 1
     - path: conf/cifar.yaml
       hash: md5
-      md5: 17424e1d0a929e12e4c6a1a423eaee92
-      size: 1418
+      md5: 20703e37d826c71d762491158f302bfe
+      size: 1501
     - path: conf/data
       hash: md5
       md5: ab878db613853b9479b012b228a00d50.dir
@@ -665,8 +665,8 @@ stages:
       nfiles: 3
     - path: conf/model
       hash: md5
-      md5: ea1de23c4f814b6091cec3063d25ac62.dir
-      size: 2094
+      md5: 5a1ef81c82a950e745c930067d8c870d.dir
+      size: 2093
       nfiles: 10
     - path: conf/scorers
       hash: md5
@@ -676,7 +676,7 @@ stages:
     outs:
     - path: cifar.yaml
       hash: md5
-      md5: 3d8ae172bf881902533add08c3320f22
+      md5: 15fc7cec034cfea8e390c77f0ebd2d26
       size: 5037
   parse@cifar100:
     cmd: python -m deckard.layers.parse --config_file cifar100.yaml --params_file
@@ -689,8 +689,8 @@ stages:
       nfiles: 1
     - path: conf/cifar100.yaml
       hash: md5
-      md5: 52bfb1f6eb415c8fadf298ee169ca12c
-      size: 1405
+      md5: 008f14b0f28ad1abdb09f56b702ae0ab
+      size: 1591
     - path: conf/data
       hash: md5
       md5: ab878db613853b9479b012b228a00d50.dir
@@ -703,8 +703,8 @@ stages:
       nfiles: 3
     - path: conf/model
       hash: md5
-      md5: ea1de23c4f814b6091cec3063d25ac62.dir
-      size: 2094
+      md5: 5a1ef81c82a950e745c930067d8c870d.dir
+      size: 2093
       nfiles: 10
     - path: conf/scorers
       hash: md5
@@ -714,26 +714,26 @@ stages:
     outs:
     - path: cifar100.yaml
       hash: md5
-      md5: 6789c3487460b36eba8b1fcce1c53bdf
-      size: 5286
+      md5: deb1b04848c71b5819cf21880b4368f0
+      size: 5282
   attack@cifar:
     cmd: python -m deckard.layers.experiment attack@cifar --config_file cifar.yaml
       --params_file cifar.yaml
     deps:
     - path: cifar/models/model.optimizer.pt
       hash: md5
-      md5: ae49c7fab3d672633b81ffdb3686da7c
+      md5: 325f6119d397c468be7d7fe01b9b04ea
       size: 44781294
     - path: cifar/models/model.pt
       hash: md5
-      md5: deb827ff6572444cd38e5c665f68cf86
+      md5: 64271d0a795a3bdf5a46951ea1e3ded9
       size: 44787138
     params:
       params.yaml:
         atk_name: hsj
         attack:
           _target_: deckard.base.attack.Attack
-          attack_size: 128
+          attack_size: 100
           data:
             _target_: deckard.base.data.Data
             generate:
@@ -747,7 +747,7 @@ stages:
               train_size: 48000
           init:
             _target_: deckard.base.attack.AttackInitializer
-            batch_size: 4096
+            batch_size: 1024
             model:
               _target_: deckard.base.model.Model
               art:
@@ -801,7 +801,7 @@ stages:
                 num_classes: 10
               library: pytorch
               trainer:
-                batch_size: 4096
+                batch_size: 1024
                 nb_epochs: 1
                 verbose: true
             name: art.attacks.evasion.HopSkipJump
@@ -859,7 +859,7 @@ stages:
               num_classes: 10
             library: pytorch
             trainer:
-              batch_size: 4096
+              batch_size: 1024
               nb_epochs: 1
               verbose: true
         data:
@@ -944,7 +944,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -960,30 +960,30 @@ stages:
     outs:
     - path: cifar/attacks/attack.pkl
       hash: md5
-      md5: 696d40f25342635e34e08f6d6968f97d
-      size: 401574
+      md5: c3e171e067df56e31ee5d4d968aad9d5
+      size: 313766
     - path: cifar/reports/attack/default/score_dict.json
       hash: md5
-      md5: 75d524f2d2aa5ea5a375211e99879b70
-      size: 865
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
   attack@cifar100:
     cmd: python -m deckard.layers.experiment attack@cifar100 --config_file cifar100.yaml
       --params_file cifar100.yaml
     deps:
     - path: cifar100/models/model.optimizer.pt
       hash: md5
-      md5: 9a8373a0c4f720033311a7af8928cd20
+      md5: b469db4312d99c3ccf8d198c9936f7ab
       size: 44781294
     - path: cifar100/models/model.pt
       hash: md5
-      md5: ca0763af9f104ca29fd73cd4e2505f46
+      md5: 76593e090e9815dfac73c6f9d1d84d57
       size: 44787138
     params:
       params.yaml:
         atk_name: hsj
         attack:
           _target_: deckard.base.attack.Attack
-          attack_size: 128
+          attack_size: 100
           data:
             _target_: deckard.base.data.Data
             generate:
@@ -997,7 +997,7 @@ stages:
               train_size: 48000
           init:
             _target_: deckard.base.attack.AttackInitializer
-            batch_size: 4096
+            batch_size: 1024
             model:
               _target_: deckard.base.model.Model
               art:
@@ -1051,7 +1051,7 @@ stages:
                 num_classes: 10
               library: pytorch
               trainer:
-                batch_size: 4096
+                batch_size: 1024
                 nb_epochs: 1
                 verbose: true
             name: art.attacks.evasion.HopSkipJump
@@ -1109,7 +1109,7 @@ stages:
               num_classes: 10
             library: pytorch
             trainer:
-              batch_size: 4096
+              batch_size: 1024
               nb_epochs: 1
               verbose: true
         data:
@@ -1194,7 +1194,7 @@ stages:
             num_classes: 10
           library: pytorch
           trainer:
-            batch_size: 4096
+            batch_size: 1024
             nb_epochs: 1
             verbose: true
         scorers:
@@ -1210,9 +1210,280 @@ stages:
     outs:
     - path: cifar100/attacks/attack.pkl
       hash: md5
-      md5: 9064e08de19a8d40d39c9bbec8780a86
-      size: 401574
+      md5: fa9665c5d8fc6a1118123c25a30e8978
+      size: 313766
     - path: cifar100/reports/attack/default/score_dict.json
       hash: md5
-      md5: 007cce41b2d429b67b174b3aa30cac30
-      size: 865
+      md5: 7396ec38b31f7ff9ae1fcab467a98c6c
+      size: 854
+  attacks@mnist-ResNet18:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet18  stage=attack model_name=ResNet18
+      attack.attack_size=100 data=torch_mnist model=torch_mnist +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
+    outs:
+    - path: mnist/logs/attack/ResNet18/
+      hash: md5
+      md5: 240762a55b7e67e04f4b337e2aa58e50.dir
+      size: 67964097
+      nfiles: 7809
+  attacks@mnist-ResNet50:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet50  stage=attack model_name=ResNet50
+      attack.attack_size=100 data=torch_mnist model=torch_mnist +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
+    outs:
+    - path: mnist/logs/attack/ResNet50/
+      hash: md5
+      md5: 481f3de00d4fe02fde5534cdcc1c2b30.dir
+      size: 78656482
+      nfiles: 7681
+  attacks@mnist-ResNet152:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet152  stage=attack
+      model_name=ResNet152 attack.attack_size=100 data=torch_mnist model=torch_mnist
+      +direction="[maximize,maximize,minimize]" +optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
+    outs:
+    - path: mnist/logs/attack/ResNet152/
+      hash: md5
+      md5: caf83ba317d2b12ecc75f638dc07e7fb.dir
+      size: 152486967
+      nfiles: 7681
+  attacks@mnist-ResNet101:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet101  stage=attack
+      model_name=ResNet101 attack.attack_size=100 data=torch_mnist model=torch_mnist
+      +direction="[maximize,maximize,minimize]" +optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
+    outs:
+    - path: mnist/logs/attack/ResNet101/
+      hash: md5
+      md5: 92951fdd84c6ad7dfa6e724499196111.dir
+      size: 90289426
+      nfiles: 7681
+  attacks@mnist-ResNet34:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet34  stage=attack model_name=ResNet34
+      attack.attack_size=100 data=torch_mnist model=torch_mnist +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: b63b8d925ab6db88e3b707ec025800d3
+      size: 834
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: f55673763c20d36336fc1a23bd057a5f
+      size: 515
+    outs:
+    - path: mnist/logs/attack/ResNet34/
+      hash: md5
+      md5: 60ec86982d5cf4693ffd7e5420ce2863.dir
+      size: 110646599
+      nfiles: 9985
+  attacks@cifar-ResNet18:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet18  stage=attack model_name=ResNet18
+      attack.attack_size=100 data=torch_cifar model=torch_cifar +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar.yaml
+    deps:
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
+    outs:
+    - path: cifar/logs/attack/ResNet18/
+      hash: md5
+      md5: 1f8b0fd2b4e94d6e67d017d9ae9d4ea0.dir
+      size: 66807197
+      nfiles: 9345
+  attacks@cifar-ResNet34:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet34  stage=attack model_name=ResNet34
+      attack.attack_size=100 data=torch_cifar model=torch_cifar +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar.yaml
+    deps:
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
+    outs:
+    - path: cifar/logs/attack/ResNet34/
+      hash: md5
+      md5: ca652fb37adbb2bc48c785d3db8cb90e.dir
+      size: 57831382
+      nfiles: 7681
+  attacks@cifar-ResNet50:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet50  stage=attack model_name=ResNet50
+      attack.attack_size=100 data=torch_cifar model=torch_cifar +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar.yaml
+    deps:
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
+    outs:
+    - path: cifar/logs/attack/ResNet50/
+      hash: md5
+      md5: 63b0e940b64d9b941c4877ff05ceb4e6.dir
+      size: 61565958
+      nfiles: 7681
+  attacks@cifar-ResNet101:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet101  stage=attack
+      model_name=ResNet101 attack.attack_size=100 data=torch_cifar model=torch_cifar
+      +direction="[maximize,maximize,minimize]" +optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name cifar.yaml
+    deps:
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
+    outs:
+    - path: cifar/logs/attack/ResNet101/
+      hash: md5
+      md5: 6899712a5e067be74511fd4b85c5531b.dir
+      size: 80647437
+      nfiles: 7681
+  attacks@cifar-ResNet152:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet152  stage=attack
+      model_name=ResNet152 attack.attack_size=100 data=torch_cifar model=torch_cifar
+      +direction="[maximize,maximize,minimize]" +optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name cifar.yaml
+    deps:
+    - path: cifar/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 6aae48892e49e75742b1d67a5e1ec276
+      size: 838
+    - path: cifar/reports/train/default/score_dict.json
+      hash: md5
+      md5: 73c3315c8f9def00a519bdf6bb9998e2
+      size: 508
+    outs:
+    - path: cifar/logs/attack/ResNet152/
+      hash: md5
+      md5: 08cbdcd3ef354342a69c7bbd361ab6f4.dir
+      size: 101987846
+      nfiles: 7681
+  attacks@cifar100-ResNet18:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet18  stage=attack model_name=ResNet18
+      attack.attack_size=100 data=torch_cifar100 model=torch_cifar100 +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar100.yaml
+    deps:
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 7396ec38b31f7ff9ae1fcab467a98c6c
+      size: 854
+    - path: cifar100/reports/train/default/score_dict.json
+      hash: md5
+      md5: 41191be9e2760b49f21bfe27ccef654c
+      size: 514
+    outs:
+    - path: cifar100/logs/attack/ResNet18/
+      hash: md5
+      md5: f6fc033b064588576514c93b8901f040.dir
+      size: 84069191
+      nfiles: 10469
+  attacks@cifar100-ResNet34:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet34  stage=attack model_name=ResNet34
+      attack.attack_size=100 data=torch_cifar100 model=torch_cifar100 +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar100.yaml
+    deps:
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 7396ec38b31f7ff9ae1fcab467a98c6c
+      size: 854
+    - path: cifar100/reports/train/default/score_dict.json
+      hash: md5
+      md5: 41191be9e2760b49f21bfe27ccef654c
+      size: 514
+    outs:
+    - path: cifar100/logs/attack/ResNet34/
+      hash: md5
+      md5: 40ab74741f8f446b09778c55522e0d23.dir
+      size: 45326629
+      nfiles: 7681
+  attacks@cifar100-ResNet50:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet50  stage=attack model_name=ResNet50
+      attack.attack_size=100 data=torch_cifar100 model=torch_cifar100 +direction="[maximize,maximize,minimize]"
+      +optimizers="[accuracy,adv_accuracy,adv_success]" --config-name cifar100.yaml
+    deps:
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 7396ec38b31f7ff9ae1fcab467a98c6c
+      size: 854
+    - path: cifar100/reports/train/default/score_dict.json
+      hash: md5
+      md5: 41191be9e2760b49f21bfe27ccef654c
+      size: 514
+    outs:
+    - path: cifar100/logs/attack/ResNet50/
+      hash: md5
+      md5: d74f031721b03ab0b6d0eeab26fdfba3.dir
+      size: 46511652
+      nfiles: 7681
+  attacks@cifar100-ResNet101:
+    cmd: bash attacks.sh  ++model.init.name=torch_example.ResNet101  stage=attack
+      model_name=ResNet101 attack.attack_size=100 data=torch_cifar100 model=torch_cifar100
+      +direction="[maximize,maximize,minimize]" +optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name cifar100.yaml
+    deps:
+    - path: cifar100/reports/attack/default/score_dict.json
+      hash: md5
+      md5: 7396ec38b31f7ff9ae1fcab467a98c6c
+      size: 854
+    - path: cifar100/reports/train/default/score_dict.json
+      hash: md5
+      md5: 41191be9e2760b49f21bfe27ccef654c
+      size: 514
+    outs:
+    - path: cifar100/logs/attack/ResNet101/
+      hash: md5
+      md5: 57911c3eaeeb3888a220a1fcf12e8442.dir
+      size: 63892972
+      nfiles: 7681

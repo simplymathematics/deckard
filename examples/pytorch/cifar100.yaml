@@ -1,0 +1,226 @@
+_target_: deckard.base.experiment.Experiment
+atk_name: hsj
+attack:
+  _target_: deckard.base.attack.Attack
+  attack_size: 100
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      name: torch_cifar100
+      path: original_data/
+    sample:
+      random_state: 0
+      stratify: true
+      test_size: 12000
+      train_size: 48000
+  init:
+    _target_: deckard.base.attack.AttackInitializer
+    batch_size: 128
+    model:
+      _target_: deckard.base.model.Model
+      art:
+        _target_: deckard.base.model.art_pipeline.ArtPipeline
+        clip_values:
+        - 0
+        - 255
+        criterion:
+          name: torch.nn.CrossEntropyLoss
+        data:
+          _target_: deckard.base.data.Data
+          generate:
+            name: torch_cifar100
+            path: original_data/
+          sample:
+            random_state: 0
+            stratify: true
+            test_size: 12000
+            train_size: 48000
+        initialize:
+          clip_values:
+          - 0
+          - 255
+          criterion:
+            name: torch.nn.CrossEntropyLoss
+          optimizer:
+            lr: 0.01
+            momentum: 0.9
+            name: torch.optim.SGD
+        library: pytorch
+        optimizer:
+          lr: 0.01
+          momentum: 0.9
+          name: torch.optim.SGD
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          name: torch_cifar100
+          path: original_data/
+        sample:
+          random_state: 0
+          stratify: true
+          test_size: 12000
+          train_size: 48000
+      init:
+        _target_: deckard.base.model.ModelInitializer
+        name: torch_example.ResNet18
+        num_channels: 3
+        num_classes: 100
+      library: pytorch
+      trainer:
+        batch_size: 128
+        nb_epochs: 1
+        verbose: true
+    name: art.attacks.evasion.HopSkipJump
+  method: evasion
+  model:
+    _target_: deckard.base.model.Model
+    art:
+      _target_: deckard.base.model.art_pipeline.ArtPipeline
+      clip_values:
+      - 0
+      - 255
+      criterion:
+        name: torch.nn.CrossEntropyLoss
+      data:
+        _target_: deckard.base.data.Data
+        generate:
+          name: torch_cifar100
+          path: original_data/
+        sample:
+          random_state: 0
+          stratify: true
+          test_size: 12000
+          train_size: 48000
+      initialize:
+        clip_values:
+        - 0
+        - 255
+        criterion:
+          name: torch.nn.CrossEntropyLoss
+        optimizer:
+          lr: 0.01
+          momentum: 0.9
+          name: torch.optim.SGD
+      library: pytorch
+      optimizer:
+        lr: 0.01
+        momentum: 0.9
+        name: torch.optim.SGD
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        name: torch_cifar100
+        path: original_data/
+      sample:
+        random_state: 0
+        stratify: true
+        test_size: 12000
+        train_size: 48000
+    init:
+      _target_: deckard.base.model.ModelInitializer
+      name: torch_example.ResNet18
+      num_channels: 3
+      num_classes: 100
+    library: pytorch
+    trainer:
+      batch_size: 128
+      nb_epochs: 1
+      verbose: true
+data:
+  _target_: deckard.base.data.Data
+  generate:
+    name: torch_cifar100
+    path: original_data/
+  sample:
+    random_state: 0
+    stratify: true
+    test_size: 12000
+    train_size: 48000
+dataset: cifar100
+def_name: control
+device_id: gpu
+direction:
+- maximize
+files:
+  _target_: deckard.base.files.FileConfig
+  adv_predictions_file: adv_predictions.json
+  attack_dir: attacks
+  attack_file: attack
+  attack_type: .pkl
+  directory: cifar100
+  model_dir: models
+  model_file: model
+  model_type: .pt
+  name: default
+  params_file: params.yaml
+  predictions_file: predictions.json
+  reports: reports
+  score_dict_file: score_dict.json
+model:
+  _target_: deckard.base.model.Model
+  art:
+    _target_: deckard.base.model.art_pipeline.ArtPipeline
+    clip_values:
+    - 0
+    - 255
+    criterion:
+      name: torch.nn.CrossEntropyLoss
+    data:
+      _target_: deckard.base.data.Data
+      generate:
+        name: torch_cifar100
+        path: original_data/
+      sample:
+        random_state: 0
+        stratify: true
+        test_size: 12000
+        train_size: 48000
+    initialize:
+      clip_values:
+      - 0
+      - 255
+      criterion:
+        name: torch.nn.CrossEntropyLoss
+      optimizer:
+        lr: 0.01
+        momentum: 0.9
+        name: torch.optim.SGD
+    library: pytorch
+    optimizer:
+      lr: 0.01
+      momentum: 0.9
+      name: torch.optim.SGD
+  data:
+    _target_: deckard.base.data.Data
+    generate:
+      name: torch_cifar100
+      path: original_data/
+    sample:
+      random_state: 0
+      stratify: true
+      test_size: 12000
+      train_size: 48000
+  init:
+    _target_: deckard.base.model.ModelInitializer
+    name: torch_example.ResNet18
+    num_channels: 3
+    num_classes: 100
+  library: pytorch
+  trainer:
+    batch_size: 128
+    nb_epochs: 1
+    verbose: true
+model_name: ResNet18
+optimizers:
+- accuracy
+scorers:
+  _target_: deckard.base.scorer.ScorerDict
+  accuracy:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: maximize
+    name: sklearn.metrics.accuracy_score
+  log_loss:
+    _target_: deckard.base.scorer.ScorerConfig
+    direction: minimize
+    name: sklearn.metrics.log_loss
+stage: ???

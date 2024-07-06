@@ -93,7 +93,7 @@ gamma:
 weibull:
   plot:
     file : weibull_aft.pdf
-    title : Weibull AFR Model
+    title : Weibull AFT Model
     qq_title : Weibull QQ Plot
   t0: .3
   model:
@@ -146,7 +146,7 @@ exponential:
 log_logistic:
   plot:
     file : log_logistic_aft.pdf
-    title : Log logistic AFR Model
+    title : Log logistic AFT Model
     qq_title : Log Logistic QQ Plot
   t0: 1
   model:
@@ -172,7 +172,7 @@ log_logistic:
 log_normal:
   plot:
     file : log_normal_aft.pdf
-    title : Log Normal AFR Model
+    title : Log Normal AFT Model
     qq_title : Log Normal QQ Plot
   t0: 2
   model:

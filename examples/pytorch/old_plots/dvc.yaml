@@ -111,9 +111,6 @@ stages:
       - plots/${cat_plot[2].file}
       - plots/${cat_plot[3].file}
       - plots/${cat_plot[4].file}
-      - plots/${cat_plot[5].file}
-      - plots/${cat_plot[6].file}
-      - plots/${cat_plot[7].file}
       - plots/${line_plot[0].file}
       - plots/${line_plot[1].file}
       - plots/${line_plot[2].file}
