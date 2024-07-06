@@ -1,7 +1,6 @@
 import logging
 import os
 import traceback
-from copy import deepcopy
 from pathlib import Path
 import yaml
 from hydra.utils import instantiate
@@ -183,10 +182,10 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
                 if stage in keys:
                     new_keys = keys[stage]
                 if "foreach" in new_keys:
-                    new_keys = new_keys["do"]['params']
+                    new_keys = new_keys["do"]["params"]
                 else:
                     new_keys = new_keys["params"]
-                    
+
             key_list.extend(new_keys)
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
@@ -198,8 +197,9 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     for stage in stages:
         if len(stage.split("@")) > 1:
             sub_stage = stage.split("@")[1]
-            files['directory'] = sub_stage
-                
+            directory = stage.splits("@")[0]
+            file_list.append(directory)
+            file_list.append(sub_stage)
         else:
             sub_stage = None
         stage = stage.split("@")[0]
@@ -327,4 +327,5 @@ if __name__ == "__main__":
     def hydra_optimise(cfg: DictConfig) -> float:
         score = optimise(cfg)
         return score
+
     hydra_optimise()

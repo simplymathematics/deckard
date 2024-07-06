@@ -11,6 +11,7 @@ from sklearn.datasets import (
     make_moons,
     make_circles,
 )
+
 try:
     from torchvision.io import read_image, read_file
 except ImportError:

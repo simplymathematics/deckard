@@ -25,6 +25,7 @@ from lifelines.fitters import RegressionFitter
 from lifelines.exceptions import ConvergenceError
 from .clean_data import drop_rows_without_results
 from .compile import load_results, save_results
+
 logger = logging.getLogger(__name__)
 
 
@@ -112,23 +113,42 @@ def survival_probability_calibration(
         except ConvergenceError as e:
             if "delta contains nan value(s)" in str(e):
                 fit_options = {
-                    "step_size" : 0.1,
-                    "max_steps" : 1000,
-                    "precision" : 1e-3,
+                    "step_size": 0.1,
+                    "max_steps": 1000,
+                    "precision": 1e-3,
                 }
             else:
                 crc._scipy_fit_method = "SLSQP"
                 fit_options = {}
             try:
                 if CensoringType.is_right_censoring(model):
-                    crc.fit_right_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
+                    crc.fit_right_censoring(
+                        prediction_df,
+                        T,
+                        E,
+                        regressors=regressors,
+                        fit_options=fit_options,
+                    )
                 elif CensoringType.is_left_censoring(model):
-                    crc.fit_left_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
+                    crc.fit_left_censoring(
+                        prediction_df,
+                        T,
+                        E,
+                        regressors=regressors,
+                        fit_options=fit_options,
+                    )
                 elif CensoringType.is_interval_censoring(model):
-                    crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
+                    crc.fit_interval_censoring(
+                        prediction_df,
+                        T,
+                        E,
+                        regressors=regressors,
+                        fit_options=fit_options,
+                    )
                 else:
                     crc.fit(prediction_df, T, E, regressors=regressors)
             except ConvergenceError as e:
+                logger.error(f"Could not fit CRC model. due to {e}")
                 return ax, np.nan, np.nan
 
     # predict new model at values 0 to 1, but remember to ccl it!
@@ -181,22 +201,24 @@ def fit_aft(
 ):
     logger.info(f"Trying to initialize model {mtype} with {kwargs}")
     if mtype == "weibull":
-        aft = WeibullAFTFitter(penalizer=kwargs.pop("penalizer",0.1), **kwargs)
+        aft = WeibullAFTFitter(penalizer=kwargs.pop("penalizer", 0.1), **kwargs)
     elif mtype == "log_normal":
-        aft = LogNormalAFTFitter(penalizer=kwargs.pop("penalizer",0.1), **kwargs)
+        aft = LogNormalAFTFitter(penalizer=kwargs.pop("penalizer", 0.1), **kwargs)
     elif mtype == "log_logistic":
-        aft = LogLogisticAFTFitter(penalizer=kwargs.pop("penalizer",0.1), **kwargs)
+        aft = LogLogisticAFTFitter(penalizer=kwargs.pop("penalizer", 0.1), **kwargs)
     elif mtype == "cox":
-        aft = CoxPHFitter(penalizer=kwargs.pop("penalizer",0.1), **kwargs)
+        aft = CoxPHFitter(penalizer=kwargs.pop("penalizer", 0.1), **kwargs)
     elif mtype == "aalen":
-        aft = AalenAdditiveFitter(alpha=kwargs.pop("alpha",0.1), **kwargs)
+        aft = AalenAdditiveFitter(alpha=kwargs.pop("alpha", 0.1), **kwargs)
     elif mtype == "gamma":
         aft = GeneralizedGammaRegressionFitter(
-            penalizer=kwargs.pop("penalizer",0.1), **kwargs
+            penalizer=kwargs.pop("penalizer", 0.1),
+            **kwargs,
         )
     elif mtype == "exponential":
         aft = PiecewiseExponentialRegressionFitter(
-            penalizer=kwargs.pop("penalizer",0.1), **kwargs
+            penalizer=kwargs.pop("penalizer", 0.1),
+            **kwargs,
         )
     else:
         raise ValueError(f"Model type {mtype} not recognized")
@@ -207,21 +229,21 @@ def fit_aft(
         assert (
             event_col in df.columns
         ), f"Column {event_col} not in dataframe with columns {df.columns}"
-    start = df[duration_col].min() 
+    start = df[duration_col].min()
     end = df[duration_col].max()
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
-    start = df[duration_col].min() 
+    start = df[duration_col].min()
     end = df[duration_col].max()
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
-    # if the event column isnt a binary column, we need to convert it to binary. 
+    # if the event column isnt a binary column, we need to convert it to binary.
     # Assume that floats represent the proportion of failure events
     # raise an error on any other type
     kwarg_dict = {}
     # if df[event_col].dtype == "boolean":
     #     pass
-    # elif df[event_col].dtype == "float" : 
+    # elif df[event_col].dtype == "float" :
     #     # Assume this column represents accuracy
     #     print(f"Length of data: {len(df)}")
     #     pos_weights = df[event_col].copy() * 100
@@ -246,23 +268,25 @@ def fit_aft(
     #     kwarg_dict['weights_col'] = 'weights_col'
     # else:
     #     raise ValueError(f"Event column {event_col} is not boolean or float")
-    kwarg_dict['duration_col'] = duration_col
-    kwarg_dict['event_col'] = event_col
+    kwarg_dict["duration_col"] = duration_col
+    kwarg_dict["event_col"] = event_col
     if mtype != "aalen":
-        kwarg_dict['timeline'] = timeline
+        kwarg_dict["timeline"] = timeline
     try:
         aft.fit(df, **kwarg_dict)
     except AttributeError as e:
-        raise ConvergenceError(f"Could not fit {mtype} model")
+        raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
     except ConvergenceError as e:
         if "delta contains nan value(s)" in str(e):
             fit_options = {
-                "step_size" : 0.1,
-                "max_steps" : 1000,
-                "precision" : 1e-3,
+                "step_size": 0.1,
+                "max_steps": 1000,
+                "precision": 1e-3,
             }
-            kwarg_dict['fit_options'] = fit_options
-            logger.info("Reducing the step size to 0.1 and increasing the max steps to 1000")
+            kwarg_dict["fit_options"] = fit_options
+            logger.info(
+                "Reducing the step size to 0.1 and increasing the max steps to 1000",
+            )
             input("Inside the fit function")
         else:
             logger.info("Trying to fit with SLSQP")
@@ -270,9 +294,9 @@ def fit_aft(
         try:
             aft.fit(df, **kwarg_dict)
         except ConvergenceError as e:
-            logger.error(f"Could not fit {mtype} model")
-            raise ConvergenceError(f"Could not fit {mtype} model")
-        
+            logger.error(f"Could not fit {mtype} model due to {e}")
+            raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
+
     else:
         logger.info(f"Fitted {mtype} model")
     if summary_file is not None:
@@ -319,7 +343,7 @@ def plot_aft(
         else:
             clean_cols.append(col)
     columns = clean_cols
-    
+
     ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -341,9 +365,9 @@ def plot_aft(
         ax2 = aft.plot(columns=dummy_cols)
         labels = ax2.get_yticklabels()
         labels = [label.get_text() for label in labels]
-        i = 0 
+        i = 0
         labels = [x.replace("dummy_", "") for x in labels]
-        for k,v in dummy_dict.items():
+        for k, v in dummy_dict.items():
             labels = [label.replace(k, v) for label in labels]
         for k, v in replacement_dict.items():
             labels = [label.replace(k, v) for label in labels]
@@ -439,14 +463,32 @@ def plot_qq(
     if folder is not None:
         file = Path(folder, file)
     plt.gcf().clear()
-    
+
     if X_test is not None:
-        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
-        ax, _, _ = survival_probability_calibration(aft, X_test, t0=t0, ax=ax, color="blue")
+        ax, _, _ = survival_probability_calibration(
+            aft,
+            X_train,
+            t0=t0,
+            ax=ax,
+            color="red",
+        )
+        ax, _, _ = survival_probability_calibration(
+            aft,
+            X_test,
+            t0=t0,
+            ax=ax,
+            color="blue",
+        )
     else:
-        ax, _, _ = survival_probability_calibration(aft, X_train, t0=t0, ax=ax, color="red")
-    ax.set_xlim(0,1)
-    ax.set_ylim(0,1)
+        ax, _, _ = survival_probability_calibration(
+            aft,
+            X_train,
+            t0=t0,
+            ax=ax,
+            color="red",
+        )
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
     if xlabel is not None:
         ax.set_xlabel(xlabel)
     if ylabel is not None:
@@ -503,7 +545,7 @@ def score_model(aft, train, test, t0=0.35, method="concordance_index"):
     train_score = aft.score(train, scoring_method=method)
     test_score = aft.score(test, scoring_method=method)
     ax, train_ici, train_e50 = survival_probability_calibration(aft, train, t0=t0)
-    ax, test_ici, test_e50 = survival_probability_calibration(aft, test, t0=t0, ax = ax)
+    ax, test_ici, test_e50 = survival_probability_calibration(aft, test, t0=t0, ax=ax)
     scores = {
         "train_score": train_score,
         "test_score": test_score,
@@ -512,7 +554,6 @@ def score_model(aft, train, test, t0=0.35, method="concordance_index"):
         "train_e50": train_e50,
         "test_e50": test_e50,
         "qq_plot": ax,
-        
     }
     return scores
 
@@ -534,10 +575,20 @@ def make_afr_table(
     ]
     aft_data.index = model_names
     aft_data["AIC"] = [
-        x.AIC_ if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter)) else np.nan for x in aft_dict.values()
+        (
+            x.AIC_
+            if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter))
+            else np.nan
+        )
+        for x in aft_dict.values()
     ]
     aft_data["BIC"] = [
-        x.AIC_ if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter)) else np.nan for x in aft_dict.values()
+        (
+            x.AIC_
+            if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter))
+            else np.nan
+        )
+        for x in aft_dict.values()
     ]
     aft_data["Concordance"] = [
         x.score(X_train, scoring_method="concordance_index") for x in aft_dict.values()
@@ -545,7 +596,7 @@ def make_afr_table(
     aft_data["Test Concordance"] = [
         x.score(X_test, scoring_method="concordance_index") for x in aft_dict.values()
     ]
-    icis = [] 
+    icis = []
     e50s = []
     for key in aft_dict.keys():
         model = aft_dict[key]
@@ -553,21 +604,24 @@ def make_afr_table(
         _, ici, e50 = survival_probability_calibration(model, X_train, t0=t0)
         icis.append(ici)
         e50s.append(e50)
-    
+
     t_icis = []
     t_e50s = []
     for model in aft_dict.values():
         try:
             _, ici, e50 = survival_probability_calibration(model, X_test, t0=t0)
         except ConvergenceError as e:
+            logger.error(
+                f"Could not calculate ICI and E50 for model {model} due to {e}"
+            )
             ici = np.nan
             e50 = np.nan
         t_icis.append(ici)
         t_e50s.append(e50)
-    aft_data['ICI'] = icis
-    aft_data['Test ICI'] = t_icis
-    aft_data['E50'] = e50s
-    aft_data['Test E50'] = t_e50s
+    aft_data["ICI"] = icis
+    aft_data["Test ICI"] = t_icis
+    aft_data["E50"] = e50s
+    aft_data["Test E50"] = t_e50s
     if dataset in ["combined", "Combined", "COMBINED"]:
         pretty_dataset = "combined"
     elif dataset is None:
@@ -582,8 +636,14 @@ def make_afr_table(
     aft_data.to_latex(
         folder / "aft_comparison.tex",
         float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
-        label=f"tab:{dataset.lower()}" if dataset is not None else "tab:afr_models",  # Label for cross-referencing
-        caption=f"Comparison of AFT Models on the {pretty_dataset} dataset." if pretty_dataset is not None else None,
+        label=(
+            f"tab:{dataset.lower()}" if dataset is not None else "tab:afr_models"
+        ),  # Label for cross-referencing
+        caption=(
+            f"Comparison of AFT Models on the {pretty_dataset} dataset."
+            if pretty_dataset is not None
+            else None
+        ),
         index=True,
         header=True,
     )
@@ -608,7 +668,7 @@ def clean_data_for_aft(
     dummy_dict={},
 ):
     # Find categorical vars
-    
+
     assert (
         target in data
     ), f"Target {target} not in dataframe with columns {data.columns}"
@@ -621,8 +681,13 @@ def clean_data_for_aft(
         subset = subset[subset[col] != -1e10]
         subset = subset[subset[col] != 1e10]
     if len(dummy_dict) > 0:
-        dummy_subset=subset[list(dummy_dict.keys())]
-        dummies = pd.get_dummies(dummy_subset, prefix=dummy_dict, prefix_sep=" ", columns=list(dummy_dict.keys()))
+        dummy_subset = subset[list(dummy_dict.keys())]
+        dummies = pd.get_dummies(
+            dummy_subset,
+            prefix=dummy_dict,
+            prefix_sep=" ",
+            columns=list(dummy_dict.keys()),
+        )
         subset = subset.drop(columns=list(dummy_dict.keys()))
         cleaned = pd.concat([subset, dummies], axis=1)
     else:
@@ -671,7 +736,7 @@ def run_afr_experiment(
     X_test=None,
     dummy_dict={},
     folder=".",
-):  
+):
     if len(config.keys()) > 0:
         plots = []
         plot_dict = config.pop("plot", {})
@@ -695,7 +760,7 @@ def run_afr_experiment(
                 f"{mtype}".replace("_", " ").replace("-", " ").title(),
             ),
             file=plot_dict.get("plot", f"{mtype}_aft.pdf"),
-            xlabel=label_dict.pop("xlabel", "log$(\phi)$"),
+            xlabel=label_dict.pop("xlabel", r"log$(\phi)$"),
             ylabel=label_dict.pop("ylabel", ""),  # noqa W605
             replacement_dict=label_dict,
             dummy_dict=dummy_dict,
@@ -739,7 +804,7 @@ def render_all_afr_plots(
     folder=".",
     dummy_dict={},
 ):
-    
+
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
     X_train, X_test = split_data_for_aft(
@@ -774,7 +839,7 @@ def render_all_afr_plots(
         X_train,
         X_test,
         folder=folder,
-        t0s=t0s
+        t0s=t0s,
     )
     print("*" * 80)
     print("*" * 34 + "  RESULTS   " + "*" * 34)
@@ -793,7 +858,7 @@ def calculate_raw_failures(args, data, config):
             :,
             "attack.attack_size",
         ]
-        
+
         if "adv_accuracy" in covariates:
             covariates.remove("adv_accuracy")
     if "ben_failures" in covariates and "ben_failures" not in data.columns:
@@ -823,17 +888,20 @@ def main(args):
     csv_file = args.data_file
     FOLDER = args.plots_folder
     Path(FOLDER).mkdir(exist_ok=True, parents=True)
-    data = load_results(results_file = Path(csv_file).name, results_folder = Path(csv_file).parent)
-    
+    data = load_results(
+        results_file=Path(csv_file).name,
+        results_folder=Path(csv_file).parent,
+    )
+
     logger.info(f"Shape of data: {data.shape}")
     data.columns = data.columns.str.strip()
     with Path(args.config_file).open("r") as f:
-            config = yaml.safe_load(f)
+        config = yaml.safe_load(f)
     fillna = config.pop("fillna", {})
     for k, v in fillna.items():
         assert k in data.columns, f"{k} not in data"
         data[k] = data[k].fillna(v)
-    dummies  = config.pop("dummies", {})
+    dummies = config.pop("dummies", {})
     # Default formerly: {"atk_gen" : "Atk:", "def_gen" : "Def:", "id" : "Data:"}
     data = calculate_raw_failures(args, data, config)
     covariate_list = config.pop("covariates", [])
@@ -848,7 +916,7 @@ def main(args):
         dataset,
         test_size=0.25,
         folder=FOLDER,
-        dummy_dict=dummies
+        dummy_dict=dummies,
     )
 
 

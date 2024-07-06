@@ -1,0 +1,40 @@
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/fs/dvc.py", line 263, in _datafss
+    datafss[key] = DataFileSystem(index=self.repo.index.data["repo"])
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/funcy/objects.py", line 25, in __get__
+    res = instance.__dict__[self.fget.__name__] = self.fget(instance)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/repo/__init__.py", line 280, in index
+    return Index.from_repo(self)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/repo/index.py", line 321, in from_repo
+    for _, idx in collect_files(repo, onerror=onerror):
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/repo/index.py", line 90, in collect_files
+    index = Index.from_file(repo, file_path)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/repo/index.py", line 345, in from_file
+    stages=list(dvcfile.stages.values()),
+  File "/usr/lib/python3.10/_collections_abc.py", line 925, in __iter__
+    yield self._mapping[key]
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/stage/loader.py", line 134, in __getitem__
+    resolved_data = self.resolver.resolve_one(name)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 178, in resolve_one
+    return definition.resolve()
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 245, in resolve
+    return self.resolve_stage(**kwargs)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 286, in resolve_stage
+    resolved = {
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 287, in <dictcomp>
+    key: self._resolve(context, value, key, skip_checks)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 305, in _resolve
+    format_and_raise(exc, f"'{self.where}.{self.name}.{key}'", self.relpath)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 74, in format_and_raise
+    _reraise_err(ResolveError, message, from_exc=exc)
+  File "/home/cmeyers/deckard/.venv/lib/python3.10/site-packages/dvc/parsing/__init__.py", line 83, in _reraise_err
+    raise err
+dvc.parsing.ResolveError: failed to parse 'stages.attack.deps' in 'cifar_old/reports/attack/d025e4f73c458b14c5cb7a552e85b031/dvc.yaml': Could not find 'files.directory'
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ python -m deckard.layers.parse --config_file mnist.yaml && python -m deckard.layers.experiment train@mnist --config_file mnist.yaml^C
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ dvc repro  --forceogd -ng/__init__.py", line 83, in _reraise_err^C
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ dvc repro
+^CERROR: interrupted by the user
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ ^C
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ pkill python
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ pkill dvc
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$ pkill wait.sh
+(base) cmeyers@cmeyers:~/deckard/examples/pytorch$

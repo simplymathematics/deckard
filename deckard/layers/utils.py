@@ -179,14 +179,14 @@ def get_dvc_stage_params(
     flat_params = flatten_dict(params)
     keys = dvc.api.params_show(pipeline_file, stages=stage, repo=directory).keys()
     if "stages" in keys:
-        
+
         pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)[
             "stages"
         ]
         if sub_stage is None:
             pipe_params = pipe_params[stage]
         else:
-            pipe_params = pipe_params[tmp_stage]['do']
+            pipe_params = pipe_params[tmp_stage]["do"]
         file_list = []
         for key in ["metrics", "deps", "outs", "plots"]:
             param_string = str(pipe_params.get(key, {}))
@@ -197,7 +197,7 @@ def get_dvc_stage_params(
             if k in flat_params:
                 file_dict[k] = flat_params[k]
             elif k == "item":
-                file_dict['directory'] = sub_stage
+                file_dict["directory"] = sub_stage
             else:
                 raise ValueError(f"File {k} not found in {pipe_params.keys()}")
         file_dict = unflatten_dict(file_dict)
@@ -205,7 +205,7 @@ def get_dvc_stage_params(
         pipe_params = dvc.api.params_show(pipeline_file, stages=stage, repo=directory)
         file_dict = unflatten_dict(pipe_params)
     params["files"] = file_dict.pop("files", {})
-    params['files'].update(file_dict)
+    params["files"].update(file_dict)
     params["files"]["stage"] = tmp_stage
     # Merge remaining params
     params = OmegaConf.merge(params, file_dict)
@@ -213,7 +213,6 @@ def get_dvc_stage_params(
     if name is not None:
         params["files"]["name"] = name
     return params
-
 
 
 def prepare_files(params_file, stage, params, id_):
@@ -256,7 +255,7 @@ def prepare_files(params_file, stage, params, id_):
 
 def get_stages(pipeline_file="dvc.yaml", stages=None, repo=None):
     try:
-       with open(pipeline_file, "r") as f:
+        with open(pipeline_file, "r") as f:
             def_stages = yaml.safe_load(f)["stages"].keys()
     except NotGitRepository:
         raise ValueError(

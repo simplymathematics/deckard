@@ -13,12 +13,12 @@ __all__ = ["merge_csv", "main", "parser"]
 
 
 def merge_csv(
-    output_file:str,
-    smaller_file:list=None,
-    fillna:dict={},
-    metadata:list=[],
-    subset_metadata:list=[],
-    how:str="outer",
+    output_file: str,
+    smaller_file: list = None,
+    fillna: dict = {},
+    metadata: list = [],
+    subset_metadata: list = [],
+    how: str = "outer",
     **kwargs,
 ):
     """
@@ -45,19 +45,19 @@ def merge_csv(
     else:
         big = pd.DataFrame()
     # Cast all columns to strings:
-    big = big .replace(np_nan, '').astype(str)
+    big = big.replace(np_nan, "").astype(str)
     # Strip whitepsace around entries:
     big = big.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
     # strip whitespace around column names
     big.columns = big.columns.astype(str).str.strip()
     if "id" not in big:
-        big['id'] = None
+        big["id"] = None
     if smaller_file is not None:
         small = pd.read_csv(Path(smaller_file), index_col=0, dtype=str)
         if "id" not in small:
-            small['id'] = Path(smaller_file).stem
+            small["id"] = Path(smaller_file).stem
     # Cast all columns to strings:
-    small = small.replace(np_nan, '').astype(str)
+    small = small.replace(np_nan, "").astype(str)
     # Strip whitepsace around entries:
     small = small.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
     # strip whitespace around column names
@@ -66,7 +66,9 @@ def merge_csv(
     logger.info(f"Shape of small: {small.shape}")
     try:
         merged = pd.merge(big, small, how=how, **kwargs)
-    except pd.errors.MergeError as e: # will raise if no common columns to merge on, so just concat
+    except (
+        pd.errors.MergeError
+    ) as e:  # will raise if no common columns to merge on, so just concat
         if "No common columns to perform merge on" in str(e):
             merged = pd.concat([big, small], axis=0)
         else:
@@ -92,19 +94,20 @@ def merge_csv(
         results_file=results_file,
         results_folder=results_folder,
     )
-    
+
     assert Path(saved_path).exists(), f"Saved path {saved_path} does not exist."
     return None
+
 
 def parse_cleaning_config(config_file, metadata_file=None, subset_metadata_file=None):
     dict_ = {}
     if config_file is not None:
         with open(config_file, "r") as stream:
             dict_ = yaml.safe_load(stream)
-        fillna = dict_.get("fillna",  dict_)
+        fillna = dict_.get("fillna", dict_)
     else:
         fillna = {}
-    dict_['fillna'] = fillna
+    dict_["fillna"] = fillna
     if metadata_file is not None:
         with open(metadata_file, "r") as stream:
             metadata = yaml.safe_load(stream)
@@ -113,7 +116,7 @@ def parse_cleaning_config(config_file, metadata_file=None, subset_metadata_file=
         metadata = dict_["metadata"]
     else:
         metadata = {}
-    dict_['metadata'] = metadata
+    dict_["metadata"] = metadata
     if subset_metadata_file is not None:
         with open(subset_metadata_file, "r") as stream:
             subset_metadata = yaml.safe_load(stream)
@@ -122,9 +125,9 @@ def parse_cleaning_config(config_file, metadata_file=None, subset_metadata_file=
         subset_metadata = dict_["subset_metadata"]
     else:
         subset_metadata = {}
-    dict_['subset_metadata'] = subset_metadata
+    dict_["subset_metadata"] = subset_metadata
     return dict_
-        
+
 
 def main(args):
     config = parse_cleaning_config(args.config, args.metadata, args.subset_metadata)
@@ -151,6 +154,7 @@ def main(args):
             how=args.how,
         )
     return None
+
 
 def add_metadata(df, metadata_dict={}):
     """
@@ -193,7 +197,8 @@ def add_subset_metadata(df, metadata_list=[]):
         subset_df[key] = value
         df.update(subset_df)
     return df
-    
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--output_file",
@@ -225,7 +230,7 @@ parser.add_argument(
     type=str,
     help="Name of file containing a 'metadata' dictionary.",
     required=False,
-    # set default to --config 
+    # set default to --config
     default=None,
 )
 parser.add_argument(

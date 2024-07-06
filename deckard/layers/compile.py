@@ -33,7 +33,11 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_folder(folder, files=["params.yaml", "score_dict.json"], other_files=False) -> pd.DataFrame:
+def parse_folder(
+    folder,
+    files=["params.yaml", "score_dict.json"],
+    other_files=False,
+) -> pd.DataFrame:
     """
     Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing files
@@ -124,7 +128,10 @@ def save_results(results, results_file, results_folder) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
-    assert isinstance(results, pd.DataFrame), f"Results must be a pandas DataFrame, not {type(results)}."
+    assert isinstance(
+        results,
+        pd.DataFrame,
+    ), f"Results must be a pandas DataFrame, not {type(results)}."
     results_file = Path(results_folder, results_file)
     logger.info(f"Saving data to {results_file}")
     Path(results_file).parent.mkdir(exist_ok=True, parents=True)
@@ -140,9 +147,9 @@ def save_results(results, results_file, results_folder) -> str:
     elif suffix == ".tex":
         pretty_model = results_file.stem.replace("_", " ").title()
         results.to_latex(
-            results_file, 
-            index=True, 
-            escape=True, 
+            results_file,
+            index=True,
+            escape=True,
             label=f"tab:{results_file.stem}",
             caption=f"{pretty_model} Results",
             header=True,
@@ -173,13 +180,14 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     elif suffix == ".json":
         results = pd.read_json(results_file)
     elif suffix == ".tex":
-        pd.read_csv(results_file,
-                    sep='&',
-                    header=None,
-                    skiprows=4,
-                    skipfooter=3,
-                    engine='python'
-                    )
+        pd.read_csv(
+            results_file,
+            sep="&",
+            header=None,
+            skiprows=4,
+            skipfooter=3,
+            engine="python",
+        )
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(

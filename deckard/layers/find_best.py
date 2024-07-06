@@ -1,5 +1,6 @@
 import optuna
 import logging
+import pandas as pd
 from pathlib import Path
 from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
@@ -43,12 +44,17 @@ def find_optuna_best(
     assert isinstance(directions, list), f"Directions is not a list: {type(directions)}"
     df = study.trials_dataframe(attrs=("number", "value", "params"))
     # Find the average of each value over the columns in average_over
-    not_these = ['number', 'value']
-    val_cols = [col for col in df.columns if col.startswith("values_") and col.split("values_")[-1] not in not_these]
+    not_these = ["number", "value"]
+    val_cols = [
+        col
+        for col in df.columns
+        if col.startswith("values_") and col.split("values_")[-1] not in not_these
+    ]
     not_these.extend(val_cols)
-    not_these.extend(average_over)
     print(f"Not these: {not_these}")
-    groupby_cols = [col for col in df.columns if col.split("params_")[-1] not in not_these]
+    groupby_cols = [
+        col for col in df.columns if col.split("params_")[-1] not in not_these
+    ]
     print(f"Groupby cols: {groupby_cols}")
     dfs = df.groupby(groupby_cols)
     new_df = pd.DataFrame(columns=groupby_cols + ["mean", "std", "ntrials", "nuniques"])
@@ -72,18 +78,17 @@ def find_optuna_best(
         # add first row of df to new_df
         new_df = pd.concat([new_df, df.head(1)])
     new_df.drop(columns=["value"], inplace=True)
-    for col in average_over:
-        new_df.drop(columns=[ f"params_{col}"], inplace=True)
     new_df["mean"] = means
     new_df["std"] = stds
     new_df["ntrials"] = ntrials
     new_df["nuniques"] = nuniques
-    param_cols = [col for col in new_df.columns if col.startswith("params_")]
     for direction in directions:
-        assert direction in ["minimize", "maximize"], f"Direction {direction} not recognized."
+        assert direction in [
+            "minimize",
+            "maximize",
+        ], f"Direction {direction} not recognized."
     directions = [False if x == "maximize" else True for x in directions]
     assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(df)}"
-    sorted_df = new_df.sort_values(by = 'mean', ascending = directions)
     if study_csv is not None:
         Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(study_csv)

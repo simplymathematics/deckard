@@ -134,7 +134,7 @@ class Experiment:
         else:
             score_dict = {}
         results = {}
-        results['score_dict'] = score_dict
+        results["score_dict"] = score_dict
         files.update(**results)
         #########################################################################
         # Load or generate data
@@ -194,7 +194,7 @@ class Experiment:
             if "adv_success" in adv_results:
                 adv_success = adv_results["adv_success"]
                 score_dict.update({"adv_success": adv_success})
-            files.update(**adv_results) 
+            files.update(**adv_results)
         ##########################################################################
         # Score results
         #########################################################################
@@ -216,7 +216,7 @@ class Experiment:
                 logger.debug(f" len(preds) : {len(preds)}")
                 new_score_dict = self.scorers(ground_truth, preds)
                 score_dict.update(**new_score_dict)
-                results['score_dict'] = score_dict
+                results["score_dict"] = score_dict
             if "adv_preds" in locals():
                 ground_truth = data[3][: len(adv_preds)]
                 adv_preds = adv_preds[: len(ground_truth)]

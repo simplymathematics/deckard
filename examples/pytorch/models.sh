@@ -53,4 +53,3 @@ python -m deckard.layers.optimise \
 rm -rf mnist/models
 rm -rf cifar/models
 rm -rf cifar100/models
-

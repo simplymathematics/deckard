@@ -76,7 +76,10 @@ class ModelTrainer:
         if library in sklearn_dict.keys():
             pass
         elif library in torch_dict.keys():
-            trainer["nb_epochs"] = trainer.pop("nb_epochs", trainer.pop("epochs", trainer.pop("nb_epoch", 10)))
+            trainer["nb_epochs"] = trainer.pop(
+                "nb_epochs",
+                trainer.pop("epochs", trainer.pop("nb_epoch", 10)),
+            )
         elif library in keras_dict.keys():
             pass
         elif library in tensorflow_dict.keys():
@@ -188,12 +191,16 @@ class ModelTrainer:
                 end_timestamp = time()
             elif "out of memory" in set(e).lower() and library in torch_dict.keys():
                 import torch
+
                 torch.cuda.empty_cache()
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 if device == "cuda":
                     # Pick the GPU with the most free memory
-                    free_memory = [torch.cuda.memory_reserved(i) - torch.cuda.memory_allocated(i) for i in range(torch.cuda.device_count())]
-                    device = f"cuda:{free_memory.index(max(free_memory))}" 
+                    free_memory = [
+                        torch.cuda.memory_reserved(i) - torch.cuda.memory_allocated(i)
+                        for i in range(torch.cuda.device_count())
+                    ]
+                    device = f"cuda:{free_memory.index(max(free_memory))}"
                 data[0] = torch.from_numpy(data[0])
                 data[1] = torch.from_numpy(data[1])
                 data[0] = torch.Tensor.float(data[0])
@@ -210,7 +217,7 @@ class ModelTrainer:
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
-                
+
             else:
                 raise e
         time_dict = {
