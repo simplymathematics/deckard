@@ -109,15 +109,23 @@ def survival_probability_calibration(
                 crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
             else:
                 crc.fit(prediction_df, T, E, regressors=regressors)
-        except ConvergenceError:
-            crc._scipy_fit_method = "SLSQP"
+        except ConvergenceError as e:
+            if "delta contains nan value(s)" in str(e):
+                fit_options = {
+                    "step_size" : 0.1,
+                    "max_steps" : 1000,
+                    "precision" : 1e-3,
+                }
+            else:
+                crc._scipy_fit_method = "SLSQP"
+                fit_options = {}
             try:
                 if CensoringType.is_right_censoring(model):
-                    crc.fit_right_censoring(prediction_df, T, E, regressors=regressors)
+                    crc.fit_right_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
                 elif CensoringType.is_left_censoring(model):
-                    crc.fit_left_censoring(prediction_df, T, E, regressors=regressors)
+                    crc.fit_left_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
                 elif CensoringType.is_interval_censoring(model):
-                    crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
+                    crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors, fit_options=fit_options)
                 else:
                     crc.fit(prediction_df, T, E, regressors=regressors)
             except ConvergenceError as e:
@@ -207,24 +215,60 @@ def fit_aft(
     end = df[duration_col].max()
     start = start - 0.01 * (end - start)
     timeline = np.linspace(start, end, 1000)
+    # if the event column isnt a binary column, we need to convert it to binary. 
+    # Assume that floats represent the proportion of failure events
+    # raise an error on any other type
+    kwarg_dict = {}
+    # if df[event_col].dtype == "boolean":
+    #     pass
+    # elif df[event_col].dtype == "float" : 
+    #     # Assume this column represents accuracy
+    #     print(f"Length of data: {len(df)}")
+    #     pos_weights = df[event_col].copy() * 100
+    #     neg_weights = (1 - df[event_col].copy()) * 100
+    #     # create a new dataframe for positive/negative
+    #     pos_df = df.copy()
+    #     neg_df = df.copy()
+    #     # Set the event column to 1 for positive, 0 for negative
+    #     pos_df[event_col] = 1
+    #     neg_df[event_col] = 0
+    #     # add the weights
+    #     pos_df['weights_col'] = pos_weights
+    #     neg_df['weights_col'] = neg_weights
+    #     # concatenate the dataframes
+    #     df = pd.concat([pos_df, neg_df], axis=0)
+    #     # drop rows with non-positive weights
+    #     df = df[df['weights_col'] > 0]
+    #     # Recast the event column as boolean
+    #     df[event_col] = df[event_col].astype(bool)
+    #     # Recast the weights column as int
+    #     df['weights_col'] = df['weights_col'].astype(int)
+    #     kwarg_dict['weights_col'] = 'weights_col'
+    # else:
+    #     raise ValueError(f"Event column {event_col} is not boolean or float")
+    kwarg_dict['duration_col'] = duration_col
+    kwarg_dict['event_col'] = event_col
+    if mtype != "aalen":
+        kwarg_dict['timeline'] = timeline
     try:
-        aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
-    except TypeError as e:
-        if "AalenAdditiveFitter" in str(e):
-            logger.debug("AalenAdditiveFitter does not support timeline")
-            aft.fit(df, event_col=event_col, duration_col=duration_col)
-        else:
-            raise e
+        aft.fit(df, **kwarg_dict)
     except AttributeError as e:
-        logger.error(f"Could not fit {mtype} model")
-        raise e
+        raise ConvergenceError(f"Could not fit {mtype} model")
     except ConvergenceError as e:
-        logger.info("Trying to fit with SLSQP")
-        aft._scipy_fit_method = "SLSQP"
+        if "delta contains nan value(s)" in str(e):
+            fit_options = {
+                "step_size" : 0.1,
+                "max_steps" : 1000,
+                "precision" : 1e-3,
+            }
+            kwarg_dict['fit_options'] = fit_options
+            logger.info("Reducing the step size to 0.1 and increasing the max steps to 1000")
+            input("Inside the fit function")
+        else:
+            logger.info("Trying to fit with SLSQP")
+            aft._scipy_fit_method = "SLSQP"
         try:
-            aft.fit(df, event_col=event_col, duration_col=duration_col, timeline=timeline)
-        except AttributeError as e:
-            raise ConvergenceError(f"Could not fit {mtype} model with SLSQP")
+            aft.fit(df, **kwarg_dict)
         except ConvergenceError as e:
             logger.error(f"Could not fit {mtype} model")
             raise ConvergenceError(f"Could not fit {mtype} model")
@@ -286,7 +330,7 @@ def plot_aft(
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     # symlog-scale the x-axis
-    ax.set_xscale("symlog")
+    # ax.set_xscale("linear")
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     plt.gcf().clear()
@@ -539,7 +583,7 @@ def make_afr_table(
         folder / "aft_comparison.tex",
         float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
         label=f"tab:{dataset.lower()}" if dataset is not None else "tab:afr_models",  # Label for cross-referencing
-        caption=f"Comparison of AFR Models on the {pretty_dataset} dataset." if pretty_dataset is not None else None,
+        caption=f"Comparison of AFT Models on the {pretty_dataset} dataset." if pretty_dataset is not None else None,
         index=True,
         header=True,
     )
@@ -755,7 +799,7 @@ def calculate_raw_failures(args, data, config):
     if "ben_failures" in covariates and "ben_failures" not in data.columns:
         data.loc[:, "ben_failures"] = (1 - data.loc[:, "accuracy"]) * data.loc[
             :,
-            "attack.attack_size",
+            "data.sample.test_size",
         ]
         if "accuracy" in covariates:
             covariates.remove("accuracy")
