@@ -612,7 +612,7 @@ def make_afr_table(
             _, ici, e50 = survival_probability_calibration(model, X_test, t0=t0)
         except ConvergenceError as e:
             logger.error(
-                f"Could not calculate ICI and E50 for model {model} due to {e}"
+                f"Could not calculate ICI and E50 for model {model} due to {e}",
             )
             ici = np.nan
             e50 = np.nan
