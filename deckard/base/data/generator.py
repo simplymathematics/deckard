@@ -11,7 +11,11 @@ from sklearn.datasets import (
     make_moons,
     make_circles,
 )
-from torchvision.io import read_image, read_file
+
+try:
+    from torchvision.io import read_image, read_file
+except ImportError:
+    pass
 from art.utils import load_mnist, load_cifar10, load_diabetes, to_categorical
 from ..utils import my_hash
 
@@ -225,8 +229,6 @@ class DataGenerator:
             return TorchDataGenerator(self.name, **self.kwargs)()
         elif self.name in KERAS_DATASETS:
             return KerasDataGenerator(self.name, **self.kwargs)()
-        elif isinstance(self.name, str) and Path(self.name).exists():
-            return SklearnDataGenerator(self.name, **self.kwargs)()
         else:  # pragma: no cover
             raise ValueError(
                 f"Invalid name {self.name}. Please choose from {ALL_DATASETS}",

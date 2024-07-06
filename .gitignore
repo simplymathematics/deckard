@@ -140,5 +140,10 @@ env/
 # screenlog
 screenlog.*
 
-# tmp.py
-tmp.py
+# env310
+env310/*
+# dvc read-write protect files in  the examples folder
+examples/*/.dvc/tmp/lock
+examples/*/.dvc/tmp/lock
+examples/*/.dvc/tmp/rwlock
+examples/*/.dvc/tmp/rwlock.lock

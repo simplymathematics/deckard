@@ -1,0 +1,23 @@
+
+defaults:
+    - art : default
+data:  ${data}
+init:
+    _target_: deckard.base.model.ModelInitializer
+    num_channels : 1
+    num_classes : 10
+    name : torch_example.ResNet18
+_target_: deckard.base.model.Model
+trainer:
+    nb_epochs: 1
+    batch_size: 4096
+    verbose: True
+library : pytorch
+art:
+    criterion:
+        name : torch.nn.CrossEntropyLoss
+    optimizer:
+        name : torch.optim.SGD
+        lr : 0.01
+        momentum : 0.9
+    clip_values : [0, 255]

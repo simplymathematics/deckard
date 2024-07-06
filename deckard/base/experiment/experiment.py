@@ -112,7 +112,7 @@ class Experiment:
         name = str(self.name).encode("utf-8")
         return int.from_bytes(name, "little")
 
-    def __call__(self):
+    def __call__(self, **kwargs):
         """Runs the experiment. If the experiment has already been run, it will load the results from disk. If scorer is not None, it will return the score for the specified scorer. If scorer is None, it will return the score for the first scorer in the ScorerDict.
         :param scorer: The scorer to return the score for. If None, the score for the first scorer in the ScorerDict will be returned.
         :type scorer: str
@@ -134,7 +134,8 @@ class Experiment:
         else:
             score_dict = {}
         results = {}
-        results["score_dict_file"] = score_dict
+        results["score_dict"] = score_dict
+        files.update(**results)
         #########################################################################
         # Load or generate data
         #########################################################################
@@ -143,10 +144,10 @@ class Experiment:
         # Load or train model
         #########################################################################
         if self.model is not None:
-            model_results = self.model(data, **files)
+            model_results = self.model(**files)
             score_dict.update(**model_results.pop("time_dict", {}))
             score_dict.update(**model_results.pop("score_dict", {}))
-            model = model_results["model"]
+            files.update(**model_results)
             # Prefer probabilities, then loss_files, then predictions
             if (
                 "probabilities" in model_results
@@ -174,8 +175,6 @@ class Experiment:
         ##########################################################################
         if self.attack is not None:
             adv_results = self.attack(
-                data,
-                model,
                 **files,
             )
             if "adv_predictions" in adv_results:
@@ -195,6 +194,7 @@ class Experiment:
             if "adv_success" in adv_results:
                 adv_success = adv_results["adv_success"]
                 score_dict.update({"adv_success": adv_success})
+            files.update(**adv_results)
         ##########################################################################
         # Score results
         #########################################################################
@@ -216,7 +216,7 @@ class Experiment:
                 logger.debug(f" len(preds) : {len(preds)}")
                 new_score_dict = self.scorers(ground_truth, preds)
                 score_dict.update(**new_score_dict)
-                results["score_dict_file"] = score_dict
+                results["score_dict"] = score_dict
             if "adv_preds" in locals():
                 ground_truth = data[3][: len(adv_preds)]
                 adv_preds = adv_preds[: len(ground_truth)]
@@ -225,7 +225,7 @@ class Experiment:
                     f"adv_{key}": value for key, value in adv_score_dict.items()
                 }
                 score_dict.update(**adv_score_dict)
-                results["score_dict_file"] = score_dict
+                results["score_dict"] = score_dict
             # # Save results
             if "score_dict_file" in files and files["score_dict_file"] is not None:
                 if Path(files["score_dict_file"]).exists():

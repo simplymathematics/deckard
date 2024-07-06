@@ -1,0 +1,9 @@
+_target_: deckard.base.data.Data
+generate:
+    name: torch_cifar100
+    path: original_data/
+sample:
+    random_state : 0
+    stratify: True
+    train_size : 48000
+    test_size : 12000

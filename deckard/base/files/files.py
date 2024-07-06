@@ -83,17 +83,17 @@ class FileConfig:
         files = dict(self.get_filenames())
         return files
 
-    def get_filenames(self):
+    def get_filenames(self, **kwargs):
         files = deepcopy(self.files)
+        files.update(**kwargs)
         files = self._set_filenames(**files)
         return files
 
     def _set_filenames(self, **kwargs):
         name = self.name
         stage = self.stage
-        if hasattr(self, "files"):
-            kwargs.update(self.files)
-        files = dict(kwargs)
+        files = self.files
+        files.update(**kwargs)
         new_files = {}
         directory = self.directory
         reports = self.reports

@@ -127,29 +127,19 @@ stages:
       - ../conf/combined_afr.yaml
     plots:
       - combined/weibull_aft.pdf # You can also define them manually
-      - combined/weibull_epochs_partial_effect.pdf
-      - combined/weibull_batch_size_partial_effect.pdf
-      - combined/weibull_attack_eps_partial_effect.pdf
       - combined/weibull_qq.pdf
-      - combined/weibull_summary.pdf
+      - combined/weibull_aft_dummies.pdf
       # - combined/cox_aft.pdf
       # - combined/cox_epochs_partial_effect.pdf
       # - combined/cox_batch_size_partial_effect.pdf
       # - combined/cox_attack_eps_partial_effect.pdf
       # - combined/cox_qq.pdf
-      # - combined/cox_summary.pdf
       - combined/log_logistic_aft.pdf
-      - combined/log_logistic_epochs_partial_effect.pdf
-      - combined/log_logistic_batch_size_partial_effect.pdf
-      - combined/log_logistic_attack_eps_partial_effect.pdf
       - combined/log_logistic_qq.pdf
-      - combined/log_logistic_summary.pdf
+      - combined/log_logistic_aft_dummies.pdf
       - combined/log_normal_aft.pdf
-      - combined/log_normal_epochs_partial_effect.pdf
-      - combined/log_normal_batch_size_partial_effect.pdf
-      - combined/log_normal_attack_eps_partial_effect.pdf
       - combined/log_normal_qq.pdf
-      - combined/log_normal_summary.pdf
+      - combined/log_normal_aft_dummies.pdf
     metrics:
       - combined/aft_comparison.csv
       - combined/log_normal_summary.csv

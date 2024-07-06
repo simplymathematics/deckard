@@ -1,0 +1,201 @@
+covariates:
+  - adv_fit_time
+  - accuracy
+  - train_time
+  - atk_value
+  - def_value
+  - data.sample.random_state
+  - Epochs
+  - model_layers
+  - id
+  - atk_gen
+  - def_gen
+  - adv_failures
+  - adv_accuracy
+  - predict_time
+fillna:
+  Epochs: 20
+  data.sample.train_size : 48000
+  data.sample.test_size: 12000
+cox:
+  plot:
+    file : cox_aft.pdf
+    title : Cox Model
+    qq_title : Cox QQ Plot
+  t0: .3
+  model:
+    penalizer: .1
+  labels:
+    "data.sample.random_state": "Random State"
+    "atk_value": "Attack Strength"
+    "train_time": "$T_{train}$"
+    "predict_time": "$T_{predict}$"
+    "adv_accuracy": "Adv. Accuracy"
+    "def_value": "Defence Strength"
+    "accuracy": "Ben. Accuracy"
+    "model_layers": "Layers"
+    "adv_fit_time": "$T_{attack}$"
+    "adv_failure_rate": "$f_{adv.}(t;\\theta)$"
+    "failure_rate": "$f_{ben.}(t;\\theta)$"
+    "Epochs": "No. of Epochs"
+    "model.trainer.batch_size": "Batch Size"
+    "def_gen": "Defence"
+# aalen:
+#   plot:
+#     file : aalen_aft.pdf
+#     title : Aalen Model
+#     qq_title : Aalen QQ Plot
+#   t0: 1
+#   model:
+#     alpha: 1
+#     coef_penalizer: .1
+#     smoothing_penalizer: .1
+#   labels:
+#     "data.sample.random_state": "Random State"
+#     "atk_value": "Attack Strength"
+#     "train_time": "$T_{train}$"
+#     "predict_time": "$T_{predict}$"
+#     "adv_accuracy": "Adv. Accuracy"
+#     "accuracy": "Ben. Accuracy"
+#     "adv_fit_time": "$T_{attack}$"
+#     "adv_failure_rate": "$f_{adv.}(t;\\theta)$"
+#     "failure_rate": "$f_{ben.}(t;\\theta)$"
+#     "Epochs": "No. of Epochs"
+#     "model.trainer.batch_size": "Batch Size"
+#     "def_gen": "Defence"
+gamma:
+  plot:
+    file : gamma_aft.pdf
+    title : Generalized Gamma Model
+    qq_title : Gamma QQ Plot
+    
+  t0: .3
+  model:
+    penalizer : .4
+  labels:
+    "Intercept: alpha_": "$\\alpha$"
+    "Intercept: beta_": "$\\beta$"
+    "data.sample.random_state: beta_": "Random State"
+    "def_value: beta_": "Defence Strength"
+    "atk_value: beta_": "Attack Strength"
+    "train_time: beta_": "$T_{train}$"
+    "model_layers: beta_": "Layers"
+    "predict_time: beta_": "$T_{predict}$"
+    "adv_accuracy: beta_": "Adv. Accuracy"
+    "accuracy: beta_": "Ben. Accuracy"
+    "adv_fit_time: beta_": "$T_{attack}$"
+    "adv_failure_rate: beta_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: beta_": "$h_{ben.}(t;\\theta)$"
+    "Epochs: beta_": "No. of Epochs"
+    "model.trainer.batch_size: beta_": "Batch Size"
+    "def_gen": "Defence"
+    "attack.init.eps: beta_": "$\\varepsilon$"
+weibull:
+  plot:
+    file : weibull_aft.pdf
+    title : Weibull AFT Model
+    qq_title : Weibull QQ Plot
+  t0: .3
+  model:
+    penalizer: .1
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "model_layers: lambda_": "Layers"
+    "train_time: lambda_": "$T_{train}$"
+    "predict_time: lambda_": "$T_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$T_{attack}$"
+    "adv_failure_rate: lambda_": "$f_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$f_{ben.}(t;\\theta)$"
+    "Epochs: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+    "def_value: lambda_" : "Defence Strength"
+    ": lambda_" : ""
+exponential:
+  plot:
+    file : exponential_aft.pdf
+    title : Exponential Model
+    qq_title : Exponential QQ Plot
+  t0: .1
+  model:
+    breakpoints:
+      - .1
+  labels:
+    "Intercept: rho_": "$\\rho$"
+    "Intercept: lambda_": "$\\lambda$" 
+    "data.sample.random_state: lambda_": "Random State"
+    "atk_value: lambda_": "Attack Strength"
+    "def_value: lambda_": "Defence Strength"
+    "model_layers: lambda_": "Layers"
+    "train_time: lambda_": "$T_{train}$"
+    "predict_time: lambda_": "$T_{predict}$"
+    "adv_accuracy: lambda_": "Adv. Accuracy"
+    "accuracy: lambda_": "Ben. Accuracy"
+    "adv_fit_time: lambda_": "$T_{attack}$"
+    "adv_failure_rate: lambda_": "$f_{adv.}(t;\\theta)$"
+    "failure_rate: lambda_": "$f_{ben.}(t;\\theta)$"
+    "Epochs: lambda_": "No. of Epochs"
+    "model.trainer.batch_size: lambda_": "Batch Size"
+    "def_gen": "Defence"
+    ": lambda_" : ""
+log_logistic:
+  plot:
+    file : log_logistic_aft.pdf
+    title : Log logistic AFT Model
+    qq_title : Log Logistic QQ Plot
+  t0: 1
+  model:
+    penalizer: .2
+  labels:
+    "Intercept: beta_": "$\\beta$"
+    "Intercept: alpha_": "$\\alpha$"
+    "data.sample.random_state: alpha_": "Random State"
+    "atk_value: alpha_": "Attack Strength"
+    "def_value: alpha_": "Defence Strength"
+    "model_layers: alpha_": "Layers"
+    "train_time: alpha_": "$T_{train}$"
+    "predict_time: alpha_": "$T_{predict}$"
+    "adv_accuracy: alpha_": "Adv. Accuracy"
+    "accuracy: alpha_": "Ben. Accuracy"
+    "adv_fit_time: alpha_": "$T_{attack}$"
+    "adv_failure_rate: alpha_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: alpha_": "$h_{ben.}(t;\\theta)$"
+    "Epochs: alpha_": "No. of Epochs"
+    "model.trainer.batch_size: alpha_": "Batch Size"
+    "def_gen": "Defence"
+    "attack.init.eps: alpha_": "$\\varepsilon$"
+log_normal:
+  plot:
+    file : log_normal_aft.pdf
+    title : Log Normal AFT Model
+    qq_title : Log Normal QQ Plot
+  t0: 2
+  model:
+    penalizer: .5
+  labels:
+    "Intercept: sigma_": "$\\sigma$" 
+    "Intercept: mu_": "$\\mu$"
+    "atk_value: mu_": "Attack Strength" 
+    "def_value: mu_": "Defence Strength"
+    "model_layers: mu_": "Layers"
+    "train_time: mu_": "$T_{train}$"
+    "predict_time: mu_": "$T_{predict}$"
+    "adv_accuracy: mu_": "Adv. Accuracy"
+    "accuracy: mu_": "Ben. Accuracy"
+    "adv_fit_time: mu_": "$T_{attack}$"
+    "adv_failure_rate: mu_": "$h_{adv.}(t;\\theta)$"
+    "failure_rate: mu_": "$h_{ben.}(t;\\theta)$"
+    "Epochs: mu_": "No. of Epochs"
+    "model.trainer.batch_size: mu_": "Batch Size"
+    "def_gen": "Defence"
+    "attack.init.eps: mu_": "$\\varepsilon$"
+    "data.sample.random_state: mu_": "Random State"
+dummies:
+  "atk_gen": "Atk:"
+  "def_gen": "Def:"
+  "id" : "Data:"

@@ -34,7 +34,6 @@ class ArtPipelineStage:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name=None, **kwargs):
-        logger.info(f"Creating pipeline stage: {name} kwargs: {kwargs}")
         self.name = name
         kwargs.update(**kwargs.pop("kwargs", {}))
         self.kwargs = kwargs
@@ -69,7 +68,6 @@ class ArtInitializer:
 
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
             if device_type == "gpu":
-                logger.info("Using GPU")
                 number_of_devices = torch.cuda.device_count()
                 num = randint(0, number_of_devices - 1)
                 device = torch.device(f"cuda:{num}")
@@ -205,7 +203,7 @@ class ArtPipeline:
             name = params.pop("name", None)
             kwargs = params.pop("kwargs", {})
         else:
-            name = None
+            name = self.library
             kwargs = {}
         pre_def = []
         post_def = []

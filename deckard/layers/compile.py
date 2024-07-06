@@ -33,7 +33,11 @@ def flatten_results(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFrame:
+def parse_folder(
+    folder,
+    files=["params.yaml", "score_dict.json"],
+    other_files=False,
+) -> pd.DataFrame:
     """
     Parse a folder containing files and return a dataframe with the results, excluding the files in the exclude list.
     :param folder: Path to folder containing files
@@ -56,11 +60,10 @@ def parse_folder(folder, files=["params.yaml", "score_dict.json"]) -> pd.DataFra
     results = {}
     for file in tqdm(path_gen, desc="Parsing Specified files"):
         results = read_file(file, results)
-    for folder in tqdm(folder_gen, desc="Adding other files to results"):
-        results = add_file(folder, path_gen, results)
+    if other_files is True:
+        for folder in tqdm(folder_gen, desc="Adding other files to results"):
+            results = add_file(folder, path_gen, results)
     df = pd.DataFrame(results).T
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     df.columns = df.columns.str.strip()
     return df
@@ -125,6 +128,10 @@ def save_results(results, results_file, results_folder) -> str:
     """
     Compile results from a folder of reports and save to a csv file; return the path to the csv file. It will optionally delete columns from the results.
     """
+    assert isinstance(
+        results,
+        pd.DataFrame,
+    ), f"Results must be a pandas DataFrame, not {type(results)}."
     results_file = Path(results_folder, results_file)
     logger.info(f"Saving data to {results_file}")
     Path(results_file).parent.mkdir(exist_ok=True, parents=True)
@@ -137,6 +144,17 @@ def save_results(results, results_file, results_folder) -> str:
         results.to_html(results_file, index=True)
     elif suffix == ".json":
         results.to_json(results_file, index=True, orient="records")
+    elif suffix == ".tex":
+        pretty_model = results_file.stem.replace("_", " ").title()
+        results.to_latex(
+            results_file,
+            index=True,
+            escape=True,
+            label=f"tab:{results_file.stem}",
+            caption=f"{pretty_model} Results",
+            header=True,
+            position="htbp",
+        )
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(
@@ -161,6 +179,15 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
         results = pd.read_html(results_file)
     elif suffix == ".json":
         results = pd.read_json(results_file)
+    elif suffix == ".tex":
+        pd.read_csv(
+            results_file,
+            sep="&",
+            header=None,
+            skiprows=4,
+            skipfooter=3,
+            engine="python",
+        )
     else:
         raise ValueError(f"File type {suffix} not supported.")
     assert Path(

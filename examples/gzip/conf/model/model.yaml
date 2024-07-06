@@ -1,0 +1,13 @@
+_target_: deckard.base.model.Model
+art:
+  _target_: deckard.base.model.art_pipeline.ArtPipeline
+  initialize:
+    nb_classes: 3
+  library: sklearn
+data: ${data}
+init:
+  _target_: deckard.base.model.ModelInitializer
+  k: 3
+  n: 50
+  name: gzip_classifier.GzipClassifier
+library: sklearn

@@ -76,7 +76,10 @@ class ModelTrainer:
         if library in sklearn_dict.keys():
             pass
         elif library in torch_dict.keys():
-            pass
+            trainer["nb_epochs"] = trainer.pop(
+                "nb_epochs",
+                trainer.pop("epochs", trainer.pop("nb_epoch", 10)),
+            )
         elif library in keras_dict.keys():
             pass
         elif library in tensorflow_dict.keys():
@@ -142,7 +145,7 @@ class ModelTrainer:
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
-            except Exception as e:
+            except AttributeError as e:
                 raise e
         except RuntimeError as e:  # pragma: no cover
             if "eager mode" in str(e) and library in tensorflow_dict.keys():
@@ -176,6 +179,45 @@ class ModelTrainer:
                 model.fit(data[0], data[2], **trainer)
                 end = process_time_ns()
                 end_timestamp = time()
+            elif "disable eager execution" in str(e):
+                logger.warning("Disabling eager execution for Tensorflow.")
+                import tensorflow as tf
+
+                tf.compat.v1.disable_eager_execution()
+                start = process_time_ns()
+                start_timestamp = time()
+                model.fit(data[0], data[2], **trainer)
+                end = process_time_ns()
+                end_timestamp = time()
+            elif "out of memory" in set(e).lower() and library in torch_dict.keys():
+                import torch
+
+                torch.cuda.empty_cache()
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                if device == "cuda":
+                    # Pick the GPU with the most free memory
+                    free_memory = [
+                        torch.cuda.memory_reserved(i) - torch.cuda.memory_allocated(i)
+                        for i in range(torch.cuda.device_count())
+                    ]
+                    device = f"cuda:{free_memory.index(max(free_memory))}"
+                data[0] = torch.from_numpy(data[0])
+                data[1] = torch.from_numpy(data[1])
+                data[0] = torch.Tensor.float(data[0])
+                data[1] = torch.Tensor.float(data[1])
+                data[0].to(device)
+                data[2] = torch.from_numpy(data[2])
+                data[3] = torch.from_numpy(data[3])
+                data[2] = torch.Tensor.float(data[2])
+                data[3] = torch.Tensor.float(data[3])
+                data[2].to(device)
+                model.model.to(device) if hasattr(model, "model") else model.to(device)
+                start = process_time_ns()
+                start_timestamp = time()
+                model.fit(data[0], data[2], **trainer)
+                end = process_time_ns()
+                end_timestamp = time()
+
             else:
                 raise e
         time_dict = {

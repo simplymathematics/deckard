@@ -1,0 +1,10 @@
+_target_: deckard.base.data.Data
+generate:
+    _target_: deckard.base.data.generator.DataGenerator
+    name: torch_mnist
+sample:
+    _target_: deckard.base.data.sampler.SklearnDataSampler
+    random_state : 0
+    stratify: True
+    train_size : 48000
+    test_size : 12000

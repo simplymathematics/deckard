@@ -1,5 +1,6 @@
 import optuna
 import logging
+import pandas as pd
 from pathlib import Path
 from hydra import initialize_config_dir, compose
 from omegaconf import OmegaConf
@@ -24,13 +25,70 @@ def find_optuna_best(
 ):
     logger.info(f"Study name: {study_name}")
     logger.info(f"Storage name: {storage_name}")
-    study = optuna.create_study(
-        study_name=study_name,
-        storage=storage_name,
-        load_if_exists=True,
-        direction=direction,
-    )
-    df = study.trials_dataframe(attrs=("number", "value", "params", "state"))
+    if isinstance(direction, str):
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+            direction=direction,
+        )
+        directions = [direction]
+    else:
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+            directions=direction,
+        )
+        directions = direction
+    assert isinstance(directions, list), f"Directions is not a list: {type(directions)}"
+    df = study.trials_dataframe(attrs=("number", "value", "params"))
+    # Find the average of each value over the columns in average_over
+    not_these = ["number", "value"]
+    val_cols = [
+        col
+        for col in df.columns
+        if col.startswith("values_") and col.split("values_")[-1] not in not_these
+    ]
+    not_these.extend(val_cols)
+    print(f"Not these: {not_these}")
+    groupby_cols = [
+        col for col in df.columns if col.split("params_")[-1] not in not_these
+    ]
+    print(f"Groupby cols: {groupby_cols}")
+    dfs = df.groupby(groupby_cols)
+    new_df = pd.DataFrame(columns=groupby_cols + ["mean", "std", "ntrials", "nuniques"])
+    means = []
+    stds = []
+    ntrials = []
+    nuniques = []
+    for _, df in dfs:
+        # find mean of value
+        mean_ = df.value.mean()
+        # find the std
+        std_ = df.value.std()
+        # find the number of trials
+        n = df.value.count()
+        # find the number of unique trials
+        nunique = df.value.nunique()
+        means.append(mean_)
+        stds.append(std_)
+        ntrials.append(n)
+        nuniques.append(nunique)
+        # add first row of df to new_df
+        new_df = pd.concat([new_df, df.head(1)])
+    new_df.drop(columns=["value"], inplace=True)
+    new_df["mean"] = means
+    new_df["std"] = stds
+    new_df["ntrials"] = ntrials
+    new_df["nuniques"] = nuniques
+    for direction in directions:
+        assert direction in [
+            "minimize",
+            "maximize",
+        ], f"Direction {direction} not recognized."
+    directions = [False if x == "maximize" else True for x in directions]
+    assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(df)}"
     if study_csv is not None:
         Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(study_csv)
@@ -52,7 +110,7 @@ def find_optuna_best(
     # Changing the keys to hydra override format
     for key, value in best_params.items():
         if (
-            key.startswith("++") or key.startswith("~~") or key.startswith("--")
+            key.startswith("++") or key.startswith("~") or key.startswith("--")
         ):  # reserved meaning
             pass
         elif key.startswith("+"):  # appends to config

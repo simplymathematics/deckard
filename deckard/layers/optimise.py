@@ -1,7 +1,6 @@
 import logging
 import os
 import traceback
-from copy import deepcopy
 from pathlib import Path
 import yaml
 from hydra.utils import instantiate
@@ -172,32 +171,50 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
     if isinstance(params, dict):
         key_list = []
         for stage in stages:
+            stage = stage.split("@")[0]
             assert Path(
                 path,
                 "dvc.yaml",
             ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
-                new_keys = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage][
-                    "params"
-                ]
+                print()
+                keys = yaml.load(f, Loader=yaml.FullLoader)["stages"]
+                if stage in keys:
+                    new_keys = keys[stage]
+                if "foreach" in new_keys:
+                    new_keys = new_keys["do"]["params"]
+                else:
+                    new_keys = new_keys["params"]
+
             key_list.extend(new_keys)
     else:
         raise TypeError(f"Expected str or dict, got {type(params)}")
     params = read_subset_of_params(key_list, params)
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
-        file_list = []
-        for stage in stages:
-            pipe = yaml.load(f, Loader=yaml.FullLoader)["stages"][stage]
-            if "deps" in pipe:
-                dep_list = [str(x).split(":")[0] for x in pipe["deps"]]
-                file_list.extend(dep_list)
-            if "outs" in pipe:
-                out_list = [str(x).split(":")[0] for x in pipe["outs"]]
-                file_list.extend(out_list)
-            if "metrics" in pipe:
-                metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
-                file_list.extend(metric_list)
+        pipe = yaml.load(f, Loader=yaml.FullLoader)
+    file_list = []
+    for stage in stages:
+        if len(stage.split("@")) > 1:
+            sub_stage = stage.split("@")[1]
+            directory = stage.splits("@")[0]
+            file_list.append(directory)
+            file_list.append(sub_stage)
+        else:
+            sub_stage = None
+        stage = stage.split("@")[0]
+        pipe = pipe["stages"][stage]
+        if "do" in pipe:
+            pipe = pipe["do"]
+        if "deps" in pipe:
+            dep_list = [str(x).split(":")[0] for x in pipe["deps"]]
+            file_list.extend(dep_list)
+        if "outs" in pipe:
+            out_list = [str(x).split(":")[0] for x in pipe["outs"]]
+            file_list.extend(out_list)
+        if "metrics" in pipe:
+            metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
+            file_list.extend(metric_list)
     file_string = str(file_list)
     files = params["files"]
     file_list = list(files.keys())
@@ -252,7 +269,7 @@ def optimise(cfg: DictConfig) -> None:
     stage = cfg.pop("stage", None)
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
-    files = deepcopy(exp.files)()
+    files = exp.files.get_filenames()
     folder = Path(files["score_dict_file"]).parent
     Path(folder).mkdir(exist_ok=True, parents=True)
     write_stage(cfg, stage, path=folder, working_dir=working_dir)
