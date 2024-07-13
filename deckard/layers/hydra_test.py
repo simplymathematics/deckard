@@ -1,5 +1,6 @@
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
+import sys
 
 
 working_dir = Path().cwd()
@@ -8,7 +9,7 @@ config_path = Path(working_dir, config_dir).as_posix()
 config_file = "default"
 
 
-def main():
+def hydra_test_main():
     # Use sys calls to look for --working_dir, --config_dir, and --config_file
     args = sys.argv
     if "--working_dir" in args:
@@ -51,4 +52,4 @@ def main():
 
 
 if __name__ == "__main__":
-    my_app()
+    hydra_test_main()
