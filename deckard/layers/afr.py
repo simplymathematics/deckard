@@ -872,7 +872,7 @@ def calculate_raw_failures(args, data, config):
     return data
 
 
-def main(args):
+def afr_main(args):
     target = args.target
     duration_col = args.duration_col
     dataset = args.dataset
@@ -929,4 +929,4 @@ if "__main__" == __name__:
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
     args = afr_parser.parse_args()
-    main(args)
+    afr_main(args)
