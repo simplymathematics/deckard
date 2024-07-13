@@ -4,6 +4,7 @@ import json
 import logging
 from tqdm import tqdm
 import yaml
+import argparse
 
 
 logger = logging.getLogger(__name__)
@@ -196,16 +197,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     return results
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--results_file", type=str, default="results.csv")
-    parser.add_argument("--report_folder", type=str, default="reports", required=True)
-    parser.add_argument("--results_folder", type=str, default=".")
-    parser.add_argument("--exclude", type=list, default=None, nargs="*")
-    parser.add_argument("--verbose", type=str, default="INFO")
-    args = parser.parse_args()
+def compile_main(parse_results, save_results, args):
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
     results_file = args.results_file
@@ -215,3 +207,14 @@ if __name__ == "__main__":
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."
+    
+compile_parser = argparse.ArgumentParser()
+compile_parser.add_argument("--results_file", type=str, default="results.csv")
+compile_parser.add_argument("--report_folder", type=str, default="reports", required=True)
+compile_parser.add_argument("--results_folder", type=str, default=".")
+compile_parser.add_argument("--exclude", type=list, default=None, nargs="*")
+compile_parser.add_argument("--verbose", type=str, default="INFO")
+
+if __name__ == "__main__":
+    args = compile_parser.parse_args()
+    compile_main(parse_results, save_results, args)
