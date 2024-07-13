@@ -1,6 +1,4 @@
 from omegaconf import DictConfig, OmegaConf
-import hydra
-import sys
 from pathlib import Path
 
 
@@ -51,8 +49,6 @@ def main():
         print(OmegaConf.to_yaml(cfg))
         return 0
 
-    return hydra_main()
-
 
 if __name__ == "__main__":
-    main()
+    my_app()

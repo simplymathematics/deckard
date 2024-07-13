@@ -1,5 +1,5 @@
 import logging
-import sys
+import os
 from copy import deepcopy
 from pathlib import Path
 import yaml
@@ -326,8 +326,4 @@ def main():
         ).exists(), f"Folder {folder} does not exist for experiment {id_}."
         return 0
 
-    return hydra_prepare()
-
-
-if __name__ == "__main__":
-    main()
+    hydra_prepare()

@@ -82,9 +82,18 @@ def get_overrides(overrides=None):
                 elif k.startswith("+"):
                     overrides[f"++{k[1:]}"] = v
                 elif k.startswith("~"):
-                    pass
+                    overrides[f"~{k[2:]}"] = v
                 else:
                     overrides[f"++{k}"] = v
+
+        # assert isinstance(overrides, dict), f"Expected list, got {type(overrides)}"
+    # if key is not None and len(overrides) > 0:
+    #     overrides.pop(f"{key}.name", None)
+    #     overrides.pop(f"files.{key}_file", None)
+    #     overrides[f"++{key}.name"] = Path(file).stem
+    #     overrides[f"++files.{key}_file"] = Path(file).stem
+    #     overrides[f"{key}"] = Path(file).stem
+    #     overrides["++stage"] = key
     return overrides
 
 
@@ -209,6 +218,7 @@ def get_dvc_stage_params(
 def prepare_files(params_file, stage, params, id_):
     # Turns the dictionary into a FileConfig object.
     # This creates a new directory at files.directory
+    # It also creates a new directory at files.directory/files.data_dir
     # It also creates a new directory at files.directory/files.reports_dir
     # If a stage is specified, it also creates a new directory at files.directory/files.reports/stage
     params["files"]["_target_"] = "deckard.base.files.FileConfig"

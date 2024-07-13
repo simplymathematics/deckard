@@ -1,11 +1,11 @@
 import logging
+import os
 import traceback
 from pathlib import Path
 import yaml
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 import hydra
-import sys
 from ..base.utils import my_hash, unflatten_dict
 from .utils import deckard_nones
 
@@ -15,7 +15,15 @@ OmegaConf.register_new_resolver("eval", eval)
 
 __all__ = ["write_stage", "optimise", "parse_stage", "get_files"]
 
-logger = logging.getLogger(__name__)
+config_path = os.environ.get(
+    "DECKARD_CONFIG_PATH",
+    str(Path(Path.cwd(), "conf").absolute().as_posix()),
+)
+assert Path(
+    config_path,
+).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
+config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
+full_path = Path(config_path, config_name).as_posix()
 
 
 def get_files(
@@ -73,6 +81,13 @@ def get_files(
     if stage is not None:
         cfg["files"]["stage"] = stage
     return cfg
+
+
+# def save_file(cfg, folder, params_file):
+#     path = Path(folder, Path(params_file).name)
+#     with open(path, "w") as f:
+#         yaml.safe_dump(cfg, f)
+#     assert Path(path).exists()
 
 
 def merge_params(default, params) -> dict:
@@ -231,6 +246,9 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
     stage_params = {"stages": {stage: {}}}
     stage_params["stages"][stage] = dvc["stages"][stage]
     path.mkdir(exist_ok=True, parents=True)
+    # with open(path / "dvc.yaml", "w") as f:
+    #     yaml.dump(stage_params, f, default_flow_style=False)
+    # assert Path(path / "dvc.yaml").exists(), f"File {path/'dvc.yaml'} does not exist."
     with open(Path(path, "params.yaml"), "w") as f:
         yaml.dump(params, f, default_flow_style=False)
     assert Path(
@@ -242,13 +260,13 @@ def write_stage(params: dict, stage: str, path=None, working_dir=None) -> None:
 def optimise(cfg: DictConfig) -> None:
     cfg = OmegaConf.to_container(OmegaConf.create(cfg), resolve=True)
     raise_exception = cfg.pop("raise_exception", True)
+    working_dir = Path(config_path).parent
     direction = cfg.get("direction", "minimize")
     direction = [direction] if not isinstance(direction, list) else direction
     optimizers = cfg.get("optimizers", None)
     optimizers = [optimizers] if not isinstance(optimizers, list) else optimizers
     assert len(optimizers) == len(direction)
     stage = cfg.pop("stage", None)
-    working_dir = globals().get("working_dir", Path.cwd())
     cfg = parse_stage(params=cfg, stage=stage, path=working_dir)
     exp = instantiate(cfg)
     files = exp.files.get_filenames()
@@ -302,49 +320,12 @@ def optimise(cfg: DictConfig) -> None:
     return scores
 
 
-def main():
-    # Use sys calls to look for --working_dir, --config_dir, and --config_file
-    args = sys.argv
-    global working_dir
-    if "--working_dir" in args:
-        working_dir = args[args.index("--working_dir") + 1]
-        # remove working_dir from args
-        args.pop(args.index("--working_dir"))
-        args.pop(args.index(working_dir))
-    else:
-        working_dir = Path(".").cwd()
-    print(working_dir)
-    if "--config_dir" in args:
-        config_dir = args[args.index("--config_dir") + 1]
-        # remove config_dir from args
-        args.pop(args.index("--config_dir"))
-        args.pop(args.index(config_dir))
-    else:
-        config_dir = "conf"
-    config_dir = Path(working_dir, config_dir).as_posix()
-    if "--config_file" in args:
-        config_file = args[args.index("--config_file") + 1]
-        # remove config_file from args
-        args.pop(args.index("--config_file"))
-        args.pop(args.index(config_file))
-    else:
-        config_file = "default"
-    if "--version_base" in args:
-        version_base = args[args.index("--version_base") + 1]
-        # remove version_base from args
-        args.pop(args.index("--version_base"))
-        args.pop(args.index(version_base))
-    else:
-        version_base = "1.3"
+if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
 
-    @hydra.main(config_path=config_dir, config_name=config_file, version_base="1.3")
+    @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
     def hydra_optimise(cfg: DictConfig) -> float:
         score = optimise(cfg)
         return score
 
-    del working_dir
-    return hydra_optimise()
-
-
-if __name__ == "__main__":
-    main()
+    hydra_optimise()

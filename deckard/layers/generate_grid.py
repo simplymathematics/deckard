@@ -4,7 +4,6 @@ import os
 import yaml
 from functools import reduce
 from operator import mul
-import argparse
 from ..base.utils import make_grid, my_hash
 
 logger = logging.getLogger(__name__)
@@ -39,6 +38,15 @@ def load_config(config_path):
     return config
 
 
+def dict_to_overrides(dictionary):
+    new = {}
+    for key, value in dictionary.items():
+        for k, v in value.items():
+            new_key = "++" + key + "." + k
+            new[new_key] = v
+    return new
+
+
 def generate_grid_from_folders(conf_dir, regex):
     this_dir = os.getcwd()
     conf_dir = os.path.relpath(conf_dir, this_dir)
@@ -66,7 +74,7 @@ def generate_grid_from_folders(conf_dir, regex):
     return big_list
 
 
-def main(
+def generate_queue(
     conf_root,
     grid_dir,
     regex,
@@ -79,6 +87,7 @@ def main(
     big_list = generate_grid_from_folders(conf_dir, regex)
     i = 0
     for entry in big_list:
+        new = dict_to_overrides(entry)
         path = Path(conf_root, queue_folder)
         name = my_hash(entry)
         path.mkdir(parents=True, exist_ok=True)
@@ -87,7 +96,7 @@ def main(
                 default = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 logger.error(exc)
-        default["hydra"]["sweeper"]["params"] = entry
+        default["hydra"]["sweeper"]["params"] = new
         big_list[i] = default
         with open(Path(path, name + ".yaml"), "w") as outfile:
             yaml.dump(big_list[i], outfile, default_flow_style=False)
@@ -96,11 +105,9 @@ def main(
     return big_list
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--config_folder", type=str, default="conf")
-parser.add_argument("--grid_folder", type=str, default="grid")
-parser.add_argument("--regex", type=str, default="*.yaml")
+conf_root = "conf"
+grid_folder = "grid"
+regex = "*.yaml"
 
-if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args.config_folder, args.grid_folder, args.regex)
+big_list = generate_queue(conf_root, grid_folder, regex)
+print(yaml.dump(big_list[0]))

@@ -9,18 +9,18 @@ from .utils import save_params_file, run_stages
 
 logger = logging.getLogger(__name__)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("stage", type=str, nargs="*", default=None)
-parser.add_argument("--verbosity", type=str, default="INFO")
-parser.add_argument("--params_file", type=str, default="params.yaml")
-parser.add_argument("--pipeline_file", type=str, default="dvc.yaml")
-parser.add_argument("--config_dir", type=str, default="conf")
-parser.add_argument("--config_file", type=str, default="default")
-parser.add_argument("--workdir", type=str, default=".")
-parser.add_argument("--overrides", nargs="*", default=[], type=str)
+attack_parser = argparse.ArgumentParser()
+attack_parser.add_argument("stage", type=str, nargs="*", default=None)
+attack_parser.add_argument("--verbosity", type=str, default="INFO")
+attack_parser.add_argument("--params_file", type=str, default="params.yaml")
+attack_parser.add_argument("--pipeline_file", type=str, default="dvc.yaml")
+attack_parser.add_argument("--config_dir", type=str, default="conf")
+attack_parser.add_argument("--config_file", type=str, default="default")
+attack_parser.add_argument("--workdir", type=str, default=".")
+attack_parser.add_argument("--overrides", nargs="*", default=[], type=str)
 
 
-def main(args):
+def attack_main(args):
     config_dir = Path(args.workdir, args.config_dir).absolute().as_posix()
     logging.basicConfig(
         level=args.verbosity,
@@ -49,5 +49,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    args = attack_parser.parse_args()
+    attack_main(args)

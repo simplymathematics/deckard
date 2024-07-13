@@ -15,8 +15,6 @@ from .base import Experiment as Experiment
 from .base import FileConfig as FileConfig
 from .base import ScorerDict as ScorerDict
 
-from .layers import *  # noqa: F401, F403
-
 # from deckard import layers  # noqa: F401
 
 # Semantic Version

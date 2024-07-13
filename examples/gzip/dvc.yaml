@@ -38,21 +38,20 @@ stages:
       - raw_data/
     deps:
       - data_prep.py
-  # parse_params:
-  #   cmd: python -m deckard.layers.parse
-  #   deps:
-  #     - conf/default.yaml
-  #     - conf/data/
-  #     - conf/model/
-  #     - conf/files/
-  #     - conf/scorers/
-  #     - conf/attack/
-  #   outs:
-  #     - params.yaml:
-  #         cache: true
-  #         desc : "Parsed parameters for the experiment"
-  #         persist: true
-  #         push : true
+  parse_params:
+    cmd: python -m deckard.layers.parse
+    deps:
+      - conf/default.yaml
+      - conf/data/default.yaml
+      - conf/model/default.yaml
+      - conf/files/default.yaml
+      - conf/scorers/default.yaml
+    outs:
+      - params.yaml:
+          cache: true
+          desc : "Parsed parameters for the experiment"
+          persist: true
+          push : true
   
   train:
     cmd: python -m deckard.layers.experiment train

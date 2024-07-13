@@ -4,7 +4,6 @@ import json
 import logging
 from tqdm import tqdm
 import yaml
-import argparse
 
 
 logger = logging.getLogger(__name__)
@@ -197,15 +196,15 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     return results
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--results_file", type=str, default="results.csv")
-parser.add_argument("--report_folder", type=str, default="reports", required=True)
-parser.add_argument("--results_folder", type=str, default=".")
-parser.add_argument("--exclude", type=list, default=None, nargs="*")
-parser.add_argument("--verbose", type=str, default="INFO")
+if __name__ == "__main__":
+    import argparse
 
-
-def main(parse_results, save_results, parser):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--results_file", type=str, default="results.csv")
+    parser.add_argument("--report_folder", type=str, default="reports", required=True)
+    parser.add_argument("--results_folder", type=str, default=".")
+    parser.add_argument("--exclude", type=list, default=None, nargs="*")
+    parser.add_argument("--verbose", type=str, default="INFO")
     args = parser.parse_args()
     logging.basicConfig(level=args.verbose)
     report_folder = args.report_folder
@@ -216,8 +215,3 @@ def main(parse_results, save_results, parser):
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."
-
-
-if __name__ == "__main__":
-
-    main(parse_results, save_results, parser)

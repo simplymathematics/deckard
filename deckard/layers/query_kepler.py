@@ -1,9 +1,8 @@
 from datetime import datetime
-from pathlib import Path
 import argparse
+import logging
 import sys
 from dataclasses import dataclass
-from hydra.utils import instantiate
 import yaml
 
 try:
@@ -11,30 +10,27 @@ try:
 except ImportError:
     ImportError("Please install prometheus_api_client")
     sys.exit(1)
-from .compile import load_results, save_results
 
+
+v100 = 250 / 3600
+p100 = 250 / 3600
+l4 = 72 / 3600
 
 @dataclass
 class PromQuery:
-    prom_host = "34.147.65.220"
-    prom_port = "9090"
-    prom_address = None
-    warmup = 0
-    cooldown = 0
-    step = 1
-    total = 0
-    query = ""
-    start = 0
-    end = 0
-    service = ""
-    namespace = ""
-    input_file = ""
-    output_file = ""
-    device_power_dict = {}
-    device_id = "device_id"
-    start_time_string = "_start_time"
-    end_time_string = "_end_time"
-    power_string = "_power"
+    def __init__(self):
+        self.prom_host = "34.147.65.220"
+        self.prom_port = "9090"
+        self.prom_address = "http://" + self.prom_host + ":" + self.prom_port + "/"
+        self.warmup = 0
+        self.cooldown = 0
+        self.step = 1
+        self.total = 0
+        self.query = ""
+        self.start = 0
+        self.end = 0
+        self.service = ""
+        self.namespace = ""
 
     def query_prometheus(self):
         """
@@ -42,16 +38,7 @@ class PromQuery:
             step.
         :return:
         """
-        if self.prom_address is None:
-            prom_address = "http://" + self.prom_host + ":" + self.prom_port
-        else:
-            prom_address = self.prom_address
-        is_https = prom_address.startswith("https")
-        should_disable = not is_https
-        prom = PrometheusConnect(
-            url=prom_address,
-            disable_ssl=should_disable,
-        )
+        prom = PrometheusConnect(url=self.prom_address, disable_ssl=True)
         start = datetime.fromtimestamp((self.start + self.warmup))
         end = datetime.fromtimestamp((self.end - self.cooldown))
         result = prom.custom_query_range(
@@ -68,85 +55,82 @@ class PromQuery:
     def get_power(self):
         self.query = (
             "sum(increase((kepler_container_joules_total["
-            + self.calculate_minutes()
+            + self.caluculate_minutes()
             + "])))"
         )
 
-    def calculate_minutes(self):
+    def caluculate_minutes(self):
         self.total = self.end - self.start
         print("total_time:", self.total)
         if abs(self.total) < 60:
             return "1m"
         return str(int(self.total / 60)) + "m"
 
-    def load(self):
-        result_file = Path(self.input_file).name
-        result_folder = Path(self.input_file).parent
-        data = load_results(results_file=result_file, results_folder=result_folder)
-        return data
 
-    def run_query(self, data):
-        data = self.load()
-        start_times = [col for col in data.columns if self.start_time_string in col]
-        end_times = [col for col in data.columns if self.end_time_string in col]
-        new_columns = [
-            col.replace(self.start_time_string, self.power_string)
-            for col in start_times
-        ]
-        for new_column in new_columns:
-            data[new_column] = 0
-        for index, _ in data.iterrows():
-            for start_time in start_times:
-                self.start = data[start_time]
-                self.end = data[end_times[start_times.index(start_time)]]
-                self.get_power()
-                consumed_power = self.query_prometheus()
-                data.at[index, new_columns[start_times.index(start_time)]] = (
-                    consumed_power
-                )
-        for device in self.device_power_dict.keys():
-            data.loc[data[self.device_id] == device, "peak_power"] = (
-                self.device_power_dict[device]
-            )
-        return data
+def run_query(input_file, output_file):
+    new_columns = [
+        "train_power",
+        "predict_power",
+        "predict_proba_power",
+        "predict_log_proba_power",
+        "adv_fit_power",
+        "adv_predict_power",
+    ]
+    start_times = [
+        "train_start_time",
+        "predict_start_time",
+        "predict_proba_start_time",
+        "predict_log_proba_start_time",
+        "adv_fit_start_time",
+        "adv_predict_start_time",
+    ]
+    end_times = [
+        "train_end_time",
+        "predict_end_time",
+        "predict_proba_end_time",
+        "predict_log_proba_end_time",
+        "adv_fit_end_time",
+        "adv_predict_end_time",
+    ]
 
-    def save(self, data):
-        output_file = Path(self.output_file).name
-        output_folder = Path(self.output_file).parent
-        save_results(data, results_file=output_file, results_folder=output_folder)
-
-    def __call__(self):
-        data = self.run_query()
-        self.save(data)
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--input_file", type=str, default=None)
-parser.add_argument("--output_file", type=str, default=None)
-parser.add_argument("--verbosity", type=str, default="INFO")
-parser.add_argument("--prometheus_config", type=str, default=None)
-
-
-def main(args):
-    input_file = args.input_file
-    output_file = args.output_file
-    # Read the prometheus config from yaml
-    with Path(args.prometheus_config).open("r") as stream:
-        prometheus_config = yaml.safe_load(stream)
-    if prometheus_config is None:
-        promObj = PromQuery(input_file=input_file, output_file=output_file)
-    else:
-        prometheus_config["_target_"] = "deckard.layers.compile.PromQuery"
-        prometheus_config["input_file"] = (
-            input_file if input_file is not None else prometheus_config["input_file"]
-        )
-        prometheus_config["output_file"] = (
-            output_file if output_file is not None else prometheus_config["output_file"]
-        )
-        promObj = instantiate(prometheus_config)
-    promObj()
+    promObj = PromQuery()
+    data = pd.read_csv(input_file, index_col=0)
+    for new_column in new_columns:
+        data[new_column] = 0
+        data["peak_power"] = 0
+    for index, row in data.iterrows():
+        for start_time in start_times:
+            promObj.start = data[start_time]
+            promObj.end = data[end_times[start_times.index(start_time)]]
+            promObj.get_power()
+            consumed_power = promObj.query_prometheus()
+            peak_power = 0
+            if "v100" in row["device_id"]:
+                peak_power = 250
+            elif "p100" in row["device_id"]:
+                peak_power = 250
+            elif "l4" in row["device_id"]:
+                peak_power = 72
+            data.at[index, new_columns[start_times.index(start_time)]] = consumed_power
+            data.at[index, "peak_power"] = peak_power
+    data.to_csv(output_file)
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    logger = logging.getLogger(__name__)
+    dvc_parser = argparse.ArgumentParser()
+    dvc_parser.add_argument("--input_file", type=str, default=None)
+    dvc_parser.add_argument("--output_file", type=str, default=None)
+    dvc_parser.add_argument("--verbosity", type=str, default="INFO")
+
+    args = dvc_parser.parse_args()
+    input_file = args.input_file
+    output_file = args.output_file
+
+    logging.basicConfig(
+        level=args.verbosity,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger.info("Quering the Prometheus for power metrics")
+
+    results = run_query(input_file=input_file, output_file=output_file)
