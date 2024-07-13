@@ -67,7 +67,15 @@ class PromQuery:
         return str(int(self.total / 60)) + "m"
 
 
-def run_query(input_file, output_file):
+def kepler_main(args):
+    input_file = args.input_file
+    output_file = args.output_file
+    logging.basicConfig(
+        level=args.verbosity,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+    logger.info("Quering the Prometheus for power metrics")
     new_columns = [
         "train_power",
         "predict_power",
@@ -115,22 +123,12 @@ def run_query(input_file, output_file):
             data.at[index, "peak_power"] = peak_power
     data.to_csv(output_file)
 
+kepler_parser = argparse.ArgumentParser()
+kepler_parser.add_argument("--input_file", type=str, default=None)
+kepler_parser.add_argument("--output_file", type=str, default=None)
+kepler_parser.add_argument("--verbosity", type=str, default="INFO")
+
 
 if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
-    dvc_parser = argparse.ArgumentParser()
-    dvc_parser.add_argument("--input_file", type=str, default=None)
-    dvc_parser.add_argument("--output_file", type=str, default=None)
-    dvc_parser.add_argument("--verbosity", type=str, default="INFO")
-
-    args = dvc_parser.parse_args()
-    input_file = args.input_file
-    output_file = args.output_file
-
-    logging.basicConfig(
-        level=args.verbosity,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    logger.info("Quering the Prometheus for power metrics")
-
-    results = run_query(input_file=input_file, output_file=output_file)
+    args = kepler_parser.parse_args()
+    results = kepler_main(args)
