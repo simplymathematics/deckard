@@ -3,6 +3,7 @@ import argparse
 import logging
 import sys
 from dataclasses import dataclass
+import pandas as pd
 
 try:
     from prometheus_api_client import PrometheusConnect
