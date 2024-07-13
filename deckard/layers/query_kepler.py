@@ -3,7 +3,6 @@ import argparse
 import logging
 import sys
 from dataclasses import dataclass
-import yaml
 
 try:
     from prometheus_api_client import PrometheusConnect
