@@ -23,7 +23,7 @@ hydra:
   run:
     dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${model_name}
+    dir: ${files.directory}/logs/${stage}/${model_name}/${model.trainer.nb_epochs}
     subdir : ${def_name}/${atk_name}/${hydra.job.num}
   sweeper:
     sampler:
@@ -31,12 +31,14 @@ hydra:
     direction: ${direction}
     study_name: ${model_name}_${def_name}_${atk_name}
     storage: sqlite:///${dataset}.db
-    n_jobs: ${oc.env:HYDRA_SWEEPER_N_JOBS, 8}
+    n_jobs: ${oc.env:HYDRA_SWEEPER_N_JOBS, 32}
     n_trials: ${oc.env:HYDRA_SWEEPER_N_TRIALS, 128}
     max_failure_rate: 1.0
     params:
-      ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
-      ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
+      ++model.art.initialize.optimizer.lr: shuffle(choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001))
+      ++model.art.initialize.optimizer.momentum: choice(0.1, 0.9, 0.95, 0.99)
+      # ++model.trainer.nb_epochs: choice(1, 10, 30, 50, 100)
+      ++model.trainer.batch_size: choice(32, 64, 128, 256, 512, 1024)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

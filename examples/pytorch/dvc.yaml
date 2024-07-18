@@ -88,22 +88,24 @@ stages:
     matrix:
       dataset : [mnist, cifar, cifar100]
       model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
+      epochs : [1, 10, 20]
     cmd: >- 
       bash attacks.sh 
       ++model.init.name=torch_example.${item.model} 
       stage=attack
       model_name=${item.model}
       attack.attack_size=100
+      model.trainer.nb_epochs=${item.epochs}
       data=torch_${item.dataset}
       model=torch_${item.dataset}
       +direction="[maximize,maximize,minimize]"
-      +optimizers="[accuracy,adv_accuracy,adv_success]"
+      ++optimizers="[accuracy,adv_accuracy,adv_success]"
       --config-name ${item.dataset}.yaml
     deps:
       - ${item.dataset}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
-      - ${item.dataset}/logs/attack/${item.model}/:
+      - ${item.dataset}/logs/attack/${item.model}/${item.epochs}/:
           cache: True
           persist: True
   compile:
