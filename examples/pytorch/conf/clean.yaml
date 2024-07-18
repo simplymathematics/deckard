@@ -15,24 +15,24 @@ defences:
   nb_epochs : Epochs
   model_layers: Control
 params:
-  Deep: attack.init.kwargs.nb_grads
+  Deep: attack.init.nb_grads
   FGM: attack.init.eps
-  HSJ: attack.init.kwargs.max_iter
-  Pixel: attack.init.kwargs.th
+  HSJ: attack.init.max_iter
+  Pixel: attack.init.th
   PGD: attack.init.eps
-  Thresh: attack.init.kwargs.th
-  Gauss-out: model.art.pipeline.postprocessor.kwargs.scale
-  Conf: model.art.pipeline.postprocessor.kwargs.cutoff
-  FSQ: model.art.pipeline.preprocessor.kwargs.bit_depth
-  Gauss-in: model.art.pipeline.preprocessor.kwargs.sigma
+  Thresh: attack.init.th
+  Gauss-out: model.art.postprocessor.scale
+  Conf: model.art.postprocessor.cutoff
+  FSQ: model.art.preprocessor.bit_depth
+  Gauss-in: model.art.preprocessor.sigma
   Control: model_layers
-  Epochs: model.trainer.nb_epoch
+  Epochs: model.trainer.nb_epochs
   ZOO : attack.init.binary_search_steps
   control:
     model_layers: 18
-replace_cols:
-  model.trainer.nb_epochs: Epochs
+# replace_cols:
+#   model.trainer.nb_epochs: Epochs
 fillna:
-  Epochs: 20
   data.sample.train_size : 48000
   data.sample.test_size: 12000
+  attack.attack_size: 100
