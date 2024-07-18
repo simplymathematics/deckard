@@ -499,13 +499,6 @@ def replace_strings_in_columns(data, replace_dict):
                 data.rename(columns={k: v}, inplace=True)
             else:
                 pass
-    after = list(data.columns)
-    if len(replace_dict) > 0:
-        logger.info(f"Columns after replacement: {after}")
-        assert cols != after, "Columns not replaced."
-        assert len(cols) == len(
-            after,
-        ), f"Length of columns before and after replacement not equal: {len(cols)} != {len(after)}."
     return data
 
 
