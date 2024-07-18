@@ -110,7 +110,7 @@ def survival_probability_calibration(
                 crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
             else:
                 crc.fit(prediction_df, T, E, regressors=regressors)
-        except ConvergenceError as e:
+        except (ConvergenceError, AttributeError) as e:
             if "delta contains nan value(s)" in str(e):
                 fit_options = {
                     "step_size": 0.1,
@@ -147,7 +147,7 @@ def survival_probability_calibration(
                     )
                 else:
                     crc.fit(prediction_df, T, E, regressors=regressors)
-            except ConvergenceError as e:
+            except (ConvergenceError, AttributeError) as e:
                 logger.error(f"Could not fit CRC model. due to {e}")
                 return ax, np.nan, np.nan
 
@@ -274,9 +274,7 @@ def fit_aft(
         kwarg_dict["timeline"] = timeline
     try:
         aft.fit(df, **kwarg_dict)
-    except AttributeError as e:
-        raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
-    except ConvergenceError as e:
+    except (ConvergenceError, AttributeError) as e:
         if "delta contains nan value(s)" in str(e):
             fit_options = {
                 "step_size": 0.1,
@@ -287,18 +285,14 @@ def fit_aft(
             logger.info(
                 "Reducing the step size to 0.1 and increasing the max steps to 1000",
             )
-            input("Inside the fit function")
         else:
             logger.info("Trying to fit with SLSQP")
             aft._scipy_fit_method = "SLSQP"
         try:
             aft.fit(df, **kwarg_dict)
-        except ConvergenceError as e:
+        except (ConvergenceError, AttributeError) as e:
             logger.error(f"Could not fit {mtype} model due to {e}")
             raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
-
-    else:
-        logger.info(f"Fitted {mtype} model")
     if summary_file is not None:
         summary = pd.DataFrame(aft.summary).copy()
         if folder is None:
