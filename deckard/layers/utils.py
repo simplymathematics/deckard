@@ -168,12 +168,12 @@ def get_dvc_stage_params(
     directory=".",
     name=None,
 ):
-    tmp_stage = stage.split("@")[0]
-    sub_stage = stage.split("@")[1] if tmp_stage != stage else None
+    main_stage = stage.split("@")[0]
+    sub_stage = stage.split("@")[1] if main_stage != stage else None
     logger.info(
-        f"Getting params for stage {tmp_stage} from {params_file} and {pipeline_file} in {directory}.",
+        f"Getting params for stage {main_stage} from {params_file} and {pipeline_file} in {directory}.",
     )
-    params = dvc.api.params_show(stages=tmp_stage, repo=directory)
+    params = dvc.api.params_show(stages=main_stage, repo=directory)
     params.update({"_target_": "deckard.base.experiment.Experiment"})
     params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
     flat_params = flatten_dict(params)
@@ -186,7 +186,7 @@ def get_dvc_stage_params(
         if sub_stage is None:
             pipe_params = pipe_params[stage]
         else:
-            pipe_params = pipe_params[tmp_stage]["do"]
+            pipe_params = pipe_params[main_stage]["do"]
         file_list = []
         for key in ["metrics", "deps", "outs", "plots"]:
             param_string = str(pipe_params.get(key, {}))
@@ -206,7 +206,7 @@ def get_dvc_stage_params(
         file_dict = unflatten_dict(pipe_params)
     params["files"] = file_dict.pop("files", {})
     params["files"].update(file_dict)
-    params["files"]["stage"] = tmp_stage
+    params["files"]["stage"] = main_stage
     # Merge remaining params
     params = OmegaConf.merge(params, file_dict)
     params = OmegaConf.to_container(OmegaConf.create(params), resolve=True)
