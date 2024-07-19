@@ -2,7 +2,7 @@ covariates:
   - accuracy
   - train_time
   - predict_proba_time
-  - model.trainer.nb_epoch
+  - model.trainer.np_epochs
   - model.trainer.batch_size
   - attack.init.eps
   - data.sample.random_state
@@ -11,7 +11,7 @@ covariates:
   - adv_fit_time
   - adv_failures
 fillna:
-  model.trainer.nb_epoch: 20
+  model.trainer.np_epochs: 20
   model.trainer.batch_size: 1024
   model.art.preprocessor.bit_depth: 32
 weibull:
@@ -30,7 +30,7 @@ weibull:
     "adv_fit_time: lambda_": "$T_{a}$"
     "adv_failure_rate: lambda_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: lambda_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: lambda_": "No. of Epochs"
+    "model.trainer.np_epochs: lambda_": "No. of Epochs"
     "model.trainer.batch_size: lambda_": "Batch Size"
     "def_gen": "Defence"
     "attack.init.eps: lambda_": "$\\varepsilon$"
@@ -50,13 +50,13 @@ weibull:
 #     "adv_fit_time": "$T_{a}$"
 #     "adv_failure_rate": "$h_{adv.}(t;\\theta)$"
 #     "failure_rate": "$h_{ben.}(t;\\theta)$"
-#     "model.trainer.nb_epoch": "No. of Epochs"
+#     "model.trainer.np_epochs": "No. of Epochs"
 #     "model.trainer.batch_size": "Batch Size"
 #     "def_gen": "Defence"
 #     "attack.init.eps": "$\\varepsilon$"
 #   partial_effect:
 #     - "file": "cox_epochs_partial_effect.pdf"
-#       "covariate_array": "model.trainer.nb_epoch"
+#       "covariate_array": "model.trainer.np_epochs"
 #       "values_array": [1,10,25,50]
 #       "title": "$S(t)$ for Cox AFR"
 #       "ylabel": "$\\mathbb{P}~(T>t)$"
@@ -101,7 +101,7 @@ log_logistic:
     "adv_fit_time: alpha_": "$T_{a}$"
     "adv_failure_rate: alpha_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: alpha_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: alpha_": "No. of Epochs"
+    "model.trainer.np_epochs: alpha_": "No. of Epochs"
     "model.trainer.batch_size: alpha_": "Batch Size"
     "def_gen": "Defence"
     "attack.init.eps: alpha_": "$\\varepsilon$"
@@ -122,7 +122,7 @@ log_normal:
     "adv_fit_time: mu_": "$T_{a}$"
     "adv_failure_rate: mu_": "$h_{adv.}(t;\\theta)$"
     "failure_rate: mu_": "$h_{ben.}(t;\\theta)$"
-    "model.trainer.nb_epoch: mu_": "No. of Epochs"
+    "model.trainer.np_epochs: mu_": "No. of Epochs"
     "model.trainer.batch_size: mu_": "Batch Size"
     "def_gen": "Defence"
     "attack.init.eps: mu_": "$\\varepsilon$"

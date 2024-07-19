@@ -15,7 +15,7 @@ params:
   DeepFool: attack.init.eps
   FSQ: model.art.preprocessor.bit_depth
   Control: model_layers
-  Epochs: model.trainer.nb_epoch
+  Epochs: model.trainer.np_epochs
   Batch_Size: model.trainer.batch_size
 fillna:
   Epochs: 20
