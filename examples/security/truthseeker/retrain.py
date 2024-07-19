@@ -236,9 +236,9 @@ def save_results_and_outputs(results, outputs, path="retrain") -> list:
 # Parse Model Results
 results = pd.read_csv("output/train.csv")
 # Some convenient variable names
-# input_size = results["data.generate.kwargs.n_samples"] * results["data.generate.kwargs.n_features"]
-results["Kernel"] = results["model.init.kwargs.kernel"].copy()
-# results["Features"] = results["data.generate.kwargs.n_features"].copy()
+# input_size = results["data.generate.n_samples"] * results["data.generate.n_features"]
+results["Kernel"] = results["model.init.kernel"].copy()
+# results["Features"] = results["data.generate.n_features"].copy()
 # results["Samples"] = results["data.sample.train_size"].copy()
 # results["input_size"] = input_size
 # Clean up results
@@ -249,7 +249,7 @@ for col in results.columns:
         results[col] = results[col].apply(lambda x: x[0])
 # Subset results
 # subset = results[results["data.sample.train_size"] == 10000]
-# subset = subset[subset["data.generate.kwargs.n_features"] == 100]
+# subset = subset[subset["data.generate.n_features"] == 100]
 with open("conf/model/best_rbf.yaml", "r") as f:
     best_rbf = yaml.safe_load(f)
 best_rbf["init"].pop("_target_", None)
@@ -341,7 +341,7 @@ for model in art_models:
                     params = json.load(f)
             else:
                 raise ValueError(f"No params file found for {folder}")
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence"] = avg_prob
@@ -429,7 +429,7 @@ for model in art_models:
             else:
                 logger.warning(f"No params file found for {folder}")
                 continue
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence After Retraining"] = avg_prob

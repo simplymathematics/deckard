@@ -11,7 +11,7 @@ for model_config in $CONFIG_NAMES; do
         continue
     fi
     HYDRA_FULL_ERROR=1 python -m deckard.layers.optimise \
-    ++model.init.kernel=kernel_name \
+    ++model.init.kernel=${kernel_name}\
     ++stage=attack \
     ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent \
     ++attack.init.norm=1,2,inf \
@@ -21,6 +21,7 @@ for model_config in $CONFIG_NAMES; do
     ++attack.init.max_iter=1,10,100,1000 \
     ++hydra.sweeper.study_name=$model_config \
     ++attack.attack_size=100 \
+    direction=minimize \
     model=$model_config $@ --multirun >> logs/attacks/$model_config.log
     echo "Successfully completed model $model_config" >> attack_log.txt
 done
