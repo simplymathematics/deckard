@@ -323,35 +323,35 @@ def scatter_plot(
     return graph
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
+plots_parser = argparse.ArgumentParser()
+plots_parser.add_argument(
     "-p",
     "--path",
     type=str,
     help="Path to the plot folder",
     required=True,
 )
-parser.add_argument(
+plots_parser.add_argument(
     "-f",
     "--file",
     type=str,
     help="Data file to read from",
     required=True,
 )
-parser.add_argument(
+plots_parser.add_argument(
     "-t",
     "--plotfiletype",
     type=str,
     help="Filetype of the plots",
     default=".eps",
 )
-parser.add_argument(
+plots_parser.add_argument(
     "-v",
     "--verbosity",
     default="INFO",
     help="Increase output verbosity",
 )
-parser.add_argument(
+plots_parser.add_argument(
     "-c",
     "--config",
     help="Path to the config file",
@@ -359,7 +359,7 @@ parser.add_argument(
 )
 
 
-def main(args):
+def plots_main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.file,
@@ -405,5 +405,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    args = plots_parser.parse_args()
+    plots_main(args)

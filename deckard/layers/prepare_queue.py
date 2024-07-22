@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+import sys
 from pathlib import Path
 import yaml
 from hydra.utils import instantiate
@@ -272,7 +273,7 @@ def prepare_experiment_folder(cfg: DictConfig) -> None:
     return exp, scorer, direction, folder, id_
 
 
-def main():
+def prepare_queue_main():
     # Use sys calls to look for --working_dir, --config_dir, and --config_file
     args = sys.argv
     global working_dir
@@ -326,3 +327,6 @@ def main():
         return 0
 
     hydra_prepare()
+
+if __name__ == "__main__":
+    prepare_queue_main()

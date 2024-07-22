@@ -188,7 +188,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
 
             key_list.extend(new_keys)
     else:
-        raise TypeError(f"Expected str or dict, got {type(params)}")
+        raise TypeError(f"Expected dict, got {type(params)}")
     params = read_subset_of_params(key_list, params)
     # Load files from dvc
     with open(Path(path, "dvc.yaml"), "r") as f:
@@ -324,8 +324,8 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
-    def hydra_optimise(cfg: DictConfig) -> float:
+    def optimise_main(cfg: DictConfig) -> float:
         score = optimise(cfg)
         return score
 
-    hydra_optimise()
+    optimise_main()
