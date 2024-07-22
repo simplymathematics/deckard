@@ -5,6 +5,8 @@ import os
 from omegaconf import OmegaConf
 from .utils import save_params_file
 
+__all__ = ["parse_hydra_config", "hydra_parser"]
+
 logger = logging.getLogger(__name__)
 hydra_parser = argparse.ArgumentParser()
 hydra_parser.add_argument("overrides", type=str, nargs="*", default=None)

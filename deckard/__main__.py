@@ -1,77 +1,77 @@
 #!/usr/bin/env python3
-import argparse
-import subprocess
+import sys
 import logging
-from pathlib import Path
 from omegaconf import OmegaConf
-from .layers.parse import save_params_file
+from .layers.afr import afr_parser, afr_main
+from .layers.attack import attack_parser, attack_main
+from .layers.clean_data import clean_data_parser, clean_data_main
+from .layers.compile import compile_parser, compile_main
+from .layers.data import data_parser, data_main
+from .layers.experiment import experiment_parser, experiment_main
+from .layers.find_best import find_best_parser, find_best_main
+from .layers.generate_grid import generate_grid_parser, generate_grid_main
+from .layers.hydra_test import  hydra_test_main
+from .layers.merge import merge_parser, merge_main
+from .layers.optimise import  optimise_main
+from .layers.parse import hydra_parser, parse_hydra_config
+from .layers.plots import plots_parser, plots_main
+from .layers.prepare_queue import prepare_queue_main
+from .layers.query_kepler import kepler_parser, kepler_main
 
 OmegaConf.register_new_resolver("eval", eval)
 
 logger = logging.getLogger(__name__)
+layer_list = [
+    "afr",
+    "attack",
+    "clean_data"
+    "compile",
+    "data",
+    "experiment",
+    "find_best",
+    "generate_grid",
+    "hydra_test",
+    "merge",
+    "optimise",
+    "parse",
+    "plots",
+    "prepare_queue",
+    "query_kepler",    
+]
 
 
-def main(args):
+deckard_layer_dict = {
+    "afr": (afr_parser, afr_main),
+    "attack": (attack_parser, attack_main),
+    "clean_data": (clean_data_parser, clean_data_main),
+    "compile": (compile_parser, compile_main),
+    "data": (data_parser, data_main),
+    "experiment": (experiment_parser, experiment_main),
+    "find_best": (find_best_parser, find_best_main),
+    "generate_grid": (generate_grid_parser, generate_grid_main),
+    "hydra_test": (None, hydra_test_main),
+    "merge": (merge_parser, merge_main),
+    "optimise": (None, optimise_main),
+    "parse": (hydra_parser, parse_hydra_config),
+    "plots": (plots_parser, plots_main),
+    "prepare_queue": (None, prepare_queue_main),
+    "query_kepler": (kepler_parser, kepler_main),
+}
+assert len(deckard_layer_dict) == len(layer_list), "Some layers are missing from the deckard_layer_dict"
+def main(layer, args):
     # Get the layer and the main function for the layer.
-    layer = args.layer
     if layer not in deckard_layer_dict:
         raise ValueError(f"Layer {layer} not found.")
-    print("Trying to run layer", layer)
     parser, sub_main = deckard_layer_dict[layer]
     # Parse the arguments.
     args = parser.parse_args(args.args)
     # Print the arguments and values
-    import yaml
-
-    print(yaml.dump(OmegaConf.to_container(args)))
-    input("Press Enter to continue...")
     # Run the main function.
     sub_main(args)
 
 
-parser = argparse.ArgumentParser()
-# Choose which layers to run.
-parser.add_argument("layer", help="The layers to run.")
-# The rest of the arguments are passed to the layer.
-parser.add_argument(
-    "args",
-    nargs=argparse.REMAINDER,
-    help="Arguments to pass to the layer.",
-)
-# parse the layer to know which subparser to use.
-args = parser.parse_args()
-
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--submodule",
-        type=str,
-        help=f"Submodule to run. Choices: {layer_list}",
-    )
-    parser.add_argument(
-        "--config_file",
-        type=str,
-        help="default hydra configuration file that you would like to reproduce with dvc repro.",
-    )
-    parser.add_argument("--config_dir", type=str, default="conf")
-    parser.add_argument("other_args", type=str, nargs="*")
-    args = parser.parse_args()
-    submodule = args.submodule
-    if submodule is not None:
-        assert (
-            args.config_file is None
-        ), "config_file and submodule cannot be specified at the same time"
-    if submodule not in layer_list and submodule is not None:
-        raise ValueError(f"Submodule {submodule} not found. Choices: {layer_list}")
-    if len(args.other_args) > 0:
-        other_args = " ".join(args.other_args)
-    else:
-        other_args = []
-    if submodule is None:
-        assert (
-            parse_and_repro(other_args, args.config_file, config_dir=args.config_dir)
-            == 0
-        )
-    else:
-        assert run_submodule(submodule, other_args) == 0
+    # pop the first argument which is the script name
+    layer = sys.argv.pop(1)
+    # pass the rest of the arguments to the main function
+    main(layer, sys.argv)
