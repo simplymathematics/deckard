@@ -9,7 +9,7 @@ from deckard.layers.compile import save_results
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["merge_csv", "main", "parser"]
+__all__ = ["merge_csv", "main", "merge_parser"]
 
 
 def merge_csv(
@@ -129,7 +129,7 @@ def parse_cleaning_config(config_file, metadata_file=None, subset_metadata_file=
     return dict_
 
 
-def main(args):
+def merge_main(args):
     config = parse_cleaning_config(args.config, args.metadata, args.subset_metadata)
     if args.output_folder is None:
         args.output_folder = Path().cwd()
@@ -199,33 +199,33 @@ def add_subset_metadata(df, metadata_list=[]):
     return df
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
+merge_parser = argparse.ArgumentParser()
+merge_parser.add_argument(
     "--output_file",
     type=str,
     help="Name of the output file",
     default="merged.csv",
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--output_folder",
     type=str,
     help="Name of the output folder",
     required=False,
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--smaller_file",
     type=str,
     help="Name(s) of the files to merge into the big file.",
     required=False,
     nargs="*",
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--config",
     type=str,
     help="Name of file containing a 'fillna' config dictionary.",
     required=False,
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--metadata",
     type=str,
     help="Name of file containing a 'metadata' dictionary.",
@@ -233,14 +233,14 @@ parser.add_argument(
     # set default to --config
     default=None,
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--subset_metadata",
     type=str,
     help="Name of file containing a 'subset_metadata' dictionary.",
     required=False,
     default=None,
 )
-parser.add_argument(
+merge_parser.add_argument(
     "--how",
     type=str,
     help="Type of merge to perform. Default is 'outer'.",
@@ -248,5 +248,5 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    args = merge_parser.parse_args()
+    merge_main(args)
