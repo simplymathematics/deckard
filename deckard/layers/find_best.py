@@ -30,7 +30,8 @@ def find_optuna_best(
         directions = [direction]
     else:
         assert isinstance(
-            directions, list
+            directions,
+            list,
         ), f"Directions is not a list: {type(directions)}"
     for direction in directions:
         assert direction in [
@@ -64,7 +65,10 @@ def find_optuna_best(
         df.to_csv(study_csv)
     # To dotlist
     params = merge_best_with_default(
-        config_folder, default_config, config_subdir, study
+        config_folder,
+        default_config,
+        config_subdir,
+        study,
     )
     if params_file is not None:
         params_file = create_new_config_in_subdir(
@@ -78,7 +82,11 @@ def find_optuna_best(
 
 
 def merge_best_with_default(
-    config_folder, default_config, config_subdir, study, use_optuna_best=True
+    config_folder,
+    default_config,
+    config_subdir,
+    study,
+    use_optuna_best=True,
 ):
     if use_optuna_best is True:
         best_params = flatten_dict(study.best_params)

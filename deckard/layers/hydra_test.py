@@ -1,7 +1,7 @@
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
 import sys
-
+import hydra
 
 working_dir = Path().cwd()
 config_dir = "conf"

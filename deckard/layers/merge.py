@@ -9,7 +9,7 @@ from deckard.layers.compile import save_results
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["merge_csv", "main", "merge_parser"]
+__all__ = ["merge_csv", "merge_main", "merge_parser"]
 
 
 def merge_csv(

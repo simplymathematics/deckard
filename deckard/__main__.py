@@ -57,7 +57,7 @@ deckard_layer_dict = {
     "query_kepler": (kepler_parser, kepler_main),
 }
 assert len(deckard_layer_dict) == len(
-    layer_list
+    layer_list,
 ), "Some layers are missing from the deckard_layer_dict"
 
 
