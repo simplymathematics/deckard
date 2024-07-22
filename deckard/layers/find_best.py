@@ -29,7 +29,9 @@ def find_optuna_best(
     if isinstance(direction, str):
         directions = [direction]
     else:
-        assert isinstance(directions, list), f"Directions is not a list: {type(directions)}"
+        assert isinstance(
+            directions, list
+        ), f"Directions is not a list: {type(directions)}"
     for direction in directions:
         assert direction in [
             "minimize",
@@ -61,7 +63,9 @@ def find_optuna_best(
         Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(study_csv)
     # To dotlist
-    params = merge_best_with_default(config_folder, default_config, config_subdir, study)
+    params = merge_best_with_default(
+        config_folder, default_config, config_subdir, study
+    )
     if params_file is not None:
         params_file = create_new_config_in_subdir(
             params_file,
@@ -72,7 +76,10 @@ def find_optuna_best(
         )
     return params
 
-def merge_best_with_default(config_folder, default_config, config_subdir, study, use_optuna_best = True):
+
+def merge_best_with_default(
+    config_folder, default_config, config_subdir, study, use_optuna_best=True
+):
     if use_optuna_best is True:
         best_params = flatten_dict(study.best_params)
         more_params = flatten_dict(study.best_trial.user_attrs)
@@ -97,6 +104,7 @@ def merge_best_with_default(config_folder, default_config, config_subdir, study,
         config_subdir=config_subdir,
     )
     return params
+
 
 def group_by_params(df):
     not_these = ["number", "value"]
@@ -137,6 +145,7 @@ def group_by_params(df):
     new_df["nuniques"] = nuniques
     assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(new_df)}"
     return new_df
+
 
 def get_overrides(config_subdir, best_params):
     overrides = []
@@ -198,8 +207,6 @@ def create_new_config_in_subdir(
     return params_file
 
 
-
-
 def override_default_with_best(
     config_folder,
     default_config,
@@ -214,6 +221,7 @@ def override_default_with_best(
     cfg = OmegaConf.to_container(cfg, resolve=False)
     return cfg
 
+
 find_best_parser = argparse.ArgumentParser()
 find_best_parser.add_argument("--params_file", type=str, default=True)
 
@@ -227,6 +235,7 @@ find_best_parser.add_argument("--verbosity", type=str, default="INFO")
 find_best_parser.add_argument("--storage_name", type=str, required=True)
 find_best_parser.add_argument("--direction", type=str, default="maximize")
 find_best_parser.add_argument("--study_type", type=str, default="optuna")
+
 
 def find_best_main(find_optuna_best, args):
     args.config_folder = Path(args.config_folder).resolve().as_posix()
@@ -247,6 +256,7 @@ def find_best_main(find_optuna_best, args):
         )
     else:
         raise NotImplementedError(f"Study type {args.study_type} not implemented.")
+
 
 if __name__ == "__main__":
     args = find_best_parser.parse_args()

@@ -395,7 +395,7 @@ for model in art_models:
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
-            if len(probs.shape) > 1:    
+            if len(probs.shape) > 1:
                 probs = np.squeeze(probs)
                 probs = probs[:, 1]
             else:

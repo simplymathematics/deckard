@@ -35,9 +35,6 @@ for col in attack_results.columns:
         attack_results[col] = attack_results[col].apply(lambda x: x[0])
 
 
-
-
-
 graph4 = sns.lineplot(
     x="data.sample.train_size",
     y="train_time",

@@ -207,10 +207,13 @@ def compile_main(parse_results, save_results, args):
     assert Path(
         report_file,
     ).exists(), f"Results file {report_file} does not exist. Something went wrong."
-    
+
+
 compile_parser = argparse.ArgumentParser()
 compile_parser.add_argument("--results_file", type=str, default="results.csv")
-compile_parser.add_argument("--report_folder", type=str, default="reports", required=True)
+compile_parser.add_argument(
+    "--report_folder", type=str, default="reports", required=True
+)
 compile_parser.add_argument("--results_folder", type=str, default=".")
 compile_parser.add_argument("--exclude", type=list, default=None, nargs="*")
 compile_parser.add_argument("--verbose", type=str, default="INFO")

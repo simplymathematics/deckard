@@ -16,6 +16,7 @@ v100 = 250 / 3600
 p100 = 250 / 3600
 l4 = 72 / 3600
 
+
 @dataclass
 class PromQuery:
     def __init__(self):
@@ -122,6 +123,7 @@ def kepler_main(args):
             data.at[index, new_columns[start_times.index(start_time)]] = consumed_power
             data.at[index, "peak_power"] = peak_power
     data.to_csv(output_file)
+
 
 kepler_parser = argparse.ArgumentParser()
 kepler_parser.add_argument("--input_file", type=str, default=None)

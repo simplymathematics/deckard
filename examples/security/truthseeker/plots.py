@@ -35,9 +35,6 @@ for col in attack_results.columns:
         attack_results[col] = attack_results[col].apply(lambda x: x[0])
 
 
-
-
-
 graph4 = sns.lineplot(
     x="data.sample.train_size",
     y="train_time",
@@ -334,7 +331,8 @@ graph11 = sns.lineplot(
     ax=ax[1, 0],
     legend=False,
     color="darkred",
-    style_order=["rbf", "poly", "linear"],err_style="bars",
+    style_order=["rbf", "poly", "linear"],
+    err_style="bars",
     errorbar=("ci", 99),
 )
 graph11.set(xscale="log", xlabel="Maximum Iterations", ylabel="False Confidence")
@@ -346,7 +344,8 @@ graph12 = sns.lineplot(
     ax=ax[1, 1],
     legend=False,
     color="darkred",
-    style_order=["rbf", "poly", "linear"],err_style="bars",
+    style_order=["rbf", "poly", "linear"],
+    err_style="bars",
     errorbar=("ci", 99),
 )
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="False Confidence")

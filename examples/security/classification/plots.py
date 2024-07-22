@@ -18,10 +18,7 @@ logger = logging.getLogger(__name__)
 # else:
 #     results = parse_results("reports/model_queue/")
 results = pd.read_csv("output/train.csv")
-input_size = (
-    results["data.generate.n_samples"]
-    * results["data.generate.n_features"]
-)
+input_size = results["data.generate.n_samples"] * results["data.generate.n_features"]
 results["Kernel"] = results["model.init.kernel"].copy()
 results["Features"] = results["data.generate.n_features"].copy()
 results["Samples"] = results["data.sample.train_size"].copy()

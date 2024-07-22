@@ -10,9 +10,9 @@ from .layers.data import data_parser, data_main
 from .layers.experiment import experiment_parser, experiment_main
 from .layers.find_best import find_best_parser, find_best_main
 from .layers.generate_grid import generate_grid_parser, generate_grid_main
-from .layers.hydra_test import  hydra_test_main
+from .layers.hydra_test import hydra_test_main
 from .layers.merge import merge_parser, merge_main
-from .layers.optimise import  optimise_main
+from .layers.optimise import optimise_main
 from .layers.parse import hydra_parser, parse_hydra_config
 from .layers.plots import plots_parser, plots_main
 from .layers.prepare_queue import prepare_queue_main
@@ -24,8 +24,7 @@ logger = logging.getLogger(__name__)
 layer_list = [
     "afr",
     "attack",
-    "clean_data"
-    "compile",
+    "clean_data" "compile",
     "data",
     "experiment",
     "find_best",
@@ -36,7 +35,7 @@ layer_list = [
     "parse",
     "plots",
     "prepare_queue",
-    "query_kepler",    
+    "query_kepler",
 ]
 
 
@@ -57,7 +56,11 @@ deckard_layer_dict = {
     "prepare_queue": (None, prepare_queue_main),
     "query_kepler": (kepler_parser, kepler_main),
 }
-assert len(deckard_layer_dict) == len(layer_list), "Some layers are missing from the deckard_layer_dict"
+assert len(deckard_layer_dict) == len(
+    layer_list
+), "Some layers are missing from the deckard_layer_dict"
+
+
 def main(layer, args):
     # Get the layer and the main function for the layer.
     if layer not in deckard_layer_dict:
