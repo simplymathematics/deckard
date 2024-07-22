@@ -49,40 +49,40 @@ from batchMixin import BatchedMixin
 logger = logging.getLogger(__name__)
 
 
-def _gzip_compressor(x):
+def _gzip_len(x):
     return len(gzip.compress(str(x).encode()))
 
 
-def _lzma_compressor(x):
+def _lzma_len(x):
     import lzma
 
     return len(lzma.compress(str(x).encode()))
 
 
-def _bz2_compressor(x):
+def _bz2_len(x):
     import bz2
 
     return len(bz2.compress(str(x).encode()))
 
 
-def _zstd_compressor(x):
+def _zstd_len(x):
     import zstd
 
     return len(zstd.compress(str(x).encode()))
 
 
-def _pickle_compressor(x):
+def _pickle_len(x):
     import pickle
 
     return len(pickle.dumps(x))
 
 
 compressors = {
-    "gzip": _gzip_compressor,
-    "lzma": _lzma_compressor,
-    "bz2": _bz2_compressor,
-    "zstd": _zstd_compressor,
-    "pkl": _pickle_compressor,
+    "gzip": _gzip_len,
+    "lzma": _lzma_len,
+    "bz2": _bz2_len,
+    "zstd": _zstd_len,
+    "pkl": _pickle_len,
 }
 
 
@@ -102,15 +102,15 @@ def ncd(
         float: The normalized compression distance between x1 and x2
     """
 
-    compressor = (
+    compressor_len = (
         compressors[method] if method in compressors.keys() else compressors["gzip"]
     )
     x1 = str(x1)
     x2 = str(x2)
-    Cx1 = compressor(x1) if cx1 is None else cx1
-    Cx2 = compressor(x2) if cx2 is None else cx2
+    Cx1 = compressor_len(x1) if cx1 is None else cx1
+    Cx2 = compressor_len(x2) if cx2 is None else cx2
     x1x2 = " ".join([x1, x2])
-    Cx1x2 = compressor(x1x2)
+    Cx1x2 = compressor_len(x1x2)
     min_ = min(Cx1, Cx2)
     max_ = max(Cx1, Cx2)
     ncd = (Cx1x2 - min_) / max_
