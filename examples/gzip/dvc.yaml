@@ -71,106 +71,106 @@ stages:
     - params.yaml
     - raw_data/ # Raw data
   ##############################################################################
-  test_each_dataset:
-    matrix:
-      dataset : [ddos, truthseeker, sms_spam, kdd_nsl]
-      model_name : [gzip_knn, gzip_svc, gzip_logistic]
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=train
-      files.name=${item.model_name}
-      data.sample.train_size=100
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      dataset=${item.dataset}
-      model_name=${item.model_name}
-      model=${item.model_name}
-      hydra.run.dir=${item.dataset}/logs/train/${item.model_name}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/train/${item.model_name}/${files.score_dict_file}
-    - ${item.dataset}/logs/train/${item.model_name}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
+  # test_each_dataset:
+  #   matrix:
+  #     dataset : [ddos, truthseeker, sms_spam, kdd_nsl]
+  #     model_name : [gzip_knn, gzip_svc, gzip_logistic]
+  #   cmd : >-
+  #     python -m deckard.layers.optimise 
+  #     stage=train
+  #     files.name=${item.model_name}
+  #     data.sample.train_size=100
+  #     files.directory=${item.dataset}
+  #     data=${item.dataset}
+  #     dataset=${item.dataset}
+  #     model_name=${item.model_name}
+  #     model=${item.model_name}
+  #     hydra.run.dir=${item.dataset}/logs/train/${item.model_name}
+  #     ++raise_exception=True 
+  #   deps:
+  #   - params.yaml
+  #   - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+  #   outs:
+  #   - ${item.dataset}/${files.reports}/train/${item.model_name}/${files.score_dict_file}
+  #   - ${item.dataset}/logs/train/${item.model_name}
+  #   params:
+  #     - data
+  #     - model
+  #     - scorers
+  #     - files
+  #     - dataset
+  #     - model_name
+  #     - device_id
   ##############################################################################
-  test_each_metric:
-    matrix:
-      metric: [gzip,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
-      model : [gzip_knn,] # gzip_svc, gzip_logistic
-      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
-      train_size: [20] #100, 1000, 10000
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=test_each_metric 
-      files.name=${item.model}/${item.metric}/${item.train_size}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      data.sample.train_size=${item.train_size}
-      dataset=${item.dataset}
-      model=${item.model}
-      model_name=${model_name}
-      model.init.metric=${item.metric} 
-      model.init.m=-1
-      hydra.run.dir=${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/test_each_metric/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
-    - ${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
+  # test_each_metric:
+  #   matrix:
+  #     metric: [gzip,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+  #     model : [gzip_knn,] # gzip_svc, gzip_logistic
+  #     dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+  #     train_size: [20] #100, 1000, 10000
+  #   cmd : >-
+  #     python -m deckard.layers.optimise 
+  #     stage=test_each_metric 
+  #     files.name=${item.model}/${item.metric}/${item.train_size}
+  #     files.directory=${item.dataset}
+  #     data=${item.dataset}
+  #     data.sample.train_size=${item.train_size}
+  #     dataset=${item.dataset}
+  #     model=${item.model}
+  #     model_name=${model_name}
+  #     model.init.metric=${item.metric} 
+  #     model.init.m=-1
+  #     hydra.run.dir=${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
+  #     ++raise_exception=True 
+  #   deps:
+  #   - params.yaml
+  #   - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+  #   outs:
+  #   - ${item.dataset}/${files.reports}/test_each_metric/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+  #   - ${item.dataset}/logs/test_each_metric/${item.model}/${item.metric}/${item.train_size}
+  #   params:
+  #     - data
+  #     - model
+  #     - scorers
+  #     - files
+  #     - dataset
+  #     - model_name
+  #     - device_id
   # ##############################################################################
-  test_each_model:
-    matrix:
-      metric: [gzip] #,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
-      model : [gzip_knn, gzip_svc, gzip_logistic] 
-      dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
-      train_size: [20] #100, 1000, 10000
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=test_each_model 
-      files.name=${item.model}/${item.metric}/${item.train_size}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      data.sample.train_size=${item.train_size}
-      dataset=${item.dataset}
-      model=${item.model}
-      model_name=${model_name}
-      model.init.metric=${item.metric} 
-      model.init.m=-1
-      hydra.run.dir=${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/test_each_model/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
-    - ${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
+  # test_each_model:
+  #   matrix:
+  #     metric: [gzip] #,  zstd, pkl, bz2, lzma,levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
+  #     model : [gzip_knn, gzip_svc, gzip_logistic] 
+  #     dataset : [kdd_nsl] #truthseeker, sms_spam, ddos
+  #     train_size: [20] #100, 1000, 10000
+  #   cmd : >-
+  #     python -m deckard.layers.optimise 
+  #     stage=test_each_model 
+  #     files.name=${item.model}/${item.metric}/${item.train_size}
+  #     files.directory=${item.dataset}
+  #     data=${item.dataset}
+  #     data.sample.train_size=${item.train_size}
+  #     dataset=${item.dataset}
+  #     model=${item.model}
+  #     model_name=${model_name}
+  #     model.init.metric=${item.metric} 
+  #     model.init.m=-1
+  #     hydra.run.dir=${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
+  #     ++raise_exception=True 
+  #   deps:
+  #   - params.yaml
+  #   - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+  #   outs:
+  #   - ${item.dataset}/${files.reports}/test_each_model/${item.model}/${item.metric}/${item.train_size}/${files.score_dict_file}
+  #   - ${item.dataset}/logs/test_each_model/${item.model}/${item.metric}/${item.train_size}
+  #   params:
+  #     - data
+  #     - model
+  #     - scorers
+  #     - files
+  #     - dataset
+  #     - model_name
+  #     - device_id
   ##############################################################################
   grid_search:
     matrix: 
@@ -222,37 +222,37 @@ stages:
   #   outs:
   #     - conf/model/best_${item.model}_${item.dataset}.yaml
   #############################################################################
-  test_each_method:
-    matrix:
-      dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
-      method: [medoid, sum, svc, hardness, nearmiss,random,knn] 
-    cmd : >-
-      python -m deckard.layers.optimise 
-      stage=train 
-      +model.init.sampling_method=${item.method} 
-      model.init.m=3
-      data.sample.train_size=100
-      files.name=${item.method}
-      files.directory=${item.dataset}
-      data=${item.dataset}
-      dataset=${item.dataset}
-      model_name=${item.method}
-      hydra.run.dir=${item.dataset}/logs/method/${item.method}
-      ++raise_exception=True 
-    deps:
-    - params.yaml
-    - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
-    outs:
-    - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
-    - ${item.dataset}/logs/method/${item.method}
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - dataset
-      - model_name
-      - device_id
+  # test_each_method:
+  #   matrix:
+  #     dataset : [ddos] # kdd_nsl, truthseeker, sms_spam, 
+  #     method: [medoid, sum, svc, hardness, nearmiss,random,knn] 
+  #   cmd : >-
+  #     python -m deckard.layers.optimise 
+  #     stage=train 
+  #     +model.init.sampling_method=${item.method} 
+  #     model.init.m=3
+  #     data.sample.train_size=100
+  #     files.name=${item.method}
+  #     files.directory=${item.dataset}
+  #     data=${item.dataset}
+  #     dataset=${item.dataset}
+  #     model_name=${item.method}
+  #     hydra.run.dir=${item.dataset}/logs/method/${item.method}
+  #     ++raise_exception=True 
+  #   deps:
+  #   - params.yaml
+  #   - ${files.directory}/${files.reports}/train/default/${files.score_dict_file}
+  #   outs:
+  #   - ${item.dataset}/${files.reports}/train/${item.method}/${files.score_dict_file}
+  #   - ${item.dataset}/logs/method/${item.method}
+  #   params:
+  #     - data
+  #     - model
+  #     - scorers
+  #     - files
+  #     - dataset
+  #     - model_name
+  #     - device_id
   ##############################################################################
   condense:
     matrix:
