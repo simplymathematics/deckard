@@ -1,61 +1,88 @@
-line_plot:
-  - file : sampling_method_vs_accuracy.pdf
-    hue: model.init.sampling_method
-    title: #"Accuracy vs Sampling Method"
-    x : model.init.m
-    xlabel: Percentage of Samples per Class
+cat_plot:
+  - file : condensing_method_vs_accuracy.pdf
+    digitize : Condensing Ratio 
+    x: Condensing Method
+    hue : Condensing Ratio 
     y : accuracy
-    ylabel: Accuracy
-    hue_order:
-    - random
-    - svc
-    - knn
-    - sum
-    - medoid
-    - nearmiss
-    - hardness
-    errorbar: se
-    err_style: bars
-    xlim : [0, 1]
     y_scale : linear
-    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
-  - file: sampling_method_vs_train_time.pdf
-    hue: model.init.sampling_method
-    title: #"Training Time vs Sampling Method"
-    x : model.init.m
-    xlabel: Percentage of Samples per Class
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind : boxen
+    col : Model
+    rotation : 45
+    order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    xticklabels:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    xlabels: "Condensing Method"
+    ylabels: "Accuracy"
+    legend_title : "Sample Ratio"
+  - file: condensing_method_vs_train_time.pdf
+    x: Condensing Method
+    hue : Condensing Ratio 
+    digitize : Condensing Ratio 
     y : train_time
-    ylabel: Training Time (s)
-    y_scale : linear
-    hue_order:
-    - random
-    - svc
-    - knn
-    - sum
-    - medoid
-    - nearmiss
-    - hardness
-    errorbar: se
-    err_style: bars
-    xlim : [0, 1]
-    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
-  - file : sampling_method_vs_predict_time.pdf
-    hue: model.init.sampling_method
-    title: #"Prediction Time vs Sampling Method"
-    x : model.init.m
-    xlabel: Percentage of Samples per Class
-    y : predict_time
-    ylabel: Prediction Time (s)
     y_scale : log
-    hue_order:
-    - random
-    - svc
-    - knn
-    - sum
-    - medoid
-    - nearmiss
-    - hardness
-    errorbar: se
-    err_style: bars
-    xlim : [0, 1]
-    legend: {"title": "Sampling Method", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind : boxen
+    col : Model
+    rotation : 45
+    order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    xticklabels:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - k-NN
+    xlabels: "Condensing Method"
+    ylabels: "Training Time"
+    legend_title : "Sample Ratio"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file : condensing_method_vs_predict_time.pdf
+    x: Condensing Method
+    hue : Condensing Ratio 
+    digitize : Condensing Ratio 
+    y : predict_time
+    y_scale : log
+    col : Model
+    rotation : 45
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind : boxen
+    order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    xticklabels:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - k-NN
+    xlabels: "Condensing Method"
+    ylabels: "Prediction Time"
+    legend_title : "Sample Ratio"

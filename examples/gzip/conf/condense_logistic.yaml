@@ -42,7 +42,7 @@ hydra:
       n_ei_candidates: 24
       multivariate: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ${dataset}_${model_name}_${stage}
+    study_name: ${dataset}_${model_name}_condense
     storage: sqlite:///optuna.db
     n_jobs: 1
     n_trials : 1
@@ -53,8 +53,7 @@ hydra:
       +model.init.C : 1e-2,1e-1,1e0,1e1,1e2
       +model.init.fit_intercept : True,False
       +model.init.class_weight : balanced,None
-      model.init.symmetric : True,False
-      ++model.init.precompute : True
+      model.init.symmetric : True
       model.init.metric : gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
       model_name : ${model_name}
       data.sample.random_state: 0,1,2,3,4,5,6,7,8,9
