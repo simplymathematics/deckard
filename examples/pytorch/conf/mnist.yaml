@@ -23,58 +23,6 @@ hydra:
   run:
     dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${model_name}
-    subdir : ${def_name}/${atk_name}/${hydra.job.num}
-  sweeper:
-    sampler:
-      _target_: optuna.samplers.GridSampler
-    direction: ${direction}
-    study_name: ${model_name}_${def_name}_${atk_name}
-    storage: sqlite:///${dataset}.db
-    n_jobs: ${oc.env:HYDRA_SWEEPER_N_JOBS, 8}
-    n_trials: ${oc.env:HYDRA_SWEEPER_N_TRIALS, 128}
-    max_failure_rate: 1.0
-    params:
-      ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
-      ++model.trainer.nb_epoch: choice(1, 10, 30, 50, 100)
-    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-  launcher:
-    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: ${oc.env:HYDRA_SWEEPER_N_JOBS, 8}
-    prefer : threads
-    verbose: 10
-    timeout: null
-    pre_dispatch: n_jobs
-    batch_size: auto
-    temp_folder: /tmp/deckard
-    max_nbytes: 100000
-    mmap_mode: r
-
-defaults:
-    - _self_
-    - data: torch_mnist
-    - model: torch_mnist
-    - attack: default
-    - files: mnist
-    - scorers: default
-    - override hydra/sweeper : optuna
-    - override hydra/sweeper/sampler : grid
-    - override hydra/launcher : joblib
-def_name : control
-atk_name : hsj
-dataset : mnist
-model_name : ResNet18
-device_id : gpu
-stage : '???'
-direction : 
-  -  "maximize"
-_target_ : deckard.base.experiment.Experiment
-optimizers : 
-  - accuracy
-hydra:
-  run:
-    dir: ${files.directory}/logs/${stage}/
-  sweep:
     dir: ${files.directory}/logs/${stage}/${model_name}/${model.trainer.nb_epochs}
     subdir : ${def_name}/${atk_name}/${hydra.job.num}
   sweeper:
