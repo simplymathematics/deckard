@@ -7,6 +7,7 @@ import seaborn as sns
 import yaml
 import numpy as np
 from tqdm import tqdm
+from typing import Literal
 from .utils import deckard_nones as nones
 from .compile import save_results, load_results
 
@@ -14,18 +15,7 @@ logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
-def fill_train_time(
-    data,
-    match=[
-        "model.init.name",
-        "model.trainer.nb_epoch",
-        "model.art.preprocessor",
-        "model.art.postprocessor",
-        "def_name",
-        "def_gen",
-        "defence_name",
-    ],
-):
+def fill_train_time(data, match=["model.init.name", "model.trainer.nb_epoch", "model.art.preprocessor", "model.art.postprocessor", "def_name", "def_gen", "defence_name"]):
     sort_by = []
     for col in match:
         # find out which columns have the string in match
@@ -35,9 +25,7 @@ def fill_train_time(
             pass
     # Convert "train_time" to numeric
     # Fill missing values in "train_time" with the max of the group
-    data["train_time"] = pd.to_numeric(data["train_time"], errors="coerce").astype(
-        float,
-    )
+    data["train_time"] = pd.to_numeric(data["train_time"], errors="coerce").astype(float)
     # Group by everything in the "match" list
     assert isinstance(data, pd.DataFrame), "data is not a pandas DataFrame"
     # Sort by the entries in "match"
@@ -45,6 +33,7 @@ def fill_train_time(
     data["train_time"] = data["train_time"].fillna(method="ffill")
     data["train_time"] = data["train_time"].fillna(method="bfill")
     return data
+
 
 
 def drop_rows_without_results(
@@ -74,7 +63,7 @@ def drop_rows_without_results(
     """
 
     logger.info(f"Dropping frames without results for {subset}")
-
+    
     for col in subset:
         logger.info(f"Dropping frames without results for {col}")
         before = data.shape[0]
@@ -124,6 +113,7 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
+        survival_time = data.loc[:, "predict_time"] * data.loc[:, "accuracy"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
             data.loc[:, "predict_proba_time"],
@@ -131,19 +121,36 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
+        surival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "accuracy"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (
-        (1 - data.loc[:, "adv_accuracy"])
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "predict_time"]
-    )
-
+    if "adv_fit_time" in data.columns:
+        assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
+        if "predict_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = data.loc[:, "predict_time"] * data.loc[:, "adv_accuracy"]
+        elif "predict_proba_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "adv_accuracy"]
+        else:
+            raise ValueError("predict_time or predict_proba_time not in data.columns")
+    data = data.assign(adv_survival_time=adv_survival_time)
+    data = data.assign(survival_time=survival_time)
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
-    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
@@ -471,6 +478,8 @@ def format_control_parameter(data, control_dict, fillna):
     return data, fillna
 
 
+
+    
 def replace_strings_in_data(data, replace_dict):
     for k, v in replace_dict.items():
         logger.info(f"Replacing strings in {k}...")
@@ -499,6 +508,11 @@ def replace_strings_in_columns(data, replace_dict):
                 data.rename(columns={k: v}, inplace=True)
             else:
                 pass
+    after = list(data.columns)
+    if len(replace_dict) > 0:
+        logger.info(f"Columns after replacement: {after}")
+        assert cols != after, "Columns not replaced."
+        assert len(cols) == len(after), f"Length of columns before and after replacement not equal: {len(cols)} != {len(after)}."
     return data
 
 
@@ -509,7 +523,7 @@ def clean_data_for_plotting(
     control_dict={},
     fillna={},
     replace_dict={},
-    col_replace_dict={},
+    col_replace_dict = {},
     pareto_dict={},
 ):
     """
@@ -565,23 +579,20 @@ def clean_data_for_plotting(
     data = fill_na(data, fillna)
     data = replace_strings_in_data(data, replace_dict)
     data = replace_strings_in_columns(data, col_replace_dict)
-
+    
     if len(pareto_dict) > 0:
         data = find_pareto_set(data, pareto_dict)
     return data
-
 
 def shorten_defence_names(data, def_gen_dict):
     def_gen = data.def_gen.map(def_gen_dict)
     data.def_gen = def_gen
     data.dropna(axis=0, subset=["def_gen"], inplace=True)
 
-
 def shorten_attack_names(data, atk_gen_dict):
     atk_gen = data.atk_gen.map(atk_gen_dict)
     data.atk_gen = atk_gen
     data.dropna(axis=0, subset=["atk_gen"], inplace=True)
-
 
 def fill_na(data, fillna):
     for k, v in fillna.items():
@@ -590,7 +601,6 @@ def fill_na(data, fillna):
         else:
             data[k] = str(v)
     return data
-
 
 def find_pareto_set(data, pareto_dict):
     data = pareto_set(data, pareto_dict)
@@ -661,10 +671,7 @@ def main(args):
     assert Path(
         args.input_file,
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
-    data = load_results(
-        results_file=Path(args.input_file).name,
-        results_folder=Path(args.input_file).parent,
-    )
+    data = load_results(results_file=Path(args.input_file).name, results_folder=Path(args.input_file).parent)
     # Strip whitespace from column names
     trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # noqa E731
     data.rename(columns=trim_strings, inplace=True)
@@ -675,7 +682,9 @@ def main(args):
         args.drop_if_empty = args.drop_if_empty.split(",")
     else:
         assert isinstance(args.drop_if_empty, list)
-
+    
+    
+    
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
