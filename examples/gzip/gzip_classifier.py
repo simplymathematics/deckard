@@ -436,11 +436,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             )
             self._save_distance_matrix(self.distance_matrix, distance_matrix)
         elif isinstance(self.distance_matrix, np.ndarray) and len(
-            self.distance_matrix
+            self.distance_matrix,
         ) == len(self.X_):
             distance_matrix = self.distance_matrix
         elif isinstance(self.distance_matrix, np.ndarray) and len(
-            self.distance_matrix
+            self.distance_matrix,
         ) != len(self.X_):
             distance_matrix = self._calculate_distance_matrix(
                 self.X_,

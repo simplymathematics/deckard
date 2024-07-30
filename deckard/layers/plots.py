@@ -175,7 +175,8 @@ def digitize_cols(data, digitize):
         digitize = [digitize]
     else:
         assert isinstance(
-            digitize, list
+            digitize,
+            list,
         ), "digitize must be a list of columns to digitize"
     if len(digitize) > 0:
         for col in digitize:

@@ -26,7 +26,8 @@ def objective(trial: optuna.Trial):
     elif model_type == "svc":
         C = trial.suggest_loguniform("C", 1e-10, 1e10)
         kernel = trial.suggest_categorical(
-            "kernel", ["linear", "rbf", "poly", "sigmoid"]
+            "kernel",
+            ["linear", "rbf", "poly", "sigmoid"],
         )
         class_weight = trial.suggest_categorical("class_weight", ["balanced", None])
         if kernel == "poly":

@@ -57,7 +57,7 @@ class BatchedMixin:
                     train_scores.append(score)
                     if X_test is not None:
                         assert len(X_test) == len(
-                            y_test
+                            y_test,
                         ), "X_test and y_test must have the same length"
                         test_score = self.score(X_test, y_test)
                         test_scores.append(test_score)
@@ -69,7 +69,8 @@ class BatchedMixin:
                         if i == 0:
                             # rotate the log file by appending a timestamp before the extension
                             rotated_log_name = log_file.replace(
-                                ".csv", f"_{int(time())}.csv"
+                                ".csv",
+                                f"_{int(time())}.csv",
                             )
                             # rename the log file
                             Path(log_file).rename(rotated_log_name)
