@@ -28,6 +28,7 @@ from .compile import load_results, save_results
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["afr_main", "survival_probability_calibration", "fit_aft", "plot_aft", "afr_parser"]
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
 def survival_probability_calibration(
