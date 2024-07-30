@@ -215,7 +215,7 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
         if "metrics" in pipe:
             metric_list = [str(x).split(":")[0] for x in pipe["metrics"]]
             file_list.extend(metric_list)
-    file_string = str(file_list)
+    file_string = str(file_list).replace("item.", "")
     files = params["files"]
     file_list = list(files.keys())
     for key in file_list:
