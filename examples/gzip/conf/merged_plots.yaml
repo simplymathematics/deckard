@@ -1,0 +1,372 @@
+cat_plot:
+  - file: models_vs_accuracy.pdf
+    x : Model
+    y : accuracy
+    hue : data.sample.train_size
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : Accuracy
+    legend_title: "Samples"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    col : Dataset
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+  - file: models_vs_train_time.pdf
+    x : Model
+    y : train_time
+    hue : data.sample.train_size
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_t$ (s)
+    legend_title: "Samples"
+    rotation: 90
+    col : Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    y_scale : log
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+  - file: models_vs_predict_time.pdf
+    x : Model
+    y : predict_time_per_sample
+    hue : data.sample.train_size
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_i$ (s)
+    legend_title: "Samples"
+    col : Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    y_scale : log
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+  - file: symmetric_models_vs_accuracy.pdf
+    row : Model
+    x : data.sample.train_size
+    y : accuracy
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : "Samples" 
+    ylabels : Accuracy
+    legend_title: " "
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    col :  Dataset
+    col_order: 
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    row_order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+  - file: symmetric_models_vs_train_time.pdf
+    row : Model
+    x : data.sample.train_size
+    y : train_time_per_sample
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_t$ (s)
+    legend_title: " "
+    rotation: 90
+    col : Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    y_scale : log
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    row_order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+  - file: symmetric_models_vs_predict_time.pdf
+    x : data.sample.train_size
+    row : Model
+    y : predict_time_per_sample
+    hue : Symmetric
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_i$ (s)
+    legend_title: " "
+    col : Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    y_scale : log
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    row_order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+  - file: condensing_methods_vs_accuracy.pdf
+    x : Model
+    y : accuracy
+    hue : Condensing Method
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : Accuracy
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    col : Dataset
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    legend_title: "Condensing Method"
+  - file: condensing_methods_vs_train_time.pdf
+    x : Model
+    y : train_time
+    hue : Condensing Method
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_t$ (s)
+    legend_title: "Condensing Method"
+    rotation: 90
+    col : Dataset
+    y_scale : log
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+  - file: condensing_methods_vs_predict_time.pdf
+    x : Model
+    y : predict_time_per_sample
+    hue : Condensing Method
+    errorbar: se
+    kind : boxen
+    titles :
+    xlabels : " " 
+    ylabels : $t_i$ (s)
+    legend_title: "Condensing Method"
+    col : Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    rotation: 90
+    y_scale : log
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+line_plot:
+  - file: compressor_metric_vs_accuracy.pdf
+    hue: Metric
+    title: #"Accuracy vs $m$-best samples across datasets and compressors"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: accuracy
+    ylabel: Accuracy
+    hue_order:
+    - GZIP
+    - Pickle
+    - BZ2
+    - ZSTD
+    - LZMA
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+  - file: string_metric_vs_accuracy.pdf
+    hue : Metric
+    title: #"Accuracy vs $m$-best samples across datasets and string metrics"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: accuracy
+    ylabel: Accuracy
+    hue_order:
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler
+    - SeqRatio
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+  - file: string_metric_vs_train_time.pdf
+    hue : Metric
+    title: #"Accuracy vs $m$-best samples across datasets and string metrics"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: train_time
+    ylabel: $t_t$ (s)
+    hue_order:
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler
+    - SeqRatio
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+    y_scale: log
+  - file: compressor_metric_vs_train_time.pdf
+    hue: Metric
+    title: #"Training Time vs $m$-best samples across datasets and compressors"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: train_time
+    ylabel: $t_t$ (s)
+    hue_order:
+    - GZIP
+    - Pickle
+    - BZ2
+    - ZSTD
+    - LZMA
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+    y_scale: log
+  - file: string_metric_vs_predict_time.pdf
+    hue : Metric
+    title: #"Accuracy vs $m$-best samples across datasets and string metrics"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: predict_time_per_sample
+    ylabel: $t_i$ (s)
+    hue_order:
+    - Levenshtein
+    - Ratio
+    - Hamming
+    - Jaro
+    - Jaro-Winkler
+    - SeqRatio
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+    y_scale: log
+  - file: compressor_metric_vs_predict_time.pdf
+    hue: Metric
+    title: #"Prediction Time vs $m$-best samples across datasets and compressors"
+    x: data.sample.train_size
+    xlabel: Number of Training Samples
+    y: predict_time_per_sample
+    ylabel: $t_i$ (s)
+    hue_order:
+    - GZIP
+    - Pickle
+    - BZ2
+    - ZSTD
+    - LZMA
+    errorbar: se
+    err_style: bars
+    xlim: [10, 500]
+    style: Dataset
+    style_order:
+    - "DDoS"
+    - "SMS Spam"
+    - "KDD NSL"
+    - "Truthseeker"
+    legend : 
+      bbox_to_anchor : [1.05, .5]
+      loc: center left
+      prop: {"size" : 12}
+    y_scale: log

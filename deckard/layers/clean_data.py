@@ -478,7 +478,9 @@ def replace_strings_in_data(data, replace_dict):
             v,
             dict,
         ), f"Value for key {k} in replace_dict is not a dictionary."
-        assert k in data.columns, f"Key {k} not in data.columns."
+        if k not in data.columns:
+            logger.warning(f"Column {k} not in data. Ignoring.")
+            continue
         for k1, v1 in v.items():
             logger.info(f"Replacing {k1} with {v1} in {k}...")
             k1 = str(k1)
@@ -610,41 +612,41 @@ def drop_values(data, drop_dict):
     return data
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
+clean_data_parser = argparse.ArgumentParser()
+clean_data_parser.add_argument(
     "-i",
     "--input_file",
     type=str,
     help="Data file to read from",
     required=True,
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-o",
     "--output_file",
     type=str,
     help="Data file to read from",
     required=True,
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-v",
     "--verbosity",
     default="INFO",
     help="Increase output verbosity",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-c",
     "--config",
     help="Path to the config file",
     default="clean.yaml",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-s",
     "--subset",
     help="Subset of data you would like to plot",
     default=None,
     nargs="?",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-d",
     "--drop_if_empty",
     help="Drop row if this columns is empty",
@@ -656,14 +658,14 @@ parser.add_argument(
         "predict_time",
     ],
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "--pareto_dict",
     help="Path to (optional) pareto set dictionary.",
     default=None,
 )
 
 
-def main(args):
+def clean_data_main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.input_file,
@@ -726,5 +728,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    args = clean_data_parser.parse_args()
+    clean_data_main(args)

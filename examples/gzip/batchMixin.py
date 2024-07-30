@@ -4,12 +4,9 @@ import numpy as np
 
 
 from sklearn.datasets import make_classification
-import random
-
-# from gzip_classifier import GzipSVC, GzipKNN, GzipLogisticRegressor
-from sklearn.svm import SVC
+from pathlib import Path
+from time import time
 from sklearn.model_selection import train_test_split
-import plotext
 
 logger = logging.getLogger(__name__)
 
@@ -25,38 +22,96 @@ class BatchedMixin:
         nb_epoch=1,
         **kwargs,
     ):
-        self.batch_size = kwargs.pop("m", batch_size)
+        self.batch_size = kwargs.pop("batch_size", batch_size)
         self.max_batches = kwargs.pop("max_batches", max_batches)
+        self.training_log = kwargs.pop("training_log", None)
         nb_epoch = kwargs.pop("nb_epoch", nb_epoch)
         if not nb_epoch >= 1:
             nb_epoch = 1
         self.nb_epoch = nb_epoch
-        if "m" in kwargs:
-            logger.warning(
-                f"Parameter 'm' is being overwritten with batch_size={self.batch_size}.",
-            )
-            kwargs["m"] = self.batch_size
         super().__init__(**kwargs)
-        self.predict = self.batched_predict(self.predict)
         if hasattr(self, "_find_best_samples"):
             self._find_best_samples = self.batched_find_best_samples(
                 self._find_best_samples,
             )
-        if hasattr(self, "score"):
-            self.score = self.batched_score(self.score)
         self.fit = self.batched_fit(self.fit)
-        self.predict = self.batched_predict(self.predict)
         if self.nb_epoch > 1:
             self.fit = self.epoch_fit(self.fit)
-        # self.score = self.batched_score(self.score)
 
     def epoch_fit(self, fit_func):
         def wrapper(*args, **kwargs):
             X, y = args
-            for i in range(self.nb_epoch):
-                random.shuffle(X)
-                random.shuffle(y)
+            X_test = kwargs.pop("X_test", None)
+            y_test = kwargs.pop("y_test", None)
+            log_file = self.training_log if hasattr(self, "training_log") else None
+            for i in tqdm(range(self.nb_epoch), desc="Epochs", leave=True, position=0):
+                # Shuffle the indices of X,y
+                indices = np.arange(len(X))
+                np.random.shuffle(indices)
+                X = X[indices]
+                y = y[indices]
+                logger.debug(f"Epoch {i + 1}/{self.nb_epoch}")
                 fit_func(X, y, **kwargs)
+                if hasattr(self, "score"):
+                    score = self.score(X, y)
+                    train_scores.append(score)
+                    if X_test is not None:
+                        assert len(X_test) == len(
+                            y_test,
+                        ), "X_test and y_test must have the same length"
+                        test_score = self.score(X_test, y_test)
+                        test_scores.append(test_score)
+                        logger.info(f"Train score: {score}, Test score: {test_score}")
+                    else:
+                        logger.info(f"Train score: {score}")
+                if log_file is not None:
+                    if Path(log_file).exists():
+                        if i == 0:
+                            # rotate the log file by appending a timestamp before the extension
+                            rotated_log_name = log_file.replace(
+                                ".csv",
+                                f"_{int(time())}.csv",
+                            )
+                            # rename the log file
+                            Path(log_file).rename(rotated_log_name)
+                            with open(log_file, "w") as f:
+                                f.write("epoch, train_score,")
+                                if "test_score" in locals():
+                                    f.write(",test_score")
+                                f.write("\n")
+                                f.write(f"{i+1},")
+                                f.write(f"{score},")
+                                if "test_score" in locals():
+                                    f.write(f" {test_score},")
+                                f.write("\n")
+                        else:
+                            with open(log_file, "a") as f:
+                                # assuming csv format
+                                f.write(f"{i+1},")
+                                f.write(f"{score},")
+                                if "test_score" in locals():
+                                    f.write(f"{test_score},")
+                                f.write("\n")
+                    else:
+                        with open(log_file, "w") as f:
+                            f.write("epoch, train_score,")
+                            if "test_score" in locals():
+                                f.write(" test_score,")
+                            f.write("\n")
+                            f.write(f"{i+1},")
+                            f.write(f"{score},")
+                            if "test_score" in locals():
+                                f.write(f"{test_score},")
+                            f.write("\n")
+            import plotext as plt
+
+            plt.plot(train_scores, label="Train score")
+            if X_test is not None:
+                plt.plot(test_scores, label="Test score")
+            plt.xlabel("Epochs")
+            plt.ylabel("Accuracy")
+            plt.title("Scores")
+            plt.show()
 
         return wrapper
 
@@ -72,28 +127,16 @@ class BatchedMixin:
                 n_batches = self.max_batches
             for i in tqdm(
                 range(n_batches),
-                desc="Fitting batches",
                 total=n_batches,
+                desc="Fitting batches",
                 leave=False,
-                dynamic_ncols=True,
+                position=1,
             ):
                 start = i * self.batch_size
                 end = (i + 1) * self.batch_size
                 X_batch = X_train[start:end]
                 y_batch = y_train[start:end]
-                print(
-                    f"Shape of X_batch is {X_batch.shape} and shape of y_batch is {y_batch.shape}",
-                )
                 fit_func(X_batch, y_batch, **kwargs)
-                if self.nb_epoch > 1:
-                    continue
-                train_score = self.score(X_batch, y_batch)
-                test_score = self.score(X_train, y_train)
-                print(
-                    f"Batch {i+1} of {n_batches} - Train score: {np.mean(train_score)}; Test score: {np.mean(test_score)}",
-                )
-                train_scores.append(train_score)
-                test_scores.append(test_score)
 
         return wrapper
 
@@ -120,8 +163,6 @@ class BatchedMixin:
                     new_X = X[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
                     new_y = y[i * self.batch_size : (i + 1) * self.batch_size]  # noqa
                     indices = func(X=new_X, y=new_y, method=method, n_jobs=n_jobs)
-                    # print("After finding best samples")
-                    # print(f"Length of indices is {len(indices)}")
                     X = X[indices]
                     y = y[indices]
                     self.X_ = X
@@ -132,75 +173,6 @@ class BatchedMixin:
                     return indices
 
         return wrapper
-
-    def batched_predict(self, predict_func):
-        def wrapper(*args, **kwargs):
-            X_test = args[0]
-            n = len(X_test)
-            n_batches = n // self.batch_size
-            if n_batches > self.max_batches:
-                n_batches = self.max_batches
-            elif n_batches == 0:
-                n_batches = 1
-            preds = []
-            for i in tqdm(
-                range(n_batches),
-                desc="Predicting batches",
-                total=n_batches,
-                leave=False,
-                dynamic_ncols=True,
-            ):
-                start = i * self.batch_size
-                end = (i + 1) * self.batch_size
-                X_batch = X_test[start:end]
-                new_preds = predict_func(X_batch, **kwargs)
-                preds.append(new_preds)
-            return np.concatenate(preds)
-
-        return wrapper
-
-    def batched_score(self, score_func):
-        def wrapper(*args, **kwargs):
-            X_test, y_test = args
-            n = len(X_test)
-            n_batches = n // self.batch_size
-            if n_batches > self.max_batches:
-                n_batches = self.max_batches
-            elif n_batches == 0:
-                n_batches = 1
-            scores = []
-            for i in tqdm(
-                range(n_batches),
-                desc="Scoring batches",
-                total=n_batches,
-                leave=False,
-                dynamic_ncols=True,
-            ):
-                start = i * self.batch_size
-                end = (i + 1) * self.batch_size
-                X_batch = X_test[start:end]
-                y_batch = y_test[start:end]
-                score = score_func(X_batch, y_batch, **kwargs)
-                scores.append(score)
-            return scores
-
-        return wrapper
-
-
-def create_batched_class(cls, *args, **kwargs):
-    name = cls.__name__
-
-    class BatchedClass(cls, BatchedMixin):
-        def __init__(self, *args, **kwargs):
-            self.max_batches = kwargs.pop("max_batches", 100)
-            self.batch_size = kwargs.pop("batch_size", 10)
-            super().__init__(*args, **kwargs)
-
-    batched_class = BatchedClass()
-    combined_name = f"Batched{name}"
-    batched_class.__name__ = combined_name
-    batched_class.__init__(*args, **kwargs)
-    return batched_class
 
 
 if __name__ == "__main__":
@@ -236,20 +208,3 @@ if __name__ == "__main__":
         test_size=0.2,
         random_state=42,
     )
-
-    class BatchedSVC(BatchedMixin, SVC):
-        pass
-
-    clf = BatchedSVC(max_batches=100, batch_size=100, kernel="rbf")
-    clf.fit(X_train, y_train)
-    score = clf.score(X_test, y_test)
-    print(score)
-    input("Press enter to continue")
-    score = round(np.mean(score), 2)
-    std = round(np.std(score), 3)
-    logger.info(f"Final Score: {score}")
-    logger.info(f"Standard Deviation: {std}")
-    # if plotext_available is True:
-    plotext.scatter(train_scores, label="Train scores")
-    plotext.scatter(test_scores, label="Test scores")
-    plotext.plot()

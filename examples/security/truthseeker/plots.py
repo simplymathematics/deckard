@@ -2,7 +2,6 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 import matplotlib.pyplot as plt
-
 import logging
 
 sns.set_style("whitegrid")
@@ -19,28 +18,16 @@ logger = logging.getLogger(__name__)
 # else:
 #     results = parse_results("reports/model_queue/")
 results = pd.read_csv("output/train.csv")
-# input_size = results["data.generate.kwargs.n_samples"] * results["data.generate.kwargs.n_features"]
-results["Kernel"] = results["model.init.kwargs.kernel"].copy()
-# results["Features"] = results["data.generate.kwargs.n_features"].copy()
-results["Samples"] = results["data.sample.train_size"].copy()
-# results["input_size"] = input_size
-# sample_list = results["data.generate.kwargs.n_samples"].unique()
-# feature_list = results["data.generate.kwargs.n_features"].unique()
-kernel_list = results["model.init.kwargs.kernel"].unique()
+results["Kernel"] = results["model.init.kernel"].copy()
 if "Unnamed: 0" in results.columns:
     del results["Unnamed: 0"]
 for col in results.columns:
     if col == "data.name" and isinstance(results[col][0], list):
         results[col] = results[col].apply(lambda x: x[0])
-results = results[results["model.init.kwargs.kernel"] != "sigmoid"]
+results = results[results["model.init.kernel"] != "sigmoid"]
 
 attack_results = pd.read_csv("output/attack.csv")
-attack_results["Kernel"] = attack_results["model.init.kwargs.kernel"].copy()
-# attack_results["Features"] = attack_results["data.generate.kwargs.n_features"].copy()
-# attack_results["Samples"] = attack_results["data.sample.train_size"].copy()
-# sample_list = attack_results["data.generate.kwargs.n_samples"].unique()
-# feature_list = attack_results["data.generate.kwargs.n_features"].unique()
-kernel_list = attack_results["model.init.kwargs.kernel"].unique()
+attack_results["Kernel"] = attack_results["model.init.kernel"].copy()
 if "Unnamed: 0" in attack_results.columns:
     del attack_results["Unnamed: 0"]
 for col in attack_results.columns:
@@ -48,75 +35,26 @@ for col in attack_results.columns:
         attack_results[col] = attack_results[col].apply(lambda x: x[0])
 
 
-# graph1 = sns.lineplot(
-#     x="data.sample.train_size",
-#     y="accuracy",
-#     data=results,
-#     style="Kernel",
-#     style_order=["rbf", "poly", "linear"],
-# )
-# graph1.legend(labels=["Linear", "RBF", "Poly"])
-# graph1.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
-# graph1.set_xlabel("Number of Samples")
-# graph1.set_ylabel("Accuracy")
-# graph1.set_xscale("log")
-# graph1.get_figure().tight_layout()
-# graph1.get_figure().savefig("plots/accuracy_vs_samples.pdf")
-# plt.gcf().clear()
-
-# graph2 = sns.lineplot(
-#     x="data.generate.kwargs.n_features",
-#     y="accuracy",
-#     data=results,
-#     style="Kernel",
-#     style_order=["rbf", "poly", "linear"],
-# )
-# graph2.set_xlabel("Number of Features")
-# graph2.set_ylabel("Accuracy")
-# graph2.set_xscale("log")
-# graph2.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
-# graph2.get_figure().tight_layout()
-# graph2.get_figure().savefig("plots/accuracy_vs_features.pdf")
-# plt.gcf().clear()
-
-# results["train_time"] = (
-#     results["train_time"]
-#     * results["data.sample.train_size"]
-#     * results["data.generate.kwargs.n_samples"]
-# )
-# graph3 = sns.lineplot(
-#     x="data.generate.kwargs.n_features",
-#     y="train_time",
-#     data=results,
-#     style="Kernel",
-#     style_order=["rbf", "poly", "linear"],
-# )
-# graph3.set_xlabel("Number of Features")
-# graph3.set_ylabel("Training Time")
-# graph3.set(yscale="log", xscale="log")
-# graph3.legend(title="Kernel")
-# graph3.get_figure().tight_layout()
-# graph3.get_figure().savefig("plots/train_time_vs_features.pdf")
-# plt.gcf().clear()
-
-# graph4 = sns.lineplot(
-#     x="data.sample.train_size",
-#     y="train_time",
-#     data=results,
-#     style="Kernel",
-#     style_order=["rbf", "poly", "linear"],
-# )
-# graph4.set_xlabel("Number of Samples")
-# graph4.set_ylabel("Training Time")
-# graph4.set(yscale="log", xscale="log")
-# graph4.legend(title="Kernel")
-# graph4.get_figure().tight_layout()
-# graph4.get_figure().savefig("plots/train_time_vs_samples.eps")
-# plt.gcf().clear()
+graph4 = sns.lineplot(
+    x="data.sample.train_size",
+    y="train_time",
+    data=results,
+    style="Kernel",
+    style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
+)
+graph4.set_xlabel("Number of Samples")
+graph4.set_ylabel("Training Time")
+graph4.set(yscale="log", xscale="log", xlim=(10, 1e6))
+graph4.legend(title="Kernel")
+graph4.get_figure().tight_layout()
+graph4.get_figure().savefig("plots/train_time_vs_samples.eps")
+plt.gcf().clear()
 
 fig, ax = plt.subplots(2, 2)
 graph5 = sns.lineplot(
-    x="attack.init.kwargs.eps",
+    x="attack.init.eps",
     y="accuracy",
     data=attack_results,
     style="Kernel",
@@ -124,20 +62,24 @@ graph5 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph5.set(xscale="log", xlabel="Perturbation Distance", ylabel="Accuracy")
 graph6 = sns.lineplot(
-    x="attack.init.kwargs.eps_step",
+    x="attack.init.eps_step",
     y="accuracy",
     data=attack_results,
     style="Kernel",
     ax=ax[0, 1],
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph6.set(xscale="log", xlabel="Perturbation Step", ylabel="Accuracy")
 graph7 = sns.lineplot(
-    x="attack.init.kwargs.max_iter",
+    x="attack.init.max_iter",
     y="accuracy",
     data=attack_results,
     style="Kernel",
@@ -145,10 +87,12 @@ graph7 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph7.set(xscale="log", xlabel="Maximum Iterations", ylabel="Accuracy")
 graph8 = sns.lineplot(
-    x="attack.init.kwargs.batch_size",
+    x="attack.init.batch_size",
     y="accuracy",
     data=attack_results,
     style="Kernel",
@@ -156,16 +100,18 @@ graph8 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph8.set(xscale="log", xlabel="Batch Size", ylabel="Accuracy")
 graph6.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout()
-fig.savefig("plots/accuracy_vs_attack_parameters.pdf")
+fig.savefig("plots/accuracy_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 fig, ax = plt.subplots(2, 2)
 graph9 = sns.lineplot(
-    x="attack.init.kwargs.eps",
+    x="attack.init.eps",
     y="adv_fit_time",
     data=attack_results,
     style="Kernel",
@@ -173,20 +119,24 @@ graph9 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph9.set(xscale="log", xlabel="Perturbation Distance", ylabel="Attack Time")
 graph10 = sns.lineplot(
-    x="attack.init.kwargs.eps_step",
+    x="attack.init.eps_step",
     y="adv_fit_time",
     data=attack_results,
     style="Kernel",
     ax=ax[0, 1],
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph10.set(xscale="log", xlabel="Perturbation Step", ylabel="Attack Time")
 graph11 = sns.lineplot(
-    x="attack.init.kwargs.max_iter",
+    x="attack.init.max_iter",
     y="adv_fit_time",
     data=attack_results,
     style="Kernel",
@@ -194,10 +144,12 @@ graph11 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph11.set(xscale="log", xlabel="Maximum Iterations", ylabel="Attack Time")
 graph12 = sns.lineplot(
-    x="attack.init.kwargs.batch_size",
+    x="attack.init.batch_size",
     y="adv_fit_time",
     data=attack_results,
     style="Kernel",
@@ -205,11 +157,13 @@ graph12 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="Attack Time")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/train_time_vs_attack_parameters.pdf")
+fig.savefig("plots/train_time_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 retrain_df = pd.DataFrame()
@@ -232,6 +186,8 @@ retrain = sns.lineplot(
     data=retrain_df,
     style="Kernel",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 retrain = sns.lineplot(
     x="Epochs",
@@ -241,12 +197,14 @@ retrain = sns.lineplot(
     color="darkred",
     legend=False,
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 retrain.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 retrain.set_xlabel("Retraining Epochs")
 retrain.set_ylabel("Accuracy")
 retrain.get_figure().tight_layout()
-retrain.get_figure().savefig("plots/retrain_accuracy.pdf")
+retrain.get_figure().savefig("plots/retrain_accuracy.eps")
 plt.gcf().clear()
 
 retrain_df["ben_time"] = retrain_df["ben_time"] * retrain_df["train_size"] * 10
@@ -257,6 +215,8 @@ retrain = sns.lineplot(
     data=retrain_df,
     style="Kernel",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 retrain = sns.lineplot(
     x="Epochs",
@@ -266,13 +226,15 @@ retrain = sns.lineplot(
     color="darkred",
     legend=False,
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 retrain.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 retrain.set_xlabel("Retraining Epochs")
 retrain.set_ylabel("Time")
 retrain.set_yscale("log")
 retrain.get_figure().tight_layout()
-retrain.get_figure().savefig("plots/retrain_time.pdf")
+retrain.get_figure().savefig("plots/retrain_time.eps")
 plt.gcf().clear()
 
 confidence_df = pd.read_csv("plots/before_retrain_confidence.csv")
@@ -286,6 +248,8 @@ graph9 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph9.set(xscale="log", xlabel="Perturbation Distance", ylabel="False Confidence")
 graph10 = sns.lineplot(
@@ -296,6 +260,8 @@ graph10 = sns.lineplot(
     ax=ax[0, 1],
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph10.set(xscale="log", xlabel="Perturbation Step", ylabel="False Confidence")
 graph11 = sns.lineplot(
@@ -307,6 +273,8 @@ graph11 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph11.set(xscale="log", xlabel="Maximum Iterations", ylabel="False Confidence")
 graph12 = sns.lineplot(
@@ -318,11 +286,13 @@ graph12 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="False Confidence")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/confidence_vs_attack_parameters.pdf")
+fig.savefig("plots/confidence_vs_attack_parameters.eps")
 plt.gcf().clear()
 
 confdence_df = pd.read_csv("plots/after_retrain_confidence.csv")
@@ -337,6 +307,8 @@ graph9 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph9.set(xscale="log", xlabel="Perturbation Distance", ylabel="False Confidence")
 graph10 = sns.lineplot(
@@ -347,6 +319,8 @@ graph10 = sns.lineplot(
     ax=ax[0, 1],
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph10.set(xscale="log", xlabel="Perturbation Step", ylabel="False Confidence")
 graph11 = sns.lineplot(
@@ -358,6 +332,8 @@ graph11 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph11.set(xscale="log", xlabel="Maximum Iterations", ylabel="False Confidence")
 graph12 = sns.lineplot(
@@ -369,9 +345,11 @@ graph12 = sns.lineplot(
     legend=False,
     color="darkred",
     style_order=["rbf", "poly", "linear"],
+    err_style="bars",
+    errorbar=("ci", 99),
 )
 graph12.set(xscale="log", xlabel="Batch Size", ylabel="False Confidence")
 graph10.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, title="Kernel")
 fig.tight_layout(h_pad=0.5)
-fig.savefig("plots/retrain_confidence_vs_attack_parameters.pdf")
+fig.savefig("plots/retrain_confidence_vs_attack_parameters.eps")
 plt.gcf().clear()

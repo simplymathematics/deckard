@@ -74,7 +74,7 @@ stages:
       - rbf
       - poly
     do:
-      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model --params_file best_${item} --study_name=${item}_100_10000  --default_config model.yaml
+      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir model --params_file best_${item} --study_name=${item}_100_10000  --default_config default.yaml --storage_name sqlite:///model.db
       outs:
         - conf/model/best_${item}.yaml
       deps:
@@ -112,7 +112,7 @@ stages:
       - rbf
       - poly
     do:
-      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack --params_file best_${item} --study_name=best_${item}  --default_config attack.yaml
+      cmd: python -m deckard.layers.find_best --config_folder conf --config_subdir attack --params_file best_${item} --study_name=best_${item}  --default_config default.yaml --storage_name sqlite:///attack.db --direction minimize
       outs:
         - conf/attack/best_${item}.yaml
       deps:
@@ -122,7 +122,6 @@ stages:
   retrain:
       cmd : python retrain.py
       deps:
-        - ${files.directory}/models/
         - ${files.directory}/attacks/
         - conf/attack/best_linear.yaml
         - conf/attack/best_rbf.yaml
@@ -142,6 +141,7 @@ stages:
         - output/train.csv
         - plots/before_retrain_confidence.csv
         - output/attack.csv
+        - plots.py
       plots :
         - plots/accuracy_vs_attack_parameters.eps
         - plots/accuracy_vs_features.eps
@@ -153,3 +153,7 @@ stages:
         - plots/retrain_accuracy.eps
         - plots/retrain_confidence_vs_attack_parameters.eps
         - plots/retrain_time.eps
+  move_files:
+    cmd: >-
+      cp -r ./plots/* ~/KDD-Paper-EAI-AISEC/generated/ 
+    #&& rm ~/KDD-Paper-EAI-AISEC/generated/.gitignore

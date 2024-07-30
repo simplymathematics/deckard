@@ -237,7 +237,7 @@ def save_results_and_outputs(results, outputs, path="retrain") -> list:
 results = pd.read_csv("output/train.csv")
 # Some convenient variable names
 # input_size = results["data.generate.kwargs.n_samples"] * results["data.generate.kwargs.n_features"]
-results["Kernel"] = results["model.init.kwargs.kernel"].copy()
+results["Kernel"] = results["model.init.kernel"].copy()
 # results["Features"] = results["data.generate.kwargs.n_features"].copy()
 # results["Samples"] = results["data.sample.train_size"].copy()
 # results["input_size"] = input_size
@@ -310,8 +310,11 @@ for model in art_models:
                 "r",
             ) as f:
                 probs = json.load(f)
-            probs = np.array(probs)
-            false_confidence = y_test[: len(probs)] - probs[:, 1]
+            probs = np.squeeze(np.array(probs))
+            # take only the second column
+            if len(probs.shape) > 1:
+                probs = probs[:, 1]
+            false_confidence = y_test[: len(probs)] - probs[:]
             avg_prob = np.mean(false_confidence)
             with open(
                 Path("output/reports/attack", folder, "score_dict.json"),
@@ -341,7 +344,7 @@ for model in art_models:
                     params = json.load(f)
             else:
                 raise ValueError(f"No params file found for {folder}")
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence"] = avg_prob
@@ -392,7 +395,12 @@ for model in art_models:
             ) as f:
                 probs = json.load(f)
             probs = np.array(probs)
-            false_confidence = y_test[: len(probs)] - probs[:, 1]
+            if len(probs.shape) > 1:
+                probs = np.squeeze(probs)
+                probs = probs[:, 1]
+            else:
+                probs = np.squeeze(probs)
+            false_confidence = y_test[: len(probs)] - probs
             avg_prob = np.mean(false_confidence)
             pd.DataFrame(probs).to_csv(
                 Path(
@@ -429,7 +437,7 @@ for model in art_models:
             else:
                 logger.warning(f"No params file found for {folder}")
                 continue
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence After Retraining"] = avg_prob

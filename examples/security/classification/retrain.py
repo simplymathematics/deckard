@@ -344,7 +344,7 @@ for model in art_models:
                     params = json.load(f)
             else:
                 raise ValueError(f"No params file found for {folder}")
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence"] = avg_prob
@@ -432,7 +432,7 @@ for model in art_models:
             else:
                 logger.warning(f"No params file found for {folder}")
                 continue
-            attack_params = params["attack"]["init"]["kwargs"]
+            attack_params = params["attack"]["init"]
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence After Retraining"] = avg_prob

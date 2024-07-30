@@ -33,31 +33,28 @@ hydra:
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 123
       consider_prior: true
+      seed: 123
       prior_weight: 1.0
       consider_magic_clip: true
-      consider_endpoints: false
-      n_startup_trials: 10
-      n_ei_candidates: 24
+      consider_endpoints: true
+      n_startup_trials: 256
+      n_ei_candidates: 32
       multivariate: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}_${stage}
     storage: sqlite:///optuna.db
-    n_jobs: 1
-    n_trials : 1
+    n_trials: 128
+    n_jobs: 8
     params:
       +model.init.solver: saga
-      +model.init.penalty : l2,l1,l2,none
-      +model.init.tol : 1e-4,1e-3,1e-2
-      +model.init.C : 1e-2,1e-1,1e0,1e1,1e2
+      +model.init.penalty : l2,l1
+      +model.init.tol: tag(log, interval(1e-5, 1e-1))
+      +model.init.C : tag(log, interval(1e-3, 1e3))
       +model.init.fit_intercept : True,False
       +model.init.class_weight : balanced,None
-      model.init.symmetric : True,False
-      ++model.init.precompute : True
-      model.init.metric : gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
+      
       model_name : ${model_name}
-      data.sample.random_state: int(interval(1, 10000))
     direction: ${direction}
     max_failure_rate: 1.0
   launcher:

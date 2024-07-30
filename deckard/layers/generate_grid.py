@@ -4,6 +4,7 @@ import os
 import yaml
 from functools import reduce
 from operator import mul
+import argparse
 from ..base.utils import make_grid, my_hash
 
 logger = logging.getLogger(__name__)
@@ -74,13 +75,13 @@ def generate_grid_from_folders(conf_dir, regex):
     return big_list
 
 
-def generate_queue(
-    conf_root,
-    grid_dir,
-    regex,
-    queue_folder="queue",
-    default_file="default.yaml",
-):
+def generate_grid_main(args):
+    conf_root = args.conf_root
+    grid_dir = args.grid_folder
+    regex = args.regex
+    queue_folder = args.queue_folder
+    default_file = args.default_file
+    output_file = args.output_file
     this_dir = os.getcwd()
     conf_dir = os.path.join(this_dir, conf_root, grid_dir)
     logger.debug(f"Looking for configs in {conf_dir}")
@@ -102,12 +103,51 @@ def generate_queue(
             yaml.dump(big_list[i], outfile, default_flow_style=False)
         assert Path(path, name + ".yaml").exists()
         i += 1
+    if output_file is not None:
+        with open(output_file, "w") as outfile:
+            yaml.dump(big_list, outfile, default_flow_style=False)
+        assert Path(output_file).exists()
     return big_list
 
 
-conf_root = "conf"
-grid_folder = "grid"
-regex = "*.yaml"
+generate_grid_parser = argparse.ArgumentParser()
+generate_grid_parser.add_argument(
+    "--conf_root",
+    type=str,
+    default="conf",
+    help="Root directory for config files",
+)
+generate_grid_parser.add_argument(
+    "--grid_folder",
+    type=str,
+    default="grid",
+    help="Folder containing config files",
+)
+generate_grid_parser.add_argument(
+    "--regex",
+    type=str,
+    default="*.yaml",
+    help="Regex for finding config files",
+)
+generate_grid_parser.add_argument(
+    "--queue_folder",
+    type=str,
+    default="queue",
+    help="Folder for queue files",
+)
+generate_grid_parser.add_argument(
+    "--default_file",
+    type=str,
+    default="default.yaml",
+    help="Default config file",
+)
+generate_grid_parser.add_argument(
+    "--output_file",
+    type=str,
+    default=None,
+    help="Output file for grid",
+)
 
-big_list = generate_queue(conf_root, grid_folder, regex)
-print(yaml.dump(big_list[0]))
+if __name__ == "__main__":
+    args = generate_grid_parser.parse_args()
+    generate_grid_main(args)
