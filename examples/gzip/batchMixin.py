@@ -38,7 +38,6 @@ class BatchedMixin:
         if self.nb_epoch > 1:
             self.fit = self.epoch_fit(self.fit)
 
-    
     def epoch_fit(self, fit_func):
         def wrapper(*args, **kwargs):
             X, y = args
@@ -57,7 +56,9 @@ class BatchedMixin:
                     score = self.score(X, y)
                     train_scores.append(score)
                     if X_test is not None:
-                        assert len(X_test) == len(y_test), "X_test and y_test must have the same length"
+                        assert len(X_test) == len(
+                            y_test
+                        ), "X_test and y_test must have the same length"
                         test_score = self.score(X_test, y_test)
                         test_scores.append(test_score)
                         logger.info(f"Train score: {score}, Test score: {test_score}")
@@ -67,9 +68,11 @@ class BatchedMixin:
                     if Path(log_file).exists():
                         if i == 0:
                             # rotate the log file by appending a timestamp before the extension
-                            rotated_log_name = log_file.replace(".csv", f"_{int(time())}.csv")
+                            rotated_log_name = log_file.replace(
+                                ".csv", f"_{int(time())}.csv"
+                            )
                             # rename the log file
-                            Path(log_file).rename(rotated_log_name)        
+                            Path(log_file).rename(rotated_log_name)
                             with open(log_file, "w") as f:
                                 f.write("epoch, train_score,")
                                 if "test_score" in locals():
@@ -79,7 +82,7 @@ class BatchedMixin:
                                 f.write(f"{score},")
                                 if "test_score" in locals():
                                     f.write(f" {test_score},")
-                                f.write("\n")      
+                                f.write("\n")
                         else:
                             with open(log_file, "a") as f:
                                 # assuming csv format
@@ -100,6 +103,7 @@ class BatchedMixin:
                                 f.write(f"{test_score},")
                             f.write("\n")
             import plotext as plt
+
             plt.plot(train_scores, label="Train score")
             if X_test is not None:
                 plt.plot(test_scores, label="Test score")
@@ -107,6 +111,7 @@ class BatchedMixin:
             plt.ylabel("Accuracy")
             plt.title("Scores")
             plt.show()
+
         return wrapper
 
     def batched_fit(self, fit_func):
@@ -119,14 +124,20 @@ class BatchedMixin:
                     f"Number of batches ({n_batches}) is greater than max_batches ({self.max_batches}). Using max_batches.",
                 )
                 n_batches = self.max_batches
-            for i in tqdm(range(n_batches), total=n_batches, desc="Fitting batches", leave=False, position=1):
+            for i in tqdm(
+                range(n_batches),
+                total=n_batches,
+                desc="Fitting batches",
+                leave=False,
+                position=1,
+            ):
                 start = i * self.batch_size
                 end = (i + 1) * self.batch_size
                 X_batch = X_train[start:end]
                 y_batch = y_train[start:end]
                 fit_func(X_batch, y_batch, **kwargs)
+
         return wrapper
-    
 
     def batched_find_best_samples(self, func):
         def wrapper(method, **kwargs):
@@ -162,8 +173,6 @@ class BatchedMixin:
 
         return wrapper
 
-
-    
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

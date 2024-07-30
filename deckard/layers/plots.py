@@ -47,7 +47,7 @@ def cat_plot(
     filetype=".eps",
     x_scale=None,
     y_scale=None,
-    digitize = [],
+    digitize=[],
     **kwargs,
 ):
     """
@@ -124,28 +124,28 @@ def cat_plot(
     # graph is a FacetGrid object and we need to set the x,y scales, labels, titles on the axes
     for graph_ in graph.axes.flat:
         if y_scale is not None:
-          graph_.set_yscale(y_scale)
+            graph_.set_yscale(y_scale)
         if x_scale is not None:
-          graph_.set_xscale(x_scale)
+            graph_.set_xscale(x_scale)
         if xticklabels is not None:
-          graph_.set_xticklabels(xticklabels)
+            graph_.set_xticklabels(xticklabels)
         if yticklabels is not None:
-          graph_.set_yticklabels(yticklabels)
+            graph_.set_yticklabels(yticklabels)
     if titles is not None:
-      if isinstance(titles, dict):
-        graph.set_titles(**titles)
-      elif isinstance(titles, str):
-        graph.set_titles(titles)
+        if isinstance(titles, dict):
+            graph.set_titles(**titles)
+        elif isinstance(titles, str):
+            graph.set_titles(titles)
     else:
-      try:
-        graph.set_titles("{row_name} | {col_name}")
-      except KeyError as e:
-        if "row_name" in str(e):
-          graph.set_titles("{col_name}")
-        elif "col_name" in str(e):
-          graph.set_titles("{row_name}")
-        else:
-          raise e
+        try:
+            graph.set_titles("{row_name} | {col_name}")
+        except KeyError as e:
+            if "row_name" in str(e):
+                graph.set_titles("{col_name}")
+            elif "col_name" in str(e):
+                graph.set_titles("{row_name}")
+            else:
+                raise e
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:
@@ -154,9 +154,9 @@ def cat_plot(
         else:
             pass
     if xlabels is not None:
-      graph.set_xlabels(xlabels)
+        graph.set_xlabels(xlabels)
     if ylabels is not None:
-      graph.set_ylabels(ylabels)
+        graph.set_ylabels(ylabels)
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     if x_lim is not None:
         graph.set(xlim=x_lim)
@@ -169,18 +169,21 @@ def cat_plot(
     plt.clf()
     logger.info(f"Saved graph to {folder / file}")
 
+
 def digitize_cols(data, digitize):
-    if isinstance(digitize,str):
-      digitize = [digitize]
+    if isinstance(digitize, str):
+        digitize = [digitize]
     else:
-      assert isinstance(digitize, list), "digitize must be a list of columns to digitize"
+        assert isinstance(
+            digitize, list
+        ), "digitize must be a list of columns to digitize"
     if len(digitize) > 0:
-      for col in digitize:
-        min_ = data[col].min()
-        max_ = data[col].max()
-        NUMBER_OF_BINS = 10
-        bins = np.linspace(min_, max_, NUMBER_OF_BINS)
-        data[col] = np.digitize(data[col], bins)/NUMBER_OF_BINS
+        for col in digitize:
+            min_ = data[col].min()
+            max_ = data[col].max()
+            NUMBER_OF_BINS = 10
+            bins = np.linspace(min_, max_, NUMBER_OF_BINS)
+            data[col] = np.digitize(data[col], bins) / NUMBER_OF_BINS
     return data
 
 
@@ -445,8 +448,6 @@ def plots_main(args):
         logger.info(f"Creating folder {FOLDER}")
         FOLDER.mkdir(parents=True, exist_ok=True)
 
-    
-
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
@@ -458,6 +459,7 @@ def plots_main(args):
     cat_plot_list = big_dict.get("cat_plot", [])
     for dict_ in cat_plot_list:
         cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+
 
 if __name__ == "__main__":
     args = plots_parser.parse_args()
