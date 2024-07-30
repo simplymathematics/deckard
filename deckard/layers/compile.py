@@ -173,13 +173,13 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     Path(results_folder).mkdir(exist_ok=True, parents=True)
     suffix = results_file.suffix
     if suffix == ".csv":
-        results = pd.read_csv(results_file)
+        results = pd.read_csv(results_file, index_col=0)
     elif suffix == ".xlsx":
-        results = pd.read_excel(results_file)
+        results = pd.read_excel(results_file, index_col=0)
     elif suffix == ".html":
-        results = pd.read_html(results_file)
+        results = pd.read_html(results_file, index_col=0)
     elif suffix == ".json":
-        results = pd.read_json(results_file)
+        results = pd.read_json(results_file, index_col=0)
     elif suffix == ".tex":
         pd.read_csv(
             results_file,
@@ -188,6 +188,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
             skiprows=4,
             skipfooter=3,
             engine="python",
+            index_col=0,
         )
     else:
         raise ValueError(f"File type {suffix} not supported.")
