@@ -11,7 +11,7 @@ __all__ = [
 
 
 def ResNet18(num_channels=1, num_classes=10):
-    model = models.resnet18()
+    model = models.resnet18(pretrained=True)
     model.conv1 = nn.Conv2d(
         num_channels,
         64,
@@ -25,7 +25,7 @@ def ResNet18(num_channels=1, num_classes=10):
 
 
 def ResNet34(num_channels=1, num_classes=10):
-    model = models.resnet34()
+    model = models.resnet34(pretrained=True)
     model.conv1 = nn.Conv2d(
         num_channels,
         64,
@@ -39,7 +39,7 @@ def ResNet34(num_channels=1, num_classes=10):
 
 
 def ResNet50(num_channels=1, num_classes=10):
-    model = models.resnet50()
+    model = models.resnet50(pretrained=True)
     model.conv1 = nn.Conv2d(
         num_channels,
         64,
@@ -53,7 +53,7 @@ def ResNet50(num_channels=1, num_classes=10):
 
 
 def ResNet101(num_channels=1, num_classes=10):
-    model = models.resnet101()
+    model = models.resnet101(pretrained=True)
     model.conv1 = nn.Conv2d(
         num_channels,
         64,
@@ -67,7 +67,7 @@ def ResNet101(num_channels=1, num_classes=10):
 
 
 def ResNet152(num_channels=1, num_classes=10):
-    model = models.resnet152()
+    model = models.resnet152(pretrained=True)
     model.conv1 = nn.Conv2d(
         num_channels,
         64,

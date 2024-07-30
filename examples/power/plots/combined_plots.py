@@ -59,7 +59,7 @@ cost = {
     "nvidia-tesla-v100": 2.55,
     "nvidia-l4": 0.81,
 }
-epochs = "model.trainer.nb_epoch"
+epochs = "model.trainer.np_epochs"
 batch_size = "model.trainer.batch_size"
 bit_depth = "model.art.preprocessor.bit_depth"
 resolution = "n_pixels"

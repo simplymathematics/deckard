@@ -6,3 +6,4 @@ cifar100/
 /mnist.yaml
 /cifar.yaml
 original_data/
+/cifar100.yaml

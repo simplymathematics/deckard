@@ -28,14 +28,6 @@ from .compile import load_results, save_results
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "afr_main",
-    "survival_probability_calibration",
-    "fit_aft",
-    "plot_aft",
-    "afr_parser",
-]
-
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
 def survival_probability_calibration(
@@ -118,7 +110,7 @@ def survival_probability_calibration(
                 crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
             else:
                 crc.fit(prediction_df, T, E, regressors=regressors)
-        except ConvergenceError as e:
+        except (ConvergenceError, AttributeError) as e:
             if "delta contains nan value(s)" in str(e):
                 fit_options = {
                     "step_size": 0.1,
@@ -155,7 +147,7 @@ def survival_probability_calibration(
                     )
                 else:
                     crc.fit(prediction_df, T, E, regressors=regressors)
-            except ConvergenceError as e:
+            except (ConvergenceError, AttributeError) as e:
                 logger.error(f"Could not fit CRC model. due to {e}")
                 return ax, np.nan, np.nan
 
@@ -282,9 +274,7 @@ def fit_aft(
         kwarg_dict["timeline"] = timeline
     try:
         aft.fit(df, **kwarg_dict)
-    except AttributeError as e:
-        raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
-    except ConvergenceError as e:
+    except (ConvergenceError, AttributeError) as e:
         if "delta contains nan value(s)" in str(e):
             fit_options = {
                 "step_size": 0.1,
@@ -295,18 +285,14 @@ def fit_aft(
             logger.info(
                 "Reducing the step size to 0.1 and increasing the max steps to 1000",
             )
-            input("Inside the fit function")
         else:
             logger.info("Trying to fit with SLSQP")
             aft._scipy_fit_method = "SLSQP"
         try:
             aft.fit(df, **kwarg_dict)
-        except ConvergenceError as e:
+        except (ConvergenceError, AttributeError) as e:
             logger.error(f"Could not fit {mtype} model due to {e}")
             raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
-
-    else:
-        logger.info(f"Fitted {mtype} model")
     if summary_file is not None:
         summary = pd.DataFrame(aft.summary).copy()
         if folder is None:
@@ -880,7 +866,7 @@ def calculate_raw_failures(args, data, config):
     return data
 
 
-def afr_main(args):
+def main(args):
     target = args.target
     duration_col = args.duration_col
     dataset = args.dataset
@@ -937,4 +923,4 @@ if "__main__" == __name__:
     afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
     afr_parser.add_argument("--plots_folder", type=str, default="plots")
     args = afr_parser.parse_args()
-    afr_main(args)
+    main(args)

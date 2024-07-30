@@ -179,7 +179,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     elif suffix == ".html":
         results = pd.read_html(results_file, index_col=0)
     elif suffix == ".json":
-        results = pd.read_json(results_file, index_col=0)
+        results = pd.read_json(results_file)
     elif suffix == ".tex":
         pd.read_csv(
             results_file,
@@ -188,7 +188,6 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
             skiprows=4,
             skipfooter=3,
             engine="python",
-            index_col=0,
         )
     else:
         raise ValueError(f"File type {suffix} not supported.")

@@ -1,450 +1,39 @@
 schema: '2.0'
 stages:
-  clean@cifar:
-    cmd: python -m deckard.layers.clean_data -i data/attack_cifar.csv  -o data/cifar.csv  -c
-      ../conf/clean_cifar.yaml --drop_if_empty adv_fit_time accuracy train_time predict_time
-      adv_accuracy
-    deps:
-    - path: ../conf/clean_cifar.yaml
-      hash: md5
-      md5: 64150a388252f623fd67838ed36ca670
-      size: 873
-    - path: data/attack_cifar.csv
-      hash: md5
-      md5: 9fb240676d1ba7faea366fad55931a01
-      size: 26090605
-    outs:
-    - path: data/cifar.csv
-      hash: md5
-      md5: 93572521018214433674bcc3256bba0c
-      size: 20644834
-  clean@mnist:
-    cmd: python -m deckard.layers.clean_data -i data/attack_mnist.csv  -o data/mnist.csv  -c
-      ../conf/clean_mnist.yaml --drop_if_empty adv_fit_time accuracy train_time predict_time
-      adv_accuracy
-    deps:
-    - path: ../conf/clean_mnist.yaml
-      hash: md5
-      md5: b5ee8305cb0c9daa6ff09d6a096c5a34
-      size: 869
-    - path: data/attack_mnist.csv
-      hash: md5
-      md5: 5b422f124272c3b012f023a354ba2737
-      size: 189644858
-    outs:
-    - path: data/mnist.csv
-      hash: md5
-      md5: 994d1bcab57756d6d7aa112c464cd13d
-      size: 23238114
-  clean@cifar100:
-    cmd: python -m deckard.layers.clean_data -i data/attack_cifar100.csv  -o data/cifar100.csv  -c
-      ../conf/clean_cifar100.yaml --drop_if_empty adv_fit_time accuracy train_time
-      predict_time adv_accuracy
-    deps:
-    - path: ../conf/clean_cifar100.yaml
-      hash: md5
-      md5: c5e8689321f99fd2f691ef7f9d8b5e4f
-      size: 897
-    - path: data/attack_cifar100.csv
-      hash: md5
-      md5: 8f508ea00d964ebb838f5ad4e678dc44
-      size: 36167717
-    outs:
-    - path: data/cifar100.csv
-      hash: md5
-      md5: 898bb3154def96e0ee20fe3041b2bbff
-      size: 30522799
   merge:
     cmd: python -m deckard.layers.merge --smaller_file data/cifar.csv data/cifar100.csv
       data/mnist.csv  --output_folder data --output_file merged.csv
     deps:
     - path: data/cifar.csv
       hash: md5
-      md5: 93572521018214433674bcc3256bba0c
-      size: 20644834
+      md5: 4c6e158a421999f4eae6c238395f63e4
+      size: 20578565
     - path: data/cifar100.csv
       hash: md5
-      md5: 898bb3154def96e0ee20fe3041b2bbff
-      size: 30522799
+      md5: c7bbce2ed692f4697b9ab4cbbe36f9c9
+      size: 30226661
     - path: data/mnist.csv
       hash: md5
-      md5: 994d1bcab57756d6d7aa112c464cd13d
-      size: 23238114
+      md5: 083e65989c7b8a5f103d407eb675aaf8
+      size: 70077338
     outs:
     - path: data/merged.csv
       hash: md5
-      md5: 8d1038b925e7229ed5756e5f8df972a2
-      size: 75922957
-  afr:
-    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures
-      --duration_col adv_fit_time_per_sample  --config_file afr.yaml --plots_folder
-      plots/
-    deps:
-    - path: data/merged.csv
-      hash: md5
-      md5: ebca17142f7fbfc920b37824ea1c480e
-      size: 85713970
-    params:
-      afr.yaml:
-        covariates:
-        - adv_fit_time_per_sample
-        - accuracy
-        - train_time_per_sample
-        - atk_value
-        - def_value
-        - data.sample.random_state
-        - Epochs
-        - model_layers
-        - id
-        - atk_gen
-        - def_gen
-        - adv_failures
-        - adv_accuracy
-        - predict_time_per_sample
-        cox:
-          plot:
-            file: cox_aft.pdf
-            title: Cox Model
-            qq_title: Cox QQ Plot
-          t0: 0.3
-          model:
-            penalizer: 0.1
-          labels:
-            data.sample.random_state: Random State
-            atk_value: Attack Strength
-            train_time_per_sample: $t_{train}$
-            predict_time_per_sample: $t_{predict}$
-            adv_accuracy: Adv. Accuracy
-            def_value: Defence Strength
-            accuracy: Ben. Accuracy
-            model_layers: Layers
-            adv_fit_time_per_sample: $t_{attack}$
-            adv_failure_rate: $f_{adv.}(t;\theta)$
-            failure_rate: $f_{ben.}(t;\theta)$
-            Epochs: No. of Epochs
-            model.trainer.batch_size: Batch Size
-            def_gen: Defence
-        dummies:
-          atk_gen: 'Atk:'
-          def_gen: 'Def:'
-          id: 'Data:'
-        exponential:
-          plot:
-            file: exponential_aft.pdf
-            title: Exponential Model
-            qq_title: Exponential QQ Plot
-          t0: 0.1
-          model:
-            breakpoints:
-            - 0.1
-          labels:
-            'Intercept: rho_': $\rho$
-            'Intercept: lambda_': $\lambda$
-            'data.sample.random_state: lambda_': Random State
-            'atk_value: lambda_': Attack Strength
-            'def_value: lambda_': Defence Strength
-            'model_layers: lambda_': Layers
-            'train_time_per_sample: lambda_': $t_{train}$
-            'predict_time_per_sample: lambda_': $t_{predict}$
-            'adv_accuracy: lambda_': Adv. Accuracy
-            'accuracy: lambda_': Ben. Accuracy
-            'adv_fit_time_per_sample: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
-            'Epochs: lambda_': No. of Epochs
-            'model.trainer.batch_size: lambda_': Batch Size
-            def_gen: Defence
-            ': lambda_': ''
-        gamma:
-          plot:
-            file: gamma_aft.pdf
-            title: Generalized Gamma Model
-            qq_title: Gamma QQ Plot
-          t0: 0.3
-          model:
-            penalizer: 0.4
-          labels:
-            'Intercept: alpha_': $\alpha$
-            'Intercept: beta_': $\beta$
-            'data.sample.random_state: beta_': Random State
-            'def_value: beta_': Defence Strength
-            'atk_value: beta_': Attack Strength
-            'train_time_per_sample: beta_': $t_{train}$
-            'model_layers: beta_': Layers
-            'predict_time_per_sample: beta_': $t_{predict}$
-            'adv_accuracy: beta_': Adv. Accuracy
-            'accuracy: beta_': Ben. Accuracy
-            'adv_fit_time_per_sample: beta_': $t_{attack}$
-            'adv_failure_rate: beta_': $h_{adv.}(t;\theta)$
-            'failure_rate: beta_': $h_{ben.}(t;\theta)$
-            'Epochs: beta_': No. of Epochs
-            'model.trainer.batch_size: beta_': Batch Size
-            def_gen: Defence
-            'attack.init.eps: beta_': $\varepsilon$
-        log_logistic:
-          plot:
-            file: log_logistic_aft.pdf
-            title: Log logistic AFR Model
-            qq_title: Log Logistic QQ Plot
-          t0: 1
-          model:
-            penalizer: 0.2
-          labels:
-            'Intercept: beta_': $\beta$
-            'Intercept: alpha_': $\alpha$
-            'data.sample.random_state: alpha_': Random State
-            'atk_value: alpha_': Attack Strength
-            'def_value: alpha_': Defence Strength
-            'model_layers: alpha_': Layers
-            'train_time_per_sample: alpha_': $t_{train}$
-            'predict_time_per_sample: alpha_': $t_{predict}$
-            'adv_accuracy: alpha_': Adv. Accuracy
-            'accuracy: alpha_': Ben. Accuracy
-            'adv_fit_time_per_sample: alpha_': $t_{attack}$
-            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
-            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
-            'Epochs: alpha_': No. of Epochs
-            'model.trainer.batch_size: alpha_': Batch Size
-            def_gen: Defence
-            'attack.init.eps: alpha_': $\varepsilon$
-        log_normal:
-          plot:
-            file: log_normal_aft.pdf
-            title: Log Normal AFR Model
-            qq_title: Log Normal QQ Plot
-          t0: 2
-          model:
-            penalizer: 0.5
-          labels:
-            'Intercept: sigma_': $\sigma$
-            'Intercept: mu_': $\mu$
-            'atk_value: mu_': Attack Strength
-            'def_value: mu_': Defence Strength
-            'model_layers: mu_': Layers
-            'train_time_per_sample: mu_': $t_{train}$
-            'predict_time_per_sample: mu_': $t_{predict}$
-            'adv_accuracy: mu_': Adv. Accuracy
-            'accuracy: mu_': Ben. Accuracy
-            'adv_fit_time_per_sample: mu_': $t_{attack}$
-            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
-            'failure_rate: mu_': $h_{ben.}(t;\theta)$
-            'Epochs: mu_': No. of Epochs
-            'model.trainer.batch_size: mu_': Batch Size
-            def_gen: Defence
-            'attack.init.eps: mu_': $\varepsilon$
-            'data.sample.random_state: mu_': Random State
-        weibull:
-          plot:
-            file: weibull_aft.pdf
-            title: Weibull AFR Model
-            qq_title: Weibull QQ Plot
-          t0: 0.3
-          model:
-            penalizer: 0.1
-          labels:
-            'Intercept: rho_': $\rho$
-            'Intercept: lambda_': $\lambda$
-            'data.sample.random_state: lambda_': Random State
-            'atk_value: lambda_': Attack Strength
-            'model_layers: lambda_': Layers
-            'train_time_per_sample: lambda_': $t_{train}$
-            'predict_time_per_sample: lambda_': $t_{predict}$
-            'adv_accuracy: lambda_': Adv. Accuracy
-            'accuracy: lambda_': Ben. Accuracy
-            'adv_fit_time_per_sample: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
-            'Epochs: lambda_': No. of Epochs
-            'model.trainer.batch_size: lambda_': Batch Size
-            def_gen: Defence
-            'def_value: lambda_': Defence Strength
-            ': lambda_': ''
-    outs:
-    - path: plots/aft_comparison.csv
-      hash: md5
-      md5: d73ecadc5fa94fef2549e63280343bcd
-      size: 339
-    - path: plots/aft_comparison.tex
-      hash: md5
-      md5: 91fb7cb7394fd71f7e817a34af87315a
-      size: 631
-    - path: plots/cox_aft.pdf
-      hash: md5
-      md5: ed27d1978e06ae05dd5d35ddecdd6dc4
-      size: 30876
-    - path: plots/cox_aft_dummies.pdf
-      hash: md5
-      md5: 3124eb6beac82d84772d5bd49ba9e503
-      size: 28856
-    - path: plots/cox_qq.pdf
-      hash: md5
-      md5: 5d1a38624404554f04677a952d03a839
-      size: 20181
-    - path: plots/cox_summary.csv
-      hash: md5
-      md5: 39903e136f766f9840cbe1cc0154a39b
-      size: 4529
-    - path: plots/exponential_aft.pdf
-      hash: md5
-      md5: 66a13486cd114e4cc8267b69a4dd2f04
-      size: 33155
-    - path: plots/exponential_aft_dummies.pdf
-      hash: md5
-      md5: 6b506006f830ce108dde579d640e1d37
-      size: 32185
-    - path: plots/exponential_qq.pdf
-      hash: md5
-      md5: 4093a29d709ad92aedf846b50dcab965
-      size: 20240
-    - path: plots/exponential_summary.csv
-      hash: md5
-      md5: 90b7e50b371d5f54a5fa7b0c4c5743b3
-      size: 9022
-    - path: plots/gamma_aft.pdf
-      hash: md5
-      md5: 4c0368cb06e211c7d0c2905481701901
-      size: 29572
-    - path: plots/gamma_aft_dummies.pdf
-      hash: md5
-      md5: 48381e11d6eb87065cccc2179d0e19e6
-      size: 35152
-    - path: plots/gamma_qq.pdf
-      hash: md5
-      md5: 2c7a027149f292d78f7d4886751413e0
-      size: 11343
-    - path: plots/gamma_summary.csv
-      hash: md5
-      md5: 1150bbfaebb81f5ea9651766a1f868f7
-      size: 13975
-    - path: plots/log_logistic_aft.pdf
-      hash: md5
-      md5: 31260174c6af90e4b748d7e06a36f81e
-      size: 32733
-    - path: plots/log_logistic_aft_dummies.pdf
-      hash: md5
-      md5: dd120a0385f2d4341c54f2a8476b7d2e
-      size: 31885
-    - path: plots/log_logistic_qq.pdf
-      hash: md5
-      md5: cd2f80c1444b3420c1c7dfdc066e4fab
-      size: 18830
-    - path: plots/log_logistic_summary.csv
-      hash: md5
-      md5: 55ff092ab00e5cc45860c11caee59024
-      size: 4898
-    - path: plots/log_normal_aft.pdf
-      hash: md5
-      md5: 11fa430feb2cf96730b85d930541d0ab
-      size: 32716
-    - path: plots/log_normal_aft_dummies.pdf
-      hash: md5
-      md5: 9031ebb8918e71be9c68e7db68c59497
-      size: 32241
-    - path: plots/log_normal_qq.pdf
-      hash: md5
-      md5: 4410d657b6fe927cb0ca47909f6504b1
-      size: 19875
-    - path: plots/log_normal_summary.csv
-      hash: md5
-      md5: 6d49d9f09a9aeca15846bcc74a0906fc
-      size: 5002
-    - path: plots/weibull_aft.pdf
-      hash: md5
-      md5: 91ec661dd0ef73b03dbac81292522c92
-      size: 32493
-    - path: plots/weibull_aft_dummies.pdf
-      hash: md5
-      md5: 54de898f6abcd858bfa0da07d8db002a
-      size: 31439
-    - path: plots/weibull_qq.pdf
-      hash: md5
-      md5: 07b89dc4f873a61bd45a9f4ac580f276
-      size: 18007
-    - path: plots/weibull_summary.csv
-      hash: md5
-      md5: c77df236abf393dbf50fc58629886dbd
-      size: 4952
-  predict_survival_time:
-    cmd: python predict_with_best.py  --data data/merged.csv  --config_file afr.yaml  --model
-      weibull  --target adv_failures  --duration_col adv_fit_time_per_sample --output
-      data/merged_afr.csv
-    deps:
-    - path: afr.yaml
-      hash: md5
-      md5: 1e39b01abdaf8c823a25379f6ce391d4
-      size: 6349
-    - path: data/merged.csv
-      hash: md5
-      md5: ebca17142f7fbfc920b37824ea1c480e
-      size: 85713970
-    - path: plots/aft_comparison.tex
-      hash: md5
-      md5: 91fb7cb7394fd71f7e817a34af87315a
-      size: 631
-    - path: predict_with_best.py
-      hash: md5
-      md5: e60a437ab37d2ee22256268a207f2431
-      size: 2571
-    outs:
-    - path: data/merged_afr.csv
-      hash: md5
-      md5: f366cd694109920b498c8cf876440050
-      size: 86609777
+      md5: f98b901fa3ee817a55a36f78d0c95233
+      size: 124219079
   plot:
     cmd: python -m deckard.layers.plots --path plots/ --file data/merged_afr.csv -c
       plots.yaml
     deps:
     - path: data/merged_afr.csv
       hash: md5
-      md5: f366cd694109920b498c8cf876440050
-      size: 86609777
+      md5: e8c06cf834297c5ee44950ea4d640cc8
+      size: 125347398
     - path: plots.yaml
       hash: md5
-      md5: a0c5c100248543bb5f0de8949b459bc5
-      size: 3815
+      md5: 0f349596bdb4c2cee3c462325dffe4ba
+      size: 5070
     params:
-      afr.yaml:
-        covariates:
-        - adv_fit_time_per_sample
-        - accuracy
-        - train_time_per_sample
-        - atk_value
-        - def_value
-        - data.sample.random_state
-        - Epochs
-        - model_layers
-        - id
-        - atk_gen
-        - def_gen
-        - adv_failures
-        - adv_accuracy
-        - predict_time_per_sample
-        weibull:
-          plot:
-            file: weibull_aft.pdf
-            title: Weibull AFR Model
-            qq_title: Weibull QQ Plot
-          t0: 0.3
-          model:
-            penalizer: 0.1
-          labels:
-            'Intercept: rho_': $\rho$
-            'Intercept: lambda_': $\lambda$
-            'data.sample.random_state: lambda_': Random State
-            'atk_value: lambda_': Attack Strength
-            'model_layers: lambda_': Layers
-            'train_time_per_sample: lambda_': $t_{train}$
-            'predict_time_per_sample: lambda_': $t_{predict}$
-            'adv_accuracy: lambda_': Adv. Accuracy
-            'accuracy: lambda_': Ben. Accuracy
-            'adv_fit_time_per_sample: lambda_': $t_{attack}$
-            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
-            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
-            'Epochs: lambda_': No. of Epochs
-            'model.trainer.batch_size: lambda_': Batch Size
-            def_gen: Defence
-            'def_value: lambda_': Defence Strength
-            ': lambda_': ''
       plots.yaml:
         cat_plot:
         - file: adv_accuracy_vs_defence_type.pdf
@@ -479,7 +68,24 @@ stages:
           - ResNet101
           - ResNet152
           legend_title: Model
-        - file: trash_score_vs_defence_type.pdf
+        - file: ben_failures_per_train_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          x: def_gen
+          xlabels: Defence Type
+          y: c_ben
+          ylabels: $\bar{C}_{ben.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+          legend_title: Model
+        - file: adv_failures_per_train_time_vs_defence_type.pdf
           hue: model_name
           kind: boxen
           set:
@@ -496,7 +102,7 @@ stages:
           - ResNet101
           - ResNet152
           legend_title: Model
-        - file: trash_score_vs_attack_type.pdf
+        - file: adv_failures_per_train_time_vs_attack_type.pdf
           hue: model_name
           kind: boxen
           set:
@@ -513,6 +119,21 @@ stages:
           - ResNet101
           - ResNet152
           legend_title: Model
+        - file: adv_failures_per_test_time_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          x: def_gen
+          xlabels: Defence Type
+          y: adv_failure_rate
+          ylabels: $f_{adv.}$
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+          legend_title: Model
         - file: adv_accuracy_vs_attack_type.pdf
           hue: model_name
           kind: boxen
@@ -520,6 +141,23 @@ stages:
           xlabels: Attack Type
           y: adv_accuracy
           ylabels: Adv. Accuracy
+          rotation: 90
+          hue_order:
+          - ResNet18
+          - ResNet34
+          - ResNet50
+          - ResNet101
+          - ResNet152
+          legend_title: Model
+        - file: ben_failure_rate_vs_defence_type.pdf
+          hue: model_name
+          kind: boxen
+          set:
+            yscale: log
+          x: def_gen
+          xlabels: Defence Type
+          y: failure_rate
+          ylabels: $f_{ben}(t; \theta)$
           rotation: 90
           hue_order:
           - ResNet18
@@ -640,49 +278,430 @@ stages:
     outs:
     - path: plots/adv_accuracy_vs_attack_type.pdf
       hash: md5
-      md5: d98e39efcf123c924edb8d76afd9d9ad
+      md5: 589df119d033ae26afd171bb532b70b0
       size: 36004
     - path: plots/adv_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 0eb6d612c6bc0c7dd9843922b7a85cf5
-      size: 32374
+      md5: 234b264b494a6e396dbaff15ba1c06b7
+      size: 33276
     - path: plots/adv_failure_rate_vs_train_time.pdf
       hash: md5
-      md5: b4045f90c0849d5f28cd3519872c636e
-      size: 211056
+      md5: 409d1d5afc7f53a0bbd6235ea40f3670
+      size: 276434
+    - path: plots/adv_failures_per_test_time_vs_defence_type.pdf
+      hash: md5
+      md5: bc209f40e4dc19e9b64aa120907f6029
+      size: 41070
+    - path: plots/adv_failures_per_train_time_vs_attack_type.pdf
+      hash: md5
+      md5: 18eb7fb28635190e81bb9bd6e670a43f
+      size: 45248
+    - path: plots/adv_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: 164dd701541215cd35a31a5506a851b9
+      size: 41334
     - path: plots/atk_param_vs_accuracy.pdf
       hash: md5
-      md5: e27401d8b9ade96e516c954cc5ca916c
-      size: 20341
+      md5: 2f65cc39685356bb1173b3c84a930d65
+      size: 21456
     - path: plots/ben_accuracy_vs_defence_type.pdf
       hash: md5
-      md5: 323231eb1f498228dbd22caf2efc4c86
-      size: 35108
+      md5: b582dadd56d56ff587411b17a1435fa2
+      size: 34713
+    - path: plots/ben_failure_rate_vs_defence_type.pdf
+      hash: md5
+      md5: 1c800cde38bdaa41d2758d75e977d35c
+      size: 43727
+    - path: plots/ben_failures_per_train_time_vs_defence_type.pdf
+      hash: md5
+      md5: 77c8a489ec159b88afeac48ee0aeeb18
+      size: 41312
     - path: plots/def_param_vs_accuracy.pdf
       hash: md5
-      md5: 5640f125ea5212ed7018cd2535c20206
-      size: 18670
+      md5: 8247cc225c005509e2fe9ece9d4c88af
+      size: 19260
     - path: plots/def_param_vs_adv_accuracy.pdf
       hash: md5
-      md5: 64404302bc5acf53d54a6e1ec50a8085
-      size: 18499
+      md5: 3146258daf3dc7d7cea85f957a77557d
+      size: 18821
     - path: plots/def_param_vs_adv_failure_rate.pdf
       hash: md5
-      md5: 4a9e2f937c5a0c5fada95d8e5eb0144c
-      size: 22357
-    - path: plots/trash_score_vs_attack_type.pdf
+      md5: 600022c5a83acf5532e84f7f0daa635c
+      size: 23053
+  afr:
+    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures
+      --duration_col adv_fit_time  --config_file afr.yaml --plots_folder plots/
+    deps:
+    - path: data/merged.csv
       hash: md5
-      md5: 7c976e25527e965c383d8cbe1379e151
-      size: 43833
-    - path: plots/trash_score_vs_defence_type.pdf
+      md5: f98b901fa3ee817a55a36f78d0c95233
+      size: 124219079
+    params:
+      afr.yaml:
+        covariates:
+        - adv_fit_time
+        - accuracy
+        - train_time
+        - atk_value
+        - def_value
+        - data.sample.random_state
+        - Epochs
+        - model_layers
+        - id
+        - atk_gen
+        - def_gen
+        - adv_failures
+        - adv_accuracy
+        - predict_time
+        cox:
+          plot:
+            file: cox_aft.pdf
+            title: Cox Model
+            title: Cox Model
+            qq_title: Cox QQ Plot
+          t0: 0.3
+          model:
+            penalizer: 0.2
+          labels:
+            data.sample.random_state: Random State
+            atk_value: Attack Strength
+            train_time: $t_{train}$
+            predict_proba_time: $t_{predict}$
+            adv_accuracy: Adv. Accuracy
+            accuracy: Ben. Accuracy
+            adv_fit_time: $t_{attack}$
+            adv_failure_rate: $f_{adv.}(t;\theta)$
+            failure_rate: $f_{ben.}(t;\theta)$
+            Epochs: No. of Epochs
+            model.trainer.batch_size: Batch Size
+            def_gen: Defence
+        exponential:
+          plot:
+            file: exponential_aft.pdf
+            title: Exponential Model
+            qq_title: Exponential QQ Plot
+          t0: 0.1
+          model:
+            breakpoints:
+            - 0.1
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
+            'Epochs: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+            ': lambda_': ''
+        gamma:
+          plot:
+            file: gamma_aft.pdf
+            title: Generalized Gamma Model
+            qq_title: Gamma QQ Plot
+          t0: 0.3
+          model:
+            penalizer: 0.3
+          labels:
+            'Intercept: alpha_': $\alpha$
+            'Intercept: beta_': $\beta$
+            'data.sample.random_state: beta_': Random State
+            'atk_value: beta_': Attack Strength
+            'train_time: beta_': $t_{train}$
+            'predict_proba_time: beta_': $t_{predict}$
+            'adv_accuracy: beta_': Adv. Accuracy
+            'accuracy: beta_': Ben. Accuracy
+            'adv_fit_time: beta_': $t_{attack}$
+            'adv_failure_rate: beta_': $h_{adv.}(t;\theta)$
+            'failure_rate: beta_': $h_{ben.}(t;\theta)$
+            'Epochs: beta_': No. of Epochs
+            'model.trainer.batch_size: beta_': Batch Size
+            def_gen: Defence
+            'attack.init.eps: beta_': $\varepsilon$
+        log_logistic:
+          plot:
+            file: log_logistic_aft.pdf
+            title: Log logistic AFR Model
+            qq_title: Log Logistic QQ Plot
+          t0: 0.1
+          model:
+            penalizer: 0.1
+          labels:
+            'Intercept: beta_': $\beta$
+            'Intercept: alpha_': $\alpha$
+            'data.sample.random_state: alpha_': Random State
+            'atk_value: alpha_': Attack Strength
+            'train_time: alpha_': $t_{train}$
+            'predict_proba_time: alpha_': $t_{predict}$
+            'adv_accuracy: alpha_': Adv. Accuracy
+            'accuracy: alpha_': Ben. Accuracy
+            'adv_fit_time: alpha_': $t_{attack}$
+            'adv_failure_rate: alpha_': $h_{adv.}(t;\theta)$
+            'failure_rate: alpha_': $h_{ben.}(t;\theta)$
+            'Epochs: alpha_': No. of Epochs
+            'model.trainer.batch_size: alpha_': Batch Size
+            def_gen: Defence
+            'attack.init.eps: alpha_': $\varepsilon$
+        log_normal:
+          plot:
+            file: log_normal_aft.pdf
+            title: Log Normal AFR Model
+            qq_title: Log Normal QQ Plot
+          t0: 2
+          t0: 2
+          model:
+            penalizer: 0.5
+          labels:
+            'Intercept: sigma_': $\sigma$
+            'Intercept: mu_': $\mu$
+            'atk_value: mu_': Attack Strength
+            'train_time: mu_': $t_{train}$
+            'predict_proba_time: mu_': $t_{predict}$
+            'adv_accuracy: mu_': Adv. Accuracy
+            'accuracy: mu_': Ben. Accuracy
+            'adv_fit_time: mu_': $t_{attack}$
+            'adv_failure_rate: mu_': $h_{adv.}(t;\theta)$
+            'failure_rate: mu_': $h_{ben.}(t;\theta)$
+            'Epochs: mu_': No. of Epochs
+            'model.trainer.batch_size: mu_': Batch Size
+            def_gen: Defence
+            'attack.init.eps: mu_': $\varepsilon$
+            'data.sample.random_state: mu_': Random State
+        weibull:
+          plot:
+            file: weibull_aft.pdf
+            title: Weibull AFR Model
+            qq_title: Weibull QQ Plot
+          t0: 1
+          model:
+            penalizer: 0.1
+          labels:
+            'Intercept: rho_': $\rho$
+            'Intercept: lambda_': $\lambda$
+            'data.sample.random_state: lambda_': Random State
+            'atk_value: lambda_': Attack Strength
+            'train_time: lambda_': $t_{train}$
+            'predict_proba_time: lambda_': $t_{predict}$
+            'adv_accuracy: lambda_': Adv. Accuracy
+            'accuracy: lambda_': Ben. Accuracy
+            'adv_fit_time: lambda_': $t_{attack}$
+            'adv_failure_rate: lambda_': $f_{adv.}(t;\theta)$
+            'failure_rate: lambda_': $f_{ben.}(t;\theta)$
+            'Epochs: lambda_': No. of Epochs
+            'model.trainer.batch_size: lambda_': Batch Size
+            def_gen: Defence
+            'model_layers: lambda_': Layers
+            'def_value: lambda_': Defence Strength
+            'predict_time: lambda_': $t_{predict}$
+            ': lambda_': ''
+    outs:
+    - path: plots/aft_comparison.csv
       hash: md5
-      md5: 9043e42e1a1af3b4823197c69e67625b
-      size: 39732
+      md5: c2baa8f717cdc1da5c66c45b6fbe15ed
+      size: 484
+    - path: plots/aft_comparison.tex
+      hash: md5
+      md5: 36326edf164e3e50eb1fa9cdfe779883
+      size: 771
+    - path: plots/cox_aft.pdf
+      hash: md5
+      md5: 49cc31dfa8deb7a973efa79aa5661023
+      size: 29060
+    - path: plots/cox_aft_dummies.pdf
+      hash: md5
+      md5: 2886a507102de701086572d45da2dfa8
+      size: 29294
+    - path: plots/cox_qq.pdf
+      hash: md5
+      md5: 1871952097e3a7ced7597800a08864a1
+      size: 19783
+    - path: plots/cox_summary.csv
+      hash: md5
+      md5: 5c2afaed99bd7a6459ffd1417b085386
+      size: 4704
+    - path: plots/exponential_aft.pdf
+      hash: md5
+      md5: bc07de53e57a4b8ac93621e31afce321
+      size: 31719
+    - path: plots/exponential_aft_dummies.pdf
+      hash: md5
+      md5: 1590788252530487ef7c12a2412533c5
+      size: 31689
+    - path: plots/exponential_qq.pdf
+      hash: md5
+      md5: 5eb9206940c0556752308da1e30db16e
+      size: 20360
+    - path: plots/exponential_summary.csv
+      hash: md5
+      md5: 14692228f8862cdcf958ca6519f3eeb8
+      size: 6115
+    - path: plots/gamma_aft.pdf
+      hash: md5
+      md5: c14f76b8a748a81eb652df11c4168430
+      size: 28179
+    - path: plots/gamma_aft_dummies.pdf
+      hash: md5
+      md5: 0a64f85cf0c0dbf042c2af6ac3f1e514
+      size: 34487
+    - path: plots/gamma_qq.pdf
+      hash: md5
+      md5: 86b107aed5da777f5e11c7148cece4f6
+      size: 19114
+    - path: plots/gamma_summary.csv
+      hash: md5
+      md5: eae68c47d2098fd5dcb6a4456e50909d
+      size: 14596
+    - path: plots/log_logistic_aft.pdf
+      hash: md5
+      md5: c7927f6d138223b3d0814e08ae70cf50
+      size: 29805
+    - path: plots/log_logistic_aft_dummies.pdf
+      hash: md5
+      md5: 3451396aab89eda953b67b7013043df5
+      size: 30815
+    - path: plots/log_logistic_qq.pdf
+      hash: md5
+      md5: 6db594338475a53d925e72d9a5be69e6
+      size: 21187
+    - path: plots/log_logistic_summary.csv
+      hash: md5
+      md5: bc339874fa9cb8aa52471140047bab73
+      size: 5167
+    - path: plots/log_normal_aft.pdf
+      hash: md5
+      md5: 60147688508ead164e45910baace6fd9
+      size: 30291
+    - path: plots/log_normal_aft_dummies.pdf
+      hash: md5
+      md5: 267b2a890ffd2a034d9825cefec12a45
+      size: 31496
+    - path: plots/log_normal_qq.pdf
+      hash: md5
+      md5: ff928a6fbd9d7277df3f88c99d22c096
+      size: 22085
+    - path: plots/log_normal_summary.csv
+      hash: md5
+      md5: d48ff310a60a8ad40313cf3b69ab5e58
+      size: 5149
+    - path: plots/weibull_aft.pdf
+      hash: md5
+      md5: 799bddf708e9c4a48784783c629e722a
+      size: 31698
+    - path: plots/weibull_aft_dummies.pdf
+      hash: md5
+      md5: 99fef4eb8ec5dbf7844ba6e76c904b73
+      size: 31043
+    - path: plots/weibull_qq.pdf
+      hash: md5
+      md5: 258bebd08669196cf738183ecd05dc14
+      size: 19374
+    - path: plots/weibull_summary.csv
+      hash: md5
+      md5: 8ee7e7d66bcf24eb8424460826ab7421
+      size: 5217
   copy_results:
     cmd: mkdir -p ~/ml_afr/plots &&  cp -r plots/* ~/ml_afr/plots/
     deps:
     - path: plots/
       hash: md5
-      md5: e533f85afb78e6228b2e11037932a9c5.dir
-      size: 1013121
-      nfiles: 37
+      md5: 5858e5f1ee079e8c99ac53c7834601da.dir
+      size: 5938101
+      nfiles: 43
+  clean:
+    cmd: python -m deckard.layers.clean_data -i data/merged.csv -o data/clean.csv
+      -c clean.yaml
+    deps:
+    - path: data/merged.csv
+      hash: md5
+      md5: 1b4802747f91a7001c43401ad21d997a
+      size: 50761113
+    params:
+      clean.yaml:
+        fillna:
+          Epochs: 10
+    outs:
+    - path: data/clean.csv
+      hash: md5
+      md5: 2913117ef7997065dafc860c9d3080f5
+      size: 54972304
+  clean@mnist:
+    cmd: python -m deckard.layers.clean_data -i data/attack_mnist.csv  -o data/mnist.csv  -c
+      ../conf/clean_mnist.yaml --drop_if_empty adv_fit_time accuracy train_time predict_time
+      adv_accuracy Epochs
+    deps:
+    - path: ../conf/clean_mnist.yaml
+      hash: md5
+      md5: bb112947b87ca42a244135a52cc5e7d5
+      size: 1003
+    - path: data/attack_mnist.csv
+      hash: md5
+      md5: c4db49ae4fc1a0e6fa4c3d52b03d650a
+      size: 93006845
+    outs:
+    - path: data/mnist.csv
+      hash: md5
+      md5: 083e65989c7b8a5f103d407eb675aaf8
+      size: 70077338
+  clean@cifar:
+    cmd: python -m deckard.layers.clean_data -i data/attack_cifar.csv  -o data/cifar.csv  -c
+      ../conf/clean_cifar.yaml --drop_if_empty adv_fit_time accuracy train_time predict_time
+      adv_accuracy Epochs
+    deps:
+    - path: ../conf/clean_cifar.yaml
+      hash: md5
+      md5: 4e2abc093db66b77b424854549b80497
+      size: 961
+    - path: data/attack_cifar.csv
+      hash: md5
+      md5: 5a430aa13b88dff6a8fdf0277c9cd53d
+      size: 23267442
+    outs:
+    - path: data/cifar.csv
+      hash: md5
+      md5: 4c6e158a421999f4eae6c238395f63e4
+      size: 20578565
+  clean@cifar100:
+    cmd: python -m deckard.layers.clean_data -i data/attack_cifar100.csv  -o data/cifar100.csv  -c
+      ../conf/clean_cifar100.yaml --drop_if_empty adv_fit_time accuracy train_time
+      predict_time adv_accuracy Epochs
+    deps:
+    - path: ../conf/clean_cifar100.yaml
+      hash: md5
+      md5: 5a8cc7e71f7036e2f590bb882acd34fb
+      size: 897
+    - path: data/attack_cifar100.csv
+      hash: md5
+      md5: ea55355b5b530f5751aea19d13067099
+      size: 36035453
+    outs:
+    - path: data/cifar100.csv
+      hash: md5
+      md5: c7bbce2ed692f4697b9ab4cbbe36f9c9
+      size: 30226661
+  predict_survival_time:
+    cmd: python predict_with_best.py  --data data/merged.csv  --config_file afr.yaml  --model
+      weibull  --target adv_failures  --duration_col adv_fit_time  --output data/merged_afr.csv
+    deps:
+    - path: afr.yaml
+      hash: md5
+      md5: 82c7a6430d38320263db502d57cbd5c6
+      size: 5728
+    - path: data/merged.csv
+      hash: md5
+      md5: f98b901fa3ee817a55a36f78d0c95233
+      size: 124219079
+    - path: plots/aft_comparison.tex
+      hash: md5
+      md5: 36326edf164e3e50eb1fa9cdfe779883
+      size: 771
+    outs:
+    - path: data/merged_afr.csv
+      hash: md5
+      md5: e8c06cf834297c5ee44950ea4d640cc8
+      size: 125347398

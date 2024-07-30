@@ -124,6 +124,7 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
+        survival_time = data.loc[:, "predict_time"] * data.loc[:, "accuracy"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
             data.loc[:, "predict_proba_time"],
@@ -133,17 +134,35 @@ def calculate_failure_rate(data):
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (
-        (1 - data.loc[:, "adv_accuracy"])
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "predict_time"]
-    )
-
+    if "adv_fit_time" in data.columns:
+        assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
+        if "predict_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = (
+                data.loc[:, "predict_time"] * data.loc[:, "adv_accuracy"]
+            )
+        elif "predict_proba_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = (
+                data.loc[:, "predict_proba_time"] * data.loc[:, "adv_accuracy"]
+            )
+        else:
+            raise ValueError("predict_time or predict_proba_time not in data.columns")
+    data = data.assign(adv_survival_time=adv_survival_time)
+    data = data.assign(survival_time=survival_time)
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
-    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)

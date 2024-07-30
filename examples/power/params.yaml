@@ -74,7 +74,7 @@ attack:
       library: pytorch
       trainer:
         batch_size: 1024
-        nb_epoch: 1
+        np_epochs: 1
     name: art.attacks.evasion.FastGradientMethod
     targeted: false
   method: evasion
@@ -130,7 +130,7 @@ attack:
     library: pytorch
     trainer:
       batch_size: 1024
-      nb_epoch: 1
+      np_epochs: 1
 data:
   _target_: deckard.base.data.Data
   generate:
@@ -222,7 +222,7 @@ model:
   library: pytorch
   trainer:
     batch_size: 1024
-    nb_epoch: 1
+    np_epochs: 1
 optimizers:
 - accuracy
 - train_time
