@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import yaml
 from pathlib import Path
+import numpy as np
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -35,14 +36,18 @@ def cat_plot(
     folder,
     xlabels=None,
     ylabels=None,
+    xticklabels=None,
+    yticklabels=None,
     titles=None,
     legend_title=None,
     x_lim=None,
     y_lim=None,
     hue_order=None,
     rotation=0,
-    set={},
     filetype=".eps",
+    x_scale=None,
+    y_scale=None,
+    digitize = [],
     **kwargs,
 ):
     """
@@ -88,12 +93,16 @@ def cat_plot(
     """
 
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
+    # clear the Axes object
     suffix = Path(file).suffix
     if suffix is not None:
         file = Path(file)
     else:
         file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
+    data = digitize_cols(data, digitize)
     if hue is not None:
         data = data.sort_values(by=[hue, x, y])
         logger.debug(
@@ -112,12 +121,31 @@ def cat_plot(
         data = data.sort_values(by=[x, y])
         logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
         graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
-    if xlabels is not None:
-        graph.set_xlabels(xlabels)
-    if ylabels is not None:
-        graph.set_ylabels(ylabels)
+    # graph is a FacetGrid object and we need to set the x,y scales, labels, titles on the axes
+    for graph_ in graph.axes.flat:
+        if y_scale is not None:
+          graph_.set_yscale(y_scale)
+        if x_scale is not None:
+          graph_.set_xscale(x_scale)
+        if xticklabels is not None:
+          graph_.set_xticklabels(xticklabels)
+        if yticklabels is not None:
+          graph_.set_yticklabels(yticklabels)
     if titles is not None:
+      if isinstance(titles, dict):
+        graph.set_titles(**titles)
+      elif isinstance(titles, str):
         graph.set_titles(titles)
+    else:
+      try:
+        graph.set_titles("{row_name} | {col_name}")
+      except KeyError as e:
+        if "row_name" in str(e):
+          graph.set_titles("{col_name}")
+        elif "col_name" in str(e):
+          graph.set_titles("{row_name}")
+        else:
+          raise e
     if legend_title is not None:
         graph.legend.set_title(title=legend_title)
     else:
@@ -125,8 +153,11 @@ def cat_plot(
             graph.legend.remove()
         else:
             pass
+    if xlabels is not None:
+      graph.set_xlabels(xlabels)
+    if ylabels is not None:
+      graph.set_ylabels(ylabels)
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
-    graph.set(**set)
     if x_lim is not None:
         graph.set(xlim=x_lim)
     if y_lim is not None:
@@ -134,7 +165,23 @@ def cat_plot(
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
     logger.info(f"Saved graph to {folder / file}")
+
+def digitize_cols(data, digitize):
+    if isinstance(digitize,str):
+      digitize = [digitize]
+    else:
+      assert isinstance(digitize, list), "digitize must be a list of columns to digitize"
+    if len(digitize) > 0:
+      for col in digitize:
+        min_ = data[col].min()
+        max_ = data[col].max()
+        NUMBER_OF_BINS = 10
+        bins = np.linspace(min_, max_, NUMBER_OF_BINS)
+        data[col] = np.digitize(data[col], bins)/NUMBER_OF_BINS
+    return data
 
 
 def line_plot(
@@ -193,6 +240,8 @@ def line_plot(
       the line plot graph object.
     """
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
     suffix = Path(file).suffix
     if suffix is not None:
         file = Path(file)
@@ -223,6 +272,8 @@ def line_plot(
     graph.get_figure().savefig(folder / file)
     logger.info(f"Saved graph to {folder/file}")
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
     return graph
 
 
@@ -285,6 +336,8 @@ def scatter_plot(
     """
 
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
     suffix = Path(file).suffix
     if suffix is not None:
         file = Path(file)
@@ -320,6 +373,8 @@ def scatter_plot(
 
     logger.info(f"Saved graph to {Path(folder) / file}")
     plt.gcf().clear()
+    plt.cla()
+    plt.clf()
     return graph
 
 
@@ -390,19 +445,19 @@ def plots_main(args):
         logger.info(f"Creating folder {FOLDER}")
         FOLDER.mkdir(parents=True, exist_ok=True)
 
-    cat_plot_list = big_dict.get("cat_plot", [])
-    for dict_ in cat_plot_list:
-        cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
+    
 
     line_plot_list = big_dict.get("line_plot", [])
     for dict_ in line_plot_list:
         line_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
     scatter_plot_list = big_dict.get("scatter_plot", [])
-    scatter_plot_list = big_dict.get("scatter_plot", [])
     for dict_ in scatter_plot_list:
         scatter_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
+    cat_plot_list = big_dict.get("cat_plot", [])
+    for dict_ in cat_plot_list:
+        cat_plot(data, **dict_, folder=FOLDER, filetype=IMAGE_FILETYPE)
 
 if __name__ == "__main__":
     args = plots_parser.parse_args()
