@@ -478,7 +478,9 @@ def replace_strings_in_data(data, replace_dict):
             v,
             dict,
         ), f"Value for key {k} in replace_dict is not a dictionary."
-        assert k in data.columns, f"Key {k} not in data.columns."
+        if k not in data.columns:
+            logger.warning(f"Column {k} not in data. Ignoring.")
+            continue
         for k1, v1 in v.items():
             logger.info(f"Replacing {k1} with {v1} in {k}...")
             k1 = str(k1)
