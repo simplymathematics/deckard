@@ -38,7 +38,7 @@ hydra:
       ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
       ++model.art.initialize.optimizer.momentum: choice(0.1, 0.9, 0.95, 0.99)
       # ++model.trainer.nb_epochs: choice(1, 10, 30, 50, 100)
-      ++model.trainer.batch_size: choice(32, 64, 128, 256, 512, 1024)
+      ++model.trainer.batch_size: choice(128, 256, 512, 1024)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

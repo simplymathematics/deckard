@@ -88,7 +88,7 @@ stages:
     matrix:
       dataset : [mnist, cifar, cifar100]
       model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
-      epochs : [1, 10, 20]
+      epochs : [1] #10, 20, 30, 50, 100
     cmd: >- 
       bash attacks.sh 
       ++model.init.name=torch_example.${item.model} 
@@ -104,6 +104,7 @@ stages:
     deps:
       - ${item.dataset}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
+      - attacks.sh
     outs:
       - ${item.dataset}/logs/attack/${item.model}/${item.epochs}/:
           cache: True
