@@ -7,37 +7,13 @@ import seaborn as sns
 import yaml
 import numpy as np
 from tqdm import tqdm
-from typing import Literal
 from .utils import deckard_nones as nones
-from .compile import save_results, load_results
 from .compile import save_results, load_results
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
 
 
-def fill_train_time(data, match=["model.init.name", "model.trainer.nb_epoch", "model.art.preprocessor", "model.art.postprocessor", "def_name", "def_gen", "defence_name"]):
-    sort_by = []
-    for col in match:
-        # find out which columns have the string in match
-        if col in data.columns:
-            sort_by.append(col)
-        else:
-            pass
-    # Convert "train_time" to numeric
-    # Fill missing values in "train_time" with the max of the group
-    data["train_time"] = pd.to_numeric(data["train_time"], errors="coerce").astype(float)
-    # Group by everything in the "match" list
-    assert isinstance(data, pd.DataFrame), "data is not a pandas DataFrame"
-    # Sort by the entries in "match"
-    data = data.sort_values(by=sort_by)
-    data["train_time"] = data["train_time"].fillna(method="ffill")
-    data["train_time"] = data["train_time"].fillna(method="bfill")
-    return data
-
-
-
-def drop_rows_without_results(
 def fill_train_time(
     data,
     match=[
@@ -156,7 +132,6 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_proba_time"]
-        surival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "accuracy"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
     if "adv_fit_time" in data.columns:
@@ -167,14 +142,18 @@ def calculate_failure_rate(data):
                 * data.loc[:, "attack.attack_size"]
                 / data.loc[:, "adv_fit_time"]
             )
-            adv_survival_time = data.loc[:, "predict_time"] * data.loc[:, "adv_accuracy"]
+            adv_survival_time = (
+                data.loc[:, "predict_time"] * data.loc[:, "adv_accuracy"]
+            )
         elif "predict_proba_time" in data.columns:
             adv_failure_rate = (
                 (1 - data.loc[:, "adv_accuracy"])
                 * data.loc[:, "attack.attack_size"]
                 / data.loc[:, "adv_fit_time"]
             )
-            adv_survival_time = data.loc[:, "predict_proba_time"] * data.loc[:, "adv_accuracy"]
+            adv_survival_time = (
+                data.loc[:, "predict_proba_time"] * data.loc[:, "adv_accuracy"]
+            )
         else:
             raise ValueError("predict_time or predict_proba_time not in data.columns")
     data = data.assign(adv_survival_time=adv_survival_time)
@@ -182,9 +161,7 @@ def calculate_failure_rate(data):
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
     training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
-    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
         data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
@@ -513,8 +490,6 @@ def format_control_parameter(data, control_dict, fillna):
     return data, fillna
 
 
-
-    
 def replace_strings_in_data(data, replace_dict):
     for k, v in replace_dict.items():
         logger.info(f"Replacing strings in {k}...")
