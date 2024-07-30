@@ -11,7 +11,7 @@ for model_config in $CONFIG_NAMES; do
         continue
     fi
     HYDRA_FULL_ERROR=1 python -m deckard.layers.optimise \
-    ++model.init.kernel=kernel_name \
+    ++model.init.kernel=${kernel_name} \
     ++stage=attack \
     ++attack.init.name=art.attacks.evasion.ProjectedGradientDescent \
     ++attack.init.norm=1,2,inf \

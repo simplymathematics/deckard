@@ -1,14 +1,3 @@
-# params:
-  # control:
-  #   data.sample.train_size: 100
-  # defaults:
-  #   model.init.m : -1
-# fillna:
-#   model.init.compressor : "None"
-#   model.init.metric : "ncd"
-#   model.init.method : "random"
-#   model.init.m : ${data.sample.random_state}
-#   model.init.precompute : "False"
 replace:
   model.init.metric:
     jaro: "Jaro"
@@ -18,11 +7,11 @@ replace:
     ratio: "Ratio"
     seqRatio: "SeqRatio"
     hamming: "Hamming"
-    gzip: "Gzip"
+    gzip: "GZIP"
     pkl: "Pickle"
     bz2: "BZ2"
-    zstd: "Zstd"
-    lzma  : "Lzma"
+    zstd: "ZSTD"
+    lzma  : "LZMA"
   model_name:
     GzipSVC : "k-SVC"
     GzipLogisticRegressor : "k-Logistic"
@@ -30,6 +19,29 @@ replace:
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
+  model.init.sampling_method:
+    random : "Random"
+    medoid : "Medoid"
+    sum : "Sum"
+    svc : "SVC"
+    hardness : "Hardness"
+    nearmiss : "NearMiss"
+    knn : "KNN"
+  dataset:
+    ddos : "DDoS"
+    sms_spam : "SMS Spam"
+    kdd_nsl : "KDD NSL"
+    truthseeker : "Truthseeker"
+  model.init.m :
+    -1 : 1
 drop_values:
   accuracy : 0.00000000000
   predict_time : 1.00000000000
+replace_cols:
+  dataset: Dataset
+  model.init.metric: Metric
+  model.init.symmetric: Symmetric
+  model.init.sampling_method: Condensing Method
+  model.init.m: Condensing Ratio
+  model_name: Model
+  

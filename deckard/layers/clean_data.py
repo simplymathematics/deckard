@@ -10,6 +10,7 @@ from tqdm import tqdm
 from typing import Literal
 from .utils import deckard_nones as nones
 from .compile import save_results, load_results
+from .compile import save_results, load_results
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -34,6 +35,40 @@ def fill_train_time(data, match=["model.init.name", "model.trainer.nb_epoch", "m
     data["train_time"] = data["train_time"].fillna(method="bfill")
     return data
 
+
+
+def drop_rows_without_results(
+def fill_train_time(
+    data,
+    match=[
+        "model.init.name",
+        "model.trainer.nb_epoch",
+        "model.art.preprocessor",
+        "model.art.postprocessor",
+        "def_name",
+        "def_gen",
+        "defence_name",
+    ],
+):
+    sort_by = []
+    for col in match:
+        # find out which columns have the string in match
+        if col in data.columns:
+            sort_by.append(col)
+        else:
+            pass
+    # Convert "train_time" to numeric
+    # Fill missing values in "train_time" with the max of the group
+    data["train_time"] = pd.to_numeric(data["train_time"], errors="coerce").astype(
+        float,
+    )
+    # Group by everything in the "match" list
+    assert isinstance(data, pd.DataFrame), "data is not a pandas DataFrame"
+    # Sort by the entries in "match"
+    data = data.sort_values(by=sort_by)
+    data["train_time"] = data["train_time"].fillna(method="ffill")
+    data["train_time"] = data["train_time"].fillna(method="bfill")
+    return data
 
 
 def drop_rows_without_results(
@@ -63,7 +98,7 @@ def drop_rows_without_results(
     """
 
     logger.info(f"Dropping frames without results for {subset}")
-    
+
     for col in subset:
         logger.info(f"Dropping frames without results for {col}")
         before = data.shape[0]
@@ -487,7 +522,9 @@ def replace_strings_in_data(data, replace_dict):
             v,
             dict,
         ), f"Value for key {k} in replace_dict is not a dictionary."
-        assert k in data.columns, f"Key {k} not in data.columns."
+        if k not in data.columns:
+            logger.warning(f"Column {k} not in data. Ignoring.")
+            continue
         for k1, v1 in v.items():
             logger.info(f"Replacing {k1} with {v1} in {k}...")
             k1 = str(k1)
@@ -512,7 +549,9 @@ def replace_strings_in_columns(data, replace_dict):
     if len(replace_dict) > 0:
         logger.info(f"Columns after replacement: {after}")
         assert cols != after, "Columns not replaced."
-        assert len(cols) == len(after), f"Length of columns before and after replacement not equal: {len(cols)} != {len(after)}."
+        assert len(cols) == len(
+            after,
+        ), f"Length of columns before and after replacement not equal: {len(cols)} != {len(after)}."
     return data
 
 
@@ -523,7 +562,7 @@ def clean_data_for_plotting(
     control_dict={},
     fillna={},
     replace_dict={},
-    col_replace_dict = {},
+    col_replace_dict={},
     pareto_dict={},
 ):
     """
@@ -579,20 +618,23 @@ def clean_data_for_plotting(
     data = fill_na(data, fillna)
     data = replace_strings_in_data(data, replace_dict)
     data = replace_strings_in_columns(data, col_replace_dict)
-    
+
     if len(pareto_dict) > 0:
         data = find_pareto_set(data, pareto_dict)
     return data
+
 
 def shorten_defence_names(data, def_gen_dict):
     def_gen = data.def_gen.map(def_gen_dict)
     data.def_gen = def_gen
     data.dropna(axis=0, subset=["def_gen"], inplace=True)
 
+
 def shorten_attack_names(data, atk_gen_dict):
     atk_gen = data.atk_gen.map(atk_gen_dict)
     data.atk_gen = atk_gen
     data.dropna(axis=0, subset=["atk_gen"], inplace=True)
+
 
 def fill_na(data, fillna):
     for k, v in fillna.items():
@@ -601,6 +643,7 @@ def fill_na(data, fillna):
         else:
             data[k] = str(v)
     return data
+
 
 def find_pareto_set(data, pareto_dict):
     data = pareto_set(data, pareto_dict)
@@ -613,41 +656,41 @@ def drop_values(data, drop_dict):
     return data
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
+clean_data_parser = argparse.ArgumentParser()
+clean_data_parser.add_argument(
     "-i",
     "--input_file",
     type=str,
     help="Data file to read from",
     required=True,
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-o",
     "--output_file",
     type=str,
     help="Data file to read from",
     required=True,
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-v",
     "--verbosity",
     default="INFO",
     help="Increase output verbosity",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-c",
     "--config",
     help="Path to the config file",
     default="clean.yaml",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-s",
     "--subset",
     help="Subset of data you would like to plot",
     default=None,
     nargs="?",
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "-d",
     "--drop_if_empty",
     help="Drop row if this columns is empty",
@@ -659,19 +702,22 @@ parser.add_argument(
         "predict_time",
     ],
 )
-parser.add_argument(
+clean_data_parser.add_argument(
     "--pareto_dict",
     help="Path to (optional) pareto set dictionary.",
     default=None,
 )
 
 
-def main(args):
+def clean_data_main(args):
     logging.basicConfig(level=args.verbosity)
     assert Path(
         args.input_file,
     ).exists(), f"File {args.input_file} does not exist. Please specify a valid file using the -i flag."
-    data = load_results(results_file=Path(args.input_file).name, results_folder=Path(args.input_file).parent)
+    data = load_results(
+        results_file=Path(args.input_file).name,
+        results_folder=Path(args.input_file).parent,
+    )
     # Strip whitespace from column names
     trim_strings = lambda x: x.strip() if isinstance(x, str) else x  # noqa E731
     data.rename(columns=trim_strings, inplace=True)
@@ -682,9 +728,7 @@ def main(args):
         args.drop_if_empty = args.drop_if_empty.split(",")
     else:
         assert isinstance(args.drop_if_empty, list)
-    
-    
-    
+
     # Reads Config file
     with open(Path(args.config), "r") as f:
         big_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -728,5 +772,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    main(args)
+    args = clean_data_parser.parse_args()
+    clean_data_main(args)

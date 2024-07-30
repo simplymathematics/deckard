@@ -25,6 +25,19 @@ def find_optuna_best(
 ):
     logger.info(f"Study name: {study_name}")
     logger.info(f"Storage name: {storage_name}")
+    # Validate the directions
+    if isinstance(direction, str):
+        directions = [direction]
+    else:
+        assert isinstance(
+            directions,
+            list,
+        ), f"Directions is not a list: {type(directions)}"
+    for direction in directions:
+        assert direction in [
+            "minimize",
+            "maximize",
+        ], f"Direction {direction} not recognized."
     if isinstance(direction, str):
         study = optuna.create_study(
             study_name=study_name,
@@ -41,9 +54,67 @@ def find_optuna_best(
             directions=direction,
         )
         directions = direction
-    assert isinstance(directions, list), f"Directions is not a list: {type(directions)}"
+    # Convert directions to bools
+    directions = [False if x == "maximize" else True for x in directions]
+    # Get the trials dataframe
     df = study.trials_dataframe(attrs=("number", "value", "params"))
     # Find the average of each value over the columns in average_over
+    # df = group_by_params(df)
+    if study_csv is not None:
+        Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(study_csv)
+    # To dotlist
+    params = merge_best_with_default(
+        config_folder,
+        default_config,
+        config_subdir,
+        study,
+    )
+    if params_file is not None:
+        params_file = create_new_config_in_subdir(
+            params_file,
+            config_folder,
+            default_config,
+            config_subdir,
+            params,
+        )
+    return params
+
+
+def merge_best_with_default(
+    config_folder,
+    default_config,
+    config_subdir,
+    study,
+    use_optuna_best=True,
+):
+    if use_optuna_best is True:
+        best_params = flatten_dict(study.best_params)
+        more_params = flatten_dict(study.best_trial.user_attrs)
+        even_more_params = flatten_dict(study.best_trial.system_attrs)
+        logger.debug(f"Best params: {best_params}")
+        logger.debug(f"Best user params: {more_params}")
+        logger.debug(f"Best system params: {even_more_params}")
+    else:
+        raise NotImplementedError("Not implemented yet.")
+    # Merge all the params
+    best_params = OmegaConf.to_container(
+        OmegaConf.merge(best_params, more_params, even_more_params),
+        resolve=False,
+    )
+    # to dotlist
+    best_params = flatten_dict(best_params)
+    overrides = get_overrides(config_subdir, best_params)
+    params = override_default_with_best(
+        config_folder,
+        default_config,
+        overrides,
+        config_subdir=config_subdir,
+    )
+    return params
+
+
+def group_by_params(df):
     not_these = ["number", "value"]
     val_cols = [
         col
@@ -51,11 +122,9 @@ def find_optuna_best(
         if col.startswith("values_") and col.split("values_")[-1] not in not_these
     ]
     not_these.extend(val_cols)
-    print(f"Not these: {not_these}")
     groupby_cols = [
         col for col in df.columns if col.split("params_")[-1] not in not_these
     ]
-    print(f"Groupby cols: {groupby_cols}")
     dfs = df.groupby(groupby_cols)
     new_df = pd.DataFrame(columns=groupby_cols + ["mean", "std", "ntrials", "nuniques"])
     means = []
@@ -82,30 +151,11 @@ def find_optuna_best(
     new_df["std"] = stds
     new_df["ntrials"] = ntrials
     new_df["nuniques"] = nuniques
-    for direction in directions:
-        assert direction in [
-            "minimize",
-            "maximize",
-        ], f"Direction {direction} not recognized."
-    directions = [False if x == "maximize" else True for x in directions]
-    assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(df)}"
-    if study_csv is not None:
-        Path(study_csv).parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(study_csv)
-    # To dotlist
-    best_params = flatten_dict(study.best_params)
-    more_params = flatten_dict(study.best_trial.user_attrs)
-    even_more_params = flatten_dict(study.best_trial.system_attrs)
-    logger.debug(f"Best params: {best_params}")
-    logger.debug(f"Best user params: {more_params}")
-    logger.debug(f"Best system params: {even_more_params}")
-    # Merge all the params
-    best_params = OmegaConf.to_container(
-        OmegaConf.merge(best_params, more_params, even_more_params),
-        resolve=False,
-    )
-    # to dotlist
-    best_params = flatten_dict(best_params)
+    assert isinstance(new_df, pd.DataFrame), f"df is not a dataframe: {type(new_df)}"
+    return new_df
+
+
+def get_overrides(config_subdir, best_params):
     overrides = []
     # Changing the keys to hydra override format
     for key, value in best_params.items():
@@ -130,21 +180,7 @@ def find_optuna_best(
                 logger.info(f"Adding {key} to param list")
             else:
                 logger.debug(f"Skipping {key} because it is not in {config_subdir}")
-    params = override_default_with_best(
-        config_folder,
-        default_config,
-        overrides,
-        config_subdir=config_subdir,
-    )
-    if params_file is not None:
-        params_file = create_new_config_in_subdir(
-            params_file,
-            config_folder,
-            default_config,
-            config_subdir,
-            params,
-        )
-    return params
+    return overrides
 
 
 def create_new_config_in_subdir(
@@ -176,7 +212,6 @@ def create_new_config_in_subdir(
     with open(params_file.with_suffix(".yaml"), "w") as f:
         yaml.dump(params, f)
     assert params_file.exists(), f"{params_file.resolve().as_posix()} does not exist."
-
     return params_file
 
 
@@ -195,27 +230,25 @@ def override_default_with_best(
     return cfg
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--params_file", type=str, default=True)
+find_best_parser = argparse.ArgumentParser()
+find_best_parser.add_argument("--params_file", type=str, default=True)
 
-    parser.add_argument("--study_csv", type=str, default=None)
-    parser.add_argument("--config_folder", type=str, default=Path(Path(), "conf"))
-    parser.add_argument("--default_config", type=str, default="default")
-    parser.add_argument("--config_subdir", type=str, default=None)
-    parser.add_argument("--study_name", type=str, required=True)
-    parser.add_argument("--config_name", type=str)
-    parser.add_argument("--verbosity", type=str, default="INFO")
-    parser.add_argument("--storage_name", type=str, required=True)
-    parser.add_argument("--direction", type=str, default="maximize")
-    parser.add_argument("--study_type", type=str, default="optuna")
-    args = parser.parse_args()
+find_best_parser.add_argument("--study_csv", type=str, default=None)
+find_best_parser.add_argument("--config_folder", type=str, default=Path(Path(), "conf"))
+find_best_parser.add_argument("--default_config", type=str, default="default")
+find_best_parser.add_argument("--config_subdir", type=str, default=None)
+find_best_parser.add_argument("--study_name", type=str, required=True)
+find_best_parser.add_argument("--config_name", type=str)
+find_best_parser.add_argument("--verbosity", type=str, default="INFO")
+find_best_parser.add_argument("--storage_name", type=str, required=True)
+find_best_parser.add_argument("--direction", type=str, default="maximize")
+find_best_parser.add_argument("--study_type", type=str, default="optuna")
 
+
+def find_best_main(find_optuna_best, args):
     args.config_folder = Path(args.config_folder).resolve().as_posix()
     logging
     if args.study_type == "optuna":
-        study_name = args.study_name
-        storage_name = args.storage_name
         direction = args.direction
         if len(direction) == 1:
             direction = direction[0]
@@ -231,3 +264,8 @@ if __name__ == "__main__":
         )
     else:
         raise NotImplementedError(f"Study type {args.study_type} not implemented.")
+
+
+if __name__ == "__main__":
+    args = find_best_parser.parse_args()
+    find_best_main(find_optuna_best, args)
