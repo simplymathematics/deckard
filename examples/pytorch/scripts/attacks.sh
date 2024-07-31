@@ -10,7 +10,7 @@
 #     ++attack.init.eps=.001,.01,.1,.5,1 \
 #     ++attack.init.norm=2 \
 #     atk_name=FGM  $@
-# # #####################################################
+# #####################################################
 # # Projected Gradient Descent
 # bash models.sh \
 #     stage=attack \
@@ -43,23 +43,23 @@
 #     ++attack.init.norm=2 \
 #     atk_name=HSJ $@
 # #####################################################
-# PixelAttack
-bash models.sh \
-    stage=attack \
-    attack=default  \
-    ++attack.init.name=art.attacks.evasion.PixelAttack \
-    ~attack.init.batch_size \
-    ++attack.init.th=1,4,16,64,256 \
-    atk_name=Pixel $@
-# #####################################################
-# ThresholdAttack
-bash models.sh \
-    stage=attack \
-    attack=default \
-    ++attack.init.name=art.attacks.evasion.ThresholdAttack \
-    ~attack.init.batch_size \
-    ++attack.init.th=1,4,16,64,256 \
-    atk_name=Thresh $@
+# # # PixelAttack
+# bash models.sh \
+#     stage=attack \
+#     attack=default  \
+#     ++attack.init.name=art.attacks.evasion.PixelAttack \
+#     ~attack.init.batch_size \
+#     ++attack.init.th=1,4,16,64,256 \
+#     atk_name=Pixel $@
+# # #####################################################
+# # ThresholdAttack
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.ThresholdAttack \
+#     ~attack.init.batch_size \
+#     ++attack.init.th=1,4,16,64,256 \
+#     atk_name=Thresh $@
 # #####################################################
 # # ZooAttack
 # bash models.sh \

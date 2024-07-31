@@ -86,11 +86,12 @@ stages:
   #     - ${item.dataset}/${files.reports}/train/${item.model}/
   attacks:
     matrix:
+      atk_name : [FGM, PGD, Deep, Pixel, Thresh, HSJ]
       dataset : [mnist, cifar, cifar100]
       model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
-      epochs : [1] #10, 20, 30, 50, 100
+      epochs : [1, 10, 20, 30, 50, 100] #
     cmd: >- 
-      bash attacks.sh 
+      bash scripts/${item.atk_name}.sh 
       ++model.init.name=torch_example.${item.model} 
       stage=attack
       model_name=${item.model}
@@ -104,9 +105,10 @@ stages:
     deps:
       - ${item.dataset}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
       - ${item.dataset}/${files.reports}/train/${files.name}/${files.score_dict_file}
-      - attacks.sh
+      - scripts/${item.atk_name}.sh
+      - scripts/models.sh
     outs:
-      - ${item.dataset}/logs/attack/${item.model}/${item.epochs}/:
+      - ${item.dataset}/logs/attack/${item.model}/${item.atk_name}/${item.epochs}/:
           cache: True
           persist: True
   compile:

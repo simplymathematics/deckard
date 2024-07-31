@@ -23,14 +23,14 @@ hydra:
   run:
     dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${model_name}/${model.trainer.nb_epochs}
-    subdir : ${def_name}/${atk_name}/${hydra.job.num}
+    dir: ${files.directory}/logs/${stage}/${model_name}/${atk_name}/${model.trainer.nb_epochs}/
+    subdir : ${def_name}/${hydra.job.num}
   sweeper:
     sampler:
       _target_: optuna.samplers.GridSampler
     direction: ${direction}
-    study_name: ${model_name}_${def_name}_${atk_name}
-    storage: sqlite:///${dataset}.db
+    study_name: ${dataset}_${model_name}_${def_name}_${atk_name}
+    storage: sqlite:///optuna.db
     n_jobs: ${oc.env:HYDRA_SWEEPER_N_JOBS, 16}
     n_trials: ${oc.env:HYDRA_SWEEPER_N_TRIALS, 128}
     max_failure_rate: 1.0

@@ -14,9 +14,6 @@ python -m deckard.layers.optimise \
   def_name=FSQ \
   $@ --multirun
 
-rm -rf mnist/models
-rm -rf cifar/models
-rm -rf cifar100/models
 
 # Gaussian Augmentation (Input)
 python -m deckard.layers.optimise \
@@ -27,9 +24,6 @@ python -m deckard.layers.optimise \
   def_name=Gauss-In \
   $@ --multirun
 
-rm -rf mnist/models
-rm -rf cifar/models
-rm -rf cifar100/model
 
 # Gaussian Noise (Output)
 python -m deckard.layers.optimise \
@@ -39,9 +33,6 @@ python -m deckard.layers.optimise \
   def_name=Gauss-Out \
   $@ --multirun
 
-rm -rf mnist/models
-rm -rf cifar/models
-rm -rf cifar100/models
 
 # High Confidence
 python -m deckard.layers.optimise \
@@ -50,6 +41,3 @@ python -m deckard.layers.optimise \
     def_name=Conf \
     $@ --multirun
 
-rm -rf mnist/models
-rm -rf cifar/models
-rm -rf cifar100/models

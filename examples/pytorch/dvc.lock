@@ -624,8 +624,8 @@ stages:
       nfiles: 3
     - path: conf/mnist.yaml
       hash: md5
-      md5: 73ed848330388ef5d98a54d03e3cdcf9
-      size: 1671
+      md5: 95cb45a0526e83ffb7777edebe4fa9ff
+      size: 1680
     - path: conf/model
       hash: md5
       md5: eb0d17ad4826334ac8488c1683106580.dir
@@ -651,8 +651,8 @@ stages:
       nfiles: 1
     - path: conf/cifar.yaml
       hash: md5
-      md5: 5171900fd679f57392fa59f160301911
-      size: 1681
+      md5: 8088e4f61386676df9560a65c6a2697f
+      size: 1688
     - path: conf/data
       hash: md5
       md5: eafea1e119e2f54e9788ee46101afc79.dir
@@ -689,8 +689,8 @@ stages:
       nfiles: 1
     - path: conf/cifar100.yaml
       hash: md5
-      md5: 38d9e68b647acbca29a89ef6a699b4bf
-      size: 1684
+      md5: 11aa3a14e9d39196a1f46f46ee434493
+      size: 1692
     - path: conf/data
       hash: md5
       md5: eafea1e119e2f54e9788ee46101afc79.dir
@@ -1920,3 +1920,87 @@ stages:
       hash: md5
       md5: e50857f937b52c64d262302b4aa9740e
       size: 53174519
+  attacks@FGM-mnist-ResNet18-1:
+    cmd: bash scripts/FGM.sh  ++model.init.name=torch_example.ResNet18  stage=attack
+      model_name=ResNet18 attack.attack_size=100 model.trainer.nb_epochs=1 data=torch_mnist
+      model=torch_mnist +direction="[maximize,maximize,minimize]" ++optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d38a998a2b08eff46f3bab06e7c77d64
+      size: 851
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: 1f33102e4833438d6a2151c8eb49d4e7
+      size: 525
+    - path: scripts/FGM.sh
+      hash: md5
+      md5: 8605a0b6717cb85022a60ee362adfd37
+      size: 217
+    - path: scripts/models.sh
+      hash: md5
+      md5: 295e4d857ee4514c8014e95bf87012a4
+      size: 1364
+    outs:
+    - path: mnist/logs/attack/ResNet18/FGM/1/
+      hash: md5
+      md5: 32c0f1cdc0dbb1912343d66ec1486140.dir
+      size: 11926866
+      nfiles: 2561
+  attacks@FGM-mnist-ResNet18-10:
+    cmd: bash scripts/FGM.sh  ++model.init.name=torch_example.ResNet18  stage=attack
+      model_name=ResNet18 attack.attack_size=100 model.trainer.nb_epochs=10 data=torch_mnist
+      model=torch_mnist +direction="[maximize,maximize,minimize]" ++optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d38a998a2b08eff46f3bab06e7c77d64
+      size: 851
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: 1f33102e4833438d6a2151c8eb49d4e7
+      size: 525
+    - path: scripts/FGM.sh
+      hash: md5
+      md5: 8605a0b6717cb85022a60ee362adfd37
+      size: 217
+    - path: scripts/models.sh
+      hash: md5
+      md5: 295e4d857ee4514c8014e95bf87012a4
+      size: 1364
+    outs:
+    - path: mnist/logs/attack/ResNet18/FGM/10/
+      hash: md5
+      md5: 92e511213bf942f55e7f924657dde7d4.dir
+      size: 9303027
+      nfiles: 2561
+  attacks@FGM-mnist-ResNet18-20:
+    cmd: bash scripts/FGM.sh  ++model.init.name=torch_example.ResNet18  stage=attack
+      model_name=ResNet18 attack.attack_size=100 model.trainer.nb_epochs=20 data=torch_mnist
+      model=torch_mnist +direction="[maximize,maximize,minimize]" ++optimizers="[accuracy,adv_accuracy,adv_success]"
+      --config-name mnist.yaml
+    deps:
+    - path: mnist/reports/attack/default/score_dict.json
+      hash: md5
+      md5: d38a998a2b08eff46f3bab06e7c77d64
+      size: 851
+    - path: mnist/reports/train/default/score_dict.json
+      hash: md5
+      md5: 1f33102e4833438d6a2151c8eb49d4e7
+      size: 525
+    - path: scripts/FGM.sh
+      hash: md5
+      md5: 8605a0b6717cb85022a60ee362adfd37
+      size: 217
+    - path: scripts/models.sh
+      hash: md5
+      md5: 295e4d857ee4514c8014e95bf87012a4
+      size: 1364
+    outs:
+    - path: mnist/logs/attack/ResNet18/FGM/20/
+      hash: md5
+      md5: c3294e1c13e61cb2d3094f565edab466.dir
+      size: 8189626
+      nfiles: 2561
