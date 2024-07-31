@@ -57,9 +57,6 @@ class SklearnModelPipelineStage:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, stage_name, **kwargs):
-        logger.debug(
-            f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
-        )
         self.name = name
         self.kwargs = kwargs
         self.stage_name = stage_name
@@ -102,7 +99,6 @@ class SklearnModelPipeline:
     pipeline: Dict[str, SklearnModelPipelineStage] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
-        logger.debug(f"Instantiating {self.__class__.__name__} with kwargs={kwargs}")
         pipe = {}
         while "kwargs" in kwargs:
             pipe.update(**kwargs.pop("kwargs"))

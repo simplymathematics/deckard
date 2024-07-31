@@ -134,7 +134,6 @@ class EvasionAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -300,7 +299,6 @@ class PoisoningAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -493,7 +491,6 @@ class InferenceAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -618,7 +615,6 @@ class ExtractionAttack:
                 f"kwargs must be of type DictConfig or dict. Got {type(kwargs)}",
             )
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -813,7 +809,6 @@ class Attack:
             kwargs.update(**kwargs.pop("kwargs"))
         self.kwargs = kwargs
         self.name = name if name is not None else my_hash(self)
-        logger.info("Instantiating Attack with id: {}".format(self.name))
 
     def __call__(
         self,

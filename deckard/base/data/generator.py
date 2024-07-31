@@ -51,9 +51,6 @@ class SklearnDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
-        )
         self.name = name
         self.kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
@@ -91,9 +88,6 @@ class TorchDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, path=None, **kwargs):
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
-        )
         self.name = name
         self.path = path
         self.kwargs = {k: v for k, v in kwargs.items() if v is not None}
@@ -179,9 +173,6 @@ class KerasDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
-        logger.info(
-            f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
-        )
         self.name = name
         self.kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
