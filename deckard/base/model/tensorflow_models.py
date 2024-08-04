@@ -44,7 +44,7 @@ class TensorflowV2Loss:
         import tensorflow as tf
 
         tf.config.run_functions_eagerly(True)
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if len(self.kwargs) > 0:
             config = {"class_name": self.name, "config": self.kwargs}
         else:
@@ -159,7 +159,7 @@ class TensorflowV2Optimizer:
         import tensorflow as tf
 
         tf.config.run_functions_eagerly(True)
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if "kwargs" in self.kwargs:
             kwargs = self.kwargs.pop("kwargs", {})
             params = self.kwargs
@@ -184,7 +184,7 @@ class TensorflowV1Loss:
         import tensorflow as tf
 
         tf.config.run_functions_eagerly(True)
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if "kwargs" in self.kwargs:
             kwargs = self.kwargs.pop("kwargs", {})
             params = self.kwargs
@@ -296,7 +296,7 @@ class TensorflowV1Optimizer:
     def __call__(self):
         import tensorflow as tf
 
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         if "kwargs" in self.kwargs:
             kwargs = self.kwargs.pop("kwargs", {})
             params = self.kwargs

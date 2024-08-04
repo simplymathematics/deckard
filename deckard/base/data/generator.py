@@ -51,7 +51,7 @@ class SklearnDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
-        logger.info(
+        logger.debug(
             f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
         )
         self.name = name
@@ -91,7 +91,7 @@ class TorchDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, path=None, **kwargs):
-        logger.info(
+        logger.debug(
             f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
         )
         self.name = name
@@ -179,7 +179,7 @@ class KerasDataGenerator:
     kwargs: dict = field(default_factory=dict)
 
     def __init__(self, name, **kwargs):
-        logger.info(
+        logger.debug(
             f"Instantiating {self.__class__.__name__} with name={name} and kwargs={kwargs}",
         )
         self.name = name

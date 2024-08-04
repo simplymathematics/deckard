@@ -55,13 +55,13 @@ class AttackInitializer:
         return int(my_hash(self), 16)
 
     def __call__(self, model=None, data=None, attack_size=-1):
-        logger.info(f"Fitting attack {self.name} with id: {self.__hash__()}")
+        logger.debug(f"Fitting attack {self.name} with id: {self.__hash__()}")
         name = self.name
         kwargs = deepcopy(self.kwargs)
         pop_list = ["extract", "poison", "evade", "reconstruct", "infer"]
         for thing in pop_list:
             kwargs.pop(thing, None)
-        logger.info(f"Initializing attack {name} with parameters {kwargs}")
+        logger.debug(f"Initializing attack {name} with parameters {kwargs}")
         if "x_train" in kwargs:
             assert (
                 data is not None
@@ -91,7 +91,7 @@ class AttackInitializer:
             else:
                 kwargs["y_val"] = y_test
         try:
-            logger.info("Attempting black-box attack.")
+            logger.debug("Attempting black-box attack.")
             config = {"_target_": name}
             config.update(**kwargs)
             attack = instantiate(config, model)
@@ -134,7 +134,7 @@ class EvasionAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
+        logger.debug("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -300,7 +300,7 @@ class PoisoningAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
+        logger.debug("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -493,7 +493,7 @@ class InferenceAttack:
         self.attack_size = attack_size
         self.init = AttackInitializer(model, name, **init)
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
+        logger.debug("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -618,7 +618,7 @@ class ExtractionAttack:
                 f"kwargs must be of type DictConfig or dict. Got {type(kwargs)}",
             )
         self.kwargs = kwargs
-        logger.info("Instantiating Attack with id: {}".format(self.__hash__()))
+        logger.debug("Instantiating Attack with id: {}".format(self.__hash__()))
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -813,7 +813,7 @@ class Attack:
             kwargs.update(**kwargs.pop("kwargs"))
         self.kwargs = kwargs
         self.name = name if name is not None else my_hash(self)
-        logger.info("Instantiating Attack with id: {}".format(self.name))
+        logger.debug("Instantiating Attack with id: {}".format(self.name))
 
     def __call__(
         self,

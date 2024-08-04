@@ -37,7 +37,7 @@ class SklearnDataSampler:
         self.time_series = time_series
 
     def __call__(self, X, y):
-        logger.info(f"Calling SklearnDataSampler with params {asdict(self)}")
+        logger.debug(f"Calling SklearnDataSampler with params {asdict(self)}")
         params = deepcopy(asdict(self))
         stratify = params.pop("stratify", False)
         if stratify is True:

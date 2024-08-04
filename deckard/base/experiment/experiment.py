@@ -118,7 +118,7 @@ class Experiment:
         :type scorer: str
         :return: The score for the specified scorer or the status of the experiment if scorer=None (default).
         """
-        logger.info("Running experiment with id: {}".format(self.get_name()))
+        logger.debug("Running experiment with id: {}".format(self.get_name()))
         # Setup files, data, and model
         files = deepcopy(self.files).get_filenames()
 
@@ -236,8 +236,8 @@ class Experiment:
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
-        logger.info(f"Score for id : {self.get_name()}: {score_dict}")
-        logger.info("Finished running experiment with id: {}".format(self.get_name()))
+        logger.debug(f"Score for id : {self.get_name()}: {score_dict}")
+        logger.debug("Finished running experiment with id: {}".format(self.get_name()))
         return score_dict
 
     def _set_name(self):

@@ -63,7 +63,7 @@ class SklearnDataPipeline:
         return iter(self.pipeline)
 
     def __call__(self, X_train, X_test, y_train, y_test):
-        logger.info(
+        logger.debug(
             "Calling SklearnDataPipeline with pipeline={}".format(self.pipeline),
         )
         pipeline = deepcopy(self.pipeline)

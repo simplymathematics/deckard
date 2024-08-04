@@ -148,7 +148,7 @@ class Data:
         :param filename: str
         """
         if filename is not None:
-            logger.info(f"Saving data to {filename}")
+            logger.debug(f"Saving data to {filename}")
             suffix = Path(filename).suffix
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
             if isinstance(data, dict):

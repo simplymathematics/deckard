@@ -70,7 +70,7 @@ class ModelTrainer:
         self.kwargs = kwargs
 
     def __call__(self, data: list, model: object, library=None):
-        logger.info(f"Training model {model} with fit params: {self.kwargs}")
+        logger.debug(f"Training model {model} with fit params: {self.kwargs}")
         device = str(model.device) if hasattr(model, "device") else "cpu"
         trainer = self.kwargs
         if library in sklearn_dict.keys():
@@ -91,7 +91,7 @@ class ModelTrainer:
         try:
             start = process_time_ns()
             start_timestamp = time()
-            logger.info(f"Fitting type(model): {type(model)} with kwargs {trainer}")
+            logger.debug(f"Fitting type(model): {type(model)} with kwargs {trainer}")
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns()
             end_timestamp = time()
