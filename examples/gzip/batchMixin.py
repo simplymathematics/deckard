@@ -3,10 +3,8 @@ import logging
 import numpy as np
 
 
-from sklearn.datasets import make_classification
 from pathlib import Path
 from time import time
-from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -173,4 +171,3 @@ class BatchedMixin:
                     return indices
 
         return wrapper
-
