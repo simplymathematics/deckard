@@ -27,10 +27,8 @@ hydra:
       _target_ : database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
-      directions : 
-        - maximize
-      metric_names : 
-        - accuracy
+      directions : ${direction}
+      metric_names : ${optimizers}
       output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
   sweeper:
     sampler:
@@ -41,23 +39,19 @@ hydra:
       consider_magic_clip: true
       consider_endpoints: false
       n_startup_trials: 10
-      n_ei_candidates: 24
+      n_ei_candidates: 256
       multivariate: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ${dataset}_${model_name}_condense
+    study_name: ???
     storage: sqlite:///optuna.db
-    n_jobs: 2
-    n_trials : 2
+    n_jobs: ${oc.env:DECKARD_JOBS, 8}
+    n_trials : ${oc.env:DECKARD_TRIALS, 128}
     params:
       +model.init.kernel : rbf,precomputed
-      +model.init.C : 1e-2,1e-1,1e0,1e1,1e2
+      +model.init.C : tag(log, interval(1e-3, 1e3))
       +model.init.gamma : scale,auto
       +model.init.class_weight : balanced,null
-      model.init.metric : gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
-      model.init.symmetric : True
-      model_name : ${model_name}
-      data.sample.random_state: 0,1,2,3,4,5,6,7,8,9
-      model.init.m: tag(log, interval(.1, 1))
+      model.init.symmetric : True,False
       +model.init.sampling_method: medoid,sum,svc,random,hardness,nearmiss,knn
     direction: ${direction}
     max_failure_rate: 1.0

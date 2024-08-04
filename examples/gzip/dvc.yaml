@@ -77,6 +77,7 @@ stages:
       dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
       configs: [gzip_knn, gzip_logistic, gzip_svc] 
       symmetric : [True, False]
+      # model.init.metric : [gzip, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -100,14 +101,17 @@ stages:
       ++raise_exception=True               
       --config-name ${item.configs}
       --multirun
+    # ++model.init.metric=${item.metric}
     deps:
       - params.yaml
       - conf/${item.configs}.yaml
     outs:
+        # - ${item.dataset}/logs/${item.configs}/${item.train_size}/symmetry_${item.symmetric}/${item.metric}/train/
         - ${item.dataset}/logs/${item.configs}/${item.train_size}/symmetry_${item.symmetric}:
             cache: true
             persist: true
             push: true
+        # - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}/${item.metric}/train/
         - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}/train/:
             cache: true
             persist: true
@@ -127,48 +131,85 @@ stages:
   #   outs:
   #     - conf/model/best_${item.model}_${item.dataset}.yaml
   ##############################################################################
-  condense:
+  precompute_matrices:
     matrix:
       dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] # kdd_nsl, truthseeker, sms_spam, 
       model_name : [knn, svc, logistic]
-      ratio : [1, .9, .8, .7, .6, .5, .4, .3, .2, .1]
+      metric : [gzip] #, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      symmetric : [True, False]
     deps:
       - params.yaml
       - conf/condense_${item.model_name}.yaml
+      - ${item.dataset}/${files.reports}/gzip_${item.model_name}/ #Ensures that this runs after the grid_search
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
       data=${item.dataset}
       dataset=${item.dataset}
-      data.sample.train_size=100
-      data.sample.test_size=100
-      model_name=condensed_${item.model_name}
+      data.sample.train_size=1000
+      data.sample.test_size=400
+      model_name=gzip_${item.model_name}
+      model=gzip_${item.model_name}
+      ++model.init.m=1
+      files.directory=${item.dataset}
+      hydra.sweeper.study_name=gzip_${item.model_name}_${item.dataset}
+      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
+      hydra.sweeper.n_trials=1
+      hydra.sweeper.n_jobs=1
+      hydra.sweep.dir=${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
+      hydra.callbacks.study_dump.output_file=${item.dataset}/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/study.csv
+      hydra.launcher.n_jobs=-1
+      ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/1000-400-0.npz 
+      --config-name condense_${item.model_name}
+      --multirun
+    outs:
+      - ${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}:
+          cache: true
+          persist: true
+          push: true
+      - ${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/:
+          cache: true
+          persist: true
+          push: true
+    params:
+      - conf/condense.yaml:
+          - hydra
+  ############################################################################## 
+  condense:
+    matrix:
+      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] # kdd_nsl, truthseeker, sms_spam, 
+      model_name : [knn, svc, logistic]
+      ratio : [1]
+      metric : [gzip] #, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+    deps:
+      - params.yaml
+      - conf/condense_${item.model_name}.yaml
+      - ${item.dataset}/models/${item.model_name}/${item.metric}/ #Ensures that this runs after the grid_search
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      data=${item.dataset}
+      dataset=${item.dataset}
+      data.sample.train_size=1000
+      data.sample.test_size=400
+      model_name=${item.model_name}
       model=gzip_${item.model_name}
       ++model.init.m=${item.ratio}
-      ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.ratio}/distance_matrix.npz
       files.directory=${item.dataset}
-      files.reports=${files.reports}/condense/${item.model_name}/${item.ratio}/
-      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
+      hydra.sweeper.study_name=gzip_${item.model_name}_${item.dataset}
+      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/${item.ratio}/
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/${item.ratio}/
-      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.model_name}/study.csv
+      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/
+      hydra.callbacks.study_dump.output_file=${item.dataset}/${item.model_name}/${item.metric}/${item.ratio}/study.csv
       hydra.launcher.n_jobs=-1
       --config-name condense_${item.model_name}
       --multirun
     outs:
-        - ${item.dataset}/logs/condense/${item.model_name}/${item.ratio}:
-            cache: true
-            persist: true
-            push: true
-        - ${item.dataset}/${files.reports}/condense/${item.model_name}/${item.ratio}:
-            cache: true
-            persist: true
-            push: true
-        - ${item.dataset}/models/${item.model_name}/${item.ratio}/:
-            cache: true
-            persist: true
-            push: true
+      - ${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}:
+          cache: true
+          persist: true
+          push: true
     params:
       - conf/condense.yaml:
           - hydra

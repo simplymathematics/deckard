@@ -6,13 +6,12 @@ import optuna
 from pathlib import Path
 from hydra.experimental.callback import Callback
 import argparse
-
+from typing import Union
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"
 metric_names = ["accuracy"]
 directions = ["maximize"]
 output_file = "optuna.csv"
-
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):
@@ -20,10 +19,9 @@ class OptunaStudyDumpCallback(Callback):
         self,
         storage: str,
         study_name: str,
-        metric_names: list,
-        directions: list,
+        metric_names: Union[str, ListConfig, list],
+        directions: Union[str, ListConfig, list],
         output_file: str,
-        seed=42,
     ):
         self.storage = storage
         self.study_name = study_name
@@ -70,6 +68,7 @@ class OptunaStudyDumpCallback(Callback):
             metric_names = [f"values_{metric}" for metric in self.metric_names]
             df = df.sort_values(metric_names, ascending=False)
         suffix = Path(self.output_file).suffix
+        Path(self.output_file).parent.mkdir(parents=True, exist_ok=True)
         if suffix in [".csv"]:
             df.to_csv(self.output_file, index=False)
         elif suffix in [".json"]:

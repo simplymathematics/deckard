@@ -604,7 +604,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
-        if self.m > 0:
+        if self.m == 1 or self.m == -1:
+            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
+            self.distance_matrix = self.distance_matrix
+        elif self.m > 0:
             assert isinstance(
                 self.m,
                 (int, float),
@@ -615,9 +618,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             ), f"Expected {self.sampling_method} to be a string or None"
             indices = self._find_best_samples(self.sampling_method)
             self._set_best_indices(indices)
-        elif self.m == -1:
-            distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
-            self.distance_matrix = distance_matrix
         else:
             raise ValueError(
                 f"Expected {self.m} to be -1, 0, a positive integer or a float between 0 and 1. Got type {type(self.m)}",
