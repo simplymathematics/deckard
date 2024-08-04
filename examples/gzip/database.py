@@ -7,11 +7,13 @@ from pathlib import Path
 from hydra.experimental.callback import Callback
 import argparse
 from typing import Union
+
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"
 metric_names = ["accuracy"]
 directions = ["maximize"]
 output_file = "optuna.csv"
+
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):

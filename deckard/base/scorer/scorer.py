@@ -54,7 +54,9 @@ class ScorerConfig:
 
     def score(self, ind, dep, **kwargs) -> float:
         args = deepcopy(self.args)
-        kwargs = OmegaConf.merge(self.params, kwargs, list_merge_mode=ListMergeMode.REPLACE)
+        kwargs = OmegaConf.merge(
+            self.params, kwargs, list_merge_mode=ListMergeMode.REPLACE
+        )
         new_args = []
         for arg in args:
             if arg in ["y_pred", "y_train", "y_test"]:
