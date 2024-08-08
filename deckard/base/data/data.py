@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
 import numpy as np
-from pandas import DataFrame, read_csv, Series
+from pandas import DataFrame, read_csv, Series, read_json
 from omegaconf import OmegaConf
 from validators import url
 from ..utils import my_hash
@@ -129,8 +129,7 @@ class Data:
         """
         suffix = Path(filename).suffix
         if suffix in [".json"]:
-            with open(filename, "r") as f:
-                data = json.load(f)
+            data = read_json(filename, lines=True, orient="records")
         elif suffix in [".csv"]:
             data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
@@ -171,8 +170,7 @@ class Data:
                     pass
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
-                with open(filename, "w") as f:
-                    json.dump(data, f, indent=4, sort_keys=True)
+                DataFrame(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
             elif suffix in [".csv"]:
                 assert isinstance(
                     data,
