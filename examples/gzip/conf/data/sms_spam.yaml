@@ -1,4 +1,3 @@
-_target_: deckard.base.data.Data
 name: raw_data/sms-spam_undersampled_1450.csv
 target: 'label'
 sample:

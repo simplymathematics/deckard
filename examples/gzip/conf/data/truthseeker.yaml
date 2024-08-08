@@ -1,4 +1,3 @@
-_target_: deckard.base.data.Data
 name: raw_data/truthseeker_undersampled_8000.csv
 target: 'BotScoreBinary'
 sample:

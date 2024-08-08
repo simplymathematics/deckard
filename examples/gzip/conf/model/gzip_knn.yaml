@@ -1,11 +1,12 @@
 data: ${data}
 library : sklearn
 init:
-    _target_: deckard.base.model.ModelInitializer
     name : gzip_classifier.GzipKNN
     k : 1
     m: -1
     metric : gzip
     symmetric : false
     distance_matrix :  ${files.directory}/${files.model_dir}/${model.init.metric}/${data.sample.train_size}-${data.sample.test_size}/${data.sample.random_state}.npz
-_target_: deckard.base.model.Model
+    similarity : True
+    min_max_scale  : True
+    condensing_method : None

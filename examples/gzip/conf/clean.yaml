@@ -19,7 +19,7 @@ replace:
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
-  model.init.sampling_method:
+  model.init.condensing_method:
     random : "Random"
     medoid : "Medoid"
     sum : "Sum"
@@ -41,7 +41,7 @@ replace_cols:
   dataset: Dataset
   model.init.metric: Metric
   model.init.symmetric: Symmetric
-  model.init.sampling_method: Condensing Method
+  model.init.condensing_method: Condensing Method
   model.init.m: Condensing Ratio
   model_name: Model
   

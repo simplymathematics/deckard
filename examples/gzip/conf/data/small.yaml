@@ -1,6 +1,4 @@
-_target_: deckard.base.data.Data
 generate:
-    # _target_: deckard.base.data.generator.DataGenerator
     name: classification
     random_state : 0
     n_samples : 2100
@@ -8,15 +6,12 @@ generate:
     n_classes: 3
     n_clusters_per_class: 1
 sample:
-    # _target_: deckard.base.data.sampler.SklearnDataSampler
     random_state : 0
     stratify: True
     train_size : 1000
     test_size : 1000
 sklearn_pipeline:
-    # _target_: deckard.base.data.sklearn_pipeline.SklearnDataPipeline
     preprocessor:
-        #
         name: sklearn.preprocessing.StandardScaler
         with_mean: True
         with_std: True

@@ -1,9 +1,9 @@
-_target_: deckard.base.files.FileConfig
 reports: reports
 data_dir: data
 # data_file : ${data.sample.random_state}-${data.sample.train_size}
 data_type: .csv
 model_dir : model
+model_file : ${model.init.distance_matrix}
 directory: ${dataset}
 score_dict_file: score_dict.json
 params_file : params.yaml

@@ -53,7 +53,8 @@ hydra:
       +model.init.C : tag(log, interval(1e-3, 1e3))
       +model.init.fit_intercept : True,False
       +model.init.class_weight : balanced,None
-      
+      model.init.min_max_scale : True, False
+      model.init.similarity : True, False
       model_name : ${model_name}
     direction: ${direction}
     max_failure_rate: 1.0
