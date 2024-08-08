@@ -170,7 +170,13 @@ class Data:
                     pass
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
-                DataFrame(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
+                try:
+                    DataFrame(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
+                except ValueError as e:
+                    if "using all scalar values" in str(e):
+                        Series(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
+                    else:
+                        raise e
             elif suffix in [".csv"]:
                 assert isinstance(
                     data,
