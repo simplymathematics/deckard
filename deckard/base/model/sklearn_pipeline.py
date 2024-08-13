@@ -23,7 +23,7 @@ from art.estimators.regression.scikitlearn import (
 )
 
 
-from ..utils import my_hash
+from ..utils import Hashable
 
 __all__ = ["SklearnModelPipelineStage", "SklearnModelPipeline"]
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ sklearn_models = list(sklearn_dict.keys())
 
 
 @dataclass
-class SklearnModelPipelineStage:
+class SklearnModelPipelineStage(Hashable):
     name: str
     stage_name: str = None
     kwargs: dict = field(default_factory=dict)
@@ -60,9 +60,6 @@ class SklearnModelPipelineStage:
         self.name = name
         self.kwargs = kwargs
         self.stage_name = stage_name
-
-    def __hash__(self):
-        return int(my_hash(self), 16)
 
     def __call__(self, model):
         logger.debug(
@@ -73,7 +70,7 @@ class SklearnModelPipelineStage:
         stage_name = self.stage_name if self.stage_name is not None else name
         while "kwargs" in kwargs:
             kwargs.update(**kwargs.pop("kwargs"))
-        if "art." in str(type(model)):
+        if str(type(model)).startswith("art."):
             assert isinstance(
                 model.model,
                 BaseEstimator,
@@ -95,7 +92,7 @@ class SklearnModelPipelineStage:
 
 
 @dataclass
-class SklearnModelPipeline:
+class SklearnModelPipeline(Hashable):
     pipeline: Dict[str, SklearnModelPipelineStage] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
@@ -141,9 +138,6 @@ class SklearnModelPipeline:
         else:
             return 0
 
-    def __hash__(self):
-        return int(my_hash(self), 16)
-
     def __iter__(self):
         return iter(self.pipeline)
 
@@ -168,7 +162,7 @@ class SklearnModelPipeline:
             elif isinstance(stage, SklearnModelPipelineStage):
                 model = stage(model=model)
             elif hasattr(stage, "fit"):
-                if "art." in str(type(model)):
+                if str(type(model)).startswith("art."):
                     assert isinstance(
                         model.model,
                         BaseEstimator,
@@ -180,12 +174,12 @@ class SklearnModelPipeline:
                     ), f"model must be a sklearn estimator. Got {type(model)}"
                 if not isinstance(model, Pipeline) and "art." not in str(type(model)):
                     model = Pipeline([("model", model)])
-                elif "art." in str(type(model)) and not isinstance(
+                elif str(type(model)).startswith("art.") and not isinstance(
                     model.model,
                     Pipeline,
                 ):
                     model.model = Pipeline([("model", model.model)])
-                elif "art." in str(type(model)) and isinstance(model.model, Pipeline):
+                elif str(type(model)).startswith("art.") and isinstance(model.model, Pipeline):
                     model.model.steps.insert(-2, [stage, model.model])
                 else:
                     model.steps.insert(-2, [stage, model])
@@ -203,7 +197,7 @@ class SklearnModelPipeline:
 
 
 @dataclass
-class SklearnModelInitializer:
+class SklearnModelInitializer(Hashable):
     model: object = field(default_factory=None)
     library: str = field(default_factory="sklearn")
     pipeline: SklearnModelPipeline = field(default_factory=None)
@@ -263,6 +257,3 @@ class SklearnModelInitializer:
             "fit",
         ), f"model must have a fit method. Got type {type(model)}"
         return model
-
-    def __hash__(self):
-        return int(my_hash(self), 16)
