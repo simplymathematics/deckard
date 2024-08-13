@@ -23,7 +23,7 @@ from art.estimators.regression.scikitlearn import (
 )
 
 
-from ..utils import Hashable
+from ..utils import my_hash
 
 __all__ = ["SklearnModelPipelineStage", "SklearnModelPipeline"]
 logger = logging.getLogger(__name__)
@@ -140,7 +140,9 @@ class SklearnModelPipeline(Hashable):
 
     def __iter__(self):
         return iter(self.pipeline)
-
+    def __hash__(self):
+        return int(my_hash(self), 16)
+    
     def __call__(self, model):
         params = deepcopy(asdict(self))
         pipeline = params.pop("pipeline")
@@ -206,6 +208,9 @@ class SklearnModelInitializer(Hashable):
     pipeline: SklearnModelPipeline = field(default_factory=None)
     kwargs: Union[dict, None] = field(default_factory=dict)
 
+    def __hash__(self):
+        return int(my_hash(self), 16)
+    
     def __init__(self, data, model=None, library="sklearn", pipeline={}, **kwargs):
         self.data = data
         self.model = model
