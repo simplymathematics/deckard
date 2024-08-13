@@ -95,6 +95,7 @@ stages:
       stage=attack
       model_name=${item.model}
       attack.attack_size=100
+      model.trainer.nb_epochs=${item.epochs}
       data=torch_${item.dataset}
       model=torch_${item.dataset}
       ++direction="[maximize,maximize,minimize]"
