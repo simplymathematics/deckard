@@ -1,7 +1,7 @@
 from hashlib import md5
 from collections import OrderedDict
 from typing import NamedTuple, Union
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, is_dataclass, dataclass
 from omegaconf import DictConfig, OmegaConf, SCMode, ListConfig
 from copy import deepcopy
 import logging
@@ -71,3 +71,9 @@ def to_dict(obj: Union[dict, OrderedDict, NamedTuple]) -> dict:
 
 def my_hash(obj: Union[dict, OrderedDict, NamedTuple]) -> str:
     return md5(str(to_dict(obj)).encode("utf-8")).hexdigest()
+
+
+@dataclass
+class Hashable:
+    def __hash__(self):
+        return int(my_hash(self), 16)

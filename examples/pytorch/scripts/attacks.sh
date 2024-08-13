@@ -10,7 +10,7 @@
 #     ++attack.init.eps=.001,.01,.1,.5,1 \
 #     ++attack.init.norm=2 \
 #     atk_name=FGM  $@
-# # #####################################################
+# #####################################################
 # # Projected Gradient Descent
 # bash models.sh \
 #     stage=attack \
@@ -23,6 +23,27 @@
 #     ++attack.init.max_iter=1,5,10,50,100 $@
 # # #####################################################
 # # DeepFool
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.DeepFool \
+#     ++attack.init.max_iter=10 \
+#     ++attack.init.batch_size=4096 \
+#     ++attack.init.nb_grads=1,3,5,8,10 \
+#     atk_name=Deep $@
+# # #####################################################
+# # Projected Gradient Descent
+# bash models.sh \
+#     stage=attack \
+#     attack=default \
+#     ++attack.init.name=art.attacks.evasion.HopSkipJump \
+#     ++attack.init.max_iter=1,3,5,10,15 \
+#     ++attack.init.init_eval=3 \
+#     ++attack.init.max_eval=10 \
+#     ++attack.init.norm=2 \
+#     atk_name=HSJ $@
+# #####################################################
+# # # PixelAttack
 # bash models.sh \
 #     stage=attack \
 #     attack=default \

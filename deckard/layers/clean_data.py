@@ -81,7 +81,7 @@ def drop_rows_without_results(
         logger.info(f"Shape of data before data before dropping na: {data.shape}")
         data.dropna(axis=0, subset=[col], inplace=True)
         after = data.shape[0]
-        logger.info(f"Shape of data before data after dropping na: {data.shape}")
+        logger.info(f"Shape of data after data after dropping na: {data.shape}")
         percent_change = (before - after) / before * 100
         if percent_change > 5:
             # input(f"{percent_change:.2f}% of data dropped for {col}. Press any key to continue.")
@@ -593,7 +593,6 @@ def clean_data_for_plotting(
     data = fill_na(data, fillna)
     data = replace_strings_in_data(data, replace_dict)
     data = replace_strings_in_columns(data, col_replace_dict)
-
     if len(pareto_dict) > 0:
         data = find_pareto_set(data, pareto_dict)
     return data

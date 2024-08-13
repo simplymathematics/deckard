@@ -17,7 +17,7 @@ fillna:
 weibull:
   plot:
     file : weibull_aft.pdf
-    title : Weibull AFR Model
+    title : Weibull AFT Model
   labels:
     "Intercept: rho_": "$\\rho$"
     "Intercept: lambda_": "$\\lambda$" 
@@ -39,7 +39,7 @@ weibull:
 # cox:
 #   plot:
 #     file : cox_aft.pdf
-#     title : Cox AFR Model
+#     title : Cox AFT Model
 #   labels:
 #     "data.sample.random_state": "Random State"
 #     "atk_value": "Attack Strength"
@@ -58,7 +58,7 @@ weibull:
 #     - "file": "cox_epochs_partial_effect.pdf"
 #       "covariate_array": "model.trainer.np_epochs"
 #       "values_array": [1,10,25,50]
-#       "title": "$S(t)$ for Cox AFR"
+#       "title": "$S(t)$ for Cox AFT"
 #       "ylabel": "$\\mathbb{P}~(T>t)$"
 #       "xlabel": "Time $t$ (seconds)"
 #       "legend_kwargs": {
@@ -68,7 +68,7 @@ weibull:
 #     - "file": "cox_batch_size_partial_effect.pdf"
 #       "covariate_array": "model.trainer.batch_size"
 #       "values_array": [1,10,25,50]
-#       "title": "$S(t)$ for Cox AFR"
+#       "title": "$S(t)$ for Cox AFT"
 #       "ylabel": "$\\mathbb{P}~(T>t)$"
 #       "xlabel": "Time $t$ (seconds)"
 #       "legend_kwargs": {
@@ -78,7 +78,7 @@ weibull:
 #     - "file" : cox_attack_eps_partial_effect.pdf
 #       "covariate_array" : attack.init.eps
 #       "values_array" : [1e-4, 1e-3, 1e-2, 1e-1, 1]
-#       "title": "$S(t)$ for Cox AFR"
+#       "title": "$S(t)$ for Cox AFT"
 #       "ylabel": "$\\mathbb{P}~(T>t)$"
 #       "xlabel": "Time $t$ (seconds)"
 #       "legend_kwargs": {
@@ -88,7 +88,7 @@ weibull:
 log_logistic:
   plot:
     file : log_logistic_aft.pdf
-    title : Log logistic AFR Model
+    title : Log logistic AFT Model
   labels:
     "Intercept: beta_": "$\\beta$"
     "Intercept: alpha_": "$\\alpha$"
@@ -110,7 +110,7 @@ log_logistic:
 log_normal:
   plot:
     file : log_normal_aft.pdf
-    title : Log-Normal AFR Model
+    title : Log-Normal AFT Model
   labels:
     "Intercept: sigma_": "$\\sigma$" 
     "Intercept: mu_": "$\\mu$"
