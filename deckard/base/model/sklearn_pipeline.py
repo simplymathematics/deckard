@@ -51,7 +51,7 @@ sklearn_models = list(sklearn_dict.keys())
 
 
 @dataclass
-class SklearnModelPipelineStage(Hashable):
+class SklearnModelPipelineStage:
     name: str
     stage_name: str = None
     kwargs: dict = field(default_factory=dict)
@@ -92,7 +92,7 @@ class SklearnModelPipelineStage(Hashable):
 
 
 @dataclass
-class SklearnModelPipeline(Hashable):
+class SklearnModelPipeline:
     pipeline: Dict[str, SklearnModelPipelineStage] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
@@ -202,7 +202,7 @@ class SklearnModelPipeline(Hashable):
 
 
 @dataclass
-class SklearnModelInitializer(Hashable):
+class SklearnModelInitializer:
     model: object = field(default_factory=None)
     library: str = field(default_factory="sklearn")
     pipeline: SklearnModelPipeline = field(default_factory=None)
