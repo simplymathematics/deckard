@@ -40,4 +40,3 @@ python -m deckard.layers.optimise \
     +model.art.postprocessor.cutoff=.1,.3,.5,.9,.99 \
     def_name=Conf \
     $@ --multirun
-
