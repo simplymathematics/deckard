@@ -75,7 +75,11 @@ def survival_probability_calibration(
         ax = plt.gca()
     T = model.duration_col
     E = model.event_col
-
+    # Cast df to numeric DataFrame
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="raise")
+    # Drop NaNs
+    df = df.dropna()
     predictions_at_t0 = np.clip(
         1 - model.predict_survival_function(df, times=[t0]).T.squeeze(),
         1e-10,
