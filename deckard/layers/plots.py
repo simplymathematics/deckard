@@ -103,6 +103,7 @@ def cat_plot(
         file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = digitize_cols(data, digitize)
+    set_ = kwargs.pop("set", {})
     if hue is not None:
         data = data.sort_values(by=[hue, x, y])
         logger.debug(
@@ -162,6 +163,8 @@ def cat_plot(
         graph.set(xlim=x_lim)
     if y_lim is not None:
         graph.set(ylim=y_lim)
+    if len(set_) > 0:
+        graph.set(**set_)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
