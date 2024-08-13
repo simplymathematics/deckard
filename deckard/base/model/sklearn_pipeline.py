@@ -180,7 +180,8 @@ class SklearnModelPipeline(Hashable):
                 ):
                     model.model = Pipeline([("model", model.model)])
                 elif str(type(model)).startswith("art.") and isinstance(
-                    model.model, Pipeline
+                    model.model,
+                    Pipeline,
                 ):
                     model.model.steps.insert(-2, [stage, model.model])
                 else:
