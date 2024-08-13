@@ -87,19 +87,17 @@ stages:
   attacks:
     matrix:
       atk_name : [FGM, PGD, Deep, Pixel, Thresh, HSJ]
-      dataset : [mnist, cifar, cifar100]
-      model : [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
-      epochs : [1, 10, 20, 30, 50, 100] #
+      dataset : [mnist,] # cifar, cifar100
+      model : [ResNet18,] #  ResNet34, ResNet50, ResNet101, ResNet152
     cmd: >- 
       bash scripts/${item.atk_name}.sh 
       ++model.init.name=torch_example.${item.model} 
       stage=attack
       model_name=${item.model}
       attack.attack_size=100
-      model.trainer.nb_epochs=${item.epochs}
       data=torch_${item.dataset}
       model=torch_${item.dataset}
-      +direction="[maximize,maximize,minimize]"
+      ++direction="[maximize,maximize,minimize]"
       ++optimizers="[accuracy,adv_accuracy,adv_success]"
       --config-name ${item.dataset}.yaml
     deps:
@@ -108,7 +106,7 @@ stages:
       - scripts/${item.atk_name}.sh
       - scripts/models.sh
     outs:
-      - ${item.dataset}/logs/attack/${item.model}/${item.atk_name}/${item.epochs}/:
+      - ${item.dataset}/logs/attack/${item.model}/${item.atk_name}/:
           cache: True
           persist: True
   compile:
