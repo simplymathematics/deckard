@@ -140,9 +140,10 @@ class SklearnModelPipeline:
 
     def __iter__(self):
         return iter(self.pipeline)
+
     def __hash__(self):
         return int(my_hash(self), 16)
-    
+
     def __call__(self, model):
         params = deepcopy(asdict(self))
         pipeline = params.pop("pipeline")
@@ -210,7 +211,7 @@ class SklearnModelInitializer:
 
     def __hash__(self):
         return int(my_hash(self), 16)
-    
+
     def __init__(self, data, model=None, library="sklearn", pipeline={}, **kwargs):
         self.data = data
         self.model = model
