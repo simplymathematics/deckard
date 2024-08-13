@@ -347,8 +347,6 @@ def plot_aft(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    # symlog-scale the x-axis
-    # ax.set_xscale("linear")
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     plt.gcf().clear()
@@ -624,7 +622,7 @@ def make_afr_table(
         pretty_dataset = dataset.upper()
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
-    logger.info(f"Saved AFR comparison to {folder / 'aft_comparison.csv'}")
+    logger.info(f"Saved AFT comparison to {folder / 'aft_comparison.csv'}")
     aft_data = aft_data.round(2)
     aft_data.fillna("--", inplace=True)
     aft_data.to_latex(
