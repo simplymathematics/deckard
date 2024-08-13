@@ -72,6 +72,7 @@ def to_dict(obj: Union[dict, OrderedDict, NamedTuple]) -> dict:
 def my_hash(obj: Union[dict, OrderedDict, NamedTuple]) -> str:
     return md5(str(to_dict(obj)).encode("utf-8")).hexdigest()
 
+
 @dataclass
 class Hashable:
     def __hash__(self):
