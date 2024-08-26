@@ -1,7 +1,7 @@
 data: ${data}
 library : sklearn-svc
 init:
-        name : sklearn.svm.SVC
+    name : sklearn.svm.SVC
     C : 1.0
     coef0 : 0.0
     kernel : poly

@@ -1,7 +1,7 @@
 data: ${data}
 library : sklearn-svc
 init:
-        name : sklearn.svm.SVC
+    name : sklearn.svm.SVC
     C : float(.001, .01, .1, 1, 10, 100, 1000)
     kernel : linear
     probability : true

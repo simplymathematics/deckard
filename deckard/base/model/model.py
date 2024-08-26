@@ -339,7 +339,11 @@ class Model:
         # TODO refactor to use data and model initialization from self.initialize()
         result_dict = {}
         data, model = self.initialize(
-            data, model, **kwargs, data_file=data_file, model_file=model_file
+            data,
+            model,
+            **kwargs,
+            data_file=data_file,
+            model_file=model_file,
         )
 
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
