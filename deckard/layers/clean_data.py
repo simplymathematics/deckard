@@ -78,7 +78,9 @@ def drop_rows_without_results(
     for col in subset:
         logger.info(f"Dropping frames without results for {col}")
         before = data.shape[0]
-        logger.info(f"Shape of data before data before dropping na: {data.shape}")
+        if col not in data.columns:
+            logger.warning(f"{col} not in data.columns. Ignoring.")
+            continue
         data.dropna(axis=0, subset=[col], inplace=True)
         after = data.shape[0]
         logger.info(f"Shape of data before data after dropping na: {data.shape}")
@@ -398,8 +400,8 @@ def format_control_parameter(data, control_dict, fillna):
             value = pd.to_numeric(value, errors="coerce")
             # Set value to data
             data.loc[data.def_gen == defence, "def_value"] = value
-            logger.debug(f"Unique values for defence, {defence}:")
-            logger.debug(f"{data[data.def_gen == defence].def_value.unique()}")
+            logger.info(f"Unique values for defence, {defence}:")
+            logger.info(f"{data[data.def_gen == defence].def_value.unique()}")
         elif defence in fillna.keys():
             param = control_dict[defence]
             value = (
@@ -440,8 +442,8 @@ def format_control_parameter(data, control_dict, fillna):
             )
             # Set value to data
             data.loc[data.atk_gen == attack, "atk_value"] = value
-            logger.debug(f"Unique values for attack, {attack}:")
-            logger.debug(f"{data[data.atk_gen == attack].atk_value.unique()}")
+            logger.info(f"Unique values for attack, {attack}:")
+            logger.info(f"{data[data.atk_gen == attack].atk_value.unique()}")
         elif attack in fillna.keys():
             param = control_dict[attack]
             value = (
@@ -494,10 +496,10 @@ def replace_strings_in_data(data, replace_dict):
 def replace_strings_in_columns(data, replace_dict):
     cols = list(data.columns)
     for k, v in replace_dict.items():
-        logger.debug(f"Replacing {k} with {v} in column names...")
+        logger.info(f"Replacing {k} with {v} in column names...")
         for col in cols:
             if k == col:
-                logger.debug(f"Replacing {k} with {v} in column names...")
+                logger.info(f"Replacing {k} with {v} in column names...")
                 data.rename(columns={k: v}, inplace=True)
             else:
                 pass
