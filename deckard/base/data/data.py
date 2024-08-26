@@ -79,6 +79,10 @@ class Data:
         self.drop = drop
         self.target = target
         self.name = name if name is not None else my_hash(self)
+        logger.info(f"Data initialized: {self.name}")
+        logger.info(f"Data.generate: {self.generate}")
+        logger.info(f"Data.sample: {self.sample}")
+        logger.info(f"Data.sklearn_pipeline: {self.sklearn_pipeline}")
 
     def get_name(self):
         """Get the name of the data object."""
@@ -96,6 +100,7 @@ class Data:
             result = self.load(filename)
         elif self.generate is not None:
             result = self.generate()
+            self.save(result, self.name)
         else:
             result = self.load(self.name)
         if isinstance(result, DataFrame):
@@ -129,7 +134,7 @@ class Data:
         """
         suffix = Path(filename).suffix
         if suffix in [".json"]:
-            data = read_json(filename, lines=True, orient="records")
+            data = read_json(filename)
         elif suffix in [".csv"]:
             data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
@@ -171,10 +176,10 @@ class Data:
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 try:
-                    DataFrame(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
+                    DataFrame(data).to_json(filename, index=False, force_ascii=False)
                 except ValueError as e:
                     if "using all scalar values" in str(e):
-                        Series(data).to_json(filename, orient="records", lines=True, index=False, force_ascii=False, mode = "a")
+                        Series(data).to_json(filename, index=False, force_ascii=False)
                     else:
                         raise e
             elif suffix in [".csv"]:
@@ -210,9 +215,13 @@ class Data:
             data_file = self.name
         else:
             new_data_file = data_file
-        result_dict = {}
-        data = self.initialize(data_file)
-        result_dict["data"] = data
+        if data_file is not None and Path(data_file).exists():
+            data = self.initialize(data_file)
+        elif "data" in kwargs:
+            assert len(kwargs["data"]) == 4, f"Data must be length 4, not {len(kwargs['data'])}"
+            data = kwargs["data"]
+        else:
+            data = self.initialize()
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
             assert Path(
