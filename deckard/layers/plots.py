@@ -16,7 +16,6 @@ def set_matplotlib_vars(matplotlib_dict=None):
         matplotlib_dict = {
             "font": {
                 "family": "Times New Roman",
-                "weight": "bold",
                 "size": 22,
             },
         }
