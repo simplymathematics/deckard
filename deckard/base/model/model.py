@@ -319,7 +319,6 @@ class Model:
         logger.info(f"Model.init: {self.init}")
         logger.info(f"Model.trainer: {self.trainer}")
         logger.info(f"Model.art: {self.art}")
-        
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -339,7 +338,9 @@ class Model:
         # TODO pass kwarg to data and model initialization
         # TODO refactor to use data and model initialization from self.initialize()
         result_dict = {}
-        data, model = self.initialize(data, model, **kwargs, data_file=data_file, model_file=model_file)
+        data, model = self.initialize(
+            data, model, **kwargs, data_file=data_file, model_file=model_file
+        )
 
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
@@ -478,11 +479,13 @@ class Model:
                 if "disable eager execution" in str(e):
                     logger.warning("Disabling eager execution for Tensorflow.")
                     import tensorflow as tf
+
                     tf.compat.v1.disable_eager_execution()
                     model = self.init()
                 elif "eager" in str(e):
                     logger.warning("Enabling eager execution for Tensorflow.")
                     import tensorflow as tf
+
                     tf.config.run_functions_eagerly(True)
                     model = self.init()
                 else:

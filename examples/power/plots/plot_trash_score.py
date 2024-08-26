@@ -1,6 +1,5 @@
 import argparse
 import pandas as pd
-from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
 from deckard.layers.plots import set_matplotlib_vars
@@ -11,7 +10,7 @@ set_matplotlib_vars()
 sns.set_theme(style="whitegrid", font_scale=2.5, font="times new roman")
 
 
-def plot_trash_score(input_file: str, output_file: str, title:str):
+def plot_trash_score(input_file: str, output_file: str, title: str):
     big_df = pd.read_csv(input_file, index_col=0, low_memory=False)
     # Capitalize all letters in the dataset
     big_df["dataset"] = big_df["dataset"].str.upper()
@@ -45,7 +44,6 @@ def plot_trash_score(input_file: str, output_file: str, title:str):
     fig.savefig(output_file)
 
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_file", type=str, required=True)
 parser.add_argument("--output_file", type=str, required=True)
@@ -54,4 +52,3 @@ parser.add_argument("--title", type=str, required=True)
 if __name__ == "__main__":
     args = parser.parse_args()
     plot_trash_score(**vars(args))
-

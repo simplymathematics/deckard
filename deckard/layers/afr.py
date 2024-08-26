@@ -676,7 +676,7 @@ def clean_data_for_aft(
         dummy_subset = subset[non_numeric]
         dummies = pd.get_dummies(
             dummy_subset,
-            columns = dummy_subset.columns,
+            columns=dummy_subset.columns,
         )
         subset = subset.drop(columns=dummy_subset.columns)
         cleaned = pd.concat([subset, dummies], axis=1)

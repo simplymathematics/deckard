@@ -229,7 +229,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.double_centering = double_centering
         self.min_max_scale = min_max_scale
         if self.m > 0:
-            assert (condensing_method in all_condensers or condensing_method is None), f"Expected {condensing_method} in {all_condensers}"
+            assert (
+                condensing_method in all_condensers or condensing_method is None
+            ), f"Expected {condensing_method} in {all_condensers}"
         self.condensing_method = condensing_method
         if metric in compressors.keys():
             logger.debug(f"Using NCD metric with {metric} compressor.")
@@ -474,28 +476,26 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         assert (
             len(self.y_) == distance_matrix.shape[0]
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
-         # Convert from distance to similarity
+        # Convert from distance to similarity
         if self.similarity is True:
             max_ = np.max(distance_matrix)
             distance_matrix = max_ - distance_matrix  # Similarity = 1 - distance
             # Ensure that all values are positive
             if not np.all(distance_matrix >= 0):
-                raise ValueError(f"Expected all values to be positive")
+                raise ValueError("Expected all values to be positive")
         elif self.similarity is False:
             if not np.all(distance_matrix >= 0):
-                raise ValueError(f"Expected all values to be positive")
-        else: # pragma: no cover
+                raise ValueError("Expected all values to be positive")
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"Similarity {self.similarity} not supported. Supported similarities are: True, False, cosine",
-            )        
+            )
         # Min-max scale
         if self.min_max_scale is True:
             min_ = np.min(distance_matrix)
             max_ = np.max(distance_matrix)
             distance_matrix = (distance_matrix - min_) / (max_ - min_)
-       
-        
-        
+
         return distance_matrix
 
     def _find_best_samples(self, method="medoid", n_jobs=-1, update=False):
@@ -594,7 +594,15 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             indices = indices[: len(self.X_)]
         return indices
 
-    def fit(self, X: np.ndarray, y: np.ndarray, n_jobs=-1, X_test=None, y_test=None, update=False):
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        n_jobs=-1,
+        X_test=None,
+        y_test=None,
+        update=False,
+    ):
         """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.condensing_method.
 
         Args:
@@ -1085,6 +1093,7 @@ def main(args: argparse.Namespace):
     X = np.array(X) if not isinstance(X, np.ndarray) else X
     y = np.array(y) if not isinstance(y, np.ndarray) else y
     import yaml
+
     print(f"X shape: {X.shape}")
     print(f"Y shape: {y.shape}")
     print(yaml.dump(params))

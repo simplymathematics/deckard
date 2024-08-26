@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from ..attack import Attack
@@ -48,8 +47,16 @@ class Experiment:
         # if isinstance(data, dict):
         #     self.data = Data(**data)
         self.data = Data(**OmegaConf.to_container(OmegaConf.create(data)))
-        self.model = Model(**OmegaConf.to_container(OmegaConf.create(model))) if model is not None else None
-        self.attack = Attack(**OmegaConf.to_container(OmegaConf.create(attack))) if attack is not None else None
+        self.model = (
+            Model(**OmegaConf.to_container(OmegaConf.create(model)))
+            if model is not None
+            else None
+        )
+        self.attack = (
+            Attack(**OmegaConf.to_container(OmegaConf.create(attack)))
+            if attack is not None
+            else None
+        )
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
@@ -108,7 +115,7 @@ class Experiment:
             score_dict.update(**model_results.pop("time_dict", {}))
             score_dict.update(**model_results.pop("score_dict", {}))
             files.update(**model_results)
-            data=files['data']
+            data = files["data"]
             # Prefer probabilities, then loss_files, then predictions
             if (
                 "probabilities" in model_results
@@ -129,15 +136,15 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        else:  
+        else:
             #########################################################################
             # Load or generate data
             # For experiments without models, e.g Mutual Information experiments on datasets
             #########################################################################
             data = self.data(**files)
-            files['data'] = data
+            files["data"] = data
             preds = data[2]
-        
+
         ##########################################################################
         # Load or run attack
         ##########################################################################

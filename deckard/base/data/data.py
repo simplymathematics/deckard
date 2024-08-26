@@ -1,4 +1,3 @@
-import json
 import logging
 import pickle
 from dataclasses import dataclass, field
@@ -218,7 +217,9 @@ class Data:
         if data_file is not None and Path(data_file).exists():
             data = self.initialize(data_file)
         elif "data" in kwargs:
-            assert len(kwargs["data"]) == 4, f"Data must be length 4, not {len(kwargs['data'])}"
+            assert (
+                len(kwargs["data"]) == 4
+            ), f"Data must be length 4, not {len(kwargs['data'])}"
             data = kwargs["data"]
         else:
             data = self.initialize()
