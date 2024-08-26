@@ -2,12 +2,13 @@ import pandas as pd
 from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from deckard.layers.plots import set_matplotlib_vars
 
 set_matplotlib_vars()
 
 
-sns.set_theme(style="whitegrid", font_scale=1.2, font="times new roman")
+sns.set_theme(style="whitegrid", font_scale=2, font="times new roman")
 
 normal_dir = "data"
 datasets = ["mnist", "cifar", "cifar100"]
@@ -105,8 +106,9 @@ big_df = pd.read_csv("data/combined/combined.csv", index_col=0, low_memory=False
 big_df["dataset"] = big_df["dataset"].str.upper()
 # Split the device_id on the last word and only keep the last word
 big_df["Device"] = big_df["device_id"].str.split("-").str[-1].str.upper()
+############################################################################################################
 # Accuracy Plot
-fig, ax = plt.subplots(1, 2, figsize=(8, 3))
+fig, ax = plt.subplots(1, 2, figsize=(10, 3))
 ben_acc = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -117,8 +119,10 @@ ben_acc = sns.boxenplot(
 ben_acc.set_title("")
 ben_acc.set_ylabel("Ben. Accuracy")
 ben_acc.set_xlabel("")
-ben_acc.tick_params(axis="x", labelsize=12, rotation=0)
-ben_acc.set_yscale("linear")
+ben_acc.tick_params(axis="x", labelsize=12, rotation=45)
+ben_acc.set_yscale("log")
+ben_acc.set(ylim=[0.01, 1.00])
+ben_acc.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
 ben_acc.legend().remove()
 adv_acc = sns.boxenplot(
     data=big_df,
@@ -129,22 +133,30 @@ adv_acc = sns.boxenplot(
 )
 adv_acc.set_title("")
 adv_acc.set_ylabel("Adv. Accuracy")
-adv_acc.set_yscale("linear")
+adv_acc.set_yscale("log")
 adv_acc.set_xlabel("")
-adv_acc.tick_params(axis="x", labelsize=12, rotation=0)
+adv_acc.set(ylim=[0.01, 1.00])
+adv_acc.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
+adv_acc.tick_params(axis="x", labelsize=12, rotation=45)
 xticklabels = [item.get_text() for item in adv_acc.get_xticklabels()]
 adv_acc.legend()
 # for _, ax in enumerate(fig.axes):
 #     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+# Move the legend to the right
+adv_acc.legend(
+    title="Device",
+    loc="upper left",
+    bbox_to_anchor=(1, 1),
+    fontsize=18,
+)
 fig.tight_layout()
 fig.savefig("combined/acc.pdf")
 
 
-sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
-
-
+sns.set_theme(style="whitegrid", font_scale=3, font="times new roman")
+############################################################################################################
 # Time Plot
-fig, ax = plt.subplots(1, 3, figsize=(17, 5))
+fig, ax = plt.subplots(1, 3, figsize=(19, 5))
 train_time = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -152,10 +164,10 @@ train_time = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_time.set_title("")
+train_time.set_title("Training Time")
 train_time.set_ylabel("$t_{t}$ (seconds)")
 train_time.set_xlabel("")
-train_time.tick_params(axis="x", labelsize=18)
+train_time.tick_params(axis="x", labelsize=18, rotation=45)
 train_time.legend().remove()
 predict_time = sns.boxenplot(
     data=big_df,
@@ -164,10 +176,10 @@ predict_time = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-predict_time.set_title("")
+predict_time.set_title("Inference Time")
 predict_time.set_ylabel("$t_{i}$ (seconds)")
 predict_time.set_xlabel("")
-predict_time.tick_params(axis="x", labelsize=18)
+predict_time.tick_params(axis="x", labelsize=18, rotation=45)
 predict_time.legend().remove()
 adv_fit_time = sns.boxenplot(
     data=big_df,
@@ -176,16 +188,21 @@ adv_fit_time = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_time.set_title("")
+adv_fit_time.set_title("Attack Time")
 adv_fit_time.set_ylabel("$t_{a}$ (seconds)")
 adv_fit_time.set_xlabel("")
-adv_fit_time.tick_params(axis="x", labelsize=18)
-adv_fit_time.legend()
+adv_fit_time.tick_params(axis="x", labelsize=18, rotation=45)
+adv_fit_time.legend(
+    title="Device",
+    loc="upper left",
+    bbox_to_anchor=(1, 1),
+    fontsize=18,
+)
 fig.tight_layout()
 fig.savefig("combined/time.pdf")
-
+############################################################################################################
 # Power Plot
-fig, ax = plt.subplots(1, 3, figsize=(17, 5))
+fig, ax = plt.subplots(1, 3, figsize=(19, 5))
 train_power = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -193,10 +210,10 @@ train_power = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_power.set_title("")
+train_power.set_title("Training Power")
 train_power.set_ylabel("$P_{t}$ (Watts)")
 train_power.set_xlabel("")
-train_power.tick_params(axis="x", labelsize=18)
+train_power.tick_params(axis="x", labelsize=18, rotation=45)
 train_power.legend().remove()
 predict_power = sns.boxenplot(
     data=big_df,
@@ -205,10 +222,10 @@ predict_power = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-predict_power.set_title("")
+predict_power.set_title("Inference Power")
 predict_power.set_ylabel("$P_{i}$ (Watts)")
 predict_power.set_xlabel("")
-predict_power.tick_params(axis="x", labelsize=18)
+predict_power.tick_params(axis="x", labelsize=18, rotation=45)
 predict_power.legend().remove()
 adv_fit_power = sns.boxenplot(
     data=big_df,
@@ -217,16 +234,21 @@ adv_fit_power = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_power.set_title("")
+adv_fit_power.set_title("Attack Power")
 adv_fit_power.set_ylabel("$P_{a}$ (Watts)")
 adv_fit_power.set_xlabel("")
-adv_fit_power.tick_params(axis="x", labelsize=18)
-adv_fit_power.legend()
+adv_fit_power.tick_params(axis="x", labelsize=18, rotation=45)
+adv_fit_power.legend(
+    title="Device",
+    loc="upper left",
+    bbox_to_anchor=(1.05, 1),
+    fontsize=18,
+)
 fig.tight_layout()
 fig.savefig("combined/power.pdf")
-
+############################################################################################################
 # Cost Plot
-fig, ax = plt.subplots(1, 3, figsize=(17, 5))
+fig, ax = plt.subplots(1, 3, figsize=(19, 5))
 train_cost = sns.boxenplot(
     data=big_df,
     x="dataset",
@@ -234,10 +256,10 @@ train_cost = sns.boxenplot(
     hue="Device",
     ax=ax[0],
 )
-train_cost.set_title("")
+train_cost.set_title("Training Cost")
 train_cost.set_ylabel("$C_{t}$ (USD)")
 train_cost.set_xlabel("")
-train_cost.tick_params(axis="x", labelsize=18)
+train_cost.tick_params(axis="x", labelsize=18, rotation=45)
 train_cost.legend().remove()
 predict_cost = sns.boxenplot(
     data=big_df,
@@ -246,10 +268,10 @@ predict_cost = sns.boxenplot(
     hue="Device",
     ax=ax[1],
 )
-predict_cost.set_title("")
+predict_cost.set_title("Inference Cost")
 predict_cost.set_ylabel("$C_{i}$ (USD)")
 predict_cost.set_xlabel("")
-predict_cost.tick_params(axis="x", labelsize=18)
+predict_cost.tick_params(axis="x", labelsize=18, rotation=45)
 predict_cost.legend().remove()
 adv_fit_cost = sns.boxenplot(
     data=big_df,
@@ -258,10 +280,15 @@ adv_fit_cost = sns.boxenplot(
     hue="Device",
     ax=ax[2],
 )
-adv_fit_cost.set_title("")
+adv_fit_cost.set_title("Attack Cost")
 adv_fit_cost.set_ylabel("$C_{a}$ (USD)")
 adv_fit_cost.set_xlabel("")
-adv_fit_cost.tick_params(axis="x", labelsize=18)
-adv_fit_cost.legend()
+adv_fit_cost.tick_params(axis="x", labelsize=18, rotation=45)
+adv_fit_cost.legend(
+    title="Device",
+    loc="upper left",
+    bbox_to_anchor=(1.05, 1),
+    fontsize=18,
+)
 fig.tight_layout()
 fig.savefig("combined/cost.pdf")
