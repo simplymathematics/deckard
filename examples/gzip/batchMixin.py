@@ -134,6 +134,8 @@ class BatchedMixin:
                 end = (i + 1) * self.batch_size
                 X_batch = X_train[start:end]
                 y_batch = y_train[start:end]
+                if hasattr(self, "distance_matrix"):
+                    self.distance_matrix = None
                 fit_func(X_batch, y_batch, **kwargs)
 
         return wrapper

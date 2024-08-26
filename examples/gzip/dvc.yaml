@@ -41,11 +41,11 @@ stages:
   parse_params:
     cmd: python -m deckard.layers.parse
     deps:
+      - conf/data
+      - conf/model
+      - conf/files
+      - conf/scorers
       - conf/default.yaml
-      - conf/data/default.yaml
-      - conf/model/default.yaml
-      - conf/files/default.yaml
-      - conf/scorers/default.yaml
     outs:
       - params.yaml:
           cache: true
@@ -59,6 +59,10 @@ stages:
     - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
     outs:
     - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}
+    - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}/:
+        cache: true
+        persist: true
+        push: true
     params:
     - data
     - model
@@ -92,12 +96,12 @@ stages:
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
       hydra.sweep.dir=${item.dataset}/logs/${item.configs}/${item.train_size}/symmetry_${item.symmetric}
-      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.configs}/${item.train_size}/study.csv
+      hydra.callbacks.study_dump.output_file=null
       files.directory=${item.dataset}
       files.reports=${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}
       hydra.launcher.n_jobs=-1
       ++data.sample.random_state=1,2,3,4,5,6,7,8,9,10
-      model.init.metric=gzip,lzma,bz2,pkl,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
+      model.init.metric=gzip,lzma,bz2,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
       ++raise_exception=True               
       --config-name ${item.configs}
       --multirun
@@ -140,7 +144,6 @@ stages:
     deps:
       - params.yaml
       - conf/condense_${item.model_name}.yaml
-      - ${item.dataset}/${files.reports}/gzip_${item.model_name}/ #Ensures that this runs after the grid_search
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -186,7 +189,7 @@ stages:
     deps:
       - params.yaml
       - conf/condense_${item.model_name}.yaml
-      - ${item.dataset}/models/${item.model_name}/${item.metric}/ #Ensures that this runs after the grid_search
+      - ${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -228,6 +231,9 @@ stages:
      python -m deckard.layers.compile 
      --report_folder ${item.dataset}/${files.reports}/${item.stage} 
      --results_file ${item.dataset}/${files.reports}/${item.stage}.csv
+  ##############################################################################
+  epoch_fit:
+    
   ##############################################################################
   clean:
     matrix:
@@ -383,37 +389,3 @@ stages:
       rm -rf ~/Gzip-KNN/figs/${item.dataset}/.gitignore
     deps:
       - ${item.dataset}/plots/
-  # ##############################################################################
-  # # attack:
-  # #   cmd: python -m deckard.layers.experiment attack
-  # #   deps:
-  # #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-  # #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  # #   metrics:
-  # #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}
-  # #   outs:
-  # #   - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_probabilities_file}
-  # #   params:
-  # #   - data
-  # #   - model
-  # #   - attack
-  # #   - scorers
-  # #   - files
-  # ##############################################################################
-  # # attack_optimise:
-  # #   cmd: python -m deckard.layers.optimise +stage=attack +optimizers=adv_accuracy model=best --multirun --config-name attack
-  # #   deps:
-  # #   - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-  # #   - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-  # #   - conf/model/best.yaml
-  # #   outs:
-  # #   - attack.db
-  # #   params:
-  # #   - conf/attack.yaml:
-  # #     - hydra
-  # # find_best_attack:
-  # #   cmd: python -m deckard.layers.find_best attack.yaml
-  # #   deps:
-  # #   - attack.db
-  # #   outs:
-  # #   - conf/attack/best.yaml

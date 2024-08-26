@@ -53,8 +53,8 @@ hydra:
       +model.init.C : tag(log, interval(1e-3, 1e3))
       +model.init.gamma : scale,auto
       +model.init.class_weight : balanced,null
-      model.init.min_max_scale : True, False
-      model.init.similarity : True, False
+      # model.init.similarity : True, False
+      # model.init.min_max_scale : ${model.init.similarity}
       model_name : ${model_name}
     direction: ${direction}
     max_failure_rate: 1.0

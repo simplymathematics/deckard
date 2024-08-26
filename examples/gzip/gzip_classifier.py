@@ -194,10 +194,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     def __init__(
         self,
         m=0,
-        sampling_method="random",
+        condensing_method="random",
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
+        similarity=False,
+        double_centering=False,
+        min_max_scale=False,
         **kwargs,
     ):
         """
@@ -206,7 +209,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Args:
             k (int): The value of k for k-nearest neighbors. Default is 3.
             m (int): The value of m for  m-best samples. Default is -1, which indicates using all training samples.
-            sampling_method (str): The method used for classification. Default is "random".
+            condensing_method (str): The method used for classification. Default is "random".
             metric (str): The metric used to calculate the distance between samples. Default is "ncd".
             distance_matrix (str or np.ndarray): The path to a numpy file or a numpy array representing the distance matrix.
                 If a path is provided, the file will be loaded. If an array is provided, it will be used directly.
@@ -219,10 +222,15 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         """
         kwarg_string = str([f"{key}={value}" for key, value in kwargs.items()])
         logger.debug(
-            f"Initializing GzipClassifier with  m={m},  method={sampling_method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, {kwarg_string}",
+            f"Initializing GzipClassifier with  m={m},  method={condensing_method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, {kwarg_string}",
         )
         self.m = m
-        self.sampling_method = sampling_method
+        self.similarity = similarity
+        self.double_centering = double_centering
+        self.min_max_scale = min_max_scale
+        if self.m > 0:
+            assert (condensing_method in all_condensers or condensing_method is None), f"Expected {condensing_method} in {all_condensers}"
+        self.condensing_method = condensing_method
         if metric in compressors.keys():
             logger.debug(f"Using NCD metric with {metric} compressor.")
             self._distance = ncd
@@ -410,7 +418,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(path, X=matrix)
 
-    def _prepare_training_matrix(self, n_jobs=-1):
+    def _prepare_training_matrix(self, n_jobs=-1, update=False):
         """
         Prepare the distance matrix for classification.
         If self.distance_matrix is a path to a numpy file, it will be loaded.
@@ -435,13 +443,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 n_jobs=n_jobs,
             )
             self._save_distance_matrix(self.distance_matrix, distance_matrix)
-        elif isinstance(self.distance_matrix, np.ndarray) and len(
-            self.distance_matrix,
-        ) == len(self.X_):
+        elif isinstance(self.distance_matrix, np.ndarray) and update is False:
             distance_matrix = self.distance_matrix
-        elif isinstance(self.distance_matrix, np.ndarray) and len(
-            self.distance_matrix,
-        ) != len(self.X_):
+        elif isinstance(self.distance_matrix, np.ndarray) and update is True:
             distance_matrix = self._calculate_distance_matrix(
                 self.X_,
                 self.X_,
@@ -466,13 +470,35 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         ), f"Distance matrix must be square, got {distance_matrix.shape}"
         assert (
             len(self.X_) == distance_matrix.shape[0]
-        ), f"Expected len(X) == {distance_matrix.shape[0]}"
+        ), f"Expected {len(self.X_)} == {distance_matrix.shape[0]}"
         assert (
             len(self.y_) == distance_matrix.shape[0]
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
+         # Convert from distance to similarity
+        if self.similarity is True:
+            max_ = np.max(distance_matrix)
+            distance_matrix = max_ - distance_matrix  # Similarity = 1 - distance
+            # Ensure that all values are positive
+            if not np.all(distance_matrix >= 0):
+                raise ValueError(f"Expected all values to be positive")
+        elif self.similarity is False:
+            if not np.all(distance_matrix >= 0):
+                raise ValueError(f"Expected all values to be positive")
+        else: # pragma: no cover
+            raise NotImplementedError(
+                f"Similarity {self.similarity} not supported. Supported similarities are: True, False, cosine",
+            )        
+        # Min-max scale
+        if self.min_max_scale is True:
+            min_ = np.min(distance_matrix)
+            max_ = np.max(distance_matrix)
+            distance_matrix = (distance_matrix - min_) / (max_ - min_)
+       
+        
+        
         return distance_matrix
 
-    def _find_best_samples(self, method="medoid", n_jobs=-1):
+    def _find_best_samples(self, method="medoid", n_jobs=-1, update=False):
         """
         Args:
             method (str): The method used to select the best training samples. Default is "medoid". Choices are "sum", "mean", "medoid", "random", "knn", "svc".
@@ -568,8 +594,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             indices = indices[: len(self.X_)]
         return indices
 
-    def fit(self, X: np.ndarray, y: np.ndarray, n_jobs=-1, X_test=None, y_test=None):
-        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.sampling_method.
+    def fit(self, X: np.ndarray, y: np.ndarray, n_jobs=-1, X_test=None, y_test=None, update=False):
+        """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.condensing_method.
 
         Args:
             X (np.ndarray): The input data
@@ -613,10 +639,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 (int, float),
             ), f"Expected {self.m} to be an integer"
             assert isinstance(
-                self.sampling_method,
-                (str, type(None)),
-            ), f"Expected {self.sampling_method} to be a string or None"
-            indices = self._find_best_samples(self.sampling_method)
+                self.condensing_method,
+                (str),
+            ), f"Expected {self.condensing_method} to be a string"
+            indices = self._find_best_samples(self.condensing_method)
             self._set_best_indices(indices)
         else:
             raise ValueError(
@@ -628,7 +654,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             try:
                 self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
             except DataConversionWarning:
-                y = np.ravel(self.y_)
+                y = self.y_.ravel()
                 self.clf_ = self.clf_.fit(self.distance_matrix, y)
         return self
 
@@ -646,7 +672,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         ]  # select the transposed columns at the indices
         self.distance_matrix = distance_matrix.T  # transpose the matrix again
         logger.debug(
-            f"Selected {len(self.X_)} samples using method {self.sampling_method}.",
+            f"Selected {len(self.X_)} samples using method {self.condensing_method}.",
         )
         assert len(self.X_) == len(
             self.y_,
@@ -733,18 +759,24 @@ class GzipKNN(GzipClassifier):
         self,
         k: int = 2,
         m=0,
-        sampling_method="random",
+        condensing_method="random",
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
+        similarity=False,
+        double_centering=False,
+        min_max_scale=False,
         **kwargs,
     ):
         super().__init__(
-            sampling_method=sampling_method,
+            condensing_method=condensing_method,
             m=m,
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
+            similarity=similarity,
+            double_centering=double_centering,
+            min_max_scale=min_max_scale,
             **kwargs,
         )
         self.clf_ = KNeighborsClassifier(n_neighbors=k, metric="precomputed", **kwargs)
@@ -807,20 +839,26 @@ class GzipLogisticRegressor(GzipClassifier):
     def __init__(
         self,
         m=0,
-        sampling_method="random",
+        condensing_method="random",
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
+        similarity=False,
+        double_centering=False,
+        min_max_scale=False,
         **kwargs,
     ):
         clf = LogisticRegression(**kwargs)
         super().__init__(
             clf_=clf,
-            sampling_method=sampling_method,
+            condensing_method=condensing_method,
             m=m,
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
+            similarity=similarity,
+            double_centering=double_centering,
+            min_max_scale=min_max_scale,
             **kwargs,
         )
 
@@ -834,20 +872,26 @@ class GzipSVC(GzipClassifier):
         self,
         kernel="rbf",
         m=0,
-        sampling_method="random",
+        condensing_method="random",
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
+        similarity=False,
+        double_centering=False,
+        min_max_scale=False,
         **kwargs,
     ):
         clf = SVC(kernel=kernel, **kwargs)
         super().__init__(
             clf_=clf,
-            sampling_method=sampling_method,
+            condensing_method=condensing_method,
             m=m,
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
+            similarity=similarity,
+            double_centering=double_centering,
+            min_max_scale=min_max_scale,
             **kwargs,
         )
         self.kernel = kernel
@@ -904,6 +948,7 @@ def test_model(
         dict: A dictionary containing the accuracy, train_time, and pred_time
     """
     if batched is True:
+        _ = kwargs.pop("batched", "")
         model = batched_models[model_type](**kwargs)
     else:
         model = supported_models[model_type](**kwargs)
@@ -948,7 +993,7 @@ def load_data(dataset, precompressed):
             LabelEncoder().fit(y).transform(y)
         )  # Turns the labels "alt.atheism" and "talk.religion.misc" into 0 and 1
     elif dataset == "kdd_nsl":
-        df = pd.read_csv("raw_data/kdd_nsl_undersampled_10000.csv")
+        df = pd.read_csv("raw_data/kdd_nsl_undersampled_5000.csv")
         y = df["label"]
         X = df.drop("label", axis=1)
     elif dataset == "make_classification":
@@ -1010,7 +1055,7 @@ def main(args: argparse.Namespace):
     Args:
         args (argparse.Namespace): The command line arguments
     Usage:
-        python python gzip_classifier.py --metric gzip  --m 10 --sampling_method svc  --dataset kdd_nsl k=3
+        python python gzip_classifier.py --metric gzip  --m 10 --condensing_method svc  --dataset kdd_nsl k=3
     """
 
     X, y = load_data(dataset=args.dataset, precompressed=args.precompressed)
@@ -1039,6 +1084,11 @@ def main(args: argparse.Namespace):
     params.update(**kwarg_args)
     X = np.array(X) if not isinstance(X, np.ndarray) else X
     y = np.array(y) if not isinstance(y, np.ndarray) else y
+    import yaml
+    print(f"X shape: {X.shape}")
+    print(f"Y shape: {y.shape}")
+    print(yaml.dump(params))
+    input("Press Enter to Continue...")
     test_model(X_train, X_test, y_train, y_test, **params)
 
 
@@ -1068,7 +1118,7 @@ parser.add_argument(
     help="The number of best samples to use. If -1, all samples will be used.",
 )
 parser.add_argument(
-    "--sampling_method",
+    "--condensing_method",
     type=str,
     default="random",
     help=f"The method used to select the best training samples. Choices are {all_condensers}",

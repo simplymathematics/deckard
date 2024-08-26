@@ -55,7 +55,7 @@ hydra:
       ++data.sample.train_size : 1000
       ++data.sample.random_state: int(interval(10000, 20000))
       model.init.m : tag(log, interval(.01, .1))
-      +model.init.condensing_method : medoid,sum,svc,random,hardness,nearmiss,knn
+      model.init.condensing_method : medoid,sum,svc,random,hardness,nearmiss,knn
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8

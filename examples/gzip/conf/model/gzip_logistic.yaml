@@ -6,6 +6,4 @@ init:
     metric : gzip
     symmetric : false
     distance_matrix :  ${files.directory}/${files.model_dir}/${model.init.metric}/${data.sample.train_size}-${data.sample.test_size}/${data.sample.random_state}.npz
-    similarity : False
-    min_max_scale  : False
     condensing_method : None
