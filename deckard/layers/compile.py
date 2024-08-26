@@ -92,17 +92,12 @@ def read_file(file, results):
             with open(file, "r") as f:
                 dict_ = json.load(f)
         except json.decoder.JSONDecodeError as e:
-            logger.error(f"Error reading {file}")
+            full_file = Path(file).resolve()
+            logger.error(f"Error reading {full_file}")
             print(f"Error reading {file}. Please fix the file and press Enter.")
             input(
                 "Press Enter to continue. The next failure on this file will raise an error.",
             )
-            if retries > 1:
-                raise e
-            else:
-                with open(file, "r") as f:
-                    dict_ = json.load(f)
-                retries += 1
     elif suffix == ".yaml":
         with open(file, "r") as f:
             try:
