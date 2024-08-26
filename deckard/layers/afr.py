@@ -176,8 +176,8 @@ def survival_probability_calibration(
     # plot our results
 
     ax.plot(x, y, label="Calibration Curve", color=color)
-    ax.set_xlabel("Predicted P(t ≤ %.2f )" % round(t0, 3))
-    ax.set_ylabel("Observed P(t ≤ %.2f )" % round(t0, 3))
+    ax.set_xlabel("Predicted P(t ≤ %.2f)" % round(t0, 3))
+    ax.set_ylabel("Observed P(t ≤ %.2f)" % round(t0, 3))
     ax.tick_params(axis="y")
 
     # plot x=y line
@@ -249,33 +249,6 @@ def fit_aft(
     # Assume that floats represent the proportion of failure events
     # raise an error on any other type
     kwarg_dict = {}
-    # if df[event_col].dtype == "boolean":
-    #     pass
-    # elif df[event_col].dtype == "float" :
-    #     # Assume this column represents accuracy
-    #     print(f"Length of data: {len(df)}")
-    #     pos_weights = df[event_col].copy() * 100
-    #     neg_weights = (1 - df[event_col].copy()) * 100
-    #     # create a new dataframe for positive/negative
-    #     pos_df = df.copy()
-    #     neg_df = df.copy()
-    #     # Set the event column to 1 for positive, 0 for negative
-    #     pos_df[event_col] = 1
-    #     neg_df[event_col] = 0
-    #     # add the weights
-    #     pos_df['weights_col'] = pos_weights
-    #     neg_df['weights_col'] = neg_weights
-    #     # concatenate the dataframes
-    #     df = pd.concat([pos_df, neg_df], axis=0)
-    #     # drop rows with non-positive weights
-    #     df = df[df['weights_col'] > 0]
-    #     # Recast the event column as boolean
-    #     df[event_col] = df[event_col].astype(bool)
-    #     # Recast the weights column as int
-    #     df['weights_col'] = df['weights_col'].astype(int)
-    #     kwarg_dict['weights_col'] = 'weights_col'
-    # else:
-    #     raise ValueError(f"Event column {event_col} is not boolean or float")
     kwarg_dict["duration_col"] = duration_col
     kwarg_dict["event_col"] = event_col
     if mtype != "aalen":
@@ -295,7 +268,6 @@ def fit_aft(
             logger.info(
                 "Reducing the step size to 0.1 and increasing the max steps to 1000",
             )
-            input("Inside the fit function")
         else:
             logger.info("Trying to fit with SLSQP")
             aft._scipy_fit_method = "SLSQP"
@@ -344,14 +316,13 @@ def plot_aft(
     dummy_cols = []
     dummy_prefixes = tuple(dummy_dict.values())
     for col in columns:
-        if str(col).startswith(dummy_prefixes) or str(col).startswith("dummy_"):
+        if str(col).startswith(dummy_prefixes) and len(dummy_prefixes) > 0:
             dummy_cols.append(col)
         elif col.startswith("Intercept"):
             continue
         else:
             clean_cols.append(col)
     columns = clean_cols
-
     ax = aft.plot(columns=columns)
     labels = ax.get_yticklabels()
     labels = [label.get_text() for label in labels]
@@ -592,7 +563,7 @@ def make_afr_table(
     ]
     aft_data["BIC"] = [
         (
-            x.AIC_
+            x.BIC_
             if not isinstance(x, (CoxPHFitter, GeneralizedGammaRegressionFitter))
             else np.nan
         )
@@ -639,8 +610,8 @@ def make_afr_table(
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
     logger.info(f"Saved AFR comparison to {folder / 'aft_comparison.csv'}")
-    aft_data = aft_data.round(2)
     aft_data.fillna("--", inplace=True)
+    # Print the aft_data to console, nicely
     aft_data.to_latex(
         folder / "aft_comparison.tex",
         float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
@@ -684,6 +655,7 @@ def clean_data_for_aft(
     covariate_list.append(target)
     covariate_list = list(set(covariate_list))
     logger.info(f"Covariates : {covariate_list}")
+    covariate_list = [x for x in covariate_list if x in data.columns]
     subset = data[covariate_list]
     for col in subset.columns:
         subset = subset[subset[col] != -1e10]
@@ -699,8 +671,15 @@ def clean_data_for_aft(
         subset = subset.drop(columns=list(dummy_dict.keys()))
         cleaned = pd.concat([subset, dummies], axis=1)
     else:
-        cleaned = subset.astype(float)
-        cleaned = subset.dropna(axis=0, how="any")
+        # Find non-numeric columns
+        non_numeric = subset.select_dtypes(exclude=[np.number]).columns
+        dummy_subset = subset[non_numeric]
+        dummies = pd.get_dummies(
+            dummy_subset,
+            columns = dummy_subset.columns,
+        )
+        subset = subset.drop(columns=dummy_subset.columns)
+        cleaned = pd.concat([subset, dummies], axis=1)
     assert (
         target in cleaned.columns
     ), f"Target {target} not in dataframe with columns {cleaned.columns}"
@@ -768,7 +747,7 @@ def run_afr_experiment(
                 f"{mtype}".replace("_", " ").replace("-", " ").title(),
             ),
             file=plot_dict.get("plot", f"{mtype}_aft.pdf"),
-            xlabel=label_dict.pop("xlabel", r"log$(\phi)$"),
+            xlabel=label_dict.pop("xlabel", r"log$(\theta)$"),
             ylabel=label_dict.pop("ylabel", ""),  # noqa W605
             replacement_dict=label_dict,
             dummy_dict=dummy_dict,
@@ -887,7 +866,7 @@ def afr_main(args):
     logging.basicConfig(level=logging.INFO)
     font = {
         "family": "Times New Roman",
-        "weight": "bold",
+        # "weight": "bold",
         "size": 22,
     }
 
