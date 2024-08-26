@@ -47,39 +47,9 @@ class Experiment:
     ):
         # if isinstance(data, dict):
         #     self.data = Data(**data)
-        if isinstance(data, DictConfig):
-            data_dict = OmegaConf.to_container(data, resolve=True)
-            data_dict.update({"_target_": "deckard.base.data.Data"})
-            self.data = instantiate(data_dict)
-        elif isinstance(data, Data):
-            self.data = data
-        else:  # pragma: no cover
-            raise ValueError("data must be a dict, DictConfig, or Data object.")
-        assert isinstance(self.data, Data), f"data is {type(self.data)}"
-        # if isinstance(model, dict):
-        #     self.model = Model(**model)
-        if isinstance(model, DictConfig):
-            model_dict = OmegaConf.to_container(model, resolve=True)
-            self.model = Model(**model_dict)
-        elif isinstance(model, Model):
-            self.model = model
-        elif isinstance(model, type(None)):  # For experiments without models
-            self.model = None
-        else:  # pragma: no cover
-            raise ValueError("model must be a dict, DictConfig, or Model object.")
-        assert isinstance(self.model, (Model, type(None)))
-        if isinstance(scorers, dict):
-            self.scorers = ScorerDict(**scorers)
-        elif isinstance(scorers, DictConfig):
-            scorer_dict = OmegaConf.to_container(scorers, resolve=True)
-            self.scorers = ScorerDict(**scorer_dict)
-        elif isinstance(scorers, ScorerDict):
-            self.scorers = scorers
-        else:  # pragma: no cover
-            raise ValueError(
-                "scorers must be a dict, DictConfig, or ScorerDict object.",
-            )
-        assert isinstance(self.scorers, ScorerDict)
+        self.data = Data(**OmegaConf.to_container(OmegaConf.create(data)))
+        self.model = Model(**OmegaConf.to_container(OmegaConf.create(model))) if model is not None else None
+        self.attack = Attack(**OmegaConf.to_container(OmegaConf.create(attack))) if attack is not None else None
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
@@ -90,18 +60,7 @@ class Experiment:
         else:  # pragma: no cover
             raise ValueError("files must be a dict, DictConfig, or FileConfig object.")
         assert isinstance(self.files, FileConfig)
-        if attack is None or (hasattr(attack, "__len__") and len(attack) == 0):
-            self.attack = None
-        elif isinstance(attack, dict):
-            self.attack = Attack(**attack)
-        elif isinstance(attack, DictConfig):
-            attack_dict = OmegaConf.to_container(attack, resolve=True)
-            self.attack = Attack(**attack_dict)
-        elif isinstance(attack, Attack):
-            self.attack = attack
-        else:  # pragma: no cover
-            raise ValueError("attack must be a dict, DictConfig, or Attack object.")
-        assert isinstance(self.attack, (Attack, type(None)))
+        self.scorers = ScorerDict(**OmegaConf.to_container(OmegaConf.create(scorers)))
         self.device_id = device_id
         self.stage = stage
         self.optimizers = optimizers
@@ -131,15 +90,16 @@ class Experiment:
             and Path(files["score_dict_file"]).exists()
         ):
             score_dict = self.data.load(files["score_dict_file"])
+            score_dict = dict(score_dict)
+            assert isinstance(score_dict, dict), f"score_dict is {type(score_dict)}"
         else:
             score_dict = {}
         results = {}
         results["score_dict"] = score_dict
         files.update(**results)
-        #########################################################################
-        # Load or generate data
-        #########################################################################
-        data = self.data(**files)
+        # TODO verify this works
+        # data = self.data(**files)
+        # files['data'] = data
         #########################################################################
         # Load or train model
         #########################################################################
@@ -148,6 +108,7 @@ class Experiment:
             score_dict.update(**model_results.pop("time_dict", {}))
             score_dict.update(**model_results.pop("score_dict", {}))
             files.update(**model_results)
+            data=files['data']
             # Prefer probabilities, then loss_files, then predictions
             if (
                 "probabilities" in model_results
@@ -168,8 +129,15 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        else:  # For experiments without models, e.g Mutual Information experiments on datasets
+        else:  
+            #########################################################################
+            # Load or generate data
+            # For experiments without models, e.g Mutual Information experiments on datasets
+            #########################################################################
+            data = self.data(**files)
+            files['data'] = data
             preds = data[2]
+        
         ##########################################################################
         # Load or run attack
         ##########################################################################

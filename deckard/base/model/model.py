@@ -315,6 +315,11 @@ class Model:
         else:
             self.art = None
         self.name = my_hash(self) if name is None else str(name)
+        logger.info(f"Model initialized: {self.name}")
+        logger.info(f"Model.init: {self.init}")
+        logger.info(f"Model.trainer: {self.trainer}")
+        logger.info(f"Model.art: {self.art}")
+        
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -331,43 +336,11 @@ class Model:
         losses_file=None,
         **kwargs,
     ):
+        # TODO pass kwarg to data and model initialization
+        # TODO refactor to use data and model initialization from self.initialize()
         result_dict = {}
-        if isinstance(model, Model):
-            data, model = model.initialize(data)
-        elif isinstance(model, type(None)):
-            data, model = self.initialize(data)
-            assert len(data) == 4, f"Data {data} is not a tuple of length 4."
-        elif isinstance(model, (str, Path)):
-            model = self.load(model)
-            if isinstance(data, Data):
-                data = data(data_file=data_file)
-            elif isinstance(data, type(None)):
-                data = self.data.initialize(data_file)
-            elif isinstance(data, (str, Path)):
-                data = self.data.load(data)
-            else:
-                assert len(data) == 4, f"Data {data} is not a tuple of length 4."
-            assert isinstance(
-                data,
-                (list, tuple),
-            ), f"Data {data} is not a list. It is of type {type(data)}."
-        elif hasattr(model, ("fit", "fit_generator")):
-            assert hasattr(model, "predict") or hasattr(
-                model,
-                "predict_proba",
-            ), f"Model {model} does not have a predict or predict_proba method."
-            if isinstance(data, Data):
-                data = data.initialize(data_file)
-            elif isinstance(data, type(None)):
-                data = self.data.initialize(data_file)
-            elif isinstance(data, (str, Path)):
-                data = self.load(data)
-            assert isinstance(
-                data,
-                (type(None), list, tuple),
-            ), f"Data {data} is not a list. It is of type {type(data)}."
-        else:  # pragma: no cover
-            raise ValueError(f"Model {model} is not a valid model.")
+        data, model = self.initialize(data, model, **kwargs, data_file=data_file, model_file=model_file)
+
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         result_dict["data"] = data
@@ -406,7 +379,10 @@ class Model:
                 result_dict["time_dict"].update(**time_dict)
             elif Path(model_file).exists():
                 model = self.load(model_file)
+                time_dict = self.data.load(time_dict_file)
                 result_dict["model"] = model
+                result_dict["data"] = data
+                result_dict["time_dict"].update(**time_dict)
             else:
                 model, fit_time_dict = self.fit(
                     data=data,
@@ -480,7 +456,7 @@ class Model:
             self.save(model, model_file)
         return result_dict
 
-    def initialize(self, data=None, model=None):
+    def initialize(self, data=None, model=None, **kwargs):
         """Initializes the model with the data and returns the data and model.
 
         :param data: The data to initialize the model with.
@@ -490,18 +466,11 @@ class Model:
         Returns:
             tuple: The data and model as Data and Model objects.
         """
-        if isinstance(data, Data):
-            data = data.initialize(data)
-        elif isinstance(data, (str, Path)):
-            data = self.data(data)
-        elif isinstance(data, type(None)):
-            data = self.data.initialize(data)
-        assert isinstance(
-            data,
-            (list),
-        ), f"Data {data} is not a list. It is of type {type(data)}."
+        data = self.data(data=data, **kwargs)
         if isinstance(model, (str, Path)) and Path(model).exists():
             model = self.load(model)
+        elif hasattr(model, "fit"):
+            pass
         else:
             try:
                 model = self.init()
@@ -509,13 +478,11 @@ class Model:
                 if "disable eager execution" in str(e):
                     logger.warning("Disabling eager execution for Tensorflow.")
                     import tensorflow as tf
-
                     tf.compat.v1.disable_eager_execution()
                     model = self.init()
                 elif "eager" in str(e):
                     logger.warning("Enabling eager execution for Tensorflow.")
                     import tensorflow as tf
-
                     tf.config.run_functions_eagerly(True)
                     model = self.init()
                 else:
