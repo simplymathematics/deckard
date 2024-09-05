@@ -553,15 +553,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if self.similarity is True:
             max_ = np.max(distance_matrix)
             distance_matrix = max_ - distance_matrix  # Similarity = 1 - distance
-            # Ensure that all values are positive
-            if not np.all(distance_matrix >= 0):
-                raise ValueError("Expected all values to be positive")
         elif self.similarity is False:
-            if not np.all(distance_matrix >= 0):
-                raise ValueError("Expected all values to be positive")
+            pass
         else:  # pragma: no cover
             raise NotImplementedError(
-                f"Similarity {self.similarity} not supported. Supported similarities are: True, False, cosine",
+                f"Similarity {self.similarity} not supported. Supported similarities are: True, False",
             )
         # Min-max scale
         if self.min_max_scale is True:
@@ -730,7 +726,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 f"Expected {self.m} to be -1, 0, a positive integer or a float between 0 and 1. Got type {type(self.m)}",
             )
         self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
-        self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=DataConversionWarning)
+            try:
+                self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
+            except DataConversionWarning:
+                y = self.y_.ravel()
+                self.clf_ = self.clf_.fit(self.distance_matrix, y)
         return self
 
     def _set_best_indices(self, indices):
