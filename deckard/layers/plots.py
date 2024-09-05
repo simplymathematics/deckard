@@ -32,7 +32,7 @@ def cat_plot(
     kind,
     file,
     folder,
-    hue = None,
+    hue=None,
     xlabels=None,
     ylabels=None,
     xticklabels=None,
@@ -136,7 +136,7 @@ def cat_plot(
         elif isinstance(titles, str):
             graph.set_titles(titles)
         else:
-          raise ValueError(f"Unknown type {type(titles)} for titles.")
+            raise ValueError(f"Unknown type {type(titles)} for titles.")
     else:
         try:
             graph.set_titles("{row_name} | {col_name}")
@@ -155,17 +155,17 @@ def cat_plot(
         else:
             pass
     if xlabels is not None:
-      if len(graph.axes.flat) > 1 and isinstance(xlabels, str):
-        for ax in graph.axes.flat:
-            ax.set_xlabel(xlabels)
-      else:
-        graph.set_xlabels(xlabels)
+        if len(graph.axes.flat) > 1 and isinstance(xlabels, str):
+            for ax in graph.axes.flat:
+                ax.set_xlabel(xlabels)
+        else:
+            graph.set_xlabels(xlabels)
     if ylabels is not None:
-      if len(graph.axes.flat) > 1 and isinstance(ylabels, str):
-        for ax in graph.axes.flat:
-          ax.set_ylabel(ylabels)
-      else:
-        graph.set_ylabels(ylabels)
+        if len(graph.axes.flat) > 1 and isinstance(ylabels, str):
+            for ax in graph.axes.flat:
+                ax.set_ylabel(ylabels)
+        else:
+            graph.set_ylabels(ylabels)
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
     if xlim is not None:
         graph.set(xlim=xlim)
