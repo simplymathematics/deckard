@@ -371,7 +371,8 @@ class Model:
         ].count(None) != 5:
             time_dict = locals().get("time_dict", {})
             result_dict["time_dict"] = time_dict
-            # Fitting
+            #####################################################################################
+            # Fitting the model
             if model_file is None:
                 model, fit_time_dict = self.fit(
                     data=data,
@@ -397,6 +398,7 @@ class Model:
                 result_dict["model"] = model
                 result_dict["data"] = data
                 result_dict["time_dict"].update(**fit_time_dict)
+            #####################################################################################
             # Predicting
             if predictions_file is not None and not Path(predictions_file).exists():
                 preds, pred_time_dict = self.predict(
@@ -417,6 +419,7 @@ class Model:
                 )
                 result_dict["time_dict"].update(**pred_time_dict)
                 result_dict["predictions"] = preds
+            #####################################################################################
             # Predicting probabilities
             if probabilities_file is not None:
                 probs, prob_time_dict = self.predict_proba(
@@ -432,6 +435,7 @@ class Model:
                 result_dict["time_dict"].update(**prob_time_dict)
             else:
                 pass
+            #####################################################################################
             # Predicting loss
             if losses_file is not None:
                 loss, loss_time_dict = self.predict_log_loss(
@@ -447,6 +451,8 @@ class Model:
                 result_dict["losses"] = loss
             else:
                 pass
+            #####################################################################################
+            # Adding timing data to the score dictionary
             if time_dict_file is not None:
                 if Path(time_dict_file).exists():
                     old_time_dict = self.data.load(time_dict_file)
