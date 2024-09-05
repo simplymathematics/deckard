@@ -6,7 +6,6 @@ import seaborn as sns
 import yaml
 from pathlib import Path
 import numpy as np
-import numpy as np
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -186,10 +185,10 @@ def cat_plot(
         graph.set(xlim=xlim)
     if ylim is not None:
         graph.set(ylim=ylim)
-    if x_lim is not None:
-        graph.set(xlim=x_lim)
-    if y_lim is not None:
-        graph.set(ylim=y_lim)
+    if xlim is not None:
+        graph.set(xlim=xlim)
+    if ylim is not None:
+        graph.set(ylim=ylim)
     if len(set_) > 0:
         graph.set(**set_)
     graph.tight_layout()
@@ -216,25 +215,6 @@ def digitize_cols(data, digitize):
             bins = np.linspace(min_, max_, NUMBER_OF_BINS)
             data[col] = np.digitize(data[col], bins) / NUMBER_OF_BINS
     return data
-
-
-def digitize_cols(data, digitize):
-    if isinstance(digitize, str):
-        digitize = [digitize]
-    else:
-        assert isinstance(
-            digitize,
-            list,
-        ), "digitize must be a list of columns to digitize"
-    if len(digitize) > 0:
-        for col in digitize:
-            min_ = data[col].min()
-            max_ = data[col].max()
-            NUMBER_OF_BINS = 10
-            bins = np.linspace(min_, max_, NUMBER_OF_BINS)
-            data[col] = np.digitize(data[col], bins) / NUMBER_OF_BINS
-    return data
-
 
 def line_plot(
     data,

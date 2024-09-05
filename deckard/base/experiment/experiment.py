@@ -110,9 +110,8 @@ class Experiment:
         results = {}
         results["score_dict"] = score_dict
         files.update(**results)
-        ## TODO: Add shortcut if predictions file exists, even if the model doesn't
-        ## Refactor out each subsection into  traim. attack, score functions
-        ##
+        # TODO: Add shortcut if predictions file exists, even if the model doesn't
+        # Refactor out each subsection into  traim. attack, score functions
         #########################################################################
         # Load or train model
         #########################################################################
