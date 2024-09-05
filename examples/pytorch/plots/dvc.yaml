@@ -1,15 +1,15 @@
 vars:
-  - plots.yaml:cat_plot
-  - plots.yaml:line_plot
-  - plots.yaml:scatter_plot
-  - afr.yaml:covariates
-  - afr.yaml:weibull
-  - afr.yaml:log_logistic
-  - afr.yaml:log_normal
-  - afr.yaml:gamma
-  - afr.yaml:exponential
-  - afr.yaml:cox
-  - afr.yaml:dummies
+  - ../conf/plots.yaml:cat_plot
+  - ../conf/plots.yaml:line_plot
+  - ../conf/plots.yaml:scatter_plot
+  - ../conf/afr.yaml:covariates
+  - ../conf/afr.yaml:weibull
+  - ../conf/afr.yaml:log_logistic
+  - ../conf/afr.yaml:log_normal
+  - ../conf/afr.yaml:gamma
+  - ../conf/afr.yaml:exponential
+  - ../conf/afr.yaml:cox
+  - ../conf/afr.yaml:dummies
 stages:
   clean: 
     foreach:
@@ -21,12 +21,12 @@ stages:
         python -m deckard.layers.clean_data
         -i data/raw_${item}.csv 
         -o data/${item}.csv 
-        -c ../conf/clean_${item}.yaml
+        -c ../conf/clean.yaml
         --drop_if_empty adv_fit_time accuracy train_time predict_time adv_accuracy def_value atk_value model_layers
       deps:
 
         - data/raw_${item}.csv
-        - ../conf/clean_${item}.yaml
+        - ../conf/clean.yaml
       outs:
         - data/${item}.csv
   merge:
@@ -41,9 +41,8 @@ stages:
       --output_file merged.csv
     outs:
       -  data/merged.csv
-  
   afr:
-    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_accuracy --duration_col adv_fit_time_per_sample  --config_file afr.yaml --plots_folder plots/
+    cmd: python -m deckard.layers.afr  --data_file data/merged.csv  --target adv_failures --duration_col adv_fit_time --config_file ../conf/afr.yaml --plots_folder plots/
     deps:
       - data/merged.csv
     plots:
@@ -66,7 +65,7 @@ stages:
       - plots/cox_aft_dummies.pdf
       - plots/cox_qq.pdf
     params:
-      - afr.yaml:
+      - ../conf/afr.yaml:
         - dummies
         - covariates
         - weibull
@@ -89,23 +88,23 @@ stages:
     cmd: >-
       python predict_with_best.py 
       --data data/merged.csv 
-      --config_file afr.yaml 
+      --config_file ../conf/afr.yaml 
       --model weibull 
       --target adv_failures 
-      --duration_col adv_fit_time_per_sample
+      --duration_col adv_fit_time
       --output data/merged_afr.csv
     deps:
       - data/merged.csv
-      - afr.yaml
+      - ../conf/afr.yaml
       - plots/aft_comparison.tex
       - predict_with_best.py
     outs:
       - data/merged_afr.csv
   plot:
-    cmd : python -m deckard.layers.plots --path plots/ --file data/merged_afr.csv -c plots.yaml
+    cmd : python -m deckard.layers.plots --path plots/ --file data/merged_afr.csv -c ../conf/plots.yaml
     deps:
       - data/merged_afr.csv
-      - plots.yaml
+      - ../conf/plots.yaml
     plots:
       - plots/${cat_plot[0].file}
       - plots/${cat_plot[1].file}
@@ -118,11 +117,11 @@ stages:
       - plots/${line_plot[3].file}
       - plots/${scatter_plot[0].file}
     params:
-      - plots.yaml:
+      - ../conf/plots.yaml:
         - line_plot
         - scatter_plot
         - cat_plot
-      - afr.yaml:
+      - ../conf/afr.yaml:
         - covariates
         - weibull
   copy_results:

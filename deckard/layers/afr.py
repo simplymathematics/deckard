@@ -83,7 +83,11 @@ def survival_probability_calibration(
         ax = plt.gca()
     T = model.duration_col
     E = model.event_col
-
+    # Cast df to numeric DataFrame
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="raise")
+    # Drop NaNs
+    df = df.dropna()
     predictions_at_t0 = np.clip(
         1 - model.predict_survival_function(df, times=[t0]).T.squeeze(),
         1e-10,
@@ -118,7 +122,7 @@ def survival_probability_calibration(
                 crc.fit_interval_censoring(prediction_df, T, E, regressors=regressors)
             else:
                 crc.fit(prediction_df, T, E, regressors=regressors)
-        except ConvergenceError as e:
+        except (ConvergenceError, AttributeError) as e:
             if "delta contains nan value(s)" in str(e):
                 fit_options = {
                     "step_size": 0.1,
@@ -155,7 +159,7 @@ def survival_probability_calibration(
                     )
                 else:
                     crc.fit(prediction_df, T, E, regressors=regressors)
-            except ConvergenceError as e:
+            except (ConvergenceError, AttributeError) as e:
                 logger.error(f"Could not fit CRC model. due to {e}")
                 return ax, np.nan, np.nan
 
@@ -255,9 +259,7 @@ def fit_aft(
         kwarg_dict["timeline"] = timeline
     try:
         aft.fit(df, **kwarg_dict)
-    except AttributeError as e:
-        raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
-    except ConvergenceError as e:
+    except (ConvergenceError, AttributeError) as e:
         if "delta contains nan value(s)" in str(e):
             fit_options = {
                 "step_size": 0.1,
@@ -336,8 +338,6 @@ def plot_aft(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    # symlog-scale the x-axis
-    # ax.set_xscale("linear")
     ax.get_figure().tight_layout()
     ax.get_figure().savefig(file)
     plt.gcf().clear()

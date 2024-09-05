@@ -42,7 +42,7 @@ hydra:
       n_ei_candidates: 256
       multivariate: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ???
+    study_name: ${dataset}_${model_name}_condense
     storage: sqlite:///optuna.db
     n_jobs: ${oc.env:DECKARD_JOBS, 8}
     n_trials : ${oc.env:DECKARD_TRIALS, 128}

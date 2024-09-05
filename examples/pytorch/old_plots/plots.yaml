@@ -16,7 +16,7 @@ cat_plot:
   - ResNet101
   - ResNet152
   # titles: "{col_name} dataset"
-  legend_title: "Model"
+  legend_title: null
   # col: 'id'
 - file: ben_accuracy_vs_defence_type.pdf
   hue: model_name
@@ -33,7 +33,7 @@ cat_plot:
   - ResNet101
   - ResNet152
   # titles: "{col_name} dataset"
-  legend_title: "Model"
+  legend_title: null
   # col: 'id'
   # col_order:
   #   - mnist
@@ -56,7 +56,7 @@ cat_plot:
   - ResNet101
   - ResNet152
   # titles: "{col_name} dataset"
-  legend_title: "Model"
+  legend_title: null
   # col: 'id'
   # col_order:
   #   - mnist

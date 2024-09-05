@@ -6,6 +6,7 @@ import seaborn as sns
 import yaml
 from pathlib import Path
 import numpy as np
+import numpy as np
 
 logger = logging.getLogger(__name__)
 sns.set_theme(style="whitegrid", font_scale=1.8, font="times new roman")
@@ -95,6 +96,9 @@ def cat_plot(
     plt.cla()
     plt.clf()
     # clear the Axes object
+    plt.cla()
+    plt.clf()
+    # clear the Axes object
     suffix = Path(file).suffix
     if suffix is not None:
         file = Path(file)
@@ -102,6 +106,7 @@ def cat_plot(
         file = Path(file).with_suffix(filetype)
     logger.info(f"Rendering graph {file}")
     data = digitize_cols(data, digitize)
+    set_ = kwargs.pop("set", {})
     if hue is not None:
         data = data.sort_values(by=[hue, x, y])
         logger.debug(
@@ -120,6 +125,16 @@ def cat_plot(
         data = data.sort_values(by=[x, y])
         logger.debug(f"Data sorted by x:{x}, y:{y}, kind:{kind}, and kwargs:{kwargs}.")
         graph = sns.catplot(data=data, x=x, y=y, kind=kind, **kwargs)
+    # graph is a FacetGrid object and we need to set the x,y scales, labels, titles on the axes
+    for graph_ in graph.axes.flat:
+        if y_scale is not None:
+            graph_.set_yscale(y_scale)
+        if x_scale is not None:
+            graph_.set_xscale(x_scale)
+        if xticklabels is not None:
+            graph_.set_xticklabels(xticklabels)
+        if yticklabels is not None:
+            graph_.set_yticklabels(yticklabels)
     # graph is a FacetGrid object and we need to set the x,y scales, labels, titles on the axes
     for graph_ in graph.axes.flat:
         if y_scale is not None:
@@ -171,12 +186,36 @@ def cat_plot(
         graph.set(xlim=xlim)
     if ylim is not None:
         graph.set(ylim=ylim)
+    if x_lim is not None:
+        graph.set(xlim=x_lim)
+    if y_lim is not None:
+        graph.set(ylim=y_lim)
+    if len(set_) > 0:
+        graph.set(**set_)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
     plt.cla()
     plt.clf()
     logger.info(f"Saved graph to {folder / file}")
+
+
+def digitize_cols(data, digitize):
+    if isinstance(digitize, str):
+        digitize = [digitize]
+    else:
+        assert isinstance(
+            digitize,
+            list,
+        ), "digitize must be a list of columns to digitize"
+    if len(digitize) > 0:
+        for col in digitize:
+            min_ = data[col].min()
+            max_ = data[col].max()
+            NUMBER_OF_BINS = 10
+            bins = np.linspace(min_, max_, NUMBER_OF_BINS)
+            data[col] = np.digitize(data[col], bins) / NUMBER_OF_BINS
+    return data
 
 
 def digitize_cols(data, digitize):

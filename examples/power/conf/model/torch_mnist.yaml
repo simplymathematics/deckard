@@ -7,6 +7,6 @@ init:
     name : torch_example.ResNet18
 _target_: deckard.base.model.Model
 trainer:
-    nb_epoch: 1
+    np_epochs: 1
     batch_size: 1024
 library : pytorch

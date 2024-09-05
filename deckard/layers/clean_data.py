@@ -83,7 +83,7 @@ def drop_rows_without_results(
             continue
         data.dropna(axis=0, subset=[col], inplace=True)
         after = data.shape[0]
-        logger.info(f"Shape of data before data after dropping na: {data.shape}")
+        logger.info(f"Shape of data after data after dropping na: {data.shape}")
         percent_change = (before - after) / before * 100
         if percent_change > 5:
             # input(f"{percent_change:.2f}% of data dropped for {col}. Press any key to continue.")
@@ -126,6 +126,7 @@ def calculate_failure_rate(data):
         failure_rate = (
             (1 - data.loc[:, "accuracy"]) * data.loc[:, "attack.attack_size"]
         ) / data.loc[:, "predict_time"]
+        survival_time = data.loc[:, "predict_time"] * data.loc[:, "accuracy"]
     elif "predict_proba_time" in data.columns:
         data.loc[:, "predict_proba_time"] = pd.to_numeric(
             data.loc[:, "predict_proba_time"],
@@ -135,17 +136,35 @@ def calculate_failure_rate(data):
         ) / data.loc[:, "predict_proba_time"]
     else:
         raise ValueError("predict_time or predict_proba_time not in data.columns")
-    adv_failure_rate = (
-        (1 - data.loc[:, "adv_accuracy"])
-        * data.loc[:, "attack.attack_size"]
-        / data.loc[:, "predict_time"]
-    )
-
+    if "adv_fit_time" in data.columns:
+        assert "adv_accuracy" in data.columns, "adv_accuracy not in data.columns"
+        if "predict_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = (
+                data.loc[:, "predict_time"] * data.loc[:, "adv_accuracy"]
+            )
+        elif "predict_proba_time" in data.columns:
+            adv_failure_rate = (
+                (1 - data.loc[:, "adv_accuracy"])
+                * data.loc[:, "attack.attack_size"]
+                / data.loc[:, "adv_fit_time"]
+            )
+            adv_survival_time = (
+                data.loc[:, "predict_proba_time"] * data.loc[:, "adv_accuracy"]
+            )
+        else:
+            raise ValueError("predict_time or predict_proba_time not in data.columns")
+    data = data.assign(adv_survival_time=adv_survival_time)
+    data = data.assign(survival_time=survival_time)
     data = data.assign(adv_failure_rate=adv_failure_rate)
     data = data.assign(failure_rate=failure_rate)
-    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "failure_rate"]
+    training_time_per_failure = data.loc[:, "train_time"] / data.loc[:, "survival_time"]
     training_time_per_adv_failure = (
-        data.loc[:, "train_time"] * data.loc[:, "adv_failure_rate"]
+        data.loc[:, "train_time"] * data.loc[:, "adv_survival_time"]
     )
     data = data.assign(training_time_per_failure=training_time_per_failure)
     data = data.assign(training_time_per_adv_failure=training_time_per_adv_failure)
@@ -576,7 +595,6 @@ def clean_data_for_plotting(
     data = fill_na(data, fillna)
     data = replace_strings_in_data(data, replace_dict)
     data = replace_strings_in_columns(data, col_replace_dict)
-
     if len(pareto_dict) > 0:
         data = find_pareto_set(data, pareto_dict)
     return data

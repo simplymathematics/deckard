@@ -1,10 +1,9 @@
 cat_plot:
-- file: adv_accuracy_vs_defence_type.eps
+- file: adv_accuracy_vs_defence_type.pdf
   hue: model_name
   kind: boxen
   set:
     yscale: linear
-  titles: Adv. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: adv_accuracy
@@ -16,10 +15,12 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_accuracy_vs_defence_type.eps
+  # titles: "{col_name} dataset"
+  legend_title: "Model"
+  # col: 'id'
+- file: ben_accuracy_vs_defence_type.pdf
   hue: model_name
   kind: boxen
-  titles: Ben. Accuracy vs Defence Type
   x: def_gen
   xlabels: Defence Type
   y: accuracy
@@ -31,32 +32,21 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_failures_per_train_time_vs_defence_type.eps
+  # titles: "{col_name} dataset"
+  legend_title: "Model"
+  # col: 'id'
+  # col_order:
+  #   - mnist
+  #   - cifar
+  #   - cifar100
+- file: trash_score_vs_defence_type.pdf
   hue: model_name
   kind: boxen
   set:
     yscale: log
-  titles: $\bar{C}_{ben.}$ vs Defence Type
   x: def_gen
   xlabels: Defence Type
-  y: training_time_per_failure
-  ylabels: $\bar{C}_{ben.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-- file: adv_failures_per_train_time_vs_defence_type.eps
-  hue: model_name
-  kind: boxen
-  set:
-    yscale: log
-  titles:  $\bar{C}_{adv.}$ vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: training_time_per_adv_failure
+  y: c_adv
   ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
@@ -65,16 +55,21 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_failures_per_train_time_vs_attack_type.eps
+  # titles: "{col_name} dataset"
+  legend_title: "Model"
+  # col: 'id'
+  # col_order:
+  #   - mnist
+  #   - cifar
+  #   - cifar100
+- file: trash_score_vs_attack_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
   set:
     yscale: log
-  titles:  $\bar{C}_{adv.}$ vs Attack Type
   x: atk_gen
   xlabels: Attack Type
-  y: training_time_per_adv_failure
+  y: c_adv
   ylabels: $\bar{C}_{adv.}$
   rotation : 90
   hue_order:
@@ -83,28 +78,16 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: adv_failures_per_test_time_vs_defence_type.eps
+  # titles: "{col_name} dataset"
+  legend_title: "Model"
+  # col: 'id'
+  # col_order:
+  #   - mnist
+  #   - cifar
+  #   - cifar100
+- file: adv_accuracy_vs_attack_type.pdf
   hue: model_name
   kind: boxen
-  legend_title: Model Name
-  titles: $f_{adv}$ vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: adv_failure_rate
-  ylabels: $f_{adv.}$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
-
-- file: adv_accuracy_vs_attack_type.eps
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  titles: Adv. Accuracy vs Attack Type
   x: atk_gen
   xlabels: Attack Type
   y: adv_accuracy
@@ -116,26 +99,15 @@ cat_plot:
   - ResNet50
   - ResNet101
   - ResNet152
-- file: ben_failure_rate_vs_defence_type.eps
-  hue: model_name
-  kind: boxen
-  legend_title: Model Name
-  set:
-    yscale: log
-  titles: $f_{ben}(t; \theta)$ vs Defence Type
-  x: def_gen
-  xlabels: Defence Type
-  y: failure_rate
-  ylabels: $f_{ben}(t; \theta)$
-  rotation : 90
-  hue_order:
-  - ResNet18
-  - ResNet34
-  - ResNet50
-  - ResNet101
-  - ResNet152
+  # titles: "{col_name} dataset"
+  legend_title: "Model"
+  # col: 'id'
+  # col_order:
+  #   - mnist
+  #   - cifar
+  #   - cifar100
 line_plot:
-- file: def_param_vs_accuracy.eps
+- file: def_param_vs_accuracy.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: Ben. Accuracy vs Defence Strength
@@ -148,14 +120,12 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
-  - Conf
   - FSQ
   errorbar: se
   err_style: bars
-- file: def_param_vs_adv_accuracy.eps
+- file: def_param_vs_adv_accuracy.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: Adv. Accuracy vs Defence Strength
@@ -168,14 +138,13 @@ line_plot:
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
-  - Conf
   - FSQ
+  # style : id
   errorbar: se
   err_style: bars
-- file: def_param_vs_adv_failure_rate.eps
+- file: def_param_vs_adv_failure_rate.pdf
   hue: def_gen
   legend: {"bbox_to_anchor": [1.05, 1], "title": "Defence"}
   title: $f_{adv}$ vs Defence Strength
@@ -185,17 +154,16 @@ line_plot:
   y: adv_failure_rate
   y_scale: linear
   ylabel: $f_{adv.}$
+  # style: id
   hue_order:
   - Control
   - Conf
-  - Epochs
   - Gauss-in
   - Gauss-out
-  - Conf
   - FSQ
   errorbar: se
   err_style: bars
-- file: atk_param_vs_accuracy.eps
+- file: atk_param_vs_accuracy.pdf
   hue: atk_gen
   legend: {bbox_to_anchor: [1.05, 1]}
   title: Adv. Accuracy vs Attack Strength
@@ -221,7 +189,7 @@ scatter_plot:
   xlabel: $t_{train}$
   ylabel: $f_{adv}$
   title: $f_{adv}$ vs $t_{train}$
-  file: adv_failure_rate_vs_train_time.eps
+  file: adv_failure_rate_vs_train_time.pdf
   # y_scale: log
   x_scale: log
   legend: 
