@@ -3,6 +3,7 @@ import string
 from pathlib import Path
 from tqdm import tqdm
 from gzip_classifier import ncd
+
 # from gzip_classifier import modified_ncd as ncd
 import plotext as plt
 
@@ -81,7 +82,7 @@ def check_loop(number=1000, sig_figs=2, max_size=1000, data="random"):
                 assert (
                     check_symmetry(x, y, z, sig_figs=sig_figs) is None
                 ), "Not Symmetric"
-            except: # noqa E722
+            except:  # noqa E722
                 symmetric_failures += 1
             try:
                 assert (
@@ -134,6 +135,5 @@ def check_all_metric_space_assumptions(max_sig_figs=10, samples=1000):
 
 
 if __name__ == "__main__":
-
 
     check_all_metric_space_assumptions(10, 1000)

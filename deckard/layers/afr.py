@@ -280,7 +280,7 @@ def fit_aft(
             aft._scipy_fit_method = "SLSQP"
             try:
                 aft.fit(df, **kwarg_dict)
-            except:
+            except: # noqa E722
                 raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
 
     else:
