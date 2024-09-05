@@ -29,18 +29,18 @@ def cat_plot(
     data,
     x,
     y,
-    hue,
     kind,
     file,
     folder,
+    hue = None,
     xlabels=None,
     ylabels=None,
     xticklabels=None,
     yticklabels=None,
     titles=None,
     legend_title=None,
-    x_lim=None,
-    y_lim=None,
+    xlim=None,
+    ylim=None,
     hue_order=None,
     rotation=0,
     filetype=".eps",
@@ -135,6 +135,8 @@ def cat_plot(
             graph.set_titles(**titles)
         elif isinstance(titles, str):
             graph.set_titles(titles)
+        else:
+          raise ValueError(f"Unknown type {type(titles)} for titles.")
     else:
         try:
             graph.set_titles("{row_name} | {col_name}")
@@ -153,14 +155,22 @@ def cat_plot(
         else:
             pass
     if xlabels is not None:
+      if len(graph.axes.flat) > 1 and isinstance(xlabels, str):
+        for ax in graph.axes.flat:
+            ax.set_xlabel(xlabels)
+      else:
         graph.set_xlabels(xlabels)
     if ylabels is not None:
+      if len(graph.axes.flat) > 1 and isinstance(ylabels, str):
+        for ax in graph.axes.flat:
+          ax.set_ylabel(ylabels)
+      else:
         graph.set_ylabels(ylabels)
     graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
-    if x_lim is not None:
-        graph.set(xlim=x_lim)
-    if y_lim is not None:
-        graph.set(ylim=y_lim)
+    if xlim is not None:
+        graph.set(xlim=xlim)
+    if ylim is not None:
+        graph.set(ylim=ylim)
     graph.tight_layout()
     graph.savefig(folder / file)
     plt.gcf().clear()
@@ -292,8 +302,8 @@ def scatter_plot(
     folder,
     y_scale=None,
     x_scale=None,
-    x_lim=None,
-    y_lim=None,
+    xlim=None,
+    ylim=None,
     legend={},
     hue_order=None,
     filetype=".eps",
@@ -363,10 +373,10 @@ def scatter_plot(
         graph.set_yscale(y_scale)
     if x_scale is not None:
         graph.set_xscale(x_scale)
-    if x_lim is not None:
-        graph.set_xlim(x_lim)
-    if y_lim is not None:
-        graph.set_ylim(y_lim)
+    if xlim is not None:
+        graph.set_xlim(xlim)
+    if ylim is not None:
+        graph.set_ylim(ylim)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)
