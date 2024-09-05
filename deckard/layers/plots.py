@@ -216,6 +216,7 @@ def digitize_cols(data, digitize):
             data[col] = np.digitize(data[col], bins) / NUMBER_OF_BINS
     return data
 
+
 def line_plot(
     data,
     x,

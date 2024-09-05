@@ -1,8 +1,8 @@
 import random
 import string
+from pathlib import Path
 from tqdm import tqdm
 from gzip_classifier import ncd
-
 # from gzip_classifier import modified_ncd as ncd
 import plotext as plt
 
@@ -55,12 +55,12 @@ def check_zero(x, y, z, sig_figs=2):
 
 
 def check_positivity(x, y, z):
-    assert ncd(x, z) > 0, f"NCD(x,z) <= 0"
-    assert ncd(z, x) > 0, f"NCD(z,x) <= 0"
-    assert ncd(x, y) > 0, f"NCD(x,y) <= 0"
-    assert ncd(y, x) > 0, f"NCD(y,x) <= 0"
-    assert ncd(y, z) > 0, f"NCD(y,z) <= 0"
-    assert ncd(z, y) > 0, f"NCD(y,z) <= 0"
+    assert ncd(x, z) > 0, "NCD(x,z) <= 0"
+    assert ncd(z, x) > 0, "NCD(z,x) <= 0"
+    assert ncd(x, y) > 0, "NCD(x,y) <= 0"
+    assert ncd(y, x) > 0, "NCD(y,x) <= 0"
+    assert ncd(y, z) > 0, "NCD(y,z) <= 0"
+    assert ncd(z, y) > 0, "NCD(y,z) <= 0"
     return None
 
 
@@ -81,23 +81,23 @@ def check_loop(number=1000, sig_figs=2, max_size=1000, data="random"):
                 assert (
                     check_symmetry(x, y, z, sig_figs=sig_figs) is None
                 ), "Not Symmetric"
-            except:
+            except: # noqa E722
                 symmetric_failures += 1
             try:
                 assert (
                     check_triangle_inequality(x, y, z) is None
                 ), "Triangle Inequality Broken"
-            except:
+            except:  # noqa E722
                 triangle_failures += 1
             try:
                 assert (
                     check_zero(x, y, z, sig_figs=sig_figs) is None
                 ), "Zero Identity broken"
-            except:
+            except:  # noqa E722
                 zero_failures += 1
             try:
                 assert check_positivity(x, y, z) is None, "Positivity identity broken"
-            except:
+            except:  # noqa E722
                 positivity_failures += 1
             pbar.update(1)
             # Convert failures to percent
@@ -115,7 +115,7 @@ def check_all_metric_space_assumptions(max_sig_figs=10, samples=1000):
     positivities = []
     for i in range(max_sig_figs):
         t, s, z, p = check_loop(1000, sig_figs=i)
-        print(f"Significant Figures", i)
+        print(f"Significant Figures: {i}")
         print(f"Percent of examples where zero identity was violated: {z}")
         print(f"Percent of examples where positivity  was violated: {p}")
         print(f"Percent of examples where symmetry was violated: {s}")
@@ -134,8 +134,6 @@ def check_all_metric_space_assumptions(max_sig_figs=10, samples=1000):
 
 
 if __name__ == "__main__":
-    # check_all_metric_space_assumptions(10, 1000)
 
-    from gzip_classifier import modified_ncd as ncd
 
     check_all_metric_space_assumptions(10, 1000)

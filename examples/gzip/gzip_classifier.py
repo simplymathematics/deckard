@@ -34,7 +34,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn_extra.cluster import KMedoids
-from sklearn.exceptions import DataConversionWarning, ConvergenceWarning
+from sklearn.exceptions import DataConversionWarning
 from imblearn.under_sampling import (
     CondensedNearestNeighbour,
     NearMiss,
