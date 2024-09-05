@@ -136,7 +136,7 @@ class Data:
             try:
                 data = read_json(filename)
             except ValueError as e:
-                data = read_json(filename, typ='series')
+                data = read_json(filename, typ="series")
             data = dict(data)
         elif suffix in [".csv"]:
             data = read_csv(filename, delimiter=",", header=0)
