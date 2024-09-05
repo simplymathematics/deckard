@@ -136,7 +136,9 @@ class Data:
             try:
                 data = read_json(filename)
             except ValueError as e:
-                logger.warning(f"Error reading {filename}: {e}. Trying to read as Series.")
+                logger.warning(
+                    f"Error reading {filename}: {e}. Trying to read as Series."
+                )
                 data = read_json(filename, typ="series")
             data = dict(data)
         elif suffix in [".csv"]:
