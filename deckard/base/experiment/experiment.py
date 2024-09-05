@@ -99,19 +99,20 @@ class Experiment:
             score_dict = self.data.load(files["score_dict_file"])
             score_dict = dict(score_dict)
             assert isinstance(score_dict, dict), f"score_dict is {type(score_dict)}"
-            if all(metric in score_dict for metric in self.metrics): # Experiment has been run successfully!
+            if all(
+                metric in score_dict for metric in self.metrics
+            ):  # Experiment has been run successfully!
                 return score_dict
-            
+
         else:
             score_dict = {}
-            
 
         results = {}
         results["score_dict"] = score_dict
         files.update(**results)
         ## TODO: Add shortcut if predictions file exists, even if the model doesn't
         ## Refactor out each subsection into  traim. attack, score functions
-        ## 
+        ##
         #########################################################################
         # Load or train model
         #########################################################################
@@ -184,7 +185,9 @@ class Experiment:
             elif "losses" in locals() and "preds" not in locals():
                 preds = losses
             else:
-                assert "preds" in locals(), "preds not found. Something seriously wrong happened."
+                assert (
+                    "preds" in locals()
+                ), "preds not found. Something seriously wrong happened."
             if "preds" in locals() and self.model is not None:
                 ground_truth = data[3][: len(preds)]
                 logger.debug(f"preds shape: {preds.shape}")
