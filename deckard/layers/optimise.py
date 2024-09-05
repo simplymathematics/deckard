@@ -290,6 +290,7 @@ def optimise(cfg: DictConfig) -> None:
                 else:
                     scores.append(None)
             i += 1
+        logger.info(f"Experiment Folder: {Path(folder).resolve().as_posix()}")
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
