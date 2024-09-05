@@ -93,16 +93,16 @@ def multirun_call(args):
         args.directions if isinstance(args.directions, list) else [args.directions]
     )
     output_file = args.output_file
-
-    callback = OptunaStudyDumpCallback(
-        storage,
-        study_name,
-        metric_names,
-        directions,
-        output_file,
-    )
-    callback.on_multirun_start()
-    callback.on_multirun_end()
+    if output_file is not None:
+        callback = OptunaStudyDumpCallback(
+            storage,
+            study_name,
+            metric_names,
+            directions,
+            output_file,
+        )
+        callback.on_multirun_start()
+        callback.on_multirun_end()
 
 
 optuna_callback_parser = argparse.ArgumentParser()

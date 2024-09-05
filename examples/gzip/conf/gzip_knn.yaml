@@ -22,14 +22,14 @@ hydra:
   sweep:
     dir: ???
     subdir : ${hydra.job.num}
-  callbacks:
-    study_dump:
-      _target_ : database.OptunaStudyDumpCallback
-      storage : ${hydra.sweeper.storage}
-      study_name : ${hydra.sweeper.study_name}
-      directions : ${direction}
-      metric_names : ${optimizers}
-      output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+  # callbacks:
+  #   study_dump:
+  #     _target_ : database.OptunaStudyDumpCallback
+  #     storage : ${hydra.sweeper.storage}
+  #     study_name : ${hydra.sweeper.study_name}
+  #     directions : ${direction}
+  #     metric_names : ${optimizers}
+  #     output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler

@@ -34,7 +34,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn_extra.cluster import KMedoids
-from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning, ConvergenceWarning
 from imblearn.under_sampling import (
     CondensedNearestNeighbour,
     NearMiss,
@@ -121,6 +121,51 @@ def ncd(
     ncd = (Cx1x2 - min_) / max_
     return ncd
 
+def modified_ncd(
+    x1,
+    x2,
+    cx1=None,
+    cx2=None,
+    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", None] = "gzip",
+) -> float:
+    """
+    Calculate the normalized compression distance between two objects treated as strings.
+    Args:
+        x1 (str): The first object
+        x2 (str): The second object
+    Returns:
+        float: The normalized compression distance between x1 and x2
+    """
+
+    compressor_len = (
+        compressors[method] if method in compressors.keys() else compressors["gzip"]
+    )
+    x1 = str(x1)
+    x2 = str(x2)
+    if x1 == x2:
+        return 0
+    Cx1 = compressor_len(x1) if cx1 is None else cx1
+    Cx2 = compressor_len(x2) if cx2 is None else cx2
+    
+    if x1 > x2:
+        pass
+    else:
+        temp_1 = x1
+        temp_C1 = Cx1
+        temp_2 = x2
+        temp_C2 = Cx2
+        x2 = temp_1
+        Cx2 = temp_C1
+        x1 = temp_2
+        Cx1 = temp_C2
+        
+    x1x2 = " ".join([x1, x2])
+    Cx1x2 = compressor_len(x1x2)
+    min_ = min(Cx1, Cx2)
+    max_ = max(Cx1, Cx2)
+    ncd = (Cx1x2 - min_) / max_
+    return ncd
+
 
 string_metrics = {
     "levenshtein": distance,
@@ -149,16 +194,32 @@ all_condensers = [
 
 
 def _calculate_string_distance(x1, x2, method):
-    x1 = str(x1)
-    x2 = str(x2)
     if method in string_metrics.keys():
         dist = string_metrics[method]
     else:
         raise NotImplementedError(
             f"Method {method} not supported. Supported methods are: {string_metrics.keys()}",
         )
+    x1 = str(x1)
+    x2 = str(x2)
     return dist(x1, x2)
 
+
+def _modified_calculate_string_distance(x1, x2, method):
+    if method in string_metrics.keys():
+        dist = string_metrics[method]
+    else:
+        raise NotImplementedError(
+            f"Method {method} not supported. Supported methods are: {string_metrics.keys()}",
+        )
+    x1 = str(x1)
+    x2 = str(x2)
+    if x1 == x2:
+        return 0
+    if x1 > x2:
+        return dist(x1, x2)
+    else:
+        return dist(x2, x1)
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
@@ -201,6 +262,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         similarity=False,
         double_centering=False,
         min_max_scale=False,
+        modified=False,
         **kwargs,
     ):
         """
@@ -241,12 +303,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             logger.debug(f"Using {metric} metric")
             self._distance = _calculate_string_distance
             self.metric = metric
+            self.modified = False
         else:
             raise NotImplementedError(
                 f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()} and {compressors.keys()}",
             )
-
-        self.symmetric = symmetric
+        self.modified = False if modified is not True else True
+        self.symmetric = False if symmetric is not True else True
         if self.symmetric is True:
             self._calculate_distance_matrix = (
                 self._calculate_lower_triangular_distance_matrix
@@ -288,6 +351,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
             if self.metric in compressors.keys():
+                if self.modified is True:
+                    self._distance = modified_ncd
                 matrix_[i, :] = Parallel(n_jobs=n_jobs)(
                     delayed(self._distance)(
                         x1[i],
@@ -299,6 +364,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     for j in range(len(x2))
                 )
             else:
+                if self.modified is True:
+                    self._distance = _modified_calculate_string_distance
                 matrix_[i, :] = Parallel(n_jobs=n_jobs)(
                     delayed(self._distance)(x1[i], x2[j], method=self.metric)
                     for j in range(len(x2))
@@ -341,6 +408,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         for i in range(len(x1)):
             # Parallelize the calculation of the distance matrix
             if self.metric in compressors.keys():
+                if self.modified is True:
+                    self._distance = modified_ncd
                 matrix_[i, :i] = Parallel(n_jobs=n_jobs)(
                     delayed(self._distance)(
                         x1[i],
@@ -352,6 +421,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     for j in range(i)
                 )
             else:
+                if self.modified is True:
+                    self._distance = _modified_calculate_string_distance
                 matrix_[i, :i] = Parallel(n_jobs=n_jobs)(
                     delayed(self._distance)(x1[i], x2[j], method=self.metric)
                     for j in range(i)
@@ -658,7 +729,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             )
         self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
         with warnings.catch_warnings():
-            warnings.filterwarnings("error")
+            warnings.filterwarnings("error", category=DataConversionWarning)
             try:
                 self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
             except DataConversionWarning:
@@ -774,6 +845,7 @@ class GzipKNN(GzipClassifier):
         similarity=False,
         double_centering=False,
         min_max_scale=False,
+        modified=False,
         **kwargs,
     ):
         super().__init__(
@@ -785,6 +857,7 @@ class GzipKNN(GzipClassifier):
             similarity=similarity,
             double_centering=double_centering,
             min_max_scale=min_max_scale,
+            modified=modified,
             **kwargs,
         )
         self.clf_ = KNeighborsClassifier(n_neighbors=k, metric="precomputed", **kwargs)
@@ -854,6 +927,7 @@ class GzipLogisticRegressor(GzipClassifier):
         similarity=False,
         double_centering=False,
         min_max_scale=False,
+        modified=False,
         **kwargs,
     ):
         clf = LogisticRegression(**kwargs)
@@ -867,6 +941,7 @@ class GzipLogisticRegressor(GzipClassifier):
             similarity=similarity,
             double_centering=double_centering,
             min_max_scale=min_max_scale,
+            modified=modified,
             **kwargs,
         )
 
@@ -887,6 +962,7 @@ class GzipSVC(GzipClassifier):
         similarity=False,
         double_centering=False,
         min_max_scale=False,
+        modified=False,
         **kwargs,
     ):
         clf = SVC(kernel=kernel, **kwargs)
@@ -900,6 +976,7 @@ class GzipSVC(GzipClassifier):
             similarity=similarity,
             double_centering=double_centering,
             min_max_scale=min_max_scale,
+            modified=modified,
             **kwargs,
         )
         self.kernel = kernel

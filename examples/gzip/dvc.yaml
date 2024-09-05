@@ -96,7 +96,6 @@ stages:
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
       hydra.sweep.dir=${item.dataset}/logs/${item.configs}/${item.train_size}/symmetry_${item.symmetric}
-      hydra.callbacks.study_dump.output_file=null
       files.directory=${item.dataset}
       files.reports=${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}
       hydra.launcher.n_jobs=-1
@@ -117,6 +116,47 @@ stages:
             push: true
         # - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}/${item.metric}/train/
         - ${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/symmetry_${item.symmetric}/train/:
+            cache: true
+            persist: true
+            push: true
+    params:
+      - conf/${item.configs}.yaml:
+          - hydra
+  ##############################################################################
+  modified_grid_search:
+    matrix: 
+      train_size: [20, 100,  300, 500] #  
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
+      configs: [gzip_knn, gzip_logistic, gzip_svc] 
+      modified : [true]
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      data=${item.dataset}
+      dataset=${item.dataset}
+      data.sample.train_size=${item.train_size}
+      ++data.sample.test_size=400
+      model_name=${item.configs}
+      model.init.distance_matrix=null
+      ++model.init.modified=${item.modified}
+      model.init.symmetric=True
+      hydra.sweeper.study_name=modified_${item.configs}_${item.dataset}
+      hydra.sweeper.n_trials=128
+      hydra.sweeper.n_jobs=8
+      hydra.sweep.dir=${item.dataset}/logs/modfied/${item.configs}/${item.train_size}/modified_${item.modified}
+      files.directory=${item.dataset}
+      files.reports=${files.reports}/modified//${item.configs}/${item.train_size}/modified_${item.modified}
+      hydra.launcher.n_jobs=-1
+      ++data.sample.random_state=1,2,3,4,5,6,7,8,9,10
+      model.init.metric=gzip
+      ++raise_exception=True               
+      --config-name ${item.configs}
+      --multirun
+    deps:
+      - params.yaml
+      - conf/${item.configs}.yaml
+    outs:
+        -  ${item.dataset}/${files.reports}/modified/${item.configs}/${item.train_size}/modified_${item.modified}/train/:
             cache: true
             persist: true
             push: true
@@ -160,10 +200,8 @@ stages:
       hydra.sweeper.n_trials=1
       hydra.sweeper.n_jobs=1
       hydra.sweep.dir=${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
-      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/study.csv
       hydra.launcher.n_jobs=-1
       ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/1000-400-0.npz 
-      ~hydra.callbacks.study_dump
       --config-name condense_${item.model_name}
       --multirun
     outs:
@@ -200,6 +238,7 @@ stages:
       model_name=${item.model_name}
       model=gzip_${item.model_name}
       ++model.init.m=${item.ratio}
+      ++model.init.condensing_method=medoid,sum,svc,random,hardness,nearmiss,knn
       files.directory=${item.dataset}
       ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/1000-400-0.npz
       hydra.sweeper.study_name=gzip_${item.model_name}_${item.dataset}
@@ -207,10 +246,10 @@ stages:
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
       hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/
-      hydra.callbacks.study_dump.output_file=${item.dataset}/logs/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/study.csv
       hydra.launcher.n_jobs=-1
       --config-name condense_${item.model_name}
       --multirun
+    # Note that 1000-400-0 is the train_size-test_size-random_state
     outs:
       - ${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/:
           cache: true
@@ -232,7 +271,7 @@ stages:
      --report_folder ${item.dataset}/${files.reports}/${item.stage} 
      --results_file ${item.dataset}/${files.reports}/${item.stage}.csv
   ##############################################################################
-  epoch_fit:
+  # epoch_fit:
     
   ##############################################################################
   clean:
@@ -328,6 +367,7 @@ stages:
       - ${item.dataset}/plots/condensing_method_vs_accuracy.pdf
       - ${item.dataset}/plots/condensing_method_vs_train_time.pdf
       - ${item.dataset}/plots/condensing_method_vs_predict_time.pdf
+      - ${item.dataset}/plots/condensing_ratio_vs_accuracy.pdf
     params:
       - conf/condensed_plots.yaml:
           - cat_plot
@@ -337,8 +377,8 @@ stages:
       python merge.py
       --big_dir .
       --little_dir .
-      --data_file sms_spam/plots/merged.csv
-      --little_dir_data_file  kdd_nsl/plots/merged.csv ddos/plots/merged.csv truthseeker/plots/merged.csv kdd_nsl/plots/condensed_merged.csv ddos/plots/condensed_merged.csv truthseeker/plots/condensed_merged.csv sms_spam/plots/condensed_merged.csv
+      --data_file sms_spam/plots/condensed_merged.csv
+      --little_dir_data_file  kdd_nsl/plots/merged.csv ddos/plots/merged.csv truthseeker/plots/merged.csv kdd_nsl/plots/condensed_merged.csv ddos/plots/condensed_merged.csv truthseeker/plots/condensed_merged.csv sms_spam/plots/merged.csv
       --output_folder combined/plots/
       --output_file merged.csv
     deps:
@@ -374,6 +414,7 @@ stages:
       - combined/plots/models_vs_accuracy.pdf
       - combined/plots/models_vs_train_time.pdf
       - combined/plots/models_vs_predict_time.pdf
+      - combined/plots/condensing_ratio_vs_accuracy.pdf
     params:
       - conf/merged_plots.yaml:
           - cat_plot

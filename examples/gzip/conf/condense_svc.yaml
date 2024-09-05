@@ -52,7 +52,7 @@ hydra:
       +model.init.gamma : scale,auto
       +model.init.class_weight : balanced,null
       model.init.symmetric : True,False
-      ++model.init.condensing_method: medoid,sum,svc,random,hardness,nearmiss,knn
+      ++model.init.max_iter : 1000
     direction: ${direction}
     max_failure_rate: 1.0
   launcher:
