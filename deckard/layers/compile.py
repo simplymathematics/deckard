@@ -94,10 +94,7 @@ def read_file(file, results):
         except json.decoder.JSONDecodeError as e:
             full_file = Path(file).resolve()
             logger.error(f"Error reading {full_file}. Error: {e}")
-            print(f"Error reading {file}. Please fix the file and press Enter.")
-            input(
-                "Press Enter to continue. The next failure on this file will raise an error.",
-            )
+            dict_ = {}
     elif suffix == ".yaml":
         with open(file, "r") as f:
             try:
