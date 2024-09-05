@@ -42,6 +42,7 @@ from imblearn.under_sampling import (
 )
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
+from multiprocessing import Pool, cpu_count
 
 from joblib import Parallel, delayed
 from typing import Literal
@@ -341,45 +342,39 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(
-            total=len(x1),
-            desc="Calculating asymmetric distance matrix.",
-            leave=False,
-            dynamic_ncols=True,
-            position=2,
-        )
+        
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
+        list_ = []
+        if n_jobs == -1:
+            n_jobs = cpu_count()
+        else:
+            assert isinstance(n_jobs, int), f"Expected {n_jobs} to be an integer"
+            assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
+            assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
         for i in range(len(x1)):
-            # Parallelize the calculation of the distance matrix
-            if self.metric in compressors.keys():
-                if self.modified is True:
-                    self._distance = modified_ncd
-                matrix_[i, :] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(
-                        x1[i],
-                        x2[j],
-                        cx1=Cx1[i],
-                        cx2=Cx2[j],
-                        method=self.metric,
-                    )
-                    for j in range(len(x2))
-                )
-            else:
-                if self.modified is True:
-                    self._distance = _modified_calculate_string_distance
-                matrix_[i, :] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(x1[i], x2[j], method=self.metric)
-                    for j in range(len(x2))
-                )
-            pbar.update(1)
-        pbar.close()
+            for j in range(len(x2)):
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+        list_ = np.array(
+            Parallel(n_jobs=n_jobs)(
+                delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating rectangular distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
+            )
+        )
+        matrix_ = list_.reshape(len(x1), len(x2))
         assert matrix_.shape == (
             len(x1),
             len(x2),
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
         return matrix_
 
+    def _distance_helper(self, x1, x2, cx1, cx2, method):
+        if method in compressors.keys():
+            return self._distance(x1, x2, cx1=cx1, cx2=cx2, method=method)
+        else:
+            return self._distance(x1, x2, method=method)
+        
+        
+    
     def _calculate_lower_triangular_distance_matrix(
         self,
         x1,
@@ -396,50 +391,46 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
-
+        assert len(x1) == len(x2), f"Expected {len(x1)} == {len(x2)}"
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(
-            total=len(x1),
-            desc="Calculating symmetric distance metrix.",
-            leave=False,
-            dynamic_ncols=True,
-            position=0,
-        )
+        list_ = []
+        # Find the length of the longest list
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
+        if n_jobs == -1:
+            n_jobs = cpu_count()
+        else:
+            assert isinstance(n_jobs, int), f"Expected {n_jobs} to be an integer"
+            assert n_jobs > 0, f"Expected {n_jobs} > 0 or -1"
+            assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
+        # Create a list of tuples to pass to the parallel function
         for i in range(len(x1)):
-            # Parallelize the calculation of the distance matrix
-            if self.metric in compressors.keys():
-                if self.modified is True:
-                    self._distance = modified_ncd
-                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(
-                        x1[i],
-                        x2[j],
-                        cx1=Cx1[i],
-                        cx2=Cx2[j],
-                        method=self.metric,
-                    )
-                    for j in range(i)
-                )
-            else:
-                if self.modified is True:
-                    self._distance = _modified_calculate_string_distance
-                matrix_[i, :i] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(x1[i], x2[j], method=self.metric)
-                    for j in range(i)
-                )
-            # Copy the lower triangular part to the upper triangular part
-            matrix_[i, :i] = matrix_[:i, i]
-            pbar.update(1)
-        pbar.close()
+            for j in range(0, i + 1):
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+        list_ = np.array(
+            Parallel(n_jobs=n_jobs)(
+                delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating symmetric distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
+            )
+        )
+        indices = np.tril_indices(len(x1))
+        matrix_[indices] = list_
+        old_diag = np.diag(np.diag(matrix_))
+        # Add matrix to its transpose and subtract the diagonal to avoid double counting
+        matrix_ = matrix_ + matrix_.T - old_diag
+        new_diag = np.diag(np.diag(matrix_))
+        # Check that old_diag is close to new_diag
+        assert np.allclose(
+            old_diag, new_diag
+        ), f"Expected {old_diag} == {new_diag}. Old Diag: {old_diag}"
+        # Check the shape of the matrix
         assert matrix_.shape == (
             len(x1),
             len(x2),
-        ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)}). "
         return matrix_
-
-    def calculate_upper_triangular_distance_matrix(
+    
+                
+    def _calculate_upper_triangular_distance_matrix(
         self,
         x1,
         x2,
@@ -448,35 +439,28 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         n_jobs=-1,
     ):
         matrix_ = np.zeros((len(x1), len(x2)))
-        pbar = tqdm(
-            total=len(x1),
-            desc="Calculating symmetric distance metrix.",
-            leave=False,
-            dynamic_ncols=True,
-        )
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
+        list_ = []
         for i in range(len(x1)):
-            if self.metric in compressors.keys():
-                matrix_[i, i:] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(
-                        x1[i],
-                        x2[j],
-                        cx1=Cx1[i],
-                        cx2=Cx2[j],
-                        method=self.metric,
-                    )
-                    for j in range(i, len(x2))
-                )
-            else:
-                matrix_[i, i:] = Parallel(n_jobs=n_jobs)(
-                    delayed(self._distance)(x1[i], x2[j], method=self.metric)
-                    for j in range(i, len(x2))
-                )
-            # copy the upper triangular part to the lower triangular part
-            matrix_[i, i:] = matrix_[i:, i]
-            pbar.update(1)
-        pbar.close()
+            for j in range(i, len(x2)):
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+        list_ = np.array(
+            Parallel(n_jobs=n_jobs)(
+                delayed(self._distance_helper)(*args) for args in list_
+            )
+        )
+        indices = np.triu_indices(len(x1))
+        matrix_[indices] = list_
+        old_diag = np.diag(np.diag(matrix_))
+        # Add matrix to its transpose and subtract the diagonal to avoid double counting
+        matrix_ = matrix_ + matrix_.T - old_diag
+        new_diag = np.diag(np.diag(matrix_))
+        # Check that old_diag is close to new_diag
+        assert np.allclose(
+            old_diag, new_diag
+        ), f"Expected {old_diag} == {new_diag}. Old Diag: {old_diag}"
+        # Check the shape of the matrix
         assert matrix_.shape == (
             len(x1),
             len(x2),
@@ -726,13 +710,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 f"Expected {self.m} to be -1, 0, a positive integer or a float between 0 and 1. Got type {type(self.m)}",
             )
         self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error", category=DataConversionWarning)
-            try:
-                self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
-            except DataConversionWarning:
-                y = self.y_.ravel()
-                self.clf_ = self.clf_.fit(self.distance_matrix, y)
+        self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
         return self
 
     def _set_best_indices(self, indices):
