@@ -29,18 +29,18 @@ from .compile import load_results, save_results
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "afr_main",
+    "aft_main",
     "survival_probability_calibration",
     "fit_aft",
     "plot_aft",
-    "afr_parser",
+    "aft_parser",
 ]
 
 
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
 def survival_probability_calibration(
     model: RegressionFitter,
-    df: pd.DataFrame,
+    df: pd.Dataftame,
     t0: float,
     ax=None,
     color="red",
@@ -57,8 +57,8 @@ def survival_probability_calibration(
 
     model:
         a fitted lifelines regression model to be evaluated
-    df: DataFrame
-        a DataFrame - if equal to the training data, then this is an in-sample calibration. Could also be an out-of-sample
+    df: Dataftame
+        a Dataftame - if equal to the training data, then this is an in-sample calibration. Could also be an out-of-sample
         dataset.
     t0: float
         the time to evaluate the probability of event occurring prior at.
@@ -91,7 +91,7 @@ def survival_probability_calibration(
     )
 
     # create new dataset with the predictions
-    prediction_df = pd.DataFrame(
+    prediction_df = pd.Dataftame(
         {"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]},
     )
 
@@ -168,7 +168,7 @@ def survival_probability_calibration(
     y = (
         1
         - crc.predict_survival_function(
-            pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}),
+            pd.Dataftame({"ccl_at_%d" % t0: ccl(x)}),
             times=[t0],
         ).T.squeeze()
     )
@@ -232,11 +232,11 @@ def fit_aft(
         raise ValueError(f"Model type {mtype} not recognized")
     assert (
         duration_col in df.columns
-    ), f"Column {duration_col} not in dataframe with columns {df.columns}"
+    ), f"Column {duration_col} not in dataftame with columns {df.columns}"
     if event_col is not None:
         assert (
             event_col in df.columns
-        ), f"Column {event_col} not in dataframe with columns {df.columns}"
+        ), f"Column {event_col} not in dataftame with columns {df.columns}"
     start = df[duration_col].min()
     end = df[duration_col].max()
     start = start - 0.01 * (end - start)
@@ -264,7 +264,7 @@ def fit_aft(
                 "max_steps": 1000,
                 "precision": 1e-3,
             }
-            kwarg_dict["fit_options"] = fit_options
+            kwarg_dict["fit_options"].update(**fit_options)
             logger.info(
                 "Reducing the step size to 0.1 and increasing the max steps to 1000",
             )
@@ -274,13 +274,17 @@ def fit_aft(
         try:
             aft.fit(df, **kwarg_dict)
         except ConvergenceError as e:
-            logger.error(f"Could not fit {mtype} model due to {e}")
-            raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
+            logger.error(f"Could not fit {mtype} model due to {e}. Trying SLSQP")
+            aft._scipy_fit_method = "SLSQP"
+            try:
+                aft.fit(df, **kwarg_dict)
+            except:
+                raise ConvergenceError(f"Could not fit {mtype} model due to {e}")
 
     else:
         logger.info(f"Fitted {mtype} model")
     if summary_file is not None:
-        summary = pd.DataFrame(aft.summary).copy()
+        summary = pd.Dataftame(aft.summary).copy()
         if folder is None:
             folder = "."
         save_results(summary, results_file=summary_file, results_folder=folder)
@@ -390,7 +394,7 @@ def plot_summary(
         file = Path(folder, file)
     plt.gcf().clear()
     summary = aft.summary.copy()
-    summary = pd.DataFrame(summary)
+    summary = pd.Dataftame(summary)
     if isinstance(summary.index, pd.MultiIndex):
         covariates = list(summary.index.get_level_values(1))
         summary["covariate"] = covariates
@@ -537,7 +541,7 @@ def score_model(aft, train, test, t0=0.35, method="concordance_index"):
     return scores
 
 
-def make_afr_table(
+def make_aft_table(
     aft_dict,
     dataset,
     X_train,
@@ -547,7 +551,7 @@ def make_afr_table(
     span_columns=True,
 ):
     folder = Path(folder)
-    aft_data = pd.DataFrame()
+    aft_data = pd.Dataftame()
     aft_data.index.name = "Model"
     model_names = [
         x.replace("-", " ").replace("_", " ").title() for x in aft_dict.keys()
@@ -609,14 +613,14 @@ def make_afr_table(
         pretty_dataset = dataset.upper()
     aft_data = aft_data.round(2)
     aft_data.to_csv(folder / "aft_comparison.csv")
-    logger.info(f"Saved AFR comparison to {folder / 'aft_comparison.csv'}")
+    logger.info(f"Saved aft comparison to {folder / 'aft_comparison.csv'}")
     aft_data.fillna("--", inplace=True)
     # Print the aft_data to console, nicely
     aft_data.to_latex(
         folder / "aft_comparison.tex",
         float_format="%.3g",  # Two decimal places, since we have 100 adversarial examples
         label=(
-            f"tab:{dataset.lower()}" if dataset is not None else "tab:afr_models"
+            f"tab:{dataset.lower()}" if dataset is not None else "tab:aft_models"
         ),  # Label for cross-referencing
         caption=(
             f"Comparison of AFT Models on the {pretty_dataset} dataset."
@@ -650,7 +654,7 @@ def clean_data_for_aft(
 
     assert (
         target in data
-    ), f"Target {target} not in dataframe with columns {data.columns}"
+    ), f"Target {target} not in dataftame with columns {data.columns}"
     logger.info(f"Shape of dirty data: {data.shape}")
     covariate_list.append(target)
     covariate_list = list(set(covariate_list))
@@ -682,7 +686,7 @@ def clean_data_for_aft(
         cleaned = pd.concat([subset, dummies], axis=1)
     assert (
         target in cleaned.columns
-    ), f"Target {target} not in dataframe with columns {cleaned.columns}"
+    ), f"Target {target} not in dataftame with columns {cleaned.columns}"
     logger.info(f"Shape of data data: {cleaned.shape}")
     return cleaned
 
@@ -704,16 +708,16 @@ def split_data_for_aft(
     )
     assert (
         target in data.columns
-    ), f"Target {target} not in dataframe with columns {data.columns}"
+    ), f"Target {target} not in dataftame with columns {data.columns}"
     assert (
         duration_col in data.columns
-    ), f"Duration {duration_col} not in dataframe with columns {data.columns}"
+    ), f"Duration {duration_col} not in dataftame with columns {data.columns}"
     X_train = X_train.dropna(axis=0, how="any")
     X_test = X_test.dropna(axis=0, how="any")
     return X_train, X_test
 
 
-def run_afr_experiment(
+def run_aft_experiment(
     mtype,
     config,
     X_train,
@@ -740,7 +744,7 @@ def run_afr_experiment(
             mtype=mtype,
             **model_config,
         )
-        afr_plot = plot_aft(
+        aft_plot = plot_aft(
             aft=aft,
             title=plot_dict.get(
                 "title",
@@ -753,7 +757,7 @@ def run_afr_experiment(
             dummy_dict=dummy_dict,
             folder=folder,
         )
-        plots.append(afr_plot)
+        plots.append(aft_plot)
         qq_plot = plot_qq(
             X_train=X_train,
             X_test=X_test,
@@ -781,7 +785,7 @@ def run_afr_experiment(
     return aft, plots
 
 
-def render_all_afr_plots(
+def render_all_aft_plots(
     config,
     duration_col,
     target,
@@ -808,7 +812,7 @@ def render_all_afr_plots(
     for mtype in mtypes:
         sub_config = config.get(mtype, {})
         t0 = sub_config.pop("t0", 0.35)
-        models[mtype], plots[mtype] = run_afr_experiment(
+        models[mtype], plots[mtype] = run_aft_experiment(
             t0=t0,
             mtype=mtype,
             config=sub_config,
@@ -820,7 +824,7 @@ def render_all_afr_plots(
             folder=folder,
         )
         t0s[mtype] = t0
-    aft_data = make_afr_table(
+    aft_data = make_aft_table(
         models,
         dataset,
         X_train,
@@ -859,7 +863,7 @@ def calculate_raw_failures(args, data, config):
     return data
 
 
-def afr_main(args):
+def aft_main(args):
     target = args.target
     duration_col = args.duration_col
     dataset = args.dataset
@@ -895,7 +899,7 @@ def afr_main(args):
     data = clean_data_for_aft(data, covariate_list, target=target, dummy_dict=dummies)
     assert target in data.columns, f"{target} not in data.columns"
     assert duration_col in data.columns, f"{duration_col} not in data.columns"
-    render_all_afr_plots(
+    render_all_aft_plots(
         config,
         duration_col,
         target,
@@ -908,12 +912,12 @@ def afr_main(args):
 
 
 if "__main__" == __name__:
-    afr_parser = argparse.ArgumentParser()
-    afr_parser.add_argument("--target", type=str, default="adv_failures")
-    afr_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
-    afr_parser.add_argument("--dataset", type=str, default=None)
-    afr_parser.add_argument("--data_file", type=str, default="data.csv")
-    afr_parser.add_argument("--config_file", type=str, default="afr.yaml")
-    afr_parser.add_argument("--plots_folder", type=str, default="plots")
-    args = afr_parser.parse_args()
-    afr_main(args)
+    aft_parser = argparse.ArgumentParser()
+    aft_parser.add_argument("--target", type=str, default="adv_failures")
+    aft_parser.add_argument("--duration_col", type=str, default="adv_fit_time")
+    aft_parser.add_argument("--dataset", type=str, default=None)
+    aft_parser.add_argument("--data_file", type=str, default="data.csv")
+    aft_parser.add_argument("--config_file", type=str, default="aft.yaml")
+    aft_parser.add_argument("--plots_folder", type=str, default="plots")
+    args = aft_parser.parse_args()
+    aft_main(args)
