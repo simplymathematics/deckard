@@ -27,7 +27,7 @@ class Experiment:
     files: Union[FileConfig, None] = field(default_factory=FileConfig)
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
-    optimizers: Union[list, None] = field(default_factory=list)
+    metrics: Union[list, None] = field(default_factory=list)
     device_id: str = "cpu"
     kwargs: Union[dict, None] = field(default_factory=dict)
 
@@ -41,7 +41,7 @@ class Experiment:
         attack: Attack = None,
         name=None,
         stage=None,
-        optimizers=None,
+        metrics=["accuracy", "train_time", "predict_time"],
         **kwargs,
     ):
         # if isinstance(data, dict):
@@ -70,7 +70,7 @@ class Experiment:
         self.scorers = ScorerDict(**OmegaConf.to_container(OmegaConf.create(scorers)))
         self.device_id = device_id
         self.stage = stage
-        self.optimizers = optimizers
+        self.metrics = metrics
         self.kwargs = kwargs
         self.name = name if name is not None else self._set_name()
 
@@ -84,7 +84,7 @@ class Experiment:
         :type scorer: str
         :return: The score for the specified scorer or the status of the experiment if scorer=None (default).
         """
-        logger.debug("Running experiment with id: {}".format(self.get_name()))
+        logger.info("Running experiment with id: {}".format(self.get_name()))
         # Setup files, data, and model
         files = deepcopy(self.files).get_filenames()
 
@@ -99,14 +99,19 @@ class Experiment:
             score_dict = self.data.load(files["score_dict_file"])
             score_dict = dict(score_dict)
             assert isinstance(score_dict, dict), f"score_dict is {type(score_dict)}"
+            if all(metric in score_dict for metric in self.metrics): # Experiment has been run successfully!
+                return score_dict
+            
         else:
             score_dict = {}
+            
+
         results = {}
         results["score_dict"] = score_dict
         files.update(**results)
-        # TODO verify this works
-        # data = self.data(**files)
-        # files['data'] = data
+        ## TODO: Add shortcut if predictions file exists, even if the model doesn't
+        ## Refactor out each subsection into  traim. attack, score functions
+        ## 
         #########################################################################
         # Load or train model
         #########################################################################
@@ -178,6 +183,8 @@ class Experiment:
                 preds = probs
             elif "losses" in locals() and "preds" not in locals():
                 preds = losses
+            else:
+                assert "preds" in locals(), "preds not found. Something seriously wrong happened."
             if "preds" in locals() and self.model is not None:
                 ground_truth = data[3][: len(preds)]
                 logger.debug(f"preds shape: {preds.shape}")
@@ -211,8 +218,8 @@ class Experiment:
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
-        logger.debug(f"Score for id : {self.get_name()}: {score_dict}")
-        logger.debug("Finished running experiment with id: {}".format(self.get_name()))
+        logger.info(f"Score for id : {self.get_name()}: {score_dict}")
+        logger.info("Finished running experiment with id: {}".format(self.get_name()))
         return score_dict
 
     def _set_name(self):
