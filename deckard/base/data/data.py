@@ -133,7 +133,11 @@ class Data:
         """
         suffix = Path(filename).suffix
         if suffix in [".json"]:
-            data = read_json(filename)
+            try:
+                data = read_json(filename)
+            except ValueError as e:
+                data = read_json(filename, typ='series')
+            data = dict(data)
         elif suffix in [".csv"]:
             data = read_csv(filename, delimiter=",", header=0)
         elif suffix in [".pkl", ".pickle"]:
