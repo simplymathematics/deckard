@@ -121,6 +121,7 @@ def ncd(
     ncd = (Cx1x2 - min_) / max_
     return ncd
 
+
 def modified_ncd(
     x1,
     x2,
@@ -146,7 +147,7 @@ def modified_ncd(
         return 0
     Cx1 = compressor_len(x1) if cx1 is None else cx1
     Cx2 = compressor_len(x2) if cx2 is None else cx2
-    
+
     if x1 > x2:
         pass
     else:
@@ -158,7 +159,7 @@ def modified_ncd(
         Cx2 = temp_C1
         x1 = temp_2
         Cx1 = temp_C2
-        
+
     x1x2 = " ".join([x1, x2])
     Cx1x2 = compressor_len(x1x2)
     min_ = min(Cx1, Cx2)
@@ -220,6 +221,7 @@ def _modified_calculate_string_distance(x1, x2, method):
         return dist(x1, x2)
     else:
         return dist(x2, x1)
+
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
     """An example classifier which implements a 1-NN algorithm.
