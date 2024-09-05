@@ -730,13 +730,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 f"Expected {self.m} to be -1, 0, a positive integer or a float between 0 and 1. Got type {type(self.m)}",
             )
         self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error", category=DataConversionWarning)
-            try:
-                self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
-            except DataConversionWarning:
-                y = self.y_.ravel()
-                self.clf_ = self.clf_.fit(self.distance_matrix, y)
+        self.clf_ = self.clf_.fit(self.distance_matrix, self.y_)
         return self
 
     def _set_best_indices(self, indices):
