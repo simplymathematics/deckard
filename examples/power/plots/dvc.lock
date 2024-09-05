@@ -475,8 +475,8 @@ stages:
     deps:
     - path: ../conf/combined_afr.yaml
       hash: md5
-      md5: 4d86bafe5b29b5a38918fc2d70126542
-      size: 5004
+      md5: 6353de4bfa0341e60a626ec116c9a1e3
+      size: 5003
     - path: combined/clean.csv
       hash: md5
       md5: 15c348d9d5a89c9637e80062dc0af99a
@@ -492,11 +492,11 @@ stages:
       size: 542
     - path: combined/log_logistic_aft.pdf
       hash: md5
-      md5: b6e7d5ac76d9e49b1e13c12bcc5898bc
+      md5: 1d213344815bd512e4701814a2df8bd5
       size: 28656
     - path: combined/log_logistic_qq.pdf
       hash: md5
-      md5: 557357bcbca13343b85918072902c037
+      md5: 3692d94eacca537ef6592411a5d2153e
       size: 17236
     - path: combined/log_logistic_summary.csv
       hash: md5
@@ -504,11 +504,11 @@ stages:
       size: 3401
     - path: combined/log_normal_aft.pdf
       hash: md5
-      md5: c5551e63d2ac7ccf48ec510b8c30fc59
+      md5: c28d2a13d9a4db4964caa13431aea92e
       size: 28815
     - path: combined/log_normal_qq.pdf
       hash: md5
-      md5: d45bf39c79a4c4e4db329d181495fd30
+      md5: bd7d42ccc573d5bdc2135d7d525ba875
       size: 18768
     - path: combined/log_normal_summary.csv
       hash: md5
@@ -516,11 +516,11 @@ stages:
       size: 3370
     - path: combined/weibull_aft.pdf
       hash: md5
-      md5: 0a093a5ba4cacba2fb080a437fea2d85
+      md5: c63b7cfa09db57aaba4b8575f1b0692b
       size: 28811
     - path: combined/weibull_qq.pdf
       hash: md5
-      md5: 1994918d9a45ea52d03b212fb356e982
+      md5: f327ff713cda9149558ef563b1b25398
       size: 16977
     - path: combined/weibull_summary.csv
       hash: md5
@@ -559,8 +559,8 @@ stages:
     deps:
     - path: combined/
       hash: md5
-      md5: ba1c4591fa5234e4cdc12ca0f70e5cc5.dir
-      size: 151069769
+      md5: b76539fa287a7bee422a7f8931667a6e.dir
+      size: 151069754
       nfiles: 50
   predict_survival_time@weibull:
     cmd: python predict_with_best.py  --data combined/clean.csv  --config_file ../conf/combined_afr.yaml  --model
@@ -568,8 +568,8 @@ stages:
     deps:
     - path: ../conf/combined_afr.yaml
       hash: md5
-      md5: 4d86bafe5b29b5a38918fc2d70126542
-      size: 5004
+      md5: 6353de4bfa0341e60a626ec116c9a1e3
+      size: 5003
     - path: combined/aft_comparison.tex
       hash: md5
       md5: 5f35183b101579959f517e6da4299e53
@@ -593,8 +593,8 @@ stages:
     deps:
     - path: ../conf/combined_afr.yaml
       hash: md5
-      md5: 4d86bafe5b29b5a38918fc2d70126542
-      size: 5004
+      md5: 6353de4bfa0341e60a626ec116c9a1e3
+      size: 5003
     - path: combined/aft_comparison.tex
       hash: md5
       md5: 5f35183b101579959f517e6da4299e53
@@ -618,8 +618,8 @@ stages:
     deps:
     - path: ../conf/combined_afr.yaml
       hash: md5
-      md5: 4d86bafe5b29b5a38918fc2d70126542
-      size: 5004
+      md5: 6353de4bfa0341e60a626ec116c9a1e3
+      size: 5003
     - path: combined/aft_comparison.tex
       hash: md5
       md5: 5f35183b101579959f517e6da4299e53
@@ -647,12 +647,12 @@ stages:
       size: 37565381
     - path: plot_trash_score.py
       hash: md5
-      md5: 88bdbe97492eab9e01105628fc33038e
-      size: 1660
+      md5: f3a0939b9d45d6d1759f8aad1e143f27
+      size: 1634
     outs:
     - path: combined/weibull_trash_score.pdf
       hash: md5
-      md5: 177e8c8a0b1bae82fa7fac49ad98271f
+      md5: 7fd460c9e14ed41c07a995a49cfcaea0
       size: 22242
   plot_trash_score@log_normal:
     cmd: python plot_trash_score.py  --input_file combined/log_normal.csv  --output_file
@@ -664,12 +664,12 @@ stages:
       size: 37565362
     - path: plot_trash_score.py
       hash: md5
-      md5: 88bdbe97492eab9e01105628fc33038e
-      size: 1660
+      md5: f3a0939b9d45d6d1759f8aad1e143f27
+      size: 1634
     outs:
     - path: combined/log_normal_trash_score.pdf
       hash: md5
-      md5: 2d589d2818995412f604e33bf21be26c
+      md5: a8841691b0140dd8999afdefbc15ab18
       size: 22724
   plot_trash_score@log_logistic:
     cmd: python plot_trash_score.py  --input_file combined/log_logistic.csv  --output_file
@@ -681,10 +681,10 @@ stages:
       size: 37565421
     - path: plot_trash_score.py
       hash: md5
-      md5: 88bdbe97492eab9e01105628fc33038e
-      size: 1660
+      md5: f3a0939b9d45d6d1759f8aad1e143f27
+      size: 1634
     outs:
     - path: combined/log_logistic_trash_score.pdf
       hash: md5
-      md5: 404daeaa28985623331f160ec67b5360
+      md5: 619932cd383be51e5eae2c945673e361
       size: 22023
