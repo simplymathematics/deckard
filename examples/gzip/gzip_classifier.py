@@ -123,50 +123,6 @@ def ncd(
     return ncd
 
 
-def modified_ncd(
-    x1,
-    x2,
-    cx1=None,
-    cx2=None,
-    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", None] = "gzip",
-) -> float:
-    """
-    Calculate the normalized compression distance between two objects treated as strings.
-    Args:
-        x1 (str): The first object
-        x2 (str): The second object
-    Returns:
-        float: The normalized compression distance between x1 and x2
-    """
-
-    compressor_len = (
-        compressors[method] if method in compressors.keys() else compressors["gzip"]
-    )
-    x1 = str(x1)
-    x2 = str(x2)
-    if x1 == x2:
-        return 0
-    Cx1 = compressor_len(x1) if cx1 is None else cx1
-    Cx2 = compressor_len(x2) if cx2 is None else cx2
-
-    if x1 > x2:
-        pass
-    else:
-        temp_1 = x1
-        temp_C1 = Cx1
-        temp_2 = x2
-        temp_C2 = Cx2
-        x2 = temp_1
-        Cx2 = temp_C1
-        x1 = temp_2
-        Cx1 = temp_C2
-
-    x1x2 = " ".join([x1, x2])
-    Cx1x2 = compressor_len(x1x2)
-    min_ = min(Cx1, Cx2)
-    max_ = max(Cx1, Cx2)
-    ncd = (Cx1x2 - min_) / max_
-    return ncd
 
 
 string_metrics = {
@@ -195,7 +151,7 @@ all_condensers = [
 ]
 
 
-def _calculate_string_distance(x1, x2, method):
+def calculate_string_distance(x1, x2, method):
     if method in string_metrics.keys():
         dist = string_metrics[method]
     else:
@@ -207,21 +163,6 @@ def _calculate_string_distance(x1, x2, method):
     return dist(x1, x2)
 
 
-def _modified_calculate_string_distance(x1, x2, method):
-    if method in string_metrics.keys():
-        dist = string_metrics[method]
-    else:
-        raise NotImplementedError(
-            f"Method {method} not supported. Supported methods are: {string_metrics.keys()}",
-        )
-    x1 = str(x1)
-    x2 = str(x2)
-    if x1 == x2:
-        return 0
-    if x1 > x2:
-        return dist(x1, x2)
-    else:
-        return dist(x2, x1)
 
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
@@ -304,9 +245,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.metric = metric
         elif metric in string_metrics.keys():
             logger.debug(f"Using {metric} metric")
-            self._distance = _calculate_string_distance
+            self._distance = calculate_string_distance
             self.metric = metric
-            self.modified = False
         else:
             raise NotImplementedError(
                 f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()} and {compressors.keys()}",
@@ -354,7 +294,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             assert n_jobs <= cpu_count(), f"Expected {n_jobs} <= {cpu_count()}"
         for i in range(len(x1)):
             for j in range(len(x2)):
-                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating rectangular distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
@@ -367,12 +307,32 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
         return matrix_
 
-    def _distance_helper(self, x1, x2, cx1, cx2, method):
-        if method in compressors.keys():
-            return self._distance(x1, x2, cx1=cx1, cx2=cx2, method=method)
+    def _distance_helper(self, x1, x2, cx1=None, cx2=None):
+        method = self.metric
+        if self.modified is True and str(x1) == str(x2):
+            return 0
+        elif self.modified is True and str(x1) != str(x2):
+            if str(x1) > str(x2):
+                s1 = x1
+                cs1 = cx1
+                s2 = x2
+                cs2 = cx2
+            else:
+                s1 = x2
+                cs1 = cx2
+                s2 = x1
+                cs2 = cx1
         else:
-            return self._distance(x1, x2, method=method)
-        
+            assert self.modified is False, f"Expected {self.modified} to be False"
+        if method in compressors.keys():
+            result = ncd(x1, x2, cx1, cx2, method)
+        elif method in string_metrics.keys():
+            result = calculate_string_distance(s1, s2, method)
+        else:
+            raise NotImplementedError(
+                f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+            )
+        return result
         
     
     def _calculate_lower_triangular_distance_matrix(
@@ -406,7 +366,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # Create a list of tuples to pass to the parallel function
         for i in range(len(x1)):
             for j in range(0, i + 1):
-                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating symmetric distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
@@ -444,7 +404,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         list_ = []
         for i in range(len(x1)):
             for j in range(i, len(x2)):
-                list_.append((x1[i], x2[j], Cx1[i], Cx2[j], self.metric))
+                list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(self._distance_helper)(*args) for args in list_
@@ -1145,12 +1105,6 @@ def main(args: argparse.Namespace):
     params.update(**kwarg_args)
     X = np.array(X) if not isinstance(X, np.ndarray) else X
     y = np.array(y) if not isinstance(y, np.ndarray) else y
-    import yaml
-
-    print(f"X shape: {X.shape}")
-    print(f"Y shape: {y.shape}")
-    print(yaml.dump(params))
-    input("Press Enter to Continue...")
     test_model(X_train, X_test, y_train, y_test, **params)
 
 
