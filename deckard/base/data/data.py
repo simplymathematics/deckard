@@ -182,13 +182,17 @@ class Data:
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 try:
-                    DataFrame(data).to_json(filename, index=False, force_ascii=False, indent=4)
+                    DataFrame(data).to_json(
+                        filename, index=False, force_ascii=False, indent=4
+                    )
                 except ValueError as e:
                     if "using all scalar values" in str(e):
                         # Sort the dictionary by key
                         data = dict(sorted(data.items()))
                         # Save the dictionary to a JSON file
-                        Series(data).to_json(filename, index=False, force_ascii=False, indent=4)
+                        Series(data).to_json(
+                            filename, index=False, force_ascii=False, indent=4
+                        )
                     else:
                         raise e
             elif suffix in [".csv"]:
