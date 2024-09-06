@@ -38,9 +38,8 @@ hydra:
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: true
-      n_startup_trials: 256
-      n_ei_candidates: 32
-      multivariate: true
+      n_startup_trials: 128
+      n_ei_candidates: 8
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
     storage: sqlite:///optuna.db
@@ -55,6 +54,7 @@ hydra:
       # model.init.similarity : True, False
       # model.init.min_max_scale : ${model.init.similarity}
       model_name : ${model_name}
+      model.init.symmetric: True,False
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8

@@ -138,17 +138,17 @@ stages:
       ++data.sample.test_size=400
       model_name=${item.configs}
       model.init.distance_matrix=null
-      ++model.init.modified=${item.modified}
+      model.init.metric=gzip,lzma,bz2,zstd,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio
       model.init.symmetric=True
+      ++model.init.modified=${item.modified}
       hydra.sweeper.study_name=modified_${item.configs}_${item.dataset}
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=${item.dataset}/logs/modfied/${item.configs}/${item.train_size}/modified_${item.modified}
+      hydra.sweep.dir=${item.dataset}/logs/modified/${item.configs}/${item.train_size}/modified_${item.modified}/
       files.directory=${item.dataset}
-      files.reports=${files.reports}/modified//${item.configs}/${item.train_size}/modified_${item.modified}
+      files.reports=${files.reports}/modified//${item.configs}/${item.train_size}/modified_${item.modified}/
       hydra.launcher.n_jobs=-1
       ++data.sample.random_state=1,2,3,4,5,6,7,8,9,10
-      model.init.metric=gzip
       ++raise_exception=True               
       --config-name ${item.configs}
       --multirun

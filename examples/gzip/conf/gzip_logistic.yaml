@@ -38,9 +38,8 @@ hydra:
       prior_weight: 1.0
       consider_magic_clip: true
       consider_endpoints: true
-      n_startup_trials: 256
-      n_ei_candidates: 32
-      multivariate: true
+      n_startup_trials: 128
+      n_ei_candidates: 8
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}_${stage}
     storage: sqlite:///optuna.db
@@ -54,8 +53,7 @@ hydra:
       +model.init.fit_intercept : True,False
       +model.init.class_weight : balanced,None
       model.init.max_iter: 1000
-      # model.init.similarity : True, False
-      # model.init.min_max_scale : ${model.init.similarity}
+      model.init.symmetric: True,False
       model_name : ${model_name}
     direction: ${direction}
     max_failure_rate: 1.0
