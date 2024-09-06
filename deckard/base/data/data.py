@@ -182,10 +182,10 @@ class Data:
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 try:
-                    DataFrame(data).to_json(filename, index=False, force_ascii=False)
+                    DataFrame(data).to_json(filename, index=False, force_ascii=False, indent=4)
                 except ValueError as e:
                     if "using all scalar values" in str(e):
-                        Series(data).to_json(filename, index=False, force_ascii=False)
+                        Series(data).to_json(filename, index=False, force_ascii=False, indent=4)
                     else:
                         raise e
             elif suffix in [".csv"]:
