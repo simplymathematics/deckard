@@ -42,7 +42,7 @@ from imblearn.under_sampling import (
 )
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 
 from joblib import Parallel, delayed
 from typing import Literal
@@ -123,8 +123,6 @@ def ncd(
     return ncd
 
 
-
-
 string_metrics = {
     "levenshtein": distance,
     "ratio": ratio,
@@ -161,8 +159,6 @@ def calculate_string_distance(x1, x2, method):
     x1 = str(x1)
     x2 = str(x2)
     return dist(x1, x2)
-
-
 
 
 class GzipClassifier(ClassifierMixin, BaseEstimator):
@@ -282,7 +278,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
         matrix_ = np.zeros((len(x1), len(x2)))
-        
+
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
         Cx2 = Cx2 if Cx2 is not None else [None] * len(x2)
         list_ = []
@@ -297,8 +293,15 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating rectangular distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
-            )
+                delayed(self._distance_helper)(*args)
+                for args in tqdm(
+                    list_,
+                    desc="Calculating rectangular distance matrix",
+                    leave=False,
+                    dynamic_ncols=True,
+                    total=len(list_),
+                )
+            ),
         )
         matrix_ = list_.reshape(len(x1), len(x2))
         assert matrix_.shape == (
@@ -325,7 +328,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             assert self.modified is False, f"Expected {self.modified} to be False"
         if method in compressors.keys():
-            result = ncd(x1, x2, cx1, cx2, method)
+            result = ncd(x1, x2, cs1, cs2, method)
         elif method in string_metrics.keys():
             result = calculate_string_distance(s1, s2, method)
         else:
@@ -333,8 +336,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
         return result
-        
-    
+
     def _calculate_lower_triangular_distance_matrix(
         self,
         x1,
@@ -369,8 +371,15 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(self._distance_helper)(*args) for args in tqdm(list_, desc="Calculating symmetric distance matrix", leave=False, dynamic_ncols=True, total=len(list_))
-            )
+                delayed(self._distance_helper)(*args)
+                for args in tqdm(
+                    list_,
+                    desc="Calculating symmetric distance matrix",
+                    leave=False,
+                    dynamic_ncols=True,
+                    total=len(list_),
+                )
+            ),
         )
         indices = np.tril_indices(len(x1))
         matrix_[indices] = list_
@@ -380,7 +389,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         new_diag = np.diag(np.diag(matrix_))
         # Check that old_diag is close to new_diag
         assert np.allclose(
-            old_diag, new_diag
+            old_diag,
+            new_diag,
         ), f"Expected {old_diag} == {new_diag}. Old Diag: {old_diag}"
         # Check the shape of the matrix
         assert matrix_.shape == (
@@ -388,8 +398,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(x2),
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)}). "
         return matrix_
-    
-                
+
     def _calculate_upper_triangular_distance_matrix(
         self,
         x1,
@@ -408,7 +417,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(self._distance_helper)(*args) for args in list_
-            )
+            ),
         )
         indices = np.triu_indices(len(x1))
         matrix_[indices] = list_
@@ -418,7 +427,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         new_diag = np.diag(np.diag(matrix_))
         # Check that old_diag is close to new_diag
         assert np.allclose(
-            old_diag, new_diag
+            old_diag,
+            new_diag,
         ), f"Expected {old_diag} == {new_diag}. Old Diag: {old_diag}"
         # Check the shape of the matrix
         assert matrix_.shape == (
