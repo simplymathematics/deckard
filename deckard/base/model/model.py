@@ -351,7 +351,14 @@ class Model:
         result_dict["data"] = data
         result_dict["model"] = model
         exists = []
-        all_files = ["data_file", "model_file", "predictions_file", "probabilities_file", "time_dict_file", "losses_file"]
+        all_files = [
+            "data_file",
+            "model_file",
+            "predictions_file",
+            "probabilities_file",
+            "time_dict_file",
+            "losses_file",
+        ]
         must_exist = []
         for key in all_files:
             if locals().get(key) is not None:

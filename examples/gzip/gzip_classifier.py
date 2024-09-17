@@ -329,7 +329,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     raise NotImplementedError(
                         f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
                     )
-            else: # If x1 < x2, then swap the order
+            else:  # If x1 < x2, then swap the order
                 if method in compressors.keys():
                     result = ncd(x2, x1, cx2, cx1, method)
                 elif method in string_metrics.keys():
@@ -338,7 +338,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     raise NotImplementedError(
                         f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
                     )
-        elif self.modified is False: # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
+        elif (
+            self.modified is False
+        ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
             if method in compressors.keys():
                 result = ncd(x1, x2, cx1, cx2, method)
             elif method in string_metrics.keys():
@@ -547,7 +549,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             list: The indices of the best training samples.
         """
-        self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs, update=update)
+        self.distance_matrix = self._prepare_training_matrix(
+            n_jobs=n_jobs, update=update
+        )
         assert isinstance(
             self.distance_matrix,
             np.ndarray,
@@ -685,7 +689,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
         if self.m == 1 or self.m == -1 or update is True:
-            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs, update=update)
+            self.distance_matrix = self._prepare_training_matrix(
+                n_jobs=n_jobs, update=update
+            )
             self.distance_matrix = self.distance_matrix
         elif self.m > 0:
             assert isinstance(

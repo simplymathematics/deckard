@@ -376,6 +376,7 @@ def plot_aft(
         plt.gcf().clear()
     return ax
 
+
 def plot_summary(
     aft,
     title,

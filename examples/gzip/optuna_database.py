@@ -3,7 +3,6 @@
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from dataclasses import dataclass
 import optuna
-from pathlib import Path
 from hydra.experimental.callback import Callback
 import argparse
 from typing import Union
@@ -43,8 +42,6 @@ class OptunaStudyDumpCallback(Callback):
             self.directions = [directions]
         self.output_file = output_file
         super().__init__()
-        
-    
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
         studies = optuna.get_all_study_names(self.storage)
@@ -58,20 +55,23 @@ class OptunaStudyDumpCallback(Callback):
             study.set_metric_names(self.metric_names)
         else:
             print("Cannot set metric names")
-            
+
     def on_job_start(self, config: DictConfig, **kwargs) -> None:
         return self.on_multirun_start(config, **kwargs)
+
     def on_trial_start(self, config: DictConfig, **kwargs) -> None:
         return self.on_multirun_start(config, **kwargs)
+
     def on_run_start(self, config: DictConfig, **kwargs) -> None:
         return self.on_multirun_start(config, **kwargs)
-    
+
     # def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
     #     study = optuna.load_study(self.study_name, storage=self.storage)
     #     df = study.trials_dataframe()
     #     df.to_csv(self.output_file, index=False)
     #     print(f"Saved to {self.output_file}")
-    
+
+
 def multirun_call(args):
     storage = args.storage
     study_name = args.study_name
