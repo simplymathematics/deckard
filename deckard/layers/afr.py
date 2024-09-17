@@ -40,7 +40,7 @@ __all__ = [
 # Modified from https://github.com/CamDavidsonPilon/lifelines/blob/master/lifelines/calibration.py
 def survival_probability_calibration(
     model: RegressionFitter,
-    df: pd.Dataftame,
+    df: pd.DataFrame,
     t0: float,
     ax=None,
     color="red",
@@ -95,7 +95,7 @@ def survival_probability_calibration(
     )
 
     # create new dataset with the predictions
-    prediction_df = pd.Dataftame(
+    prediction_df = pd.DataFrame(
         {"ccl_at_%d" % t0: ccl(predictions_at_t0), T: df[T], E: df[E]},
     )
 
@@ -172,7 +172,7 @@ def survival_probability_calibration(
     y = (
         1
         - crc.predict_survival_function(
-            pd.Dataftame({"ccl_at_%d" % t0: ccl(x)}),
+            pd.DataFrame({"ccl_at_%d" % t0: ccl(x)}),
             times=[t0],
         ).T.squeeze()
     )
@@ -286,7 +286,7 @@ def fit_aft(
     else:
         logger.info(f"Fitted {mtype} model")
     if summary_file is not None:
-        summary = pd.Dataftame(aft.summary).copy()
+        summary = pd.DataFrame(aft.summary).copy()
         if folder is None:
             folder = "."
         save_results(summary, results_file=summary_file, results_folder=folder)
@@ -366,6 +366,8 @@ def plot_aft(
             labels[i] = new_label
             i += 1
         ax2.set_yticklabels(labels)
+        print(f"XLABEL: {xlabel}")
+        input("Press Enter to continue...")
         ax2.set_xlabel(xlabel)
         ax2.set_ylabel(ylabel)
         ax2.set_title(title)
@@ -373,7 +375,6 @@ def plot_aft(
         ax2.get_figure().savefig(file.with_name(file.stem + "_dummies" + file.suffix))
         plt.gcf().clear()
     return ax
-
 
 def plot_summary(
     aft,
@@ -394,7 +395,7 @@ def plot_summary(
         file = Path(folder, file)
     plt.gcf().clear()
     summary = aft.summary.copy()
-    summary = pd.Dataftame(summary)
+    summary = pd.DataFrame(summary)
     if isinstance(summary.index, pd.MultiIndex):
         covariates = list(summary.index.get_level_values(1))
         summary["covariate"] = covariates
@@ -551,7 +552,7 @@ def make_aft_table(
     span_columns=True,
 ):
     folder = Path(folder)
-    aft_data = pd.Dataftame()
+    aft_data = pd.DataFrame()
     aft_data.index.name = "Model"
     model_names = [
         x.replace("-", " ").replace("_", " ").title() for x in aft_dict.keys()
