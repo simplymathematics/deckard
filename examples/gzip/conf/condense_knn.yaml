@@ -23,11 +23,11 @@ hydra:
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
-      _target_ : database.OptunaStudyDumpCallback
+      _target_ : optuna_database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
-      directions : ${direction}
-      metric_names : ${optimizers}
+      directions : [maximize]
+      metric_names : [accuracy]
       output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
   sweeper:
     sampler:
@@ -51,7 +51,6 @@ hydra:
       model.init.k : 3
       +model.init.weights : uniform,distance
       +model.init.algorithm : brute
-      model.init.symmetric : True,False
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: -1

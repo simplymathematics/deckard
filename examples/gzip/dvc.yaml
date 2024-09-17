@@ -81,7 +81,6 @@ stages:
       dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
       configs: [gzip_knn, gzip_logistic, gzip_svc] 
       symmetric : [True, False]
-      # model.init.metric : [gzip, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -146,7 +145,7 @@ stages:
       hydra.sweeper.n_jobs=8
       hydra.sweep.dir=${item.dataset}/logs/modified/${item.configs}/${item.train_size}/modified_${item.modified}/
       files.directory=${item.dataset}
-      files.reports=${files.reports}/modified//${item.configs}/${item.train_size}/modified_${item.modified}/
+      files.reports=${files.reports}/modified/${item.configs}/${item.train_size}/modified_${item.modified}/
       hydra.launcher.n_jobs=-1
       ++data.sample.random_state=1,2,3,4,5,6,7,8,9,10
       ++raise_exception=True               
@@ -164,23 +163,16 @@ stages:
       - conf/${item.configs}.yaml:
           - hydra
   ##############################################################################
-  # find_best_model: # This isn't actually used in later steps, but it's handy to have these configs ready for a line search instead of a massive grid search
-  #   matrix:
-  #     dataset : [ddos, kdd_nsl, sms_spam,] #  
-  #     model : [gzip_knn, gzip_svc, gzip_logistic]
-  #   deps:
-  #     - ${item.dataset}/logs/${item.model}/
-  #   cmd: >-
-  #        python -m deckard.layers.find_best --storage sqlite:///optuna.db --study_name ${item.model}_${item.dataset} --config_subdir model --params_file best_${item.model}_${item.dataset} --default_config ${item.model}
-  #   outs:
-  #     - conf/model/best_${item.model}_${item.dataset}.yaml
-  ##############################################################################
   precompute_matrices:
     matrix:
-      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] # kdd_nsl, truthseeker, sms_spam, 
-      model_name : [knn, svc, logistic]
-      metric : [gzip] #, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
-      symmetric : [True, False]
+      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] 
+      model_name : [knn] # Only need to run for one model because the distance matrix is the same for all models
+      metric : [gzip, lzma, bz2, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      symmetric : [True]
+      random_state : [0]
+      train_size : [1000]
+      test_size : [400]
+      modified : [True]
     deps:
       - params.yaml
       - conf/condense_${item.model_name}.yaml
@@ -189,27 +181,32 @@ stages:
       stage=train
       data=${item.dataset}
       dataset=${item.dataset}
-      data.sample.train_size=1000
-      data.sample.test_size=400
+      data.sample.train_size=${item.train_size}
+      data.sample.test_size=${item.test_size}
+      data.sample.random_state=${item.random_state}
       model_name=gzip_${item.model_name}
       model=gzip_${item.model_name}
+      ++model.init.condensing_method=None
       ++model.init.m=1
+      ++model.init.symmetric=${item.symmetric}
+      ++model.init.modified=${item.modified}
+      ++model.init.metric=${item.metric}
+      ++model.init.distance_matrix=${item.dataset}/models/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz 
       files.directory=${item.dataset}
-      hydra.sweeper.study_name=gzip_${item.model_name}_${item.dataset}
-      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
+      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
       hydra.sweeper.n_trials=1
       hydra.sweeper.n_jobs=1
-      hydra.sweep.dir=${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
+      hydra.sweep.dir=${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
+      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
       hydra.launcher.n_jobs=-1
-      ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/1000-400-0.npz 
       --config-name condense_${item.model_name}
       --multirun
     outs:
-      - ${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}:
+      - ${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/:
           cache: true
           persist: true
           push: true
-      - ${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/:
+      - ${item.dataset}/models/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz:
           cache: true
           persist: true
           push: true
@@ -219,39 +216,47 @@ stages:
   ############################################################################## 
   condense:
     matrix:
-      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] # kdd_nsl, truthseeker, sms_spam, 
+      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] 
       model_name : [knn, svc, logistic]
-      ratio : [.9, .8, .7, .6, .5, .4, .3, .2, .1]
-      metric : [gzip] #, lzma, bz2, pkl, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
-      symmetric : [True, False]
+      ratio : [.9, .5, .3, .2, .1]
+      metric : [gzip, lzma, bz2, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      symmetric : [true]
+      random_state : [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9
+      train_size : [1000]
+      test_size : [400]
+      modified : [true]
     deps:
       - params.yaml
       - conf/condense_${item.model_name}.yaml
-      - ${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/
+      - ${item.dataset}/models/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
       data=${item.dataset}
       dataset=${item.dataset}
-      data.sample.train_size=1000
-      data.sample.test_size=400
+      data.sample.train_size=${item.train_size}
+      data.sample.test_size=${item.test_size}
+      data.sample.random_state=${item.random_state}
       model_name=${item.model_name}
       model=gzip_${item.model_name}
       ++model.init.m=${item.ratio}
+      ++model.init.symmetric=${item.symmetric}
+      ++model.init.modified=${item.modified}
+      ++model.init.metric=${item.metric}
       ++model.init.condensing_method=medoid,sum,svc,random,hardness,nearmiss,knn
       files.directory=${item.dataset}
-      ++model.init.distance_matrix=${item.dataset}/models/${item.model_name}/${item.metric}/symmetry_${item.symmetric}/1000-400-0.npz
-      hydra.sweeper.study_name=gzip_${item.model_name}_${item.dataset}
-      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/
+      ++model.init.distance_matrix=${item.dataset}/models/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz
+      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
+      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
       hydra.sweeper.n_trials=128
       hydra.sweeper.n_jobs=8
-      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/
+      hydra.sweep.dir=${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
       hydra.launcher.n_jobs=-1
       --config-name condense_${item.model_name}
       --multirun
     # Note that 1000-400-0 is the train_size-test_size-random_state
     outs:
-      - ${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/:
+      - ${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/optimization_results.yaml:
           cache: true
           persist: true
           push: true
