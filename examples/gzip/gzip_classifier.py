@@ -110,11 +110,11 @@ def ncd(
     compressor_len = (
         compressors[method] if method in compressors.keys() else compressors["gzip"]
     )
-    x1 = str(x1)
-    x2 = str(x2)
+    x1 = str(x1) if not isinstance(x1, str) else x1
+    x2 = str(x2) if not isinstance(x2, str) else x2
     Cx1 = compressor_len(x1) if cx1 is None else cx1
     Cx2 = compressor_len(x2) if cx2 is None else cx2
-    x1x2 = " ".join([x1, x2])
+    x1x2 = "".join([x1, x2])
     Cx1x2 = compressor_len(x1x2)
     min_ = min(Cx1, Cx2)
     max_ = max(Cx1, Cx2)
@@ -145,6 +145,10 @@ all_condensers = [
     "svc",
     "hardness",
     "nearmiss",
+    None,
+    "None",
+    "null",
+    "",
 ]
 
 
@@ -231,7 +235,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.min_max_scale = min_max_scale
         if self.m > 0:
             assert (
-                condensing_method in all_condensers or condensing_method is None
+                condensing_method in all_condensers
             ), f"Expected {condensing_method} in {all_condensers}"
         self.condensing_method = condensing_method
         if metric in compressors.keys():
@@ -310,30 +314,41 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         return matrix_
 
     def _distance_helper(self, x1, x2, cx1=None, cx2=None):
+        x1 = str(x1)
+        x2 = str(x2)
         method = self.metric
-        if self.modified is True and str(x1) == str(x2):
+        if self.modified is True and x1 == x2:
             return 0
-        elif self.modified is True and str(x1) != str(x2):
-            if str(x1) > str(x2):
-                s1 = x1
-                cs1 = cx1
-                s2 = x2
-                cs2 = cx2
+        elif self.modified is True and x1 != x2:
+            if x1 >= x2:
+                if method in compressors.keys():
+                    result = ncd(x1, x2, cx1, cx2, method)
+                elif method in string_metrics.keys():
+                    result = calculate_string_distance(x1, x2, method)
+                else:
+                    raise NotImplementedError(
+                        f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+                    )
+            else: # If x1 < x2, then swap the order
+                if method in compressors.keys():
+                    result = ncd(x2, x1, cx2, cx1, method)
+                elif method in string_metrics.keys():
+                    result = calculate_string_distance(x2, x1, method)
+                else:
+                    raise NotImplementedError(
+                        f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+                    )
+        elif self.modified is False: # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
+            if method in compressors.keys():
+                result = ncd(x1, x2, cx1, cx2, method)
+            elif method in string_metrics.keys():
+                result = calculate_string_distance(x1, x2, method)
             else:
-                s1 = x2
-                cs1 = cx2
-                s2 = x1
-                cs2 = cx1
+                raise NotImplementedError(
+                    f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+                )
         else:
-            assert self.modified is False, f"Expected {self.modified} to be False"
-        if method in compressors.keys():
-            result = ncd(x1, x2, cs1, cs2, method)
-        elif method in string_metrics.keys():
-            result = calculate_string_distance(s1, s2, method)
-        else:
-            raise NotImplementedError(
-                f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
-            )
+            raise ValueError(f"Expected {self.modified} to be a boolean")
         return result
 
     def _calculate_lower_triangular_distance_matrix(
@@ -518,6 +533,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             max_ = np.max(distance_matrix)
             distance_matrix = (distance_matrix - min_) / (max_ - min_)
 
+        # Double centering
+        if self.double_centering is True:
+            n = len(distance_matrix)
+            H = np.eye(n) - np.ones((n, n)) / n
+            distance_matrix = -0.5 * H @ distance_matrix @ H
         return distance_matrix
 
     def _find_best_samples(self, method="medoid", n_jobs=-1, update=False):
@@ -527,7 +547,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             list: The indices of the best training samples.
         """
-        self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
+        self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs, update=update)
         assert isinstance(
             self.distance_matrix,
             np.ndarray,
@@ -630,6 +650,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Args:
             X (np.ndarray): The input data
             y (np.ndarray): The target labels
+            n_jobs (int): The number of jobs to run in parallel. Default is -1.
+            X_test (np.ndarray): The test data. This is ignored and exists for consistency with the methods defined in the batchMixin.py file and are used to calculate evaluation metrics whlie training
+            y_test (np.ndarray): The test labels. This is ignored and exists for consistency with the methods defined in the batchMixin.py file and are used to calculate evaluation metrics whlie training.
+            update (bool): If True, the distance matrix will be recalculated. Default is False.
 
         Returns:
             GzipClassifier: The fitted model
@@ -660,8 +684,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
-        if self.m == 1 or self.m == -1:
-            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs)
+        if self.m == 1 or self.m == -1 or update is True:
+            self.distance_matrix = self._prepare_training_matrix(n_jobs=n_jobs, update=update)
             self.distance_matrix = self.distance_matrix
         elif self.m > 0:
             assert isinstance(
@@ -672,7 +696,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 self.condensing_method,
                 (str),
             ), f"Expected {self.condensing_method} to be a string"
-            indices = self._find_best_samples(self.condensing_method)
+            indices = self._find_best_samples(self.condensing_method, update=update)
             self._set_best_indices(indices)
         else:
             raise ValueError(
