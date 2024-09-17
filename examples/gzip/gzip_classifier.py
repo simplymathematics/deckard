@@ -550,7 +550,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             list: The indices of the best training samples.
         """
         self.distance_matrix = self._prepare_training_matrix(
-            n_jobs=n_jobs, update=update
+            n_jobs=n_jobs,
+            update=update,
         )
         assert isinstance(
             self.distance_matrix,
@@ -690,7 +691,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             self.X_ = self.X_.astype(str)
         if self.m == 1 or self.m == -1 or update is True:
             self.distance_matrix = self._prepare_training_matrix(
-                n_jobs=n_jobs, update=update
+                n_jobs=n_jobs,
+                update=update,
             )
             self.distance_matrix = self.distance_matrix
         elif self.m > 0:

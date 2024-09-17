@@ -9,9 +9,9 @@ import argparse
 import plotext as plt
 
 from gzip_classifier import ncd as old_ncd
+
 logger = logging.getLogger(__name__)
 # import wrapper from python decorator
-
 
 
 letter_frequency_upper = {
@@ -86,7 +86,7 @@ def check_triangle_inequality(x, y, z):
     xy = ncd(x, y)
     if xz > xy + yz:
         raise ValueError(
-            f"Triangle Inequality failed for {x}, {y}, {z}. <x,z> = {xz} > <x,y> + <y,z> = {xy + yz}"
+            f"Triangle Inequality failed for {x}, {y}, {z}. <x,z> = {xz} > <x,y> + <y,z> = {xy + yz}",
         )
     return None
 
@@ -189,7 +189,11 @@ def check_positivity(x, y, z, sig_figs=2):
 
 
 def check_loop(
-    samples=1000, sig_figs=2, max_string_size=1000, data="random", alphabet_size=52
+    samples=1000,
+    sig_figs=2,
+    max_string_size=1000,
+    data="random",
+    alphabet_size=52,
 ):
     triangle_failures = 0
     symmetric_failures = 0
@@ -207,19 +211,22 @@ def check_loop(
         total = len(combinations)
     else:
         raise NotImplementedError(
-            "Only random strings and alphabet combinations are supported at the data."
+            "Only random strings and alphabet combinations are supported at the data.",
         )
     with tqdm(total=total) as pbar:
         for i in range(total):
             if data == "random":
                 x = string_generator(
-                    size=random.randint(1, max_string_size), alphabet_size=alphabet_size
+                    size=random.randint(1, max_string_size),
+                    alphabet_size=alphabet_size,
                 )
                 y = string_generator(
-                    size=random.randint(1, max_string_size), alphabet_size=alphabet_size
+                    size=random.randint(1, max_string_size),
+                    alphabet_size=alphabet_size,
                 )
                 z = string_generator(
-                    size=random.randint(1, max_string_size), alphabet_size=alphabet_size
+                    size=random.randint(1, max_string_size),
+                    alphabet_size=alphabet_size,
                 )
             elif data == "combinations":
                 x, y, z = combinations[i]
@@ -324,7 +331,8 @@ def check_all_metric_space_assumptions(
     plt.plot(positivities, label="Positivity Identity violations")
     plt.plot(triangles, label="Triangle Inequality Violations")
     plt.xticks(
-        range(len(iterator)), iterator
+        range(len(iterator)),
+        iterator,
     )  # Set the x-axis ticks to be the iterator
     plt.title(f"Identity Violations vs. {title}")
     plt.xlabel(title)
