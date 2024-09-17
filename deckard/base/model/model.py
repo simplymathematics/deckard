@@ -350,18 +350,27 @@ class Model:
         assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
         result_dict["data"] = data
         result_dict["model"] = model
-
+        exists = []
+        all_files = ["data_file", "model_file", "predictions_file", "probabilities_file", "time_dict_file", "losses_file"]
+        must_exist = []
+        for key in all_files:
+            if locals().get(key) is not None:
+                must_exist.append(key)
         if predictions_file is not None and Path(predictions_file).exists():
             preds = self.data.load(predictions_file)
             result_dict["predictions"] = preds
+            exists.append("predictions_file")
         if probabilities_file is not None and Path(probabilities_file).exists():
             probs = self.data.load(probabilities_file)
             result_dict["probabilities"] = probs
+            exists.append("probabilities_file")
         if losses_file is not None and Path(losses_file).exists():
             loss = self.data.load(losses_file)
             result_dict["loss"] = loss
+            exists.append("losses_file")
         if time_dict_file is not None and Path(time_dict_file).exists():
             time_dict = self.data.load(time_dict_file)
+            exists.append("time_dict_file")
         if [
             predictions_file,
             probabilities_file,
@@ -429,10 +438,12 @@ class Model:
                 )
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
+                exists.append("probabilities_file")
             elif probabilities_file is not None and Path(probabilities_file).exists():
                 probs, prob_time_dict = self.data.load(probabilities_file)
                 result_dict["probabilities"] = probs
                 result_dict["time_dict"].update(**prob_time_dict)
+                exists.append("probabilities_file")
             else:
                 pass
             #####################################################################################
@@ -443,6 +454,7 @@ class Model:
                     model=model,
                     losses_file=losses_file,
                 )
+                exists.append("losses_file")
                 time_dict.update(**loss_time_dict)
                 result_dict["losses"] = loss
                 result_dict["time_dict"].update(**loss_time_dict)
@@ -461,10 +473,13 @@ class Model:
                     time_dict = old_time_dict
                 self.data.save(time_dict, time_dict_file)
                 result_dict["time_dict"] = time_dict
+                exists.append("time_dict_file")
         if data_file is not None and not Path(data_file).exists():
             self.data.save(data, data_file)
+            exists.append("data_file")
         if model_file is not None and not Path(model_file).exists():
             self.save(model, model_file)
+            exists.append("model_file")
         return result_dict
 
     def initialize(self, data=None, model=None, **kwargs):
