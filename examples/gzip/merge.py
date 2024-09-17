@@ -54,7 +54,13 @@ def merge_csv(
         small = pd.read_csv(Path(little_dir) / data_file)
     logger.info(f"Shape of big: {big.shape}")
     logger.info(f"Shape of small: {small.shape}")
-    merged = pd.merge(big, small, how=how, **kwargs)
+    try:
+        merged = pd.merge(big, small, how=how, **kwargs)
+    except pd.errors.MergeError as e:
+        logger.error(f"Merge error: {e}")
+        logger.error(f"Big columns: {big.columns}")
+        logger.error(f"Small columns: {small.columns}")
+        raise e
     for k, v in fillna.items():
         if k in merged.columns:
             merged[k] = merged[k].fillna(v)
