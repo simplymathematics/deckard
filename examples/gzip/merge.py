@@ -47,9 +47,11 @@ def merge_csv(
         assert "name" in big
     if little_dir is None:
         little_dir = big_dir
-    if little_dir_data_file is not None:
+    if little_dir_data_file is not None and Path(Path(little_dir) / little_dir_data_file).exists():
         small = pd.read_csv(Path(little_dir) / little_dir_data_file, index_col=0)
         assert "name" in small
+    elif little_dir_data_file is not None and Path(Path(little_dir) / little_dir_data_file).exists() is False:
+        small = pd.DataFrame()
     else:
         small = pd.read_csv(Path(little_dir) / data_file)
     logger.info(f"Shape of big: {big.shape}")
@@ -57,10 +59,7 @@ def merge_csv(
     try:
         merged = pd.merge(big, small, how=how, **kwargs)
     except pd.errors.MergeError as e:
-        logger.error(f"Merge error: {e}")
-        logger.error(f"Big columns: {big.columns}")
-        logger.error(f"Small columns: {small.columns}")
-        raise e
+        merged = pd.concat([big, small], axis=0)
     for k, v in fillna.items():
         if k in merged.columns:
             merged[k] = merged[k].fillna(v)
