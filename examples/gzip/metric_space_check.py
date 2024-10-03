@@ -64,7 +64,7 @@ def find_longest_common_substring(x, y):
             while i + length < m and j + length < n and x[i + length] == y[j + length]:
                 length += 1
             if length > len(common):
-                common = x[i: i + length]
+                common = x[i : i + length]
     return common
 
 
@@ -144,7 +144,7 @@ def subset_ncd(x, y, method="gzip", replacement=-1, max_iters=-1, shortest_commo
         replacement = new_alphabet[replacement]
     else:
         assert isinstance(replacement, str), ValueError(
-            "Replacement must be an integer or a string"
+            "Replacement must be an integer or a string",
         )
     x, y = sort_xy(x, y)
     if x == y:
@@ -208,11 +208,12 @@ def actual_min_ncd(x, y, method="gzip"):
         print(f"Compressed length of y: {compressed_length_y}")
         print(f"Compressed length of xy: {compressed_length_xy}")
         input(
-            "Actual min is compressed length of xy, but not compressed length of x or y"
+            "Actual min is compressed length of xy, but not compressed length of x or y",
         )
 
     ncd = (compressed_length_xy - actual_min) / max(
-        compressed_length_x, compressed_length_y
+        compressed_length_x,
+        compressed_length_y,
     )
     return ncd
 
@@ -467,37 +468,51 @@ def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
 def count_metric_assumption_failures(sig_figs, distance, compressor, dist, x, y, z):
     try:
         symmetric_failures = check_symmetry(
-            x, y, z, sig_figs=sig_figs, dist=dist, method=compressor
+            x,
+            y,
+            z,
+            sig_figs=sig_figs,
+            dist=dist,
+            method=compressor,
         )
     except ValueError as e:
         symmetric_failures = 1
         logger.error(
-            f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+            f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
         triangle_failures = check_triangle_inequality(
-            x, y, z, dist=dist, method=compressor
+            x,
+            y,
+            z,
+            dist=dist,
+            method=compressor,
         )
     except ValueError as e:
         triangle_failures = 1
         logger.error(
-            f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+            f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
         zero_failures = check_zero(
-            x, y, z, sig_figs=sig_figs, dist=dist, method=compressor
+            x,
+            y,
+            z,
+            sig_figs=sig_figs,
+            dist=dist,
+            method=compressor,
         )
     except ValueError as e:  # noqa E722
         zero_failures = 1
         logger.error(
-            f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+            f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
         positivity_failures = check_positivity(x, y, z, dist=dist, method=compressor)
     except ValueError as e:
         positivity_failures = 1
         logger.error(
-            f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+            f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     return triangle_failures, symmetric_failures, zero_failures, positivity_failures
 
