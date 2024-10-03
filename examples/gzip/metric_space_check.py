@@ -64,7 +64,7 @@ def find_longest_common_substring(x, y):
             while i + length < m and j + length < n and x[i + length] == y[j + length]:
                 length += 1
             if length > len(common):
-                common = x[i: i + length]
+                common = x[i : i + length] # noqa E203
     return common
 
 
