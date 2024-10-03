@@ -10,6 +10,7 @@ import argparse
 
 import seaborn as sns
 import pandas as pd
+
 # Parallelize the for loop using joblib
 from joblib import Parallel, delayed
 
@@ -52,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 # letter_frequencies = {**letter_frequency_upper, **letter_frequency_lower}
 
+
 def find_longest_common_substring(x, y):
     m = len(x)
     n = len(y)
@@ -59,11 +61,12 @@ def find_longest_common_substring(x, y):
     for i in range(m):
         for j in range(n):
             length = 0
-            while (i + length < m and j + length < n and x[i + length] == y[j + length]):
+            while i + length < m and j + length < n and x[i + length] == y[j + length]:
                 length += 1
             if length > len(common):
-                common = x[i:i + length]       
+                common = x[i: i + length]
     return common
+
 
 def old_ncd(
     x1,
@@ -93,6 +96,7 @@ def old_ncd(
     ncd = (Cx1x2 - min_) / max_
     return ncd
 
+
 def modified_ncd(x, y, method="gzip"):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
@@ -101,21 +105,23 @@ def modified_ncd(x, y, method="gzip"):
     x, y = sort_xy(x, y)
     return old_ncd(x, y, method=method)
 
+
 def sorted_ncd(x, y, method="gzip"):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
-    x,y = sort_xy(x, y)
+    x, y = sort_xy(x, y)
     return old_ncd(x, y, method=method)
 
-def sort_xy(x, y,):
+
+def sort_xy(x, y):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
     if x < y:
         return y, x
     else:
         return x, y
-    
-    
+
+
 def distance_safe_ncd(x, y, method="gzip"):
     # Return 0 if x == y
     if x == y:
@@ -126,7 +132,8 @@ def distance_safe_ncd(x, y, method="gzip"):
     ncd = actual_min_ncd(x, y, method=method)
     return ncd
 
-def subset_ncd(x, y, method="gzip", replacement=-1, max_iters = -1, shortest_common = 3):
+
+def subset_ncd(x, y, method="gzip", replacement=-1, max_iters=-1, shortest_common=3):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
     # Use ascii punctuation + digits as the "new" alphabet, stored as a list
@@ -136,8 +143,10 @@ def subset_ncd(x, y, method="gzip", replacement=-1, max_iters = -1, shortest_com
         assert len(new_alphabet) >= replacement, ValueError("Replacement is too large")
         replacement = new_alphabet[replacement]
     else:
-        assert isinstance(replacement, str), ValueError("Replacement must be an integer or a string")
-    x,y = sort_xy(x, y)
+        assert isinstance(replacement, str), ValueError(
+            "Replacement must be an integer or a string"
+        )
+    x, y = sort_xy(x, y)
     if x == y:
         return 0
     if x in y:
@@ -156,7 +165,7 @@ def subset_ncd(x, y, method="gzip", replacement=-1, max_iters = -1, shortest_com
                 max_iters = max(len(x), len(y), len(replacement))
             for i in range(max_iters):
                 longest_common = find_longest_common_substring(x, y)
-                if i > len(replacement)-1: # only works up 42^2 = 1764 iterations
+                if i > len(replacement) - 1:  # only works up 42^2 = 1764 iterations
                     replacement_j = new_alphabet[i % len(new_alphabet)]
                     replacement_i = new_alphabet[i // len(new_alphabet)]
                     replacement_i = replacement_i + replacement_j
@@ -168,13 +177,12 @@ def subset_ncd(x, y, method="gzip", replacement=-1, max_iters = -1, shortest_com
                     break
     return sorted_ncd(x, y, method=method)
 
+
 def replace_largest_common_substring(x, y, replacement=""):
     common = find_longest_common_substring(x, y)
     x = x.replace(common, replacement)
     y = y.replace(common, replacement)
-    return x,y
-
-
+    return x, y
 
 
 def actual_min_ncd(x, y, method="gzip"):
@@ -193,21 +201,24 @@ def actual_min_ncd(x, y, method="gzip"):
         # length_y,
         # length_xy,
     )
-    if actual_min == compressed_length_xy and (actual_min != compressed_length_x and actual_min != compressed_length_y):
+    if actual_min == compressed_length_xy and (
+        actual_min != compressed_length_x and actual_min != compressed_length_y
+    ):
         print(f"Compressed length of x: {compressed_length_x}")
         print(f"Compressed length of y: {compressed_length_y}")
         print(f"Compressed length of xy: {compressed_length_xy}")
-        input("Actual min is compressed length of xy, but not compressed length of x or y")
-        
-    ncd = (compressed_length_xy - actual_min) / max(compressed_length_x, compressed_length_y)
+        input(
+            "Actual min is compressed length of xy, but not compressed length of x or y"
+        )
+
+    ncd = (compressed_length_xy - actual_min) / max(
+        compressed_length_x, compressed_length_y
+    )
     return ncd
-
-
 
 
 def unmodified_ncd(x, y, method="gzip"):
     return old_ncd(x, y, method=method)
-
 
 
 def string_generator(
@@ -226,13 +237,14 @@ def string_generator(
     chars.sort()
     return "".join(random.choice(chars) for _ in range(size))
 
+
 def byte_generator(
-    size = 6,
-    alphabet_size = 256,
+    size=6,
+    alphabet_size=256,
 ):
     return bytes([random.randint(0, alphabet_size) for _ in range(size)])
-   
-    
+
+
 def check_triangle_inequality(x, y, z, dist=unmodified_ncd, method="gzip"):
     xz = dist(x, z, method=method)
     yz = dist(y, z, method=method)
@@ -292,8 +304,7 @@ def check_zero(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
         raise ValueError(f"<y,y> = {yy}")
     elif zz != 0:
         raise ValueError(f"<z,z> = {zz}")
-    
-    
+
     yx = dist(y, x)
     xy = dist(x, y)
     zx = dist(z, x)
@@ -320,6 +331,7 @@ def check_zero(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
             raise ValueError(f"<{z},{y}> = 0, but {z} != {y}")
     return 0
 
+
 def check_positivity(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
     xz = dist(x, z, method=method)
     zx = dist(z, x, method=method)
@@ -345,7 +357,7 @@ def check_positivity(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
         raise ValueError(f"<x,y> = {xy} < 0")
     if yx < 0:
         raise ValueError(f"<y,x> = {yx} < 0")
-   
+
     return 0
 
 
@@ -357,8 +369,8 @@ def check_loop(
     distance="unmodified_ncd",
     alphabet_size=52,
     compressor="gzip",
-):    
-   
+):
+
     # Choose the distance function
     if distance == "unmodified_ncd":
         dist = unmodified_ncd
@@ -374,17 +386,23 @@ def check_loop(
         raise NotImplementedError(
             f"Only unmodified_ncd, modified_ncd, and length_sorted_ncd are supported as distance functions. You chose {distance}",
         )
-    arg_list = []    
-    
+    arg_list = []
+
     # Generate a list of arguments for the parallelized for loop
     for i in range(samples):
         x, y, z = get_data_triplet(max_string_size, data, alphabet_size, samples, i)
         arg_list += [(sig_figs, distance, compressor, dist, x, y, z)]
-    
+
     # Parallelize the for loop using joblib and tqdm
     df = np.array(
-        Parallel(n_jobs=-1, verbose=False)(delayed(count_metric_assumption_failures)(*args) for args in tqdm(arg_list, desc=f"Checking metric space assumptions for {distance} algorithm using the {compressor} compressor."))
-    ) # 4 columns, 1 for each assumption, 
+        Parallel(n_jobs=-1, verbose=False)(
+            delayed(count_metric_assumption_failures)(*args)
+            for args in tqdm(
+                arg_list,
+                desc=f"Checking metric space assumptions for {distance} algorithm using the {compressor} compressor.",
+            )
+        ),
+    )  # 4 columns, 1 for each assumption,
     # Convert failures to percent
     df = df.sum(axis=0) / samples
     print(f"Percent of examples where triangle inequality was violated: {df[0]}")
@@ -394,9 +412,10 @@ def check_loop(
     print(f"Shape of df is {df.shape}")
     return df
 
+
 def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
-    
-     # Choose the dataset
+
+    # Choose the dataset
     if data == "combinations":
         combinations = find_all_combinations(
             max_alphabet_size=alphabet_size,
@@ -410,63 +429,77 @@ def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
         raise NotImplementedError(
             "Only random strings and alphabet combinations are supported at the data.",
         )
-        
+
     if data in ["random", "alphabet"]:
         x = string_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
         y = string_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
         z = string_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
     elif data in ["bytes"]:
         assert max_string_size <= 256, ValueError("Max string size is too large")
         x = byte_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
         y = byte_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
         z = byte_generator(
-                    size=random.randint(1, max_string_size),
-                    alphabet_size=alphabet_size,
-                )
+            size=random.randint(1, max_string_size),
+            alphabet_size=alphabet_size,
+        )
     elif data == "combinations":
         x, y, z = combinations[i]
     elif isinstance(data, str) and Path(data).exists():
         raise NotImplementedError
-    return x,y,z
+    return x, y, z
 
-def count_metric_assumption_failures(sig_figs, distance, compressor,dist, x, y, z):
+
+def count_metric_assumption_failures(sig_figs, distance, compressor, dist, x, y, z):
     try:
-        symmetric_failures = check_symmetry(x, y, z, sig_figs=sig_figs, dist=dist, method=compressor)
+        symmetric_failures = check_symmetry(
+            x, y, z, sig_figs=sig_figs, dist=dist, method=compressor
+        )
     except ValueError as e:
         symmetric_failures = 1
-        logger.error(f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}")
+        logger.error(
+            f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+        )
     try:
-         triangle_failures = check_triangle_inequality(x, y, z, dist=dist, method=compressor)
+        triangle_failures = check_triangle_inequality(
+            x, y, z, dist=dist, method=compressor
+        )
     except ValueError as e:
         triangle_failures = 1
-        logger.error(f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}")
+        logger.error(
+            f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+        )
     try:
-        zero_failures = check_zero(x, y, z, sig_figs=sig_figs, dist=dist, method=compressor)
+        zero_failures = check_zero(
+            x, y, z, sig_figs=sig_figs, dist=dist, method=compressor
+        )
     except ValueError as e:  # noqa E722
         zero_failures = 1
-        logger.error(f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}")
+        logger.error(
+            f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+        )
     try:
         positivity_failures = check_positivity(x, y, z, dist=dist, method=compressor)
     except ValueError as e:
         positivity_failures = 1
-        logger.error(f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}")
+        logger.error(
+            f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}"
+        )
     return triangle_failures, symmetric_failures, zero_failures, positivity_failures
-
 
 
 def check_all_metric_space_assumptions(
@@ -515,14 +548,14 @@ def check_all_metric_space_assumptions(
         title = "Alphabet Size"
     else:
         raise ValueError("Invalid iterate")
-    kwargs['compressor'] = compressor
+    kwargs["compressor"] = compressor
     if len(iterator) > 10:
         # divide the iterator into 10 parts
         max_ = max(iterator)
         min_ = min(iterator)
         # Create 10 parts of the iterator
         iterator = np.linspace(min_, max_, 10)
-    iterator = [int(i) for i in iterator]   
+    iterator = [int(i) for i in iterator]
     for i in iterator:
         print(f"{title.capitalize()}")
         print(f"Running {iterate} = {i}")
@@ -543,7 +576,7 @@ def check_all_metric_space_assumptions(
         triangles.append(t)
         positivities.append(p)
         iterators.append(i)
-        
+
     # # Turn results into a dataframe
     results = {
         "Symmetry": symmetries,
@@ -556,22 +589,38 @@ def check_all_metric_space_assumptions(
     }
     df = pd.DataFrame(results)
     # Melt the dataframe so that it can be plotted using seaborn
-    df = pd.melt(df, id_vars=["Iterate", "i"], value_vars=["Symmetry", "Zero Identity", "Triangle Inequality", "Positivity Identity"])
-    df['Identity'] = df['variable']
-    del df['variable']
-    df['Percent Violations'] = df['value']
-    df['Method'] = compressor
-    df['distance'] = distance
-    del df['value']
+    df = pd.melt(
+        df,
+        id_vars=["Iterate", "i"],
+        value_vars=[
+            "Symmetry",
+            "Zero Identity",
+            "Triangle Inequality",
+            "Positivity Identity",
+        ],
+    )
+    df["Identity"] = df["variable"]
+    del df["variable"]
+    df["Percent Violations"] = df["value"]
+    df["Method"] = compressor
+    df["distance"] = distance
+    del df["value"]
     return df
-
 
 
 def find_all_combinations(max_alphabet_size=52, max_string_size=10, reverse=False):
     chars = []
-    chars = string.ascii_lowercase + string.ascii_uppercase # Default dictionary of 52 characters
+    chars = (
+        string.ascii_lowercase + string.ascii_uppercase
+    )  # Default dictionary of 52 characters
     # Add  string.digits + string.punctuation + " " to the end
-    chars += string.digits + string.punctuation + " " + string.ascii_uppercase + string.ascii_lowercase
+    chars += (
+        string.digits
+        + string.punctuation
+        + " "
+        + string.ascii_uppercase
+        + string.ascii_lowercase
+    )
     # Join into a string
     assert max_alphabet_size <= len(chars), ValueError("Alphabet size is too large")
     chars = chars[:max_alphabet_size]
@@ -589,17 +638,21 @@ def find_all_combinations(max_alphabet_size=52, max_string_size=10, reverse=Fals
     return combs
 
 
-def check_all_distances( args):
-    distances = ["unmodified_ncd", "sorted_ncd", "modified_ncd", ] # , "subset_ncd" "distance_safe_ncd", "subset_ncd" 
+def check_all_distances(args):
+    distances = [
+        "unmodified_ncd",
+        "sorted_ncd",
+        "modified_ncd",
+    ]  # , "subset_ncd" "distance_safe_ncd", "subset_ncd"
     compressor_list = list(compressors.keys())
     # remove 'pkl' from the list of compressors
-    compressor_list.remove('pkl')
+    compressor_list.remove("pkl")
     log_file = Path(args.folder) / Path(args.log_file)
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(filename=log_file, level=logging.ERROR)
     for compressor in compressor_list:
         for i in range(len(distances)):
-            distance= distances[i]
+            distance = distances[i]
             # Make sure the log file exists
             big_df = pd.DataFrame()
             # Parallelize the for loop
@@ -617,64 +670,68 @@ def check_all_distances( args):
                 big_df = checkpoint_results(args, big_df, df)
     return big_df
 
+
 def checkpoint_results(args, *dfs):
     big_df = pd.concat([*dfs], axis=0)
     csv_file = Path(args.folder) / Path(args.results_file)
-                # Save the results to a csv file
+    # Save the results to a csv file
     if not Path(csv_file).exists():
         big_df.to_csv(csv_file, index=False, header=True)
     else:
-            big_df.to_csv(
-                            csv_file,
-                            index=False,
-                            mode="a",
-                            header=False,
-                        )
-            
+        big_df.to_csv(
+            csv_file,
+            index=False,
+            mode="a",
+            header=False,
+        )
+
     return big_df
+
 
 def plot_identity_violations(args, big_df):
     sns.set_theme(style="whitegrid")
     sns.set_context("paper")
-    big_df['i'] = big_df['i'].astype(int)
-    big_df['Percent Violations'] = big_df['Percent Violations'] * 100 
-    big_df['Percent Violations'] = big_df['Percent Violations'].round(2).astype(float)
-   
-   # Replace the underscore in "Iterate", "distance" with a space
-    big_df['Iterate'] = big_df['Iterate'].str.replace("_", " ")
-    big_df['distance'] = big_df['distance'].str.replace("_", " ")
+    big_df["i"] = big_df["i"].astype(int)
+    big_df["Percent Violations"] = big_df["Percent Violations"] * 100
+    big_df["Percent Violations"] = big_df["Percent Violations"].round(2).astype(float)
+
+    # Replace the underscore in "Iterate", "distance" with a space
+    big_df["Iterate"] = big_df["Iterate"].str.replace("_", " ")
+    big_df["distance"] = big_df["distance"].str.replace("_", " ")
     # Title-ize the iterate and distance columns
-    big_df['Iterate'] = big_df['Iterate'].str.title()
-    big_df['Iterate'].str.replace('Sig Figs', 'Significant Figures')
-    big_df['distance'] = big_df['distance'].str.title() 
-    big_df['Compressor'] = big_df['method'].str.upper()
+    big_df["Iterate"] = big_df["Iterate"].str.title()
+    big_df["Iterate"].str.replace("Sig Figs", "Significant Figures")
+    big_df["distance"] = big_df["distance"].str.title()
+    big_df["Compressor"] = big_df["method"].str.upper()
     # Drop " Ncd" from the distance column
-    big_df['distance'] = big_df['distance'].str.replace(" Ncd", "")
+    big_df["distance"] = big_df["distance"].str.replace(" Ncd", "")
     g = sns.relplot(
-        data=big_df, 
-        x="i", 
-        y="Percent Violations",  
-        col="Iterate", 
-        row="distance", 
-        kind="line", 
-        height=4, 
-        aspect=1, 
-        hue="Identity", 
-        style="Compressor", 
-        row_order=["Unmodified", "Sorted", "Modified"], 
-        col_order=["Sig Figs", "Max String Size", "Alphabet Size"], 
-        facet_kws={"sharex":False, "sharey":True})
+        data=big_df,
+        x="i",
+        y="Percent Violations",
+        col="Iterate",
+        row="distance",
+        kind="line",
+        height=4,
+        aspect=1,
+        hue="Identity",
+        style="Compressor",
+        row_order=["Unmodified", "Sorted", "Modified"],
+        col_order=["Sig Figs", "Max String Size", "Alphabet Size"],
+        facet_kws={"sharex": False, "sharey": True},
+    )
     g.set_titles("{col_name} | {row_name}")
     g.set_xlabels("{col_name}")
     g.set_axis_labels("Values", "Percent Violations")
     g.savefig(f"{args.folder}/{args.results_plot}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--sig_figs", type=int, default=5)
     parser.add_argument("--samples", type=int, default=1000)
     parser.add_argument("--max_string_size", type=int, default=5)
-    parser.add_argument("--max_alphabet_size", type=int, default=95) # acutal max is 95
+    parser.add_argument("--max_alphabet_size", type=int, default=95)  # acutal max is 95
     parser.add_argument(
         "--iterate",
         type=str,
@@ -688,13 +745,10 @@ if __name__ == "__main__":
     parser.add_argument("--results_plot", type=str, default="results.pdf")
     args = parser.parse_args()
     # Log file
-    
 
     big_df = check_all_distances(args)
-    
+
     # Generate a sns.catplot with cols=iterate, x=Values, y=Percent Violations, hue=Identity
     csv_file = Path(args.folder) / Path(args.results_file)
     big_df = pd.read_csv(csv_file)
     plot_identity_violations(args, big_df)
-    
-    

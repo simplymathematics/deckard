@@ -22850,3 +22850,165 @@ stages:
       hash: md5
       md5: 9b3c614c5610585a10678c874efb5de0
       size: 76
+  condense@ddos-knn-0.5-zstd-true-0-1000-400-true:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=1000
+      data.sample.test_size=400 data.sample.random_state=0 model_name=knn model=gzip_knn
+      ++model.init.m=0.5 ++model.init.symmetric=true ++model.init.modified=true ++model.init.metric=zstd
+      ++model.init.condensing_method=medoid,sum,svc,random,hardness,nearmiss,knn files.directory=ddos
+      ++model.init.distance_matrix=ddos/models/zstd/symmetry_true/modified_true/1000-400-0.npz
+      hydra.sweeper.study_name=condense_knn_ddos 
+      files.reports=reports/condense/knn/zstd/0.5/symmetry_true/modified_true/1000-400-0/
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 
+      hydra.sweep.dir=ddos/logs/condense/knn/zstd/0.5/symmetry_true/modified_true/1000-400-0/
+      hydra.launcher.n_jobs=-1 --config-name condense_knn --multirun
+    deps:
+    - path: conf/condense_knn.yaml
+      hash: md5
+      md5: 8dd7ea55087d559a415fc631c65062f0
+      size: 1753
+    - path: ddos/models/zstd/symmetry_true/modified_true/1000-400-0.npz
+      hash: md5
+      md5: b04a70ac83d9066e88d827d276223482
+      size: 3140497
+    - path: params.yaml
+      hash: md5
+      md5: 039d42409bc7343a6b8b07b996ec2526
+      size: 1086
+    params:
+      conf/condense_knn.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/${stage}/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: optuna_database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions:
+              - maximize
+              metric_names:
+              - accuracy
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: true
+              n_startup_trials: 32
+              n_ei_candidates: 32
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            direction: ${direction}
+            storage: sqlite:///optuna.db
+            study_name: ???
+            n_trials: ${oc.env:DECKARD_TRIALS, 128}
+            n_jobs: ${oc.env:DECKARD_JOBS, 8}
+            max_failure_rate: 1.0
+            params:
+              model.init.k: 3
+              +model.init.weights: uniform,distance
+              +model.init.algorithm: brute
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: -1
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: 
+        ddos/logs/condense/knn/zstd/0.5/symmetry_true/modified_true/1000-400-0/optimization_results.yaml
+      hash: md5
+      md5: 9b3c614c5610585a10678c874efb5de0
+      size: 76
+  condense@ddos-knn-0.3-lzma-true-0-1000-400-true:
+    cmd: python -m deckard.layers.optimise stage=train data=ddos dataset=ddos data.sample.train_size=1000
+      data.sample.test_size=400 data.sample.random_state=0 model_name=knn model=gzip_knn
+      ++model.init.m=0.3 ++model.init.symmetric=true ++model.init.modified=true ++model.init.metric=lzma
+      ++model.init.condensing_method=medoid,sum,svc,random,hardness,nearmiss,knn files.directory=ddos
+      ++model.init.distance_matrix=ddos/models/lzma/symmetry_true/modified_true/1000-400-0.npz
+      hydra.sweeper.study_name=condense_knn_ddos 
+      files.reports=reports/condense/knn/lzma/0.3/symmetry_true/modified_true/1000-400-0/
+      hydra.sweeper.n_trials=128 hydra.sweeper.n_jobs=8 
+      hydra.sweep.dir=ddos/logs/condense/knn/lzma/0.3/symmetry_true/modified_true/1000-400-0/
+      hydra.launcher.n_jobs=-1 --config-name condense_knn --multirun
+    deps:
+    - path: conf/condense_knn.yaml
+      hash: md5
+      md5: 8dd7ea55087d559a415fc631c65062f0
+      size: 1753
+    - path: ddos/models/lzma/symmetry_true/modified_true/1000-400-0.npz
+      hash: md5
+      md5: 65c042b543560f281b8b0adf061f9a81
+      size: 1712512
+    - path: params.yaml
+      hash: md5
+      md5: 039d42409bc7343a6b8b07b996ec2526
+      size: 1086
+    params:
+      conf/condense_knn.yaml:
+        hydra:
+          run:
+            dir: ${dataset}/logs/${stage}/
+          sweep:
+            dir: ???
+            subdir: ${hydra.job.num}
+          callbacks:
+            study_dump:
+              _target_: optuna_database.OptunaStudyDumpCallback
+              storage: ${hydra.sweeper.storage}
+              study_name: ${hydra.sweeper.study_name}
+              directions:
+              - maximize
+              metric_names:
+              - accuracy
+              output_file: ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+          sweeper:
+            sampler:
+              _target_: optuna.samplers.TPESampler
+              seed: 123
+              consider_prior: true
+              prior_weight: 1.0
+              consider_magic_clip: true
+              consider_endpoints: true
+              n_startup_trials: 32
+              n_ei_candidates: 32
+              multivariate: true
+            _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            direction: ${direction}
+            storage: sqlite:///optuna.db
+            study_name: ???
+            n_trials: ${oc.env:DECKARD_TRIALS, 128}
+            n_jobs: ${oc.env:DECKARD_JOBS, 8}
+            max_failure_rate: 1.0
+            params:
+              model.init.k: 3
+              +model.init.weights: uniform,distance
+              +model.init.algorithm: brute
+          launcher:
+            _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+            n_jobs: -1
+            prefer: processes
+            verbose: 1
+            timeout:
+            pre_dispatch: ${hydra.sweeper.n_jobs}
+            batch_size: auto
+            temp_folder: /tmp/deckard
+            max_nbytes: 100000
+            mmap_mode: r
+    outs:
+    - path: 
+        ddos/logs/condense/knn/lzma/0.3/symmetry_true/modified_true/1000-400-0/optimization_results.yaml
+      hash: md5
+      md5: 9b3c614c5610585a10678c874efb5de0
+      size: 76
