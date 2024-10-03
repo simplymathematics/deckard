@@ -1,14 +1,82 @@
 cat_plot:
+  - file: modified_models_vs_accuracy.pdf
+    x: Model
+    y: accuracy
+    hue: model.init.modified
+    errorbar: se
+    kind: boxen
+    titles:
+    xlabels: "Models" 
+    ylabels: Accuracy
+    rotation: 90
+    col: Dataset
+    legend_title: "Algorithm"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+  - file: modified_models_vs_train_time.pdf
+    x: Model
+    y: train_time
+    hue: model.init.modified
+    errorbar: se
+    kind: boxen
+    titles:
+    xlabels: "Models" 
+    ylabels: $t_t$ (s)
+    rotation: 90
+    col: Dataset
+    legend_title: "Algorithm"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+    y_scale: log
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
+  - file: modified_models_vs_predict_time.pdf
+    x: Model
+    y: predict_time_per_sample
+    hue: model.init.modified
+    errorbar: se
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: $t_i$ (s)
+    rotation: 90
+    col: Dataset
+    legend_title: "Algorithm"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+    y_scale: log
+    order:
+      - k-KNN
+      - k-SVC
+      - k-Logistic
+    col_order:
+      - DDoS
+      - SMS Spam
+      - KDD NSL
+      - Truthseeker
   - file: condensing_ratio_vs_accuracy.pdf
     x: "Condensing Method"
-    hue : "Condensing Ratio"
-    y : accuracy
-    y_scale : linear
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    hue: "Condensing Ratio"
+    y: accuracy
+    y_scale: linear
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     kind: strip
-    row : Model
-    col : Dataset
-    rotation : 45
+    row: Model
+    col: Dataset
+    rotation: 45
     order:
       - Random
       - Medoid
@@ -19,20 +87,19 @@ cat_plot:
       - KNN
     legend_title: "Condensing Ratio"
     ylabels: "Accuracy"
-    xlabels: "Condensing Ratio"
+    xlabels: "Condensing Method"
   - file: models_vs_accuracy.pdf
-    x : Model
-    y : accuracy
-    hue : data.sample.train_size
+    x: Model
+    y: accuracy
+    hue: data.sample.train_size
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : "Accuracy"
+    kind: boxen
+    titles:
     legend_title: "Samples"
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    xlabels: "Models"
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    col : Dataset
+    col: Dataset
     order:
       - k-KNN
       - k-SVC
@@ -42,20 +109,25 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    hue_order:
+      - 20
+      - 100
+      - 300
+      - 500
   - file: models_vs_train_time.pdf
-    x : Model
-    y : train_time
-    hue : data.sample.train_size
+    x: Model
+    y: train_time
+    hue: data.sample.train_size
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : "Models" 
-    ylabels : $t_t$ (s)
+    kind: boxen
+    titles:
+    xlabels: "Models" 
+    ylabels: $t_t$ (s)
     legend_title: "Samples"
     rotation: 90
-    col : Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
-    y_scale : log
+    col: Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+    y_scale: log
     order:
       - k-KNN
       - k-SVC
@@ -65,20 +137,25 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    hue_order:
+      - 20
+      - 100
+      - 300
+      - 500
   - file: models_vs_predict_time.pdf
-    x : Model
-    y : predict_time_per_sample
-    hue : data.sample.train_size
+    x: Model
+    y: predict_time_per_sample
+    hue: data.sample.train_size
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : $t_i$ (s)
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: $t_i$ (s)
     legend_title: "Samples"
-    col : Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    col: Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    y_scale : log
+    y_scale: log
     order:
       - k-KNN
       - k-SVC
@@ -88,129 +165,115 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    hue_order:
+      - 20
+      - 100
+      - 300
+      - 500
   - file: symmetric_models_vs_accuracy.pdf
-    row : Model
-    x : data.sample.train_size
-    y : accuracy
-    hue : Symmetric
+    x: Model
+    y: accuracy
+    hue: Symmetric
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : "Samples" 
-    ylabels : Accuracy
+    kind: boxen
+    titles:
+    xlabels: "Samples" 
+    ylabels: Accuracy
     legend_title: " "
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    col :  Dataset
+    col:  Dataset
     col_order: 
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row_order:
+    order:
       - k-KNN
       - k-SVC
       - k-Logistic
-    order : 
-      - 20
-      - 100
-      - 300
-      - 500
   - file: symmetric_models_vs_train_time.pdf
-    row : Model
-    x : data.sample.train_size
-    y : train_time_per_sample
-    hue : Symmetric
+    x: Model
+    y: train_time_per_sample
+    hue: Symmetric
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : "$t_t$ (s)"
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: "$t_t$ (s)"
     legend_title: " "
     rotation: 90
-    col : Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
-    y_scale : log
-    order : 
-      - 20
-      - 100
-      - 300
-      - 500
+    col: Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+    y_scale: log
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row_order:
+    order:
       - k-KNN
       - k-SVC
       - k-Logistic
   - file: symmetric_models_vs_predict_time.pdf
-    x : data.sample.train_size
-    row : Model
-    y : predict_time_per_sample
-    hue : Symmetric
+    x: Model
+    y: predict_time_per_sample
+    hue: Symmetric
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : $t_i$ (s)
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: $t_i$ (s)
     legend_title: " "
-    col : Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    col: Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    y_scale : log
+    y_scale: log
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row_order:
+    order:
       - k-KNN
       - k-SVC
       - k-Logistic
-    order : 
-      - 20
-      - 100
-      - 300
-      - 500
   - file: condensing_methods_vs_accuracy.pdf
-    row : Model
-    y : accuracy
-    x : Condensing Method
-    hue : Condensing Method
+    x: Model
+    y: accuracy
+    hue: Condensing Method
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : "Condensing Method" 
-    ylabels : Accuracy
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind: boxen
+    titles:
+    xlabels: "Condensing Method" 
+    ylabels: Accuracy
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    col : Dataset
+    col: Dataset
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row_order:
+    order:
       - k-KNN
       - k-SVC
       - k-Logistic
     legend_title: "Condensing Method"
   - file: condensing_methods_vs_train_time.pdf
-    x : Model
-    y : train_time
-    hue : Condensing Method
+    x: Model
+    y: train_time
+    hue: Condensing Method
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : $t_t$ (s)
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: $t_t$ (s)
     legend_title: "Condensing Method"
     rotation: 90
-    col : Dataset
-    y_scale : log
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    col: Dataset
+    y_scale: log
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     col_order:
       - DDoS
       - SMS Spam
@@ -221,19 +284,19 @@ cat_plot:
       - k-SVC
       - k-Logistic
   - file: condensing_methods_vs_predict_time.pdf
-    x : Model
-    y : predict_time_per_sample
-    hue : Condensing Method
+    x: Model
+    y: predict_time_per_sample
+    hue: Condensing Method
     errorbar: se
-    kind : boxen
-    titles :
-    xlabels : " " 
-    ylabels : $t_i$ (s)
+    kind: boxen
+    titles:
+    xlabels: " " 
+    ylabels: $t_i$ (s)
     legend_title: "Condensing Method"
-    col : Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    col: Dataset
+    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
-    y_scale : log
+    y_scale: log
     col_order:
       - DDoS
       - SMS Spam
@@ -253,7 +316,6 @@ line_plot:
     ylabel: Accuracy
     hue_order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -266,12 +328,12 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
   - file: string_metric_vs_accuracy.pdf
-    hue : Metric
+    hue: Metric
     title: #"Accuracy vs $m$-best samples across datasets and string metrics"
     x: data.sample.train_size
     xlabel: Number of Training Samples
@@ -293,13 +355,13 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
   
   - file: string_metric_vs_train_time.pdf
-    hue : Metric
+    hue: Metric
     title: #"Accuracy vs $m$-best samples across datasets and string metrics"
     x: data.sample.train_size
     xlabel: Number of Training Samples
@@ -321,10 +383,10 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
     y_scale: log
   - file: compressor_metric_vs_train_time.pdf
     hue: Metric
@@ -335,7 +397,6 @@ line_plot:
     ylabel: $t_t$ (s)
     hue_order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -348,13 +409,13 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
     y_scale: log
   - file: string_metric_vs_predict_time.pdf
-    hue : Metric
+    hue: Metric
     title: #"Accuracy vs $m$-best samples across datasets and string metrics"
     x: data.sample.train_size
     xlabel: Number of Training Samples
@@ -376,10 +437,10 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
     y_scale: log
   - file: compressor_metric_vs_predict_time.pdf
     hue: Metric
@@ -390,7 +451,6 @@ line_plot:
     ylabel: $t_i$ (s)
     hue_order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -403,8 +463,9 @@ line_plot:
     - "SMS Spam"
     - "KDD NSL"
     - "Truthseeker"
-    legend : 
-      bbox_to_anchor : [1.05, .5]
+    legend: 
+      bbox_to_anchor: [1.05, .5]
       loc: center left
-      prop: {"size" : 12}
+      prop: {"size": 12}
     y_scale: log
+  

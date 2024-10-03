@@ -4,7 +4,7 @@ vars:
   - conf/plots.yaml:cat_plot
   # - conf/condensed_plots.yaml:line_plot
   # - conf/clean.yaml:params
-  # - conf/clean.yaml:fillna
+  - conf/clean.yaml:fillna
   - conf/clean.yaml:replace
 stages:
   ##############################################################################
@@ -219,7 +219,7 @@ stages:
       dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] 
       model_name : [knn, svc, logistic]
       ratio : [.9, .5, .3, .2, .1]
-      metric : [gzip, lzma, bz2, zstd, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio]
+      metric : [gzip, lzma, bz2, zstd] #levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
       symmetric : [true]
       random_state : [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9
       train_size : [1000]
@@ -266,7 +266,7 @@ stages:
   compile:
     matrix:
       dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
+      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic, modified/gzip_knn, modified/gzip_svc, modified/gzip_logistic]
     deps:
       - ${item.dataset}/${files.reports}/${item.stage}/
     outs:
@@ -282,7 +282,7 @@ stages:
   clean:
     matrix:
       dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic]
+      stage : [gzip_knn, gzip_svc, gzip_logistic, condense/knn, condense/svc, condense/logistic, modified/gzip_knn, modified/gzip_svc, modified/gzip_logistic]
     deps:
       - ${item.dataset}/${files.reports}/${item.stage}.csv
     cmd: >-
@@ -297,6 +297,7 @@ stages:
         - replace
         - drop_values
         - replace_cols
+        - fillna
   ##############################################################################
   merge:
     matrix:
@@ -331,51 +332,51 @@ stages:
       --output_file condensed_merged.csv
     outs:
       - ${item.dataset}/plots/condensed_merged.csv
-  ##############################################################################
-  plot:
-    matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-    cmd: >-
-      python -m deckard.layers.plots 
-      --path ${item.dataset}/plots/ 
-      --file ${item.dataset}/plots/merged.csv 
-      -c conf/plots.yaml
-    deps:
-      - ${item.dataset}/plots/merged.csv
-      - conf/plots.yaml
-    plots:
-      - ${item.dataset}/plots/${line_plot[0].file}
-      - ${item.dataset}/plots/${line_plot[1].file}
-      - ${item.dataset}/plots/${line_plot[2].file}
-      - ${item.dataset}/plots/${cat_plot[0].file}
-      - ${item.dataset}/plots/${cat_plot[1].file}
-      - ${item.dataset}/plots/${cat_plot[2].file}
-      - ${item.dataset}/plots/${cat_plot[3].file}
-      - ${item.dataset}/plots/${cat_plot[4].file}
-    params:
-      - conf/plots.yaml:
-          - line_plot
-          - cat_plot
-  ##############################################################################
-  plot_condense:
-    matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-    cmd: >-
-      python -m deckard.layers.plots 
-      --path ${item.dataset}/plots/ 
-      --file ${item.dataset}/plots/condensed_merged.csv 
-      -c conf/condensed_plots.yaml
-    deps:
-      - ${item.dataset}/plots/condensed_merged.csv
-      - conf/condensed_plots.yaml
-    plots:
-      - ${item.dataset}/plots/condensing_method_vs_accuracy.pdf
-      - ${item.dataset}/plots/condensing_method_vs_train_time.pdf
-      - ${item.dataset}/plots/condensing_method_vs_predict_time.pdf
-      - ${item.dataset}/plots/condensing_ratio_vs_accuracy.pdf
-    params:
-      - conf/condensed_plots.yaml:
-          - cat_plot
+  # ##############################################################################
+  # plot:
+  #   matrix:
+  #     dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+  #   cmd: >-
+  #     python -m deckard.layers.plots 
+  #     --path ${item.dataset}/plots/ 
+  #     --file ${item.dataset}/plots/merged.csv 
+  #     -c conf/plots.yaml
+  #   deps:
+  #     - ${item.dataset}/plots/merged.csv
+  #     - conf/plots.yaml
+  #   plots:
+  #     - ${item.dataset}/plots/${line_plot[0].file}
+  #     - ${item.dataset}/plots/${line_plot[1].file}
+  #     - ${item.dataset}/plots/${line_plot[2].file}
+  #     - ${item.dataset}/plots/${cat_plot[0].file}
+  #     - ${item.dataset}/plots/${cat_plot[1].file}
+  #     - ${item.dataset}/plots/${cat_plot[2].file}
+  #     - ${item.dataset}/plots/${cat_plot[3].file}
+  #     - ${item.dataset}/plots/${cat_plot[4].file}
+  #   params:
+  #     - conf/plots.yaml:
+  #         - line_plot
+  #         - cat_plot
+  # ##############################################################################
+  # plot_condense:
+  #   matrix:
+  #     dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+  #   cmd: >-
+  #     python -m deckard.layers.plots 
+  #     --path ${item.dataset}/plots/ 
+  #     --file ${item.dataset}/plots/condensed_merged.csv 
+  #     -c conf/condensed_plots.yaml
+  #   deps:
+  #     - ${item.dataset}/plots/condensed_merged.csv
+  #     - conf/condensed_plots.yaml
+  #   plots:
+  #     - ${item.dataset}/plots/condensing_method_vs_accuracy.pdf
+  #     - ${item.dataset}/plots/condensing_method_vs_train_time.pdf
+  #     - ${item.dataset}/plots/condensing_method_vs_predict_time.pdf
+  #     - ${item.dataset}/plots/condensing_ratio_vs_accuracy.pdf
+  #   params:
+  #     - conf/condensed_plots.yaml:
+  #         - cat_plot
   ##############################################################################
   merge_datasets:
     cmd: >-
@@ -420,11 +421,15 @@ stages:
       - combined/plots/models_vs_train_time.pdf
       - combined/plots/models_vs_predict_time.pdf
       - combined/plots/condensing_ratio_vs_accuracy.pdf
+      - combined/plots/modified_models_vs_accuracy.pdf
+      - combined/plots/modified_models_vs_train_time.pdf
+      - combined/plots/modified_models_vs_predict_time.pdf
     params:
       - conf/merged_plots.yaml:
           - cat_plot
       - conf/merged_plots.yaml:
           - line_plot
+  ##############################################################################
   copy:
     matrix:
       dataset : [kdd_nsl, truthseeker, sms_spam, ddos, combined]
@@ -435,3 +440,28 @@ stages:
       rm -rf ~/Gzip-KNN/figs/${item.dataset}/.gitignore
     deps:
       - ${item.dataset}/plots/
+  ##############################################################################
+  metric_space_check:
+    deps:
+      - combined/plots/
+    cmd: >-
+      python metric_space_check.py
+      --max_alphabet_size 52
+      --max_string_size 144
+      --sig_figs 10
+      --data random
+      --samples 1000
+      --folder metric_space_check/plots
+      --log_file metric_space_check.log
+      --results_file results.csv
+      --plot_file results.pdf
+    outs:
+      - metric_space_check/results.csv
+      - metric_space_check/metric_space_check.log
+      - metric_space_check/results.pdf
+  copy_metric_space_check:
+    cmd: >-
+      cp -r metric_space_check/*pdf ~/Gzip-KNN/images/ &&
+      cp -r metric_space_check/*csv ~/Gzip-KNN/data/
+    deps:
+      - metric_space_check/

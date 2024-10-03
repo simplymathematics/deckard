@@ -8,7 +8,6 @@ replace:
     seqRatio: "SeqRatio"
     hamming: "Hamming"
     gzip: "GZIP"
-    pkl: "Pickle"
     bz2: "BZ2"
     zstd: "ZSTD"
     lzma  : "LZMA"
@@ -19,6 +18,9 @@ replace:
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
+  model.init.modified:
+    True: "Modified"
+    False: "Vanilla"
   model.init.condensing_method:
     random : "Random"
     medoid : "Medoid"
@@ -44,4 +46,9 @@ replace_cols:
   model.init.condensing_method: Condensing Method
   model.init.m: Condensing Ratio
   model_name: Model
-  
+fillna:
+  model.init.m: 1
+  # model.init.condensing_method: random
+  model.init.symmetric: False
+  model.init.modified: False
+  model.init.metric: gzip

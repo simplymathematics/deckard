@@ -8,7 +8,6 @@ line_plot:
   ylabel: Accuracy
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -25,7 +24,6 @@ line_plot:
   ylabel: Accuracy
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -48,7 +46,6 @@ line_plot:
   ylabel: Accuracy
   hue_order:
   # - GZIP
-  # - Pickle
   # - BZ2
   # - ZSTD
   # - LZMA
@@ -72,7 +69,6 @@ line_plot:
   y_scale: linear
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -96,7 +92,6 @@ line_plot:
   y_scale: linear
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -114,7 +109,6 @@ line_plot:
   y_scale: linear
   hue_order:
   # - GZIP
-  # - Pickle
   # - BZ2
   # - ZSTD
   # - LZMA
@@ -138,7 +132,6 @@ line_plot:
   y_scale: linear
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -152,7 +145,6 @@ line_plot:
   y_scale: linear
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -194,7 +186,6 @@ cat_plot:
     legend_title: "Metrics"
     order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -221,7 +212,6 @@ cat_plot:
     legend_title: " "
     order:
     # - GZIP
-    # - Pickle
     # - BZ2
     # - ZSTD
     # - LZMA
@@ -248,7 +238,6 @@ cat_plot:
     legend_title: " "
     order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -275,7 +264,6 @@ cat_plot:
     legend_title: "Metrics"
     order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -303,7 +291,6 @@ cat_plot:
     legend_title: "String Metrics"
     order:
     # - GZIP
-    # - Pickle
     # - BZ2
     # - ZSTD
     # - LZMA
@@ -330,7 +317,6 @@ cat_plot:
     legend_title: "Metrics"
     order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
