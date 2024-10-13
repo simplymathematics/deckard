@@ -1,15 +1,15 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: ???
-    - model: gzip_svc
+    - data: kdd_nsl
+    - model: ncd_knn
     - files: default
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : tpe
     - override hydra/launcher : joblib
-dataset : ???
-model_name : gzip_svc
+dataset : kdd_nsl
+model_name : knn
 stage : train
 direction : 
   - maximize
@@ -21,10 +21,10 @@ hydra:
     dir: ${dataset}/logs/${stage}/
   sweep:
     dir: ???
-    subdir : ${hydra.job.id}
+    subdir : ${hydra.job.num}
   callbacks:
     study_dump:
-      _target_ : optuna_database.OptunaStudyDumpCallback
+      _target_ : database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
       directions : ${direction}
@@ -33,27 +33,29 @@ hydra:
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 123
       consider_prior: true
+      seed: 123
       prior_weight: 1.0
       consider_magic_clip: true
-      consider_endpoints: false
-      n_startup_trials: 10
-      n_ei_candidates: 256
-      multivariate: true
+      consider_endpoints: true
+      n_startup_trials: 128
+      n_ei_candidates: 8
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ${dataset}_${model_name}_condense
-    storage: sqlite:///optuna.db
-    n_jobs: ${oc.env:DECKARD_JOBS, 8}
-    n_trials : ${oc.env:DECKARD_TRIALS, 128}
-    params:
-      +model.init.kernel : rbf,precomputed
-      +model.init.C : tag(log, interval(1e-3, 1e3))
-      +model.init.gamma : scale,auto
-      +model.init.class_weight : balanced,null
-      ++model.init.max_iter : 1000
     direction: ${direction}
+    storage: sqlite:///output/optuna.db
+    study_name: ${dataset}_${model_name}_${stage}
+    n_trials: 128
+    n_jobs: 8
     max_failure_rate: 1.0
+    params:
+      model.init.k : 1,3,5
+      +model.init.weights : uniform,distance
+      +model.init.algorithm : brute
+      model_name : ${model_name}
+      model.init.symmetric: True,False
+      ++model.init.modified: True,False
+      ++model.init.condensing_method: medoid,sum,svc,random,hardness,nearmiss,knn,None
+      ++data.sample.random_state: int(range(0, 1000))
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8

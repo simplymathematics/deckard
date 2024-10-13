@@ -1,2 +1,2 @@
 defaults:
- - gzip_knn.yaml
+ - ncd_knn.yaml

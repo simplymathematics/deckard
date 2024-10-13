@@ -10,17 +10,20 @@ cat_plot:
     ylabels: Accuracy
     rotation: 90
     col: Dataset
+    row : Condensing Method
     legend_title: "Algorithm"
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    row_order: 
+      - "Control"
   - file: modified_models_vs_train_time.pdf
     x: Model
     y: train_time
@@ -36,9 +39,9 @@ cat_plot:
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     y_scale: log
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
@@ -59,9 +62,9 @@ cat_plot:
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     y_scale: log
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
@@ -101,9 +104,9 @@ cat_plot:
     rotation: 90
     col: Dataset
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
@@ -129,9 +132,9 @@ cat_plot:
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     y_scale: log
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
@@ -157,9 +160,9 @@ cat_plot:
     rotation: 90
     y_scale: log
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
     col_order:
       - DDoS
       - SMS Spam
@@ -189,9 +192,9 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
   - file: symmetric_models_vs_train_time.pdf
     x: Model
     y: train_time_per_sample
@@ -212,9 +215,9 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
   - file: symmetric_models_vs_predict_time.pdf
     x: Model
     y: predict_time_per_sample
@@ -235,9 +238,9 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
   - file: condensing_methods_vs_accuracy.pdf
     x: Model
     y: accuracy
@@ -245,7 +248,7 @@ cat_plot:
     errorbar: se
     kind: boxen
     titles:
-    xlabels: "Condensing Method" 
+    xlabels: "Models" 
     ylabels: Accuracy
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
@@ -256,9 +259,17 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
+    hue_order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
     legend_title: "Condensing Method"
   - file: condensing_methods_vs_train_time.pdf
     x: Model
@@ -280,9 +291,17 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
+    hue_order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
   - file: condensing_methods_vs_predict_time.pdf
     x: Model
     y: predict_time_per_sample
@@ -303,9 +322,17 @@ cat_plot:
       - KDD NSL
       - Truthseeker
     order:
-      - k-KNN
-      - k-SVC
-      - k-Logistic
+      - NCD-KNN
+      - NCD-SVC
+      - NCD-Logistic
+    hue_order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
 line_plot:
   - file: compressor_metric_vs_accuracy.pdf
     hue: Metric

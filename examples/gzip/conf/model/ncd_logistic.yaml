@@ -1,0 +1,11 @@
+data: ${data}
+library : sklearn
+init:
+    name : gzip_classifier.GzipLogisticRegressor
+    m: -1
+    metric : gzip
+    max_iter : 1000
+    symmetric : false
+    modified : false
+    distance_matrix :  ${files.directory}/${files.model_dir}/${model.init.metric}/${model.init.modified}/${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}.npz
+    condensing_method : None

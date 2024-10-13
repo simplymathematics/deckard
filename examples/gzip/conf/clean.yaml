@@ -12,9 +12,9 @@ replace:
     zstd: "ZSTD"
     lzma  : "LZMA"
   model_name:
-    GzipSVC : "k-SVC"
-    GzipLogisticRegressor : "k-Logistic"
-    GzipKNN : "k-KNN"
+    GzipSVC : "NCD-SVC"
+    GzipLogisticRegressor : "NCD-Logistic"
+    GzipKNN : "NCD-KNN"
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
@@ -48,7 +48,7 @@ replace_cols:
   model_name: Model
 fillna:
   model.init.m: 1
-  # model.init.condensing_method: random
+  model.init.condensing_method: "Control"
   model.init.symmetric: False
   model.init.modified: False
   model.init.metric: gzip
