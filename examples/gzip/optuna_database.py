@@ -6,6 +6,7 @@ import optuna
 from hydra.experimental.callback import Callback
 import argparse
 from typing import Union
+from pathlib import Path
 
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"
@@ -26,6 +27,10 @@ class OptunaStudyDumpCallback(Callback):
     ):
         self.storage = storage
         self.study_name = study_name
+        # Make sure the folder exists
+        db_file = self.storage.split("///")[-1]
+        db_folder = Path(db_file).parent
+        Path(db_folder).mkdir(parents=True, exist_ok=True)
         # Set metric names
         if isinstance(metric_names, ListConfig):
             self.metric_names = OmegaConf.to_container(metric_names, resolve=True)
@@ -33,7 +38,7 @@ class OptunaStudyDumpCallback(Callback):
             self.metric_names = metric_names
         else:
             self.metric_names = [metric_names]
-        # Single direction
+        # Set direction
         if isinstance(directions, ListConfig):
             self.directions = OmegaConf.to_container(directions, resolve=True)
         elif isinstance(directions, list):
@@ -44,13 +49,12 @@ class OptunaStudyDumpCallback(Callback):
         super().__init__()
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        studies = optuna.get_all_study_names(self.storage)
-        study_names = [study for study in studies]
-        # study_names = [study.study_name for study in studies]
-        assert (
-            self.study_name in study_names
-        ), f"Study {self.study_name} not found in {study_names}"
-        study = optuna.load_study(self.study_name, storage=self.storage)
+        study = optuna.create_study(
+            study_name=self.study_name,
+            storage=self.storage,
+            direction=self.directions,
+            load_if_exists=False,
+        )
         if hasattr(study, "set_metric_names"):
             study.set_metric_names(self.metric_names)
         else:
