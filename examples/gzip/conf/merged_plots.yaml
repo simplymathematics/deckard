@@ -5,32 +5,32 @@ cat_plot:
     hue: model.init.modified
     errorbar: se
     kind: boxen
-    titles:
+    titles: "{col_name}"
     xlabels: "Models" 
     ylabels: Accuracy
     rotation: 90
     col: Dataset
-    row : Condensing Method
     legend_title: "Algorithm"
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    row : data.sample.train_size
     row_order: 
-      - "Control"
+      -  500
   - file: modified_models_vs_train_time.pdf
     x: Model
     y: train_time
     hue: model.init.modified
     errorbar: se
     kind: boxen
-    titles:
+    titles: "{col_name}"
     xlabels: "Models" 
     ylabels: $t_t$ (s)
     rotation: 90
@@ -40,20 +40,23 @@ cat_plot:
     y_scale: log
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    row : data.sample.train_size
+    row_order: 
+      -  500
   - file: modified_models_vs_predict_time.pdf
     x: Model
     y: predict_time_per_sample
     hue: model.init.modified
     errorbar: se
     kind: boxen
-    titles:
+    titles: "{col_name}"
     xlabels: " " 
     ylabels: $t_i$ (s)
     rotation: 90
@@ -63,13 +66,16 @@ cat_plot:
     y_scale: log
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
+    row : data.sample.train_size
+    row_order: 
+      -  500
   - file: condensing_ratio_vs_accuracy.pdf
     x: "Condensing Method"
     hue: "Condensing Ratio"
@@ -92,35 +98,37 @@ cat_plot:
     ylabels: "Accuracy"
     xlabels: "Condensing Method"
   - file: models_vs_accuracy.pdf
-    x: Model
+    hue: Model
     y: accuracy
-    hue: data.sample.train_size
+    x: data.sample.train_size
     errorbar: se
     kind: boxen
     titles:
     legend_title: "Samples"
     xlabels: "Models"
+    ylabels: Accuracy
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
     col: Dataset
-    order:
+    hue_order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    hue_order:
-      - 20
+    order:
+      - 10
       - 100
       - 300
       - 500
+      - 1000
   - file: models_vs_train_time.pdf
-    x: Model
+    hue: Model
     y: train_time
-    hue: data.sample.train_size
+    x: data.sample.train_size
     errorbar: se
     kind: boxen
     titles:
@@ -131,48 +139,50 @@ cat_plot:
     col: Dataset
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     y_scale: log
-    order:
+    hue_order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    hue_order:
-      - 20
+    order:
+      - 10
       - 100
       - 300
       - 500
+      - 1000
   - file: models_vs_predict_time.pdf
-    x: Model
+    hue: Model
     y: predict_time_per_sample
-    hue: data.sample.train_size
+    x: data.sample.train_size
     errorbar: se
     kind: boxen
     titles:
-    xlabels: " " 
+    xlabels: "Models" 
     ylabels: $t_i$ (s)
     legend_title: "Samples"
     col: Dataset
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     rotation: 90
     y_scale: log
-    order:
+    hue_order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     col_order:
       - DDoS
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    hue_order:
-      - 20
+    order:
+      - 10
       - 100
       - 300
       - 500
+      - 1000
   - file: symmetric_models_vs_accuracy.pdf
     x: Model
     y: accuracy
@@ -193,8 +203,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
   - file: symmetric_models_vs_train_time.pdf
     x: Model
     y: train_time_per_sample
@@ -216,8 +226,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
   - file: symmetric_models_vs_predict_time.pdf
     x: Model
     y: predict_time_per_sample
@@ -239,8 +249,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
   - file: condensing_methods_vs_accuracy.pdf
     x: Model
     y: accuracy
@@ -260,8 +270,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     hue_order:
       - Random
       - Medoid
@@ -292,8 +302,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     hue_order:
       - Random
       - Medoid
@@ -323,8 +333,8 @@ cat_plot:
       - Truthseeker
     order:
       - NCD-KNN
-      - NCD-SVC
       - NCD-Logistic
+      - NCD-SVC
     hue_order:
       - Random
       - Medoid
@@ -346,6 +356,7 @@ line_plot:
     - BZ2
     - ZSTD
     - LZMA
+    - Brotli
     errorbar: se
     err_style: bars
     xlim: [10, 500]
@@ -427,6 +438,7 @@ line_plot:
     - BZ2
     - ZSTD
     - LZMA
+    - Brotli
     errorbar: se
     err_style: bars
     xlim: [10, 500]
@@ -481,6 +493,7 @@ line_plot:
     - BZ2
     - ZSTD
     - LZMA
+    - Brotli
     errorbar: se
     err_style: bars
     xlim: [10, 500]

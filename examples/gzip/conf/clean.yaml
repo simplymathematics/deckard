@@ -11,6 +11,7 @@ replace:
     bz2: "BZ2"
     zstd: "ZSTD"
     lzma  : "LZMA"
+    brotli: "Brotli"
   model_name:
     GzipSVC : "NCD-SVC"
     GzipLogisticRegressor : "NCD-Logistic"

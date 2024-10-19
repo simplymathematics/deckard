@@ -2,7 +2,9 @@ reports: reports
 data_dir: data
 data_file : ${dataset}-${data.sample.random_state}-${data.sample.train_size}-${data.sample.test_size}
 data_type: .pkl
-model_dir : model
+model_dir : models
+model_file : default
+model_type: .pkl
 directory: output/${dataset}
 score_dict_file: score_dict.json
 params_file : params.yaml

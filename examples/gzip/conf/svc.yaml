@@ -11,10 +11,8 @@ defaults:
 dataset : ???
 model_name : svc
 stage : train
-direction : 
-  - maximize
-optimizers: 
-   - accuracy
+direction: maximize
+optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
@@ -24,14 +22,12 @@ hydra:
     subdir : ${hydra.job.id}
   callbacks:
     study_dump:
-      _target_ : database.OptunaStudyDumpCallback
+      _target_ : optuna_database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
-      directions : 
-        - maximize
-      metric_names : 
-        - accuracy
-      output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+      directions : ${direction}
+      metric_names : ${optimizers}
+      output_file : ${hydra.sweep.dir}/study.csv
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
@@ -45,19 +41,18 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}_${stage}
     storage: sqlite:///output/optuna.db
-    n_trials: 128
-    n_jobs: 8
+    n_trials: 256
+    n_jobs: 16
+    direction: ${direction}
     params:
-      +model.init.kernel : rbf,precomputed
       +model.init.C : tag(log, interval(1e-3, 1e3))
       +model.init.gamma : scale,auto
       +model.init.class_weight : balanced,null
       model_name : ${model_name}
-      model.init.symmetric: true,false
+      ++model.init.symmetric: true,false
       ++model.init.modified: True,False
       ++model.init.condensing_method: medoid,sum,svc,random,hardness,nearmiss,knn,None
-      ++data.sample.random_state: int(range(0, 1000))
-    direction: ${direction}
+      ++model.init.transform: None,abs,square,exp_neg,exp_neg_gamma_001,exp_neg_gamma_01,exp_neg_gamma_1,exp_neg_gamma10,exp_neg_gamma100,exp_neg_gamma1000
     max_failure_rate: 1.0
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

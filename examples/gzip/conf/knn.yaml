@@ -11,10 +11,8 @@ defaults:
 dataset : kdd_nsl
 model_name : knn
 stage : train
-direction : 
-  - maximize
-optimizers: 
-   - accuracy
+direction : maximize
+optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
@@ -24,12 +22,12 @@ hydra:
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
-      _target_ : database.OptunaStudyDumpCallback
+      _target_ : optuna_database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
       directions : ${direction}
       metric_names : ${optimizers}
-      output_file : ${dataset}/logs/${model_name}/${data.sample.train_size}/study.csv
+      output_file :  ${hydra.sweep.dir}/study.csv
   sweeper:
     sampler:
       _target_: optuna.samplers.TPESampler
@@ -44,18 +42,18 @@ hydra:
     direction: ${direction}
     storage: sqlite:///output/optuna.db
     study_name: ${dataset}_${model_name}_${stage}
-    n_trials: 128
-    n_jobs: 8
+    n_trials: 256
+    n_jobs: 16
     max_failure_rate: 1.0
     params:
       model.init.k : 1,3,5
       +model.init.weights : uniform,distance
       +model.init.algorithm : brute
       model_name : ${model_name}
-      model.init.symmetric: True,False
+      ++model.init.symmetric: True,False
       ++model.init.modified: True,False
       ++model.init.condensing_method: medoid,sum,svc,random,hardness,nearmiss,knn,None
-      ++data.sample.random_state: int(range(0, 1000))
+      ++model.init.transform: None,abs,square,exp_neg,exp_neg_gamma_001,exp_neg_gamma_01,exp_neg_gamma_1,exp_neg_gamma10,exp_neg_gamma100,exp_neg_gamma1000
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 8
