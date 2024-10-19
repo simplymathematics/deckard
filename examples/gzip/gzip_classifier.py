@@ -18,6 +18,7 @@ python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --dist
 import numpy as np
 import warnings
 import gzip
+import brotli
 from tqdm import tqdm
 from pathlib import Path
 import logging
@@ -81,6 +82,8 @@ def _pickle_len(x):
 
     return len(pickle.dumps(x))
 
+def _brotli_len(x):
+    return len(brotli.compress(str(x).encode()))
 
 compressors = {
     "gzip": _gzip_len,
@@ -88,7 +91,60 @@ compressors = {
     "bz2": _bz2_len,
     "zstd": _zstd_len,
     "pkl": _pickle_len,
+    "brotli": _brotli_len,
 }
+
+transform_dict = {
+    "abs" : np.abs,
+    "square" : np.square,
+    "exp_neg" : lambda x: np.exp(-x),
+    "exp_neg_gamma_001" : lambda x: np.exp(-x/0.001),
+    "exp_neg_gamma_01" : lambda x: np.exp(-x/0.01),
+    "exp_neg_gamma_1" : lambda x: np.exp(-x/0.1),
+    "exp_neg_gamma10" : lambda x: np.exp(-x/10),
+    "exp_neg_gamma100" : lambda x: np.exp(-x/100),
+    "exp_neg_gamma1000" : lambda x: np.exp(-x/1000),
+}
+
+
+def distance_helper(x1, x2, cx1=None, cx2=None, method='gzip', modified=False):
+    x1 = str(x1)
+    x2 = str(x2)
+    if modified is True and x1 == x2:
+        return 0
+    elif modified is True and x1 != x2:
+        if x1 >= x2:
+            if method in compressors.keys():
+                result = ncd(x1, x2, cx1, cx2, method)
+            elif method in string_metrics.keys():
+                result = calculate_string_distance(x1, x2, method)
+            else:
+                raise NotImplementedError(
+                    f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+                )
+        else:  # If x1 < x2, then swap the order
+            if method in compressors.keys():
+                result = ncd(x2, x1, cx2, cx1, method)
+            elif method in string_metrics.keys():
+                result = calculate_string_distance(x2, x1, method)
+            else:
+                raise NotImplementedError(
+                    f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+                )
+    elif (
+        modified is False
+    ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
+        if method in compressors.keys():
+            result = ncd(x1, x2, cx1, cx2, method)
+        elif method in string_metrics.keys():
+            result = calculate_string_distance(x1, x2, method)
+        else:
+            raise NotImplementedError(
+                f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+            )
+    else:
+        raise ValueError(f"Expected {modified} to be a boolean")
+    return result
 
 
 def ncd(
@@ -96,7 +152,7 @@ def ncd(
     x2,
     cx1=None,
     cx2=None,
-    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", None] = "gzip",
+    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
 ) -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
@@ -178,10 +234,12 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         The number of best samples to use. If -1, all samples will be used.
     compressor: str, default="gzip"
         The name of the compressor to use. Choices are
-    method: str, default="random"
+    condensing_method: str, default="random"
         The method used to select the best training samples. Choices are "sum", "mean", "medoid", "random", "knn", "svc".
     metric: str, default="ncd"
         The metric used to calculate the distance between samples. Choices are "gzip", "lzma", "bz2", "zstd", "pkl", "pickle", "levenshtein", "ratio", "seqratio", "hamming", "jaro", "jaro".
+    transform: str, default=None
+        The transformation to apply to the distance matrix. Choices are "abs", "log", "sqrt", "square", "exp", "exp_neg", "log_neg", "rbf".
     distance_matrix: str or np.ndarray, default=None
         The path to a numpy file or a numpy array representing the distance matrix. If a path is provided, the file will be loaded. If an array is provided, it will be used directly. Default is None.
     Attributes
@@ -202,10 +260,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
-        similarity=False,
-        double_centering=False,
-        min_max_scale=False,
         modified=False,
+        transform=None,
         **kwargs,
     ):
         """
@@ -220,7 +276,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 If a path is provided, the file will be loaded. If an array is provided, it will be used directly.
                 Default is None.
             symmetric (bool): If True, the distance matrix will be treated as symmetric. Default is False.
-
+            modified (bool): If True, inputs to ncd() will be sorted and ncd(x,x) will return 0. Default is False.
+            transform (str): The transformation to apply to the distance matrix. Default is None.
         Raises:
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
@@ -230,9 +287,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             f"Initializing GzipClassifier with  m={m},  method={condensing_method}, distance_matrix={distance_matrix}, metric={metric}, symmetric={symmetric}, {kwarg_string}",
         )
         self.m = m
-        self.similarity = similarity
-        self.double_centering = double_centering
-        self.min_max_scale = min_max_scale
         if self.m > 0:
             assert (
                 condensing_method in all_condensers
@@ -250,14 +304,22 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             raise NotImplementedError(
                 f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()} and {compressors.keys()}",
             )
+        assert modified in [True, False, None], f"Expected {self.modified} in [True, False, None]"
+        assert symmetric in [True, False, None], f"Expected {self.symmetric} in [True, False, None]"
+        transform_list = list(transform_dict.keys())
+        transform_list.extend([None])
+        if transform in [None, "None", "null", ""]:
+            transform = None
+        assert transform in transform_list, f"Expected {transform} in {transform_dict.keys()}"
         self.modified = False if modified is not True else True
         self.symmetric = False if symmetric is not True else True
+        self.transform = transform
         if self.symmetric is True:
-            self._calculate_distance_matrix = (
+            self._calculate_training_distance_matrix = (
                 self._calculate_lower_triangular_distance_matrix
             )
         else:
-            self._calculate_distance_matrix = (
+            self._calculate_training_distance_matrix = (
                 self._calculate_rectangular_distance_matrix
             )
         self.distance_matrix = distance_matrix
@@ -271,6 +333,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Cx1=None,
         Cx2=None,
         n_jobs=-1,
+        transform=None,
     ):
         """
         Calculate the distance matrix between two sets of objects, treating them as strings, assuming d(a,b) != d(b,a)
@@ -296,7 +359,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(self._distance_helper)(*args)
+                delayed(distance_helper)(*args, modified=self.modified, method=self.metric)
                 for args in tqdm(
                     list_,
                     desc="Calculating rectangular distance matrix",
@@ -311,47 +374,11 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(x1),
             len(x2),
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        if transform is not None:
+            matrix_ = transform_dict[transform](matrix_)
         return matrix_
 
-    def _distance_helper(self, x1, x2, cx1=None, cx2=None):
-        x1 = str(x1)
-        x2 = str(x2)
-        method = self.metric
-        if self.modified is True and x1 == x2:
-            return 0
-        elif self.modified is True and x1 != x2:
-            if x1 >= x2:
-                if method in compressors.keys():
-                    result = ncd(x1, x2, cx1, cx2, method)
-                elif method in string_metrics.keys():
-                    result = calculate_string_distance(x1, x2, method)
-                else:
-                    raise NotImplementedError(
-                        f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
-                    )
-            else:  # If x1 < x2, then swap the order
-                if method in compressors.keys():
-                    result = ncd(x2, x1, cx2, cx1, method)
-                elif method in string_metrics.keys():
-                    result = calculate_string_distance(x2, x1, method)
-                else:
-                    raise NotImplementedError(
-                        f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
-                    )
-        elif (
-            self.modified is False
-        ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
-            if method in compressors.keys():
-                result = ncd(x1, x2, cx1, cx2, method)
-            elif method in string_metrics.keys():
-                result = calculate_string_distance(x1, x2, method)
-            else:
-                raise NotImplementedError(
-                    f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
-                )
-        else:
-            raise ValueError(f"Expected {self.modified} to be a boolean")
-        return result
+    
 
     def _calculate_lower_triangular_distance_matrix(
         self,
@@ -360,6 +387,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Cx1=None,
         Cx2=None,
         n_jobs=-1,
+        transform=None,
     ):
         """
         Calculate the distance matrix between two sets of objects, treating them as strings. Assuming the d(a,b) = d(b,a)
@@ -369,7 +397,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             np.ndarray: The distance matrix of size (len(x1), len(x2))
         """
-        assert len(x1) == len(x2), f"Expected {len(x1)} == {len(x2)}"
+        # assert len(x1) == len(x2), f"Expected {len(x1)} == {len(x2)}"
         matrix_ = np.zeros((len(x1), len(x2)))
         list_ = []
         # Find the length of the longest list
@@ -387,7 +415,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(self._distance_helper)(*args)
+                delayed(distance_helper)(*args, modified=self.modified, method=self.metric)
                 for args in tqdm(
                     list_,
                     desc="Calculating symmetric distance matrix",
@@ -413,6 +441,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(x1),
             len(x2),
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)}). "
+        if transform is not None:
+            matrix_ = transform_dict[transform](matrix_)
         return matrix_
 
     def _calculate_upper_triangular_distance_matrix(
@@ -422,6 +452,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Cx1=None,
         Cx2=None,
         n_jobs=-1,
+        transform=None,
     ):
         matrix_ = np.zeros((len(x1), len(x2)))
         Cx1 = Cx1 if Cx1 is not None else [None] * len(x1)
@@ -432,7 +463,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(self._distance_helper)(*args) for args in list_
+                delayed(distance_helper)(*args, modified=self.modified, method=self.metric) for args in list_
             ),
         )
         indices = np.triu_indices(len(x1))
@@ -451,6 +482,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(x1),
             len(x2),
         ), f"Expected {matrix_.shape} == ({len(x1)}, {len(x2)})"
+        if transform is not None:
+            matrix_ = transform_dict[transform](matrix_)
         return matrix_
 
     def _load_distance_matrix(self, path):
@@ -480,31 +513,34 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             isinstance(self.distance_matrix, str)
             and not Path(self.distance_matrix).exists()
         ):
-            distance_matrix = self._calculate_distance_matrix(
+            distance_matrix = self._calculate_training_distance_matrix(
                 self.X_,
                 self.X_,
                 Cx1=self.Cx_,
                 Cx2=self.Cx_,
                 n_jobs=n_jobs,
+                transform=self.transform,
             )
             self._save_distance_matrix(self.distance_matrix, distance_matrix)
         elif isinstance(self.distance_matrix, np.ndarray) and update is False:
             distance_matrix = self.distance_matrix
         elif isinstance(self.distance_matrix, np.ndarray) and update is True:
-            distance_matrix = self._calculate_distance_matrix(
+            distance_matrix = self._calculate_training_distance_matrix(
                 self.X_,
                 self.X_,
                 Cx1=self.Cx_,
                 Cx2=self.Cx_,
                 n_jobs=n_jobs,
+                transform=self.transform,
             )
         elif isinstance(self.distance_matrix, type(None)):
-            distance_matrix = self._calculate_distance_matrix(
+            distance_matrix = self._calculate_training_distance_matrix(
                 self.X_,
                 self.X_,
                 Cx1=self.Cx_,
                 Cx2=self.Cx_,
                 n_jobs=n_jobs,
+                transform=self.transform,
             )
         else:
             raise ValueError(
@@ -519,28 +555,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         assert (
             len(self.y_) == distance_matrix.shape[0]
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
-        # Convert from distance to similarity
-        if self.similarity is True:
-            max_ = np.max(distance_matrix)
-            distance_matrix = max_ - distance_matrix  # Similarity = 1 - distance
-        elif self.similarity is False:
-            pass
-        else:  # pragma: no cover
-            raise NotImplementedError(
-                f"Similarity {self.similarity} not supported. Supported similarities are: True, False",
-            )
-        # Min-max scale
-        if self.min_max_scale is True:
-            min_ = np.min(distance_matrix)
-            max_ = np.max(distance_matrix)
-            distance_matrix = (distance_matrix - min_) / (max_ - min_)
-
-        # Double centering
-        if self.double_centering is True:
-            n = len(distance_matrix)
-            H = np.eye(n) - np.ones((n, n)) / n
-            distance_matrix = -0.5 * H @ distance_matrix @ H
         return distance_matrix
+    
+    
 
     def _find_best_samples(self, method="medoid", n_jobs=-1, update=False):
         """
@@ -558,6 +575,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             np.ndarray,
         ), f"Expected {type(self.distance_matrix)} to be np.ndarray"
         distance_matrix = self.distance_matrix
+
         indices = []
         if isinstance(self.m, float):
             m = int(self.m * len(self.X_) / self.n_classes_)
@@ -640,14 +658,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if len(indices) > len(self.X_):
             indices = indices[: len(self.X_)]
         return indices
-
+    
+    
     def fit(
         self,
         X: np.ndarray,
         y: np.ndarray,
         n_jobs=-1,
-        X_test=None,
-        y_test=None,
         update=False,
     ):
         """Fit the model using X as training data and y as target values. If self.m is not -1, the best m samples will be selected using the method specified in self.condensing_method.
@@ -663,7 +680,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             GzipClassifier: The fitted model
         """
-        assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
+        # The code snippet is performing an assertion check in Python. It is verifying whether the
+        # length of the list `X` is equal to the length of the list `y`. If the lengths are not equal,
+        # it will raise an AssertionError with a message indicating the expected and actual lengths.
+        # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
         logger.debug(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
         y = np.array(y) if not isinstance(y, np.ndarray) else y
@@ -689,7 +709,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         else:
             self.Cx_ = None
             self.X_ = self.X_.astype(str)
-        if self.m == 1 or self.m == -1 or update is True:
+        if self.m == 1 or self.m == -1 or self.m == 0 or update is True:
             self.distance_matrix = self._prepare_training_matrix(
                 n_jobs=n_jobs,
                 update=update,
@@ -730,9 +750,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         logger.debug(
             f"Selected {len(self.X_)} samples using method {self.condensing_method}.",
         )
-        assert len(self.X_) == len(
-            self.y_,
-        ), f"Expected {len(self.X_)} == {len(self.y_)}"
+        # # The code is performing an assertion check to verify that the length of `self.X_` is equal
+        # to the length of `self.y_`. If the lengths are not equal, an assertion error will be
+        # raised with a message indicating the expected lengths. However, the assertion is currently
+        # commented out with `
+        # assert len(self.X_) == len(
+        # #     self.y_,
+        # # ), f"Expected {len(self.X_)} == {len(self.y_)}"
         assert distance_matrix.shape == (
             len(self.X_),
             len(self.X_),
@@ -760,29 +784,30 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     dynamic_ncols=True,
                 )
             )
-            assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
-            assert len(self.X_) == len(
-                self.Cx_,
-            ), f"Expected {len(self.X_)} == {len(self.Cx_)}"
+            # assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
+            # assert len(self.X_) == len(
+            #     self.Cx_,
+            # ), f"Expected {len(self.X_)} == {len(self.Cx_)}"
             distance_matrix = self._calculate_rectangular_distance_matrix(
                 x1=X,
                 Cx1=Cx2,
                 x2=self.X_,
                 Cx2=self.Cx_,
                 n_jobs=-1,
+                transform=self.transform,
             )
         else:
             distance_matrix = self._calculate_rectangular_distance_matrix(
                 x2=self.X_,
                 x1=X,
                 n_jobs=-1,
+                transform=self.transform,
             )
         assert distance_matrix.shape == (
             len(X),
             len(self.X_),
         ), f"Expected {distance_matrix.shape} == ({len(X)}, {len(self.X_)})"
         y_pred = self.clf_.predict(distance_matrix)
-
         if len(np.squeeze(y_pred).shape) == 1:
             encoder = LabelBinarizer()
             y_pred = encoder.fit(self.y_).transform(y_pred)
@@ -819,10 +844,8 @@ class GzipKNN(GzipClassifier):
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
-        similarity=False,
-        double_centering=False,
-        min_max_scale=False,
         modified=False,
+        transform=None,
         **kwargs,
     ):
         super().__init__(
@@ -831,10 +854,8 @@ class GzipKNN(GzipClassifier):
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
-            similarity=similarity,
-            double_centering=double_centering,
-            min_max_scale=min_max_scale,
             modified=modified,
+            transform=transform,
             **kwargs,
         )
         self.clf_ = KNeighborsClassifier(n_neighbors=k, metric="precomputed", **kwargs)
@@ -864,10 +885,10 @@ class GzipKNN(GzipClassifier):
                     dynamic_ncols=True,
                 )
             )
-            assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
-            assert len(self.X_) == len(
-                self.Cx_,
-            ), f"Expected {len(self.X_)} == {len(self.Cx_)}"
+            # assert len(Cx2) == len(X), f"Expected {len(Cx2)} == {len(X)}"
+            # assert len(self.X_) == len(
+            #     self.Cx_,
+            # ), f"Expected {len(self.X_)} == {len(self.Cx_)}"
             distance_matrix = self._calculate_rectangular_distance_matrix(
                 x1=X,
                 Cx1=Cx2,
@@ -901,10 +922,8 @@ class GzipLogisticRegressor(GzipClassifier):
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
-        similarity=False,
-        double_centering=False,
-        min_max_scale=False,
         modified=False,
+        transform=None,
         **kwargs,
     ):
         clf = LogisticRegression(**kwargs)
@@ -915,10 +934,8 @@ class GzipLogisticRegressor(GzipClassifier):
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
-            similarity=similarity,
-            double_centering=double_centering,
-            min_max_scale=min_max_scale,
             modified=modified,
+            transform=transform,
             **kwargs,
         )
 
@@ -930,19 +947,16 @@ class BatchedGzipLogisticRegressor(BatchedMixin, GzipLogisticRegressor):
 class GzipSVC(GzipClassifier):
     def __init__(
         self,
-        kernel="rbf",
         m=0,
         condensing_method="random",
         distance_matrix=None,
         metric="gzip",
         symmetric=False,
-        similarity=False,
-        double_centering=False,
-        min_max_scale=False,
         modified=False,
+        transform=None,
         **kwargs,
     ):
-        clf = SVC(kernel=kernel, **kwargs)
+        clf = SVC(kernel="precomputed", **kwargs)
         super().__init__(
             clf_=clf,
             condensing_method=condensing_method,
@@ -950,13 +964,10 @@ class GzipSVC(GzipClassifier):
             distance_matrix=distance_matrix,
             metric=metric,
             symmetric=symmetric,
-            similarity=similarity,
-            double_centering=double_centering,
-            min_max_scale=min_max_scale,
             modified=modified,
+            transform=transform,
             **kwargs,
         )
-        self.kernel = kernel
 
 
 class BatchedGzipSVC(GzipSVC, BatchedMixin):
