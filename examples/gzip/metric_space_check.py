@@ -64,7 +64,7 @@ def find_longest_common_substring(x, y):
             while i + length < m and j + length < n and x[i + length] == y[j + length]:
                 length += 1
             if length > len(common):
-                common = x[i : i + length]  # noqa E203
+                common = x[i : i + length]  # noqa E203,
     return common
 
 
@@ -73,7 +73,7 @@ def old_ncd(
     x2,
     cx1=None,
     cx2=None,
-    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", None] = "gzip",
+    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
 ) -> float:
     """
     Calculate the normalized compression distance between two objects treated as strings.
@@ -112,14 +112,27 @@ def sorted_ncd(x, y, method="gzip"):
     x, y = sort_xy(x, y)
     return old_ncd(x, y, method=method)
 
+def squared_ncd(x, y, method="gzip"):
+    x = str(x) if not isinstance(x, str) else x
+    y = str(y) if not isinstance(y, str) else y
+    x, y = sort_xy(x, y)
+    return old_ncd(x, y, method=method)**2
 
 def sort_xy(x, y):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
-    if x < y:
-        return y, x
+    lx = len(x)
+    ly = len(y)
+    if lx < ly: 
+        res = y, x
+    elif lx == ly:
+        if x > y:
+            res = x, y
+        else:
+            res = y, x
     else:
-        return x, y
+        res = x, y
+    return res
 
 
 def distance_safe_ncd(x, y, method="gzip"):
@@ -127,7 +140,7 @@ def distance_safe_ncd(x, y, method="gzip"):
     if x == y:
         return 0
     # Sort x and y to ensure that the distance is symmetric
-    x, y = sort_xy(x, y)
+    x, y = sort_xy(x, y, method=method)
     # Calculate the distance
     ncd = actual_min_ncd(x, y, method=method)
     return ncd
@@ -191,22 +204,17 @@ def actual_min_ncd(x, y, method="gzip"):
     compressed_length_xy = compressors[method](x + y)
     compressed_length_x = compressors[method](x)
     compressed_length_y = compressors[method](y)
-    compressed_length_yx = compressors[method](y + x)
     actual_min = min(
         compressed_length_xy,
         compressed_length_x,
         compressed_length_y,
-        compressed_length_yx,
-        # length_x,
-        # length_y,
-        # length_xy,
     )
     if actual_min == compressed_length_xy and (
         actual_min != compressed_length_x and actual_min != compressed_length_y
     ):
-        print(f"Compressed length of x: {compressed_length_x}")
-        print(f"Compressed length of y: {compressed_length_y}")
-        print(f"Compressed length of xy: {compressed_length_xy}")
+        logger.info(f"Compressed length of x: {compressed_length_x}")
+        logger.info(f"Compressed length of y: {compressed_length_y}")
+        logger.info(f"Compressed length of xy: {compressed_length_xy}")
         input(
             "Actual min is compressed length of xy, but not compressed length of x or y",
         )
@@ -246,10 +254,7 @@ def byte_generator(
     return bytes([random.randint(0, alphabet_size) for _ in range(size)])
 
 
-def check_triangle_inequality(x, y, z, dist=unmodified_ncd, method="gzip"):
-    xz = dist(x, z, method=method)
-    yz = dist(y, z, method=method)
-    xy = dist(x, y, method=method)
+def check_triangle_inequality(x,y,z, xz, xy, yz):
     if xz > xy + yz:
         raise ValueError(
             f"Triangle Inequality failed for {x}, {y}, {z}. <x,z> = {xz} > <x,y> + <y,z> = {xy + yz}",
@@ -265,23 +270,7 @@ def check_triangle_inequality(x, y, z, dist=unmodified_ncd, method="gzip"):
     return 0
 
 
-def check_symmetry(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
-    xz = dist(x, z, method=method)
-    yz = dist(y, z, method=method)
-    xy = dist(x, y, method=method)
-    zx = dist(z, x, method=method)
-    zy = dist(z, y, method=method)
-    yx = dist(y, x, method=method)
-    xz = round(xz, sig_figs)
-    yz = round(yz, sig_figs)
-    xy = round(xy, sig_figs)
-    zx = round(zx, sig_figs)
-    zy = round(zy, sig_figs)
-    yx = round(yx, sig_figs)
-    # assert xz == zx, ValueError(f"XZ: {xz} != {zx}")
-    # assert yz == zy, ValueError(f"YZ: {yz} != {zy}")
-    # assert xy == yx, ValueError(f"XY: {xy} != {yx}")
-    # return None
+def check_symmetry(xy, xz, yz, yx, zx, zy):
     if xz != zx:
         raise ValueError(f"XZ: {xz} != {zx}")
     elif yz != zy:
@@ -292,26 +281,15 @@ def check_symmetry(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
         return 0
 
 
-def check_zero(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
-    xx = dist(x, x, method=method)
-    yy = dist(y, y, method=method)
-    zz = dist(z, z, method=method)
-    xx = round(xx, sig_figs)
-    yy = round(yy, sig_figs)
-    zz = round(zz, sig_figs)
+def check_zero(x, y, z, xx, yy, zz, xy, xz, yz, yx, zx, zy):
     if xx != 0:
         raise ValueError(f"<x,x> = {xx}")
     elif yy != 0:
         raise ValueError(f"<y,y> = {yy}")
     elif zz != 0:
         raise ValueError(f"<z,z> = {zz}")
-
-    yx = dist(y, x)
-    xy = dist(x, y)
-    zx = dist(z, x)
-    xz = dist(x, z)
-    yz = dist(y, z)
-    zy = dist(z, y)
+    
+    # Checks that other inner products are 0 if and only if the elements are equal
     if yx == 0:
         if y != x:
             raise ValueError(f"<{y},{x}> = 0, but {y} != {x}")
@@ -333,19 +311,7 @@ def check_zero(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
     return 0
 
 
-def check_positivity(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
-    xz = dist(x, z, method=method)
-    zx = dist(z, x, method=method)
-    yz = dist(y, z, method=method)
-    zy = dist(z, y, method=method)
-    xy = dist(x, y, method=method)
-    yx = dist(y, x, method=method)
-    xz = round(xz, sig_figs)
-    zx = round(zx, sig_figs)
-    yz = round(yz, sig_figs)
-    zy = round(zy, sig_figs)
-    xy = round(xy, sig_figs)
-    yx = round(yx, sig_figs)
+def check_positivity(xy, xz, yz, yx, zx, zy):
     if xz < 0:
         raise ValueError(f"<x,z> = {xz} < 0")
     if zx < 0:
@@ -358,7 +324,6 @@ def check_positivity(x, y, z, sig_figs=10, dist=unmodified_ncd, method="gzip"):
         raise ValueError(f"<x,y> = {xy} < 0")
     if yx < 0:
         raise ValueError(f"<y,x> = {yx} < 0")
-
     return 0
 
 
@@ -372,45 +337,33 @@ def check_loop(
     compressor="gzip",
 ):
 
-    # Choose the distance function
-    if distance == "unmodified_ncd":
-        dist = unmodified_ncd
-    elif distance == "modified_ncd":
-        dist = modified_ncd
-    elif distance == "sorted_ncd":
-        dist = sorted_ncd
-    elif distance == "subset_ncd":
-        dist = subset_ncd
-    elif distance == "distance_safe_ncd":
-        dist = distance_safe_ncd
-    else:
-        raise NotImplementedError(
-            f"Only unmodified_ncd, modified_ncd, and length_sorted_ncd are supported as distance functions. You chose {distance}",
-        )
+    
     arg_list = []
 
     # Generate a list of arguments for the parallelized for loop
     for i in range(samples):
         x, y, z = get_data_triplet(max_string_size, data, alphabet_size, samples, i)
-        arg_list += [(sig_figs, distance, compressor, dist, x, y, z)]
+        arg_list += [(sig_figs, distance, compressor, x, y, z)]
 
     # Parallelize the for loop using joblib and tqdm
     df = np.array(
-        Parallel(n_jobs=-1, verbose=False)(
+        Parallel(n_jobs=-1, prefer="threads")(
             delayed(count_metric_assumption_failures)(*args)
             for args in tqdm(
                 arg_list,
                 desc=f"Checking metric space assumptions for {distance} algorithm using the {compressor} compressor.",
+                position=2,
+                leave=False,
             )
         ),
     )  # 4 columns, 1 for each assumption,
     # Convert failures to percent
     df = df.sum(axis=0) / samples
-    print(f"Percent of examples where triangle inequality was violated: {df[0]}")
-    print(f"Percent of examples where symmetry was violated: {df[1]}")
-    print(f"Percent of examples where zero identity was violated: {df[2]}")
-    print(f"Percent of examples where positivity was violated: {df[3]}")
-    print(f"Shape of df is {df.shape}")
+    logger.info(f"Percent of examples where triangle inequality was violated: {df[0]}")
+    logger.info(f"Percent of examples where symmetry was violated: {df[1]}")
+    logger.info(f"Percent of examples where zero identity was violated: {df[2]}")
+    logger.info(f"Percent of examples where positivity was violated: {df[3]}")
+    logger.info(f"Shape of df is {df.shape}")
     return df
 
 
@@ -465,56 +418,74 @@ def get_data_triplet(max_string_size, data, alphabet_size, samples, i):
     return x, y, z
 
 
-def count_metric_assumption_failures(sig_figs, distance, compressor, dist, x, y, z):
+def count_metric_assumption_failures(sig_figs, distance, compressor, x, y, z):
+    # Choose the distance function
+    dist = get_distance_function(distance)
+    xx = dist(x, x, method=compressor)
+    yy = dist(y, y, method=compressor)
+    zz = dist(z, z, method=compressor)
+    xy = dist(x, y, method=compressor)
+    xz = dist(x, z, method=compressor)
+    yz = dist(y, z, method=compressor)
+    yx = dist(y, x, method=compressor)
+    zx = dist(z, x, method=compressor)
+    zy = dist(z, y, method=compressor)
+    xx = round(xx, sig_figs)
+    yy = round(yy, sig_figs)
+    zz = round(zz, sig_figs)
+    xy = round(xy, sig_figs)
+    xz = round(xz, sig_figs)
+    yz = round(yz, sig_figs)
+    yx = round(yx, sig_figs)
+    zx = round(zx, sig_figs)
+    zy = round(zy, sig_figs)
     try:
-        symmetric_failures = check_symmetry(
-            x,
-            y,
-            z,
-            sig_figs=sig_figs,
-            dist=dist,
-            method=compressor,
-        )
+        symmetric_failures = check_symmetry(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
     except ValueError as e:
         symmetric_failures = 1
         logger.error(
             f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
-        triangle_failures = check_triangle_inequality(
-            x,
-            y,
-            z,
-            dist=dist,
-            method=compressor,
-        )
+        triangle_failures = check_triangle_inequality(x=x, y=y, z=z, xz = xz, xy = xy, yz = yz)
     except ValueError as e:
         triangle_failures = 1
         logger.error(
             f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
-        zero_failures = check_zero(
-            x,
-            y,
-            z,
-            sig_figs=sig_figs,
-            dist=dist,
-            method=compressor,
-        )
+        zero_failures = check_zero(x=x, y=y, z=z, xx=xx, yy=yy, zz=zz, xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
     except ValueError as e:  # noqa E722
         zero_failures = 1
         logger.error(
             f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
-        positivity_failures = check_positivity(x, y, z, dist=dist, method=compressor)
+        positivity_failures = check_positivity(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
     except ValueError as e:
         positivity_failures = 1
         logger.error(
             f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     return triangle_failures, symmetric_failures, zero_failures, positivity_failures
+
+def get_distance_function(distance):
+    if distance == "unmodified_ncd":
+        dist = unmodified_ncd
+    elif distance == "modified_ncd":
+        dist = modified_ncd
+    elif distance == "sorted_ncd":
+        dist = sorted_ncd
+    elif distance == "subset_ncd":
+        dist = subset_ncd
+    elif distance == "distance_safe_ncd":
+        dist = distance_safe_ncd
+    else:
+        raise NotImplementedError(
+            f"Only unmodified_ncd, modified_ncd, and length_sorted_ncd are supported as distance functions. You chose {distance}",
+        )
+        
+    return dist
 
 
 def check_all_metric_space_assumptions(
@@ -569,11 +540,11 @@ def check_all_metric_space_assumptions(
         max_ = max(iterator)
         min_ = min(iterator)
         # Create 10 parts of the iterator
-        iterator = np.linspace(min_, max_, 10)
+        iterator = np.linspace(min_, max_, 10, endpoint=True)
     iterator = [int(i) for i in iterator]
-    for i in iterator:
-        print(f"{title.capitalize()}")
-        print(f"Running {iterate} = {i}")
+    for i in tqdm(iterator, desc=f"Running {iterate} for {compressor} compression and distance algorithm {distance}.", total=len(iterator), position=1, leave=False):
+        logger.info(f"{title.capitalize()}")
+        logger.info(f"Running {iterate} = {i}")
         if iterate == "samples" and i == 0:
             continue
         if iterate == "alphabet_size" and i == 0:
@@ -582,10 +553,10 @@ def check_all_metric_space_assumptions(
             continue
         kwargs[iterate] = i
         t, s, z, p = check_loop(**kwargs, distance=distance)
-        print(f"Percent of examples where zero identity was violated: {z}")
-        print(f"Percent of examples where positivity  was violated: {p}")
-        print(f"Percent of examples where symmetry was violated: {s}")
-        print(f"Percent of examples where triangle inequality was violated: {t}")
+        logger.info(f"Percent of examples where zero identity was violated: {z}")
+        logger.info(f"Percent of examples where positivity  was violated: {p}")
+        logger.info(f"Percent of examples where symmetry was violated: {s}")
+        logger.info(f"Percent of examples where triangle inequality was violated: {t}")
         symmetries.append(s)
         zeroes.append(z)
         triangles.append(t)
@@ -617,8 +588,8 @@ def check_all_metric_space_assumptions(
     df["Identity"] = df["variable"]
     del df["variable"]
     df["Percent Violations"] = df["value"]
-    df["Method"] = compressor
-    df["distance"] = distance
+    df["Compressor"] = compressor
+    df["Algorithm"] = distance
     del df["value"]
     return df
 
@@ -647,7 +618,7 @@ def find_all_combinations(max_alphabet_size=52, max_string_size=10, reverse=Fals
         marginal = ["".join(m) for m in marginal]
         perms.extend(marginal)
     # Find all combinations of length 3
-    print("Finding triplets")
+    logger.info("Finding triplets")
     combs = list(product(perms, repeat=3))
     # Filter out any combinations that are not unique
     return combs
@@ -660,11 +631,11 @@ def check_all_distances(args):
         "modified_ncd",
     ]  # , "subset_ncd" "distance_safe_ncd", "subset_ncd"
     compressor_list = list(compressors.keys())
+    # The above code is creating a Python list named `compressor_list` with one element, which is the
+    # string "brotli".
     # remove 'pkl' from the list of compressors
     compressor_list.remove("pkl")
-    log_file = Path(args.folder) / Path(args.log_file)
-    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(filename=log_file, level=logging.ERROR)
+    arg_list = []
     for compressor in compressor_list:
         for i in range(len(distances)):
             distance = distances[i]
@@ -672,17 +643,23 @@ def check_all_distances(args):
             big_df = pd.DataFrame()
             # Parallelize the for loop
             for iterate in args.iterate:
-                df = check_all_metric_space_assumptions(
-                    max_sig_figs=args.sig_figs,
-                    samples=args.samples,
-                    max_string_size=args.max_string_size,
-                    max_alphabet_size=args.max_alphabet_size,
-                    distance=distance,
-                    iterate=iterate,
-                    data=args.data,
-                    compressor=compressor,
-                )
-                big_df = checkpoint_results(args, big_df, df)
+                arg_dict = {
+                    "max_sig_figs": args.sig_figs,
+                    "samples": args.samples,
+                    "max_string_size": args.max_string_size,
+                    "max_alphabet_size": args.max_alphabet_size,
+                    "distance": distance,
+                    "iterate": iterate,
+                    "data": args.data,
+                    "compressor": compressor,
+                }
+                arg_list.append(arg_dict)
+    dfs = []
+    for arg_dict in tqdm(arg_list, desc="Checking all compressors, iterates, and NCD algorithms", position=0, leave=True):
+        df = check_all_metric_space_assumptions(**arg_dict)
+        dfs.append(df)
+        big_df = checkpoint_results(args, *dfs)
+        plot_identity_violations(args, big_df)
     return big_df
 
 
@@ -709,23 +686,22 @@ def plot_identity_violations(args, big_df):
     big_df["i"] = big_df["i"].astype(int)
     big_df["Percent Violations"] = big_df["Percent Violations"] * 100
     big_df["Percent Violations"] = big_df["Percent Violations"].round(2).astype(float)
-
-    # Replace the underscore in "Iterate", "distance" with a space
+    # Replace the underscore in "Iterate", "Algorithm" with a space
     big_df["Iterate"] = big_df["Iterate"].str.replace("_", " ")
-    big_df["distance"] = big_df["distance"].str.replace("_", " ")
+    big_df["Algorithm"] = big_df["Algorithm"].str.replace("_", " ")
     # Title-ize the iterate and distance columns
     big_df["Iterate"] = big_df["Iterate"].str.title()
     big_df["Iterate"].str.replace("Sig Figs", "Significant Figures")
-    big_df["distance"] = big_df["distance"].str.title()
-    big_df["Compressor"] = big_df["method"].str.upper()
+    big_df["Algorithm"] = big_df["Algorithm"].str.title()
+    big_df['Compressor'] = big_df['Compressor'].str.upper()
     # Drop " Ncd" from the distance column
-    big_df["distance"] = big_df["distance"].str.replace(" Ncd", "")
+    big_df["Algorithm"] = big_df["Algorithm"].str.replace(" Ncd", "")
     g = sns.relplot(
         data=big_df,
         x="i",
         y="Percent Violations",
         col="Iterate",
-        row="distance",
+        row="Algorithm",
         kind="line",
         height=4,
         aspect=1,
@@ -738,7 +714,7 @@ def plot_identity_violations(args, big_df):
     g.set_titles("{col_name} | {row_name}")
     g.set_xlabels("{col_name}")
     g.set_axis_labels("Values", "Percent Violations")
-    g.savefig(f"{args.folder}/{args.results_plot}")
+    g.savefig(f"{args.folder}/{args.plot_file}")
 
 
 if __name__ == "__main__":
@@ -757,9 +733,16 @@ if __name__ == "__main__":
     parser.add_argument("--folder", type=str, default="metric_space_check")
     parser.add_argument("--log_file", type=str, default="metric_space_check.log")
     parser.add_argument("--results_file", type=str, default="results.csv")
-    parser.add_argument("--results_plot", type=str, default="results.pdf")
+    parser.add_argument("--plot_file", type=str, default="results.pdf")
     args = parser.parse_args()
     # Log file
+    log_file = Path(args.folder) / Path(args.log_file)
+    # Make the directory if it doesn't exist
+    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+    # Touch the file
+    log_file.touch()
+    log_file = log_file.as_posix()
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
 
     big_df = check_all_distances(args)
 
