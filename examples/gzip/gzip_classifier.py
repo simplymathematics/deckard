@@ -372,7 +372,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(distance_helper)(
-                    *args, modified=self.modified, method=self.metric
+                    *args,
+                    modified=self.modified,
+                    method=self.metric,
                 )
                 for args in tqdm(
                     list_,
@@ -428,7 +430,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(distance_helper)(
-                    *args, modified=self.modified, method=self.metric
+                    *args,
+                    modified=self.modified,
+                    method=self.metric,
                 )
                 for args in tqdm(
                     list_,
@@ -478,7 +482,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
                 delayed(distance_helper)(
-                    *args, modified=self.modified, method=self.metric
+                    *args,
+                    modified=self.modified,
+                    method=self.metric,
                 )
                 for args in list_
             ),

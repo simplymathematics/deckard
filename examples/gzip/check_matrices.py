@@ -50,7 +50,10 @@ def check_triangle_inequality(matrix: np.ndarray, max_samples=-1) -> bool:
     indices = np.random.choice(n, size=(max_samples, 3))
     counts = 0
     for i, j, k in tqdm(
-        indices, desc="Checking triangle inequality", position=1, leave=False
+        indices,
+        desc="Checking triangle inequality",
+        position=1,
+        leave=False,
     ):
         if i != j and i != k and j != k:
             if matrix[i, j] > matrix[i, k] + matrix[k, j]:
@@ -75,7 +78,7 @@ def check_zero_identity(matrix: np.ndarray) -> bool:
     total_size_wo_diagonal = total_size - matrix.shape[0]
     non_diagonal_failures = total_size_wo_diagonal - non_diagonal_successes
     logger.debug(
-        f"Number of non-zero elements except diagonal: {non_diagonal_failures}"
+        f"Number of non-zero elements except diagonal: {non_diagonal_failures}",
     )
     return diagonal_failures + non_diagonal_failures
 
@@ -168,11 +171,11 @@ def plot_results(df: pd.DataFrame, results_plot: Path):
     df = pd.melt(df, id_vars=id_vars, value_vars=value_vars)
     df["modified"]
     algorithm = df["modified"].astype(int) + df["symmetric"].astype(
-        int
+        int,
     )  # If modified and symmetric, then 2, if not modified and symmetric, then 1, if not modified and not symmetric, then 0. The 4th case isn't meaningful.
     # Vanilla, Assumed Symmetry, Enforced Symmetry
     df["algorithm"] = algorithm.map(
-        {0: "Vanilla", 1: "Assumed Symmetry", 2: "Enforced Symmetry"}
+        {0: "Vanilla", 1: "Assumed Symmetry", 2: "Enforced Symmetry"},
     )
     results_folder = results_plot.parent
     plot_csv = results_folder / "melted.csv"
@@ -202,7 +205,7 @@ def plot_results(df: pd.DataFrame, results_plot: Path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Check matrices for metric space properties."
+        description="Check matrices for metric space properties.",
     )
     parser.add_argument(
         "--working_dir",

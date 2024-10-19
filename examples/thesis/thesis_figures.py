@@ -30,8 +30,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 
 
-
-binarizer = lambda y: 0 if y <= 0.5 else 1 # noqa E731
+binarizer = lambda y: 0 if y <= 0.5 else 1  # noqa E731
 binary_func = np.vectorize(binarizer)
 
 
@@ -47,7 +46,10 @@ def plot_dataset_model_comparison(
     # iterate over datasets
     print("Plotting dataset model comparison")
     for ds_cnt, ds in tqdm(
-        enumerate(datasets), desc="Datasets", position=0, leave=True
+        enumerate(datasets),
+        desc="Datasets",
+        position=0,
+        leave=True,
     ):
         # preprocess dataset, split into training and test part
         X, y = ds
@@ -70,7 +72,11 @@ def plot_dataset_model_comparison(
             ax.set_title("Input data", fontsize=14)
         # Plot the training points
         ax.scatter(
-            X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k"
+            X_train[:, 0],
+            X_train[:, 1],
+            c=y_train,
+            cmap=cm_bright,
+            edgecolors="k",
         )
         # Plot the testing points
         ax.scatter(
@@ -90,7 +96,10 @@ def plot_dataset_model_comparison(
 
         # iterate over classifiers
         for name, clf in tqdm(
-            zip(names, classifiers), desc="Classifiers", position=1, leave=False
+            zip(names, classifiers),
+            desc="Classifiers",
+            position=1,
+            leave=False,
         ):
             ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
             clf = make_pipeline(StandardScaler(), clf)
@@ -153,12 +162,21 @@ def plot_dataset_model_comparison(
         plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="r", markersize=10),
         plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="b", markersize=10),
         plt.Line2D(
-            [0], [0], marker="o", color="black", markerfacecolor="white", markersize=10
+            [0],
+            [0],
+            marker="o",
+            color="black",
+            markerfacecolor="white",
+            markersize=10,
         ),
     ]
     labels = ["Class 0", "Class 1", "Uncertain"]
     plt.legend(
-        handles, labels, loc="lower left", bbox_to_anchor=(1.05, 2.5), fontsize=15
+        handles,
+        labels,
+        loc="lower left",
+        bbox_to_anchor=(1.05, 2.5),
+        fontsize=15,
     )
     # Layout the figure
     figure.tight_layout()
@@ -207,7 +225,11 @@ if "__main__" == __name__:
 
     # Linearly Separable Regression
     X, y = make_regression(
-        n_features=2, n_informative=2, random_state=1, noise=1, n_samples=200
+        n_features=2,
+        n_informative=2,
+        random_state=1,
+        noise=1,
+        n_samples=200,
     )
     y = binary_func(y)
     regression = (X, y)

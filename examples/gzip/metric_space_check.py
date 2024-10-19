@@ -449,7 +449,12 @@ def count_metric_assumption_failures(sig_figs, distance, compressor, x, y, z):
         )
     try:
         triangle_failures = check_triangle_inequality(
-            x=x, y=y, z=z, xz=xz, xy=xy, yz=yz
+            x=x,
+            y=y,
+            z=z,
+            xz=xz,
+            xy=xy,
+            yz=yz,
         )
     except ValueError as e:
         triangle_failures = 1
@@ -458,7 +463,18 @@ def count_metric_assumption_failures(sig_figs, distance, compressor, x, y, z):
         )
     try:
         zero_failures = check_zero(
-            x=x, y=y, z=z, xx=xx, yy=yy, zz=zz, xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+            x=x,
+            y=y,
+            z=z,
+            xx=xx,
+            yy=yy,
+            zz=zz,
+            xy=xy,
+            xz=xz,
+            yz=yz,
+            yx=yx,
+            zx=zx,
+            zy=zy,
         )
     except ValueError as e:  # noqa E722
         zero_failures = 1
