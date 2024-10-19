@@ -112,18 +112,20 @@ def sorted_ncd(x, y, method="gzip"):
     x, y = sort_xy(x, y)
     return old_ncd(x, y, method=method)
 
+
 def squared_ncd(x, y, method="gzip"):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
     x, y = sort_xy(x, y)
-    return old_ncd(x, y, method=method)**2
+    return old_ncd(x, y, method=method) ** 2
+
 
 def sort_xy(x, y):
     x = str(x) if not isinstance(x, str) else x
     y = str(y) if not isinstance(y, str) else y
     lx = len(x)
     ly = len(y)
-    if lx < ly: 
+    if lx < ly:
         res = y, x
     elif lx == ly:
         if x > y:
@@ -254,7 +256,7 @@ def byte_generator(
     return bytes([random.randint(0, alphabet_size) for _ in range(size)])
 
 
-def check_triangle_inequality(x,y,z, xz, xy, yz):
+def check_triangle_inequality(x, y, z, xz, xy, yz):
     if xz > xy + yz:
         raise ValueError(
             f"Triangle Inequality failed for {x}, {y}, {z}. <x,z> = {xz} > <x,y> + <y,z> = {xy + yz}",
@@ -288,7 +290,7 @@ def check_zero(x, y, z, xx, yy, zz, xy, xz, yz, yx, zx, zy):
         raise ValueError(f"<y,y> = {yy}")
     elif zz != 0:
         raise ValueError(f"<z,z> = {zz}")
-    
+
     # Checks that other inner products are 0 if and only if the elements are equal
     if yx == 0:
         if y != x:
@@ -337,7 +339,6 @@ def check_loop(
     compressor="gzip",
 ):
 
-    
     arg_list = []
 
     # Generate a list of arguments for the parallelized for loop
@@ -447,14 +448,18 @@ def count_metric_assumption_failures(sig_figs, distance, compressor, x, y, z):
             f"Symmetry failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
-        triangle_failures = check_triangle_inequality(x=x, y=y, z=z, xz = xz, xy = xy, yz = yz)
+        triangle_failures = check_triangle_inequality(
+            x=x, y=y, z=z, xz=xz, xy=xy, yz=yz
+        )
     except ValueError as e:
         triangle_failures = 1
         logger.error(
             f"Triangle Inequality failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     try:
-        zero_failures = check_zero(x=x, y=y, z=z, xx=xx, yy=yy, zz=zz, xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
+        zero_failures = check_zero(
+            x=x, y=y, z=z, xx=xx, yy=yy, zz=zz, xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+        )
     except ValueError as e:  # noqa E722
         zero_failures = 1
         logger.error(
@@ -468,6 +473,7 @@ def count_metric_assumption_failures(sig_figs, distance, compressor, x, y, z):
             f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with compressor {compressor}",
         )
     return triangle_failures, symmetric_failures, zero_failures, positivity_failures
+
 
 def get_distance_function(distance):
     if distance == "unmodified_ncd":
@@ -484,7 +490,7 @@ def get_distance_function(distance):
         raise NotImplementedError(
             f"Only unmodified_ncd, modified_ncd, and length_sorted_ncd are supported as distance functions. You chose {distance}",
         )
-        
+
     return dist
 
 
@@ -542,7 +548,13 @@ def check_all_metric_space_assumptions(
         # Create 10 parts of the iterator
         iterator = np.linspace(min_, max_, 10, endpoint=True)
     iterator = [int(i) for i in iterator]
-    for i in tqdm(iterator, desc=f"Running {iterate} for {compressor} compression and distance algorithm {distance}.", total=len(iterator), position=1, leave=False):
+    for i in tqdm(
+        iterator,
+        desc=f"Running {iterate} for {compressor} compression and distance algorithm {distance}.",
+        total=len(iterator),
+        position=1,
+        leave=False,
+    ):
         logger.info(f"{title.capitalize()}")
         logger.info(f"Running {iterate} = {i}")
         if iterate == "samples" and i == 0:
@@ -655,7 +667,12 @@ def check_all_distances(args):
                 }
                 arg_list.append(arg_dict)
     dfs = []
-    for arg_dict in tqdm(arg_list, desc="Checking all compressors, iterates, and NCD algorithms", position=0, leave=True):
+    for arg_dict in tqdm(
+        arg_list,
+        desc="Checking all compressors, iterates, and NCD algorithms",
+        position=0,
+        leave=True,
+    ):
         df = check_all_metric_space_assumptions(**arg_dict)
         dfs.append(df)
         big_df = checkpoint_results(args, *dfs)
@@ -693,7 +710,7 @@ def plot_identity_violations(args, big_df):
     big_df["Iterate"] = big_df["Iterate"].str.title()
     big_df["Iterate"].str.replace("Sig Figs", "Significant Figures")
     big_df["Algorithm"] = big_df["Algorithm"].str.title()
-    big_df['Compressor'] = big_df['Compressor'].str.upper()
+    big_df["Compressor"] = big_df["Compressor"].str.upper()
     # Drop " Ncd" from the distance column
     big_df["Algorithm"] = big_df["Algorithm"].str.replace(" Ncd", "")
     g = sns.relplot(

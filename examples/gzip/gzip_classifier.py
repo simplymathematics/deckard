@@ -82,8 +82,10 @@ def _pickle_len(x):
 
     return len(pickle.dumps(x))
 
+
 def _brotli_len(x):
     return len(brotli.compress(str(x).encode()))
+
 
 compressors = {
     "gzip": _gzip_len,
@@ -95,19 +97,19 @@ compressors = {
 }
 
 transform_dict = {
-    "abs" : np.abs,
-    "square" : np.square,
-    "exp_neg" : lambda x: np.exp(-x),
-    "exp_neg_gamma_001" : lambda x: np.exp(-x/0.001),
-    "exp_neg_gamma_01" : lambda x: np.exp(-x/0.01),
-    "exp_neg_gamma_1" : lambda x: np.exp(-x/0.1),
-    "exp_neg_gamma10" : lambda x: np.exp(-x/10),
-    "exp_neg_gamma100" : lambda x: np.exp(-x/100),
-    "exp_neg_gamma1000" : lambda x: np.exp(-x/1000),
+    "abs": np.abs,
+    "square": np.square,
+    "exp_neg": lambda x: np.exp(-x),
+    "exp_neg_gamma_001": lambda x: np.exp(-x / 0.001),
+    "exp_neg_gamma_01": lambda x: np.exp(-x / 0.01),
+    "exp_neg_gamma_1": lambda x: np.exp(-x / 0.1),
+    "exp_neg_gamma10": lambda x: np.exp(-x / 10),
+    "exp_neg_gamma100": lambda x: np.exp(-x / 100),
+    "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
 }
 
 
-def distance_helper(x1, x2, cx1=None, cx2=None, method='gzip', modified=False):
+def distance_helper(x1, x2, cx1=None, cx2=None, method="gzip", modified=False):
     x1 = str(x1)
     x2 = str(x2)
     if modified is True and x1 == x2:
@@ -304,13 +306,23 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             raise NotImplementedError(
                 f"Metric {metric} not supported. Supported metrics are: ncd, {string_metrics.keys()} and {compressors.keys()}",
             )
-        assert modified in [True, False, None], f"Expected {self.modified} in [True, False, None]"
-        assert symmetric in [True, False, None], f"Expected {self.symmetric} in [True, False, None]"
+        assert modified in [
+            True,
+            False,
+            None,
+        ], f"Expected {self.modified} in [True, False, None]"
+        assert symmetric in [
+            True,
+            False,
+            None,
+        ], f"Expected {self.symmetric} in [True, False, None]"
         transform_list = list(transform_dict.keys())
         transform_list.extend([None])
         if transform in [None, "None", "null", ""]:
             transform = None
-        assert transform in transform_list, f"Expected {transform} in {transform_dict.keys()}"
+        assert (
+            transform in transform_list
+        ), f"Expected {transform} in {transform_dict.keys()}"
         self.modified = False if modified is not True else True
         self.symmetric = False if symmetric is not True else True
         self.transform = transform
@@ -359,7 +371,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(distance_helper)(*args, modified=self.modified, method=self.metric)
+                delayed(distance_helper)(
+                    *args, modified=self.modified, method=self.metric
+                )
                 for args in tqdm(
                     list_,
                     desc="Calculating rectangular distance matrix",
@@ -377,8 +391,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if transform is not None:
             matrix_ = transform_dict[transform](matrix_)
         return matrix_
-
-    
 
     def _calculate_lower_triangular_distance_matrix(
         self,
@@ -415,7 +427,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(distance_helper)(*args, modified=self.modified, method=self.metric)
+                delayed(distance_helper)(
+                    *args, modified=self.modified, method=self.metric
+                )
                 for args in tqdm(
                     list_,
                     desc="Calculating symmetric distance matrix",
@@ -463,7 +477,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 list_.append((x1[i], x2[j], Cx1[i], Cx2[j]))
         list_ = np.array(
             Parallel(n_jobs=n_jobs)(
-                delayed(distance_helper)(*args, modified=self.modified, method=self.metric) for args in list_
+                delayed(distance_helper)(
+                    *args, modified=self.modified, method=self.metric
+                )
+                for args in list_
             ),
         )
         indices = np.triu_indices(len(x1))
@@ -556,8 +573,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             len(self.y_) == distance_matrix.shape[0]
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
         return distance_matrix
-    
-    
 
     def _find_best_samples(self, method="medoid", n_jobs=-1, update=False):
         """
@@ -658,8 +673,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if len(indices) > len(self.X_):
             indices = indices[: len(self.X_)]
         return indices
-    
-    
+
     def fit(
         self,
         X: np.ndarray,
