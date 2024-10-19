@@ -66,6 +66,8 @@ def merge_csv(
         merged = pd.merge(big, small, how=how, **kwargs)
     except pd.errors.MergeError:
         merged = pd.concat([big, small], axis=0)
+    except ValueError:
+        merged = pd.concat([big, small], axis=0)
     for k, v in fillna.items():
         if k in merged.columns:
             merged[k] = merged[k].fillna(v)
