@@ -297,6 +297,7 @@ def optimise(cfg: DictConfig) -> None:
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
+        logger.info(f"Exception: {e}")
         if not raise_exception:
             logger.warning(
                 f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
