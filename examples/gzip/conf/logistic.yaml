@@ -22,7 +22,7 @@ hydra:
     subdir : ${hydra.job.id}
   callbacks:
     study_dump:
-      _target_ : optuna_database.OptunaStudyDumpCallback
+      _target_ : owptuna_database.OptunaStudyDumpCallback
       storage : ${hydra.sweeper.storage}
       study_name : ${hydra.sweeper.study_name}
       directions : ${direction}
