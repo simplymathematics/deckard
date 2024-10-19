@@ -20,3 +20,4 @@ sms_spam/*
 truthseeker/*
 conf/*/best_*.yaml
 /params.yaml
+*.ipynb
