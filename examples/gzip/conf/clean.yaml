@@ -19,6 +19,18 @@ replace:
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
+  model.init.transform:
+    abs : "$|D|$"
+    square : "$D^2$"
+    exp_neg_gamma_001 : "$e^{-D/.001}$"
+    exp_neg_gamma_01 : "$e^{-D/.01}$"
+    exp_neg_gamma_1 : "$e^{-D/.1}$"
+    exp_neg_gamma1000 : "$e^{-D/1000}$"
+    exp_neg_gamma100 : "$e^{-D/100}$"
+    exp_neg_gamma10 : "$e^{-D/10}$"
+    exp_neg : "$e^{-D}$"
+    avg_with_transpose: "(D + D^T)/2"
+    linear_kernel: "D * D^T"
   model.init.modified:
     True: "Modified"
     False: "Vanilla"
@@ -53,3 +65,4 @@ fillna:
   model.init.symmetric: False
   model.init.modified: False
   model.init.metric: gzip
+  model.init.transform: "D"

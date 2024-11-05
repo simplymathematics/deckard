@@ -7,13 +7,14 @@ line_plot:
   y: accuracy
   ylabel: Accuracy
   hue_order:
+  - Brotli
   - GZIP
   - BZ2
   - ZSTD
   - LZMA
   errorbar: se
   err_style: bars
-  xlim: [10, 500]
+  # xlim: [10, 500]
   legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}} 
 - file: metric_vs_accuracy.pdf
   hue: Metric
@@ -23,6 +24,7 @@ line_plot:
   y: accuracy
   ylabel: Accuracy
   hue_order:
+  - Brotli
   - GZIP
   - BZ2
   - ZSTD
@@ -68,6 +70,7 @@ line_plot:
   ylabel: Training Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
   - BZ2
   - ZSTD
@@ -91,6 +94,7 @@ line_plot:
   ylabel: Training Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
   - BZ2
   - ZSTD
@@ -131,6 +135,7 @@ line_plot:
   ylabel: Prediction Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
   - BZ2
   - ZSTD
@@ -185,6 +190,7 @@ cat_plot:
     ylabels : Accuracy
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
     - BZ2
     - ZSTD
@@ -263,6 +269,7 @@ cat_plot:
     ylabels : Training Time (s)
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
     - BZ2
     - ZSTD
@@ -316,6 +323,7 @@ cat_plot:
     ylabels : Training Time (s)
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
     - BZ2
     - ZSTD

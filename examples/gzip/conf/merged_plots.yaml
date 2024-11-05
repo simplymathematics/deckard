@@ -2,7 +2,7 @@ cat_plot:
   - file: modified_models_vs_accuracy.pdf
     x: Model
     y: accuracy
-    hue: model.init.modified
+    hue: model.init.transform
     errorbar: se
     kind: boxen
     titles: "{col_name}"
@@ -10,7 +10,7 @@ cat_plot:
     ylabels: Accuracy
     rotation: 90
     col: Dataset
-    legend_title: "Algorithm"
+    legend_title: "transform"
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
     order:
       - NCD-KNN
@@ -21,13 +21,13 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row : data.sample.train_size
-    row_order: 
-      -  500
+    row : algorithm
+    # row_order: 
+    #   -  500
   - file: modified_models_vs_train_time.pdf
     x: Model
     y: train_time
-    hue: model.init.modified
+    hue: algorithm
     errorbar: se
     kind: boxen
     titles: "{col_name}"
@@ -47,13 +47,10 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row : data.sample.train_size
-    row_order: 
-      -  500
   - file: modified_models_vs_predict_time.pdf
     x: Model
     y: predict_time_per_sample
-    hue: model.init.modified
+    hue: algorithm
     errorbar: se
     kind: boxen
     titles: "{col_name}"
@@ -73,30 +70,27 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    row : data.sample.train_size
-    row_order: 
-      -  500
-  - file: condensing_ratio_vs_accuracy.pdf
-    x: "Condensing Method"
-    hue: "Condensing Ratio"
-    y: accuracy
-    y_scale: linear
-    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
-    kind: strip
-    row: Model
-    col: Dataset
-    rotation: 45
-    order:
-      - Random
-      - Medoid
-      - Sum
-      - SVC
-      - Hardness
-      - NearMiss
-      - KNN
-    legend_title: "Condensing Ratio"
-    ylabels: "Accuracy"
-    xlabels: "Condensing Method"
+  # - file: condensing_ratio_vs_accuracy.pdf
+  #   x: "Condensing Method"
+  #   hue: "Condensing Ratio"
+  #   y: accuracy
+  #   y_scale: linear
+  #   legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+  #   kind: strip
+  #   row: Model
+  #   col: Dataset
+  #   rotation: 45
+  #   order:
+  #     - Random
+  #     - Medoid
+  #     - Sum
+  #     - SVC
+  #     - Hardness
+  #     - NearMiss
+  #     - KNN
+  #   legend_title: "Condensing Ratio"
+  #   ylabels: "Accuracy"
+  #   xlabels: "Condensing Method"
   - file: models_vs_accuracy.pdf
     hue: Model
     y: accuracy
@@ -119,12 +113,6 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    order:
-      - 10
-      - 100
-      - 300
-      - 500
-      - 1000
   - file: models_vs_train_time.pdf
     hue: Model
     y: train_time
@@ -148,12 +136,6 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    order:
-      - 10
-      - 100
-      - 300
-      - 500
-      - 1000
   - file: models_vs_predict_time.pdf
     hue: Model
     y: predict_time_per_sample
@@ -177,12 +159,6 @@ cat_plot:
       - SMS Spam
       - KDD NSL
       - Truthseeker
-    order:
-      - 10
-      - 100
-      - 300
-      - 500
-      - 1000
   - file: symmetric_models_vs_accuracy.pdf
     x: Model
     y: accuracy
@@ -190,7 +166,6 @@ cat_plot:
     errorbar: se
     kind: boxen
     titles:
-    xlabels: "Samples" 
     ylabels: Accuracy
     legend_title: " "
     legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
@@ -251,98 +226,98 @@ cat_plot:
       - NCD-KNN
       - NCD-Logistic
       - NCD-SVC
-  - file: condensing_methods_vs_accuracy.pdf
-    x: Model
-    y: accuracy
-    hue: Condensing Method
-    errorbar: se
-    kind: boxen
-    titles:
-    xlabels: "Models" 
-    ylabels: Accuracy
-    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
-    rotation: 90
-    col: Dataset
-    col_order:
-      - DDoS
-      - SMS Spam
-      - KDD NSL
-      - Truthseeker
-    order:
-      - NCD-KNN
-      - NCD-Logistic
-      - NCD-SVC
-    hue_order:
-      - Random
-      - Medoid
-      - Sum
-      - SVC
-      - Hardness
-      - NearMiss
-      - KNN
-    legend_title: "Condensing Method"
-  - file: condensing_methods_vs_train_time.pdf
-    x: Model
-    y: train_time
-    hue: Condensing Method
-    errorbar: se
-    kind: boxen
-    titles:
-    xlabels: " " 
-    ylabels: $t_t$ (s)
-    legend_title: "Condensing Method"
-    rotation: 90
-    col: Dataset
-    y_scale: log
-    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
-    col_order:
-      - DDoS
-      - SMS Spam
-      - KDD NSL
-      - Truthseeker
-    order:
-      - NCD-KNN
-      - NCD-Logistic
-      - NCD-SVC
-    hue_order:
-      - Random
-      - Medoid
-      - Sum
-      - SVC
-      - Hardness
-      - NearMiss
-      - KNN
-  - file: condensing_methods_vs_predict_time.pdf
-    x: Model
-    y: predict_time_per_sample
-    hue: Condensing Method
-    errorbar: se
-    kind: boxen
-    titles:
-    xlabels: " " 
-    ylabels: $t_i$ (s)
-    legend_title: "Condensing Method"
-    col: Dataset
-    legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
-    rotation: 90
-    y_scale: log
-    col_order:
-      - DDoS
-      - SMS Spam
-      - KDD NSL
-      - Truthseeker
-    order:
-      - NCD-KNN
-      - NCD-Logistic
-      - NCD-SVC
-    hue_order:
-      - Random
-      - Medoid
-      - Sum
-      - SVC
-      - Hardness
-      - NearMiss
-      - KNN
+  # - file: condensing_methods_vs_accuracy.pdf
+  #   x: Model
+  #   y: accuracy
+  #   hue: Condensing Method
+  #   errorbar: se
+  #   kind: boxen
+  #   titles:
+  #   xlabels: "Models" 
+  #   ylabels: Accuracy
+  #   legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+  #   rotation: 90
+  #   col: Dataset
+  #   col_order:
+  #     - DDoS
+  #     - SMS Spam
+  #     - KDD NSL
+  #     - Truthseeker
+  #   order:
+  #     - NCD-KNN
+  #     - NCD-Logistic
+  #     - NCD-SVC
+  #   hue_order:
+  #     - Random
+  #     - Medoid
+  #     - Sum
+  #     - SVC
+  #     - Hardness
+  #     - NearMiss
+  #     - KNN
+  #   legend_title: "Condensing Method"
+  # - file: condensing_methods_vs_train_time.pdf
+  #   x: Model
+  #   y: train_time
+  #   hue: Condensing Method
+  #   errorbar: se
+  #   kind: boxen
+  #   titles:
+  #   xlabels: " " 
+  #   ylabels: $t_t$ (s)
+  #   legend_title: "Condensing Method"
+  #   rotation: 90
+  #   col: Dataset
+  #   y_scale: log
+  #   legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+  #   col_order:
+  #     - DDoS
+  #     - SMS Spam
+  #     - KDD NSL
+  #     - Truthseeker
+  #   order:
+  #     - NCD-KNN
+  #     - NCD-Logistic
+  #     - NCD-SVC
+  #   hue_order:
+  #     - Random
+  #     - Medoid
+  #     - Sum
+  #     - SVC
+  #     - Hardness
+  #     - NearMiss
+  #     - KNN
+  # - file: condensing_methods_vs_predict_time.pdf
+  #   x: Model
+  #   y: predict_time_per_sample
+  #   hue: Condensing Method
+  #   errorbar: se
+  #   kind: boxen
+  #   titles:
+  #   xlabels: " " 
+  #   ylabels: $t_i$ (s)
+  #   legend_title: "Condensing Method"
+  #   col: Dataset
+  #   legend: {"bbox_to_anchor": [1.05, .5], "loc": "center left", "prop": {"size": 14}}
+  #   rotation: 90
+  #   y_scale: log
+  #   col_order:
+  #     - DDoS
+  #     - SMS Spam
+  #     - KDD NSL
+  #     - Truthseeker
+  #   order:
+  #     - NCD-KNN
+  #     - NCD-Logistic
+  #     - NCD-SVC
+  #   hue_order:
+  #     - Random
+  #     - Medoid
+  #     - Sum
+  #     - SVC
+  #     - Hardness
+  #     - NearMiss
+  #     - KNN
 line_plot:
   - file: compressor_metric_vs_accuracy.pdf
     hue: Metric
@@ -359,7 +334,6 @@ line_plot:
     - Brotli
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"
@@ -386,7 +360,6 @@ line_plot:
     - SeqRatio
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"
@@ -414,7 +387,6 @@ line_plot:
     - SeqRatio
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"
@@ -441,7 +413,6 @@ line_plot:
     - Brotli
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"
@@ -469,7 +440,6 @@ line_plot:
     - SeqRatio
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"
@@ -496,7 +466,6 @@ line_plot:
     - Brotli
     errorbar: se
     err_style: bars
-    xlim: [10, 500]
     style: Dataset
     style_order:
     - "DDoS"

@@ -2,10 +2,11 @@ data: ${data}
 library : sklearn
 init:
     name : gzip_classifier.GzipSVC
-    m: -1
     metric : gzip
     symmetric : false
     modified : false
-    distance_matrix :  ${files.directory}/${files.model_dir}/${model.init.metric}/${model.init.modified}/${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}.npz
-    condensing_method : None
+    distance_matrix_train :  ${files.directory}/${files.model_dir}/${model.init.metric}/${model.init.modified}/train-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}.npz
+    distance_matrix_test : ${files.directory}/${files.model_dir}/${model.init.metric}/${model.init.modified}/test-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}.npz
     transform : None
+    kernel : precomputed
+    max_iter : 1000

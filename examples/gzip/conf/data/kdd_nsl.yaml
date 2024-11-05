@@ -7,3 +7,4 @@ sample:
     test_size :  100
 name: raw_data/kdd_nsl_undersampled_5000.csv
 target: label
+alias: kdd_nsl

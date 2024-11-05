@@ -73,186 +73,138 @@ stages:
     - files
     - dataset
     - model_name
-    - device_id
+    - algorithm
     deps:
-    - params.yaml
+    - params.yaml # The default configuration file, as defined in the 'parse_params' stage
     - raw_data/ # Raw data
   ##############################################################################
-  grid_search:
+  grid_search_precompute:
     matrix: 
+      train_size: [1000] 
       dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
-      configs: [knn, logistic, svc]
-      train_size: [10, 20, 35, 60, 100, ] #   300, 600
-      algorithm : [{"modified" : False, "symmetric" : False, "name": "Vanilla"}, {"modified" : False, "symmetric" : True, "name" : "Assumed Symmetry"}, {"modified" : True, "symmetric" : True, "name": "Enforced Symmetry"}]
+      model_name : [knn, svc, logistic] # knn, svc, logistic
+      metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+      algorithm : # modified, symmetric, name
+        - [False, False, "Vanilla"]
+        - [False, True, "Assumed"] 
+        - [True, True, "Enforced"]
+        - [True, False, "Average"]
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
+      ++algorithm="${item.algorithm[2]}"
       data=${item.dataset}
-      ++dataset=${item.dataset}
+      data.sample.test_size=400
       ++data.sample.train_size=${item.train_size}
-      ++algorithm=${item.algorithm.name}
-      data.sample.test_size=100
-      ++model_name=${item.configs}
-      ++model.init.symmetric=${item.algorithm.symmetric}
-      ++model.init.modified=${item.algorithm.modified}
-      hydra.sweeper.study_name=${item.configs}_${item.dataset}
-      hydra.sweep.dir=output/${item.dataset}/logs/${item.configs}/${item.train_size}/transforms/symmetric_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/
-      files.directory=output/${item.dataset}
-      files.reports=${files.reports}/${item.configs}/${item.train_size}/transforms/symmetric_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/
-      hydra.launcher.n_jobs=-1
-      ++data.sample.random_state="tag(choice, tag(int, range(1,1000)))"
-      ++model.init.metric=gzip,lzma,bz2,zstd,brotli,levenshtein,ratio,hamming,jaro,jaro_winkler,seqratio 
-      ++model.init.transform=None,abs,square,exp_neg,exp_neg_gamma_001,exp_neg_gamma_01,exp_neg_gamma_1,exp_neg_gamma10,exp_neg_gamma100,exp_neg_gamma1000
-      ++model.init.condensing_method=None
-      ~model.init.distance_matrix
-      ++raise_exception=True               
-      --config-name ${item.configs}
-      --multirun
-    deps:
-      - params.yaml
-      - conf/${item.configs}.yaml
-    outs:
-        - output/${item.dataset}/logs/${item.configs}/${item.train_size}/transforms/symmetric_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/optimization_results.yaml:
-            cache: true
-            persist: true
-            push: true
-        - output/${item.dataset}/${files.reports}/${item.configs}/${item.train_size}/transforms/symmetric_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/:
-            cache: true
-            persist: true
-            push: true
-    params:
-      - conf/${item.configs}.yaml:
-          - hydra
-  ##############################################################################
-  precompute_matrices:
-    matrix:
-      dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] 
-      model_name : [knn] # Only need to run for one model because the distance matrix is the same for all models
-      metric : [gzip, bz2, zstd, brotli, lzma]
-      random_state : [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010] 
-      train_size : [1000]
-      test_size : [400]
-      transform : [None]
-      algorithm : [{"modified" : False, "symmetric" : False, "name": "Vanilla"}, {"modified" : False, "symmetric" : True, "name" : "Assumed Symmetry"}, {"modified" : True, "symmetric" : True, "name": "Enforced Symmetry"}]
-    deps:
-      - params.yaml
-      - conf/${item.model_name}.yaml
-    cmd: >-
-      python -m deckard.layers.optimise
-      stage=train
-      data=${item.dataset}
-      dataset=${item.dataset}
-      data.sample.train_size=${item.train_size}
-      data.sample.test_size=${item.test_size}
-      ++data.sample.random_state=${item.random_state}
-      ++model.sample.condensing_method=None
-      model_name=${item.model_name}
-      model=ncd_${item.model_name}
-      ++algorithm=${item.algorithm.name}
-      ++model.init.condensing_method=None
-      ++model.init.m=1
-      ++model.init.symmetric=${item.algorithm.symmetric}
-      ++model.init.modified=${item.algorithm.modified}
+      ++dataset=${item.dataset}
+      ++model_name=${item.model_name}
+      ++model.init.symmetric=${item.algorithm[1]}
+      ++model.init.modified=${item.algorithm[0]}
       ++model.init.metric=${item.metric}
-      ++model.init.transform=${item.transform}
-      ++model.init.distance_matrix=output/${item.dataset}/models/precomputed/${item.metric}/symmetry_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz 
+      ++model.init.transform=None
       files.directory=output/${item.dataset}
-      files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/symmetry_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
-      hydra.sweeper.n_trials=1
-      hydra.sweeper.n_jobs=1
-      hydra.sweep.dir=output/${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
-      hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}
-      hydra.launcher.n_jobs=-1
+      files.reports=reports/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/train-${item.train_size}/400/0/
+      ++hydra.sampler.n_trials=1
       --config-name ${item.model_name}
-      --multirun
+    deps:
+      - conf/${item.model_name}.yaml
+      - params.yaml
+      - raw_data/
     outs:
-      - output/${item.dataset}/logs/precompute/${item.model_name}/${item.metric}/symmetry_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/${item.train_size}-${item.test_size}-${item.random_state}/:
-          cache: true
-          persist: true
-          push: true
-      - output/${item.dataset}/models/precomputed/${item.metric}/symmetry_${item.algorithm.symmetric}/modified_${item.algorithm.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz:
-          cache: true
-          persist: true
-          push: true
+        - output/${item.dataset}/distance_matrix/${item.model_name}/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-400-0.npz:
+            cache: true
+            persist: true
+            push: true
+        - output/${item.dataset}/distance_matrix/${item.model_name}/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-400-0.npz:
+            cache: true
+            persist: true
+            push: true
+        - output/${item.dataset}/logs/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/${item.train_size}/:
+            cache: true
+            persist: true
+            push: true
+        - output/${item.dataset}/reports/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/${item.train_size}/:
+            cache: true
+            persist: true
+            push: true
     params:
       - conf/${item.model_name}.yaml:
           - hydra
-  # ############################################################################## 
-  # condense:
-  #   matrix:
-  #     dataset : [ddos,  kdd_nsl, truthseeker, sms_spam,] 
-  #     model_name : [knn, svc, logistic]
-  #     ratio : [.9, .5, .3, .2, .1] 
-  #     metric : [gzip, bz2, zstd, brotli,] #  bz2, zstd, brotli, lzma, levenshtein, ratio, hamming, jaro, jaro_winkler, seqratio
-  #     symmetric : [true]
-  #     random_state : [1001,1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010] 
-  #     train_size : [1000]
-  #     test_size : [400]
-  #     modified : [true]
-  #   deps:
-  #     - params.yaml
-  #     - conf/${item.model_name}.yaml
-  #     - output/${item.dataset}/models/precomputed/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz
-  #   cmd: >-
-  #     python -m deckard.layers.optimise
-  #     stage=train
-  #     data=${item.dataset}
-  #     dataset=${item.dataset}
-  #     data.sample.train_size=${item.train_size}
-  #     data.sample.test_size=${item.test_size}
-  #     data.sample.random_state=${item.random_state}
-  #     model_name=${item.model_name}
-  #     model=ncd_${item.model_name}
-  #     ++model.init.m=${item.ratio}
-  #     ++model.init.symmetric=${item.symmetric}
-  #     ++model.init.modified=${item.modified}
-  #     ++model.init.metric=${item.metric}
-  #     ++model.init.condensing_method=medoid,sum,svc,random,hardness,nearmiss,knn
-  #     files.directory=output/${item.dataset}
-  #     ++model.init.distance_matrix=output/${item.dataset}/models/precomputed/${item.metric}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}.npz
-  #     hydra.sweeper.study_name=condense_${item.model_name}_${item.dataset}_${item.metric}_${item.ratio}
-  #     files.reports=${files.reports}/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
-  #     hydra.sweeper.n_trials=128
-  #     hydra.sweeper.n_jobs=8
-  #     hydra.sweep.dir=output/${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/
-  #     hydra.launcher.n_jobs=-1
-  #     --config-name ${item.model_name}
-  #     --multirun
-  #   # Note that 1000-400-0 is the train_size-test_size-random_state
-  #   outs:
-  #     - output/${item.dataset}/logs/condense/${item.model_name}/${item.metric}/${item.ratio}/symmetry_${item.symmetric}/modified_${item.modified}/${item.train_size}-${item.test_size}-${item.random_state}/optimization_results.yaml:
-  #         cache: true
-  #         persist: true
-  #         push: true
-  #   params:
-  #     - conf/${item.model_name}.yaml:
-  #         - hydra
-  # compile:
-  #   matrix:
-  #     dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-  #     stage : [knn, svc, logistic, condense/knn, condense/svc, condense/logistic]
-  #   deps:
-  #     - output/${item.dataset}/${files.reports}/${item.stage}/
-  #   outs:
-  #   - output/${item.dataset}/${files.reports}/${item.stage}.csv
-  #   cmd: >-
-  #    python -m deckard.layers.compile 
-  #    --report_folder output/${item.dataset}/${files.reports}/${item.stage} 
-  #    --results_file output/${item.dataset}/${files.reports}/${item.stage}.csv
+  ##############################################################################
+  grid_search:
+    matrix: 
+      train_size: [1000] # 10, 20, 35, 60, 100, 200, 500  200, 500
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
+      model_name : [knn, svc, logistic] # knn, svc, logistic
+      algorithm : # modified, symmetric, name
+        - [False, False, "Vanilla"]
+        - [False, True, "Assumed"] 
+        - [True, True, "Enforced"]
+        - [True, False, "Average"]
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      data=${item.dataset}
+      data.sample.test_size=400
+      ++data.sample.train_size=${item.train_size}
+      ++dataset=${item.dataset}
+      ++model_name=${item.model_name}
+      ++model.init.symmetric=${item.algorithm[1]}
+      ++model.init.modified=${item.algorithm[0]}
+      files.directory=output/${item.dataset}
+      files.reports=reports/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/400/0/
+      hydra.sweeper.n_jobs=1
+      hydra.launcher.n_jobs=1
+      ++algorithm="${item.algorithm[2]}"
+      --config-name ${item.model_name}
+      --multirun
+    deps:
+      - conf/${item.model_name}.yaml
+      - params.yaml
+      - raw_data/
+      - output/${item.dataset}/distance_matrix/${item.model_name}/
+      - output/${item.dataset}/distance_matrix/${item.model_name}/
+    outs:
+        - output/${item.dataset}/logs/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/:
+            cache: true
+            persist: true
+            push: true
+        - output/${item.dataset}/reports/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/:
+            cache: true
+            persist: true
+            push: true
+    params:
+      - conf/${item.model_name}.yaml:
+          - hydra
+  ##############################################################################
+  compile:
+    matrix:
+      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+      model : [knn, svc, logistic, ] #condense/knn, condense/svc, condense/logistic
+      stage : [search]
+    deps:
+      - output/${item.dataset}/${files.reports}/${item.stage}/${item.model}/
+    outs:
+    - output/${item.dataset}/${files.reports}/${item.stage}/${item.model}.csv
+    cmd: >-
+      python -m deckard.layers.compile 
+      --report_folder output/${item.dataset}/${files.reports}/${item.stage}/${item.model} 
+      --results_file output/${item.dataset}/${files.reports}/${item.stage}/${item.model}.csv
   ##############################################################################
   clean:
     matrix:
       dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-      stage : [knn, svc, logistic, ] #condense/knn, condense/svc, condense/logistic
-    deps:
-      - output/${item.dataset}/${files.reports}/${item.stage}.csv
+      model : [knn, svc, logistic,] # condense/knn, condense/svc, condense/logistic
+      stage : [search]
+    deps: 
+      - output/${item.dataset}/${files.reports}/${item.stage}/${item.model}.csv
     cmd: >-
       python -m deckard.layers.clean_data 
-      -i output/${item.dataset}/${files.reports}/${item.stage}.csv
-      -o output/${item.dataset}/plots/clean/${item.stage}.csv
+      -i output/${item.dataset}/${files.reports}/${item.stage}/${item.model}.csv
+      -o output/${item.dataset}/plots//${item.stage}/${item.model}.csv
       -c conf/clean.yaml
     outs:
-      - output/${item.dataset}/plots/clean/${item.stage}.csv
+      - output/${item.dataset}/plots//${item.stage}/${item.model}.csv
     params:
       - conf/clean.yaml:
         - replace
@@ -277,41 +229,20 @@ stages:
     outs:
       - output/${item.dataset}/plots/merged.csv
   ##############################################################################
-  merge_condense:
-    matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
-    deps:
-      - output/${item.dataset}/plots/clean/condense/knn.csv
-      - output/${item.dataset}/plots/clean/condense/logistic.csv
-      - output/${item.dataset}/plots/clean/condense/svc.csv
-    cmd: >-
-      python merge.py
-      --big_dir output/${item.dataset}/plots/
-      --data_file clean/condense/knn.csv
-      --little_dir_data_file  clean/condense/logistic.csv clean/condense/svc.csv
-      --output_folder output/${item.dataset}/plots/
-      --output_file condensed_merged.csv
-    outs:
-      - output/${item.dataset}/plots/condensed_merged.csv
-  ##############################################################################
   merge_datasets:
     cmd: >-
       python merge.py
       --big_dir output/
       --little_dir output/
-      --data_file sms_spam/plots/condensed_merged.csv
-      --little_dir_data_file  kdd_nsl/plots/merged.csv ddos/plots/merged.csv truthseeker/plots/merged.csv kdd_nsl/plots/condensed_merged.csv ddos/plots/condensed_merged.csv truthseeker/plots/condensed_merged.csv sms_spam/plots/merged.csv
-      --output_folder output/combined/plots/
+      --data_file sms_spam/plots/merged.csv
+      --little_dir_data_file  kdd_nsl/plots/merged.csv ddos/plots/merged.csv truthseeker/plots/merged.csv 
       --output_file merged.csv
+      --output_folder output/combined/plots/
     deps:
       - output/sms_spam/plots/merged.csv
       - output/kdd_nsl/plots/merged.csv
       - output/ddos/plots/merged.csv
       - output/truthseeker/plots/merged.csv
-      - output/kdd_nsl/plots/condensed_merged.csv
-      - output/ddos/plots/condensed_merged.csv
-      - output/truthseeker/plots/condensed_merged.csv
-      - output/sms_spam/plots/condensed_merged.csv
     outs:
       - output/combined/plots/merged.csv
   ##############################################################################
@@ -334,13 +265,9 @@ stages:
       - output/combined/plots/symmetric_models_vs_accuracy.pdf
       - output/combined/plots/symmetric_models_vs_train_time.pdf
       - output/combined/plots/symmetric_models_vs_predict_time.pdf
-      - output/combined/plots/condensing_methods_vs_accuracy.pdf
-      - output/combined/plots/condensing_methods_vs_train_time.pdf
-      - output/combined/plots/condensing_methods_vs_predict_time.pdf
       - output/combined/plots/models_vs_accuracy.pdf
       - output/combined/plots/models_vs_train_time.pdf
       - output/combined/plots/models_vs_predict_time.pdf
-      - output/combined/plots/condensing_ratio_vs_accuracy.pdf
       - output/combined/plots/modified_models_vs_accuracy.pdf
       - output/combined/plots/modified_models_vs_train_time.pdf
       - output/combined/plots/modified_models_vs_predict_time.pdf
