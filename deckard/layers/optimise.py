@@ -290,7 +290,10 @@ def optimise(cfg: DictConfig) -> None:
                 else:
                     scores.append(None)
             i += 1
-        logger.info(f"Experiment Folder: {Path(folder).resolve().as_posix()}")
+        full_path = Path(folder).resolve().as_posix()
+        # Assume it is a subpath of the working directory, and remove the working directory from the path
+        rel_path = full_path.replace(Path(working_dir).resolve().as_posix(), ".")
+        logger.info(f"Experiment Folder: {rel_path}")
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
