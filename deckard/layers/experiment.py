@@ -27,12 +27,9 @@ def experiment_main(args):
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     if args.overrides is not None and len(args.overrides) > 0:
-        save_params_file(
-            config_dir=config_dir,
-            config_file=args.config_file,
-            params_file=args.params_file,
-            overrides=args.overrides,
-        )
+       for override in args.overrides:
+           key, value = override.split("=")
+           logger.info(f"Setting {key}={value}")
     logger.info(
         f"Using existing params file {args.params_file} in directory {args.workdir}",
     )
