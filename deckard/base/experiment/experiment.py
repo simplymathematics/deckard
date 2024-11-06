@@ -44,19 +44,30 @@ class Experiment:
         metrics=["accuracy", "train_time", "predict_time"],
         **kwargs,
     ):
-        # if isinstance(data, dict):
-        #     self.data = Data(**data)
+        # Data
         self.data = Data(**OmegaConf.to_container(OmegaConf.create(data)))
+        logger.info(f"Data: {self.data}")
+        
+        # Model
         self.model = (
             Model(**OmegaConf.to_container(OmegaConf.create(model)))
             if model is not None
             else None
         )
+        if self.model is not None:
+            logger.info(f"Model: {self.model}")
+            
+        # Attack
         self.attack = (
             Attack(**OmegaConf.to_container(OmegaConf.create(attack)))
             if attack is not None
             else None
         )
+        if self.attack is not None:
+            logger.info(f"Attack: {self.attack}")
+            adv_metrics = [f"adv_{metric}" for metric in metrics]
+            metrics = metrics + adv_metrics        
+        # Files
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
@@ -67,12 +78,22 @@ class Experiment:
         else:  # pragma: no cover
             raise ValueError("files must be a dict, DictConfig, or FileConfig object.")
         assert isinstance(self.files, FileConfig)
+        logger.info(f"Files: {self.files}")
         self.scorers = ScorerDict(**OmegaConf.to_container(OmegaConf.create(scorers)))
+        logger.info(f"Scorers: {self.scorers}")
         self.device_id = device_id
+        logger.info(f"Device ID: {self.device_id}")
         self.stage = stage
+        if stage is not None:
+            logger.info(f"Stage: {self.stage}")
         self.metrics = metrics
+        if metrics is not None:
+            logger.info(f"Metrics: {self.metrics}")
         self.kwargs = kwargs
+        if len(kwargs) > 0:
+            logger.info(f"kwargs: {self.kwargs}")
         self.name = name if name is not None else self._set_name()
+        logger.info(f"Name: {self.name}")
 
     def __hash__(self):
         name = str(self.name).encode("utf-8")
@@ -153,6 +174,7 @@ class Experiment:
         ##########################################################################
         # Load or run attack
         ##########################################################################
+        files.update(**results)
         if self.attack is not None:
             adv_results = self.attack(
                 **files,
@@ -220,7 +242,13 @@ class Experiment:
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
-        logger.info(f"Score for id : {self.get_name()}: {score_dict}")
+        #########################################################################
+        # Return results
+        if len(self.metrics)>= 1:
+            for metric in self.metrics:
+                logger.info(f"{metric}: {score_dict[metric]}")
+        else:
+            logger.info("score_dict: {}".format(score_dict))
         logger.info("Finished running experiment with id: {}".format(self.get_name()))
         return score_dict
 
