@@ -58,6 +58,8 @@ class AttackInitializer:
         logger.debug(f"Fitting attack {self.name} with id: {self.__hash__()}")
         name = self.name
         kwargs = deepcopy(self.kwargs)
+        while "kwargs" in kwargs:
+            kwargs.update(**kwargs.pop("kwargs"))
         pop_list = ["extract", "poison", "evade", "reconstruct", "infer"]
         for thing in pop_list:
             kwargs.pop(thing, None)
@@ -72,10 +74,7 @@ class AttackInitializer:
                 data is not None
             ), "Data must be provided to call function if y_train is kwargs."
             y_train = data[2][:attack_size]
-            if len(np.squeeze(y_train).shape) < 2:
-                kwargs["y_train"] = to_categorical(y_train)
-            else:
-                kwargs["y_train"] = y_train
+            kwargs["y_train"] = y_train
         if "x_val" in kwargs:
             assert (
                 data is not None
@@ -93,6 +92,7 @@ class AttackInitializer:
         try:
             logger.debug("Attempting black-box attack.")
             config = {"_target_": name}
+            
             config.update(**kwargs)
             attack = instantiate(config, model)
         except TypeError as e:
