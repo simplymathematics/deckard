@@ -8,6 +8,8 @@ from omegaconf import OmegaConf, DictConfig
 from copy import deepcopy
 import numpy as np
 from sklearn.exceptions import NotFittedError
+
+from hydra.utils import instantiate
 from ..data import Data
 from ..utils import my_hash, factory
 
@@ -73,6 +75,8 @@ class ModelTrainer:
         logger.debug(f"Training model {model} with fit params: {self.kwargs}")
         device = str(model.device) if hasattr(model, "device") else "cpu"
         trainer = self.kwargs
+        while "kwargs" in trainer:
+            trainer.update(**trainer.pop("kwargs"))
         if library in sklearn_dict.keys():
             pass
         elif library in torch_dict.keys():
@@ -92,6 +96,7 @@ class ModelTrainer:
             start = process_time_ns()
             start_timestamp = time()
             logger.debug(f"Fitting type(model): {type(model)} with kwargs {trainer}")
+            unique, counts = np.unique(data[2], return_counts=True)
             model.fit(data[0], data[2], **trainer)
             end = process_time_ns()
             end_timestamp = time()
@@ -315,10 +320,10 @@ class Model:
         else:
             self.art = None
         self.name = my_hash(self) if name is None else str(name)
-        logger.info(f"Model initialized: {self.name}")
-        logger.info(f"Model.init: {self.init}")
-        logger.info(f"Model.trainer: {self.trainer}")
-        logger.info(f"Model.art: {self.art}")
+        logger.debug(f"Model initialized: {self.name}")
+        logger.debug(f"Model.init: {self.init}")
+        logger.debug(f"Model.trainer: {self.trainer}")
+        logger.debug(f"Model.art: {self.art}")
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -363,6 +368,127 @@ class Model:
         for key in all_files:
             if locals().get(key) is not None:
                 must_exist.append(key)
+        time_dict, result_dict = self._load_model_results(predictions_file, probabilities_file, time_dict_file, losses_file, result_dict, exists)
+        if "train_time" not in time_dict.keys():
+            time_dict = locals().get("time_dict", {})
+            result_dict["time_dict"] = time_dict
+            #####################################################################################
+            # Fitting the model
+            if model_file is None:
+                logger.info("Fitting model.")
+                model, fit_time_dict = self.fit(
+                    data=data,
+                    model=model,
+                    model_file=model_file,
+                )
+                time_dict.update(**fit_time_dict)
+                result_dict["model"] = model
+                result_dict["data"] = data
+                result_dict["time_dict"].update(**time_dict)
+            elif Path(model_file).exists():
+                logger.info(f"Loading model from {model_file}.")
+                model = self.load(model_file)
+                if time_dict_file is not None and Path(time_dict_file).exists():
+                    time_dict = self.data.load(time_dict_file)
+                else:
+                    time_dict = {}
+                result_dict["model"] = model
+                result_dict["data"] = data
+                result_dict["time_dict"].update(**time_dict)
+            else:
+                logger.info("Fitting model.")
+                model, fit_time_dict = self.fit(
+                    data=data,
+                    model=model,
+                    model_file=model_file,
+                )
+                result_dict["model"] = model
+                result_dict["data"] = data
+                result_dict["time_dict"].update(**fit_time_dict)
+            #####################################################################################
+            # Predicting
+            if "pred_time" not in time_dict.keys():
+                logger.info("Predicting.")
+                preds, pred_time_dict = self.predict(
+                    data=data,
+                    model=model,
+                    predictions_file=predictions_file,
+                )
+                result_dict["time_dict"].update(**pred_time_dict)
+                result_dict["predictions"] = preds
+            elif predictions_file is not None and Path(predictions_file).exists() and "pred_time" in time_dict.keys():
+                logger.info(f"Loading predictions from {predictions_file}.")
+                preds = self.data.load(predictions_file)
+                result_dict["predictions"] = preds
+            else:
+                logger.info("Predicting.")
+                preds, pred_time_dict = self.predict(
+                    data=data,
+                    model=model,
+                    predictions_file=predictions_file,
+                )
+                result_dict["time_dict"].update(**pred_time_dict)
+                result_dict["predictions"] = preds
+            #####################################################################################
+            # Predicting probabilities
+            if probabilities_file is not None and probabilities_file in must_exist:
+                logger.info("Predicting probabilities.")
+                probs, prob_time_dict = self.predict_proba(
+                    data=data,
+                    model=model,
+                    probabilities_file=probabilities_file,
+                )
+                result_dict["probabilities"] = probs
+                result_dict["time_dict"].update(**prob_time_dict)
+                exists.append("probabilities_file")
+            elif probabilities_file is not None and Path(probabilities_file).exists():
+                logger.info(f"Loading probabilities from {probabilities_file}.")
+                probs, prob_time_dict = self.data.load(probabilities_file)
+                result_dict["probabilities"] = probs
+                result_dict["time_dict"].update(**prob_time_dict)
+                exists.append("probabilities_file")
+            else:
+                pass
+            #####################################################################################
+            # Predicting loss
+            if losses_file is not None and losses_file in must_exist:
+                logger.info("Predicting loss.")
+                loss, loss_time_dict = self.predict_log_loss(
+                    data=data,
+                    model=model,
+                    losses_file=losses_file,
+                )
+                exists.append("losses_file")
+                time_dict.update(**loss_time_dict)
+                result_dict["losses"] = loss
+                result_dict["time_dict"].update(**loss_time_dict)
+            elif losses_file is not None and Path(losses_file).exists():
+                logger.info(f"Loading loss from {losses_file}.")
+                loss = self.data.load(losses_file)
+                result_dict["losses"] = loss
+            else:
+                pass
+            #####################################################################################
+            # Adding timing data to the score dictionary
+            if time_dict_file is not None:
+                if Path(time_dict_file).exists():
+                    logger.info(f"Loading time_dict from {time_dict_file}.")
+                    old_time_dict = self.data.load(time_dict_file)
+
+                    old_time_dict.update(**result_dict["time_dict"])
+                    time_dict = old_time_dict
+                self.data.save(time_dict, time_dict_file)
+                result_dict["time_dict"] = time_dict
+                exists.append("time_dict_file")
+        if data_file is not None and not Path(data_file).exists():
+            self.data.save(data, data_file)
+            exists.append("data_file")
+        if model_file is not None and not Path(model_file).exists():
+            self.save(model, model_file)
+            exists.append("model_file")
+        return result_dict
+
+    def _load_model_results(self, predictions_file, probabilities_file, time_dict_file, losses_file, result_dict, exists):
         if predictions_file is not None and Path(predictions_file).exists():
             preds = self.data.load(predictions_file)
             result_dict["predictions"] = preds
@@ -378,116 +504,9 @@ class Model:
         if time_dict_file is not None and Path(time_dict_file).exists():
             time_dict = self.data.load(time_dict_file)
             exists.append("time_dict_file")
-        if [
-            predictions_file,
-            probabilities_file,
-            time_dict_file,
-            losses_file,
-            model_file,
-        ].count(None) != 5:
-            time_dict = locals().get("time_dict", {})
-            result_dict["time_dict"] = time_dict
-            #####################################################################################
-            # Fitting the model
-            if model_file is None:
-                model, fit_time_dict = self.fit(
-                    data=data,
-                    model=model,
-                    model_file=model_file,
-                )
-                time_dict.update(**fit_time_dict)
-                result_dict["model"] = model
-                result_dict["data"] = data
-                result_dict["time_dict"].update(**time_dict)
-            elif Path(model_file).exists():
-                model = self.load(model_file)
-                time_dict = self.data.load(time_dict_file)
-                result_dict["model"] = model
-                result_dict["data"] = data
-                result_dict["time_dict"].update(**time_dict)
-            else:
-                model, fit_time_dict = self.fit(
-                    data=data,
-                    model=model,
-                    model_file=model_file,
-                )
-                result_dict["model"] = model
-                result_dict["data"] = data
-                result_dict["time_dict"].update(**fit_time_dict)
-            #####################################################################################
-            # Predicting
-            if predictions_file is not None and not Path(predictions_file).exists():
-                preds, pred_time_dict = self.predict(
-                    data=data,
-                    model=model,
-                    predictions_file=predictions_file,
-                )
-                result_dict["time_dict"].update(**pred_time_dict)
-                result_dict["predictions"] = preds
-            elif predictions_file is not None and Path(predictions_file).exists():
-                preds = self.data.load(predictions_file)
-                result_dict["predictions"] = preds
-            else:
-                preds, pred_time_dict = self.predict(
-                    data=data,
-                    model=model,
-                    predictions_file=predictions_file,
-                )
-                result_dict["time_dict"].update(**pred_time_dict)
-                result_dict["predictions"] = preds
-            #####################################################################################
-            # Predicting probabilities
-            if probabilities_file is not None:
-                probs, prob_time_dict = self.predict_proba(
-                    data=data,
-                    model=model,
-                    probabilities_file=probabilities_file,
-                )
-                result_dict["probabilities"] = probs
-                result_dict["time_dict"].update(**prob_time_dict)
-                exists.append("probabilities_file")
-            elif probabilities_file is not None and Path(probabilities_file).exists():
-                probs, prob_time_dict = self.data.load(probabilities_file)
-                result_dict["probabilities"] = probs
-                result_dict["time_dict"].update(**prob_time_dict)
-                exists.append("probabilities_file")
-            else:
-                pass
-            #####################################################################################
-            # Predicting loss
-            if losses_file is not None:
-                loss, loss_time_dict = self.predict_log_loss(
-                    data=data,
-                    model=model,
-                    losses_file=losses_file,
-                )
-                exists.append("losses_file")
-                time_dict.update(**loss_time_dict)
-                result_dict["losses"] = loss
-                result_dict["time_dict"].update(**loss_time_dict)
-            elif losses_file is not None and Path(losses_file).exists():
-                loss = self.data.load(losses_file)
-                result_dict["losses"] = loss
-            else:
-                pass
-            #####################################################################################
-            # Adding timing data to the score dictionary
-            if time_dict_file is not None:
-                if Path(time_dict_file).exists():
-                    old_time_dict = self.data.load(time_dict_file)
-
-                    old_time_dict.update(**result_dict["time_dict"])
-                    time_dict = old_time_dict
-                self.data.save(time_dict, time_dict_file)
-                result_dict["time_dict"] = time_dict
-                exists.append("time_dict_file")
-        if data_file is not None and not Path(data_file).exists():
-            self.data.save(data, data_file)
-            exists.append("data_file")
-        if model_file is not None and not Path(model_file).exists():
-            self.save(model, model_file)
-            exists.append("model_file")
-        return result_dict
+        else:
+            time_dict = {}
+        return time_dict, result_dict
 
     def initialize(self, data=None, model=None, **kwargs):
         """Initializes the model with the data and returns the data and model.
@@ -536,6 +555,10 @@ class Model:
         :type data: tuple
         :return: The fitted model and the average time per sample.
         """
+        if isinstance(data, type(None)):
+            data = self.data()
+        elif isinstance(data, str):
+            data = self.data(data_file=data)
         assert isinstance(data, list), f"Data {data} is not a list."
         assert (
             len(data) == 4
