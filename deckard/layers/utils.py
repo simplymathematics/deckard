@@ -222,8 +222,12 @@ def prepare_files(params_file, stage, params, id_):
     # It also creates a new directory at files.directory/files.reports_dir
     # If a stage is specified, it also creates a new directory at files.directory/files.reports/stage
     params["files"]["_target_"] = "deckard.base.files.FileConfig"
-    tmp_stage = stage.split("@")[0]
-    sub_stage = stage.split("@")[1] if tmp_stage != stage else None
+    if stage is not None:
+        tmp_stage = stage.split("@")[0]
+        sub_stage = stage.split("@")[1] if tmp_stage != stage else None
+    else:
+        tmp_stage = None
+        sub_stage = None
     if sub_stage is not None:
         params["files"]["directory"] = sub_stage
     params["files"]["stage"] = tmp_stage
@@ -375,6 +379,7 @@ def run_stages(
     config_dir=None,
     config_file=None,
     sub_dict=None,
+    overrides=None,
 ):
     results = {}
     stages = get_stages(stages=stages, pipeline_file=pipeline_file, repo=repo)
@@ -387,6 +392,7 @@ def run_stages(
             config_dir=config_dir,
             config_file=config_file,
             sub_dict=sub_dict,
+            overrides=overrides,
         )
         results[id_] = score
     return results
