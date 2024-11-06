@@ -49,31 +49,34 @@ class OptunaStudyDumpCallback(Callback):
         super().__init__()
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        study = optuna.create_study(
-            study_name=self.study_name,
-            storage=self.storage,
-            direction=self.directions,
-            load_if_exists=False,
-        )
+        if len(self.directions) == 1:
+            direction = self.directions[0]
+            study = optuna.create_study(
+                study_name=self.study_name,
+                storage=self.storage,
+                direction=direction,
+                load_if_exists=True,
+            )
+        else:
+            directions = self.directions
+            study = optuna.create_study(
+                study_name=self.study_name,
+                storage=self.storage,
+                directions=directions,
+                load_if_exists=True,
+            )
+            
         if hasattr(study, "set_metric_names"):
             study.set_metric_names(self.metric_names)
         else:
             print("Cannot set metric names")
 
-    def on_job_start(self, config: DictConfig, **kwargs) -> None:
-        return self.on_multirun_start(config, **kwargs)
 
-    def on_trial_start(self, config: DictConfig, **kwargs) -> None:
-        return self.on_multirun_start(config, **kwargs)
-
-    def on_run_start(self, config: DictConfig, **kwargs) -> None:
-        return self.on_multirun_start(config, **kwargs)
-
-    # def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
-    #     study = optuna.load_study(self.study_name, storage=self.storage)
-    #     df = study.trials_dataframe()
-    #     df.to_csv(self.output_file, index=False)
-    #     print(f"Saved to {self.output_file}")
+    def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
+        study = optuna.load_study(self.study_name, storage=self.storage)
+        df = study.trials_dataframe()
+        df.to_csv(self.output_file, index=False)
+        print(f"Saved to {self.output_file}")
 
 
 def multirun_call(args):
