@@ -14,10 +14,13 @@ logger = logging.getLogger(__name__)
 class SklearnDataPipelineStage:
     name: str
     kwargs: dict = field(default_factory=dict)
+    y: bool = False
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, y=False, **kwargs):
         self.name = name
         self.kwargs = kwargs
+        self.y = y
+        
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -29,8 +32,12 @@ class SklearnDataPipelineStage:
         while "kwargs" in dict_:
             dict_.update(**dict_.pop("kwargs"))
         obj = instantiate(dict_)
-        X_train = obj.fit(X_train).transform(X_train)
-        X_test = obj.transform(X_test)
+        if self.y is False:
+            X_train = obj.fit_transform(X_train, y_train)
+            X_test = obj.transform(X_test, y_test)
+        else:
+            y_train = obj.fit_transform(y_train)
+            y_test = obj.transform(y_test)
         return X_train, X_test, y_train, y_test
 
 
@@ -46,7 +53,7 @@ class SklearnDataPipeline:
                 OmegaConf.create(pipe[stage]),
                 resolve=True,
             )
-            name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
+            name = pipe[stage].pop("name",  stage)
             pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
         self.pipeline = pipe
 

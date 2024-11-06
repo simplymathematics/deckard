@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 from validators import url
 from ..utils import my_hash
 from .generator import DataGenerator
-from .sampler import SklearnDataSampler
+from .sampler import SklearnSplitSampler
 from .sklearn_pipeline import SklearnDataPipeline
 
 __all__ = ["Data"]
@@ -21,22 +21,24 @@ class Data:
     """Data class for generating and sampling data. If the data is generated, then generate the data and sample it. When called, the data is loaded from file if it exists, otherwise it is generated and saved to file. Returns X_train, X_test, y_train, y_test as a list of arrays, typed according to the framework."""
 
     generate: Union[DataGenerator, None] = field(default_factory=DataGenerator)
-    sample: Union[SklearnDataSampler, None] = field(default_factory=SklearnDataSampler)
+    sample: Union[SklearnSplitSampler, None] = field(default_factory=SklearnSplitSampler)
     sklearn_pipeline: Union[SklearnDataPipeline, None] = field(
         default_factory=SklearnDataPipeline,
     )
     target: Union[str, None] = None
     name: Union[str, None] = None
     drop: list = field(default_factory=list)
+    alias : Union[str, None] = None
 
     def __init__(
         self,
         name: str = None,
         generate: DataGenerator = None,
-        sample: SklearnDataSampler = None,
+        sample: SklearnSplitSampler = None,
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
         drop: list = [],
+        alias : str = None,
         **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
@@ -44,7 +46,7 @@ class Data:
         Args:
             name (str, optional): The name of the data object. Defaults to None.
             generate (DataGenerator, optional): The data generator. Defaults to None.
-            sample (SklearnDataSampler, optional): The data sampler. Defaults to None.
+            sample (SklearnSplitSampler, optional): The data sampler. Defaults to None.
             sklearn_pipeline (SklearnDataPipeline, optional): The sklearn pipeline. Defaults to None.
             target (str, optional): The target column. Defaults to None.
         """
@@ -54,34 +56,29 @@ class Data:
                 if isinstance(generate, (DataGenerator))
                 else DataGenerator(**generate)
             )
+            self.alias = alias
         else:
             self.generate = None
+            assert alias is not None, "Alias is not specified"
+            self.alias = alias
         if sample is not None:
-            self.sample = (
-                sample
-                if isinstance(sample, (SklearnDataSampler))
-                else SklearnDataSampler(**sample)
-            )
-        else:
-            self.sample = SklearnDataSampler()
+            sample_dict = OmegaConf.to_container(OmegaConf.create(sample))
+            self.sample = SklearnSplitSampler(**sample_dict)
         if sklearn_pipeline is not None:
             sklearn_pipeline = OmegaConf.to_container(
                 OmegaConf.create(sklearn_pipeline),
             )
-            self.sklearn_pipeline = (
-                sklearn_pipeline
-                if isinstance(sklearn_pipeline, (SklearnDataPipeline))
-                else SklearnDataPipeline(**sklearn_pipeline)
-            )
+            self.sklearn_pipeline = SklearnDataPipeline(**sklearn_pipeline)
         else:
             self.sklearn_pipeline = None
         self.drop = drop
         self.target = target
+        self.kwargs = kwargs
         self.name = name if name is not None else my_hash(self)
-        logger.info(f"Data initialized: {self.name}")
-        logger.info(f"Data.generate: {self.generate}")
-        logger.info(f"Data.sample: {self.sample}")
-        logger.info(f"Data.sklearn_pipeline: {self.sklearn_pipeline}")
+        logger.debug(f"Data initialized: {self.name}")
+        logger.debug(f"Data.generate: {self.generate}")
+        logger.debug(f"Data.sample: {self.sample}")
+        logger.debug(f"Data.sklearn_pipeline: {self.sklearn_pipeline}")
 
     def get_name(self):
         """Get the name of the data object."""
@@ -136,7 +133,7 @@ class Data:
             try:
                 data = read_json(filename)
             except ValueError as e:
-                logger.warning(
+                logger.debug(
                     f"Error reading {filename}: {e}. Trying to read as Series.",
                 )
                 data = read_json(filename, typ="series")
@@ -215,7 +212,7 @@ class Data:
             elif suffix in [".npz"]:
                 np.savez(filename, data)
             else:  # pragma: no cover
-                raise ValueError(f"Unknown file type {type(suffix)} for {suffix}")
+                raise ValueError(f"Unknown file type {suffix} for {suffix}")
             assert Path(filename).exists()
 
     def __call__(
@@ -235,13 +232,16 @@ class Data:
         else:
             new_data_file = data_file
         if data_file is not None and Path(data_file).exists():
+            logger.info(f"Loading data from {data_file}")
             data = self.initialize(data_file)
         elif "data" in kwargs:
+            logger.info("Data is already loaded.")
             assert (
                 len(kwargs["data"]) == 4
             ), f"Data must be length 4, not {len(kwargs['data'])}"
             data = kwargs["data"]
         else:
+            logger.info("Initializing data.")
             data = self.initialize()
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
