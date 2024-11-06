@@ -3,8 +3,8 @@ data_dir: data
 data_file : ${dataset}-${data.sample.random_state}-${data.sample.train_size}-${data.sample.test_size}
 data_type: .pkl
 model_dir : models
-model_file : default
-model_type: .pkl
+# model_file : ${.reports}/${stage}/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
+# model_type: .pkl
 directory: output/${dataset}
 score_dict_file: score_dict.json
 params_file : params.yaml

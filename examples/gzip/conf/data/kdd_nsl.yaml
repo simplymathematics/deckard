@@ -3,8 +3,10 @@ drop:
 sample:
     random_state : 0
     stratify: True
-    train_size : 100
-    test_size :  100
+    train_size : 1000
+    test_size :  200
+    n_splits: 5
+    fold: 0
 name: raw_data/kdd_nsl_undersampled_5000.csv
 target: label
 alias: kdd_nsl

@@ -62,10 +62,6 @@ stages:
         cache: true
         persist: true
         push: true
-    # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}/:
-    #     cache: true
-    #     persist: true
-    #     push: true
     params:
     - data
     - model
@@ -81,9 +77,9 @@ stages:
   grid_search_precompute:
     matrix: 
       train_size: [1000] 
-      dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
-      model_name : [knn, svc, logistic] # knn, svc, logistic
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
       metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+      fold : [0, 1, 2, 3, 4]
       algorithm : # modified, symmetric, name
         - [False, False, "Vanilla"]
         - [False, True, "Assumed"] 
@@ -92,50 +88,54 @@ stages:
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
-      ++algorithm="${item.algorithm[2]}"
+      algorithm="${item.algorithm[2]}"
       data=${item.dataset}
-      data.sample.test_size=400
-      ++data.sample.train_size=${item.train_size}
-      ++dataset=${item.dataset}
-      ++model_name=${item.model_name}
-      ++model.init.symmetric=${item.algorithm[1]}
-      ++model.init.modified=${item.algorithm[0]}
-      ++model.init.metric=${item.metric}
-      ++model.init.transform=None
+      data.sample.test_size=200
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      data.sample.fold=${item.fold}
+      model_name=knn
+      model=ncd_knn
+      model.init.symmetric=${item.algorithm[1]}
+      model.init.modified=${item.algorithm[0]}
+      model.init.metric=${item.metric}
+      model.init.transform=None
+      model.init.distance_matrix_train=output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}${item.fold}.npz
+      model.init.distance_matrix_test=output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}${item.fold}.npz
       files.directory=output/${item.dataset}
-      files.reports=reports/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/train-${item.train_size}/400/0/
-      ++hydra.sampler.n_trials=1
-      --config-name ${item.model_name}
+      files.reports=reports/precomputed/knn/${item.algorithm[2]}/${item.train_size}/${item.fold}/${item.metric}/
+      hydra.sweeper.n_trials=1
+      --config-name knn
     deps:
-      - conf/${item.model_name}.yaml
+      - conf/knn.yaml # Only needs one distance matrix per fold/metric/algorithm to tune all the models
       - params.yaml
       - raw_data/
     outs:
-        - output/${item.dataset}/distance_matrix/${item.model_name}/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-400-0.npz:
+        - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}${item.fold}.npz:
             cache: true
             persist: true
             push: true
-        - output/${item.dataset}/distance_matrix/${item.model_name}/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-400-0.npz:
+        - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}${item.fold}.npz:
             cache: true
             persist: true
             push: true
-        - output/${item.dataset}/logs/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/${item.train_size}/:
+        - output/${item.dataset}/logs/precomputed/knn/${item.algorithm[2]}/${item.train_size}/${item.fold}/${item.metric}/:
             cache: true
             persist: true
             push: true
-        - output/${item.dataset}/reports/precomputed/${item.model_name}/${item.metric}/${item.algorithm[2]}/${item.train_size}/:
+        - output/${item.dataset}/reports/precomputed/knn/${item.algorithm[2]}/${item.train_size}/${item.fold}/${item.metric}/:
             cache: true
             persist: true
             push: true
     params:
-      - conf/${item.model_name}.yaml:
+      - conf/knn.yaml:
           - hydra
   ##############################################################################
   grid_search:
     matrix: 
       train_size: [1000] # 10, 20, 35, 60, 100, 200, 500  200, 500
-      dataset : [ddos, kdd_nsl, sms_spam, truthseeker] # 
-      model_name : [knn, svc, logistic] # knn, svc, logistic
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
+      model_name : [knn,logistic, svc] # knn, svc, logistic
       algorithm : # modified, symmetric, name
         - [False, False, "Vanilla"]
         - [False, True, "Assumed"] 
@@ -145,25 +145,23 @@ stages:
       python -m deckard.layers.optimise
       stage=train
       data=${item.dataset}
-      data.sample.test_size=400
-      ++data.sample.train_size=${item.train_size}
-      ++dataset=${item.dataset}
-      ++model_name=${item.model_name}
-      ++model.init.symmetric=${item.algorithm[1]}
-      ++model.init.modified=${item.algorithm[0]}
+      data.sample.test_size=200
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      model_name=${item.model_name}
+      model.init.symmetric=${item.algorithm[1]}
+      model.init.modified=${item.algorithm[0]}
       files.directory=output/${item.dataset}
-      files.reports=reports/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/400/0/
-      hydra.sweeper.n_jobs=1
+      hydra.sweeper.n_jobs=32
       hydra.launcher.n_jobs=1
-      ++algorithm="${item.algorithm[2]}"
+      algorithm="${item.algorithm[2]}"
       --config-name ${item.model_name}
       --multirun
     deps:
       - conf/${item.model_name}.yaml
       - params.yaml
       - raw_data/
-      - output/${item.dataset}/distance_matrix/${item.model_name}/
-      - output/${item.dataset}/distance_matrix/${item.model_name}/
+      - output/${item.dataset}/distance_matrix/
     outs:
         - output/${item.dataset}/logs/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/:
             cache: true
@@ -179,7 +177,7 @@ stages:
   ##############################################################################
   compile:
     matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
       model : [knn, svc, logistic, ] #condense/knn, condense/svc, condense/logistic
       stage : [search]
     deps:
@@ -193,7 +191,7 @@ stages:
   ##############################################################################
   clean:
     matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
       model : [knn, svc, logistic,] # condense/knn, condense/svc, condense/logistic
       stage : [search]
     deps: 
@@ -214,7 +212,7 @@ stages:
   ##############################################################################
   merge:
     matrix:
-      dataset : [kdd_nsl, sms_spam, ddos, truthseeker]
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
     deps:
       - output/${item.dataset}/plots/clean/knn.csv
       - output/${item.dataset}/plots/clean/logistic.csv
@@ -234,8 +232,8 @@ stages:
       python merge.py
       --big_dir output/
       --little_dir output/
-      --data_file sms_spam/plots/merged.csv
-      --little_dir_data_file  kdd_nsl/plots/merged.csv ddos/plots/merged.csv truthseeker/plots/merged.csv 
+      --data_file ddos/plots/merged.csv
+      --little_dir_data_file  kdd_nsl/plots/merged.csv sms_spam/plots/merged.csv truthseeker/plots/merged.csv 
       --output_file merged.csv
       --output_folder output/combined/plots/
     deps:
@@ -279,7 +277,7 @@ stages:
   ##############################################################################
   copy:
     matrix:
-      dataset : [kdd_nsl, truthseeker, sms_spam, ddos, combined]
+      dataset : [ddos] # , kdd_nsl, sms_spam, truthseeker
     cmd: >-
       rm -rf ~/Gzip-KNN/figs/${item.dataset}/ &&
       mkdir -p ~/Gzip-KNN/figs/${item.dataset}/ &&

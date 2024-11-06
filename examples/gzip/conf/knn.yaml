@@ -17,9 +17,9 @@ optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
-    dir: output/${dataset}/logs/precomputed/${model_name}/${model.init.metric}/${algorithm}/${data.sample.train_size}
+    dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
   sweep:
-    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}
+    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
@@ -44,12 +44,12 @@ hydra:
       +model.init.weights : uniform,distance
       +model.init.algorithm : brute
       model_name : ${model_name}
-      ++model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
-      ++model.init.symmetric: True,False
-      ++model.init.modified: True,False
-      ++model.init.transform: None,abs,square,exp
-      ++model.init.distance_matrix_train: output/${dataset}/distance_matrix/${model_name}/${model.init.metric}/${algorithm}/train-${data.sample.train_size}-400-0.npz
-      ++model.init.distance_matrix_test: output/${dataset}/distance_matrix/${model_name}/${model.init.metric}/${algorithm}/test-${data.sample.test_size}-400-0.npz
+      model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
+      model.init.symmetric: True,False
+      model.init.modified: True,False
+      model.init.transform: None,abs,square
+      data.sample.fold: 0,1,2,3,4
+      files.reports: reports/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 1
