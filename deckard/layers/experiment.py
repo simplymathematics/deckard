@@ -43,6 +43,7 @@ def experiment_main(args):
         repo=args.workdir,
         config_dir=config_dir,
         config_file=args.config_file,
+        overrides=args.overrides,
     )
     return results
 
