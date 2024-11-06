@@ -366,8 +366,6 @@ def plot_aft(
             labels[i] = new_label
             i += 1
         ax2.set_yticklabels(labels)
-        print(f"XLABEL: {xlabel}")
-        input("Press Enter to continue...")
         ax2.set_xlabel(xlabel)
         ax2.set_ylabel(ylabel)
         ax2.set_title(title)
