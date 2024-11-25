@@ -53,7 +53,7 @@ class OptunaStudyDumpCallback(Callback):
         try:
             study = optuna.load_study(self.study_name, storage=self.storage)
             study.delete_study(study_name=self.study_name, storage=self.storage)
-        except: #noqa E722
+        except:  # noqa E722
             pass
         if len(self.directions) == 1:
             direction = self.directions[0]
@@ -71,12 +71,11 @@ class OptunaStudyDumpCallback(Callback):
                 directions=directions,
                 load_if_exists=True,
             )
-            
+
         if hasattr(study, "set_metric_names"):
             study.set_metric_names(self.metric_names)
         else:
             print("Cannot set metric names")
-
 
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
         study = optuna.load_study(self.study_name, storage=self.storage)

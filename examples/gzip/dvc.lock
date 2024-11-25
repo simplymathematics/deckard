@@ -5,41 +5,41 @@ stages:
     deps:
     - path: output/combined/plots/precomputed_merged.csv
       hash: md5
-      md5: bcac4044ebf6a8e87466657152fee0ab
-      size: 544862
+      md5: 74e64a550f67500cde658a2451b596ff
+      size: 542942
     - path: output/combined/plots/search_merged.csv
       hash: md5
-      md5: 9bb919729281590d81f581534532ee68
-      size: 80745918
+      md5: dc6c5be32fb30fee5d8da9db17981c91
+      size: 80466782
     - path: plots.py
       hash: md5
-      md5: 76c5fd920dbc21e0ce5fd027ee119821
-      size: 7847
+      md5: 861b58e8c12e56d7d86711a74e25201f
+      size: 7799
     outs:
     - path: output/combined/plots/accuracy_vs_algorithm.pdf
       hash: md5
-      md5: b8178d24dd4bab5aa54c703b1e8b6838
-      size: 84491
+      md5: baf264ff4454a859fdafe3d3d70ec613
+      size: 84418
     - path: output/combined/plots/accuracy_vs_kernel.pdf
       hash: md5
-      md5: 53e67ccc2d8630bbd58538aac18a2593
-      size: 89180
+      md5: da4394a3547668ba63ed919f4a1d720a
+      size: 89128
     - path: output/combined/plots/distance_matrix_time_vs_algorithm.pdf
       hash: md5
-      md5: 620e718bdc9bdd0ff7aea46de65531c3
+      md5: 4b5e4e832a383fd483f8facebb01a6a1
       size: 59938
     - path: output/combined/plots/pred_time_vs_algorithm.pdf
       hash: md5
-      md5: 94c369b6313ee117c5cc3a4b91237891
-      size: 187238
+      md5: 9f0499aa355f9360803c0034711fbfe1
+      size: 187176
     - path: output/combined/plots/search_averaged.csv
       hash: md5
-      md5: 92e26c3922060d70acadbff523387847
-      size: 31273539
+      md5: e58fa6aaabd1aa57e190bb2634e8b7d3
+      size: 30994403
     - path: output/combined/plots/train_time_vs_algorithm.pdf
       hash: md5
-      md5: cccf6094b9bbe8ff9f2918472c161425
-      size: 181444
+      md5: 29e8c4f22ef2238bdaae493f1d67d55b
+      size: 181379
   metric_space_check:
     cmd: python metric_space_check.py --max_alphabet_size 52 --max_string_size 144
       --sig_figs 10 --data random --samples 1000 --folder metric_space_check/ --log_file
@@ -82,8 +82,8 @@ stages:
     deps:
     - path: output/combined/
       hash: md5
-      md5: 9d15a7cb36c73eee62f488a3d75f9315.dir
-      size: 113166610
+      md5: 9b8e607c2893891890004f7aaf1a202b.dir
+      size: 112606166
       nfiles: 8
   check_matrices:
     cmd: python check_matrices.py --working_dir output --file_regex */distance_matrix/**/train-*.npz

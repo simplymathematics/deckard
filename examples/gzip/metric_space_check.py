@@ -18,8 +18,7 @@ from gzip_classifier import compressors
 
 logger = logging.getLogger(__name__)
 
-sns.set_theme(context='paper', style='whitegrid', font='Times New Roman', font_scale=2)
-
+sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
 
 
 def old_ncd(
@@ -92,6 +91,7 @@ def sort_xy(x, y):
     else:
         res = x, y
     return res
+
 
 def unmodified_ncd(x, y, method="gzip"):
     return old_ncd(x, y, method=method)
@@ -591,7 +591,7 @@ def plot_identity_violations(args, big_df):
         "ratio": "Ratio",
         "hamming": "Hamming",
     }
-    big_df['Identity'] = big_df['Identity'].str.replace("_", " ").str.title()
+    big_df["Identity"] = big_df["Identity"].str.replace("_", " ").str.title()
     big_df["Metric"] = big_df["Metric"].map(metric_dict)
     # Drop " Ncd" from the distance column
     cols = ["Sig Figs", "Max String Size", "Alphabet Size"]
