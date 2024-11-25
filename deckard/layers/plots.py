@@ -168,19 +168,10 @@ def cat_plot(
             graph.legend.remove()
         else:
             pass
-    if xlabels is not None:
-        if len(graph.axes.flat) > 1 and isinstance(xlabels, str):
-            for ax in graph.axes.flat:
-                ax.set_xlabel(xlabels)
-        else:
-            graph.set_xlabels(xlabels)
-    if ylabels is not None:
-        if len(graph.axes.flat) > 1 and isinstance(ylabels, str):
-            for ax in graph.axes.flat:
-                ax.set_ylabel(ylabels)
-        else:
-            graph.set_ylabels(ylabels)
-    graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
+        #
+    for ax in graph.axes.flat:
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation)
+    graph.set_axis_labels(x_var=xlabels, y_var=ylabels)
     if xlim is not None:
         graph.set(xlim=xlim)
     if ylim is not None:
