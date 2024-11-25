@@ -20,7 +20,6 @@ class SklearnDataPipelineStage:
         self.name = name
         self.kwargs = kwargs
         self.y = y
-        
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -53,7 +52,7 @@ class SklearnDataPipeline:
                 OmegaConf.create(pipe[stage]),
                 resolve=True,
             )
-            name = pipe[stage].pop("name",  stage)
+            name = pipe[stage].pop("name", stage)
             pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
         self.pipeline = pipe
 

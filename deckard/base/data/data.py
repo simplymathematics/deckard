@@ -21,14 +21,16 @@ class Data:
     """Data class for generating and sampling data. If the data is generated, then generate the data and sample it. When called, the data is loaded from file if it exists, otherwise it is generated and saved to file. Returns X_train, X_test, y_train, y_test as a list of arrays, typed according to the framework."""
 
     generate: Union[DataGenerator, None] = field(default_factory=DataGenerator)
-    sample: Union[SklearnSplitSampler, None] = field(default_factory=SklearnSplitSampler)
+    sample: Union[SklearnSplitSampler, None] = field(
+        default_factory=SklearnSplitSampler
+    )
     sklearn_pipeline: Union[SklearnDataPipeline, None] = field(
         default_factory=SklearnDataPipeline,
     )
     target: Union[str, None] = None
     name: Union[str, None] = None
     drop: list = field(default_factory=list)
-    alias : Union[str, None] = None
+    alias: Union[str, None] = None
 
     def __init__(
         self,
@@ -38,7 +40,7 @@ class Data:
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
         drop: list = [],
-        alias : str = None,
+        alias: str = None,
         **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.

@@ -5,7 +5,7 @@ from pathlib import Path
 import argparse
 
 
-from .utils import  run_stages
+from .utils import run_stages
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +27,9 @@ def experiment_main(args):
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     if args.overrides is not None and len(args.overrides) > 0:
-       for override in args.overrides:
-           key, value = override.split("=")
-           logger.info(f"Setting {key}={value}")
+        for override in args.overrides:
+            key, value = override.split("=")
+            logger.info(f"Setting {key}={value}")
     logger.info(
         f"Using existing params file {args.params_file} in directory {args.workdir}",
     )

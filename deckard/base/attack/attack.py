@@ -92,7 +92,7 @@ class AttackInitializer:
         try:
             logger.debug("Attempting black-box attack.")
             config = {"_target_": name}
-            
+
             config.update(**kwargs)
             attack = instantiate(config, model)
         except TypeError as e:

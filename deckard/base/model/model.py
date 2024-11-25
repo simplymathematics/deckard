@@ -367,7 +367,14 @@ class Model:
         for key in all_files:
             if locals().get(key) is not None:
                 must_exist.append(key)
-        time_dict, result_dict = self._load_model_results(predictions_file, probabilities_file, time_dict_file, losses_file, result_dict, exists)
+        time_dict, result_dict = self._load_model_results(
+            predictions_file,
+            probabilities_file,
+            time_dict_file,
+            losses_file,
+            result_dict,
+            exists,
+        )
         if "train_time" not in time_dict.keys():
             time_dict = locals().get("time_dict", {})
             result_dict["time_dict"] = time_dict
@@ -415,7 +422,11 @@ class Model:
                 )
                 result_dict["time_dict"].update(**pred_time_dict)
                 result_dict["predictions"] = preds
-            elif predictions_file is not None and Path(predictions_file).exists() and "pred_time" in time_dict.keys():
+            elif (
+                predictions_file is not None
+                and Path(predictions_file).exists()
+                and "pred_time" in time_dict.keys()
+            ):
                 logger.info(f"Loading predictions from {predictions_file}.")
                 preds = self.data.load(predictions_file)
                 result_dict["predictions"] = preds
@@ -487,7 +498,15 @@ class Model:
             exists.append("model_file")
         return result_dict
 
-    def _load_model_results(self, predictions_file, probabilities_file, time_dict_file, losses_file, result_dict, exists):
+    def _load_model_results(
+        self,
+        predictions_file,
+        probabilities_file,
+        time_dict_file,
+        losses_file,
+        result_dict,
+        exists,
+    ):
         if predictions_file is not None and Path(predictions_file).exists():
             preds = self.data.load(predictions_file)
             result_dict["predictions"] = preds

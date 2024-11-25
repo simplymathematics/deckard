@@ -47,7 +47,7 @@ class Experiment:
         # Data
         self.data = Data(**OmegaConf.to_container(OmegaConf.create(data)))
         logger.info(f"Data: {self.data}")
-        
+
         # Model
         self.model = (
             Model(**OmegaConf.to_container(OmegaConf.create(model)))
@@ -56,7 +56,7 @@ class Experiment:
         )
         if self.model is not None:
             logger.info(f"Model: {self.model}")
-            
+
         # Attack
         self.attack = (
             Attack(**OmegaConf.to_container(OmegaConf.create(attack)))
@@ -66,7 +66,7 @@ class Experiment:
         if self.attack is not None:
             logger.info(f"Attack: {self.attack}")
             adv_metrics = [f"adv_{metric}" for metric in metrics]
-            metrics = metrics + adv_metrics        
+            metrics = metrics + adv_metrics
         # Files
         if isinstance(files, dict):
             self.files = FileConfig(**files)
@@ -244,7 +244,7 @@ class Experiment:
             raise ValueError("Scorer is None. Please specify a scorer.")
         #########################################################################
         # Return results
-        if len(self.metrics)>= 1:
+        if len(self.metrics) >= 1:
             for metric in self.metrics:
                 logger.info(f"{metric}: {score_dict[metric]}")
         else:
