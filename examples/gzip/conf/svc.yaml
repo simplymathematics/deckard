@@ -1,7 +1,7 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: ???
+    - data: default
     - model: ncd_svc
     - files: default
     - scorers: default
@@ -35,7 +35,7 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}_${algorithm}
     storage: sqlite:///output/optuna.db
-    n_trials: 8192
+    n_trials: 1
     n_jobs: ${oc.env:DECKARD_N_JOBS, 1}
     direction: ${direction}
     params:
@@ -46,7 +46,6 @@ hydra:
       model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
       data.sample.fold: 0,1,2,3,4
       model.init.transform: None,exp_neg,exp_neg_gamma_001,exp_neg_gamma_01,exp_neg_gamma_1,exp_neg_gamma10,exp_neg_gamma100,exp_neg_gamma1000
-      files.reports: reports/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
     max_failure_rate: 1.0
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

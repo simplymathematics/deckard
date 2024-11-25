@@ -13,9 +13,9 @@ replace:
     lzma  : "LZMA"
     brotli: "Brotli"
   model_name:
-    GzipSVC : "NCD-SVC"
-    GzipLogisticRegressor : "NCD-Logistic"
-    GzipKNN : "NCD-KNN"
+    GzipSVC : "SVC"
+    GzipLogisticRegressor : "Logistic"
+    GzipKNN : "KNN"
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
@@ -31,24 +31,11 @@ replace:
     exp_neg : "$e^{-D}$"
     avg_with_transpose: "(D + D^T)/2"
     linear_kernel: "D * D^T"
-  model.init.modified:
-    True: "Modified"
-    False: "Vanilla"
-  model.init.condensing_method:
-    random : "Random"
-    medoid : "Medoid"
-    sum : "Sum"
-    svc : "SVC"
-    hardness : "Hardness"
-    nearmiss : "NearMiss"
-    knn : "KNN"
   dataset:
     ddos : "DDoS"
     sms_spam : "SMS Spam"
     kdd_nsl : "KDD NSL"
     truthseeker : "Truthseeker"
-  model.init.m :
-    -1 : 1
 drop_values:
   accuracy : 0.00000000000
   predict_time : 1.00000000000

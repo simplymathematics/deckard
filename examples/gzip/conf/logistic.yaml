@@ -1,7 +1,7 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: ???
+    - data: default
     - model: ncd_logistic
     - files: default
     - scorers: default
@@ -35,12 +35,12 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     study_name: ${dataset}_${model_name}_${algorithm}
     storage: sqlite:///output/optuna.db
-    n_trials: 8192
+    n_trials: 1
     n_jobs: ${oc.env:DECKARD_N_JOBS, 1}
     params:
       +model.init.solver: saga
       +model.init.penalty : l2
-      +model.init.tol: .0001,.001,.01,.1
+      +model.init.tol: .0001
       +model.init.C : .0001,.001,.01,.1,1,10,100,1000
       +model.init.fit_intercept : True
       model.init.modified: True,False
@@ -50,7 +50,6 @@ hydra:
       model.init.symmetric: True,False
       model_name : ${model_name}
       data.sample.fold: 0,1,2,3,4
-      files.reports: reports/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
     direction: ${direction}
     max_failure_rate: 1.0
   launcher:

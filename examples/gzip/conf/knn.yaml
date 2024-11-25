@@ -36,7 +36,7 @@ hydra:
     direction: ${direction}
     storage: sqlite:///output/optuna.db
     study_name: ${dataset}_${model_name}_${algorithm}
-    n_trials: 4096
+    n_trials: 1
     n_jobs: 1
     max_failure_rate: 1.0
     params:
@@ -49,7 +49,6 @@ hydra:
       model.init.modified: True,False
       model.init.transform: None,abs,square
       data.sample.fold: 0,1,2,3,4
-      files.reports: reports/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 1
