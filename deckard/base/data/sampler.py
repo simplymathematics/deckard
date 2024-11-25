@@ -63,20 +63,20 @@ class SklearnDataSampler:
                 **params,
             )
         else:
-            if isinstance(train_size, float):
-                train_size = int(train_size * len(X))
-            if test_size is None:
-                test_size = len(X) - train_size
-            elif isinstance(test_size, float):
-                test_size = int(test_size * len(X))
-            if isinstance(train_size, type(None)):
-                assert test_size is not None
-                train_size = len(X) - test_size
-            assert train_size + test_size <= len(X), "train_size + test_size must be <= len(X)"
-            X_train = X[:train_size]
-            X_test = X[train_size : train_size + test_size]  # noqa E203
-            y_train = y[:train_size]
-            y_test = y[train_size : train_size + test_size]  # noqa E203
+            if isinstance(self.train_size, float):
+                self.train_size = int(self.train_size * len(X))
+            if self.test_size is None:
+                self.test_size = len(X) - self.train_size
+            elif isinstance(self.test_size, float):
+                self.test_size = int(self.test_size * len(X))
+            if isinstance(self.train_size, type(None)):
+                assert self.test_size is not None
+                self.train_size = len(X) - self.test_size
+            assert self.train_size + self.test_size <= len(X), "self.train_size + self.test_size must be <= len(X)"
+            X_train = X[:self.train_size]
+            X_test = X[self.train_size : self.train_size + self.test_size]  # noqa E203
+            y_train = y[:self.train_size]
+            y_test = y[self.train_size : self.train_size + self.test_size]  # noqa E203
 
         return [X_train, X_test, y_train, y_test]
 
