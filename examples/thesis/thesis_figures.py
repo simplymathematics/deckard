@@ -27,7 +27,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score
 
 
 binarizer = lambda y: 0 if y <= 0.5 else 1  # noqa E731
@@ -43,7 +42,6 @@ def plot_dataset_model_comparison(
 ):
     # Create a figure with specified size
     figure = plt.figure(figsize=(8, 13))
-    i = 1
     # Print for progress tracking
     print("Plotting dataset model comparison")
     

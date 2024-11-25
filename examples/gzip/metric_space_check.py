@@ -365,8 +365,6 @@ def get_distance_function(distance):
         dist = sorted_ncd
     elif distance == "Averaged":
         dist = averaged_ncd
-    elif distance == "Safe":
-        dist = distance_safe_ncd
     else:
         raise NotImplementedError(
             f"Only unmodified_ncd, modified_ncd, and length_sorted_ncd are supported as distance functions. You chose {distance}",

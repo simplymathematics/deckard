@@ -1,12 +1,7 @@
 
-import logging
-import argparse
 import pandas as pd
-from pathlib import Path
 from tqdm import tqdm
-import numpy as np
 import seaborn as sns
-import hashlib
 
 
 # Set seaborn theme to paper using times new roman font
@@ -82,7 +77,7 @@ if __name__ == "__main__":
         kind = "boxen",
         order = ["GZIP", "BZ2", "Brotli", "Hamming", "Ratio", "Levenshtein"],
         row_order = ["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
-        col_order = ["NCD-KNN", "NCD-Logistic", "NCD-SVC"],
+        col_order = ["KNN", "Logistic", "SVC"],
         hue_order = ["Vanilla", "Assumed", "Enforced", "Average"],
     )
     acc_graph.set_axis_labels("Metric", "Accuracy")
@@ -108,7 +103,7 @@ if __name__ == "__main__":
         kind = "boxen",
         hue_order = ["Vanilla", "Assumed", "Enforced", "Average"],
         row_order = ["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
-        col_order = ["NCD-KNN", "NCD-Logistic", "NCD-SVC"],
+        col_order = ["KNN", "Logistic", "SVC"],
         sharex=False,
     )
     acc_graph.set_axis_labels("Kernel", "Accuracy")
@@ -164,7 +159,7 @@ if __name__ == "__main__":
         row_order = ["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
         hue_order = ["Vanilla", "Assumed", "Enforced", "Average"],
         col="Model",
-        col_order = ["NCD-KNN", "NCD-Logistic", "NCD-SVC"],
+        col_order = ["KNN", "Logistic", "SVC"],
     )
     train_time_graph.set_axis_labels("Metric", "Model Training Time \n per Sample (seconds)")
     train_time_graph.set_titles("{row_name} - {col_name}")
@@ -191,7 +186,7 @@ if __name__ == "__main__":
         row_order = ["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
         hue_order = ["Vanilla", "Assumed", "Enforced", "Average"],
         col="Model",
-        col_order = ["NCD-KNN", "NCD-Logistic", "NCD-SVC"],
+        col_order = ["KNN", "Logistic", "SVC"],
     )
     pred_time_graph.set_axis_labels("Metric", "Prediction Time per Sample (seconds)")
     pred_time_graph.set_titles("{col_name} - {row_name}")

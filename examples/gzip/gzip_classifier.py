@@ -18,7 +18,6 @@ python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --dist
 import numpy as np
 import warnings
 import gzip
-import brotli
 from tqdm import tqdm
 from pathlib import Path
 import logging
@@ -34,12 +33,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
-from sklearn_extra.cluster import KMedoids
-from imblearn.under_sampling import (
-    CondensedNearestNeighbour,
-    NearMiss,
-    InstanceHardnessThreshold,
-)
 from Levenshtein import distance, ratio, hamming, jaro, jaro_winkler, seqratio
 import pandas as pd
 from multiprocessing import cpu_count
@@ -634,7 +627,6 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # length of the list `X` is equal to the length of the list `y`. If the lengths are not equal,
         # it will raise an AssertionError with a message indicating the expected and actual lengths.
         # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
-        n_jobs = self.n_jobs
         logger.debug(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
         self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
         self.X_ = np.array([str(x) for x in self.X_])
@@ -1166,13 +1158,13 @@ def grid_search_main(args: argparse.Namespace):
        # Turn all values into lists
         try:
             v = eval(v)
-        except:
+        except: # noqa E722
             v = str(v)
             vs = v.split(",")
             for i in range(len(vs)):
                 try:
                     vs[i] = eval(vs[i])
-                except:
+                except: # noqa E722
                     vs[i] = str(vs[i])
             v = vs
         if isinstance(v, tuple):
@@ -1189,7 +1181,6 @@ def grid_search_main(args: argparse.Namespace):
     skf = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
     n_jobs = params.pop("n_jobs", cpu_count())
     model = supported_models[model_type](n_jobs=1)
-    param_grid = ParameterGrid(kwarg_args)
     # Assume that kwarg_args contains the hyperparameters to search
     grid = GridSearchCV(
         estimator=model,

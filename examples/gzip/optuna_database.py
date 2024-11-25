@@ -53,7 +53,7 @@ class OptunaStudyDumpCallback(Callback):
         try:
             study = optuna.load_study(self.study_name, storage=self.storage)
             study.delete_study(study_name=self.study_name, storage=self.storage)
-        except:
+        except: #noqa E722
             pass
         if len(self.directions) == 1:
             direction = self.directions[0]

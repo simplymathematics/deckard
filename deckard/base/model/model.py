@@ -9,7 +9,6 @@ from copy import deepcopy
 import numpy as np
 from sklearn.exceptions import NotFittedError
 
-from hydra.utils import instantiate
 from ..data import Data
 from ..utils import my_hash, factory
 
