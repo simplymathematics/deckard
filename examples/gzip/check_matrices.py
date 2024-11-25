@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-sns.set_theme(context='paper', style='whitegrid', font='Times New Roman', font_scale=2)
+sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
+
+
 def check_symmetry_identity(matrix: np.ndarray) -> bool:
     logger.debug("Checking symmetry and identity.")
     new_matrix = matrix - matrix.T
@@ -159,21 +161,19 @@ def get_results_for_file(file):
     return result_dict
 
 
-
-
 def plot_results(df: pd.DataFrame, results_plot: Path):
     value_vars = ["symmetry", "non_negative", "triangle_inequality", "zero_identity"]
-    
+
     id_vars = [c for c in df.columns if c not in value_vars]
     df = pd.melt(df, id_vars=id_vars, value_vars=value_vars)
     metric_dict = {
         "brotli": "Brotli",
         "gzip": "GZIP",
-        "bz2" : "BZ2",
+        "bz2": "BZ2",
         "ratio": "Ratio",
         "levenshtein": "Levenshtein",
         "hamming": "Hamming",
-    } 
+    }
     df["metric"] = df["metric"].map(metric_dict)
     results_folder = results_plot.parent
     plot_csv = results_folder / "melted.csv"
@@ -270,7 +270,9 @@ if __name__ == "__main__":
     logger.debug(f"Found {len(files)} files to check.")
     # Check the files
     # Remove the old results file
-    df = check_failures_for_all_files(files, results_file=Path(args.results_folder) / Path(args.results_file))
+    df = check_failures_for_all_files(
+        files, results_file=Path(args.results_folder) / Path(args.results_file)
+    )
 
     # Read the results file
     df = pd.read_csv(Path(args.results_folder) / Path(args.results_file))
