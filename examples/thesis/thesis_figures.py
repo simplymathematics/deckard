@@ -44,7 +44,7 @@ def plot_dataset_model_comparison(
     figure = plt.figure(figsize=(8, 13))
     # Print for progress tracking
     print("Plotting dataset model comparison")
-    
+
     # Iterate over datasets
     for ds_cnt, ds in tqdm(
         enumerate(datasets),
@@ -54,7 +54,11 @@ def plot_dataset_model_comparison(
     ):
         X, y = ds
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=100, train_size=100, random_state=42
+            X,
+            y,
+            test_size=100,
+            train_size=100,
+            random_state=42,
         )
 
         x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
@@ -62,19 +66,30 @@ def plot_dataset_model_comparison(
 
         # Colormap definitions
         cm = plt.cm.PuOr
-        cm_bright_list =["#E66100", "#5D3A9B"]
+        cm_bright_list = ["#E66100", "#5D3A9B"]
         cm_bright = ListedColormap(cm_bright_list)
-        
+
         # Plot the dataset in the first row
         ax = plt.subplot(len(classifiers) + 1, len(datasets), ds_cnt + 1)
-        ax.set_title(f"{dataset_names[ds_cnt]}", fontsize=14)  # Set title for each dataset column
+        ax.set_title(
+            f"{dataset_names[ds_cnt]}", fontsize=14
+        )  # Set title for each dataset column
 
         # Plot training and testing points for raw data
         ax.scatter(
-            X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k"
+            X_train[:, 0],
+            X_train[:, 1],
+            c=y_train,
+            cmap=cm_bright,
+            edgecolors="k",
         )
         ax.scatter(
-            X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6, edgecolors="k"
+            X_test[:, 0],
+            X_test[:, 1],
+            c=y_test,
+            cmap=cm_bright,
+            alpha=0.6,
+            edgecolors="k",
         )
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
@@ -83,9 +98,14 @@ def plot_dataset_model_comparison(
 
         # Iterate over classifiers and plot each one below the raw data plot
         for clf_cnt, (name, clf) in enumerate(
-            zip(names, classifiers), start=1
+            zip(names, classifiers),
+            start=1,
         ):
-            ax = plt.subplot(len(classifiers) + 1, len(datasets), clf_cnt * len(datasets) + ds_cnt + 1)
+            ax = plt.subplot(
+                len(classifiers) + 1,
+                len(datasets),
+                clf_cnt * len(datasets) + ds_cnt + 1,
+            )
             clf = make_pipeline(StandardScaler(), clf)
             clf.fit(X_train, y_train)
             preds = clf.predict(X_test)
@@ -94,15 +114,30 @@ def plot_dataset_model_comparison(
 
             # Plot decision boundaries
             DecisionBoundaryDisplay.from_estimator(
-                clf, X, cmap=cm, alpha=0.8, ax=ax, eps=0.5, response_method="predict"
+                clf,
+                X,
+                cmap=cm,
+                alpha=0.8,
+                ax=ax,
+                eps=0.5,
+                response_method="predict",
             )
 
             # Overlay training and testing points
             ax.scatter(
-                X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k"
+                X_train[:, 0],
+                X_train[:, 1],
+                c=y_train,
+                cmap=cm_bright,
+                edgecolors="k",
             )
             ax.scatter(
-                X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, edgecolors="k", alpha=0.6
+                X_test[:, 0],
+                X_test[:, 1],
+                c=y_test,
+                cmap=cm_bright,
+                edgecolors="k",
+                alpha=0.6,
             )
             ax.set_xlim(x_min, x_max)
             ax.set_ylim(y_min, y_max)
@@ -120,24 +155,44 @@ def plot_dataset_model_comparison(
     # Set x and y labels for the figure
     figure.supylabel("Model", fontsize=18)
     figure.supxlabel("Dataset", fontsize=18)
-    
+
     # Adjust layout for better visibility
     figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
-    
+
     # Create legend handles using the cm_bright colormap
     handles = [
-        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cm_bright_list[0], markersize=10),
-        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cm_bright_list[1], markersize=10),
-        plt.Line2D([0], [0], marker="o", color="black", markerfacecolor="white", markersize=10),
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor=cm_bright_list[0],
+            markersize=10,
+        ),
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor=cm_bright_list[1],
+            markersize=10,
+        ),
+        plt.Line2D(
+            [0], [0], marker="o", color="black", markerfacecolor="white", markersize=10
+        ),
     ]
     labels = ["Class 0", "Class 1", "Uncertain"]
     plt.legend(
-        handles, labels, loc="lower left", bbox_to_anchor=(1.05, 2.5), fontsize=15
+        handles,
+        labels,
+        loc="lower left",
+        bbox_to_anchor=(1.05, 2.5),
+        fontsize=15,
     )
-    
+
     # Apply tight layout to the figure
     figure.tight_layout()
-    
+
     # Save figure if file path is provided
     if file is not None:
         Path(file).parent.mkdir(parents=True, exist_ok=True)
