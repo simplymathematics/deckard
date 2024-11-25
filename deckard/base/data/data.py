@@ -22,7 +22,7 @@ class Data:
 
     generate: Union[DataGenerator, None] = field(default_factory=DataGenerator)
     sample: Union[SklearnSplitSampler, None] = field(
-        default_factory=SklearnSplitSampler
+        default_factory=SklearnSplitSampler,
     )
     sklearn_pipeline: Union[SklearnDataPipeline, None] = field(
         default_factory=SklearnDataPipeline,

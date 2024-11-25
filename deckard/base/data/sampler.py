@@ -73,7 +73,7 @@ class SklearnDataSampler:
                 assert self.test_size is not None
                 self.train_size = len(X) - self.test_size
             assert self.train_size + self.test_size <= len(
-                X
+                X,
             ), "self.train_size + self.test_size must be <= len(X)"
             X_train = X[: self.train_size]
             X_test = X[self.train_size : self.train_size + self.test_size]  # noqa E203
@@ -88,7 +88,7 @@ class SklearnDataSampler:
     def _determine_maximum_split(self, X, train_int, test_int):
 
         assert train_int + test_int <= len(
-            X
+            X,
         ), "train_size + test_size must be == len(X)"
         max_train = len(X) - test_int
         max_test = len(X) - train_int
@@ -117,7 +117,9 @@ class SklearnDataStratifiedSampler:
 
     def __call__(self, X, y):
         stratifier = StratifiedKFold(
-            n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state
+            n_splits=self.n_splits,
+            shuffle=self.shuffle,
+            random_state=self.random_state,
         )
         list_of_splits = list(stratifier.split(X, y))
         train_idx, test_idx = list_of_splits[self.fold]
@@ -169,10 +171,10 @@ class SklearnSplitSampler:
         sampler = SklearnDataSampler(**params)
         X_train_big, X_eval, y_train_big, y_eval = sampler(X, y)
         logger.info(
-            f"X_train_big.shape: {X_train_big.shape}, X_eval.shape: {X_eval.shape}"
+            f"X_train_big.shape: {X_train_big.shape}, X_eval.shape: {X_eval.shape}",
         )
         logger.info(
-            f"y_train_big.shape: {y_train_big.shape}, y_eval.shape: {y_eval.shape}"
+            f"y_train_big.shape: {y_train_big.shape}, y_eval.shape: {y_eval.shape}",
         )
         if self.fold == -1 or self.n_splits == 1:
             res = [X_train_big, X_eval, y_train_big, y_eval]
@@ -194,7 +196,8 @@ class SklearnSplitSampler:
                 fold=self.fold,
             )
             X_train, X_test, y_train, y_test = stratified_sampler(
-                X_train_big, y_train_big
+                X_train_big,
+                y_train_big,
             )
             res = [X_train, X_test, y_train, y_test]
         logger.info(f"X_train.shape: {res[0].shape}, X_test.shape: {res[1].shape}")

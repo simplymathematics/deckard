@@ -72,7 +72,8 @@ def plot_dataset_model_comparison(
         # Plot the dataset in the first row
         ax = plt.subplot(len(classifiers) + 1, len(datasets), ds_cnt + 1)
         ax.set_title(
-            f"{dataset_names[ds_cnt]}", fontsize=14
+            f"{dataset_names[ds_cnt]}",
+            fontsize=14,
         )  # Set title for each dataset column
 
         # Plot training and testing points for raw data
@@ -178,7 +179,12 @@ def plot_dataset_model_comparison(
             markersize=10,
         ),
         plt.Line2D(
-            [0], [0], marker="o", color="black", markerfacecolor="white", markersize=10
+            [0],
+            [0],
+            marker="o",
+            color="black",
+            markerfacecolor="white",
+            markersize=10,
         ),
     ]
     labels = ["Class 0", "Class 1", "Uncertain"]

@@ -271,7 +271,8 @@ if __name__ == "__main__":
     # Check the files
     # Remove the old results file
     df = check_failures_for_all_files(
-        files, results_file=Path(args.results_folder) / Path(args.results_file)
+        files,
+        results_file=Path(args.results_folder) / Path(args.results_file),
     )
 
     # Read the results file

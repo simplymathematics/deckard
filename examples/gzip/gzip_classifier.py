@@ -141,7 +141,13 @@ transform_dict = {
 
 
 def distance_helper(
-    x1, x2, cx1=None, cx2=None, method="gzip", modified=False, symmetric=False
+    x1,
+    x2,
+    cx1=None,
+    cx2=None,
+    method="gzip",
+    modified=False,
+    symmetric=False,
 ):
     x1 = str(x1)
     x2 = str(x2)
@@ -759,7 +765,9 @@ class GzipKNN(GzipClassifier):
             **kwargs,
         )
         self.clf_ = KNeighborsClassifier(
-            n_neighbors=kwargs.pop("n_neighbors", k), metric="precomputed", **kwargs
+            n_neighbors=kwargs.pop("n_neighbors", k),
+            metric="precomputed",
+            **kwargs,
         )
         self.k = k
         for k, v in kwargs.items():
@@ -861,7 +869,8 @@ class GridSearchClassifier(BaseEstimator, ClassifierMixin):
     ):
         estimator = eval(estimator)
         assert isinstance(
-            estimator, BaseEstimator
+            estimator,
+            BaseEstimator,
         ), f"Expected {estimator} to be a BaseEstimator"
         self.estimator = estimator
         self.param_grid = param_grid
@@ -1122,7 +1131,9 @@ def cross_validate_main(args: argparse.Namespace):
     model_type = params.pop("model_type")
     optimizer = params.pop("optimizer")
     skf = StratifiedKFold(
-        n_splits=params.pop("n_splits", 5), random_state=random_state, shuffle=True
+        n_splits=params.pop("n_splits", 5),
+        random_state=random_state,
+        shuffle=True,
     )
     model = supported_models[model_type](**params)
     cv_scores = cross_validate(

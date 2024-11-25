@@ -126,7 +126,10 @@ if __name__ == "__main__":
     data = pd.read_csv(input_file, index_col=0)
 
     sns.set_theme(
-        context="paper", style="whitegrid", font="Times New Roman", font_scale=1
+        context="paper",
+        style="whitegrid",
+        font="Times New Roman",
+        font_scale=1,
     )
     distance_matrix_time_graph = sns.catplot(
         data=data,
@@ -140,7 +143,8 @@ if __name__ == "__main__":
         hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
     )
     distance_matrix_time_graph.set_axis_labels(
-        "Metric", "Distance Matrix Calculation \n Time per Sample (seconds)"
+        "Metric",
+        "Distance Matrix Calculation \n Time per Sample (seconds)",
     )
     distance_matrix_time_graph.set_titles("{col_name}")
     # Change legend title
@@ -154,10 +158,13 @@ if __name__ == "__main__":
     # tight layout
     distance_matrix_time_graph.tight_layout()
     distance_matrix_time_graph.savefig(
-        "output/combined/plots/distance_matrix_time_vs_algorithm.pdf"
+        "output/combined/plots/distance_matrix_time_vs_algorithm.pdf",
     )
     sns.set_theme(
-        context="paper", style="whitegrid", font="Times New Roman", font_scale=2
+        context="paper",
+        style="whitegrid",
+        font="Times New Roman",
+        font_scale=2,
     )
     train_time_graph = sns.catplot(
         data=new_df,
@@ -173,7 +180,8 @@ if __name__ == "__main__":
         col_order=["KNN", "Logistic", "SVC"],
     )
     train_time_graph.set_axis_labels(
-        "Metric", "Model Training Time \n per Sample (seconds)"
+        "Metric",
+        "Model Training Time \n per Sample (seconds)",
     )
     train_time_graph.set_titles("{row_name} - {col_name}")
     # Change legend title
@@ -188,7 +196,10 @@ if __name__ == "__main__":
     train_time_graph.savefig("output/combined/plots/train_time_vs_algorithm.pdf")
 
     sns.set_theme(
-        context="paper", style="whitegrid", font="Times New Roman", font_scale=1.5
+        context="paper",
+        style="whitegrid",
+        font="Times New Roman",
+        font_scale=1.5,
     )
     pred_time_graph = sns.catplot(
         data=new_df,
