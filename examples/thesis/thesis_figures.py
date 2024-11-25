@@ -39,151 +39,111 @@ def plot_dataset_model_comparison(
     classifiers,
     datasets,
     dataset_names,
-    file="thesis/figures/dataset_model_comparison.pdf",
+    file="figures/dataset_model_comparison.pdf",
 ):
-    figure = plt.figure(figsize=(22, 7))
+    # Create a figure with specified size
+    figure = plt.figure(figsize=(8, 13))
     i = 1
-    # iterate over datasets
+    # Print for progress tracking
     print("Plotting dataset model comparison")
+    
+    # Iterate over datasets
     for ds_cnt, ds in tqdm(
         enumerate(datasets),
         desc="Datasets",
         position=0,
         leave=True,
     ):
-        # preprocess dataset, split into training and test part
         X, y = ds
         X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            y,
-            test_size=100,
-            train_size=100,
-            random_state=42,
+            X, y, test_size=100, train_size=100, random_state=42
         )
 
         x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
         y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
-        # just plot the dataset first
-        cm = plt.cm.RdBu
-        cm_bright = ListedColormap(["#FF0000", "#0000FF"])
-        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
-        if ds_cnt == 0:
-            ax.set_title("Input data", fontsize=14)
-        # Plot the training points
+        # Colormap definitions
+        cm = plt.cm.PuOr
+        cm_bright_list =["#E66100", "#5D3A9B"]
+        cm_bright = ListedColormap(cm_bright_list)
+        
+        # Plot the dataset in the first row
+        ax = plt.subplot(len(classifiers) + 1, len(datasets), ds_cnt + 1)
+        ax.set_title(f"{dataset_names[ds_cnt]}", fontsize=14)  # Set title for each dataset column
+
+        # Plot training and testing points for raw data
         ax.scatter(
-            X_train[:, 0],
-            X_train[:, 1],
-            c=y_train,
-            cmap=cm_bright,
-            edgecolors="k",
+            X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k"
         )
-        # Plot the testing points
         ax.scatter(
-            X_test[:, 0],
-            X_test[:, 1],
-            c=y_test,
-            cmap=cm_bright,
-            alpha=0.6,
-            edgecolors="k",
+            X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6, edgecolors="k"
         )
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
         ax.set_xticks(())
         ax.set_yticks(())
-        ax.set_ylabel(f"{dataset_names[ds_cnt]}", fontsize=14)
-        i += 1
 
-        # iterate over classifiers
-        for name, clf in tqdm(
-            zip(names, classifiers),
-            desc="Classifiers",
-            position=1,
-            leave=False,
+        # Iterate over classifiers and plot each one below the raw data plot
+        for clf_cnt, (name, clf) in enumerate(
+            zip(names, classifiers), start=1
         ):
-            ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+            ax = plt.subplot(len(classifiers) + 1, len(datasets), clf_cnt * len(datasets) + ds_cnt + 1)
             clf = make_pipeline(StandardScaler(), clf)
             clf.fit(X_train, y_train)
             preds = clf.predict(X_test)
             preds = binary_func(preds)
-            score = accuracy_score(y_test, preds)
+            # score = accuracy_score(y_test, preds)
+
+            # Plot decision boundaries
             DecisionBoundaryDisplay.from_estimator(
-                clf,
-                X,
-                cmap=cm,
-                alpha=0.8,
-                ax=ax,
-                eps=0.5,
-                response_method="predict",
+                clf, X, cmap=cm, alpha=0.8, ax=ax, eps=0.5, response_method="predict"
             )
 
-            # Plot the training points
+            # Overlay training and testing points
             ax.scatter(
-                X_train[:, 0],
-                X_train[:, 1],
-                c=y_train,
-                cmap=cm_bright,
-                edgecolors="k",
+                X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k"
             )
-            # Plot the testing points
             ax.scatter(
-                X_test[:, 0],
-                X_test[:, 1],
-                c=y_test,
-                cmap=cm_bright,
-                edgecolors="k",
-                alpha=0.6,
+                X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, edgecolors="k", alpha=0.6
             )
-            # Specify the limits of each plot
             ax.set_xlim(x_min, x_max)
             ax.set_ylim(y_min, y_max)
             ax.set_xticks(())
             ax.set_yticks(())
-            if ds_cnt == 0:  # Otherwise, this is handled outside of this loop
-                ax.set_title(name, fontsize=14)
-            ax.text(
-                x_max - 0.2,
-                y_min + 0.3,
-                ("%.2f" % score).lstrip("0"),
-                size=15,
-                horizontalalignment="right",
-            )  # Display the accuracy score
-            i += 1
-    # Add title to the entire figure
+            if ds_cnt == 0:  # Set model name as label for the row's first column
+                ax.set_ylabel(name, fontsize=14)
+            # ax.text(
+            #     x_max - 0.2, y_min + 0.3, ("%.2f" % score).lstrip("0"),
+            #     size=15, horizontalalignment="right"
+            # )  # Display accuracy score
+
+    # Set overall figure title
     figure.suptitle("Classifiers Comparison", fontsize=18)
-    # Add label to the y axis
-    figure.supylabel("Dataset", fontsize=18)
-    # Shift the y axis label to the right
+    # Set x and y labels for the figure
+    figure.supylabel("Model", fontsize=18)
+    figure.supxlabel("Dataset", fontsize=18)
+    
+    # Adjust layout for better visibility
     figure.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
-    # Add label to the x axis
-    figure.supxlabel("Model", fontsize=18)
-    # # Create legend handles using the cm_bright colormap
+    
+    # Create legend handles using the cm_bright colormap
     handles = [
-        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="r", markersize=10),
-        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="b", markersize=10),
-        plt.Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="black",
-            markerfacecolor="white",
-            markersize=10,
-        ),
+        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cm_bright_list[0], markersize=10),
+        plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=cm_bright_list[1], markersize=10),
+        plt.Line2D([0], [0], marker="o", color="black", markerfacecolor="white", markersize=10),
     ]
     labels = ["Class 0", "Class 1", "Uncertain"]
     plt.legend(
-        handles,
-        labels,
-        loc="lower left",
-        bbox_to_anchor=(1.05, 2.5),
-        fontsize=15,
+        handles, labels, loc="lower left", bbox_to_anchor=(1.05, 2.5), fontsize=15
     )
-    # Layout the figure
+    
+    # Apply tight layout to the figure
     figure.tight_layout()
-    # Save the figure
+    
+    # Save figure if file path is provided
     if file is not None:
         Path(file).parent.mkdir(parents=True, exist_ok=True)
-        figure.savefig(file)
+        figure.savefig(file, bbox_inches="tight")
 
 
 if "__main__" == __name__:
@@ -191,8 +151,8 @@ if "__main__" == __name__:
     ##############################################################################
     # Model list
     names = [
-        "Linear Regression",
-        "Logistic Regression",
+        "Linear \nRegression",
+        "Logistic \nRegression",
         "KNN",
         "Linear SVM",
         "RBF SVM",
@@ -246,7 +206,7 @@ if "__main__" == __name__:
     print("MNIST dataset created.")
 
     # # kddcup99
-    # kddcup99 = fetch_kddcup99(data_home="thesis/raw_data")
+    # kddcup99 = fetch_kddcup99(data_home="raw_data")
     # X = kddcup99.data
     # y = kddcup99.target
     # # Transform the target to binary
