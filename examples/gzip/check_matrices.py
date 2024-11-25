@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-
-
+sns.set_theme(context='paper', style='whitegrid', font='Times New Roman', font_scale=2)
 def check_symmetry_identity(matrix: np.ndarray) -> bool:
     logger.debug("Checking symmetry and identity.")
     new_matrix = matrix - matrix.T
@@ -111,20 +110,24 @@ def extract_metadata_from_filename(file: Path) -> dict:
     parents = [p.name for p in file.parents]
     wd = parents[-2]
     dataset = parents[-3]
-    compressor = parents[-6]
-    symmetry = parents[-7].split("_")[-1]
-    modified = parents[-8].split("_")[-1]
+    metric = parents[-5]
+    algorithm = parents[-6]
     filename = file.name.split(".")[0]
-    training_samples, test_samples, random_state = filename.split("-")
+    logger.info(f"Filename: {filename}")
+    logger.info(f"working directory: {wd}")
+    logger.info(f"dataset: {dataset}")
+    logger.info(f"metric: {metric}")
+    logger.info(f"Algorithm: {algorithm}")
+    test_or_train, training_samples, test_samples, random_state = filename.split("-")
     return {
         "working_directory": wd,
         "dataset": dataset,
-        "compressor": compressor,
+        "metric": metric,
         "training_samples": training_samples,
         "test_samples": test_samples,
         "random_state": random_state,
-        "symmetric": symmetry,
-        "modified": modified,
+        "algorithm": algorithm,
+        "mode": test_or_train,
     }
 
 
@@ -134,7 +137,11 @@ def check_failures_for_all_files(files: list, results_file=None) -> dict:
     for file in tqdm(files, desc="Checking matrices", position=0, leave=True):
         result_dict = get_results_for_file(file)
         result_list.append(result_dict)
-        df = save_results(results_file, result_list, df)
+    df = pd.DataFrame(result_list)
+    if results_file:
+        if Path(results_file).exists():
+            Path(results_file).unlink()
+        df.to_csv(results_file)
     return df
 
 
@@ -152,53 +159,58 @@ def get_results_for_file(file):
     return result_dict
 
 
-def save_results(results_file, result_list, df):
-    result_df = pd.DataFrame(result_list)
-    df = pd.concat([df, result_df])
-    df.index = range(len(df))
-    if results_file is not None:
-        # if the file exists, append to it
-        if results_file.exists():
-            df.to_csv(results_file, mode="a", header=False, index=False)
-        else:
-            df.to_csv(results_file, mode="w", header=True, index=False)
-    return df
 
 
 def plot_results(df: pd.DataFrame, results_plot: Path):
     value_vars = ["symmetry", "non_negative", "triangle_inequality", "zero_identity"]
+    
     id_vars = [c for c in df.columns if c not in value_vars]
     df = pd.melt(df, id_vars=id_vars, value_vars=value_vars)
-    df["modified"]
-    algorithm = df["modified"].astype(int) + df["symmetric"].astype(
-        int,
-    )  # If modified and symmetric, then 2, if not modified and symmetric, then 1, if not modified and not symmetric, then 0. The 4th case isn't meaningful.
-    # Vanilla, Assumed Symmetry, Enforced Symmetry
-    df["algorithm"] = algorithm.map(
-        {0: "Vanilla", 1: "Assumed Symmetry", 2: "Enforced Symmetry"},
-    )
+    metric_dict = {
+        "brotli": "Brotli",
+        "gzip": "GZIP",
+        "bz2" : "BZ2",
+        "ratio": "Ratio",
+        "levenshtein": "Levenshtein",
+        "hamming": "Hamming",
+    } 
+    df["metric"] = df["metric"].map(metric_dict)
     results_folder = results_plot.parent
     plot_csv = results_folder / "melted.csv"
     df.to_csv(plot_csv)
+    variable_dict = {
+        "symmetry": "Symmetry",
+        "non_negative": "Non-negative",
+        "triangle_inequality": "Triangle inequality",
+        "zero_identity": "Zero identity",
+    }
+    df["variable"] = df["variable"].map(variable_dict)
     # Create two plots on the same figure
-    fig, ax = plt.subplots(1, 2, figsize=(22,))
+    fig, ax = plt.subplots(1, 2, figsize=(20, 12))
     g = sns.catplot(
         x="variable",
         y="value",
         data=df,
-        hue="compressor",
+        hue="metric",
         col="dataset",
         kind="bar",
         row="algorithm",
-        sharex=True,
+        sharex=False,
         sharey=True,
     )
-    # xlabel
-    g.set_xlabels("Dataset: {col_name}")
     # ylabel
     g.set_ylabels("Failure rate")
     # title
-    g.set_titles("Algorithm : {row_name}")
+    g.set_titles("Algorithm : {row_name}, Variable: {col_name}")
+    # Set legend name to metric
+    g._legend.set_title("Metric")
+    # rotate x labels
+    for ax in g.axes.flat:
+        for label in ax.get_xticklabels():
+            label.set_rotation(45)
+    g.set(yscale="log")
+    # Tight layout
+    g.tight_layout()
     g.savefig(results_plot)
     # save the plot
 
@@ -257,7 +269,8 @@ if __name__ == "__main__":
     files = list(Path(args.working_dir).glob(args.file_regex))
     logger.debug(f"Found {len(files)} files to check.")
     # Check the files
-    # df = check_failures_for_all_files(files, results_file=Path(args.results_folder) / Path(args.results_file))
+    # Remove the old results file
+    df = check_failures_for_all_files(files, results_file=Path(args.results_folder) / Path(args.results_file))
 
     # Read the results file
     df = pd.read_csv(Path(args.results_folder) / Path(args.results_file))
