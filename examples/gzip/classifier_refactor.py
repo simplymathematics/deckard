@@ -20,7 +20,6 @@ from sklearn.datasets import fetch_20newsgroups, make_classification
 from sklearn.preprocessing import LabelEncoder
 
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -143,7 +142,12 @@ def distance_helper(
 
 
 def calculate_rectangular_distance_matrix(
-    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+    X,
+    Y,
+    metric="gzip",
+    sorting_hack=False,
+    zero_hack=False,
+    average_hack=False,
 ):
     n = len(X)
     m = len(Y)
@@ -163,7 +167,7 @@ def calculate_rectangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
@@ -175,7 +179,12 @@ def calculate_rectangular_distance_matrix(
 
 
 def calculate_lower_triangular_distance_matrix(
-    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+    X,
+    Y,
+    metric="gzip",
+    sorting_hack=False,
+    zero_hack=False,
+    average_hack=False,
 ):
     n = len(X)
     m = len(Y)
@@ -194,7 +203,7 @@ def calculate_lower_triangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
@@ -215,7 +224,12 @@ def calculate_lower_triangular_distance_matrix(
 
 
 def calculate_upper_triangular_distance_matrix(
-    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+    X,
+    Y,
+    metric="gzip",
+    sorting_hack=False,
+    zero_hack=False,
+    average_hack=False,
 ):
     n = len(X)
     m = len(Y)
@@ -234,7 +248,7 @@ def calculate_upper_triangular_distance_matrix(
             Cx_i = Cx[i]
             Cy_j = Cy[j]
             queue.append(
-                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack),
             )
     distances = Parallel(n_jobs=-1)(
         delayed(distance_helper)(*args)
@@ -363,7 +377,12 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
         degree=0,
         gamma=1,
         form: Literal[
-            "exp", "exp_neg", "poly", "quadratic", "rational", "multiquadric"
+            "exp",
+            "exp_neg",
+            "poly",
+            "quadratic",
+            "rational",
+            "multiquadric",
         ] = None,
     ):
         self.coef0 = coef0
