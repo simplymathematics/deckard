@@ -1,10 +1,7 @@
-from pathlib import Path
 from typing import Literal
 import logging
-import numpy as np 
+import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import brotli
 import pickle
 import gzip
@@ -24,13 +21,7 @@ from sklearn.preprocessing import LabelEncoder
 
 
 
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import accuracy_score
-
 logger = logging.getLogger(__name__)
-
-
 
 
 def _gzip_len(x):
@@ -86,22 +77,20 @@ all_metrics = {
 }
 
 
-
-
-
-def ncd(x,y, Cx=None, Cy=None, metric='gzip'):
+def ncd(x, y, Cx=None, Cy=None, metric="gzip"):
     if Cx is None:
         Cx = compressors[metric](x)
     if Cy is None:
         Cy = compressors[metric](y)
-    Cxy = compressors[metric](x+y)
+    Cxy = compressors[metric](x + y)
     return (Cxy - min(Cx, Cy)) / max(Cx, Cy)
 
-def string_distance(x, y, metric='levenshtein'):
+
+def string_distance(x, y, metric="levenshtein"):
     return string_metrics[metric](x, y)
 
 
-def calculate_distance(x,y, Cx=None, Cy=None, metric='gzip'):
+def calculate_distance(x, y, Cx=None, Cy=None, metric="gzip"):
     if metric in compressors:
         return ncd(x, y, Cx, Cy, metric=metric)
     elif metric in string_metrics:
@@ -110,11 +99,22 @@ def calculate_distance(x,y, Cx=None, Cy=None, metric='gzip'):
         raise ValueError(f"Unknown metric {metric}")
 
 
-def distance_helper(x,y, Cx=None, Cy=None, metric='gzip', sorting_hack=False, zero_hack=False, average_hack=False):
+def distance_helper(
+    x,
+    y,
+    Cx=None,
+    Cy=None,
+    metric="gzip",
+    sorting_hack=False,
+    zero_hack=False,
+    average_hack=False,
+):
     if zero_hack:
         if x == y:
             return 0
-    assert sorting_hack + average_hack < 2, "Only one of sorting_hack and average_hack can be used"
+    assert (
+        sorting_hack + average_hack < 2
+    ), "Only one of sorting_hack and average_hack can be used"
     if sorting_hack:
         lenx = len(x)
         leny = len(y)
@@ -136,12 +136,15 @@ def distance_helper(x,y, Cx=None, Cy=None, metric='gzip', sorting_hack=False, ze
     elif average_hack:
         dist1 = calculate_distance(x, y, Cx, Cy, metric=metric)
         dist2 = calculate_distance(y, x, Cy, Cx, metric=metric)
-        result =  (dist1 + dist2) / 2
+        result = (dist1 + dist2) / 2
     else:
         result = calculate_distance(x, y, Cx, Cy, metric=metric)
     return result
 
-def calculate_rectangular_distance_matrix(X, Y, metric='gzip', sorting_hack=False, zero_hack=False, average_hack=False):
+
+def calculate_rectangular_distance_matrix(
+    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+):
     n = len(X)
     m = len(Y)
     if metric in compressors:
@@ -152,20 +155,28 @@ def calculate_rectangular_distance_matrix(X, Y, metric='gzip', sorting_hack=Fals
     else:
         Cx = [None] * n
         Cy = [None] * m
-    queue=[]
+    queue = []
     for i in range(n):
         for j in range(m):
             x = X[i]
             y = Y[j]
             Cx_i = Cx[i]
             Cy_j = Cy[j]
-            queue.append((x,y,Cx_i,Cy_j,metric,sorting_hack, zero_hack, average_hack))
-    distances = Parallel(n_jobs=-1)(delayed(distance_helper)(*args) for args in tqdm(queue, total=n*m, desc="Calculating distances.", leave=False))
+            queue.append(
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+            )
+    distances = Parallel(n_jobs=-1)(
+        delayed(distance_helper)(*args)
+        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+    )
     # Reformat the distances into a matrix
     distances = np.array(distances).reshape(n, m)
     return distances
 
-def calculate_lower_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack=False, zero_hack=False, average_hack=False):
+
+def calculate_lower_triangular_distance_matrix(
+    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+):
     n = len(X)
     m = len(Y)
     assert m == n, "Lower triangular matrix can only be calculated for square matrices"
@@ -175,15 +186,20 @@ def calculate_lower_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack
     else:
         Cx = [None] * n
         Cy = [None] * m
-    queue=[]
+    queue = []
     for i in range(n):
-        for j in range(i+1, m):
+        for j in range(i + 1, m):
             x = X[i]
             y = Y[j]
             Cx_i = Cx[i]
             Cy_j = Cy[j]
-            queue.append((x,y,Cx_i,Cy_j,metric,sorting_hack, zero_hack, average_hack))
-    distances = Parallel(n_jobs=-1)(delayed(distance_helper)(*args) for args in tqdm(queue, total=n*m, desc="Calculating distances.", leave=False))
+            queue.append(
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+            )
+    distances = Parallel(n_jobs=-1)(
+        delayed(distance_helper)(*args)
+        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+    )
     # get lower triangular indices
     indices = np.tril_indices(n)
     # Reformat the distances into a matrix
@@ -194,10 +210,13 @@ def calculate_lower_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack
     new_diag = np.diag(np.diag(mtx))
     assert np.all(new_diag == old_diag), "Diagonal elements have changed"
     assert mtx.shape == (n, m), f"Matrix shape is {mtx.shape} but should be {(n, m)}"
-    
+
     return mtx
 
-def calculate_upper_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack=False, zero_hack=False, average_hack=False):
+
+def calculate_upper_triangular_distance_matrix(
+    X, Y, metric="gzip", sorting_hack=False, zero_hack=False, average_hack=False
+):
     n = len(X)
     m = len(Y)
     assert m == n, "Upper triangular matrix can only be calculated for square matrices"
@@ -207,15 +226,20 @@ def calculate_upper_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack
     else:
         Cx = [None] * n
         Cy = [None] * m
-    queue=[]
+    queue = []
     for i in range(n):
         for j in range(i, m):
             x = X[i]
             y = Y[j]
-            Cx_i = Cx[i] 
+            Cx_i = Cx[i]
             Cy_j = Cy[j]
-            queue.append((x,y,Cx_i,Cy_j,metric,sorting_hack, zero_hack, average_hack))
-    distances = Parallel(n_jobs=-1)(delayed(distance_helper)(*args) for args in tqdm(queue, total=n*m, desc="Calculating distances.", leave=False))
+            queue.append(
+                (x, y, Cx_i, Cy_j, metric, sorting_hack, zero_hack, average_hack)
+            )
+    distances = Parallel(n_jobs=-1)(
+        delayed(distance_helper)(*args)
+        for args in tqdm(queue, total=n * m, desc="Calculating distances.", leave=False)
+    )
     # Reformat the distances into a matrix
     mtx = np.zeros((n, m))
     indices = np.triu_indices(n)
@@ -231,12 +255,25 @@ def calculate_upper_triangular_distance_matrix(X, Y, metric='gzip', sorting_hack
 
 
 class StringDistanceTransformer(BaseEstimator, TransformerMixin):
-    
-    def __init__(self, metric:str, algorithm : Literal[None, "assume", "sort", "average"]=None, n_jobs:int=-1, zero_hack:bool=False, lower_triangle=False, upper_triangle=False):
+
+    def __init__(
+        self,
+        metric: str,
+        algorithm: Literal[None, "assume", "sort", "average"] = None,
+        n_jobs: int = -1,
+        zero_hack: bool = False,
+        lower_triangle=False,
+        upper_triangle=False,
+    ):
         assert metric in all_metrics, f"Unknown metric {metric}"
         self.metric = metric
         self.zero_hack = zero_hack
-        assert algorithm in [None, "assume", "sort", "average"], f"Unknown algorithm {algorithm}"
+        assert algorithm in [
+            None,
+            "assume",
+            "sort",
+            "average",
+        ], f"Unknown algorithm {algorithm}"
         self.algorithm = algorithm
         if self.algorithm is None:
             self.sort_hack = False
@@ -249,21 +286,23 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
             self.average_hack = True
         else:
             raise ValueError(f"Unknown algorithm {algorithm}")
-        assert lower_triangle + upper_triangle < 2, "Only one of lower_triangle and upper_triangle can be used"
+        assert (
+            lower_triangle + upper_triangle < 2
+        ), "Only one of lower_triangle and upper_triangle can be used"
         self.upper_triangle = upper_triangle
         self.lower_triangle = lower_triangle
-        
+
         self.calculate_distance_matrix = calculate_rectangular_distance_matrix
         self.n_jobs = n_jobs
-    
+
     def _save(self, path):
         with open(path, "wb") as f:
             pickle.dump(self, f)
-    
+
     def _load(self, path):
         with open(path, "rb") as f:
             return pickle.load(f)
-    
+
     def fit(self, X, y=None):
         X = np.array([str(x) for x in X])
         if self.lower_triangle:
@@ -274,19 +313,32 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
             self.upper_triangle = True
         else:
             self.calculate_fit_matrix = calculate_rectangular_distance_matrix
-        self.mtx_ = self.calculate_fit_matrix(X, X, metric=self.metric, sorting_hack=self.sort_hack, zero_hack=self.zero_hack, average_hack=self.average_hack)
-        self.X_= X
-    
+        self.mtx_ = self.calculate_fit_matrix(
+            X,
+            X,
+            metric=self.metric,
+            sorting_hack=self.sort_hack,
+            zero_hack=self.zero_hack,
+            average_hack=self.average_hack,
+        )
+        self.X_ = X
+
     def transform(self, X, y=None):
         X = np.array([str(x) for x in X])
-        mtx = self.calculate_distance_matrix(X, self.X_, metric=self.metric, sorting_hack=self.sort_hack, zero_hack=self.zero_hack, average_hack=self.average_hack)
+        mtx = self.calculate_distance_matrix(
+            X,
+            self.X_,
+            metric=self.metric,
+            sorting_hack=self.sort_hack,
+            zero_hack=self.zero_hack,
+            average_hack=self.average_hack,
+        )
         return mtx
-    
+
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
-    
-    
+
     def get_params(self, deep=True):
         return {
             "metric": self.metric,
@@ -296,21 +348,34 @@ class StringDistanceTransformer(BaseEstimator, TransformerMixin):
             "lower_triangle": self.lower_triangle,
             "upper_triangle": self.upper_triangle,
         }
-    
+
     def set_params(self, **params):
         for param in params:
             setattr(self, param, params[param])
         return self
 
 
-
-
 class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
     # From https://pdfs.semanticscholar.org/a9ee/f3769fe3686591a88cc831f9f685632f1b95.pdf
-    def __init__(self, coef0=0, degree=0, gamma=1, form:Literal["exp", "exp_neg", "poly", "quadratic", "rational", "multiquadric",]=None):
+    def __init__(
+        self,
+        coef0=0,
+        degree=0,
+        gamma=1,
+        form: Literal[
+            "exp", "exp_neg", "poly", "quadratic", "rational", "multiquadric"
+        ] = None,
+    ):
         self.coef0 = coef0
         self.gamma = gamma
-        assert form in ["exp", "exp_neg", "poly", "quadratic", "rational", "multiquadric"], f"Unknown form: {form}"
+        assert form in [
+            "exp",
+            "exp_neg",
+            "poly",
+            "quadratic",
+            "rational",
+            "multiquadric",
+        ], f"Unknown form: {form}"
         self.form = form
         if self.form in ["multiquadric", "quadratic"]:
             if degree != 2:
@@ -318,42 +383,39 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
             self.degree = 2
         else:
             self.degree = degree
-        
+
     def fit(self, X, y=None):
         if self.form == "exp":
             assert self.coef0 == 0, "coef0 must be 0 for exp form"
-            self.kernel_function = lambda x: np.exp(x**self.degree/self.gamma)
+            self.kernel_function = lambda x: np.exp(x**self.degree / self.gamma)
         elif self.form == "exp_neg":
             assert self.coef0 == 0, "coef0 must be 0 for exp_neg form"
-            self.kernel_function = lambda x: np.exp(-x**self.degree/self.gamma)
+            self.kernel_function = lambda x: np.exp(-(x**self.degree) / self.gamma)
         elif self.form == "poly":
-            self.kernel_function = lambda x: (self.gamma * x + self.coef0)**self.degree
+            self.kernel_function = (
+                lambda x: (self.gamma * x + self.coef0) ** self.degree
+            )
         elif self.form == "quadratic":
             assert self.degree in [2], "Degree must be 2 for quadratic form"
             assert self.gamma == 1, "Gamma must be 1 for quadratic form"
-            self.kernel_function = lambda x: (x + self.coef0)**self.degree
+            self.kernel_function = lambda x: (x + self.coef0) ** self.degree
         elif self.form == "rational":
             assert self.degree == 1, "Degree must be 1 for rational form"
             assert self.gamma == 1, "Gamma must be 1 for rational form"
-            self.kernel_function = lambda x: 1 - (x) /(x + self.coef0)
+            self.kernel_function = lambda x: 1 - (x) / (x + self.coef0)
         elif self.form == "multiquadric":
             assert self.degree == 2, "Degree must be 2 for multiquadric form"
             self.gamma = 1, "Gamma must be 1 for multiquadric form"
-            self.kernel_function = lambda x: 1/np.sqrt(x**2 + self.coef0**2)
+            self.kernel_function = lambda x: 1 / np.sqrt(x**2 + self.coef0**2)
         else:
             raise ValueError(f"Unknown form {self.form}")
-    
+
     def transform(self, X, y=None):
         return self.kernel_function(X)
-    
+
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
-            
-        
-
-
-
 
 
 def load_data(dataset, **kwargs):
@@ -408,8 +470,6 @@ def load_data(dataset, **kwargs):
     return X, y
 
 
-
-
 # from sklearn.pipeline import Pipeline
 # from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 # from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
@@ -424,11 +484,9 @@ def load_data(dataset, **kwargs):
 # from sklearn.model_selection import ParameterGrid
 
 
-
 # model1 = LogisticRegression(max_iter=1000)
 # model2 = KNeighborsClassifier()
 # model3 = SVC(kernel="precomputed")
-
 
 
 # logistic_params = {
@@ -506,7 +564,6 @@ def load_data(dataset, **kwargs):
 #                 new_dict[key] = [new_dict[key]]
 #         model_list.append(new_dict)
 #     i += 1
-        
 
 
 # pipeline1 = Pipeline([
@@ -526,10 +583,9 @@ def load_data(dataset, **kwargs):
 # ])
 
 
-
 if __name__ == "__main__":
 
-    _config ="""
+    _config = """
     data:
         name: raw_data/ddos_undersampled_10000.csv
         target: 'Label'
@@ -633,10 +689,7 @@ if __name__ == "__main__":
     from hashlib import md5
 
     _config = yaml.safe_load(_config)
-    _config['files']['name'] = md5(str(_config).encode('utf-8')).hexdigest()
-    exp = instantiate(_config) 
+    _config["files"]["name"] = md5(str(_config).encode("utf-8")).hexdigest()
+    exp = instantiate(_config)
     score_dict = exp()
     print(score_dict)
-
-
-

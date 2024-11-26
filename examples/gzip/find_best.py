@@ -56,7 +56,7 @@ def query_optuna_db(study_name, storage_path):
             "datetime_complete",
             "state",
             "number",
-        ]
+        ],
     )
     return trials, id_vars, value_vars
 
@@ -112,8 +112,6 @@ def remove_hydra_syntax(trial):
     return trial
 
 
-
-
 def merge_best_with_default(best_trial, default_config):
     best_trial = best_trial.to_dict()
     # best_trial = {f"++{k}": v for k, v in best_trial.items()}
@@ -156,7 +154,8 @@ def main(
 ):
     # Query the optuna database
     trials, id_vars, value_vars = query_optuna_db(
-        study_name=study_name, storage_path=storage_path
+        study_name=study_name,
+        storage_path=storage_path,
     )
     if len(exclude) > 0:
         id_vars = [col for col in id_vars if col not in exclude]
@@ -185,19 +184,35 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Find the best trial for a given study."
+        description="Find the best trial for a given study.",
     )
     parser.add_argument(
-        "-n", "--study_name", type=str, required=True, help="Optuna study name"
+        "-n",
+        "--study_name",
+        type=str,
+        required=True,
+        help="Optuna study name",
     )
     parser.add_argument(
-        "-p", "--storage_path", type=str, required=True, help="Optuna storage path"
+        "-p",
+        "--storage_path",
+        type=str,
+        required=True,
+        help="Optuna storage path",
     )
     parser.add_argument(
-        "-d", "--default_path", type=str, required=True, help="Default path"
+        "-d",
+        "--default_path",
+        type=str,
+        required=True,
+        help="Default path",
     )
     parser.add_argument(
-        "-c", "--config_path", type=str, required=False, help="Configuration path"
+        "-c",
+        "--config_path",
+        type=str,
+        required=False,
+        help="Configuration path",
     )
     parser.add_argument(
         "-s",
@@ -207,10 +222,18 @@ if __name__ == "__main__":
         help="Subset of the data to consider",
     )
     parser.add_argument(
-        "-o", "--output_path", type=str, required=True, help="Output path"
+        "-o",
+        "--output_path",
+        type=str,
+        required=True,
+        help="Output path",
     )
     parser.add_argument(
-        "-x", "--exclude", nargs="+", required=False, help="Exclude these columns"
+        "-x",
+        "--exclude",
+        nargs="+",
+        required=False,
+        help="Exclude these columns",
     )
     args = parser.parse_args()
 
