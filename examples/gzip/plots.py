@@ -164,7 +164,7 @@ if __name__ == "__main__":
         context="paper",
         style="whitegrid",
         font="Times New Roman",
-        font_scale=2,
+        font_scale=1.3,
     )
     train_time_graph = sns.catplot(
         data=new_df,
@@ -192,6 +192,8 @@ if __name__ == "__main__":
             label.set_rotation(45)
     # Take up 2/3 of an A4 page
     train_time_graph.figure.set_size_inches(8, 8)
+    # Move legend outside of the plot and to the right
+    train_time_graph._legend.set_bbox_to_anchor((1, 0.5))
     train_time_graph.tight_layout()
     train_time_graph.savefig("output/combined/plots/train_time_vs_algorithm.pdf")
 
@@ -199,7 +201,7 @@ if __name__ == "__main__":
         context="paper",
         style="whitegrid",
         font="Times New Roman",
-        font_scale=1.5,
+        font_scale=2,
     )
     pred_time_graph = sns.catplot(
         data=new_df,
@@ -225,3 +227,34 @@ if __name__ == "__main__":
     # tight layout
     pred_time_graph.tight_layout()
     pred_time_graph.savefig("output/combined/plots/pred_time_vs_algorithm.pdf")
+
+    refit_df = pd.read_csv("output/combined/plots/refit_merged.csv", index_col=0)
+    refit_df['Algorithm'] = refit_df['algorithm']
+    acc_graph = sns.relplot(
+        data=refit_df,
+        x="data.sample.train_size",
+        y="accuracy",
+        hue="Algorithm",
+        style="Metric",
+        col="Model",
+        row="Dataset",
+        kind="line",
+        col_order=["KNN", "Logistic", "SVC"],
+        row_order=["DDoS", "KDD NSL", "SMS Spam", "Truthseeker"],
+        hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
+        style_order=["GZIP", "BZ2", "Brotli", "Hamming", "Ratio", "Levenshtein"],
+    )
+    # Increase the line thickness
+    for ax in acc_graph.axes.flat:
+        for line in ax.lines:
+            line.set_linewidth(2)
+    acc_graph.set_axis_labels("No. of Training Samples", "Accuracy")
+    acc_graph.set_titles("{row_name} - {col_name}")
+    # Rotate x labels
+    for ax in acc_graph.axes.flat:
+        for label in ax.get_xticklabels():
+            label.set_rotation(45)
+            
+    # tight layout
+    acc_graph.tight_layout()
+    acc_graph.savefig("output/combined/plots/accuracy_vs_train_size.pdf")

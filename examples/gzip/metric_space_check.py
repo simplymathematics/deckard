@@ -608,7 +608,7 @@ def plot_identity_violations(args, big_df):
         style="Metric",
         row_order=["Vanilla", "Assumed", "Enforced", "Averaged"],
         col_order=cols,
-        facet_kws={"sharex": True, "sharey": True},
+        facet_kws={"sharex": False, "sharey": True},
     )
     g.set_titles("{col_name} - {row_name}")
     g.set_axis_labels("", "Percent Violations")
