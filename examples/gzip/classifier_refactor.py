@@ -624,14 +624,13 @@ if __name__ == "__main__":
             label_binarizer:
                 name: sklearn.preprocessing.LabelBinarizer
                 y: True
-            transformer: 
+            transformer:
                 name: tmp.StringDistanceTransformer
                 metric : gzip
-                algorithm: sort 
+                algorithm: sort
                 n_jobs: -1
                 lower_triangle: False
                 zero_hack: False
-            
         _target_: deckard.Data
     model:
         data  : ${data}
@@ -652,10 +651,9 @@ if __name__ == "__main__":
             _target_ : deckard.base.model.art_pipeline.ArtPipeline
             library : sklearn
             initialize:
-                
     attack:
         data: ${data}
-        model: ${model}            
+        model: ${model}
         _target_ : deckard.base.attack.Attack
         init:
             model: ${model}
@@ -693,7 +691,7 @@ if __name__ == "__main__":
             average: weighted
             alias: f1
             direction: maximize
-    metrics: 
+    metrics:
         - train_time
         - predict_time
         - accuracy
