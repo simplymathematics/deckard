@@ -1,7 +1,6 @@
 adversarial-robustness-toolbox
 output
 *.db
-kdd_nsl
 /raw_data
 .dvc/config
 .dvc/*
@@ -18,6 +17,5 @@ ddos/*
 kdd_nsl/*
 sms_spam/*
 truthseeker/*
-conf/*/best_*.yaml
 /params.yaml
 *.ipynb

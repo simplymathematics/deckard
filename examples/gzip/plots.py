@@ -229,7 +229,7 @@ if __name__ == "__main__":
     pred_time_graph.savefig("output/combined/plots/pred_time_vs_algorithm.pdf")
 
     refit_df = pd.read_csv("output/combined/plots/refit_merged.csv", index_col=0)
-    refit_df['Algorithm'] = refit_df['algorithm']
+    refit_df["Algorithm"] = refit_df["algorithm"]
     acc_graph = sns.relplot(
         data=refit_df,
         x="data.sample.train_size",
@@ -254,7 +254,7 @@ if __name__ == "__main__":
     for ax in acc_graph.axes.flat:
         for label in ax.get_xticklabels():
             label.set_rotation(45)
-            
+
     # tight layout
     acc_graph.tight_layout()
     acc_graph.savefig("output/combined/plots/accuracy_vs_train_size.pdf")

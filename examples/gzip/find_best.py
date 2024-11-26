@@ -8,6 +8,7 @@ import logging
 from tqdm import tqdm
 from omegaconf import OmegaConf
 from hydra import compose, initialize
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +37,7 @@ def query_optuna_db(study_name, storage_path):
         elif col.startswith("user_attrs_"):
             new_col = col[11:]
             id_vars.append(new_col)
-        elif col.startswith("value_"): # the optimization metric(s)
+        elif col.startswith("value_"):  # the optimization metric(s)
             new_col = col[6:]
             value_vars.append(new_col)
         else:
@@ -46,9 +47,19 @@ def query_optuna_db(study_name, storage_path):
     logger.info(f"ID variables: {id_vars}")
     logger.info(f"Value variables: {value_vars}")
     # drop system_attrs_grid_id,system_attrs_search_space, duration, datatime_start, datetime_complete
-    trials = trials.drop(columns=["system_attrs_grid_id", "system_attrs_search_space", "duration", "datetime_start", "datetime_complete", "state", "number"])
+    trials = trials.drop(
+        columns=[
+            "system_attrs_grid_id",
+            "system_attrs_search_space",
+            "duration",
+            "datetime_start",
+            "datetime_complete",
+            "state",
+            "number",
+        ]
+    )
     return trials, id_vars, value_vars
-    
+
 
 def find_mean_std(trials, id_vars, value_vars):
     # For each value_var, calculate the mean and std
@@ -57,6 +68,7 @@ def find_mean_std(trials, id_vars, value_vars):
         trials[f"avg_{var_}"] = grouped[var_].transform("mean")
         trials[f"std_{var_}"] = grouped[var_].transform(lambda X: X.std())
     return trials
+
 
 def sort_by_value_vars(trials, value_vars):
     # sort by value_vars, each of which has an avg_${var} and a
@@ -71,10 +83,11 @@ def sort_by_value_vars(trials, value_vars):
     trials = trials.sort_values(by=sortby, ascending=ascending)
     return trials
 
-def find_best_trial(trials,value_vars, subdict=None):
+
+def find_best_trial(trials, value_vars, subdict=None):
     # Sort the trials by the value_vars
-    
-    trials = sort_by_value_vars(trials,  value_vars)
+
+    trials = sort_by_value_vars(trials, value_vars)
     # Get the best trial
     best_trial = trials.iloc[1]
     values = best_trial[value_vars]
@@ -91,21 +104,14 @@ def find_best_trial(trials,value_vars, subdict=None):
             del best_trial[value_var]
     return best_trial, values
 
+
 def remove_hydra_syntax(trial):
     # Remove hydra syntax from the trial
     trial = trial.rename(lambda x: x.replace("+", ""))
     trial = trial.rename(lambda x: "++" + x if "." in x else x)
     return trial
 
-def find_subdict(trial, subdict):
-    # Only return cols that start with 'subdict.'
-    trial = trial.filter(regex=f"^{subdict}\.")
-    # Remove the subdict prefix (e.g. 'subdict.')
-    if hasattr(trial, "columns"):
-        trial.columns = trial.columns.str.replace(f"{subdict}\.", "")
-    else:
-        trial = trial.rename(lambda x: x.replace(f"{subdict}.", ""))
-    return trial
+
 
 
 def merge_best_with_default(best_trial, default_config):
@@ -121,7 +127,6 @@ def merge_best_with_default(best_trial, default_config):
     return cfg
 
 
-
 def save_best_trial(best_trial, output_path):
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     best_trial = OmegaConf.to_container(best_trial)
@@ -129,7 +134,7 @@ def save_best_trial(best_trial, output_path):
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
         yaml.dump(best_trial, f)
-   
+
 
 def find_subset(data, subset):
     # assume that subset is a list of strings, where var=val
@@ -140,10 +145,19 @@ def find_subset(data, subset):
     return data
 
 
-
-def  main(study_name, storage_path, default_path, config_path, output_path, subset =[], exclude=[]):
+def main(
+    study_name,
+    storage_path,
+    default_path,
+    config_path,
+    output_path,
+    subset=[],
+    exclude=[],
+):
     # Query the optuna database
-    trials, id_vars, value_vars = query_optuna_db(study_name=study_name, storage_path=storage_path)
+    trials, id_vars, value_vars = query_optuna_db(
+        study_name=study_name, storage_path=storage_path
+    )
     if len(exclude) > 0:
         id_vars = [col for col in id_vars if col not in exclude]
     trials = find_mean_std(trials, id_vars, value_vars)
@@ -157,7 +171,7 @@ def  main(study_name, storage_path, default_path, config_path, output_path, subs
         subconf = None
     if len(subset) > 0:
         trials = find_subset(trials, subset)
-    best_trial, values = find_best_trial(trials, value_vars, subdict=subconf)
+    best_trial, _ = find_best_trial(trials, value_vars, subdict=subconf)
     best_trial = remove_hydra_syntax(best_trial)
     merged = merge_best_with_default(best_trial, config_path)
     print(f"Configuration: {conf}")
@@ -168,19 +182,40 @@ def  main(study_name, storage_path, default_path, config_path, output_path, subs
     # Save the best trial to the output path
     save_best_trial(merged, output_path)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Find the best trial for a given study.')
-    parser.add_argument('-n', '--study_name', type=str, required=True, help='Optuna study name')
-    parser.add_argument('-p', '--storage_path', type=str, required=True, help='Optuna storage path')
-    parser.add_argument('-d', '--default_path', type=str, required=True, help='Default path')
-    parser.add_argument('-c', '--config_path', type=str, required=False, help='Configuration path')
-    parser.add_argument('-s', '--subset', nargs='+', required=False, help='Subset of the data to consider')
-    parser.add_argument('-o', '--output_path', type=str, required=True, help='Output path')
-    parser.add_argument('-x', '--exclude', nargs='+', required=False, help='Exclude these columns')
+    parser = argparse.ArgumentParser(
+        description="Find the best trial for a given study."
+    )
+    parser.add_argument(
+        "-n", "--study_name", type=str, required=True, help="Optuna study name"
+    )
+    parser.add_argument(
+        "-p", "--storage_path", type=str, required=True, help="Optuna storage path"
+    )
+    parser.add_argument(
+        "-d", "--default_path", type=str, required=True, help="Default path"
+    )
+    parser.add_argument(
+        "-c", "--config_path", type=str, required=False, help="Configuration path"
+    )
+    parser.add_argument(
+        "-s",
+        "--subset",
+        nargs="+",
+        required=False,
+        help="Subset of the data to consider",
+    )
+    parser.add_argument(
+        "-o", "--output_path", type=str, required=True, help="Output path"
+    )
+    parser.add_argument(
+        "-x", "--exclude", nargs="+", required=False, help="Exclude these columns"
+    )
     args = parser.parse_args()
-    
+
     logging.basicConfig(level=logging.INFO)
-    
+
     main(
         study_name=args.study_name,
         storage_path=args.storage_path,
