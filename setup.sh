@@ -11,28 +11,27 @@ if [[ "$EUID" -eq 0 ]]; then
         sudo apt  -y install msttcorefonts -qq
         rm ~/.cache/matplotlib -rf
         export SETUPTOOLS_USE_DISTUTILS=stdlib
-        
     elif [[ "$OSTYPE" == "darwin"* ]]; 
     then
         # Mac OSX
-        echo "This script is not tested on Mac OSX."
+        echo "This script is not tested on Mac OSX. Please install Python and pip manually."
     elif [[ "$OSTYPE" == "cygwin" ]]; 
     then
         echo "POSIX compatibility layer and Linux environment emulation for Windows. Python must be installed"
-        python -m pip -V || echo "Python is not installed. Please install Python and pip."
+        python3 -m pip -V || echo "Python is not installed. Please install Python and pip."
     elif [[ "$OSTYPE" == "msys" ]]; 
     then
         echo "Installing on windows git shell."
-        python -m pip -V || echo "Python is not installed. Please install Python and pip."
+        python3 -m pip -V || echo "Python is not installed. Please install Python and pip."
     elif [[ "$OSTYPE" == "win32" ]]; 
     then
         echo "I'm not sure this can happen. Good luck."
-        python -m pip -V || echo "Python is not installed. Please install Python and pip."
+        python3 -m pip -V || echo "Python is not installed. Please install Python and pip."
     elif [[ "$OSTYPE" == "freebsd"* ]]; 
     then
         echo "This script is not tested on FreeBSD."
         echo "FreeBSD"
-        python -m pip -V || echo "Python is not installed. Please install Python and pip."
+        python3 -m pip -V || echo "Python is not installed. Please install Python and pip."
     else
         # Unknown.
         echo "Unknown operating system."
@@ -44,5 +43,7 @@ fi
 git clone --recurse-submodules -j 8 https://github.com/simplymathematics/deckard.git || (cd deckard && git submodule update --init --recursive)
 python3 -m venv env
 source env/bin/activate
-python3 -m pip install adversarial-robustness-toolbox
-python3 -m pip install  -e .
+python3 -m pip install adversarial-robustness-toolbox # for adversarial attacks
+python3 -m pip install hydra # For distributed/parallel and command-line configuration
+python3 -m pip install omegaconf # For yaml configurations
+python3 -m pip install  -e . # install deckard

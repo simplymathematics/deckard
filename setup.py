@@ -7,7 +7,6 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "adversarial-robustness-toolbox",
     "numpy",
     "scipy",
     "scikit-learn",
@@ -28,7 +27,6 @@ install_requires = [
     "seaborn",
     "jinja2",
     "paretoset",
-    "omegaconf",
 ]
 test_requires = [
     "pytest",
