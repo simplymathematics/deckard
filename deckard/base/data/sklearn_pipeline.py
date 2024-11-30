@@ -32,8 +32,12 @@ class SklearnDataPipelineStage:
             dict_.update(**dict_.pop("kwargs"))
         obj = instantiate(dict_)
         if self.y is False:
-            X_train = obj.fit_transform(X_train, y_train)
-            X_test = obj.transform(X_test, y_test)
+            try:
+                X_train = obj.fit_transform(X_train, y_train)
+                X_test = obj.transform(X_test, y_test)
+            except TypeError:
+                X_train = obj.fit_transform(X_train)
+                X_test = obj.transform(X_test)
         else:
             y_train = obj.fit_transform(y_train)
             y_test = obj.transform(y_test)
