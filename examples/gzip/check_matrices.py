@@ -199,9 +199,9 @@ def plot_results(df: pd.DataFrame, results_plot: Path):
         sharey=True,
     )
     # ylabel
-    g.set_ylabels("Failure rate")
+    g.set_ylabels("Probability of Metric Property Violation")
     # title
-    g.set_titles("Algorithm : {row_name}, Variable: {col_name}")
+    g.set_titles("{col_name} - {row_name}")
     # Set legend name to metric
     g._legend.set_title("Metric")
     # rotate x labels

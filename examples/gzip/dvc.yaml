@@ -397,7 +397,10 @@ stages:
       - output/combined/plots/distance_matrix_time_vs_algorithm.pdf
       - output/combined/plots/accuracy_vs_train_size.pdf
     outs:
-      - output/combined/plots/search_averaged.csv
+      - output/combined/plots/search_averaged.csv:
+          cache: false
+          persist: true
+          push: true
   copy:
     cmd: >-
       rm -rf ~/Gzip-KNN/images/combined/ &&

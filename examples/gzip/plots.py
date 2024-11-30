@@ -1,7 +1,9 @@
 import pandas as pd
 from tqdm import tqdm
 import seaborn as sns
-
+import numpy as np
+from pathlib import Path
+from matplotlib.ticker import FixedLocator, NullFormatter
 
 # Set seaborn theme to paper using times new roman font
 sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
@@ -32,45 +34,46 @@ if __name__ == "__main__":
         else:
             tmp.append(col)
     data = data[tmp]
+    if not Path(output_file).exists():
+        # fillna with 0 because nans confuse the groupby
+        data = data.fillna(0)
+        print(f"Shape of data: {data.shape}")
+        print(f"Columns: {data.columns}")
+        data['accuracy'] = data['accuracy'] * 100
+        tmp_groups = []
+        for col in group_these:
+            if col not in data.columns:
+                for c in data.columns:
+                    if col in c:
+                        tmp_groups.append(c)
+            else:
+                tmp_groups.append(col)
+        group_these = tmp_groups
+        group_these = [col for col in group_these if col not in do_not_group]
+        print(f"Grouping with {group_these}")
+        grouped = data.groupby(group_these)
+        # Calculate the mean and std for each group and each value column
 
-    # fillna with 0 because nans confuse the groupby
-    data = data.fillna(0)
-    print(f"Shape of data: {data.shape}")
-    print(f"Columns: {data.columns}")
-    data
-
-    tmp_groups = []
-    for col in group_these:
-        if col not in data.columns:
-            for c in data.columns:
-                if col in c:
-                    tmp_groups.append(c)
-        else:
-            tmp_groups.append(col)
-    group_these = tmp_groups
-    group_these = [col for col in group_these if col not in do_not_group]
-    print(f"Grouping with {group_these}")
-    grouped = data.groupby(group_these)
-    # Calculate the mean and std for each group and each value column
-
-    new_df = pd.DataFrame()
-    for _, group in tqdm(grouped):
-        for col in val_cols:
-            # find subset from data
-            subset = data.loc[group.index]
-            # compute the mean
-            mean = subset[col].mean()
-            # compute the standard deviation
-            std = subset[col].std()
-            # add the mean and standard deviation to the group
-            group[col + "_mean"] = mean
-            group[col + "_std"] = std
-            assert f"{col}_mean" in group.columns, f"{col}_mean not in group columns"
-            assert f"{col}_std" in group.columns, f"{col}_std not in group columns"
-            group = group.drop(col, axis=1)
-            # group = group.head(1)
-        new_df = pd.concat([new_df, group])
-    new_df.to_csv(output_file)
+        new_df = pd.DataFrame()
+        for _, group in tqdm(grouped):
+            for col in val_cols:
+                # find subset from data
+                subset = data.loc[group.index]
+                # compute the mean
+                mean = subset[col].mean()
+                # compute the standard deviation
+                std = subset[col].std()
+                # add the mean and standard deviation to the group
+                group[col + "_mean"] = mean
+                group[col + "_std"] = std
+                assert f"{col}_mean" in group.columns, f"{col}_mean not in group columns"
+                assert f"{col}_std" in group.columns, f"{col}_std not in group columns"
+                group = group.drop(col, axis=1)
+                # group = group.head(1)
+            new_df = pd.concat([new_df, group])
+        new_df.to_csv(output_file)
+    else:
+        new_df = pd.read_csv(output_file, index_col=0)
 
     acc_graph = sns.catplot(
         data=new_df,
@@ -85,7 +88,7 @@ if __name__ == "__main__":
         col_order=["KNN", "Logistic", "SVC"],
         hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
     )
-    acc_graph.set_axis_labels("Metric", "Accuracy")
+    acc_graph.set_axis_labels("Metric", " Accuracy (%)")
     acc_graph.set_titles("{row_name} - {col_name}")
     # Change legend title
     acc_graph._legend.set_title("Algorithm")
@@ -110,7 +113,7 @@ if __name__ == "__main__":
         col_order=["KNN", "Logistic", "SVC"],
         sharex=False,
     )
-    acc_graph.set_axis_labels("Kernel", "Accuracy")
+    acc_graph.set_axis_labels("Kernel", " Accuracy (%)")
     acc_graph.set_titles("{row_name} - {col_name}")
     # Change legend title
     acc_graph._legend.set_title("Algorithm")
@@ -230,6 +233,8 @@ if __name__ == "__main__":
 
     refit_df = pd.read_csv("output/combined/plots/refit_merged.csv", index_col=0)
     refit_df["Algorithm"] = refit_df["algorithm"]
+    refit_df['accuracy'] = refit_df['accuracy'] * 100
+    refit_df.dropna(inplace=True, subset=["accuracy"])
     acc_graph = sns.relplot(
         data=refit_df,
         x="data.sample.train_size",
@@ -244,17 +249,18 @@ if __name__ == "__main__":
         hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
         style_order=["GZIP", "BZ2", "Brotli", "Hamming", "Ratio", "Levenshtein"],
     )
-    # Increase the line thickness
+    
     for ax in acc_graph.axes.flat:
+        # Increase the line thickness
         for line in ax.lines:
             line.set_linewidth(2)
-    acc_graph.set_axis_labels("No. of Training Samples", "Accuracy")
-    acc_graph.set_titles("{row_name} - {col_name}")
-    # Rotate x labels
-    for ax in acc_graph.axes.flat:
+        # Rotate x labels
         for label in ax.get_xticklabels():
             label.set_rotation(45)
-
-    # tight layout
-    acc_graph.tight_layout()
+        # set ylim to [0,1]
+        ax.set_ylim(0, 100)
+        
+    acc_graph.set_axis_labels("No. of Training Samples", " Accuracy (%)")
+    acc_graph.set_titles("{row_name} - {col_name}")
+    # acc_graph.tight_layout()
     acc_graph.savefig("output/combined/plots/accuracy_vs_train_size.pdf")
