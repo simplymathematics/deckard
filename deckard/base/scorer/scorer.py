@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Dict, List
 from hydra.utils import call
 from hydra.errors import InstantiationException
-from omegaconf import DictConfig, OmegaConf, ListConfig
+from omegaconf import DictConfig, OmegaConf, ListConfig, ListMergeMode, DictMergeMode
 import numpy as np
 import json
 from pathlib import Path
@@ -57,6 +57,8 @@ class ScorerConfig:
         kwargs = OmegaConf.merge(
             self.params,
             kwargs,
+            list_merge_mode=ListMergeMode.EXTEND_UNIQUE,
+            dict_merge_mode=DictMergeMode.UPDATE,
         )
         new_args = []
         for arg in args:
