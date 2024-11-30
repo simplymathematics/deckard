@@ -1,9 +1,7 @@
 import pandas as pd
 from tqdm import tqdm
 import seaborn as sns
-import numpy as np
 from pathlib import Path
-from matplotlib.ticker import FixedLocator, NullFormatter
 
 # Set seaborn theme to paper using times new roman font
 sns.set_theme(context="paper", style="whitegrid", font="Times New Roman", font_scale=2)
@@ -39,7 +37,7 @@ if __name__ == "__main__":
         data = data.fillna(0)
         print(f"Shape of data: {data.shape}")
         print(f"Columns: {data.columns}")
-        data['accuracy'] = data['accuracy'] * 100
+        data["accuracy"] = data["accuracy"] * 100
         tmp_groups = []
         for col in group_these:
             if col not in data.columns:
@@ -66,7 +64,9 @@ if __name__ == "__main__":
                 # add the mean and standard deviation to the group
                 group[col + "_mean"] = mean
                 group[col + "_std"] = std
-                assert f"{col}_mean" in group.columns, f"{col}_mean not in group columns"
+                assert (
+                    f"{col}_mean" in group.columns
+                ), f"{col}_mean not in group columns"
                 assert f"{col}_std" in group.columns, f"{col}_std not in group columns"
                 group = group.drop(col, axis=1)
                 # group = group.head(1)
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     refit_df = pd.read_csv("output/combined/plots/refit_merged.csv", index_col=0)
     refit_df["Algorithm"] = refit_df["algorithm"]
-    refit_df['accuracy'] = refit_df['accuracy'] * 100
+    refit_df["accuracy"] = refit_df["accuracy"] * 100
     refit_df.dropna(inplace=True, subset=["accuracy"])
     acc_graph = sns.relplot(
         data=refit_df,
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         hue_order=["Vanilla", "Assumed", "Enforced", "Average"],
         style_order=["GZIP", "BZ2", "Brotli", "Hamming", "Ratio", "Levenshtein"],
     )
-    
+
     for ax in acc_graph.axes.flat:
         # Increase the line thickness
         for line in ax.lines:
@@ -259,7 +259,7 @@ if __name__ == "__main__":
             label.set_rotation(45)
         # set ylim to [0,1]
         ax.set_ylim(0, 100)
-        
+
     acc_graph.set_axis_labels("No. of Training Samples", " Accuracy (%)")
     acc_graph.set_titles("{row_name} - {col_name}")
     # acc_graph.tight_layout()

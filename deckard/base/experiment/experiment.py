@@ -65,7 +65,9 @@ class Experiment:
         )
         if self.attack is not None:
             logger.info(f"Attack: {self.attack}")
-            adv_metrics = [f"adv_{metric}" for metric in metrics if not metric.startswith("adv_")]
+            adv_metrics = [
+                f"adv_{metric}" for metric in metrics if not metric.startswith("adv_")
+            ]
             if "adv_train_time" in adv_metrics:
                 adv_metrics.remove("adv_train_time")
                 adv_metrics.append("adv_fit_time")

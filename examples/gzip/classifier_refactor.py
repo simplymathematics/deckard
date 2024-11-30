@@ -1,7 +1,6 @@
 from typing import Literal
 import logging
 import numpy as np
-import pandas as pd
 import brotli
 import pickle
 import gzip
@@ -13,7 +12,6 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from sklearn.base import BaseEstimator, TransformerMixin
-
 
 
 logger = logging.getLogger(__name__)
@@ -431,7 +429,6 @@ class DistanceMatrixKernelizer(BaseEstimator, TransformerMixin):
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
-
 
 
 if __name__ == "__main__":
