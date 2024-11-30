@@ -44,7 +44,7 @@ docs_require = [
     "sphinx-autodoc-annotation",
     "sphinx-autodoc-typehints",
     "matplotlib",
-    "numpy>=1.18.0",
+    "numpy==1.26.4",
     "scipy>=1.4.1",
     "six>=1.13.0",
     "scikit-learn>=0.22.2,<1.1.0",
