@@ -28,6 +28,7 @@ install_requires = [
     "seaborn",
     "jinja2",
     "paretoset",
+    "omegaconf",
 ]
 test_requires = [
     "pytest",
