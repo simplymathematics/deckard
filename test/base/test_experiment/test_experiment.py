@@ -24,7 +24,8 @@ class testExperiment(unittest.TestCase):
             version_base="1.3",
         ):
             cfg = compose(
-                config_name=self.config_file, overrides=[f"files.directory={self.dir}"]
+                config_name=self.config_file,
+                overrides=[f"files.directory={self.dir}"],
             )
         self.cfg = cfg
         self.exp = instantiate(config=self.cfg)

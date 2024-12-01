@@ -353,7 +353,8 @@ class Model:
 
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
         assert isinstance(model, Callable) or hasattr(
-            model, "fit"
+            model,
+            "fit",
         ), f"Model {model} does not have a fit method and is not a callable."
         result_dict["data"] = data
         result_dict["model"] = model
@@ -390,7 +391,9 @@ class Model:
             result_dict["predictions"] = preds
             if probabilities_file is not None:
                 probs, prob_time_dict = self.predict_proba(
-                    data, model, probabilities_file
+                    data,
+                    model,
+                    probabilities_file,
                 )
                 time_dict.update(**prob_time_dict)
                 result_dict["probabilities"] = probs
@@ -505,7 +508,8 @@ class Model:
                 model, time_dict = self.trainer(data, model, library=self.library)
             else:
                 assert hasattr(
-                    model, "fit"
+                    model,
+                    "fit",
                 ), f"Model {model} does not have a fit method."
                 model, time_dict = self.trainer(data, model, library=self.library)
             if model_file is not None:

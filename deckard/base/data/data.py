@@ -229,7 +229,7 @@ class Data:
                         )
                     else:
                         raise ValueError(
-                            f"Unknown data type {type(data)} for {filename}."
+                            f"Unknown data type {type(data)} for {filename}.",
                         )
                 except ValueError as e:
                     if "using all scalar values" in str(e):
