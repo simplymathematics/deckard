@@ -34,7 +34,6 @@ sudo apt-get install libopenblas-dev python-numpy python-scipy python-pandas pyt
 # LLVM_CONFIG=llvm-config-9 pip install llvmlite
 ## The above works with really old versions of sklearn, but the below works with the latest version???
 
-# install berryconda
 conda install -c numba llvmdev
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.1.0/llvm-11.1.0.src.tar.xz
 wget https://github.com/numba/llvmlite

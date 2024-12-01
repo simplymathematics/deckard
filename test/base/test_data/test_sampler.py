@@ -4,14 +4,14 @@ import numpy as np
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
 import os
-from deckard.base.data.sampler import SklearnDataSampler
+from deckard.base.data.sampler import SklearnSplitSampler
 
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 config_dir = Path(this_dir, "../../conf/data").resolve().as_posix()
 config_file = "classification.yaml"
 
 
-class testSklearnDataSampler(unittest.TestCase):
+class testSklearnSplitSampler(unittest.TestCase):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
             config_dir=Path(config_dir).resolve().as_posix(),
@@ -22,7 +22,7 @@ class testSklearnDataSampler(unittest.TestCase):
         self.data = instantiate(config=self.cfg)
 
     def test_init(self):
-        self.assertTrue(isinstance(self.data.sample, SklearnDataSampler))
+        self.assertTrue(isinstance(self.data.sample, SklearnSplitSampler))
 
     def test_call(self):
         X, y = self.data.generate()
@@ -49,7 +49,7 @@ class testSklearnDataSampler(unittest.TestCase):
 config_file = "time_series.yaml"
 
 
-class testTimeSeriesSklearnDataSampler(unittest.TestCase):
+class testTimeSeriesSklearnSplitSampler(unittest.TestCase):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
             config_dir=Path(config_dir).resolve().as_posix(),
@@ -60,7 +60,7 @@ class testTimeSeriesSklearnDataSampler(unittest.TestCase):
         self.data = instantiate(config=self.cfg)
 
     def test_init(self):
-        self.assertTrue(isinstance(self.data.sample, SklearnDataSampler))
+        self.assertTrue(isinstance(self.data.sample, SklearnSplitSampler))
 
     def test_call(self):
         X, y = self.data.generate()
@@ -87,7 +87,7 @@ class testTimeSeriesSklearnDataSampler(unittest.TestCase):
 config_file = "time_series2.yaml"
 
 
-class testTimeSeriesSklearnDataSampler2(testTimeSeriesSklearnDataSampler):
+class testTimeSeriesSklearnSplitSampler2(testTimeSeriesSklearnSplitSampler):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
             config_dir=Path(config_dir).resolve().as_posix(),
@@ -101,7 +101,7 @@ class testTimeSeriesSklearnDataSampler2(testTimeSeriesSklearnDataSampler):
 config_file = "time_series3.yaml"
 
 
-class testTimeSeriesSklearnDataSampler3(testTimeSeriesSklearnDataSampler):
+class testTimeSeriesSklearnSplitSampler3(testTimeSeriesSklearnSplitSampler):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
             config_dir=Path(config_dir).resolve().as_posix(),
@@ -115,7 +115,7 @@ class testTimeSeriesSklearnDataSampler3(testTimeSeriesSklearnDataSampler):
 config_file = "time_series4.yaml"
 
 
-class testTimeSeriesSklearnDataSampler4(testTimeSeriesSklearnDataSampler):
+class testTimeSeriesSklearnSplitSampler4(testTimeSeriesSklearnSplitSampler):
     def setUp(self, config_dir=config_dir, config_file=config_file):
         with initialize_config_dir(
             config_dir=Path(config_dir).resolve().as_posix(),

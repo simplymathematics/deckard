@@ -17,3 +17,4 @@ sklearn_pipeline:
         name: sklearn.preprocessing.StandardScaler
         with_mean: True
         with_std: True
+        X_only: True

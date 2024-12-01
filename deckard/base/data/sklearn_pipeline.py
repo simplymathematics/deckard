@@ -4,6 +4,7 @@ from omegaconf import OmegaConf
 from hydra.utils import instantiate
 from dataclasses import dataclass, field
 from copy import deepcopy
+from numpy import squeeze
 from ..utils import my_hash
 
 __all__ = ["SklearnDataPipelineStage", "SklearnDataPipeline"]
@@ -14,10 +15,14 @@ logger = logging.getLogger(__name__)
 class SklearnDataPipelineStage:
     name: str
     kwargs: dict = field(default_factory=dict)
+    y: bool = False
+    X_only = False
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, y=False, X_only=False, **kwargs):
         self.name = name
         self.kwargs = kwargs
+        self.y = y
+        self.X_only = X_only
 
     def __hash__(self):
         return int(my_hash(self), 16)
@@ -29,9 +34,23 @@ class SklearnDataPipelineStage:
         while "kwargs" in dict_:
             dict_.update(**dict_.pop("kwargs"))
         obj = instantiate(dict_)
-        X_train = obj.fit(X_train).transform(X_train)
-        X_test = obj.transform(X_test)
-        return X_train, X_test, y_train, y_test
+        X_tr = squeeze(X_train)
+        X_te = squeeze(X_test)
+        y_tr = squeeze(y_train)
+        y_te = squeeze(y_test)
+        if self.y is False:
+            if not self.X_only:
+                X_tr_transformed = obj.fit_transform(X_tr, y_tr)
+                X_te_transformed = obj.transform(X_te, y_te)
+            else:
+                X_tr_transformed = obj.fit_transform(X_tr)
+                X_te_transformed = obj.transform(X_te)
+            y_tr_transformed = y_tr
+            y_te_transformed = y_te
+        else:
+            y_tr_transformed = obj.fit_transform(y_tr)
+            y_te_transformed = obj.transform(y_te)
+        return X_tr_transformed, X_te_transformed, y_tr_transformed, y_te_transformed
 
 
 @dataclass
@@ -46,7 +65,8 @@ class SklearnDataPipeline:
                 OmegaConf.create(pipe[stage]),
                 resolve=True,
             )
-            name = pipe[stage].pop("name", pipe[stage].pop("_target_", stage))
+            name = pipe[stage].pop("name", stage)
+            logger.debug(f"Instantiating {name} with kwargs {pipe[stage]}")
             pipe[stage] = SklearnDataPipelineStage(name, **pipe[stage])
         self.pipeline = pipe
 
@@ -63,7 +83,7 @@ class SklearnDataPipeline:
         return iter(self.pipeline)
 
     def __call__(self, X_train, X_test, y_train, y_test):
-        logger.info(
+        logger.debug(
             "Calling SklearnDataPipeline with pipeline={}".format(self.pipeline),
         )
         pipeline = deepcopy(self.pipeline)

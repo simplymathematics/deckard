@@ -22,6 +22,7 @@ init:
             name: sklearn.preprocessing.StandardScaler
             with_mean: True
             with_std: True
+            X_only: True
         feature_selector:
             name: sklearn.feature_selection.SelectKBest
             score_func: sklearn.feature_selection.f_classif

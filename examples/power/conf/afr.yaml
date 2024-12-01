@@ -8,6 +8,7 @@ covariates:
   - adv_fit_time
   - attack.init.eps
   - adv_failures
+  - device_id
 fillna:
   model.trainer.np_epochs: 20
   model.trainer.batch_size: 1024
@@ -32,6 +33,14 @@ weibull:
       "model.trainer.batch_size: lambda_": "Batch Size"
       "def_gen": "Defence"
       "attack.init.eps: lambda_": "$\\varepsilon$"
+      "dataset_" : "Dataset: "
+      "cifar100" : "CIFAR100"
+      "cifar" : "CIFAR10"
+      "mnist" : "MNIST"
+      "device_id_": "nvidia-"
+      "tesla-v100" : "V100"
+      "tesla-p100" : "P100"
+      "l4" : "L4"
   partial_effect:
     - "file": "weibull_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.np_epochs"
@@ -61,6 +70,14 @@ cox:
       "model.trainer.batch_size": "Batch Size"
       "def_gen": "Defence"
       "attack.init.eps": "$\\varepsilon$"
+      "dataset_" : "Dataset: "
+      "cifar100" : "CIFAR100"
+      "cifar" : "CIFAR10"
+      "mnist" : "MNIST"
+      "device_id_": "nvidia-"
+      "tesla-v100" : "V100"
+      "tesla-p100" : "P100"
+      "l4" : "L4"
   partial_effect:
     - "file": "cox_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.np_epochs"
@@ -92,6 +109,14 @@ log_logistic:
       "model.trainer.batch_size: alpha_": "Batch Size"
       "def_gen": "Defence"
       "attack.init.eps: alpha_": "$\\varepsilon$"
+      "dataset_" : "Dataset: "
+      "cifar100" : "CIFAR100"
+      "cifar" : "CIFAR10"
+      "mnist" : "MNIST"
+      "device_id_": "nvidia-"
+      "tesla-v100" : "100"
+      "tesla-p100" : "P100"
+      "l4" : "L4"
   partial_effect:
     - "file": "log_logistic_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.np_epochs"
@@ -123,6 +148,14 @@ log_normal:
       "def_gen": "Defence"
       "attack.init.eps: mu_": "$\\varepsilon$"
       "data.sample.random_state: mu_": "Random State"
+      "dataset_" : "Dataset: "
+      "cifar100" : "CIFAR100"
+      "cifar" : "CIFAR10"
+      "mnist" : "MNIST"
+      "device_id_": "nvidia-"
+      "tesla-v100" : "V100"
+      "tesla-p100" : "P100"
+      "l4" : "L4"
   partial_effect:
     - "file": "log_normal_epochs_partial_effect.pdf"
       "covariate_array": "model.trainer.np_epochs"

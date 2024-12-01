@@ -92,17 +92,9 @@ def read_file(file, results):
             with open(file, "r") as f:
                 dict_ = json.load(f)
         except json.decoder.JSONDecodeError as e:
-            logger.error(f"Error reading {file}")
-            print(f"Error reading {file}. Please fix the file and press Enter.")
-            input(
-                "Press Enter to continue. The next failure on this file will raise an error.",
-            )
-            if retries > 1:
-                raise e
-            else:
-                with open(file, "r") as f:
-                    dict_ = json.load(f)
-                retries += 1
+            full_file = Path(file).resolve()
+            logger.error(f"Error reading {full_file}. Error: {e}")
+            dict_ = {}
     elif suffix == ".yaml":
         with open(file, "r") as f:
             try:
@@ -179,7 +171,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
     elif suffix == ".html":
         results = pd.read_html(results_file, index_col=0)
     elif suffix == ".json":
-        results = pd.read_json(results_file)
+        results = pd.read_json(results_file, index_col=0)
     elif suffix == ".tex":
         pd.read_csv(
             results_file,
@@ -188,6 +180,7 @@ def load_results(results_file, results_folder) -> pd.DataFrame:
             skiprows=4,
             skipfooter=3,
             engine="python",
+            index_col=0,
         )
     else:
         raise ValueError(f"File type {suffix} not supported.")

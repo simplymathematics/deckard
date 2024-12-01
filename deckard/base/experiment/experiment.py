@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from ..attack import Attack
@@ -28,7 +27,7 @@ class Experiment:
     files: Union[FileConfig, None] = field(default_factory=FileConfig)
     name: Union[str, None] = field(default_factory=str)
     stage: Union[str, None] = field(default_factory=str)
-    optimizers: Union[list, None] = field(default_factory=list)
+    metrics: Union[list, None] = field(default_factory=list)
     device_id: str = "cpu"
     kwargs: Union[dict, None] = field(default_factory=dict)
 
@@ -42,44 +41,39 @@ class Experiment:
         attack: Attack = None,
         name=None,
         stage=None,
-        optimizers=None,
+        metrics=["accuracy", "train_time", "predict_time"],
         **kwargs,
     ):
-        # if isinstance(data, dict):
-        #     self.data = Data(**data)
-        if isinstance(data, DictConfig):
-            data_dict = OmegaConf.to_container(data, resolve=True)
-            data_dict.update({"_target_": "deckard.base.data.Data"})
-            self.data = instantiate(data_dict)
-        elif isinstance(data, Data):
-            self.data = data
-        else:  # pragma: no cover
-            raise ValueError("data must be a dict, DictConfig, or Data object.")
-        assert isinstance(self.data, Data), f"data is {type(self.data)}"
-        # if isinstance(model, dict):
-        #     self.model = Model(**model)
-        if isinstance(model, DictConfig):
-            model_dict = OmegaConf.to_container(model, resolve=True)
-            self.model = Model(**model_dict)
-        elif isinstance(model, Model):
-            self.model = model
-        elif isinstance(model, type(None)):  # For experiments without models
-            self.model = None
-        else:  # pragma: no cover
-            raise ValueError("model must be a dict, DictConfig, or Model object.")
-        assert isinstance(self.model, (Model, type(None)))
-        if isinstance(scorers, dict):
-            self.scorers = ScorerDict(**scorers)
-        elif isinstance(scorers, DictConfig):
-            scorer_dict = OmegaConf.to_container(scorers, resolve=True)
-            self.scorers = ScorerDict(**scorer_dict)
-        elif isinstance(scorers, ScorerDict):
-            self.scorers = scorers
-        else:  # pragma: no cover
-            raise ValueError(
-                "scorers must be a dict, DictConfig, or ScorerDict object.",
-            )
-        assert isinstance(self.scorers, ScorerDict)
+        # Data
+        self.data = Data(**OmegaConf.to_container(OmegaConf.create(data)))
+        logger.info(f"Data: {self.data}")
+
+        # Model
+        self.model = (
+            Model(**OmegaConf.to_container(OmegaConf.create(model)))
+            if model is not None
+            else None
+        )
+        if self.model is not None:
+            logger.info(f"Model: {self.model}")
+
+        # Attack
+        self.attack = (
+            Attack(**OmegaConf.to_container(OmegaConf.create(attack)))
+            if attack is not None
+            else None
+        )
+        if self.attack is not None:
+            logger.info(f"Attack: {self.attack}")
+            adv_metrics = [
+                f"adv_{metric}" for metric in metrics if not metric.startswith("adv_")
+            ]
+            if "adv_train_time" in adv_metrics:
+                adv_metrics.remove("adv_train_time")
+                adv_metrics.append("adv_fit_time")
+            adv_metrics.append("adv_success")
+            metrics = metrics + adv_metrics
+        # Files
         if isinstance(files, dict):
             self.files = FileConfig(**files)
         elif isinstance(files, DictConfig):
@@ -90,23 +84,22 @@ class Experiment:
         else:  # pragma: no cover
             raise ValueError("files must be a dict, DictConfig, or FileConfig object.")
         assert isinstance(self.files, FileConfig)
-        if attack is None or (hasattr(attack, "__len__") and len(attack) == 0):
-            self.attack = None
-        elif isinstance(attack, dict):
-            self.attack = Attack(**attack)
-        elif isinstance(attack, DictConfig):
-            attack_dict = OmegaConf.to_container(attack, resolve=True)
-            self.attack = Attack(**attack_dict)
-        elif isinstance(attack, Attack):
-            self.attack = attack
-        else:  # pragma: no cover
-            raise ValueError("attack must be a dict, DictConfig, or Attack object.")
-        assert isinstance(self.attack, (Attack, type(None)))
+        logger.info(f"Files: {self.files}")
+        self.scorers = ScorerDict(**OmegaConf.to_container(OmegaConf.create(scorers)))
+        logger.info(f"Scorers: {self.scorers}")
         self.device_id = device_id
+        logger.info(f"Device ID: {self.device_id}")
         self.stage = stage
-        self.optimizers = optimizers
+        if stage is not None:
+            logger.info(f"Stage: {self.stage}")
+        self.metrics = metrics
+        if metrics is not None:
+            logger.info(f"Metrics: {self.metrics}")
         self.kwargs = kwargs
+        if len(kwargs) > 0:
+            logger.info(f"kwargs: {self.kwargs}")
         self.name = name if name is not None else self._set_name()
+        logger.info(f"Name: {self.name}")
 
     def __hash__(self):
         name = str(self.name).encode("utf-8")
@@ -131,15 +124,21 @@ class Experiment:
             and Path(files["score_dict_file"]).exists()
         ):
             score_dict = self.data.load(files["score_dict_file"])
+            score_dict = dict(score_dict)
+            assert isinstance(score_dict, dict), f"score_dict is {type(score_dict)}"
+            if all(
+                metric in score_dict for metric in self.metrics
+            ):  # Experiment has been run successfully!
+                return score_dict
+
         else:
             score_dict = {}
+
         results = {}
         results["score_dict"] = score_dict
         files.update(**results)
-        #########################################################################
-        # Load or generate data
-        #########################################################################
-        data = self.data(**files)
+        # TODO: Add shortcut if predictions file exists, even if the model doesn't
+        # Refactor out each subsection into  traim. attack, score functions
         #########################################################################
         # Load or train model
         #########################################################################
@@ -148,6 +147,7 @@ class Experiment:
             score_dict.update(**model_results.pop("time_dict", {}))
             score_dict.update(**model_results.pop("score_dict", {}))
             files.update(**model_results)
+            data = files["data"]
             # Prefer probabilities, then loss_files, then predictions
             if (
                 "probabilities" in model_results
@@ -168,11 +168,19 @@ class Experiment:
                 if not hasattr(losses, "shape"):
                     losses = np.array(losses)
                 logger.debug(f"losses shape: {losses.shape}")
-        else:  # For experiments without models, e.g Mutual Information experiments on datasets
+        else:
+            #########################################################################
+            # Load or generate data
+            # For experiments without models, e.g Mutual Information experiments on datasets
+            #########################################################################
+            data = self.data(**files)
+            files["data"] = data
             preds = data[2]
+
         ##########################################################################
         # Load or run attack
         ##########################################################################
+        files.update(**results)
         if self.attack is not None:
             adv_results = self.attack(
                 **files,
@@ -203,6 +211,10 @@ class Experiment:
                 preds = probs
             elif "losses" in locals() and "preds" not in locals():
                 preds = losses
+            else:
+                assert (
+                    "preds" in locals()
+                ), "preds not found. Something seriously wrong happened."
             if "preds" in locals() and self.model is not None:
                 ground_truth = data[3][: len(preds)]
                 logger.debug(f"preds shape: {preds.shape}")
@@ -236,7 +248,13 @@ class Experiment:
                 self.data.save(score_dict, files["score_dict_file"])
         else:  # pragma: no cover
             raise ValueError("Scorer is None. Please specify a scorer.")
-        logger.info(f"Score for id : {self.get_name()}: {score_dict}")
+        #########################################################################
+        # Return results
+        if len(self.metrics) >= 1:
+            for metric in self.metrics:
+                logger.info(f"{metric}: {score_dict[metric]}")
+        else:
+            logger.info("score_dict: {}".format(score_dict))
         logger.info("Finished running experiment with id: {}".format(self.get_name()))
         return score_dict
 

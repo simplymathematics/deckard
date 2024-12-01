@@ -1,4 +1,26 @@
 cat_plot:
+  - file: condensing_ratio_vs_accuracy.pdf
+    digitize : "Condensing Ratio"
+    hue: Condensing Method
+    x : "Condensing Ratio"
+    y : accuracy
+    y_scale : linear
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind: boxen
+    col : Model
+    rotation : 45
+    hue_order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    legend_title: "Condensing Method"
+    ylabels: "Accuracy"
+    xlabels: "Condensing Ratio"
+    # xlim : [0,.9]
   - file : condensing_method_vs_accuracy.pdf
     digitize : Condensing Ratio 
     x: Condensing Method
@@ -28,6 +50,7 @@ cat_plot:
     xlabels: "Condensing Method"
     ylabels: "Accuracy"
     legend_title : "Sample Ratio"
+  
   - file: condensing_method_vs_train_time.pdf
     x: Condensing Method
     hue : Condensing Ratio 
@@ -86,3 +109,25 @@ cat_plot:
     xlabels: "Condensing Method"
     ylabels: "Prediction Time"
     legend_title : "Sample Ratio"
+  - file: string_metric_m_vs_accuracy.pdf
+    digitize : Condensing Ratio 
+    hue: Condensing Method
+    x : Condensing Ratio 
+    y : accuracy
+    y_scale : linear
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    kind: point
+    col : Model
+    rotation : 45
+    hue_order:
+      - Random
+      - Medoid
+      - Sum
+      - SVC
+      - Hardness
+      - NearMiss
+      - KNN
+    legend_title: "Condensing Method"
+    ylabels: "Accuracy"
+    xlabels: "Sample Ratio"
+    xlim: [0, .9]

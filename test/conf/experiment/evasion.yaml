@@ -12,7 +12,7 @@ data:
         test_size : 1000
 model:
     data: ${data}
-    library : sklearn
+    library : sklearn-svc
     init:
         name : sklearn.svm.SVC
         kernel: rbf
@@ -65,7 +65,6 @@ scorers:
         normalize: True
 _target_: deckard.base.experiment.Experiment
 optimizers: 
-    - accuracy
-    - train_time
-
-    
+    - adv_success
+metrics:
+    - adv_success

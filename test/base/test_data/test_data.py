@@ -16,7 +16,7 @@ this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 class testSklearnData(unittest.TestCase):
     config_dir = Path(this_dir, "../../conf/data").resolve().as_posix()
     config_file = "titanic.yaml"
-    data_type = ".json"
+    data_type = ".pkl"
     data_file = "data"
 
     def setUp(self):

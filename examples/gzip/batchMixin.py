@@ -3,10 +3,8 @@ import logging
 import numpy as np
 
 
-from sklearn.datasets import make_classification
 from pathlib import Path
 from time import time
-from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +134,8 @@ class BatchedMixin:
                 end = (i + 1) * self.batch_size
                 X_batch = X_train[start:end]
                 y_batch = y_train[start:end]
+                if hasattr(self, "distance_matrix"):
+                    self.distance_matrix = None
                 fit_func(X_batch, y_batch, **kwargs)
 
         return wrapper
@@ -173,38 +173,3 @@ class BatchedMixin:
                     return indices
 
         return wrapper
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    big_X = []
-    big_y = []
-    for i in range(100):
-        X, y = make_classification(
-            n_samples=100,
-            n_features=20,
-            n_informative=19,
-            n_redundant=1,
-            n_classes=2,
-            random_state=42 + i,
-        )
-        big_X.extend(X.tolist())
-        big_y.extend(y.tolist())
-    big_X = np.array(big_X)
-    big_y = np.array(big_y)
-    logger.info(f"Shape of big_X: {big_X.shape}")
-    i = 42
-    X, y = make_classification(
-        n_samples=10000,
-        n_features=20,
-        n_informative=19,
-        n_redundant=1,
-        n_classes=2,
-        random_state=42 + i,
-    )
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42,
-    )

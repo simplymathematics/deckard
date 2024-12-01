@@ -8,32 +8,34 @@ replace:
     seqRatio: "SeqRatio"
     hamming: "Hamming"
     gzip: "GZIP"
-    pkl: "Pickle"
     bz2: "BZ2"
     zstd: "ZSTD"
     lzma  : "LZMA"
+    brotli: "Brotli"
   model_name:
-    GzipSVC : "k-SVC"
-    GzipLogisticRegressor : "k-Logistic"
-    GzipKNN : "k-KNN"
+    GzipSVC : "SVC"
+    GzipLogisticRegressor : "Logistic"
+    GzipKNN : "KNN"
   model.init.symmetric:
     True: "Symmetric"
     False: "Asymmetric"
-  model.init.sampling_method:
-    random : "Random"
-    medoid : "Medoid"
-    sum : "Sum"
-    svc : "SVC"
-    hardness : "Hardness"
-    nearmiss : "NearMiss"
-    knn : "KNN"
+  model.init.transform:
+    abs : "$|D|$"
+    square : "$D^2$"
+    exp_neg_gamma_001 : "$e^{-D/.001}$"
+    exp_neg_gamma_01 : "$e^{-D/.01}$"
+    exp_neg_gamma_1 : "$e^{-D/.1}$"
+    exp_neg_gamma1000 : "$e^{-D/1000}$"
+    exp_neg_gamma100 : "$e^{-D/100}$"
+    exp_neg_gamma10 : "$e^{-D/10}$"
+    exp_neg : "$e^{-D}$"
+    avg_with_transpose: "(D + D^T)/2"
+    linear_kernel: "D * D^T"
   dataset:
     ddos : "DDoS"
     sms_spam : "SMS Spam"
     kdd_nsl : "KDD NSL"
     truthseeker : "Truthseeker"
-  model.init.m :
-    -1 : 1
 drop_values:
   accuracy : 0.00000000000
   predict_time : 1.00000000000
@@ -41,7 +43,13 @@ replace_cols:
   dataset: Dataset
   model.init.metric: Metric
   model.init.symmetric: Symmetric
-  model.init.sampling_method: Condensing Method
+  model.init.condensing_method: Condensing Method
   model.init.m: Condensing Ratio
   model_name: Model
-  
+fillna:
+  model.init.m: 1
+  model.init.condensing_method: "Control"
+  model.init.symmetric: False
+  model.init.modified: False
+  model.init.metric: gzip
+  model.init.transform: "D"

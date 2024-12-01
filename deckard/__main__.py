@@ -2,7 +2,7 @@
 import sys
 import logging
 from omegaconf import OmegaConf
-from .layers.afr import afr_parser, afr_main
+from .layers.afr import aft_parser, aft_main
 from .layers.attack import attack_parser, attack_main
 from .layers.clean_data import clean_data_parser, clean_data_main
 from .layers.compile import compile_parser, compile_main
@@ -40,7 +40,7 @@ layer_list = [
 
 
 deckard_layer_dict = {
-    "afr": (afr_parser, afr_main),
+    "afr": (aft_parser, aft_main),
     "attack": (attack_parser, attack_main),
     "clean_data": (clean_data_parser, clean_data_main),
     "compile": (compile_parser, compile_main),

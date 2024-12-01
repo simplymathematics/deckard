@@ -65,7 +65,7 @@ stages:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}:
           cache: false
   attacks:
-    cmd: python -m deckard.layers.optimise  --multirun ++attack.attack_size=100 stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${device_id}.db  --config-name ${data.generate.name}.yaml
+    cmd: python -m deckard.layers.optimise  --multirun ++attack.attack_size=100 ++attack.init.eps=interval(0.01, 1.0) stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${device_id}.db  --config-name ${data.generate.name}.yaml
     deps:
       - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
     outs:

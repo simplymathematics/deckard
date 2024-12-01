@@ -1,3 +1,6 @@
 [submodule "adversarial-robustness-toolbox"]
 	path = adversarial-robustness-toolbox
 	url = https://github.com/Trusted-AI/adversarial-robustness-toolbox.git
+[submodule "omegaconf"]
+	path = omegaconf
+	url = https://github.com/omry/omegaconf.git

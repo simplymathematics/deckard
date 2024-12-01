@@ -93,6 +93,8 @@ stages:
         - ${item}/aft_comparison.csv
       outs:
         - ${item}/aft_comparison.tex
+
+  
   combined_plots:
     cmd : python combined_plots.py
     deps:
@@ -128,18 +130,10 @@ stages:
     plots:
       - combined/weibull_aft.pdf # You can also define them manually
       - combined/weibull_qq.pdf
-      - combined/weibull_aft_dummies.pdf
-      # - combined/cox_aft.pdf
-      # - combined/cox_epochs_partial_effect.pdf
-      # - combined/cox_batch_size_partial_effect.pdf
-      # - combined/cox_attack_eps_partial_effect.pdf
-      # - combined/cox_qq.pdf
       - combined/log_logistic_aft.pdf
       - combined/log_logistic_qq.pdf
-      - combined/log_logistic_aft_dummies.pdf
       - combined/log_normal_aft.pdf
       - combined/log_normal_qq.pdf
-      - combined/log_normal_aft_dummies.pdf
     metrics:
       - combined/aft_comparison.csv
       - combined/log_normal_summary.csv
@@ -147,6 +141,43 @@ stages:
       - combined/weibull_summary.csv
     outs:
       - combined/aft_comparison.tex
+  predict_survival_time:
+    foreach:
+      - weibull
+      - log_normal
+      - log_logistic
+    do:
+      cmd: >-
+        python predict_with_best.py 
+        --data combined/clean.csv 
+        --config_file ../conf/combined_afr.yaml 
+        --model ${item}
+        --target adv_failures 
+        --duration_col adv_fit_time
+        --output combined/${item}.csv
+      deps:
+        - combined/clean.csv
+        - ../conf/combined_afr.yaml
+        - combined/aft_comparison.tex
+        - predict_with_best.py
+      outs:
+        - combined/${item}.csv
+  plot_trash_score:
+    foreach:
+      - weibull
+      - log_normal
+      - log_logistic
+    do:
+      cmd: >-
+        python plot_trash_score.py 
+        --input_file combined/${item}.csv 
+        --output_file combined/${item}_trash_score.pdf
+        --title ${item}
+      deps:
+        - combined/${item}.csv
+        - plot_trash_score.py
+      plots:
+        - combined/${item}_trash_score.pdf
   copy:
     foreach:
       - mnist

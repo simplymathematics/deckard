@@ -7,14 +7,14 @@ line_plot:
   y: accuracy
   ylabel: Accuracy
   hue_order:
+  - Brotli
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
   errorbar: se
   err_style: bars
-  xlim: [10, 500]
+  # xlim: [10, 500]
   legend: {"title": "Metrics", "bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}} 
 - file: metric_vs_accuracy.pdf
   hue: Metric
@@ -24,8 +24,8 @@ line_plot:
   y: accuracy
   ylabel: Accuracy
   hue_order:
+  - Brotli
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -48,7 +48,6 @@ line_plot:
   ylabel: Accuracy
   hue_order:
   # - GZIP
-  # - Pickle
   # - BZ2
   # - ZSTD
   # - LZMA
@@ -71,8 +70,8 @@ line_plot:
   ylabel: Training Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -95,8 +94,8 @@ line_plot:
   ylabel: Training Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -114,7 +113,6 @@ line_plot:
   y_scale: linear
   hue_order:
   # - GZIP
-  # - Pickle
   # - BZ2
   # - ZSTD
   # - LZMA
@@ -137,8 +135,8 @@ line_plot:
   ylabel: Prediction Time (s)
   y_scale: linear
   hue_order:
+  - Brotli
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -152,7 +150,6 @@ line_plot:
   y_scale: linear
   hue_order:
   - GZIP
-  - Pickle
   - BZ2
   - ZSTD
   - LZMA
@@ -193,8 +190,8 @@ cat_plot:
     ylabels : Accuracy
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -221,7 +218,6 @@ cat_plot:
     legend_title: " "
     order:
     # - GZIP
-    # - Pickle
     # - BZ2
     # - ZSTD
     # - LZMA
@@ -248,7 +244,6 @@ cat_plot:
     legend_title: " "
     order:
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -274,8 +269,8 @@ cat_plot:
     ylabels : Training Time (s)
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA
@@ -303,7 +298,6 @@ cat_plot:
     legend_title: "String Metrics"
     order:
     # - GZIP
-    # - Pickle
     # - BZ2
     # - ZSTD
     # - LZMA
@@ -329,8 +323,8 @@ cat_plot:
     ylabels : Training Time (s)
     legend_title: "Metrics"
     order:
+    - Brotli
     - GZIP
-    - Pickle
     - BZ2
     - ZSTD
     - LZMA

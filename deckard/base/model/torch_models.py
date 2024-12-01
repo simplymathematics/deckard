@@ -35,7 +35,7 @@ class TorchCriterion:
         self.kwargs = kwargs
 
     def __call__(self):
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}
@@ -54,7 +54,7 @@ class TorchOptimizer:
         self.kwargs = kwargs
 
     def __call__(self, model):
-        logger.info(f"Initializing model {self.name} with kwargs {self.kwargs}")
+        logger.debug(f"Initializing model {self.name} with kwargs {self.kwargs}")
         params = self.kwargs
         name = params.pop("_target_", self.name)
         dict_ = {"_target_": name}

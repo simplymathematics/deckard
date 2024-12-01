@@ -16,7 +16,6 @@ def set_matplotlib_vars(matplotlib_dict=None):
         matplotlib_dict = {
             "font": {
                 "family": "Times New Roman",
-                "weight": "bold",
                 "size": 22,
             },
         }
@@ -30,18 +29,18 @@ def cat_plot(
     data,
     x,
     y,
-    hue,
     kind,
     file,
     folder,
+    hue=None,
     xlabels=None,
     ylabels=None,
     xticklabels=None,
     yticklabels=None,
     titles=None,
     legend_title=None,
-    x_lim=None,
-    y_lim=None,
+    xlim=None,
+    ylim=None,
     hue_order=None,
     rotation=0,
     filetype=".eps",
@@ -96,6 +95,9 @@ def cat_plot(
     plt.cla()
     plt.clf()
     # clear the Axes object
+    plt.cla()
+    plt.clf()
+    # clear the Axes object
     suffix = Path(file).suffix
     if suffix is not None:
         file = Path(file)
@@ -132,11 +134,23 @@ def cat_plot(
             graph_.set_xticklabels(xticklabels)
         if yticklabels is not None:
             graph_.set_yticklabels(yticklabels)
+    # graph is a FacetGrid object and we need to set the x,y scales, labels, titles on the axes
+    for graph_ in graph.axes.flat:
+        if y_scale is not None:
+            graph_.set_yscale(y_scale)
+        if x_scale is not None:
+            graph_.set_xscale(x_scale)
+        if xticklabels is not None:
+            graph_.set_xticklabels(xticklabels)
+        if yticklabels is not None:
+            graph_.set_yticklabels(yticklabels)
     if titles is not None:
         if isinstance(titles, dict):
             graph.set_titles(**titles)
         elif isinstance(titles, str):
             graph.set_titles(titles)
+        else:
+            raise ValueError(f"Unknown type {type(titles)} for titles.")
     else:
         try:
             graph.set_titles("{row_name} | {col_name}")
@@ -154,15 +168,18 @@ def cat_plot(
             graph.legend.remove()
         else:
             pass
-    if xlabels is not None:
-        graph.set_xlabels(xlabels)
-    if ylabels is not None:
-        graph.set_ylabels(ylabels)
-    graph.set_xticklabels(graph.axes.flat[-1].get_xticklabels(), rotation=rotation)
-    if x_lim is not None:
-        graph.set(xlim=x_lim)
-    if y_lim is not None:
-        graph.set(ylim=y_lim)
+        #
+    for ax in graph.axes.flat:
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=rotation)
+    graph.set_axis_labels(x_var=xlabels, y_var=ylabels)
+    if xlim is not None:
+        graph.set(xlim=xlim)
+    if ylim is not None:
+        graph.set(ylim=ylim)
+    if xlim is not None:
+        graph.set(xlim=xlim)
+    if ylim is not None:
+        graph.set(ylim=ylim)
     if len(set_) > 0:
         graph.set(**set_)
     graph.tight_layout()
@@ -296,8 +313,8 @@ def scatter_plot(
     folder,
     y_scale=None,
     x_scale=None,
-    x_lim=None,
-    y_lim=None,
+    xlim=None,
+    ylim=None,
     legend={},
     hue_order=None,
     filetype=".eps",
@@ -367,10 +384,10 @@ def scatter_plot(
         graph.set_yscale(y_scale)
     if x_scale is not None:
         graph.set_xscale(x_scale)
-    if x_lim is not None:
-        graph.set_xlim(x_lim)
-    if y_lim is not None:
-        graph.set_ylim(y_lim)
+    if xlim is not None:
+        graph.set_xlim(xlim)
+    if ylim is not None:
+        graph.set_ylim(ylim)
     graph.set_xlabel(xlabel)
     graph.set_ylabel(ylabel)
     graph.legend(**legend)

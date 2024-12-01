@@ -284,7 +284,6 @@ def prepare_queue_main():
         args.pop(args.index(working_dir))
     else:
         working_dir = Path(".").cwd()
-    print(working_dir)
     if "--config_dir" in args:
         config_dir = args[args.index("--config_dir") + 1]
         # remove config_dir from args

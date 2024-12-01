@@ -1,9 +1,13 @@
-_target_: deckard.base.data.Data
 name: raw_data/truthseeker_undersampled_8000.csv
 target: 'BotScoreBinary'
 sample:
     random_state : 0
-    train_size : 100
-    test_size : 100
+    train_size : 1000
+    test_size : 200
     stratify: True
     shuffle : True
+    n_splits: 5
+    fold: 0
+alias: truthseeker
+n_splits: 5
+fold: 0

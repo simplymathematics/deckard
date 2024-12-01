@@ -19,9 +19,6 @@ config_path = os.environ.get(
     "DECKARD_CONFIG_PATH",
     str(Path(Path.cwd(), "conf").absolute().as_posix()),
 )
-assert Path(
-    config_path,
-).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
 full_path = Path(config_path, config_name).as_posix()
 
@@ -290,12 +287,17 @@ def optimise(cfg: DictConfig) -> None:
                 else:
                     scores.append(None)
             i += 1
+        full_path = Path(folder).resolve().as_posix()
+        # Assume it is a subpath of the working directory, and remove the working directory from the path
+        rel_path = full_path.replace(Path(working_dir).resolve().as_posix(), ".")
+        logger.info(f"Experiment Folder: {rel_path}")
         logger.info(f"Optimizers are : {optimizers}")
         logger.info(f"Score is : {scores}")
     except Exception as e:
         with open(Path(folder, "exception.log"), "w") as f:
             f.write(str(e))
             f.write(traceback.format_exc())
+        logger.info(f"Exception: {e}")
         if not raise_exception:
             logger.warning(
                 f"Exception {e} occured while running experiment {id_}. Setting score to default for specified direction (e.g. -/+ 1e10).",
@@ -320,12 +322,15 @@ def optimise(cfg: DictConfig) -> None:
     return scores
 
 
+@hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
+def optimise_main(cfg: DictConfig) -> float:
+    score = optimise(cfg)
+    return score
+
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-
-    @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
-    def optimise_main(cfg: DictConfig) -> float:
-        score = optimise(cfg)
-        return score
-
+    assert Path(
+        config_path,
+    ).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
     optimise_main()

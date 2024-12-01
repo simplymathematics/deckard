@@ -5,6 +5,7 @@ init:
     name: torch_example.MNISTNet
 _target_: deckard.base.model.Model
 trainer: 
+    nb_epochs: 1
 library : torch
 art:
     library : torch
