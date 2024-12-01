@@ -19,9 +19,6 @@ config_path = os.environ.get(
     "DECKARD_CONFIG_PATH",
     str(Path(Path.cwd(), "conf").absolute().as_posix()),
 )
-assert Path(
-    config_path,
-).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
 config_name = os.environ.get("DECKARD_DEFAULT_CONFIG", "default.yaml")
 full_path = Path(config_path, config_name).as_posix()
 
@@ -325,12 +322,14 @@ def optimise(cfg: DictConfig) -> None:
     return scores
 
 
+@hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
+def optimise_main(cfg: DictConfig) -> float:
+    score = optimise(cfg)
+    return score
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
-
-    @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
-    def optimise_main(cfg: DictConfig) -> float:
-        score = optimise(cfg)
-        return score
-
+    assert Path(
+        config_path,
+    ).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
     optimise_main()
