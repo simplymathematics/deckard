@@ -186,9 +186,9 @@ class SklearnSplitSampler:
             u_train, c_train = unique(y_train_big, return_counts=True)
             u_eval, c_eval = unique(y_eval, return_counts=True)
             for u, c in zip(u_train, c_train):
-                logger.info(f"Train class {u} has {c} samples")
+                logger.debug(f"Train class {u} has {c} samples")
             for u, c in zip(u_eval, c_eval):
-                logger.info(f"Eval class {u} has {c} samples")
+                logger.debug(f"Eval class {u} has {c} samples")
             stratified_sampler = SklearnDataStratifiedSampler(
                 n_splits=self.n_splits,
                 random_state=self.random_state,
@@ -200,8 +200,8 @@ class SklearnSplitSampler:
                 y_train_big,
             )
             res = [X_train, X_test, y_train, y_test]
-        logger.info(f"X_train.shape: {res[0].shape}, X_test.shape: {res[1].shape}")
-        logger.info(f"y_train.shape: {res[2].shape}, y_test.shape: {res[3].shape}")
+        logger.debug(f"X_train.shape: {res[0].shape}, X_test.shape: {res[1].shape}")
+        logger.debug(f"y_train.shape: {res[2].shape}, y_test.shape: {res[3].shape}")
         return res
 
     def __hash__(self):
