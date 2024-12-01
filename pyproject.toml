@@ -20,7 +20,8 @@ dependencies = [
     "seaborn",
     "jinja2",
     "paretoset",
-    "omegaconf>=2.4.0.dev3"
+    "omegaconf>=2.4.0.dev3",
+    "adversarial-robustness-toolbox",
 ]
 requires-python = ">=3.8"
 version = "0.80"
