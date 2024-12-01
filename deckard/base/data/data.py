@@ -40,7 +40,7 @@ class Data:
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
         drop: list = [],
-        alias: str = None,
+        alias : str = None,
         **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
@@ -48,7 +48,7 @@ class Data:
         Args:
             name (str, optional): The name of the data object. Defaults to None.
             generate (DataGenerator, optional): The data generator. Defaults to None.
-            sample (SklearnSplitSampler, optional): The data sampler. Defaults to None.
+            sample (SklearnDataSampler, optional): The data sampler. Defaults to None.
             sklearn_pipeline (SklearnDataPipeline, optional): The sklearn pipeline. Defaults to None.
             target (str, optional): The target column. Defaults to None.
         """
@@ -58,25 +58,32 @@ class Data:
                 if isinstance(generate, (DataGenerator))
                 else DataGenerator(**generate)
             )
-            self.alias = alias
         else:
             self.generate = None
-            assert alias is not None, "Alias is not specified"
-            self.alias = alias
         if sample is not None:
-            sample_dict = OmegaConf.to_container(OmegaConf.create(sample))
-            self.sample = SklearnSplitSampler(**sample_dict)
+            sample = OmegaConf.to_container(OmegaConf.create(sample), resolve=True)
+            self.sample = (
+                sample
+                if isinstance(sample, (SklearnSplitSampler))
+                else SklearnSplitSampler(**sample)
+            )
+        else:
+            self.sample = SklearnSplitSampler()
         if sklearn_pipeline is not None:
             sklearn_pipeline = OmegaConf.to_container(
                 OmegaConf.create(sklearn_pipeline),
             )
-            self.sklearn_pipeline = SklearnDataPipeline(**sklearn_pipeline)
+            self.sklearn_pipeline = (
+                sklearn_pipeline
+                if isinstance(sklearn_pipeline, (SklearnDataPipeline))
+                else SklearnDataPipeline(**sklearn_pipeline)
+            )
         else:
             self.sklearn_pipeline = None
         self.drop = drop
         self.target = target
-        self.kwargs = kwargs
         self.name = name if name is not None else my_hash(self)
+        self.alias = alias
         logger.debug(f"Data initialized: {self.name}")
         logger.debug(f"Data.generate: {self.generate}")
         logger.debug(f"Data.sample: {self.sample}")
@@ -95,11 +102,14 @@ class Data:
         :return: X_train, X_test, y_train, y_test
         """
         if filename is not None and Path(filename).exists():
+            logger.info(f"Loading data from {filename}")
             result = self.load(filename)
         elif self.generate is not None:
+            logger.info(f"Generating data for {self.generate}")
             result = self.generate()
-            self.save(result, self.name)
+            self.save(result, filename)
         else:
+            logger.info(f"Loading data from {self.name}")
             result = self.load(self.name)
         if isinstance(result, DataFrame):
             assert self.target is not None, "Target is not specified"
@@ -110,13 +120,14 @@ class Data:
             X = X.to_numpy()
             y = y.to_numpy()
             result = [X, y]
+        if len(result) == 2:
+            result = self.sample(*result)
         else:
             if self.drop != []:
                 raise ValueError(
                     f"Drop is not supported for non-DataFrame data. Data is type {type(result)}",
                 )
-        if len(result) == 2:
-            result = self.sample(*result)
+            assert len(result) == 4, f"Data is not generated: {self.name} {result}. Length: {len(result)}."
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
@@ -174,19 +185,48 @@ class Data:
                     for datum in data:
                         if isinstance(datum, (np.ndarray)):
                             new_data.append(datum.tolist())
+                        elif isinstance(datum, (Series, DataFrame)):
+                            new_data.append(datum.to_dict())
                     data = new_data
                     del new_data
+                    logger.info(f"Type of data: {type(data)}")
+                    logger.info(f"Length of data: {len(data)}")
                 elif isinstance(data, (dict, int, float, str, bool)):
                     pass
                 else:  # pragma: no cover
                     raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 try:
-                    DataFrame(data).to_json(
-                        filename,
-                        index=False,
-                        force_ascii=False,
-                        indent=4,
-                    )
+                    if isinstance(data, DataFrame):
+                        data.to_json(
+                            filename,
+                            index=False,
+                            force_ascii=False,
+                            indent=4,
+                        )
+                    elif isinstance(data, dict):
+                        Series(data).to_json(
+                            filename,
+                            index=False,
+                            force_ascii=False,
+                            indent=4,
+                        )
+                    elif isinstance(data, list):
+                        Series(data).to_json(
+                            filename,
+                            index=False,
+                            force_ascii=False,
+                            indent=4,
+                        )
+                    elif isinstance(data, (int, float, str, bool)):
+                        data = [data]
+                        Series(data).to_json(
+                            filename,
+                            index=False,
+                            force_ascii=False,
+                            indent=4,
+                        )
+                    else:
+                        raise ValueError(f"Unknown data type {type(data)} for {filename}.")
                 except ValueError as e:
                     if "using all scalar values" in str(e):
                         # Sort the dictionary by key
@@ -228,33 +268,14 @@ class Data:
         :param filename: str
         :return: list
         """
-        if Path(self.name).is_file() or url(self.name):
-            new_data_file = data_file
-            data_file = self.name
-        else:
-            new_data_file = data_file
-        if data_file is not None and Path(data_file).exists():
-            logger.info(f"Loading data from {data_file}")
-            data = self.initialize(data_file)
-        elif "data" in kwargs:
-            logger.info("Data is already loaded.")
-            assert (
-                len(kwargs["data"]) == 4
-            ), f"Data must be length 4, not {len(kwargs['data'])}"
-            data = kwargs["data"]
-        else:
-            logger.info("Initializing data.")
-            data = self.initialize()
+        data = self.initialize(data_file)
+        
+        assert isinstance(data, list), f"Data is not a list: {type(data)}"
+        assert len(data) == 4, f"Data is not generated: {data}. Length: {len(data)},"
+        if data_file is not None:
+            self.save(data=data, filename=data_file)
         if train_labels_file is not None:
             self.save(data[2], train_labels_file)
-            assert Path(
-                train_labels_file,
-            ).exists(), f"Error saving train labels to {train_labels_file}"
         if test_labels_file is not None:
             self.save(data[3], test_labels_file)
-            assert Path(
-                test_labels_file,
-            ).exists(), f"Error saving test labels to {test_labels_file}"
-        if new_data_file is not None:
-            self.save(data, new_data_file)
         return data
