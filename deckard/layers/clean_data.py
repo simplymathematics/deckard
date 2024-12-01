@@ -86,7 +86,6 @@ def drop_rows_without_results(
         logger.info(f"Shape of data after data after dropping na: {data.shape}")
         percent_change = (before - after) / before * 100
         if percent_change > 5:
-            # input(f"{percent_change:.2f}% of data dropped for {col}. Press any key to continue.")
             logger.warning(f"{percent_change:.2f}% of data dropped for {col}")
     return data
 

@@ -348,16 +348,11 @@ for model in art_models:
             attack_params.update({"name": params["attack"]["init"]["name"]})
             confidence_ser["Kernel"] = name
             confidence_ser["Average False Confidence"] = avg_prob
-            # print(f"Shape of confidence ser: {confidence_ser.shape}")
             attack_ser = pd.Series(attack_params)
             confidence_ser = confidence_ser._append(attack_ser)
-            # print(f"Shape of confidence ser: {confidence_ser.shape}")
             if "Unnamed: 0" in confidence_df.columns:
                 del confidence_df["Unnamed: 0"]
             confidence_df = confidence_df._append(confidence_ser, ignore_index=True)
-            # print(f"Shape of confidence df: {confidence_df.shape}")
-            # print(confidence_df.head())
-            # input("Press Enter to continue...")
         else:
             pass
     df1 = pd.concat([df1, confidence_df], ignore_index=True)
