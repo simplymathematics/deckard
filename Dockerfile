@@ -7,5 +7,5 @@ RUN python3 -m pip install nvidia-pyindex nvidia-cuda-runtime-cu12
 RUN apt-get update && apt-get install -y python3 python3-pip
 RUN apt-get upgrade -y
 RUN git clone https://github.com/simplymathematics/deckard.git
-WORKDIR /deckard
+WORKDIR deckard
 RUN python3 -m pip install -e . --verbose
