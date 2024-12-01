@@ -13,5 +13,5 @@ RUN apt-get update && apt-get install -y python3 python3-pip
 RUN apt-get upgrade -y
 RUN git clone https://github.com/simplymathematics/deckard.git
 WORKDIR /deckard
-RUN git submodule update --init --recursive -j -1
+# RUN git submodule update --init --recursive -j -1
 RUN python3 -m pip install -e . --verbose
