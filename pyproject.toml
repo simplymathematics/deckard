@@ -48,8 +48,6 @@ classifiers=[
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ]
-[project.scripts]
-deckard = "deckard.__main__:main"
 
 [project.optional-dependencies]
 test = [
