@@ -20,6 +20,7 @@ class FileConfig:
     name: Union[str, None] = None
     stage: Union[str, None] = None
     files: dict = field(default_factory=dict)
+    directory = None
 
     def __init__(
         self,
@@ -30,7 +31,7 @@ class FileConfig:
         attack_type: str = ".pkl",
         data_type: str = ".pkl",
         model_type: str = ".pkl",
-        directory=None,
+        directory=".",
         stage=None,
         name=None,
         files={},
