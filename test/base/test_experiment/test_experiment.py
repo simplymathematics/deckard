@@ -18,14 +18,13 @@ class testExperiment(unittest.TestCase):
     config_file = "evasion.yaml"
 
     def setUp(self):
+        self.dir = mkdtemp()
         with initialize_config_dir(
             config_dir=Path(self.config_dir).resolve().as_posix(),
             version_base="1.3",
         ):
-            cfg = compose(config_name=self.config_file)
+            cfg = compose(config_name=self.config_file, overrides =[f"files.directory={self.dir}"])
         self.cfg = cfg
-        self.dir = mkdtemp()
-        self.cfg["files"]["directory"] = self.dir
         self.exp = instantiate(config=self.cfg)
 
     def test_init(self):

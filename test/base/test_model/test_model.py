@@ -2,9 +2,11 @@ import unittest
 from pathlib import Path
 from tempfile import mkdtemp
 from shutil import rmtree
+from typing import Callable
 import os
 import numpy as np
 from hydra import initialize_config_dir, compose
+from deckard.base.model.art_pipeline import sklearn_dict
 from hydra.utils import instantiate
 import tensorflow as tf
 
@@ -28,7 +30,6 @@ class testModel(unittest.TestCase):
             cfg = compose(config_name=self.config_file)
         self.cfg = cfg
         self.model = instantiate(config=self.cfg)
-        self.model = self.model
         self.dir = mkdtemp()
         self.model_file = Path(self.dir, self.file).as_posix()
 
@@ -58,8 +59,11 @@ class testModel(unittest.TestCase):
     def test_initialize(self):
         data, model = self.model.initialize()
         self.assertIsInstance(data, list)
-        self.assertTrue(hasattr(model, "fit"))
-        self.assertTrue(hasattr(model, "predict"))
+        if self.model.library in sklearn_dict:
+            self.assertTrue(hasattr(model, "fit"))
+            self.assertTrue(hasattr(model, "predict"))
+        else:
+            self.assertTrue(isinstance(model, Callable))
 
     def tearDown(self) -> None:
         rmtree(self.dir)

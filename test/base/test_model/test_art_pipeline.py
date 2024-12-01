@@ -4,6 +4,9 @@ from tempfile import mkdtemp
 from shutil import rmtree
 import os
 from hydra import initialize_config_dir, compose
+from deckard.base.model.art_pipeline import sklearn_dict
+from sklearn.utils.validation import check_is_fitted
+from sklearn.exceptions import NotFittedError
 from hydra.utils import instantiate
 
 from deckard.base.model.art_pipeline import ArtPipeline
@@ -34,6 +37,8 @@ class testArtPipeline(unittest.TestCase):
 
     def test_call(self):
         data, model = self.model.initialize()
+        if self.model.library in sklearn_dict:
+            model.fit(data[0], data[2])
         model = self.model.art(data=data, model=model)
         self.assertTrue("art" in str(type(model)).lower())
         self.assertTrue(hasattr(model, "fit"))
@@ -47,6 +52,8 @@ class testArtPipeline(unittest.TestCase):
         new_hash = hash(new_model.art)
         self.assertEqual(old_hash, new_hash)
         data, model = self.model.initialize()
+        if self.model.library in sklearn_dict:
+            model.fit(data[0], data[2])
         _ = new_model.art(data=data, model=model)
         hash_after_call = hash(new_model.art)
         self.assertEqual(old_hash, hash_after_call)

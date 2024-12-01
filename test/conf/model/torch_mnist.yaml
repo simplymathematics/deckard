@@ -15,7 +15,7 @@ init:
 _target_: deckard.base.model.Model
 trainer:
     _target_: deckard.base.model.ModelTrainer
-    nb_epoch: 1
+    nb_epochs: 1
     batch_size: 1024
 library : torch
 art:

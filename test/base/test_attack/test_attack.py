@@ -5,6 +5,7 @@ from shutil import rmtree
 import os
 from hydra import initialize_config_dir, compose
 from hydra.utils import instantiate
+from deckard.base.model.art_pipeline import sklearn_dict
 
 from deckard.base.attack import Attack, AttackInitializer
 
@@ -33,6 +34,9 @@ class testAttackInitializer(unittest.TestCase):
 
     def test_call(self):
         data, model = self.attack.model.initialize()
+        if self.attack.model.library in sklearn_dict:
+            model.fit(data[0], data[2])
+            model = self.attack.model.art(data=data, model=model)
         obj = self.attack.init(data=data, model=model)
         self.assertTrue("art.attacks." in str(type(obj)).lower())
 

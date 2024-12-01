@@ -37,20 +37,20 @@ class testSklearnDataPipeline(unittest.TestCase):
         X, y = self.data.generate()
         X_train, X_test, y_train, y_test = self.data.sample(X, y)
         old_mean = np.mean(X_train)
-        X_train, X_test, y_train, y_test = self.data.sklearn_pipeline(
+        X_tr, X_te, y_tr, y_te = self.data.sklearn_pipeline(
             X_train,
             X_test,
             y_train,
             y_test,
         )
-        new_mean = np.mean(X_train)
+        new_mean = np.mean(X_tr)
         self.assertNotEqual(old_mean, new_mean)
-        self.assertIsInstance(X_train, np.ndarray)
-        self.assertIsInstance(X_test, np.ndarray)
-        self.assertIsInstance(y_train, np.ndarray)
-        self.assertIsInstance(y_test, np.ndarray)
-        self.assertEqual(X_train.shape[0], y_train.shape[0])
-        self.assertEqual(X_test.shape[0], y_test.shape[0])
+        self.assertIsInstance(X_tr, np.ndarray)
+        self.assertIsInstance(X_te, np.ndarray)
+        self.assertIsInstance(y_tr, np.ndarray)
+        self.assertIsInstance(y_te, np.ndarray)
+        self.assertEqual(X_tr.shape[0], y_tr.shape[0])
+        self.assertEqual(X_te.shape[0], y_te.shape[0])
 
     def test_hash(self):
         old_hash = hash(self.data.sklearn_pipeline)
