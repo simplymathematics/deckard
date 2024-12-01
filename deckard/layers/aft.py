@@ -923,5 +923,5 @@ aft_parser.add_argument("--plots_folder", type=str, default="plots")
 args = aft_parser.parse_args()
 
 if "__main__" == __name__:
-    
+
     aft_main(args)

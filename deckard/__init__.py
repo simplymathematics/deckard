@@ -26,7 +26,7 @@ LOGGING = {
     "handlers": {
         "default": {
             # Use RotatingFileHandler for log rotation
-            "class": "logging.handlers.RotatingFileHandler", 
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(Path.cwd(), "deckard.log"),
             "formatter": "std",
             "level": logging.DEBUG,

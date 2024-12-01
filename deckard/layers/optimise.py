@@ -327,6 +327,7 @@ def optimise_main(cfg: DictConfig) -> float:
     score = optimise(cfg)
     return score
 
+
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     assert Path(
