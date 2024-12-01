@@ -5,8 +5,6 @@ from shutil import rmtree
 import os
 from hydra import initialize_config_dir, compose
 from deckard.base.model.art_pipeline import sklearn_dict
-from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import NotFittedError
 from hydra.utils import instantiate
 
 from deckard.base.model.art_pipeline import ArtPipeline

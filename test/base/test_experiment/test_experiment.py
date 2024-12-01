@@ -23,7 +23,9 @@ class testExperiment(unittest.TestCase):
             config_dir=Path(self.config_dir).resolve().as_posix(),
             version_base="1.3",
         ):
-            cfg = compose(config_name=self.config_file, overrides =[f"files.directory={self.dir}"])
+            cfg = compose(
+                config_name=self.config_file, overrides=[f"files.directory={self.dir}"]
+            )
         self.cfg = cfg
         self.exp = instantiate(config=self.cfg)
 

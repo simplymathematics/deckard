@@ -50,7 +50,7 @@ class SklearnDataPipelineStage:
         else:
             y_tr_transformed = obj.fit_transform(y_tr)
             y_te_transformed = obj.transform(y_te)
-        return  X_tr_transformed, X_te_transformed, y_tr_transformed, y_te_transformed
+        return X_tr_transformed, X_te_transformed, y_tr_transformed, y_te_transformed
 
 
 @dataclass

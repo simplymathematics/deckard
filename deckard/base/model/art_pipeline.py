@@ -47,7 +47,7 @@ class ArtSklearnInitializer:
     data: list = None
     model: object = None
     kwargs: dict = field(default_factory=dict)
-    
+
     def __init__(self, model: object, library: str, data=None, **kwargs):
         assert (
             library in supported_models
@@ -60,7 +60,7 @@ class ArtSklearnInitializer:
             raise ValueError("Model must be fitted before being passed to ART")
         self.model = model
         self.kwargs = kwargs
-    
+
     def __call__(self):
         library = self.library
         model = self.model
@@ -235,6 +235,7 @@ class ArtKerasInitializer:
                     raise e
         return model
 
+
 @dataclass
 class ArtTF2Initializer:
     library: str = None
@@ -269,7 +270,8 @@ class ArtTF2Initializer:
                 **kwargs,
             )()
         return model
-    
+
+
 @dataclass
 class ArtPytorchInitializer:
     library: str = None
@@ -296,6 +298,7 @@ class ArtPytorchInitializer:
             tuple(torch_dict.values()),
         ):
             import torch
+
             device_type = "gpu" if torch.cuda.is_available() else "cpu"
             if device_type == "gpu":
                 number_of_devices = torch.cuda.device_count()
@@ -316,7 +319,8 @@ class ArtPytorchInitializer:
                 **kwargs,
             )()
         return model
-    
+
+
 @dataclass
 class ArtInitializer:
     library: str = None
@@ -330,10 +334,10 @@ class ArtInitializer:
         ), f"library must be one of {supported_models}. Got {library}"
         self.library = library
         self.data = data
-        
+
         self.model = model
         self.kwargs = kwargs
-    
+
     def __call__(self):
         if self.library in sklearn_dict:
             try:
@@ -367,7 +371,8 @@ class ArtInitializer:
                 data=self.data,
                 **self.kwargs,
             )()
-        return model    
+        return model
+
 
 @dataclass
 class ArtPipeline:

@@ -58,7 +58,7 @@ class ModelInitializer:
             model = pipe_conf(obj)
         else:
             model = factory(name, **params)
-        
+
         return model
 
     # def __hash__(self):
@@ -81,7 +81,9 @@ class ModelTrainer:
         if library in sklearn_dict.keys():
             pass
         elif library in torch_dict.keys():
-            assert "nb_epochs" in trainer.keys(), "nb_epochs must be in trainer kwargs for PyTorch models."
+            assert (
+                "nb_epochs" in trainer.keys()
+            ), "nb_epochs must be in trainer kwargs for PyTorch models."
         elif library in keras_dict.keys():
             pass
         elif library in tensorflow_dict.keys():
@@ -350,10 +352,12 @@ class Model:
         )
 
         assert len(data) == 4, f"Data {data} is not a tuple of length 4."
-        assert (isinstance(model, Callable) or hasattr(model, "fit")), f"Model {model} does not have a fit method and is not a callable."
+        assert isinstance(model, Callable) or hasattr(
+            model, "fit"
+        ), f"Model {model} does not have a fit method and is not a callable."
         result_dict["data"] = data
         result_dict["model"] = model
-        
+
         time_dict, result_dict = self._load_model_results(
             predictions_file,
             probabilities_file,
@@ -377,20 +381,25 @@ class Model:
                 time_dict = self.data.load(time_dict_file)
             else:
                 time_dict = locals().get("time_dict", {})
-        if "pred_time" not in time_dict.keys() or "predict_proba_time" not in time_dict.keys():
+        if (
+            "pred_time" not in time_dict.keys()
+            or "predict_proba_time" not in time_dict.keys()
+        ):
             preds, pred_time_dict = self.predict(data, model, predictions_file)
             time_dict.update(**pred_time_dict)
-            result_dict['predictions'] = preds
+            result_dict["predictions"] = preds
             if probabilities_file is not None:
-                probs, prob_time_dict = self.predict_proba(data, model, probabilities_file)
+                probs, prob_time_dict = self.predict_proba(
+                    data, model, probabilities_file
+                )
                 time_dict.update(**prob_time_dict)
-                result_dict['probabilities'] = probs
+                result_dict["probabilities"] = probs
             if losses_file is not None:
                 losses, loss_time_dict = self.predict_log_loss(data, model, losses_file)
                 time_dict.update(**loss_time_dict)
-                result_dict['loss'] = losses
+                result_dict["loss"] = losses
         # add time_dict to result_dict
-        result_dict['time_dict'] = time_dict
+        result_dict["time_dict"] = time_dict
         if data_file is not None and not Path(data_file).exists():
             self.data.save(data, data_file)
         if model_file is not None and not Path(model_file).exists():
@@ -459,7 +468,7 @@ class Model:
                     model = self.init()
                 else:
                     raise e
-        
+
         return data, model
 
     def fit(self, data, model, model_file=None, time_dict_file=None):
@@ -495,7 +504,9 @@ class Model:
             elif isinstance(model, tuple(all_models.values())):
                 model, time_dict = self.trainer(data, model, library=self.library)
             else:
-                assert hasattr(model, "fit"), f"Model {model} does not have a fit method."
+                assert hasattr(
+                    model, "fit"
+                ), f"Model {model} does not have a fit method."
                 model, time_dict = self.trainer(data, model, library=self.library)
             if model_file is not None:
                 self.save(model, model_file)
@@ -531,7 +542,7 @@ class Model:
             predictions = model.predict(data[1])
             end = process_time_ns()
             end_timestamp = time()
-        except NotFittedError as e:  # pragma: no cover
+        except NotFittedError:  # pragma: no cover
             raise ValueError(f"Model {model} is not fitted. Fit the model first.")
         except TypeError as e:  # pragma: no cover
             if "np.float32" in str(e):

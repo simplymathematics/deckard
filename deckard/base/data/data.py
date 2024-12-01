@@ -40,7 +40,7 @@ class Data:
         sklearn_pipeline: SklearnDataPipeline = None,
         target: str = None,
         drop: list = [],
-        alias : str = None,
+        alias: str = None,
         **kwargs,
     ):
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
@@ -101,7 +101,7 @@ class Data:
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
         :return: X_train, X_test, y_train, y_test
         """
-        if filename is not None and Path(filename).exists():
+        if filename is not None and Path(filename).exists() or url(filename):
             logger.info(f"Loading data from {filename}")
             result = self.load(filename)
         elif self.generate is not None:
@@ -127,7 +127,9 @@ class Data:
                 raise ValueError(
                     f"Drop is not supported for non-DataFrame data. Data is type {type(result)}",
                 )
-            assert len(result) == 4, f"Data is not generated: {self.name} {result}. Length: {len(result)}."
+            assert (
+                len(result) == 4
+            ), f"Data is not generated: {self.name} {result}. Length: {len(result)}."
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
@@ -226,7 +228,9 @@ class Data:
                             indent=4,
                         )
                     else:
-                        raise ValueError(f"Unknown data type {type(data)} for {filename}.")
+                        raise ValueError(
+                            f"Unknown data type {type(data)} for {filename}."
+                        )
                 except ValueError as e:
                     if "using all scalar values" in str(e):
                         # Sort the dictionary by key
@@ -269,7 +273,7 @@ class Data:
         :return: list
         """
         data = self.initialize(data_file)
-        
+
         assert isinstance(data, list), f"Data is not a list: {type(data)}"
         assert len(data) == 4, f"Data is not generated: {data}. Length: {len(data)},"
         if data_file is not None:
