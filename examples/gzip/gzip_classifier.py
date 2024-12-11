@@ -26,6 +26,7 @@ import argparse
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import accuracy_score
+from sklearn.metrics.pairwise import rbf_kernel, linear_kernel, polynomial_kernel
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_20newsgroups, make_classification
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -39,7 +40,6 @@ from multiprocessing import cpu_count
 from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
 from joblib import Parallel, delayed
 from typing import Literal
-
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -90,14 +90,27 @@ compressors = {
     "brotli": _brotli_len,
 }
 
+# Because these metrics describe similarity, we need to subtract them from 1 to get a distance
+def ratio_distance(x1, x2):
+    return 1 - ratio(x1, x2)
+
+def jaro_distance(x1, x2):
+    return 1 - jaro(x1, x2)
+
+def jaro_winkler_distance(x1, x2):
+    return 1 - jaro_winkler(x1, x2)
+
+def seqratio_distance(x1, x2):
+    return 1 - seqratio(x1, x2)
+######################################################
 
 string_metrics = {
     "levenshtein": distance,
-    "ratio": ratio,
     "hamming": hamming,
-    "jaro": jaro,
-    "jaro_winkler": jaro_winkler,
-    "seqratio": seqratio,
+    "jaro": jaro_distance,
+    "ratio" : ratio_distance,
+    "jaro_winkler": jaro_winkler_distance,
+    "seqratio": seqratio_distance,
 }
 
 all_metrics = {
@@ -125,6 +138,13 @@ transform_dict = {
     "abs": np.abs,
     "square": np.square,
     "exp": np.exp,
+    "distance_rbf" : lambda x: 2 - 2 * np.exp(-x ** 2),
+    "distance_rbf_gamma_001" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.001),
+    "distance_rbf_gamma_01" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.01),
+    "distance_rbf_gamma_1" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.1),
+    "distance_rbf_gamma10" : lambda x: 2 - 2 * np.exp(-x ** 2 / 10),
+    "distance_rbf_gamma100" : lambda x: 2 - 2 * np.exp(-x ** 2 / 100),
+    "distance_rbf_gamma1000" : lambda x: 2 - 2 * np.exp(-x ** 2 / 1000),
     "exp_neg": lambda x: np.exp(-x),
     "exp_neg_gamma_001": lambda x: np.exp(-x / 0.001),
     "exp_neg_gamma_01": lambda x: np.exp(-x / 0.01),
@@ -132,8 +152,38 @@ transform_dict = {
     "exp_neg_gamma10": lambda x: np.exp(-x / 10),
     "exp_neg_gamma100": lambda x: np.exp(-x / 100),
     "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
+    "rbf": lambda x: np.exp(-x ** 2),
+    "rbf_gamma_001": lambda x: np.exp(-x ** 2 / 0.001),
+    "rbf_gamma_01": lambda x: np.exp(-x ** 2 / 0.01),
+    "rbf_gamma_1": lambda x: np.exp(-x ** 2 / 0.1),
+    "rbf_gamma10": lambda x: np.exp(-x ** 2 / 10),
+    "rbf_gamma100": lambda x: np.exp(-x ** 2 / 100),
+    "rbf_gamma1000": lambda x: np.exp(-x ** 2 / 1000),
+    "quadratic": lambda x: x ** 2,
+    "qudratic_1_1" : lambda x: 1 * (x + 1) ** 2,
+    "quadratic_01_1": lambda x: 0.1 * (x + 1) ** 2,
+    "quadratic_1_01": lambda x: 1 * (x + 0.1) ** 2,
+    "quadratic_01_01": lambda x: 0.1 * (x + 0.1) ** 2,
+    "multiquadric": lambda x: np.sqrt(x ** 2),
+    "multiquadric_1": lambda x: np.sqrt(1 + x ** 2),
+    "multiquadric_01": lambda x: np.sqrt(0.1 + x ** 2),
+    "multiquadric_001": lambda x: np.sqrt(0.01 + x ** 2),
 }
-
+kernel_dict = {
+    "linear": linear_kernel,
+    "rbf": rbf_kernel,
+    "rbf_gamma_001": lambda x1, x2: rbf_kernel(x1, x2, gamma=0.001),
+    "rbf_gamma_01": lambda x1, x2: rbf_kernel(x1, x2, gamma=0.01),
+    "rbf_gamma_1": lambda x1, x2: rbf_kernel(x1, x2, gamma=0.1),
+    "rbf_gamma10": lambda x1, x2: rbf_kernel(x1, x2, gamma=10),
+    "rbf_gamma100": lambda x1, x2: rbf_kernel(x1, x2, gamma=100),
+    "rbf_gamma1000": lambda x1, x2: rbf_kernel(x1, x2, gamma=1000),
+    "polynomial": polynomial_kernel,
+    "polynomial_2": lambda x1, x2: polynomial_kernel(x1, x2, degree=2),
+    "polynomial_3": lambda x1, x2: polynomial_kernel(x1, x2, degree=3),
+    "polynomial_4": lambda x1, x2: polynomial_kernel(x1, x2, degree=4),
+    "polynomial_5": lambda x1, x2: polynomial_kernel(x1, x2, degree=5),
+}
 
 def distance_helper(
     x1,
@@ -259,8 +309,12 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         The metric used to calculate the distance between samples. Choices are "gzip", "lzma", "bz2", "zstd", "pkl", "pickle", "levenshtein", "ratio", "seqratio", "hamming", "jaro", "jaro".
     transform: str, default=None
         The transformation to apply to the distance matrix. Choices are "abs", "log", "sqrt", "square", "exp", "exp_neg", "log_neg", "rbf".
-    distance_matrix: str or np.ndarray, default=None
+    distance_matrix_train: str or np.ndarray, default=None
         The path to a numpy file or a numpy array representing the distance matrix. If a path is provided, the file will be loaded. If an array is provided, it will be used directly. Default is None.
+    distance_matrix_test: str or np.ndarray, default=None
+        The path to a numpy file or a numpy array representing the distance matrix. If a path is provided, the file will be loaded. If an array is provided, it will be used directly. Default is None.
+    kernel: str, default=None
+        The kernel to use to calculate kernel features from the distance matrix. Choices are "linear", "rbf", "polynomial".
     Attributes
     anchor : bool or None (default=None)
         If True, the first half of the training data will be used as the anchor. If False, the second half will be used as the anchor. If None, the anchor will not be used.
@@ -282,6 +336,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         symmetric=False,
         modified=False,
         transform=None,
+        kernel=None,
         anchor=None,
         n_jobs=-1,
         **kwargs,
@@ -298,7 +353,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                 Default is None.
             symmetric (bool): If True, the distance matrix will be treated as symmetric. Default is False.
             modified (bool): If True, inputs to ncd() will be sorted and ncd(x,x) will return 0. Default is False.
-            transform (str): The transformation to apply to the distance matrix. Default is None.
+            transform (str): The transformation to apply to the distance matrix. These are kernel functions, but that is already a kwarg argument for SVCs, so something else had to be used. Default is None.
         Raises:
             ValueError: If distance_matrix is not a path to a numpy file or a numpy array.
             NotImplementedError: If the metric is not supported.
@@ -355,6 +410,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.distance_matrix_train = distance_matrix_train
         self.distance_matrix_test = distance_matrix_test
         self.n_jobs = n_jobs
+        kernel_list = list(kernel_dict.keys())
+        kernel_list.extend([None, "precomputed", "None", "null", ""])
+        assert kernel in kernel_list, f"Expected {kernel} in {kernel_list}. It is '{kernel}'"
+        self.kernel = kernel
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -543,7 +602,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         with open(path, "wb") as f:
             np.savez_compressed(f, X=matrix)
 
-    def _prepare_training_matrix(self):
+    def _prepare_training_distance_matrix(self):
         """
         Prepare the distance matrix for classification.
         If self.distance_matrix is a path to a numpy file, it will be loaded.
@@ -592,7 +651,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         assert (
             len(self.y_) == distance_matrix.shape[0]
         ), f"Expected len(y) == {distance_matrix.shape[0]}"
-        if self.distance_matrix_train is not None:
+        if isinstance(self.distance_matrix_train, (str, Path)):
             # Save the distance matrix
             self._save_distance_matrix(self.distance_matrix_train, distance_matrix)
         return distance_matrix
@@ -634,30 +693,45 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # length of the list `X` is equal to the length of the list `y`. If the lengths are not equal,
         # it will raise an AssertionError with a message indicating the expected and actual lengths.
         # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
+        
         logger.debug(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
-        self.X_ = np.array(X) if not isinstance(X, np.ndarray) else X
-        self.X_ = np.array([str(x) for x in self.X_])
+        self.y_ = self._prepare_y(y)
+        self.X_ =  self._prepare_X(X)
+        self._train_matrix = self._prepare_training_distance_matrix()
+        self._train_matrix = self._transform_training_matrix(self._train_matrix)
+        self.clf_ = self.clf_.fit(self._train_matrix, self.y_)
+        return self
+
+    def _transform_training_matrix(self, training_matrix):
+        if self.kernel not in [None, "precomputed", "None", "null", ""]:
+            kernel = kernel_dict[self.kernel]
+            training_matrix = kernel(training_matrix, training_matrix)
+        if self.transform is not None:
+            training_matrix = transform_dict[self.transform](training_matrix)
+        return training_matrix
+
+    def _prepare_X(self, X):
+        X = np.array(X) if not isinstance(X, np.ndarray) else X
+        X = np.array([str(x) for x in X])
+        self.n_features_ = X.shape[1] if len(X.shape) > 1 else 1
+        return X
+
+    def _prepare_y(self, y):
         y = np.array(y) if not isinstance(y, np.ndarray) else y
         if len(np.squeeze(y).shape) == 1:
             encoder = LabelBinarizer()
-            self.y_ = encoder.fit_transform(y)
+            y = encoder.fit_transform(y)
             self.n_classes_ = len(unique_labels(y))
             flat_y = np.squeeze(y).astype(int)
         else:
-            self.y_ = y
+            y = y
             self.n_classes_ = y.shape[1]
             flat_y = np.argmax(y, axis=1)
         counts = np.bincount(flat_y)
         self.counts_ = counts
         logger.debug(f"Num Classes: {self.n_classes_}, counts: {counts}")
-        self.n_features_ = X.shape[1] if len(X.shape) > 1 else 1
         self.classes_ = range(len(unique_labels(y)))
-
-        self._train_matrix = self._prepare_training_matrix()
-        if self.transform is not None:
-            self._train_matrix = transform_dict[self.transform](self._train_matrix)
-        self.clf_ = self.clf_.fit(self._train_matrix, self.y_)
-        return self
+        return y
 
     def predict(self, X: np.ndarray):
         """Predict the class labels for the provided data.
@@ -670,6 +744,31 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         logger.debug(f"Predicting with X of shape {X.shape}")
+        X = self._prepare_X(X)
+        distance_matrix = self._prepare_test_matrix(X)
+        distance_matrix = self._transform_test_matrix(distance_matrix)
+        y_pred = self.clf_.predict(distance_matrix)
+        y_pred = self._format_predictions(y_pred)
+        return y_pred
+
+    def _transform_test_matrix(self, distance_matrix):
+        if self.kernel not in [None, "precomputed", "None", "null", ""]:
+            kernel = kernel_dict[self.kernel]
+            distance_matrix = kernel(distance_matrix, self._train_matrix)
+        if self.transform is not None:
+            distance_matrix = transform_dict[self.transform](distance_matrix)
+        return distance_matrix
+
+    def _format_predictions(self, y_pred):
+        if len(np.squeeze(y_pred).shape) == 1:
+            encoder = LabelBinarizer()
+            y_pred = encoder.fit(self.y_).transform(y_pred)
+        else:
+            encoder = LabelEncoder()
+            y_pred = encoder.fit(self.y_).transform(y_pred)
+        return y_pred
+
+    def _prepare_test_matrix(self, X):
         if (
             self.distance_matrix_test is not None
             and Path(self.distance_matrix_test).exists()
@@ -707,16 +806,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         if self.distance_matrix_test is not None:
             # Save the distance matrix
             self._save_distance_matrix(self.distance_matrix_test, distance_matrix)
-        if self.transform is not None:
-            distance_matrix = transform_dict[self.transform](distance_matrix)
-        y_pred = self.clf_.predict(distance_matrix)
-        if len(np.squeeze(y_pred).shape) == 1:
-            encoder = LabelBinarizer()
-            y_pred = encoder.fit(self.y_).transform(y_pred)
-        else:
-            encoder = LabelEncoder()
-            y_pred = encoder.fit(self.y_).transform(y_pred)
-        return y_pred
+        return distance_matrix
 
     def score(self, X: np.ndarray, y: np.ndarray):
         """Score the model using the provided data.
@@ -745,6 +835,7 @@ class GzipKNN(GzipClassifier):
         transform=None,
         anchor=None,
         n_jobs=-1,
+        kernel = None,
         **kwargs,
     ):
         super().__init__(
@@ -757,6 +848,7 @@ class GzipKNN(GzipClassifier):
             anchor=anchor,
             n_jobs=n_jobs,
             weights=weights,
+            kernel=kernel,
             **kwargs,
         )
         self.clf_ = KNeighborsClassifier(
@@ -767,7 +859,9 @@ class GzipKNN(GzipClassifier):
         self.k = k
         for k, v in kwargs.items():
             setattr(self, k, v)
-
+    
+        
+    
 
 class GzipLogisticRegressor(GzipClassifier):
     def __init__(
@@ -784,6 +878,7 @@ class GzipLogisticRegressor(GzipClassifier):
         tol=1e-4,
         C=1.0,
         fit_intercept=True,
+        kernel=None,
         **kwargs,
     ):
         clf = LogisticRegression(**kwargs)
@@ -801,6 +896,7 @@ class GzipLogisticRegressor(GzipClassifier):
             tol=tol,
             C=C,
             fit_intercept=fit_intercept,
+            kernel=kernel,
             **kwargs,
         )
         for k, v in kwargs.items():
@@ -825,11 +921,9 @@ class GzipSVC(GzipClassifier):
     ):
         if "kernel" not in kwargs.keys():
             kwargs["kernel"] = "precomputed"
-        else:
-            assert (
-                kwargs["kernel"] == "precomputed"
-            ), f"Expected {kwargs['kernel']} == 'precomputed'"
-        clf = SVC(**kwargs)
+        elif kwargs["kernel"] is None:
+            kwargs["kernel"] = "precomputed"
+        clf = SVC(**kwargs, C=C, tol=tol)
         super().__init__(
             clf_=clf,
             m=m,
