@@ -348,7 +348,12 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
         )
     try:
         non_negativity_failures = check_non_negativity(
-            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+            xy=xy,
+            xz=xz,
+            yz=yz,
+            yx=yx,
+            zx=zx,
+            zy=zy,
         )
     except ValueError as e:
         non_negativity_failures = 1

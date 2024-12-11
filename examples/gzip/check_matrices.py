@@ -185,7 +185,7 @@ def plot_results(df: pd.DataFrame, results_plot: Path):
         "zero_identity": "Zero identity",
     }
     df["variable"] = df["variable"].map(variable_dict)
-    df['dataset'] = df['dataset'].str.replace('_', ' ').str.title()
+    df["dataset"] = df["dataset"].str.replace("_", " ").str.title()
     # Create two plots on the same figure
     fig, ax = plt.subplots(1, 2, figsize=(20, 12))
     g = sns.catplot(
