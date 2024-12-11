@@ -48,13 +48,13 @@ class OptunaStudyDumpCallback(Callback):
         self.output_file = output_file
         super().__init__()
 
-    def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        # delete the study if it exists
-        try:
-            study = optuna.load_study(self.study_name, storage=self.storage)
-            study.delete_study(study_name=self.study_name, storage=self.storage)
-        except:  # noqa E722
-            pass
+    def on_job_start(self, config: DictConfig, **kwargs) -> None:
+        study = optuna.create_study(
+            study_name=self.study_name,
+            storage=self.storage,
+            load_if_exists=True,
+        )
+        study.delete_study(study_name=self.study_name, storage=self.storage)
         if len(self.directions) == 1:
             direction = self.directions[0]
             study = optuna.create_study(
