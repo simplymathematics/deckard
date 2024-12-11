@@ -178,7 +178,7 @@ def check_zero(x, y, z, xx, yy, zz, xy, xz, yz, yx, zx, zy):
     return 0
 
 
-def check_positivity(xy, xz, yz, yx, zx, zy):
+def check_non_negativity(xy, xz, yz, yx, zx, zy):
     if xz < 0:
         raise ValueError(f"<x,z> = {xz} < 0")
     if zx < 0:
@@ -228,7 +228,7 @@ def check_loop(
     logger.info(f"Percent of examples where triangle inequality was violated: {df[0]}")
     logger.info(f"Percent of examples where symmetry was violated: {df[1]}")
     logger.info(f"Percent of examples where zero identity was violated: {df[2]}")
-    logger.info(f"Percent of examples where positivity was violated: {df[3]}")
+    logger.info(f"Percent of examples where non-negativity was violated: {df[3]}")
     logger.info(f"Shape of df is {df.shape}")
     return df
 
@@ -347,13 +347,13 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
             f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
         )
     try:
-        positivity_failures = check_positivity(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
+        non_negativity_failures = check_non_negativity(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
     except ValueError as e:
-        positivity_failures = 1
+        non_negativity_failures = 1
         logger.error(
-            f"Positivity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
+            f"Non-negativity Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
         )
-    return triangle_failures, symmetric_failures, zero_failures, positivity_failures
+    return triangle_failures, symmetric_failures, zero_failures, non_negativity_failures
 
 
 def get_distance_function(distance):
@@ -444,7 +444,7 @@ def check_all_metric_space_assumptions(
         kwargs[iterate] = i
         t, s, z, p = check_loop(**kwargs, distance=distance)
         logger.info(f"Percent of examples where zero identity was violated: {z}")
-        logger.info(f"Percent of examples where positivity  was violated: {p}")
+        logger.info(f"Percent of examples where non-negativity  was violated: {p}")
         logger.info(f"Percent of examples where symmetry was violated: {s}")
         logger.info(f"Percent of examples where triangle inequality was violated: {t}")
         symmetries.append(s)
@@ -458,7 +458,7 @@ def check_all_metric_space_assumptions(
         "Symmetry": symmetries,
         "Zero Identity": zeroes,
         "Triangle Inequality": triangles,
-        "Positivity Identity": positivities,
+        "Non-negativity Identity": positivities,
         "Iterate": iterate,
         "Values": iterators,
         "i": iterators,
@@ -472,7 +472,7 @@ def check_all_metric_space_assumptions(
             "Symmetry",
             "Zero Identity",
             "Triangle Inequality",
-            "Positivity Identity",
+            "Non-negativity Identity",
         ],
     )
     df["Identity"] = df["variable"]
@@ -610,7 +610,7 @@ def plot_identity_violations(args, big_df):
         col_order=cols,
         facet_kws={"sharex": False, "sharey": True},
     )
-    g.set_titles("{col_name} - {row_name}")
+    g.set_titles("{row_name} - {col_name}")
     g.set_axis_labels("", "Percent Violations")
     g._legend.set_title("Identity")
     # Rotate the x-axis labels
