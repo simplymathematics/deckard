@@ -19,3 +19,4 @@ sms_spam/*
 truthseeker/*
 /params.yaml
 *.ipynb
+output_december/

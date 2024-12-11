@@ -149,3 +149,4 @@ examples/*/.dvc/tmp/rwlock
 examples/*/.dvc/tmp/rwlock.lock
 tmp.ipynb
 examples/gzip/gzip.code-workspace
+examples/gzip/deckard.log*
