@@ -90,25 +90,31 @@ compressors = {
     "brotli": _brotli_len,
 }
 
+
 # Because these metrics describe similarity, we need to subtract them from 1 to get a distance
 def ratio_distance(x1, x2):
     return 1 - ratio(x1, x2)
 
+
 def jaro_distance(x1, x2):
     return 1 - jaro(x1, x2)
+
 
 def jaro_winkler_distance(x1, x2):
     return 1 - jaro_winkler(x1, x2)
 
+
 def seqratio_distance(x1, x2):
     return 1 - seqratio(x1, x2)
+
+
 ######################################################
 
 string_metrics = {
     "levenshtein": distance,
     "hamming": hamming,
     "jaro": jaro_distance,
-    "ratio" : ratio_distance,
+    "ratio": ratio_distance,
     "jaro_winkler": jaro_winkler_distance,
     "seqratio": seqratio_distance,
 }
@@ -138,13 +144,13 @@ transform_dict = {
     "abs": np.abs,
     "square": np.square,
     "exp": np.exp,
-    "distance_rbf" : lambda x: 2 - 2 * np.exp(-x ** 2),
-    "distance_rbf_gamma_001" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.001),
-    "distance_rbf_gamma_01" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.01),
-    "distance_rbf_gamma_1" : lambda x: 2 - 2 * np.exp(-x ** 2 / 0.1),
-    "distance_rbf_gamma10" : lambda x: 2 - 2 * np.exp(-x ** 2 / 10),
-    "distance_rbf_gamma100" : lambda x: 2 - 2 * np.exp(-x ** 2 / 100),
-    "distance_rbf_gamma1000" : lambda x: 2 - 2 * np.exp(-x ** 2 / 1000),
+    "distance_rbf": lambda x: 2 - 2 * np.exp(-(x**2)),
+    "distance_rbf_gamma_001": lambda x: 2 - 2 * np.exp(-(x**2) / 0.001),
+    "distance_rbf_gamma_01": lambda x: 2 - 2 * np.exp(-(x**2) / 0.01),
+    "distance_rbf_gamma_1": lambda x: 2 - 2 * np.exp(-(x**2) / 0.1),
+    "distance_rbf_gamma10": lambda x: 2 - 2 * np.exp(-(x**2) / 10),
+    "distance_rbf_gamma100": lambda x: 2 - 2 * np.exp(-(x**2) / 100),
+    "distance_rbf_gamma1000": lambda x: 2 - 2 * np.exp(-(x**2) / 1000),
     "exp_neg": lambda x: np.exp(-x),
     "exp_neg_gamma_001": lambda x: np.exp(-x / 0.001),
     "exp_neg_gamma_01": lambda x: np.exp(-x / 0.01),
@@ -152,22 +158,22 @@ transform_dict = {
     "exp_neg_gamma10": lambda x: np.exp(-x / 10),
     "exp_neg_gamma100": lambda x: np.exp(-x / 100),
     "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
-    "rbf": lambda x: np.exp(-x ** 2),
-    "rbf_gamma_001": lambda x: np.exp(-x ** 2 / 0.001),
-    "rbf_gamma_01": lambda x: np.exp(-x ** 2 / 0.01),
-    "rbf_gamma_1": lambda x: np.exp(-x ** 2 / 0.1),
-    "rbf_gamma10": lambda x: np.exp(-x ** 2 / 10),
-    "rbf_gamma100": lambda x: np.exp(-x ** 2 / 100),
-    "rbf_gamma1000": lambda x: np.exp(-x ** 2 / 1000),
-    "quadratic": lambda x: x ** 2,
-    "qudratic_1_1" : lambda x: 1 * (x + 1) ** 2,
+    "rbf": lambda x: np.exp(-(x**2)),
+    "rbf_gamma_001": lambda x: np.exp(-(x**2) / 0.001),
+    "rbf_gamma_01": lambda x: np.exp(-(x**2) / 0.01),
+    "rbf_gamma_1": lambda x: np.exp(-(x**2) / 0.1),
+    "rbf_gamma10": lambda x: np.exp(-(x**2) / 10),
+    "rbf_gamma100": lambda x: np.exp(-(x**2) / 100),
+    "rbf_gamma1000": lambda x: np.exp(-(x**2) / 1000),
+    "quadratic": lambda x: x**2,
+    "qudratic_1_1": lambda x: 1 * (x + 1) ** 2,
     "quadratic_01_1": lambda x: 0.1 * (x + 1) ** 2,
     "quadratic_1_01": lambda x: 1 * (x + 0.1) ** 2,
     "quadratic_01_01": lambda x: 0.1 * (x + 0.1) ** 2,
-    "multiquadric": lambda x: np.sqrt(x ** 2),
-    "multiquadric_1": lambda x: np.sqrt(1 + x ** 2),
-    "multiquadric_01": lambda x: np.sqrt(0.1 + x ** 2),
-    "multiquadric_001": lambda x: np.sqrt(0.01 + x ** 2),
+    "multiquadric": lambda x: np.sqrt(x**2),
+    "multiquadric_1": lambda x: np.sqrt(1 + x**2),
+    "multiquadric_01": lambda x: np.sqrt(0.1 + x**2),
+    "multiquadric_001": lambda x: np.sqrt(0.01 + x**2),
 }
 kernel_dict = {
     "linear": linear_kernel,
@@ -184,6 +190,7 @@ kernel_dict = {
     "polynomial_4": lambda x1, x2: polynomial_kernel(x1, x2, degree=4),
     "polynomial_5": lambda x1, x2: polynomial_kernel(x1, x2, degree=5),
 }
+
 
 def distance_helper(
     x1,
@@ -412,7 +419,9 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_jobs = n_jobs
         kernel_list = list(kernel_dict.keys())
         kernel_list.extend([None, "precomputed", "None", "null", ""])
-        assert kernel in kernel_list, f"Expected {kernel} in {kernel_list}. It is '{kernel}'"
+        assert (
+            kernel in kernel_list
+        ), f"Expected {kernel} in {kernel_list}. It is '{kernel}'"
         self.kernel = kernel
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -693,10 +702,10 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         # length of the list `X` is equal to the length of the list `y`. If the lengths are not equal,
         # it will raise an AssertionError with a message indicating the expected and actual lengths.
         # assert len(X) == len(y), f"Expected {len(X)} == {len(y)}"
-        
+
         logger.debug(f"Fitting with X of shape {X.shape} and y of shape {y.shape}")
         self.y_ = self._prepare_y(y)
-        self.X_ =  self._prepare_X(X)
+        self.X_ = self._prepare_X(X)
         self._train_matrix = self._prepare_training_distance_matrix()
         self._train_matrix = self._transform_training_matrix(self._train_matrix)
         self.clf_ = self.clf_.fit(self._train_matrix, self.y_)
@@ -835,7 +844,7 @@ class GzipKNN(GzipClassifier):
         transform=None,
         anchor=None,
         n_jobs=-1,
-        kernel = None,
+        kernel=None,
         **kwargs,
     ):
         super().__init__(
@@ -859,9 +868,7 @@ class GzipKNN(GzipClassifier):
         self.k = k
         for k, v in kwargs.items():
             setattr(self, k, v)
-    
-        
-    
+
 
 class GzipLogisticRegressor(GzipClassifier):
     def __init__(

@@ -134,8 +134,12 @@ if __name__ == "__main__":
         font="Times New Roman",
         font_scale=1,
     )
-    data['train_time_per_sample'] = data['train_time'] / (800 * 200) # 800 training samples, 200 prediction samples to form an 800x200 distance matrix
-    data['train_time_per_sample'] = data['train_time_per_sample'] * 128 # Multiply by the number of threads
+    data["train_time_per_sample"] = data["train_time"] / (
+        800 * 200
+    )  # 800 training samples, 200 prediction samples to form an 800x200 distance matrix
+    data["train_time_per_sample"] = (
+        data["train_time_per_sample"] * 128
+    )  # Multiply by the number of threads
     distance_matrix_time_graph = sns.catplot(
         data=data,
         x="Metric",
@@ -171,7 +175,9 @@ if __name__ == "__main__":
         font="Times New Roman",
         font_scale=1.3,
     )
-    new_df['train_time_per_sample_mean'] = new_df['train_time_per_sample_mean'] * 128 # Multiply by the number of threads
+    new_df["train_time_per_sample_mean"] = (
+        new_df["train_time_per_sample_mean"] * 128
+    )  # Multiply by the number of threads
     train_time_graph = sns.catplot(
         data=new_df,
         x="Metric",
@@ -209,7 +215,9 @@ if __name__ == "__main__":
         font="Times New Roman",
         font_scale=2,
     )
-    new_df['predict_time_per_sample_mean'] = new_df['predict_time_per_sample_mean'] * 128 # Multiply by the number of threads
+    new_df["predict_time_per_sample_mean"] = (
+        new_df["predict_time_per_sample_mean"] * 128
+    )  # Multiply by the number of threads
     pred_time_graph = sns.catplot(
         data=new_df,
         x="Metric",

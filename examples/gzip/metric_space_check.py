@@ -347,7 +347,9 @@ def count_metric_assumption_failures(sig_figs, distance, metric, x, y, z):
             f"Zero Identity failed for {x}, {y}, {z}. {e} and distance is {distance} with metric {metric}",
         )
     try:
-        non_negativity_failures = check_non_negativity(xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy)
+        non_negativity_failures = check_non_negativity(
+            xy=xy, xz=xz, yz=yz, yx=yx, zx=zx, zy=zy
+        )
     except ValueError as e:
         non_negativity_failures = 1
         logger.error(

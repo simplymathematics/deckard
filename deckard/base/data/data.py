@@ -123,7 +123,7 @@ class Data:
         if len(result) == 2:
             result = self.sample(*result)
         else:
-            pass 
+            pass
         assert (
             len(result) == 4
         ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
