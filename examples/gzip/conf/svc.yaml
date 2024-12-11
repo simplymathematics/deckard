@@ -17,9 +17,9 @@ optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
-    dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
+    dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}/${data.sample.fold}/
   sweep:
-    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
+    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}/${data.sample.fold}/
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
@@ -33,7 +33,7 @@ hydra:
     sampler:
       _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    study_name: ${dataset}_${model_name}_${algorithm}
+    study_name: ${dataset}_${model_name}_${algorithm}_${model.init.metric}
     storage: sqlite:///output/optuna.db
     n_trials: 1
     n_jobs: ${oc.env:DECKARD_N_JOBS, 1}
@@ -45,7 +45,7 @@ hydra:
       model.init.modified: True,False
       model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
       data.sample.fold: 0,1,2,3,4
-      model.init.transform: None,exp_neg,exp_neg_gamma_001,exp_neg_gamma_01,exp_neg_gamma_1,exp_neg_gamma10,exp_neg_gamma100,exp_neg_gamma1000
+      model.init.transform: exp_neg,rbf_gamma_001,rbf_gamma_01,rbf_gamma_1,rbf_gamma10,rbf_gamma100,rbf_gamma1000
     max_failure_rate: 1.0
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

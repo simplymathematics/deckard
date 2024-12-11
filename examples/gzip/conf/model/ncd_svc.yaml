@@ -5,8 +5,9 @@ init:
     metric : gzip
     symmetric : false
     modified : false
-    distance_matrix_train :  ${files.directory}/distance_matrix/${model.init.metric}/${algorithm}/train-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}${data.sample.fold}.npz
-    distance_matrix_test : ${files.directory}/distance_matrix/${model.init.metric}/${algorithm}/test-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}${data.sample.fold}.npz
+    distance_matrix_train :  ${files.directory}/distance_matrix/${algorithm}/${model.init.metric}/train-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}-${data.sample.fold}.npz
+    distance_matrix_test : ${files.directory}/distance_matrix/${algorithm}/${model.init.metric}/test-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}-${data.sample.fold}.npz
     transform : None
+    kernel : None
     kernel : precomputed
     max_iter : 1000

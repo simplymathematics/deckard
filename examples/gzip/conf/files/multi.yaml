@@ -1,6 +1,6 @@
-reports: reports/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/${model.init.metric}/
+reports: reports/search/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}/${data.sample.fold}/${data.sample.test_size}/${data.sample.random_state}/
 data_dir: data
-data_file : ${dataset}-${data.sample.random_state}-${data.sample.train_size}-${data.sample.test_size}${data.sample.fold}
+data_file : ${data.sample.random_state}-${data.sample.train_size}-${data.sample.test_size}${data.sample.fold}
 data_type: .pkl
 model_dir : models
 directory: output/${dataset}

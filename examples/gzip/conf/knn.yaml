@@ -17,9 +17,9 @@ optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
   run:
-    dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
+    dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}/${data.sample.fold}/
   sweep:
-    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
+    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${model.init.metric}/${data.sample.train_size}/${data.sample.fold}/
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
@@ -35,19 +35,18 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     direction: ${direction}
     storage: sqlite:///output/optuna.db
-    study_name: ${dataset}_${model_name}_${algorithm}
+    study_name: ${dataset}_${model_name}_${algorithm}_${model.init.metric}
     n_trials: 1
     n_jobs: 1
     max_failure_rate: 1.0
     params:
       model.init.k : 1,3,5
-      +model.init.weights : uniform,distance
       +model.init.algorithm : brute
       model_name : ${model_name}
       model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
       model.init.symmetric: True,False
       model.init.modified: True,False
-      model.init.transform: None,abs,square
+      model.init.transform: None,distance_rbf,distance_rbf_gamma_001,distance_rbf_gamma_01,distance_rbf_gamma_1,distance_rbf_gamma10,distance_rbf_gamma100,distance_rbf_gamma1000
       data.sample.fold: 0,1,2,3,4
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
