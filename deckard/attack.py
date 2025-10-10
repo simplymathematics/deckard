@@ -40,7 +40,13 @@ from .utils import initialize_config
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
 
-supported_attacks = ["blackbox_membership_inference", "blackbox_evasion", "whitebox_evasion", "blackbox_attribute_inference", "whitebox_attribute_inference"]
+supported_attacks = [
+    "blackbox_membership_inference",
+    "blackbox_evasion",
+    "whitebox_evasion",
+    "blackbox_attribute_inference",
+    "whitebox_attribute_inference",
+]
 classifier_dict = {
     "SVC": ScikitlearnSVC,
     "LogisticRegression": ScikitlearnLogisticRegression,
@@ -61,6 +67,7 @@ regressor_dict = {
 sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.keys())
 
+
 @dataclass
 class AttackConfig:
     """
@@ -69,10 +76,10 @@ class AttackConfig:
     This class provides a unified interface for configuring, executing, and scoring various types of adversarial attacks,
     including evasion, poisoning, extraction, and inference attacks. It supports integration with scikit-learn models
     and the Adversarial Robustness Toolbox (ART), and provides detailed logging and timing for attack operations.
-    
+
     Attributes
     ----------
-    
+
     attack_name : str
         The fully qualified name of the attack class to be used.
     attack_params : dict, optional
@@ -91,7 +98,7 @@ class AttackConfig:
         Stores the result of the attack.
     _score_dict : dict, optional
         Stores the computed scores and metrics for the attack.
-    
+
     Methods
     -------
     __hash__()
@@ -113,7 +120,7 @@ class AttackConfig:
     _poison()
     _extract()
     _save(filepath)
-    
+
     Raises
     ------
     ValueError
@@ -124,23 +131,24 @@ class AttackConfig:
         If the output scores or timing variables are not of the expected types.
     TypeError
         If the attack model's fit method does not accept the expected arguments.
-    
+
     Examples
     --------
     >>> config = AttackConfig(attack_name="art.attacks.evasion.FastGradientMethod", attack_params={"eps": 0.2})
     >>> results = config(data, estimator)
     >>> print(results)
     """
+
     attack_name: str = "art.attacks.evasion.HopSkipJump"
     attack_params: dict = None
-    attack_size : int = 10  # Number of samples to attack
+    attack_size: int = 10  # Number of samples to attack
     targeted_attribute: str = None  # For inference attacks
     _attack_time: float = None
     _attack_prediction_time: float = None
     _attack_score_time: float = None
     _attack: object = None
     _score_dict: dict = None
-    
+
     def __hash__(self):
         """
         Compute a hash value for the object by concatenating all non-private attribute names and values,
@@ -151,9 +159,11 @@ class AttackConfig:
         int
             The hash value of the object based on its non-private attributes.
         """
-        hash_input = "".join(f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_"))
+        hash_input = "".join(
+            f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_")
+        )
         return int(md5(hash_input.encode()).hexdigest(), 16)
-    
+
     def __post_init__(self):
         """
         Initializes post-construction attributes for the class.
@@ -194,7 +204,7 @@ class AttackConfig:
         AssertionError
             If the output scores or timing variables are not of the expected types.
         """
-        module = importlib.import_module(self.attack_name.rsplit('.', 1)[0])
+        module = importlib.import_module(self.attack_name.rsplit(".", 1)[0])
         attack_type = self.attack_name.split("attacks.")[-1].split(".")[0]
         attack_subtype = self.attack_name.split("attacks.")[-1].split(".")[1]
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
@@ -209,9 +219,9 @@ class AttackConfig:
                 raise ValueError(f"Estimator {estimator_alias} is not fitted")
         else:
             raise ValueError(f"Unsupported estimator type: {estimator_alias}")
-        try: # Assume Whitebox attack if estimator can be passed to the attack constructor
+        try:  # Assume Whitebox attack if estimator can be passed to the attack constructor
             attack = attack_class(art_estimator, **self.attack_params)
-        except ValueError as e: # If ValueError, assume Blackbox attack
+        except ValueError as e:  # If ValueError, assume Blackbox attack
             attack = attack_class(**self.attack_params)
         if attack_type == "evasion":
             scores = self._evade(data, art_estimator, attack, train=train)
@@ -219,22 +229,38 @@ class AttackConfig:
             raise NotImplementedError("Poisoning attack not implemented yet.")
         elif attack_type == "extraction":
             raise NotImplementedError("Extraction attack not implemented yet.")
-        elif attack_type == "inference":       
+        elif attack_type == "inference":
             match attack_subtype:
                 case "membership_inference":
-                    scores = self._infer_membership(data, art_estimator, attack, train=train)
+                    scores = self._infer_membership(
+                        data, art_estimator, attack, train=train
+                    )
                 case "attribute_inference":
-                    assert self.targeted_attribute is not None, "targeted_attribute must be specified for inference attacks"
+                    assert (
+                        self.targeted_attribute is not None
+                    ), "targeted_attribute must be specified for inference attacks"
                     targeted_attribute = self.targeted_attribute
-                    scores = self._infer_attribute(data, art_estimator, attack, train=train, targeted_attribute=targeted_attribute)
+                    scores = self._infer_attribute(
+                        data,
+                        art_estimator,
+                        attack,
+                        train=train,
+                        targeted_attribute=targeted_attribute,
+                    )
                 case _:
-                    raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
+                    raise ValueError(
+                        f"Unsupported inference attack subtype: {attack_subtype}"
+                    )
         else:
             raise NotImplementedError(f"Attack type {attack_type} not implemented yet.")
         assert isinstance(scores, dict), "Scores should be a dictionary"
         assert isinstance(self._attack_time, float), "Attack time should be a float"
-        assert isinstance(self._attack_prediction_time, float), "Attack prediction time should be a float"
-        assert isinstance(self._attack_score_time, float), "Attack score time should be a float"
+        assert isinstance(
+            self._attack_prediction_time, float
+        ), "Attack prediction time should be a float"
+        assert isinstance(
+            self._attack_score_time, float
+        ), "Attack score time should be a float"
         times = {
             "training_time": self._attack_time,
             "prediction_time": self._attack_prediction_time,
@@ -246,7 +272,7 @@ class AttackConfig:
         score_dict = {**scores, **times}
         self._score_dict = score_dict
         return score_dict
-    
+
     def _get_benign_preds(self, data, art_estimator, train=False):
         """
         Generate benign predictions and corresponding labels for a subset of data.
@@ -275,19 +301,24 @@ class AttackConfig:
         """
         n = self.attack_size
         if train is True:
-            _,_, X_test, y_test = data()
+            _, _, X_test, y_test = data()
             ben_preds = art_estimator.predict(X_test.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
         else:
-            X_train, y_train, _, _, = data()
+            (
+                X_train,
+                y_train,
+                _,
+                _,
+            ) = data()
             ben_preds = art_estimator.predict(X_train.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_train.iloc[:n]
             y_subset = y_train.iloc[:n]
-        return n,ben_pred_labels,X_subset,y_subset
-    
+        return n, ben_pred_labels, X_subset, y_subset
+
     def _get_feature_vector_preds(self, data, targeted_attribute, train=False):
         """
         Extracts a subset of feature vectors, labels, and attributes from the provided data for either training or testing.
@@ -316,19 +347,31 @@ class AttackConfig:
         """
         n = self.attack_size
         if train is False:
-            _,_,_, X_test, y_test, a_test = data(targeted_attribute=targeted_attribute)
-            assert len(X_test) == len(y_test) == len(a_test), "X_test, y_test, and a_test must have the same length, but got lengths: {}, {}, {}".format(len(X_test), len(y_test), len(a_test))
+            _, _, _, X_test, y_test, a_test = data(
+                targeted_attribute=targeted_attribute
+            )
+            assert (
+                len(X_test) == len(y_test) == len(a_test)
+            ), "X_test, y_test, and a_test must have the same length, but got lengths: {}, {}, {}".format(
+                len(X_test), len(y_test), len(a_test)
+            )
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
             a_subset = a_test.iloc[:n]
         else:
-            X_train, y_train, a_train, _,_,_ = data(targeted_attribute=targeted_attribute)
-            assert len(X_train) == len(y_train) == len(a_train), "X_train, y_train, and a_train must have the same length, but got lengths: {}, {}, {}".format(len(X_train), len(y_train), len(a_train))
+            X_train, y_train, a_train, _, _, _ = data(
+                targeted_attribute=targeted_attribute
+            )
+            assert (
+                len(X_train) == len(y_train) == len(a_train)
+            ), "X_train, y_train, and a_train must have the same length, but got lengths: {}, {}, {}".format(
+                len(X_train), len(y_train), len(a_train)
+            )
             X_subset = X_train.iloc[:n]
             y_subset = y_train.iloc[:n]
             a_subset = a_train.iloc[:n]
-        return n,X_subset,y_subset,a_subset
-    
+        return n, X_subset, y_subset, a_subset
+
     def _score_attack(self, ben_pred_labels, adv_pred_labels, y_test_numeric):
         """
         Computes and logs various performance metrics for adversarial attack predictions.
@@ -356,9 +399,15 @@ class AttackConfig:
         """
         start_time = time.process_time()
         adv_accuracy = accuracy_score(y_test_numeric, adv_pred_labels)
-        adv_precision = precision_score(y_test_numeric, adv_pred_labels, zero_division=0, average="weighted")
-        adv_recall = recall_score(y_test_numeric, adv_pred_labels, zero_division=0, average="weighted")
-        adv_f1 = f1_score(y_test_numeric, adv_pred_labels, zero_division=0, average="weighted")
+        adv_precision = precision_score(
+            y_test_numeric, adv_pred_labels, zero_division=0, average="weighted"
+        )
+        adv_recall = recall_score(
+            y_test_numeric, adv_pred_labels, zero_division=0, average="weighted"
+        )
+        adv_f1 = f1_score(
+            y_test_numeric, adv_pred_labels, zero_division=0, average="weighted"
+        )
         adv_success = accuracy_score(ben_pred_labels, adv_pred_labels)
         end_time = time.process_time()
         self._attack_score_time = end_time - start_time
@@ -369,10 +418,12 @@ class AttackConfig:
             "adversarial_f1-score": adv_f1,
             "adversarial_success_rate": adv_success,
         }
-        logger.info(f"Attack scoring took {self._attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self._score_dict)} scores.")
+        logger.info(
+            f"Attack scoring took {self._attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self._score_dict)} scores."
+        )
         for score in self._score_dict:
             logger.info(f"{score}: {self._score_dict[score]}")
-    
+
     def _evade(self, data, art_estimator, attack, train=False):
         """
         Executes an evasion attack on a given dataset using the specified ART estimator and attack method.
@@ -398,7 +449,9 @@ class AttackConfig:
         dict
             A dictionary containing the scores and metrics of the attack evaluation.
         """
-        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(data, art_estimator, train=train)
+        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
+            data, art_estimator, train=train
+        )
         start_time = time.process_time()
         X_test_adv = attack.generate(x=X_test_subset.values)
         end_time = time.process_time()
@@ -409,8 +462,10 @@ class AttackConfig:
         adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self._attack_prediction_time = end_time - start_time
-        logger.info(f"Adversarial prediction took {self._attack_prediction_time} seconds for {n} samples")
-        y_test_numeric = y_test_subset.astype('category').cat.codes
+        logger.info(
+            f"Adversarial prediction took {self._attack_prediction_time} seconds for {n} samples"
+        )
+        y_test_numeric = y_test_subset.astype("category").cat.codes
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         self._attack = adv_pred
         return self._score_dict
@@ -438,13 +493,17 @@ class AttackConfig:
         AssertionError
             If the targeted attribute is not found in the DataFrame columns.
         """
-        assert targeted_attribute in X.columns, f"Targeted attribute {targeted_attribute} not found in data columns"
+        assert (
+            targeted_attribute in X.columns
+        ), f"Targeted attribute {targeted_attribute} not found in data columns"
         X = X.copy()
         target = X.pop(targeted_attribute)
         X = X.values
         return X, target
 
-    def _infer_attribute(self, data, art_estimator, attack, targeted_attribute, train=False):
+    def _infer_attribute(
+        self, data, art_estimator, attack, targeted_attribute, train=False
+    ):
         """
         Perform an attribute inference attack on a dataset using a specified attack model and estimator.
 
@@ -477,20 +536,26 @@ class AttackConfig:
         TypeError
             If the attack model's `fit` method does not accept the expected arguments.
         """
-        assert hasattr(data, "_X_train") and hasattr(data, "_y_train"), "DataConfig must have _X_train, _y_train attributes. Please ensure data() has been called."
+        assert hasattr(data, "_X_train") and hasattr(
+            data, "_y_train"
+        ), "DataConfig must have _X_train, _y_train attributes. Please ensure data() has been called."
         X_train = data._X_train
         y_train = data._y_train
         X_test = data._X_test
         y_test = data._y_test
         if train is False:
-            X_test = X_test.iloc[:self.attack_size].values
-            y_test = y_test.iloc[:self.attack_size].values
+            X_test = X_test.iloc[: self.attack_size].values
+            y_test = y_test.iloc[: self.attack_size].values
         else:
-            X_test = X_train.iloc[:self.attack_size].values
-            y_test = y_train.iloc[:self.attack_size].values
-        assert len(X_test) == self.attack_size, f"X_test length {len(X_test)} does not match attack_size {self.attack_size}"
+            X_test = X_train.iloc[: self.attack_size].values
+            y_test = y_train.iloc[: self.attack_size].values
+        assert (
+            len(X_test) == self.attack_size
+        ), f"X_test length {len(X_test)} does not match attack_size {self.attack_size}"
         n = len(X_test)
-        logger.info(f"Performing attribute inference attack on {n} samples for attribute '{targeted_attribute}'")
+        logger.info(
+            f"Performing attribute inference attack on {n} samples for attribute '{targeted_attribute}'"
+        )
         start_time = time.process_time()
         try:
             attack.fit(x=X_test, y=y_test)
@@ -502,16 +567,30 @@ class AttackConfig:
                 raise e
         end_time = time.process_time()
         attack_time = time.process_time() - start_time
-        logger.info(f"Attribute inference attack training took {attack_time} seconds for {n} samples")
+        logger.info(
+            f"Attribute inference attack training took {attack_time} seconds for {n} samples"
+        )
         self._attack_time = attack_time
         start_time = time.process_time()
-        attack_x_test_predictions = np.array([np.argmax(arr) for arr in art_estimator.predict(X_test)]).reshape(-1,1)
-        logger.info(f"Attribute inference attack prediction took {self._attack_prediction_time} seconds for {n} samples")
-        X_test_subset, target = self._pop_attribute(pd.DataFrame(X_test, columns=data._X_train.columns), targeted_attribute)
-        inferred = attack.infer(x=X_test_subset, y=y_test, pred=attack_x_test_predictions, )
+        attack_x_test_predictions = np.array(
+            [np.argmax(arr) for arr in art_estimator.predict(X_test)]
+        ).reshape(-1, 1)
+        logger.info(
+            f"Attribute inference attack prediction took {self._attack_prediction_time} seconds for {n} samples"
+        )
+        X_test_subset, target = self._pop_attribute(
+            pd.DataFrame(X_test, columns=data._X_train.columns), targeted_attribute
+        )
+        inferred = attack.infer(
+            x=X_test_subset,
+            y=y_test,
+            pred=attack_x_test_predictions,
+        )
         end_time = time.process_time()
         self._attack_prediction_time = end_time - start_time
-        logger.info(f"Attribute inference attack scoring took {self._attack_score_time} seconds for {n} samples")
+        logger.info(
+            f"Attribute inference attack scoring took {self._attack_score_time} seconds for {n} samples"
+        )
         start_time = time.process_time()
         if isinstance(target, pd.DataFrame):
             target = target.iloc[:, 0]
@@ -521,12 +600,18 @@ class AttackConfig:
             inferred = inferred.iloc[:, 0]
         else:
             inferred = pd.Series(inferred)
-        assert len(target) == len(inferred) == n, f"Length mismatch: target {len(target)}, inferred {len(inferred)}, expected {n}"
+        assert (
+            len(target) == len(inferred) == n
+        ), f"Length mismatch: target {len(target)}, inferred {len(inferred)}, expected {n}"
         inferred = list(inferred)
         target = list(target)
         inferred_accuracy = accuracy_score(target, inferred)
-        inferred_precision = precision_score(target, inferred, zero_division=0, average="weighted")
-        inferred_recall = recall_score(target, inferred, zero_division=0, average="weighted")
+        inferred_precision = precision_score(
+            target, inferred, zero_division=0, average="weighted"
+        )
+        inferred_recall = recall_score(
+            target, inferred, zero_division=0, average="weighted"
+        )
         inferred_f1 = f1_score(target, inferred, zero_division=0, average="weighted")
         end_time = time.process_time()
         self._attack_score_time = end_time - start_time
@@ -539,7 +624,7 @@ class AttackConfig:
         for score in self._score_dict:
             logger.info(f"{score}: {self._score_dict[score]}")
         self._attack = inferred
-        return self._score_dict       
+        return self._score_dict
 
     def _infer_membership(self, data, art_estimator, attack, train=False):
         """
@@ -573,45 +658,60 @@ class AttackConfig:
         """
         start_time = time.process_time()
         try:
-            attack.fit(x=data._X_train.values, y=data._y_train.values, test_x=data._X_test.values, test_y=data._y_test.values)
+            attack.fit(
+                x=data._X_train.values,
+                y=data._y_train.values,
+                test_x=data._X_test.values,
+                test_y=data._y_test.values,
+            )
         except Exception as e:
             raise e
         end_time = time.process_time()
         self._attack_time = time.process_time() - start_time
-        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(data, art_estimator, train=train)
-        logger.info(f"Membership inference attack training took {self._attack_time} seconds for {n} samples")
+        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
+            data, art_estimator, train=train
+        )
+        logger.info(
+            f"Membership inference attack training took {self._attack_time} seconds for {n} samples"
+        )
         start_time = time.process_time()
         inferred = attack.infer(x=X_test_subset.values, y=y_test_subset.values)
         end_time = time.process_time()
         self._attack_prediction_time = end_time - start_time
-        logger.info(f"Membership inference attack took {self._attack_time} seconds for {n} samples")
+        logger.info(
+            f"Membership inference attack took {self._attack_time} seconds for {n} samples"
+        )
         if isinstance(inferred, (list, np.ndarray)):
             inferred = np.array(inferred)
         elif isinstance(inferred, pd.Series):
             inferred = inferred.values
         else:
             raise ValueError(f"Unsupported inferred type: {type(inferred)}")
-        assert len(inferred) == n, f"Length of inferred {len(inferred)} does not match number of samples {n}"
+        assert (
+            len(inferred) == n
+        ), f"Length of inferred {len(inferred)} does not match number of samples {n}"
         inferred = inferred.astype(int)
-        logger.info(f"Membership inference prediction took {self._attack_prediction_time} seconds for {n} samples")
-        y_test_numeric = y_test_subset.astype('category').cat.codes
+        logger.info(
+            f"Membership inference prediction took {self._attack_prediction_time} seconds for {n} samples"
+        )
+        y_test_numeric = y_test_subset.astype("category").cat.codes
         start_time = time.process_time()
         self._score_attack(ben_pred_labels, inferred, y_test_numeric)
         self._attack = inferred
         return self._score_dict
-    
+
     def _poison(self):
         """
         Not implemented yet.
         """
         raise NotImplementedError("Poisoning attack not implemented yet.")
-    
+
     def _extract(self):
         """
         Not implemented yet.
         """
         raise NotImplementedError("Extraction attack not implemented yet.")
-    
+
     def _save(self, filepath: Union[str, Path]):
         """
         Saves the current object to a pickle file.
@@ -619,7 +719,7 @@ class AttackConfig:
         Parameters
         ----------
         filepath : Union[str, Path]
-            The path where the object should be saved. 
+            The path where the object should be saved.
             If the provided path does not end with '.pkl', the extension will be appended automatically.
 
         Side Effects
@@ -627,66 +727,86 @@ class AttackConfig:
         Serializes the object and writes it to the specified file in binary format.
         Logs an info message indicating the save location.
         """
-        if not filepath.endswith('.pkl'):
-            filepath += '.pkl'
-        with open(filepath, 'wb') as f:
+        if not filepath.endswith(".pkl"):
+            filepath += ".pkl"
+        with open(filepath, "wb") as f:
             pickle.dump(self, f)
         logger.info(f"AttackConfig saved to {filepath}")
 
 
-attack_parser = argparse.ArgumentParser(description="AttackConfig parameters", add_help=False,)
-attack_parser.add_argument('--attack_params', type=str, nargs='*', help='Override configuration parameters as key=value pairs')
-attack_parser.add_argument('--attack_config_file', type=str, default=None, help='Path to YAML config file for attack parameters')
-attack_parser.add_argument('--attack_filepath', type=str, default=None, help='Path to load/save attack from/to .pkl file')
-attack_parser.add_argument('--attack_size', type=int, default=100, help='Number of samples to use for the attack')
+attack_parser = argparse.ArgumentParser(
+    description="AttackConfig parameters",
+    add_help=False,
+)
+attack_parser.add_argument(
+    "--attack_params",
+    type=str,
+    nargs="*",
+    help="Override configuration parameters as key=value pairs",
+)
+attack_parser.add_argument(
+    "--attack_config_file",
+    type=str,
+    default=None,
+    help="Path to YAML config file for attack parameters",
+)
+attack_parser.add_argument(
+    "--attack_filepath",
+    type=str,
+    default=None,
+    help="Path to load/save attack from/to .pkl file",
+)
+attack_parser.add_argument(
+    "--attack_size",
+    type=int,
+    default=100,
+    help="Number of samples to use for the attack",
+)
 
 
 def initialize_attack_config() -> AttackConfig:
     args = attack_parser.parse_known_args()[0]
     params = args.attack_params if args.attack_params is not None else []
     target = "deckard.AttackConfig"
-    assert isinstance(params, list), "attack_params should be a list of key=value strings"
+    assert isinstance(
+        params, list
+    ), "attack_params should be a list of key=value strings"
     if args.attack_config_file in list(attack_defaults.keys()):
-        assert len(params) == 0, "Cannot use both predefined config and override parameters"
+        assert (
+            len(params) == 0
+        ), "Cannot use both predefined config and override parameters"
         param_dict = attack_defaults[args.attack_config_file]
         overrides = ["attack_name=" + param_dict["attack_name"]]
         overrides += ["attack_params=" + " ".join(param_dict.get("attack_params", []))]
-        attack = initialize_config(config_file = None, params=params, target=target)
-        assert isinstance(params, list), "attack_params should be a list of key=value strings"
+        attack = initialize_config(config_file=None, params=params, target=target)
+        assert isinstance(
+            params, list
+        ), "attack_params should be a list of key=value strings"
     elif args.attack_config_file is not None or len(params) > 0:
-        attack = initialize_config(config_file = args.attack_config_file, params=params, target=target)
+        attack = initialize_config(
+            config_file=args.attack_config_file, params=params, target=target
+        )
     else:
         attack = AttackConfig()
-    assert isinstance(attack, AttackConfig), f"Initialized object is not of type AttackConfig, got {type(attack)}"
+    assert isinstance(
+        attack, AttackConfig
+    ), f"Initialized object is not of type AttackConfig, got {type(attack)}"
     return attack
-    
-    
-    
+
+
 attack_defaults = {
     "blackbox_evasion": {
         "attack_name": "art.attacks.evasion.HopSkipJump",
-        "attack_params": [
-            "max_iter=10",
-            "init_eval=5",
-            "max_eval=20",
-            "init_size=100"
-        ],
+        "attack_params": ["max_iter=10", "init_eval=5", "max_eval=20", "init_size=100"],
     },
     "whitebox_evasion": {
         "attack_name": "art.attacks.evasion.FastGradientMethod",
-        "attack_params": [
-            "eps=0.2",
-            "eps_step=0.1",
-            "norm=inf",
-            "targeted=False"
-        ],
+        "attack_params": ["eps=0.2", "eps_step=0.1", "norm=inf", "targeted=False"],
     },
     "blackbox_attribute_inference": {
         "attack_name": "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
         "targeted_attribute": "sex",
-        "attack_params": [
-            "attack_model_type=svm"
-        ],
+        "attack_params": ["attack_model_type=svm"],
     },
     "whitebox_attribute_inference": {
         "attack_name": "art.attacks.inference.attribute_inference.AttributeInferenceBaseline",
@@ -694,9 +814,7 @@ attack_defaults = {
     },
     "blackbox_membership_inference": {
         "attack_name": "art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
-        "attack_params": [
-            "attack_model_type=rf"
-        ],
+        "attack_params": ["attack_model_type=rf"],
     },
 }
 
@@ -716,8 +834,11 @@ def attack_main():
     """
     # setup logging
     logging.basicConfig(level=logging.INFO)
-    
-    parser = argparse.ArgumentParser(description="Attack Evaluation", parents=[attack_parser, model_parser, data_parser])
+
+    parser = argparse.ArgumentParser(
+        description="Attack Evaluation",
+        parents=[attack_parser, model_parser, data_parser],
+    )
     args = parser.parse_args()
     data = initialize_data_config()
     data(filepath=args.data_filepath)
@@ -725,7 +846,7 @@ def attack_main():
     check_is_fitted(model)
     attack = initialize_attack_config()
     attack(data, model)
-    
+
+
 if __name__ == "__main__":
     attack_main()
-    

@@ -6,9 +6,9 @@ from hydra import initialize, compose
 from hydra.utils import instantiate
 
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
 
 def initialize_config(config_file, params, target) -> object:
     """
@@ -16,7 +16,7 @@ def initialize_config(config_file, params, target) -> object:
 
     Depending on the provided arguments, this function loads a configuration file,
     applies parameter overrides, and ensures the object_name is set in the configuration.
-    
+
     Args:
         config_file (str or list or None): Path to the configuration file, or a list of override strings.
         params (list or None): List of parameter overrides in the format ["key=value", ...].
@@ -37,13 +37,15 @@ def initialize_config(config_file, params, target) -> object:
     elif config_file:
         logger.info(f"Overriding config from {config_file} with params:")
         override_config = config_file
-        keys = [k.split('=')[0] for k in override_config]
+        keys = [k.split("=")[0] for k in override_config]
         for param in params:
             logger.info(f" - {param}")
             override_config.append(param)
         if "_target_" not in keys:
             override_config = [f"++_target_={target}"] + override_config
-        assert isinstance(override_config, list), "config must be a YAML list of dictionaries"
+        assert isinstance(
+            override_config, list
+        ), "config must be a YAML list of dictionaries"
         if config_file is None:
             with initialize(config_path=None):
                 config = compose(config_name=None, overrides=override_config)
@@ -54,7 +56,7 @@ def initialize_config(config_file, params, target) -> object:
                 config = compose(config_name=filename, overrides=override_config)
     else:
         params = params if params is not None else []
-        keys = [k.split('=')[0] for k in params]
+        keys = [k.split("=")[0] for k in params]
         if "_target_" not in keys:
             params = [f"++_target_={target}"] + params
         with initialize(config_path=None):

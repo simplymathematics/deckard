@@ -10,17 +10,18 @@ from .attack import AttackConfig, attack_parser, attack_main
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'DataConfig', 'data_parser', 'data_main',
-    'ModelConfig', 'model_parser', 'model_main',
-    'AttackConfig', 'attack_parser', 'attack_main'
+    "DataConfig",
+    "data_parser",
+    "data_main",
+    "ModelConfig",
+    "model_parser",
+    "model_main",
+    "AttackConfig",
+    "attack_parser",
+    "attack_main",
 ]
-
-
-
-    

@@ -9,8 +9,15 @@ from pathlib import Path
 from hashlib import md5
 from dataclasses import dataclass
 from typing import Union
+
 # Scikit-learn
-from sklearn.datasets import fetch_openml, make_classification, make_regression,load_digits, load_diabetes
+from sklearn.datasets import (
+    fetch_openml,
+    make_classification,
+    make_regression,
+    load_digits,
+    load_diabetes,
+)
 import sklearn.model_selection
 from hydra.utils import instantiate
 
@@ -20,8 +27,6 @@ from .utils import initialize_config
 
 # Setup logger
 logger = logging.getLogger(__name__)
-
-
 
 
 @dataclass
@@ -98,7 +103,8 @@ class DataConfig:
     --------
     config = DataConfig(dataset_name="adult", **kwargs)
     X_train, y_train, X_test, y_test = config()
-    """  
+    """
+
     dataset_name: str = "adult"
     data_params: dict = None
     test_size: float = 0.2
@@ -143,20 +149,21 @@ class DataConfig:
 
     def __hash__(self):
         """
-            Computes a hash value for the instance.
+        Computes a hash value for the instance.
 
-            Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
-            The hash excludes attributes whose names start with an underscore.
+        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
+        The hash excludes attributes whose names start with an underscore.
 
-            Returns
-            -------
-            int
-                The integer representation of the MD5 hash of the concatenated attribute string.
-        """  
+        Returns
+        -------
+        int
+            The integer representation of the MD5 hash of the concatenated attribute string.
+        """
         # Hash all fields that do not start with an underscore
-        hash_input = "".join(f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_"))
+        hash_input = "".join(
+            f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_")
+        )
         return int(md5(hash_input.encode()).hexdigest(), 16)
-
 
     def _load_adult_income_data(self):
         """
@@ -177,25 +184,25 @@ class DataConfig:
         -------
         self : DataConfig
             The instance with loaded and preprocessed data.
-        """  
+        """
         start_time = time.time()
         adult = fetch_openml(name=self.dataset_name, version=2, as_frame=True)
         df = adult.frame
-        X = df.drop(columns='class')
-        y = df['class'].cat.rename_categories({'<=50K': 0, '>50K': 1})
+        X = df.drop(columns="class")
+        y = df["class"].cat.rename_categories({"<=50K": 0, ">50K": 1})
         y = y.astype(int)
         # Replace Male/Female with 1/0
-        sex = X.pop('sex')
+        sex = X.pop("sex")
         # Convert appropriate columns to categorical or numeric types
-        X['age'] = X['age'].astype(int)
-        X['education-num'] = X['education-num'].astype(int)
-        X['hours-per-week'] = X['hours-per-week'].astype(int)
-        X['capital-gain'] = X['capital-gain'].astype(int)
-        X['capital-loss'] = X['capital-loss'].astype(int)
-        X['race'] = X['race'].astype('category')
-        X['native-country'] = X['native-country'].astype('category')
+        X["age"] = X["age"].astype(int)
+        X["education-num"] = X["education-num"].astype(int)
+        X["hours-per-week"] = X["hours-per-week"].astype(int)
+        X["capital-gain"] = X["capital-gain"].astype(int)
+        X["capital-loss"] = X["capital-loss"].astype(int)
+        X["race"] = X["race"].astype("category")
+        X["native-country"] = X["native-country"].astype("category")
         X = pd.get_dummies(X, drop_first=True)
-        X['sex'] = sex.cat.rename_categories({'Male': 0, 'Female': 1})
+        X["sex"] = sex.cat.rename_categories({"Male": 0, "Female": 1})
         # Convert categorical variables to numeric using one-hot encoding
         end_time = time.time()
         self._data_load_time = end_time - start_time
@@ -212,17 +219,17 @@ class DataConfig:
         -------
         self : DataConfig
             The instance of the class with loaded data.
-        """  
+        """
         start_time = time.time()
         diabetes = load_diabetes(as_frame=True)
-        X = diabetes.frame.drop(columns='target')
-        y = diabetes.frame['target']
+        X = diabetes.frame.drop(columns="target")
+        y = diabetes.frame["target"]
         end_time = time.time()
         self._data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
         return self
-    
+
     def _load_digits_data(self):
         """
         Loads the scikit-learn digits dataset into the instance variables.
@@ -234,18 +241,26 @@ class DataConfig:
         -------
         self : DataConfig
             The instance with loaded data and updated attributes.
-        """  
+        """
         start_time = time.time()
         digits = load_digits(as_frame=True)
-        X = digits.frame.drop(columns='target')
-        y = digits.frame['target']
+        X = digits.frame.drop(columns="target")
+        y = digits.frame["target"]
         end_time = time.time()
         self._data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
         return self
 
-    def _make_classification_data(self, n_samples=1000, n_features=20, n_informative=10, n_redundant=5, n_clusters_per_class=2, random_state=42,):
+    def _make_classification_data(
+        self,
+        n_samples=1000,
+        n_features=20,
+        n_informative=10,
+        n_redundant=5,
+        n_clusters_per_class=2,
+        random_state=42,
+    ):
         """
         Generates a synthetic classification dataset and stores it as instance attributes.
 
@@ -274,18 +289,30 @@ class DataConfig:
         Sets self._X (pd.DataFrame): Feature matrix.
         Sets self._y (pd.Series): Target vector.
         Sets self._data_load_time (float): Time taken to generate the data.
-        """  
+        """
         start_time = time.time()
-        X, y = make_classification(n_samples=n_samples, n_features=n_features, n_informative=n_informative,
-                                   n_redundant=n_redundant, n_clusters_per_class=n_clusters_per_class,
-                                   random_state=random_state)
+        X, y = make_classification(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_informative,
+            n_redundant=n_redundant,
+            n_clusters_per_class=n_clusters_per_class,
+            random_state=random_state,
+        )
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
         end_time = time.time()
         self._data_load_time = end_time - start_time
         return self
-    
-    def _make_regression_data(self, n_samples=1000, n_features=20, n_informative=10, noise=0.1, random_state=42,):
+
+    def _make_regression_data(
+        self,
+        n_samples=1000,
+        n_features=20,
+        n_informative=10,
+        noise=0.1,
+        random_state=42,
+    ):
         """
         Generates synthetic regression data using scikit-learn's make_regression function and stores it as pandas DataFrame and Series.
 
@@ -306,18 +333,24 @@ class DataConfig:
         -------
         self : DataConfig
             The instance with generated data stored in self._X (DataFrame), self._y (Series), and self._data_load_time (float).
-        """  
+        """
         start_time = time.time()
-        X, y = make_regression(n_samples=n_samples, n_features=n_features, n_informative=n_informative,
-                               noise=noise, random_state=random_state)
+        X, y = make_regression(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_informative,
+            noise=noise,
+            random_state=random_state,
+        )
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
         end_time = time.time()
         self._data_load_time = end_time - start_time
         return self
 
-    
-    def _sample(self,):
+    def _sample(
+        self,
+    ):
         """
         Samples training and testing indices from the loaded dataset, optionally using stratification.
 
@@ -334,8 +367,8 @@ class DataConfig:
         ------------
         Sets ``self._train_indices``, ``self._test_indices``, and ``self._data_sample_time``.
         Logs the time taken for sampling.
-        """  
-        if not hasattr(self, '_X') or self._X is None:
+        """
+        if not hasattr(self, "_X") or self._X is None:
             raise ValueError("Data not loaded. Cannot sample.")
         train_n = int(self.train_size * len(self._X))
         test_n = len(self._X) - train_n
@@ -349,7 +382,9 @@ class DataConfig:
                 if self.stratify in self._X.columns:
                     stratify_col = self._X[self.stratify]
                 else:
-                    raise ValueError(f"Stratify column {self.stratify} not found in data columns")
+                    raise ValueError(
+                        f"Stratify column {self.stratify} not found in data columns"
+                    )
             else:
                 raise ValueError("stratify must be None, True, or a column name")
         indices = range(len(self._X))
@@ -366,8 +401,6 @@ class DataConfig:
         logger.info(f"Data sampled in {self._data_sample_time:.2f} seconds")
         self._train_indices = train_idx
         self._test_indices = test_idx
-        
-        
 
     def _load_data(self):
         """
@@ -396,12 +429,23 @@ class DataConfig:
             If the dataset or file type is not supported.
         ValueError
             If a CSV file does not contain a 'target' column.
-        """  
+        """
         filetype = Path(self.dataset_name).suffix
         supported_filetypes = [".csv"]
-        suppoted_datasets = ["adult", "make_classification", "make_regression", "diabetes", "digits"]
-        if filetype not in supported_filetypes and self.dataset_name not in suppoted_datasets:
-            raise NotImplementedError(f"Currently only {supported_filetypes} filetypes are supported for loading data")
+        suppoted_datasets = [
+            "adult",
+            "make_classification",
+            "make_regression",
+            "diabetes",
+            "digits",
+        ]
+        if (
+            filetype not in supported_filetypes
+            and self.dataset_name not in suppoted_datasets
+        ):
+            raise NotImplementedError(
+                f"Currently only {supported_filetypes} filetypes are supported for loading data"
+            )
         match self.dataset_name:
             case "adult":
                 self._load_adult_income_data(**self._data_params)
@@ -415,22 +459,24 @@ class DataConfig:
                 self._load_digits_data(**self._data_params)
             case _ if filetype == ".csv":
                 data = pd.read_csv(self.dataset_name)
-                if 'target' not in data.columns:
+                if "target" not in data.columns:
                     raise ValueError("CSV file must contain 'target' column")
-                y = data.pop('target')
+                y = data.pop("target")
                 X = data
                 self._X = X
                 self._y = y
                 end_time = time.time()
                 self._data_load_time = end_time - time.time()
-                logger.info(f"Data loaded from {self.dataset_name} in {self._data_load_time:.2f} seconds")
+                logger.info(
+                    f"Data loaded from {self.dataset_name} in {self._data_load_time:.2f} seconds"
+                )
             case _ if filetype == ".npz":
                 raise NotImplementedError("Loading from .npz files not yet implemented")
             case _:
-                raise NotImplementedError(f"Dataset {self.dataset_name} not implemented")  
-    
-    
-        
+                raise NotImplementedError(
+                    f"Dataset {self.dataset_name} not implemented"
+                )
+
     def __call__(self, filepath=None):
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
@@ -453,7 +499,7 @@ class DataConfig:
         ------
         AssertionError
             If train or test indices are not set after sampling.
-        """  
+        """
         start_time = time.time()
         self._load_data()
         end_time = time.time()
@@ -461,8 +507,12 @@ class DataConfig:
         logger.info(f"Data loaded in {self._data_load_time:.2f} seconds")
         # Sample data
         self._sample()
-        assert hasattr(self, '_train_indices') and self._train_indices is not None, "Train indices must be set after sampling"
-        assert hasattr(self, '_test_indices') and self._test_indices is not None, "Test indices must be set after sampling"
+        assert (
+            hasattr(self, "_train_indices") and self._train_indices is not None
+        ), "Train indices must be set after sampling"
+        assert (
+            hasattr(self, "_test_indices") and self._test_indices is not None
+        ), "Test indices must be set after sampling"
         train_indices = self._train_indices
         test_indices = self._test_indices
         # Create train and test sets
@@ -470,15 +520,28 @@ class DataConfig:
         self._y_train = self._y.iloc[train_indices].reset_index(drop=True)
         self._X_test = self._X.iloc[test_indices].reset_index(drop=True)
         self._y_test = self._y.iloc[test_indices].reset_index(drop=True)
-        # Return data 
+        # Return data
         return self._X_train, self._y_train, self._X_test, self._y_test
-        
+
+
 # Argument parsing
-data_parser = argparse.ArgumentParser(description="DataConfig parameters", add_help=False,)
-data_parser.add_argument('--data_config_file', type=str, help='Path to YAML config file')
-data_parser.add_argument('--data_filepath', type=str, help='Path to save loaded data as CSV')
+data_parser = argparse.ArgumentParser(
+    description="DataConfig parameters",
+    add_help=False,
+)
+data_parser.add_argument(
+    "--data_config_file", type=str, help="Path to YAML config file"
+)
+data_parser.add_argument(
+    "--data_filepath", type=str, help="Path to save loaded data as CSV"
+)
 # data_params should be a dotlist of key=value pairs
-data_parser.add_argument('--data_params', type=str, nargs='*', help='Override configuration parameters as key=value pairs')
+data_parser.add_argument(
+    "--data_params",
+    type=str,
+    nargs="*",
+    help="Override configuration parameters as key=value pairs",
+)
 
 
 def initialize_data_config():
@@ -492,7 +555,7 @@ def initialize_data_config():
     -------
     DataConfig
         An instance of DataConfig initialized with the specified configuration.
-    """  
+    """
     args = data_parser.parse_known_args()[0]
     config_file = args.data_config_file
     params = args.data_params if args.data_params is not None else []
@@ -527,7 +590,7 @@ def data_main():
     Logs
     ----
     Train and test set sizes.
-    """  
+    """
     args = data_parser.parse_known_args()[0]
     # setup logging
     logging.basicConfig(level=logging.INFO)
@@ -541,6 +604,6 @@ def data_main():
     assert len(X_train) == len(y_train), "X_train and y_train must have the same length"
     assert len(X_test) == len(y_test), "X_test and y_test must have the same length"
 
+
 if __name__ == "__main__":
     data_main()
-    

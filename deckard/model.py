@@ -15,7 +15,7 @@ import argparse
 import importlib
 import numpy as np
 from pathlib import Path
-from hashlib import md5 
+from hashlib import md5
 
 from .data import initialize_data_config, data_parser
 from .utils import initialize_config
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 supported_sklearn_libraries = ["sklearn"]
 
+
 @dataclass
 class ModelConfig:
     """
@@ -31,7 +32,7 @@ class ModelConfig:
 
     Attributes:
     -------
-    
+
     model_type : str
         The fully qualified class name of the scikit-learn model to instantiate (e.g., "sklearn.svm.SVC").
     classifier : bool
@@ -52,7 +53,7 @@ class ModelConfig:
         Dictionary containing the latest computed scores and timing information.
     _target_ : str
         Internal identifier for the class.
-    
+
     Methods:
     -------
     __post_init__(): Initializes the model based on the provided type and parameters.
@@ -66,7 +67,7 @@ class ModelConfig:
     __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
     _save_model(filepath): Saves the model to the specified filepath.
     _load_model(filepath): Loads the model from the specified filepath.
-    
+
     Raises:
     -------
     AssertionError:
@@ -75,7 +76,7 @@ class ModelConfig:
         If the model is not initialized, not trained, or if prediction is attempted without a trained model.
     NotImplementedError:
         If model saving/loading is attempted for unsupported model types.
-    
+
     Examples
     -------
     data_config = DataConfig()
@@ -84,6 +85,7 @@ class ModelConfig:
     train_scores = model_config(data, train=True, score=True)
     test_scores = model_config(data, train=False, score=True)
     """
+
     model_type: str = "sklearn.svm.SVC"
     classifier: bool = True
     model_params: dict = None
@@ -111,9 +113,11 @@ class ModelConfig:
         """
         # Import the model class from sklearn
         library = self.model_type.split(".")[0]
-        
-        assert library in supported_sklearn_libraries, f"Only {supported_sklearn_libraries} models are supported"
-         # Dynamically import the model class
+
+        assert (
+            library in supported_sklearn_libraries
+        ), f"Only {supported_sklearn_libraries} models are supported"
+        # Dynamically import the model class
         module_name, class_name = self.model_type.rsplit(".", 1)
         module = importlib.import_module(module_name)
         model_class = getattr(module, class_name)
@@ -124,7 +128,7 @@ class ModelConfig:
             self._model = model_class()
         self.model_params = self._model.get_params()
         self._score_dict = {}
-    
+
     def __hash__(self):
         """
         Computes a hash value for the instance by concatenating all non-private attribute names and values,
@@ -137,9 +141,10 @@ class ModelConfig:
             Only attributes whose names do not start with an underscore ('_') are included in the hash computation.
         """
         # Hash all fields that do not start with an underscore
-        hash_input = "".join(f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_"))
+        hash_input = "".join(
+            f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_")
+        )
         return int(md5(hash_input.encode()).hexdigest(), 16)
-
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
         """
@@ -217,11 +222,12 @@ class ModelConfig:
         y_proba = self._model.predict_proba(X)
         end_time = time.process_time()
         self._prediction_time = end_time - start_time
-        logger.info(f"Probability prediction made in {self._prediction_time:.2f} seconds")
+        logger.info(
+            f"Probability prediction made in {self._prediction_time:.2f} seconds"
+        )
         return y_proba
 
-
-    def _classification_scores(self, y_true:pd.Series, y_pred:pd.Series) -> dict:
+    def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         """
         Computes classification metrics including accuracy, precision, recall, and F1-score.
 
@@ -253,7 +259,7 @@ class ModelConfig:
         }
         return scores
 
-    def _regression_scores(self, y_true:pd.Series, y_pred:pd.Series) -> dict:
+    def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         """
         Calculate regression error metrics between true and predicted values.
 
@@ -273,7 +279,7 @@ class ModelConfig:
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
         mse = ((y_true - y_pred) ** 2).mean()
-        rmse = mse ** 0.5
+        rmse = mse**0.5
         mae = (y_true - y_pred).abs().mean()
         scores = {
             "mse": mse,
@@ -281,9 +287,8 @@ class ModelConfig:
             "mae": mae,
         }
         return scores
-    
-    def _score(self, y_true:pd.Series, y_pred:pd.Series, train: bool) -> dict:
-        
+
+    def _score(self, y_true: pd.Series, y_pred: pd.Series, train: bool) -> dict:
         """
         Compute and log performance scores for classification or regression.
 
@@ -305,10 +310,10 @@ class ModelConfig:
         if self.classifier:
             start_time = time.process_time()
             scores = self._classification_scores(y_true, y_pred)
-        
+
         else:
             start_time = time.process_time()
-            scores =  self._regression_scores(y_true, y_pred)
+            scores = self._regression_scores(y_true, y_pred)
         end_time = time.process_time()
         # prepend train_ to each score if train is True
         if train:
@@ -326,7 +331,7 @@ class ModelConfig:
             scores[score] = rounded
         self._score_time = end_time - start_time
         return scores
-    
+
     def _save_model(self, filepath: str):
         """
         Saves the trained model to the specified filepath using pickle.
@@ -345,9 +350,13 @@ class ModelConfig:
             try:
                 check_is_fitted(self._model)
             except NotFittedError:
-                raise ValueError("Model is not fitted yet. Train the model before saving.")
+                raise ValueError(
+                    "Model is not fitted yet. Train the model before saving."
+                )
         else:
-            raise NotImplementedError("Model saving is only implemented for sklearn models.")
+            raise NotImplementedError(
+                "Model saving is only implemented for sklearn models."
+            )
         if self._training_time is None:
             raise ValueError("Model not trained")
         if filepath is not None:
@@ -358,8 +367,8 @@ class ModelConfig:
             with open(filepath, "wb") as f:
                 pickle.dump(self._model, f)
             logger.info(f"Model saved to {filepath}")
-            assert Path(filepath).exists(), f"Model file {filepath} was not created"    
-    
+            assert Path(filepath).exists(), f"Model file {filepath} was not created"
+
     def _load_model(self, filepath: str):
         """
         Loads a trained model from the specified filepath using pickle.
@@ -384,7 +393,9 @@ class ModelConfig:
                 raise ValueError("Loaded object is not a valid model instance")
             self._model = loaded_model
             self.model_params = self._model.get_params()
-            self.model_type = f"{self._model.__class__.__module__}.{self._model.__class__.__name__}"
+            self.model_type = (
+                f"{self._model.__class__.__module__}.{self._model.__class__.__name__}"
+            )
             logger.info(f"Model loaded from {filepath}")
         except FileNotFoundError:
             logger.error(f"File {filepath} not found")
@@ -393,8 +404,14 @@ class ModelConfig:
             logger.error(f"Error loading model: {e}")
             raise
 
-
-    def __call__(self, X: pd.DataFrame, y: pd.Series, train: bool = True, score = False, filepath: Union[str, None] = None) -> Union[pd.Series, pd.DataFrame]:
+    def __call__(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        train: bool = True,
+        score=False,
+        filepath: Union[str, None] = None,
+    ) -> Union[pd.Series, pd.DataFrame]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
         Parameters
@@ -423,7 +440,9 @@ class ModelConfig:
                 start_time = time.process_time()
                 self._load_model(filepath)
                 end_time = time.process_time()
-                logger.debug(f"Model loaded from {filepath} in {end_time - start_time:.2f} seconds")
+                logger.debug(
+                    f"Model loaded from {filepath} in {end_time - start_time:.2f} seconds"
+                )
             else:
                 logger.debug(f"Model already loaded, skipping loading from {filepath}")
         if train:
@@ -436,7 +455,9 @@ class ModelConfig:
                     "training_score_time": self._score_time,
                 }
             else:
-                logger.warning(f"Model file {filepath} already exists. Skipping training to avoid overwriting.")
+                logger.warning(
+                    f"Model file {filepath} already exists. Skipping training to avoid overwriting."
+                )
                 self._load_model(filepath)
                 # TODO: Save/Load training times/scores
                 times = {
@@ -451,7 +472,7 @@ class ModelConfig:
                 if self._model is None:
                     raise ValueError("Model not trained or loaded. Cannot predict.")
             times = {
-                "training_time" : self._training_time,
+                "training_time": self._training_time,
                 "training_prediction_time": self._prediction_time,
                 "training_score_time": self._score_time,
             }
@@ -460,8 +481,8 @@ class ModelConfig:
         else:
             preds = self._predict(X)
         if score is True:
-            scores = self._score(y, preds, train = train)
-            
+            scores = self._score(y, preds, train=train)
+
         else:
             scores = {}
         times["prediction_time"] = self._prediction_time
@@ -475,14 +496,28 @@ class ModelConfig:
         return self._score_dict
 
 
-
-    
 # Argument parsing
-model_parser = argparse.ArgumentParser(description="DataConfig parameters", add_help=False,)
-model_parser.add_argument('--probability', action="store_true", help='Whether the model will output probabilities (True/False)')
-model_parser.add_argument('--model_config_file', type=str, help='Path to YAML config file')
-model_parser.add_argument('--model_filepath', type=str, help='Path to save loaded data as CSV')
-model_parser.add_argument('--model_params', type=str, nargs='*', help='Override configuration parameters as key=value pairs')
+model_parser = argparse.ArgumentParser(
+    description="DataConfig parameters",
+    add_help=False,
+)
+model_parser.add_argument(
+    "--probability",
+    action="store_true",
+    help="Whether the model will output probabilities (True/False)",
+)
+model_parser.add_argument(
+    "--model_config_file", type=str, help="Path to YAML config file"
+)
+model_parser.add_argument(
+    "--model_filepath", type=str, help="Path to save loaded data as CSV"
+)
+model_parser.add_argument(
+    "--model_params",
+    type=str,
+    nargs="*",
+    help="Override configuration parameters as key=value pairs",
+)
 
 
 def initialize_model_config() -> ModelConfig:
@@ -509,7 +544,10 @@ def initialize_model_config() -> ModelConfig:
     assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
     return model
 
-def train_and_evaluate(args, train = True, score = True, data = None) -> tuple[dict, dict, object]:
+
+def train_and_evaluate(
+    args, train=True, score=True, data=None
+) -> tuple[dict, dict, object]:
     """
     Trains and evaluates a machine learning model using provided arguments and data.
 
@@ -520,7 +558,7 @@ def train_and_evaluate(args, train = True, score = True, data = None) -> tuple[d
         data (optional): An optional data configuration object. If None, a new data configuration is initialized.
 
     Returns:
-        tuple[dict, dict, object]: 
+        tuple[dict, dict, object]:
             - train_scores (dict): Scores or metrics from training data evaluation.
             - test_scores (dict): Scores or metrics from test data evaluation.
             - model._model (object): The trained model instance.
@@ -532,17 +570,30 @@ def train_and_evaluate(args, train = True, score = True, data = None) -> tuple[d
         # Load and sample data
         data(filepath=args.data_filepath)
     # Initialize model configuration
-    model = initialize_model_config()   
+    model = initialize_model_config()
     # Train and score model on the training and test sets
     if train:
-        train_scores = model(data._X_train, data._y_train, train=True, score=True, filepath=args.model_filepath)
+        train_scores = model(
+            data._X_train,
+            data._y_train,
+            train=True,
+            score=True,
+            filepath=args.model_filepath,
+        )
     else:
         train_scores = {}
     if score:
-        test_scores = model(data._X_test, data._y_test, train=False, score=True, filepath=args.model_filepath)
+        test_scores = model(
+            data._X_test,
+            data._y_test,
+            train=False,
+            score=True,
+            filepath=args.model_filepath,
+        )
     else:
         test_scores = {}
     return train_scores, test_scores, model._model
+
 
 def model_main():
     """
@@ -557,11 +608,14 @@ def model_main():
         None
     """
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Model Training and Evaluation", parents=[model_parser, data_parser], conflict_handler="resolve")
+    parser = argparse.ArgumentParser(
+        description="Model Training and Evaluation",
+        parents=[model_parser, data_parser],
+        conflict_handler="resolve",
+    )
     args = parser.parse_args()
     train_and_evaluate(args)
-    
+
+
 if __name__ == "__main__":
     model_main()
-
-    
