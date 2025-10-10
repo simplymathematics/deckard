@@ -1,53 +1,26 @@
 import logging
-import os
-from pathlib import Path
-import warnings
-from sklearn.exceptions import UndefinedMetricWarning
+from .data import *
+from .model import *
+from .attack import *
+from .data import DataConfig, data_parser, data_main
+from .model import ModelConfig, model_parser, model_main
+from .attack import AttackConfig, attack_parser, attack_main
 
-from .base import *  # noqa: F401, F403
-from .base import Data as Data
-from .base import Model as Model
-from .base import Attack as Attack
-from .base import Experiment as Experiment
-from .base import FileConfig as FileConfig
-from .base import ScorerDict as ScorerDict
+# Import configs, parsers, and mains from each module
 
-# from deckard import layers  # noqa: F401
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "std": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M",
-        },
-    },
-    "handlers": {
-        "default": {
-            # Use RotatingFileHandler for log rotation
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(Path.cwd(), "deckard.log"),
-            "formatter": "std",
-            "level": logging.DEBUG,
-            "maxBytes": 10 * 1024 * 1024,  # 10 MB log file size limit
-            "backupCount": 5,  # Keep up to 5 backup files
-            "mode": "a",
-        },
-        "test": {
-            "class": "logging.StreamHandler",
-            "formatter": "std",
-            "level": logging.DEBUG,
-        },
-    },
-    "loggers": {
-        "deckard": {"handlers": ["default"], "level": "INFO", "propagate": True},
-        "tests": {"handlers": ["test"], "level": "DEBUG", "propagate": True},
-    },
-}
-logging.config.dictConfig(LOGGING)
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+__all__ = [
+    'DataConfig', 'data_parser', 'data_main',
+    'ModelConfig', 'model_parser', 'model_main',
+    'AttackConfig', 'attack_parser', 'attack_main'
+]
+
+
+
+    

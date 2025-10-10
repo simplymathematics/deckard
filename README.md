@@ -1,47 +1,59 @@
+# Deckard
 
+Deckard is a Python application designed to [briefly describe purpose]. This README provides installation instructions for Windows, macOS, and Linux using both `pyenv` and Python's built-in `venv`.
 
-# Deckard: A Tool for Evaluating AI
+## Prerequisites
 
-## 1 - Dependencies
+- Python 3.10 or higher
+- Git
 
-To install this, ensure that you have your favorite library installed. To install deckard along with `tensorflow`, for example, use
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/deckard.git
+cd deckard
 ```
-python -m pip install .[tensorflow]
+
+### 2. Setup a virtual environment
+
+You can use either `pyenv` or `venv`. Below, there are instructions for both:
+
+To set up a virtual environment using `pyenv`, follow these steps:
+
+```bash
+pyenv install 3.10
+pyenv virtualenv 3.10 env
+pyenv activate deckard-env
 ```
-Add the `-e` flag if you want to edit files:
+
+- `pyenv install 3.10` downloads and installs the newest Python version compatible with 3.10.
+- `pyenv virtualenv 3.10 env` creates a new virtual environment named `deckard-env` using Python 3.10.
+- `pyenv activate env` activates the `deckard-env` environment, so all Python commands use this isolated setup.
+
+To set up a virtual environment using Python's built-in `venv`, run:
+
+```bash
+python3 -m venv deckard-env
+source deckard-env/bin/activate  # On Windows use: deckard-env\Scripts\activate
 ```
+
+- `python3 -m venv deckard-env` creates a new virtual environment named `deckard-env`.
+- `source deckard-env/bin/activate` (or `deckard-env\Scripts\activate` on Windows) activates the environment so all Python commands use this isolated setup.
+
+This command switches your shell to use the `deckard-env` environment, ensuring all Python packages are installed locally within it.
+
+
+
+### 3. Install Dependencies
+
+```bash
 python -m pip install -e .
 ```
-Or try the rpi script:
-```
-bash rpi.sh
-```
-Now, check that deckard works
-```$ python```
-```>>> import deckard```
-Then CTRL+D or `quit()` to quit.
-##  2 - Navigate to your favorite subfolder in `examples`. One is provided for each framework.
-Running `dvc repro` in that folder will reproduce the experiment outlined in the `dvc.yaml`. Running 
-```python -m deckard```
- will parse the configuration folder, create a `params.yaml`, and then run `dvc repro`.
-### _like tears in the rain_, this tool is meant for bladerunners. NOT INTENDED FOR USE BY REPLICANTS
 
-## Files
+This command installs the project's dependencies in "editable" mode. Editable mode (`-e .`) allows you to modify the source code and have changes reflected immediately without needing to reinstall the package. The `-m` flag tells Python to run the `pip` module as a script, ensuring you use the correct version of `pip` for your environment.
 
-.  
-├── Dockerfile: Constructs a generic Docker image for running experiments  
-├── LICENSE  
-├── README.md: this file  
-├── deckard: Source code  
-├── examples: Directory containing all the examples  
-├── rpi.sh: For installation on Raspbian.  
-├── setup.py : for installation with pip  
-├── setup.sh : for installation using bash  
-└── test : test suite  
- 
-After adding it to your path, you can then run it as a module:
+## Usage
 
-```
-cd examples/power
-python -m deckard --config_name mnist.yaml 
-```
+See [docs/README.md](docs/README.md) for detailed documentation.

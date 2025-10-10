@@ -1,3 +1,0 @@
-_target_: deckard.base.data.Data
-name: https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv
-target : Survived
