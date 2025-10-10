@@ -12,7 +12,7 @@ Deckard is a Python application designed to [briefly describe purpose]. This REA
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/deckard.git
+git clone git@github.com:simplymathematics/deckard.git
 cd deckard
 ```
 
@@ -25,24 +25,24 @@ To set up a virtual environment using `pyenv`, follow these steps:
 ```bash
 pyenv install 3.10
 pyenv virtualenv 3.10 env
-pyenv activate deckard-env
+pyenv activate env
 ```
 
 - `pyenv install 3.10` downloads and installs the newest Python version compatible with 3.10.
-- `pyenv virtualenv 3.10 env` creates a new virtual environment named `deckard-env` using Python 3.10.
-- `pyenv activate env` activates the `deckard-env` environment, so all Python commands use this isolated setup.
+- `pyenv virtualenv 3.10 env` creates a new virtual environment named `env` using Python 3.10.
+- `pyenv activate env` activates the `env` environment, so all Python commands use this isolated setup.
 
 To set up a virtual environment using Python's built-in `venv`, run:
 
 ```bash
-python3 -m venv deckard-env
-source deckard-env/bin/activate  # On Windows use: deckard-env\Scripts\activate
+python3 -m venv env
+source env/bin/activate  # On Windows use: env\Scripts\activate
 ```
 
-- `python3 -m venv deckard-env` creates a new virtual environment named `deckard-env`.
-- `source deckard-env/bin/activate` (or `deckard-env\Scripts\activate` on Windows) activates the environment so all Python commands use this isolated setup.
+- `python3 -m venv env` creates a new virtual environment named `env`.
+- `source env/bin/activate` (or `env\Scripts\activate` on Windows) activates the environment so all Python commands use this isolated setup.
 
-This command switches your shell to use the `deckard-env` environment, ensuring all Python packages are installed locally within it.
+This command switches your shell to use the `env` environment, ensuring all Python packages are installed locally within it.
 
 
 
