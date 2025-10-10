@@ -1,6 +1,0 @@
-accuracy:
-    name: sklearn.metrics.accuracy_score
-    direction: maximize
-log_loss:
-    name: sklearn.metrics.log_loss
-    direction: minimize

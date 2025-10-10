@@ -1,5 +1,0 @@
-init.model : ${model}
-init.name : art.attacks.evasion.CarliniL0Method
-init.max_iter : choice(10)
-init.batch_size : choice(1024)
-init.confidence : choice(.01, .1, .3, .5, .9, .99, 1)

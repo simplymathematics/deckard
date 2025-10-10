@@ -1,9 +1,0 @@
-explained_variance:
-    name: sklearn.metrics.explained_variance_score
-    direction: maximize
-r2:
-    name: sklearn.metrics.r2_score
-    direction: maximize
-mse:
-    name: sklearn.metrics.mean_squared_error
-    direction: minimize

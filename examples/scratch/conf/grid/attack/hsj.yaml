@@ -1,5 +1,0 @@
-init.name : art.attacks.evasion.HopSkipJump
-init.batch_size : [1, 4, 16, 65, 128]
-init.max_iter :  [1, 10, 100, 1000]
-init.max_eval : [1, 10, 100, 1000]
-init.init_eval : [1, 10, 100, 1000]
