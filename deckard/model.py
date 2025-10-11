@@ -14,8 +14,8 @@ import numpy as np
 from pathlib import Path
 from hashlib import md5
 
-from .data import initialize_data_config, data_parser
-from .utils import initialize_config
+from .data import initialize_data_config, data_parser, DataConfig
+from .utils import initialize_config, ConfigBase
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ supported_sklearn_libraries = ["sklearn"]
 
 
 @dataclass
-class ModelConfig:
+class ModelConfig(ConfigBase):
     """
     A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.
 
@@ -46,6 +46,12 @@ class ModelConfig:
         Time taken to make predictions (in seconds).
     _score_time : float or None
         Time taken to compute scoring metrics (in seconds).
+    _training_prediction_time : float or None
+        Time taken to make predictions during training (in seconds).
+    _training_score_time : float or None
+        Time taken to compute training scoring metrics (in seconds).
+    _prediction_score_time : float or None
+        Time taken to compute prediction scoring metrics (in seconds).
     _score_dict : dict or None
         Dictionary containing the latest computed scores and timing information.
     _target_ : str
@@ -89,10 +95,16 @@ class ModelConfig:
     _model = None
     probability: bool = False
     _training_time: float = None
+    _training_prediction_time: float = None
+    _training_score_time: float = None
     _prediction_time: float = None
     _score_time: float = None
     _score_dict: dict = None
     _target_: str = "ModelConfig"
+    _training_n = None
+    _prediction_n = None
+    _predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list] = None
+    _training_predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list] = None
 
     def __post_init__(self):
         """
@@ -125,23 +137,17 @@ class ModelConfig:
             self._model = model_class()
         self.model_params = self._model.get_params()
         self._score_dict = {}
+        self._training_time = None
+        self._prediction_time = None
+        self._score_time = None
+        self._training_prediction_time = None
+        self._training_score_time = None
+        self._prediction_score_time = None
+        self._training_n = None
+        self._prediction_n = None
 
     def __hash__(self):
-        """
-        Computes a hash value for the instance by concatenating all non-private attribute names and values,
-        then applying the MD5 hash function. The resulting hash is returned as an integer.
-
-        Returns:
-            int: The hash value representing the current state of the instance.
-
-        Note:
-            Only attributes whose names do not start with an underscore ('_') are included in the hash computation.
-        """
-        # Hash all fields that do not start with an underscore
-        hash_input = "".join(
-            f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_")
-        )
-        return int(md5(hash_input.encode()).hexdigest(), 16)
+        return super().__hash__()
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
         """
@@ -162,9 +168,11 @@ class ModelConfig:
         if self._model is None:
             raise ValueError("Model not initialized")
         start_time = time.process_time()
+        assert hasattr(self._model, "fit"), "Model does not have a fit method"
         self._model.fit(X, y)
         end_time = time.process_time()
         self._training_time = end_time - start_time
+        self._training_n = len(y)
         logger.info(f"Model trained in {self._training_time:.2f} seconds")
 
     def _predict(self, X: pd.DataFrame) -> pd.Series:
@@ -180,18 +188,14 @@ class ModelConfig:
         Raises:
             ValueError: If the model has not been initialized.
 
-        Logs:
-            - The type and shape of the input data.
-            - The time taken to make predictions.
         """
         if self._model is None:
             raise ValueError("Model not initialized")
         logger.debug(f"Type of X: {type(X)}, shape of X: {X.shape}")
-        start_time = time.process_time()
+        
         y_pred = self._model.predict(X)
-        end_time = time.process_time()
-        self._prediction_time = end_time - start_time
-        logger.info(f"Prediction made in {self._prediction_time:.2f} seconds")
+        
+        
         return y_pred
 
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -207,21 +211,13 @@ class ModelConfig:
         Raises:
             ValueError: If the model is not initialized or does not support probability predictions.
 
-        Side Effects:
-            Updates self._prediction_time with the time taken for prediction.
-            Logs the prediction time using the logger.
         """
         if self._model is None:
             raise ValueError("Model not initialized")
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
-        start_time = time.process_time()
         y_proba = self._model.predict_proba(X)
-        end_time = time.process_time()
-        self._prediction_time = end_time - start_time
-        logger.info(
-            f"Probability prediction made in {self._prediction_time:.2f} seconds"
-        )
+    
         return y_proba
 
     def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
@@ -285,7 +281,7 @@ class ModelConfig:
         }
         return scores
 
-    def _score(self, y_true: pd.Series, y_pred: pd.Series, train: bool) -> dict:
+    def _score(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         """
         Compute and log performance scores for classification or regression.
 
@@ -311,10 +307,7 @@ class ModelConfig:
         else:
             start_time = time.process_time()
             scores = self._regression_scores(y_true, y_pred)
-        end_time = time.process_time()
-        # prepend train_ to each score if train is True
-        if train:
-            scores = {f"train_{k}": v for k, v in scores.items()}
+        end_time = time.process_time()        
         self._score_time = end_time - start_time
         logger.info(f"Scoring done in {self._score_time:.2f} seconds")
         sig_figs = np.log10(len(y_true)) + 1
@@ -384,6 +377,7 @@ class ModelConfig:
             - Updates self.model_type to the class name of the loaded model.
         """
         try:
+            logger.info(f"Loading model from {filepath}")
             with open(filepath, "rb") as f:
                 loaded_model = pickle.load(f)
             if not hasattr(loaded_model, "predict"):
@@ -400,29 +394,129 @@ class ModelConfig:
         except Exception as e:
             logger.error(f"Error loading model: {e}")
             raise
+    
+    def _load_predictions(self, filepath: str):
+        """
+        Loads predictions from a specified CSV file.
 
+        Args:
+            filepath (str): The path to the CSV file containing predictions.
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+            ValueError: If the loaded predictions are not in a valid format.
+            Exception: For any other issues during the loading process.
+        Side Effects:
+            - Reads predictions from the specified CSV file and assigns them to self._predictions.
+            - Logs the load operation.
+        """
+        try:
+            predictions = self.load_data(filepath)
+            if not isinstance(predictions, (pd.Series, pd.DataFrame, np.ndarray, list)):
+                raise ValueError("Loaded predictions are not in a valid format")
+            logger.info(f"Predictions loaded from {filepath}")
+        except FileNotFoundError:
+            logger.error(f"File {filepath} not found")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading predictions: {e}")
+            raise e
+        return predictions
+    
+    def _load_all_predictions(self, training_predictions_filepath, predictions_filepath, times):
+        """
+        Loads training and prediction data from the specified file paths and updates the provided times dictionary
+        with relevant metadata.
+        Parameters
+        ----------
+        training_predictions_filepath : str or Path or None
+            File path to the training predictions. If None or the file does not exist, training predictions are not loaded.
+        predictions_filepath : str or Path or None
+            File path to the predictions. If None or the file does not exist, predictions are not loaded.
+        times : dict
+            Dictionary to be updated with timing and count information for training and prediction data.
+        Updates
+        -------
+        self._training_predictions : object
+            Loaded training predictions, if available.
+        self._training_prediction_time : object
+            Time associated with training predictions, must be set if training predictions are loaded.
+        self._predictions : object
+            Loaded predictions, if available.
+        self._prediction_time : object
+            Time associated with predictions, must be set if predictions are loaded.
+        times["training_prediction_time"] : object
+            Updated with training prediction time.
+        times["training_n"] : int
+            Updated with the number of training predictions.
+        times["prediction_time"] : object
+            Updated with prediction time.
+        times["prediction_n"] : int
+            Updated with the number of predictions.
+        Returns
+        -------
+        dict
+            The updated times dictionary.
+        Raises
+        ------
+        AssertionError
+            If training or prediction time is not set when corresponding predictions are loaded.
+        """
+        # Load the training predictions if provided
+        if training_predictions_filepath is not None and Path(training_predictions_filepath).exists():
+            self._training_predictions = self._load_predictions(training_predictions_filepath)
+            assert self._training_prediction_time is not None, "Training prediction time must be set if training predictions are loaded"
+            times["training_prediction_time"] = self._training_prediction_time
+            times["training_n"] = len(self._training_predictions)
+        
+        # Load the predictions if provided
+        if predictions_filepath is not None and Path(predictions_filepath).exists():
+            self._predictions = self._load_predictions(predictions_filepath)
+            assert self._prediction_time is not None, "Prediction time must be set if predictions are loaded"
+            times["prediction_time"] = self._prediction_time
+            times["prediction_n"] = len(self._predictions)
+        return times
+    
+    def _load_score_file(self, score_filepath):
+        times = {}
+        if score_filepath is not None and Path(score_filepath).exists():
+            new_score_dict = self.load_scores(score_filepath)
+            old_score_dict = self._score_dict if self._score_dict is not None else {}
+            # Update old_score_dict with new_score_dict
+            score_dict = {**old_score_dict, **new_score_dict}
+            # pop keys ending with _time and add to times dict
+            for key in list(score_dict.keys()):
+                if key.endswith("_time") or key.endswith("_n"):
+                    times[key] = score_dict.pop(key)
+        # Update all attributes in times dict
+        for key in times:
+            setattr(self, f"_{key}", times[key])
+        return times
+    
+    
+    
     def __call__(
         self,
-        X: pd.DataFrame,
-        y: pd.Series,
-        train: bool = True,
-        score=False,
-        filepath: Union[str, None] = None,
+        data: DataConfig,
+        model_filepath: Union[str, None] = None,
+        predictions_filepath: Union[str, None] = None,
+        training_predictions_filepath: Union[str, None] = None,
+                
+        score_filepath: Union[str, None] = None,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
+        
         Parameters
         ----------
-        X : pd.DataFrame
-            Feature data for training or prediction.
-        y : pd.Series
-            Target labels for training or scoring.
-        train : bool, optional (default=True)
-            If True, trains the model; otherwise, performs prediction using a loaded or previously trained model.
-        score : bool, optional (default=False)
-            If True, computes and returns scoring metrics.
-        filepath : str or None, optional
+        data : DataConfig
+            An instance of DataConfig containing training and test data.
+        model_filepath : str or None, optional
             Path to save or load the model. If provided, the model will be loaded from or saved to this path.
+        predictions_filepath : str or None, optional
+            Path to save the predictions. If provided, the predictions will be saved to this path.  
+        score_filepath : str or None, optional
+            Path to load existing scores. If provided, scores will be loaded from this path.
+       
         Returns
         -------
         dict
@@ -431,72 +525,132 @@ class ModelConfig:
         ------
         ValueError
             If prediction is requested without a trained or loaded model.
+            
         """
-        if filepath is not None:
-            if self._model is None:
-                start_time = time.process_time()
-                self._load_model(filepath)
-                end_time = time.process_time()
-                logger.debug(
-                    f"Model loaded from {filepath} in {end_time - start_time:.2f} seconds"
-                )
-            else:
-                logger.debug(f"Model already loaded, skipping loading from {filepath}")
-        if train:
-            if filepath is None or not Path(filepath).exists():
-                self._train(X, y)
-                self._save_model(filepath)
-                times = {
-                    "training_time": self._training_time,
-                    "training_prediction_time": self._prediction_time,
-                    "training_score_time": self._score_time,
-                }
-            else:
-                logger.warning(
-                    f"Model file {filepath} already exists. Skipping training to avoid overwriting."
-                )
-                self._load_model(filepath)
-                # TODO: Save/Load training times/scores
-                times = {
-                    "training_time": None,
-                    "training_prediction_time": None,
-                    "training_score_time": None,
-                }
-        else:
-            if filepath is not None:
-                self._load_model(filepath)
-            else:
-                if self._model is None:
-                    raise ValueError("Model not trained or loaded. Cannot predict.")
-            times = {
-                "training_time": self._training_time,
-                "training_prediction_time": self._prediction_time,
-                "training_score_time": self._score_time,
-            }
-        if self.probability:
-            preds = self._predict_proba(X)
-        else:
-            preds = self._predict(X)
-        if score is True:
-            scores = self._score(y, preds, train=train)
+        # Ensure data is loaded
+        if data._X_train is None or data._y_train is None:
+            raise ValueError("Data not loaded. Please load data before calling the model.")
+        
+        # Load the score_filepath if provided
+        times = self._load_score_file(score_filepath)
 
-        else:
-            scores = {}
-        times["prediction_time"] = self._prediction_time
-        times["score_time"] = self._score_time
-        logger.info("Timing Information:")
-        for time in times:
-            if times[time] is not None:
-                logger.info(f"{time}: {times[time]:.3f} seconds")
-        score_dict = {**scores, **times}
-        self._score_dict = score_dict
-        return self._score_dict
+        # Load predictions from filepaths and update times
+        pred_times = self._load_all_predictions(training_predictions_filepath, predictions_filepath, times)
+        times.update(pred_times)
+        
+        # Train the model if training data is provided and model is not already trained   
+        self._load_or_train_model(data, model_filepath, times)
+    
+            
+        # Make predictions on training data if not already done
+        if self._training_predictions is None or self._training_prediction_time is None:
+            start_time = time.process_time()
+            self._training_predictions = self._predict(data._X_train)
+            end_time = time.process_time()
+            self._training_prediction_time = end_time - start_time
+            times["training_prediction_time"] = self._training_prediction_time
+            logger.info(f"Training predictions made in {self._training_prediction_time:.2f} seconds")
+            times["training_n"] = len(self._training_predictions)
+            
+        # Score training predictions if true labels are available and scoring not already done
+        if (self._training_score_time is None or self._score_dict is None):
+            if data._y_train is not None and self._training_predictions is not None:
+                train_scores = self._score(data._y_train, self._training_predictions)
+                # Prefix training scores with 'train_'
+                train_scores = {f"train_{key}": value for key, value in train_scores.items()}
+                if self._score_dict is None:
+                    self._score_dict = {}
+                self._score_dict.update(train_scores)
+                times["training_score_time"] = self._score_time
+                logger.info(f"Training scores computed in {self._score_time:.2f} seconds")
+                # Save scores if filepath provided
+                if score_filepath is not None:
+                    self.save_scores(self._score_dict, score_filepath)
+                    logger.info(f"Scores saved to {score_filepath}")
+        
+        # Make predictions on test data if not already done
+        if self._predictions is None or self._prediction_time is None:
+            if data._X_test is not None:
+                start_time = time.process_time()
+                self._predictions = self._predict(data._X_test)
+                end_time = time.process_time()
+                self._prediction_time = end_time - start_time
+                times["prediction_time"] = self._prediction_time
+                logger.info(f"Predictions made in {self._prediction_time:.2f} seconds")
+                times["prediction_n"] = len(self._predictions)
+            else:
+                logger.warning("No test data available for predictions.")
+        # Score test predictions if true labels are available and scoring not already done
+        if (self._prediction_score_time is None or self._score_dict is None):
+            if data._y_test is not None and self._predictions is not None:
+                test_scores = self._score(data._y_test, self._predictions)
+                if self._score_dict is None:
+                    self._score_dict = {}
+                self._score_dict.update(test_scores)
+                times["prediction_score_time"] = self._score_time
+                logger.info(f"Prediction scores computed in {self._score_time:.2f} seconds")
+        all_scores = self._score_dict if self._score_dict is not None else {}
+        all_scores.update(times)
+        
+        # Save training predictions if filepath provided
+        if training_predictions_filepath is not None:
+            self.save_data(filepath=training_predictions_filepath, data=self._training_predictions)
+            logger.info(f"Training predictions saved to {training_predictions_filepath}")
+        # Save predictions if filepath provided
+        if predictions_filepath is not None and self._predictions is not None:
+            self.save_data(filepath=predictions_filepath, data=self._predictions)
+            logger.info(f"Predictions saved to {predictions_filepath}")
+        # Save model if filepath provided
+        if model_filepath is not None:
+            self._save_model(model_filepath)
+        # Save scores if filepath provided
+        if score_filepath is not None and Path(score_filepath).exists():
+            self.save_scores(all_scores, score_filepath)
+            logger.info(f"Scores saved to {score_filepath}")
+        return all_scores
+
+    def _load_or_train_model(self, data, model_filepath, times):
+        match self._model, model_filepath:
+            case None, None: # Neither model nor filepath provided
+                raise ValueError("Model not trained or loaded. Please train or load a model before prediction.")
+            case _, _: # Model and/or filepath provided
+                if Path(model_filepath).exists():
+                    logger.info(f"Model file {model_filepath} exists. Loading model.")
+                    self._load_model(model_filepath)
+                    assert isinstance(self._model, object)
+                    try: # validate that the  loaded model is trained
+                        check_is_fitted(self._model)
+                        logger.info("Model is already trained.")
+                    except NotFittedError:
+                        # train the model if it is not fitted
+                        self._train(data._X_train, data._y_train)
+                        times["training_time"] = self._training_time
+                        times["training_n"] = self._training_n
+                else:
+                    # train the model if no model exists at the filepath
+                    self._train(data._X_train, data._y_train)
+                    times["training_time"] = self._training_time
+                    times["training_n"] = self._training_n
+                    if model_filepath is not None:
+                        self._save_model(model_filepath)          
+        
+        # Validate model is trained
+        if self._model is None:
+            raise NotFittedError("Model is not initialized")
+        try:
+            check_is_fitted(self._model)
+        except NotFittedError:
+            raise ValueError("Model is not trained. Please train the model before prediction.")
+
+    
+                
 
 
 # Argument parsing
 model_parser = argparse.ArgumentParser(
     description="DataConfig parameters",
     add_help=False,
+    conflict_handler="resolve",
 )
 model_parser.add_argument(
     "--probability",
@@ -534,85 +688,44 @@ def initialize_model_config() -> ModelConfig:
     config_file = args.model_config_file
     params = args.model_params if args.model_params is not None else []
     target = "deckard.ModelConfig"
-    if not config_file and len(params) == 0:
-        logger.info("No config file or parameters provided, using default ModelConfig")
-        return ModelConfig()
     model = initialize_config(config_file, params, target)
     assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
     return model
 
+    
 
-def train_and_evaluate(
-    args, train=True, score=True, data=None
-) -> tuple[dict, dict, object]:
+
+def model_main(args: argparse.Namespace = None) -> None:
     """
-    Trains and evaluates a machine learning model using provided arguments and data.
-
+    Main entry point for model training and evaluation.
+    This function sets up logging, parses command-line arguments using the provided
+    parsers, and initiates the training and evaluation process.
     Args:
-        args: An object containing configuration parameters such as data and model filepaths.
-        train (bool, optional): If True, trains the model on the training data. Defaults to True.
-        score (bool, optional): If True, evaluates the model on the test data. Defaults to True.
-        data (optional): An optional data configuration object. If None, a new data configuration is initialized.
-
-    Returns:
-        tuple[dict, dict, object]:
-            - train_scores (dict): Scores or metrics from training data evaluation.
-            - test_scores (dict): Scores or metrics from test data evaluation.
-            - model._model (object): The trained model instance.
+        args (argparse.Namespace, optional): Parsed command-line arguments. If None,
+            arguments are parsed from sys.argv.
+    Raises:
+        AssertionError: If `args` is provided and is not an instance of argparse.Namespace.
     """
+    logging.basicConfig(level=logging.INFO)
+    if args is None:
+        parser = argparse.ArgumentParser(
+            description="ModelConfig parameters",
+            parents=[data_parser, model_parser],
+        )
+        args = parser.parse_known_args()[0]
+    else:
+        assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
     # Initialize DataConfig and load data
-    if data is None:
-        data = initialize_data_config()
-    if not hasattr(data, "_X_train") or not hasattr(data, "_y_train"):
-        # Load and sample data
-        data(filepath=args.data_filepath)
+    data = initialize_data_config()
+    assert isinstance(data, DataConfig)
+    data(filepath=args.data_filepath)
     # Initialize model configuration
     model = initialize_model_config()
     # Train and score model on the training and test sets
-    if train:
-        train_scores = model(
-            data._X_train,
-            data._y_train,
-            train=True,
-            score=True,
-            filepath=args.model_filepath,
-        )
-    else:
-        train_scores = {}
-    if score:
-        test_scores = model(
-            data._X_test,
-            data._y_test,
-            train=False,
-            score=True,
-            filepath=args.model_filepath,
-        )
-    else:
-        test_scores = {}
-    return train_scores, test_scores, model._model
-
-
-def model_main():
-    """
-    Initializes logging, parses command-line arguments for model training and evaluation, and executes the training and evaluation process.
-
-    This function sets up logging at the INFO level, constructs an argument parser with model and data-specific options, parses the provided arguments, and calls the train_and_evaluate function with those arguments.
-
-    Args:
-        None
-
-    Returns:
-        None
-    """
-    logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(
-        description="Model Training and Evaluation",
-        parents=[model_parser, data_parser],
-        conflict_handler="resolve",
+    estimator = model(
+        data._X_train,
+        data._y_train,
+        filepath=args.model_filepath,
     )
-    args = parser.parse_args()
-    train_and_evaluate(args)
+    model._model = estimator
 
-
-if __name__ == "__main__":
-    model_main()
