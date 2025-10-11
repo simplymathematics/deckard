@@ -2,7 +2,6 @@
 import pandas as pd
 import time
 import logging
-import yaml
 import argparse
 
 from pathlib import Path
@@ -19,7 +18,6 @@ from sklearn.datasets import (
     load_diabetes,
 )
 import sklearn.model_selection
-from hydra.utils import instantiate
 
 
 # deckard
@@ -477,7 +475,7 @@ class DataConfig:
                     f"Dataset {self.dataset_name} not implemented"
                 )
 
-    def __call__(self, filepath=None):
+    def __call__(self, filepath=None) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
 
@@ -488,12 +486,11 @@ class DataConfig:
 
         Returns
         -------
-        tuple
-            A tuple containing:
-            - X_train (pd.DataFrame): Training features.
-            - y_train (pd.Series or pd.DataFrame): Training labels.
-            - X_test (pd.DataFrame): Testing features.
-            - y_test (pd.Series or pd.DataFrame): Testing labels.
+        dict:
+            A dictionary containing:
+            - 'data_load_time': Time taken to load the data.
+            - 'data_sample_time': Time taken to sample/split the data.
+            - Additional times/scores can be added in the future.
 
         Raises
         ------
@@ -520,8 +517,16 @@ class DataConfig:
         self._y_train = self._y.iloc[train_indices].reset_index(drop=True)
         self._X_test = self._X.iloc[test_indices].reset_index(drop=True)
         self._y_test = self._y.iloc[test_indices].reset_index(drop=True)
-        # Return data
-        return self._X_train, self._y_train, self._X_test, self._y_test
+        time_dict = {
+            "data_load_time": self._data_load_time,
+            "data_sample_time": self._data_sample_time,
+        }
+        logger.info(f"Train set size: {len(self._X_train)}, Test set size: {len(self._X_test)}")
+        ## TODO: Add Scores for dataset
+        
+        scores = {}
+        all_scores = {**time_dict, **scores}
+        return all_scores
 
 
 # Argument parsing
@@ -565,8 +570,14 @@ def initialize_data_config():
     return data
 
 
-def data_main():
+def data_main(args: argparse.Namespace = None):
+
     """
+    Parameters
+    ----------
+    args : argparse.Namespace, optional
+        Parsed command-line arguments. If None, arguments are parsed from sys.argv.
+    
     Main function for data initialization and validation.
 
     Parses command-line arguments, sets up logging, loads data configuration,
@@ -591,7 +602,10 @@ def data_main():
     ----
     Train and test set sizes.
     """
-    args = data_parser.parse_known_args()[0]
+    if args is None:
+        args = data_parser.parse_known_args()[0]
+    else:
+        assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
     # setup logging
     logging.basicConfig(level=logging.INFO)
     # Load configuration from YAML file if provided

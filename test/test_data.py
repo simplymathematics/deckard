@@ -16,7 +16,11 @@ class TestDataConfig(unittest.TestCase):
 
     def test_make_classification_data_loading_and_sampling(self):
         cfg = self.basic_config()
-        X_train, y_train, X_test, y_test = cfg()
+        cfg()
+        X_train = cfg._X_train
+        y_train = cfg._y_train
+        X_test = cfg._X_test
+        y_test = cfg._y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -34,7 +38,11 @@ class TestDataConfig(unittest.TestCase):
             random_state=1,
             stratify=None
         )
-        X_train, y_train, X_test, y_test = cfg()
+        cfg()
+        X_train = cfg._X_train
+        y_train = cfg._y_train
+        X_test = cfg._X_test
+        y_test = cfg._y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -51,7 +59,11 @@ class TestDataConfig(unittest.TestCase):
             random_state=0,
             stratify=None
         )
-        X_train, y_train, X_test, y_test = cfg()
+        cfg()
+        X_train = cfg._X_train
+        y_train = cfg._y_train
+        X_test = cfg._X_test
+        y_test = cfg._y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -68,7 +80,11 @@ class TestDataConfig(unittest.TestCase):
             random_state=123,
             stratify=True
         )
-        X_train, y_train, X_test, y_test = cfg()
+        cfg()
+        X_train = cfg._X_train
+        y_train = cfg._y_train
+        X_test = cfg._X_test
+        y_test = cfg._y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -112,7 +128,13 @@ class TestDataConfig(unittest.TestCase):
             random_state=7,
             stratify=True
         )
-        X_train, y_train, X_test, y_test = cfg()
+        cfg()
+        X_train = cfg._X_train
+        y_train = cfg._y_train
+        X_test = cfg._X_test
+        y_test = cfg._y_test
+        self.assertEqual(X_train.shape[0], 30)
+        self.assertEqual(X_test.shape[0], 30)
         self.assertEqual(X_train.shape[1], 6)
         self.assertEqual(X_test.shape[1], 6)
         self.assertEqual(len(X_train), len(y_train))
