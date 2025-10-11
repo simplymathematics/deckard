@@ -642,15 +642,7 @@ def data_main(args: argparse.Namespace = None) -> None:
     else:
         args = argparse.Namespace(**vars(args))
     assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
-    data_filepath = getattr(args, "data_filepath", None)
-    data_score_filepath = getattr(args, "data_score_filepath", None)
-    if data_filepath is not None:
-        Path(data_filepath).parent.mkdir(parents=True, exist_ok=True)
-    if data_score_filepath is not None:
-        Path(data_score_filepath).parent.mkdir(parents=True, exist_ok=True)
-        if Path(data_score_filepath).exists():
-            logger.info(f"Loading existing scores from {data_score_filepath}")
-            data.score_dict.update(**self.load_scores(data_score_filepath))
+    
     # setup logging
     logging.basicConfig(level=logging.INFO)
     # Load configuration from YAML file if provided
@@ -663,4 +655,5 @@ def data_main(args: argparse.Namespace = None) -> None:
     assert len(data.X_test) == len(
         data.y_test,
     ), "X_test and y_test must have the same length"
+    
     return data

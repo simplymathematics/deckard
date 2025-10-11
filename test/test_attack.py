@@ -1,11 +1,7 @@
-import pytest
+import pandas as pd
+import numpy as np
 from deckard.attack import AttackConfig, attack_defaults
-import pandas as pd
-import numpy as np
-import pandas as pd
-import numpy as np
-import pandas as pd
-import numpy as np
+
 
 
 def test_attackconfig_default_initialization():
