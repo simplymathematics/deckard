@@ -101,3 +101,5 @@ line-length = 88
 target-version = ['py310']
 include = 'deckard/.*\.py'
 
+[project.scripts]
+deckard = "deckard.__main__:main"
