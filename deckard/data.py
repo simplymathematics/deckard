@@ -594,7 +594,7 @@ def initialize_data_config():
     return data
 
 
-def data_main(args: argparse.Namespace = None):
+def data_main(args: argparse.Namespace = None) -> None:
 
     """
     Parameters
