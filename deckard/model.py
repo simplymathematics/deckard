@@ -52,6 +52,14 @@ class ModelConfig(ConfigBase):
         Time taken to compute prediction scoring metrics (in seconds).
     _score_dict : dict or None
         Dictionary containing the latest computed scores and timing information.
+    _training_n : int or None
+        Number of training samples.
+    _prediction_n : int or None
+        Number of prediction samples.
+    _training_predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
+        Predictions made on the training data.
+    _predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
+        Predictions made on the prediction data.
     _target_ : str
         Internal identifier for the class.
 
@@ -92,17 +100,7 @@ class ModelConfig(ConfigBase):
     model_params: dict = None
     _model = None
     probability: bool = False
-    _training_time: float = None
-    _training_prediction_time: float = None
-    _training_score_time: float = None
-    _prediction_time: float = None
-    _score_time: float = None
-    _score_dict: dict = None
-    _target_: str = "ModelConfig"
-    _training_n = None
-    _prediction_n = None
-    _predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list] = None
-    _training_predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list] = None
+    
 
     def __post_init__(self):
         """
@@ -143,6 +141,10 @@ class ModelConfig(ConfigBase):
         self._prediction_score_time = None
         self._training_n = None
         self._prediction_n = None
+        self._training_predictions = None
+        self._predictions = None
+        if self._target_ is None:
+            self._target_ = "deckard.ModelConfig"
 
     def __hash__(self):
         return super().__hash__()
@@ -526,7 +528,7 @@ class ModelConfig(ConfigBase):
             
         """
         # Ensure data is loaded
-        if data._X_train is None or data._y_train is None:
+        if data.X_train is None or data.y_train is None:
             raise ValueError("Data not loaded. Please load data before calling the model.")
         
         # Load the model_score_filepath if provided
@@ -543,7 +545,7 @@ class ModelConfig(ConfigBase):
         # Make predictions on training data if not already done
         if self._training_predictions is None or self._training_prediction_time is None:
             start_time = time.process_time()
-            self._training_predictions = self._predict(data._X_train)
+            self._training_predictions = self._predict(data.X_train)
             end_time = time.process_time()
             self._training_prediction_time = end_time - start_time
             times["training_prediction_time"] = self._training_prediction_time
@@ -552,8 +554,8 @@ class ModelConfig(ConfigBase):
             
         # Score training predictions if true labels are available and scoring not already done
         if (self._training_score_time is None or self._score_dict is None):
-            if data._y_train is not None and self._training_predictions is not None:
-                train_scores = self._score(data._y_train, self._training_predictions)
+            if data.y_train is not None and self._training_predictions is not None:
+                train_scores = self._score(data.y_train, self._training_predictions)
                 # Prefix training scores with 'train_'
                 train_scores = {f"train_{key}": value for key, value in train_scores.items()}
                 if self._score_dict is None:
@@ -568,9 +570,9 @@ class ModelConfig(ConfigBase):
         
         # Make predictions on test data if not already done
         if self._predictions is None or self._prediction_time is None:
-            if data._X_test is not None:
+            if data.X_test is not None:
                 start_time = time.process_time()
-                self._predictions = self._predict(data._X_test)
+                self._predictions = self._predict(data.X_test)
                 end_time = time.process_time()
                 self._prediction_time = end_time - start_time
                 times["prediction_time"] = self._prediction_time
@@ -580,8 +582,8 @@ class ModelConfig(ConfigBase):
                 logger.warning("No test data available for predictions.")
         # Score test predictions if true labels are available and scoring not already done
         if (self._prediction_score_time is None or self._score_dict is None):
-            if data._y_test is not None and self._predictions is not None:
-                test_scores = self._score(data._y_test, self._predictions)
+            if data.y_test is not None and self._predictions is not None:
+                test_scores = self._score(data.y_test, self._predictions)
                 if self._score_dict is None:
                     self._score_dict = {}
                 self._score_dict.update(test_scores)
@@ -621,12 +623,12 @@ class ModelConfig(ConfigBase):
                         logger.info("Model is already trained.")
                     except NotFittedError:
                         # train the model if it is not fitted
-                        self._train(data._X_train, data._y_train)
+                        self._train(data.X_train, data.y_train)
                         times["training_time"] = self._training_time
                         times["training_n"] = self._training_n
                 else:
                     # train the model if no model exists at the filepath
-                    self._train(data._X_train, data._y_train)
+                    self._train(data.X_train, data.y_train)
                     times["training_time"] = self._training_time
                     times["training_n"] = self._training_n
                     if model_filepath is not None:

@@ -145,11 +145,6 @@ class AttackConfig(ConfigBase):
     attack_params: dict = None
     attack_size: int = 10  # Number of samples to attack
     targeted_attribute: str = None  # For inference attacks
-    _attack_time: float = None
-    _attack_prediction_time: float = None
-    _attack_score_time: float = None
-    _attack: object = None
-    _score_dict: dict = None
 
     def __hash__(self):
         return super().__hash__()
@@ -167,6 +162,11 @@ class AttackConfig(ConfigBase):
         self._attack_predictions = None
         self._attack = None
         self._score_dict = {}
+        self._attack_time = None
+        self._attack_prediction_time = None
+        self._attack_score_time = None
+        if self._target_ is None:
+            self._target_ = "deckard.AttackConfig"
 
     def _initialize_attack(self, estimator):
         if isinstance(estimator, ModelConfig):
@@ -332,19 +332,19 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            X_train = data._X_train
-            y_train = data._y_train
-            X_test = data._X_test
-            y_test = data._y_test
+            X_train = data.X_train
+            y_train = data.y_train
+            X_test = data.X_test
+            y_test = data.y_test
             ben_preds = art_estimator.predict(X_test.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
         else:
-            X_train = data._X_train
-            y_train = data._y_train
-            X_test = data._X_test
-            y_test = data._y_test
+            X_train = data.X_train
+            y_train = data.y_train
+            X_test = data.X_test
+            y_test = data.y_test
             ben_preds = art_estimator.predict(X_train.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_train.iloc[:n]
@@ -571,10 +571,10 @@ class AttackConfig(ConfigBase):
         assert hasattr(data, "_X_train") and hasattr(
             data, "_y_train"
         ), "DataConfig must have _X_train, _y_train attributes. Please ensure data() has been called."
-        X_train = data._X_train
-        y_train = data._y_train
-        X_test = data._X_test
-        y_test = data._y_test
+        X_train = data.X_train
+        y_train = data.y_train
+        X_test = data.X_test
+        y_test = data.y_test
         if train is False:
             X_test = X_test.iloc[: self.attack_size].values
             y_test = y_test.iloc[: self.attack_size].values
@@ -611,7 +611,7 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack prediction took {self._attack_prediction_time} seconds for {n} samples"
         )
         X_test_subset, target = self._pop_attribute(
-            pd.DataFrame(X_test, columns=data._X_train.columns), targeted_attribute
+            pd.DataFrame(X_test, columns=data.X_train.columns), targeted_attribute
         )
         inferred = attack.infer(
             x=X_test_subset,
@@ -691,10 +691,10 @@ class AttackConfig(ConfigBase):
         start_time = time.process_time()
         try:
             attack.fit(
-                x=data._X_train.values,
-                y=data._y_train.values,
-                test_x=data._X_test.values,
-                test_y=data._y_test.values,
+                x=data.X_train.values,
+                y=data.y_train.values,
+                test_x=data.X_test.values,
+                test_y=data.y_test.values,
             )
         except Exception as e:
             raise e

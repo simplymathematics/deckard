@@ -105,7 +105,12 @@ class DataConfig(ConfigBase):
     Examples
     --------
     config = DataConfig(dataset_name="adult", **kwargs)
-    X_train, y_train, X_test, y_test = config()
+    config()
+    X_train = config.X_train
+    y_train = config.y_train
+    X_test = config.X_test
+    y_test = config.y_test
+    score_dict = config._score_dict
     """
 
     dataset_name: str = "adult"
@@ -113,18 +118,7 @@ class DataConfig(ConfigBase):
     test_size: float = 0.2
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    _X: pd.DataFrame = None
-    _y: pd.Series = None
-    _data_load_time: float = None
-    _data_sample_time: float = None
-    _train_indices: list = None
-    _test_indices: list = None
-    _X_train: pd.DataFrame = None
-    _y_train: pd.Series = None
-    _X_test: pd.DataFrame = None
-    _y_test: pd.Series = None
-    _score_dict: dict = None
-    _target_: str = "DataConfig"
+    
 
     def __post_init__(self):
         """
@@ -146,11 +140,16 @@ class DataConfig(ConfigBase):
         self._y = None
         self._train_indices = None
         self._test_indices = None
-        self._X_train = None
-        self._y_train = None
-        self._X_test = None
-        self._y_test = None
-        self._score_dict = {}
+        self.X_train = None
+        self.y_train = None
+        self.X_test = None
+        self.y_test = None
+        self._data_load_time = None
+        self._data_sample_time = None
+        self._train_indices = None
+        self._test_indices = None
+        if self._target_ is None:
+            self._target_ = "DataConfig"
 
     def __hash__(self):
         return super().__hash__()
@@ -391,10 +390,10 @@ class DataConfig(ConfigBase):
         logger.info(f"Data sampled in {self._data_sample_time:.2f} seconds")
         self._train_indices = train_idx
         self._test_indices = test_idx
-        self._X_train = self._X.iloc[self._train_indices].reset_index(drop=True)
-        self._y_train = self._y.iloc[self._train_indices].reset_index(drop=True)
-        self._X_test = self._X.iloc[self._test_indices].reset_index(drop=True)
-        self._y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
+        self.X_train = self._X.iloc[self._train_indices].reset_index(drop=True)
+        self.y_train = self._y.iloc[self._train_indices].reset_index(drop=True)
+        self.X_test = self._X.iloc[self._test_indices].reset_index(drop=True)
+        self.y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
 
     def _load_data(self):
         """
@@ -543,7 +542,7 @@ class DataConfig(ConfigBase):
             "data_load_time": self._data_load_time,
             "data_sample_time": self._data_sample_time,
         }
-        logger.info(f"Train set size: {len(self._X_train)}, Test set size: {len(self._X_test)}")
+        logger.info(f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}")
         ## TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
         
@@ -652,6 +651,6 @@ def data_main(args: argparse.Namespace = None) -> None:
     data = initialize_data_config()
     data_call_args = data_call_parser.parse_known_args(args=vars(args))[0]
     data(**dict(vars(data_call_args)))
-    assert len(data._X_train) == len(data._y_train), "X_train and y_train must have the same length"
-    assert len(data._X_test) == len(data._y_test), "X_test and y_test must have the same length"
+    assert len(data.X_train) == len(data.y_train), "X_train and y_train must have the same length"
+    assert len(data.X_test) == len(data.y_test), "X_test and y_test must have the same length"
     return data 
