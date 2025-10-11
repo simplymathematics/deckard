@@ -11,10 +11,12 @@ supported_modules = ["data", "model", "attack"]
 # Assert that there is a parser and a main function for each supported module
 for module in supported_modules:
     assert hasattr(
-        sys.modules[__name__], f"{module}_parser"
+        sys.modules[__name__],
+        f"{module}_parser",
     ), f"Missing parser for module: {module}"
     assert hasattr(
-        sys.modules[__name__], f"{module}_main"
+        sys.modules[__name__],
+        f"{module}_main",
     ), f"Missing main function for module: {module}"
 
 
@@ -56,7 +58,7 @@ def main():
         case _:
             parser.print_help()
             logging.error(
-                "No valid module specified. Please choose from: data, model, attack."
+                "No valid module specified. Please choose from: data, model, attack.",
             )
             sys.exit(1)
 

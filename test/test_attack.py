@@ -19,7 +19,8 @@ def test_attackconfig_default_initialization():
 
 def test_attackconfig_hash_and_post_init():
     config = AttackConfig(
-        attack_name="art.attacks.evasion.FastGradientMethod", attack_params={"eps": 0.2}
+        attack_name="art.attacks.evasion.FastGradientMethod",
+        attack_params={"eps": 0.2},
     )
     h = hash(config)
     assert isinstance(h, int)
@@ -80,7 +81,9 @@ def test_attackconfig_get_benign_preds_shape():
 
     config = AttackConfig(attack_size=5)
     n, ben_pred_labels, X_subset, y_subset = config._get_benign_preds(
-        DummyData(), DummyEstimator(), train=False
+        DummyData(),
+        DummyEstimator(),
+        train=False,
     )
     assert n == 5
     assert len(ben_pred_labels) == 5
@@ -101,7 +104,9 @@ def test_attackconfig_get_feature_vector_preds_shape():
 
     config = AttackConfig(attack_size=5)
     n, X_subset, y_subset, a_subset = config._get_feature_vector_preds(
-        DummyData(), "a", train=False
+        DummyData(),
+        "a",
+        train=False,
     )
     assert n == 5
     assert X_subset.shape[0] == 5

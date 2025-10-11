@@ -114,7 +114,9 @@ class ConfigBase:
         return int(md5(hash_input.encode()).hexdigest(), 16)
 
     def save_scores(
-        self, scores: Union[dict, pd.Series], filepath: Union[str, None] = None
+        self,
+        scores: Union[dict, pd.Series],
+        filepath: Union[str, None] = None,
     ):
         """
         Saves the scores dictionary to a CSV file if a filepath is provided.
@@ -154,7 +156,10 @@ class ConfigBase:
         logger.info(f"Scores saved to {score_path}")
 
     def save_data(
-        self, data: pd.DataFrame, filepath: Union[str, None] = None, **kwargs
+        self,
+        data: pd.DataFrame,
+        filepath: Union[str, None] = None,
+        **kwargs,
     ) -> None:
         supported_filetypes = [
             ".csv",
@@ -219,7 +224,9 @@ class ConfigBase:
                     scores = pd.read_csv(score_path).to_dict(orient="records")[0]
                 case ".json":
                     scores = pd.read_json(
-                        score_path, orient="records", lines=True
+                        score_path,
+                        orient="records",
+                        lines=True,
                     ).to_dict(orient="records")[0]
                 case "xlsx":
                     scores = pd.read_excel(score_path).to_dict(orient="records")[0]
@@ -356,7 +363,10 @@ class ConfigBase:
 
 
 def create_parser_from_function(
-    func, parser=None, exclude=[], **kwargs
+    func,
+    parser=None,
+    exclude=[],
+    **kwargs,
 ) -> argparse.ArgumentParser:
     """
     Creates an argparse.ArgumentParser from a function's signature.
@@ -390,14 +400,16 @@ def create_parser_from_function(
     add_help = kwargs.pop("add_help", False)
     if parser is None:
         parser = argparse.ArgumentParser(
-            **kwargs, conflict_handler=conflict_handler, add_help=add_help
+            **kwargs,
+            conflict_handler=conflict_handler,
+            add_help=add_help,
         )
     else:
         if len(kwargs) > 0:
             raise ValueError("Cannot pass kwargs when parser is provided.")
         if not isinstance(parser, argparse.ArgumentParser):
             raise ValueError(
-                "parser must be an instance of argparse.ArgumentParser or None."
+                "parser must be an instance of argparse.ArgumentParser or None.",
             )
     sig = inspect.signature(func)
     for name, param in sig.parameters.items():

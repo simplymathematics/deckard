@@ -191,7 +191,9 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
 
         parser = argparse.ArgumentParser()
         parser = create_parser_from_function(
-            ExcludeConfig.__call__, parser, exclude=["exclude", "self_param"]
+            ExcludeConfig.__call__,
+            parser,
+            exclude=["exclude", "self_param"],
         )
         args = parser.parse_args(["--include", "5"])
         self.assertEqual(args.include, 5)
