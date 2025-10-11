@@ -39,27 +39,27 @@ class ModelConfig(ConfigBase):
         The instantiated scikit-learn model object.
     probability : bool
         If True, enables probability prediction (requires model support).
-    _training_time : float or None
+    training_time : float or None
         Time taken to train the model (in seconds).
-    _prediction_time : float or None
+    prediction_time : float or None
         Time taken to make predictions (in seconds).
-    _score_time : float or None
+    score_time : float or None
         Time taken to compute scoring metrics (in seconds).
-    _training_prediction_time : float or None
+    training_prediction_time : float or None
         Time taken to make predictions during training (in seconds).
-    _training_score_time : float or None
+    training_score_time : float or None
         Time taken to compute training scoring metrics (in seconds).
-    _prediction_score_time : float or None
+    prediction_score_time : float or None
         Time taken to compute prediction scoring metrics (in seconds).
-    _score_dict : dict or None
+    score_dict : dict or None
         Dictionary containing the latest computed scores and timing information.
     _training_n : int or None
         Number of training samples.
     _prediction_n : int or None
         Number of prediction samples.
-    _training_predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
+    training_predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
         Predictions made on the training data.
-    _predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
+    predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None
         Predictions made on the prediction data.
     _target_ : str
         Internal identifier for the class.
@@ -132,17 +132,17 @@ class ModelConfig(ConfigBase):
         else:
             self._model = model_class()
         self.model_params = self._model.get_params()
-        self._score_dict = {}
-        self._training_time = None
-        self._prediction_time = None
-        self._score_time = None
-        self._training_prediction_time = None
-        self._training_score_time = None
-        self._prediction_score_time = None
-        self._training_n = None
-        self._prediction_n = None
-        self._training_predictions = None
-        self._predictions = None
+        self.score_dict = {}
+        self.training_time = None
+        self.prediction_time = None
+        self.score_time = None
+        self.training_prediction_time = None
+        self.training_score_time = None
+        self.prediction_score_time = None
+        self.training_n = None
+        self.prediction_n = None
+        self.training_predictions = None
+        self.predictions = None
         if self._target_ is None:
             self._target_ = "deckard.ModelConfig"
 
@@ -171,9 +171,9 @@ class ModelConfig(ConfigBase):
         assert hasattr(self._model, "fit"), "Model does not have a fit method"
         self._model.fit(X, y)
         end_time = time.process_time()
-        self._training_time = end_time - start_time
+        self.training_time = end_time - start_time
         self._training_n = len(y)
-        logger.info(f"Model trained in {self._training_time:.2f} seconds")
+        logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
     def _predict(self, X: pd.DataFrame) -> pd.Series:
         """
@@ -297,7 +297,7 @@ class ModelConfig(ConfigBase):
             - Measures and logs scoring time.
             - Rounds scores based on the size of `y_true`.
             - Logs each rounded score.
-            - Updates `self._score_time`.
+            - Updates `self.score_time`.
         """
         if self.classifier:
             start_time = time.process_time()
@@ -307,8 +307,8 @@ class ModelConfig(ConfigBase):
             start_time = time.process_time()
             scores = self._regression_scores(y_true, y_pred)
         end_time = time.process_time()
-        self._score_time = end_time - start_time
-        logger.info(f"Scoring done in {self._score_time:.2f} seconds")
+        self.score_time = end_time - start_time
+        logger.info(f"Scoring done in {self.score_time:.2f} seconds")
         sig_figs = np.log10(len(y_true)) + 1
         if sig_figs < 1:
             sig_figs = 1
@@ -318,7 +318,7 @@ class ModelConfig(ConfigBase):
             rounded = round(scores[score], int(sig_figs))
             logger.info(f"{score}: {rounded}")
             scores[score] = rounded
-        self._score_time = end_time - start_time
+        self.score_time = end_time - start_time
         return scores
 
     def _save_model(self, filepath: str):
@@ -346,7 +346,7 @@ class ModelConfig(ConfigBase):
             raise NotImplementedError(
                 "Model saving is only implemented for sklearn models.",
             )
-        if self._training_time is None:
+        if self.training_time is None:
             raise ValueError("Model not trained")
         if filepath is not None:
             # Ensure the directory exists
@@ -405,7 +405,7 @@ class ModelConfig(ConfigBase):
             ValueError: If the loaded predictions are not in a valid format.
             Exception: For any other issues during the loading process.
         Side Effects:
-            - Reads predictions from the specified CSV file and assigns them to self._predictions.
+            - Reads predictions from the specified CSV file and assigns them to self.predictions.
             - Logs the load operation.
         """
         try:
@@ -422,7 +422,10 @@ class ModelConfig(ConfigBase):
         return predictions
 
     def _load_all_predictions(
-        self, training_predictions_filepath, predictions_filepath, times
+        self,
+        training_predictions_filepath,
+        predictions_filepath,
+        times,
     ):
         """
         Loads training and prediction data from the specified file paths and updates the provided times dictionary
@@ -437,13 +440,13 @@ class ModelConfig(ConfigBase):
             Dictionary to be updated with timing and count information for training and prediction data.
         Updates
         -------
-        self._training_predictions : object
+        self.training_predictions : object
             Loaded training predictions, if available.
-        self._training_prediction_time : object
+        self.training_prediction_time : object
             Time associated with training predictions, must be set if training predictions are loaded.
-        self._predictions : object
+        self.predictions : object
             Loaded predictions, if available.
-        self._prediction_time : object
+        self.prediction_time : object
             Time associated with predictions, must be set if predictions are loaded.
         times["training_prediction_time"] : object
             Updated with training prediction time.
@@ -467,30 +470,30 @@ class ModelConfig(ConfigBase):
             training_predictions_filepath is not None
             and Path(training_predictions_filepath).exists()
         ):
-            self._training_predictions = self._load_predictions(
-                training_predictions_filepath
+            self.training_predictions = self._load_predictions(
+                training_predictions_filepath,
             )
             assert (
-                self._training_prediction_time is not None
+                self.training_prediction_time is not None
             ), "Training prediction time must be set if training predictions are loaded"
-            times["training_prediction_time"] = self._training_prediction_time
-            times["training_n"] = len(self._training_predictions)
+            times["training_prediction_time"] = self.training_prediction_time
+            times["training_n"] = len(self.training_predictions)
 
         # Load the predictions if provided
         if predictions_filepath is not None and Path(predictions_filepath).exists():
-            self._predictions = self._load_predictions(predictions_filepath)
+            self.predictions = self._load_predictions(predictions_filepath)
             assert (
-                self._prediction_time is not None
+                self.prediction_time is not None
             ), "Prediction time must be set if predictions are loaded"
-            times["prediction_time"] = self._prediction_time
-            times["prediction_n"] = len(self._predictions)
+            times["prediction_time"] = self.prediction_time
+            times["prediction_n"] = len(self.predictions)
         return times
 
     def _load_score_file(self, model_score_filepath):
         times = {}
         if model_score_filepath is not None and Path(model_score_filepath).exists():
             new_score_dict = self.load_scores(model_score_filepath)
-            old_score_dict = self._score_dict if self._score_dict is not None else {}
+            old_score_dict = self.score_dict if self.score_dict is not None else {}
             # Update old_score_dict with new_score_dict
             score_dict = {**old_score_dict, **new_score_dict}
             # pop keys ending with _time and add to times dict
@@ -537,7 +540,7 @@ class ModelConfig(ConfigBase):
         # Ensure data is loaded
         if data.X_train is None or data.y_train is None:
             raise ValueError(
-                "Data not loaded. Please load data before calling the model."
+                "Data not loaded. Please load data before calling the model.",
             )
 
         # Load the model_score_filepath if provided
@@ -545,7 +548,9 @@ class ModelConfig(ConfigBase):
 
         # Load predictions from filepaths and update times
         pred_times = self._load_all_predictions(
-            training_predictions_filepath, predictions_filepath, times
+            training_predictions_filepath,
+            predictions_filepath,
+            times,
         )
         times.update(pred_times)
 
@@ -553,74 +558,75 @@ class ModelConfig(ConfigBase):
         self._load_or_train_model(data, model_filepath, times)
 
         # Make predictions on training data if not already done
-        if self._training_predictions is None or self._training_prediction_time is None:
+        if self.training_predictions is None or self.training_prediction_time is None:
             start_time = time.process_time()
-            self._training_predictions = self._predict(data.X_train)
+            self.training_predictions = self._predict(data.X_train)
             end_time = time.process_time()
-            self._training_prediction_time = end_time - start_time
-            times["training_prediction_time"] = self._training_prediction_time
+            self.training_prediction_time = end_time - start_time
+            times["training_prediction_time"] = self.training_prediction_time
             logger.info(
-                f"Training predictions made in {self._training_prediction_time:.2f} seconds"
+                f"Training predictions made in {self.training_prediction_time:.2f} seconds",
             )
-            times["training_n"] = len(self._training_predictions)
+            times["training_n"] = len(self.training_predictions)
 
         # Score training predictions if true labels are available and scoring not already done
-        if self._training_score_time is None or self._score_dict is None:
-            if data.y_train is not None and self._training_predictions is not None:
-                train_scores = self._score(data.y_train, self._training_predictions)
+        if self.training_score_time is None or self.score_dict is None:
+            if data.y_train is not None and self.training_predictions is not None:
+                train_scores = self._score(data.y_train, self.training_predictions)
                 # Prefix training scores with 'train_'
                 train_scores = {
                     f"train_{key}": value for key, value in train_scores.items()
                 }
-                if self._score_dict is None:
-                    self._score_dict = {}
-                self._score_dict.update(train_scores)
-                times["training_score_time"] = self._score_time
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict.update(train_scores)
+                times["training_score_time"] = self.score_time
                 logger.info(
-                    f"Training scores computed in {self._score_time:.2f} seconds"
+                    f"Training scores computed in {self.score_time:.2f} seconds",
                 )
                 # Save scores if filepath provided
                 if model_score_filepath is not None:
-                    self.save_scores(self._score_dict, model_score_filepath)
+                    self.save_scores(self.score_dict, model_score_filepath)
                     logger.info(f"Scores saved to {model_score_filepath}")
 
         # Make predictions on test data if not already done
-        if self._predictions is None or self._prediction_time is None:
+        if self.predictions is None or self.prediction_time is None:
             if data.X_test is not None:
                 start_time = time.process_time()
-                self._predictions = self._predict(data.X_test)
+                self.predictions = self._predict(data.X_test)
                 end_time = time.process_time()
-                self._prediction_time = end_time - start_time
-                times["prediction_time"] = self._prediction_time
-                logger.info(f"Predictions made in {self._prediction_time:.2f} seconds")
-                times["prediction_n"] = len(self._predictions)
+                self.prediction_time = end_time - start_time
+                times["prediction_time"] = self.prediction_time
+                logger.info(f"Predictions made in {self.prediction_time:.2f} seconds")
+                times["prediction_n"] = len(self.predictions)
             else:
                 logger.warning("No test data available for predictions.")
         # Score test predictions if true labels are available and scoring not already done
-        if self._prediction_score_time is None or self._score_dict is None:
-            if data.y_test is not None and self._predictions is not None:
-                test_scores = self._score(data.y_test, self._predictions)
-                if self._score_dict is None:
-                    self._score_dict = {}
-                self._score_dict.update(test_scores)
-                times["prediction_score_time"] = self._score_time
+        if self.prediction_score_time is None or self.score_dict is None:
+            if data.y_test is not None and self.predictions is not None:
+                test_scores = self._score(data.y_test, self.predictions)
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict.update(test_scores)
+                times["prediction_score_time"] = self.score_time
                 logger.info(
-                    f"Prediction scores computed in {self._score_time:.2f} seconds"
+                    f"Prediction scores computed in {self.score_time:.2f} seconds",
                 )
-        all_scores = self._score_dict if self._score_dict is not None else {}
+        all_scores = self.score_dict if self.score_dict is not None else {}
         all_scores.update(times)
 
         # Save training predictions if filepath provided
         if training_predictions_filepath is not None:
             self.save_data(
-                filepath=training_predictions_filepath, data=self._training_predictions
+                filepath=training_predictions_filepath,
+                data=self.training_predictions,
             )
             logger.info(
-                f"Training predictions saved to {training_predictions_filepath}"
+                f"Training predictions saved to {training_predictions_filepath}",
             )
         # Save predictions if filepath provided
-        if predictions_filepath is not None and self._predictions is not None:
-            self.save_data(filepath=predictions_filepath, data=self._predictions)
+        if predictions_filepath is not None and self.predictions is not None:
+            self.save_data(filepath=predictions_filepath, data=self.predictions)
             logger.info(f"Predictions saved to {predictions_filepath}")
         # Save model if filepath provided
         if model_filepath is not None:
@@ -635,7 +641,7 @@ class ModelConfig(ConfigBase):
         match self._model, model_filepath:
             case None, None:  # Neither model nor filepath provided
                 raise ValueError(
-                    "Model not trained or loaded. Please train or load a model before prediction."
+                    "Model not trained or loaded. Please train or load a model before prediction.",
                 )
             case _, _:  # Model and/or filepath provided
                 if model_filepath is not None and Path(model_filepath).exists():
@@ -648,12 +654,12 @@ class ModelConfig(ConfigBase):
                     except NotFittedError:
                         # train the model if it is not fitted
                         self._train(data.X_train, data.y_train)
-                        times["training_time"] = self._training_time
+                        times["training_time"] = self.training_time
                         times["training_n"] = self._training_n
                 else:
                     # train the model if no model exists at the filepath
                     self._train(data.X_train, data.y_train)
-                    times["training_time"] = self._training_time
+                    times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
                     if model_filepath is not None:
                         self._save_model(model_filepath)
@@ -665,7 +671,7 @@ class ModelConfig(ConfigBase):
             check_is_fitted(self._model)
         except NotFittedError:
             raise ValueError(
-                "Model is not trained. Please train the model before prediction."
+                "Model is not trained. Please train the model before prediction.",
             )
 
 
@@ -687,7 +693,10 @@ model_init_parser.add_argument(
     help="Override configuration parameters as key=value pairs",
 )
 model_call_parser = create_parser_from_function(
-    ModelConfig.__call__, add_help=False, exclude=["data"], parser=None
+    ModelConfig.__call__,
+    add_help=False,
+    exclude=["data"],
+    parser=None,
 )
 
 model_parser = argparse.ArgumentParser(
@@ -742,7 +751,8 @@ def model_main(args: argparse.Namespace = None) -> None:
         args = parser.parse_known_args()[0]
     else:
         assert isinstance(
-            args, argparse.Namespace
+            args,
+            argparse.Namespace,
         ), "args must be an argparse.Namespace"
 
     data_args = data_parser.parse_known_args(args=vars(args))[0]

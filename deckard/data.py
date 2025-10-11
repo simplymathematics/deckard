@@ -64,7 +64,7 @@ class DataConfig(ConfigBase):
         Testing feature matrix.
     _y_test : pd.Series
         Testing target vector.
-    _score_dict : dict
+    score_dict : dict
         Dictionary to store scores or metrics.
     _target_ : str
         Internal identifier for the class.
@@ -110,7 +110,7 @@ class DataConfig(ConfigBase):
     y_train = config.y_train
     X_test = config.X_test
     y_test = config.y_test
-    score_dict = config._score_dict
+    score_dict = config.score_dict
     """
 
     dataset_name: str = "adult"
@@ -132,9 +132,9 @@ class DataConfig(ConfigBase):
         if not (0 < self.test_size < 1):
             raise ValueError("test_size must be between 0 and 1")
         self.train_size = 1 - self.test_size
-        self._data_load_time = None
-        self._data_sample_time = None
-        self._data_params = self.data_params if self.data_params is not None else {}
+        self.data_load_time = None
+        self.data_sample_time = None
+        self.data_params = self.data_params if self.data_params is not None else {}
         self._X = None
         self._y = None
         self._train_indices = None
@@ -143,8 +143,8 @@ class DataConfig(ConfigBase):
         self.y_train = None
         self.X_test = None
         self.y_test = None
-        self._data_load_time = None
-        self._data_sample_time = None
+        self.data_load_time = None
+        self.data_sample_time = None
         self._train_indices = None
         self._test_indices = None
         if self._target_ is None:
@@ -193,7 +193,7 @@ class DataConfig(ConfigBase):
         X["sex"] = sex.cat.rename_categories({"Male": 0, "Female": 1})
         # Convert categorical variables to numeric using one-hot encoding
         end_time = time.time()
-        self._data_load_time = end_time - start_time
+        self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
         return self
@@ -213,7 +213,7 @@ class DataConfig(ConfigBase):
         X = diabetes.frame.drop(columns="target")
         y = diabetes.frame["target"]
         end_time = time.time()
-        self._data_load_time = end_time - start_time
+        self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
         return self
@@ -235,7 +235,7 @@ class DataConfig(ConfigBase):
         X = digits.frame.drop(columns="target")
         y = digits.frame["target"]
         end_time = time.time()
-        self._data_load_time = end_time - start_time
+        self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
         return self
@@ -276,7 +276,7 @@ class DataConfig(ConfigBase):
         ------------
         Sets self._X (pd.DataFrame): Feature matrix.
         Sets self._y (pd.Series): Target vector.
-        Sets self._data_load_time (float): Time taken to generate the data.
+        Sets self.data_load_time (float): Time taken to generate the data.
         """
         start_time = time.time()
         X, y = make_classification(
@@ -290,7 +290,7 @@ class DataConfig(ConfigBase):
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
         end_time = time.time()
-        self._data_load_time = end_time - start_time
+        self.data_load_time = end_time - start_time
         return self
 
     def _make_regression_data(
@@ -320,7 +320,7 @@ class DataConfig(ConfigBase):
         Returns
         -------
         self : DataConfig
-            The instance with generated data stored in self._X (DataFrame), self._y (Series), and self._data_load_time (float).
+            The instance with generated data stored in self._X (DataFrame), self._y (Series), and self.data_load_time (float).
         """
         start_time = time.time()
         X, y = make_regression(
@@ -333,7 +333,7 @@ class DataConfig(ConfigBase):
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
         end_time = time.time()
-        self._data_load_time = end_time - start_time
+        self.data_load_time = end_time - start_time
         return self
 
     def _sample(
@@ -353,7 +353,7 @@ class DataConfig(ConfigBase):
 
         Side Effects
         ------------
-        Sets ``self._train_indices``, ``self._test_indices``, and ``self._data_sample_time``.
+        Sets ``self._train_indices``, ``self._test_indices``, and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
         if not hasattr(self, "_X") or self._X is None:
@@ -385,8 +385,8 @@ class DataConfig(ConfigBase):
             stratify=stratify_col if self.stratify is not None else None,
         )
         end_time = time.time()
-        self._data_sample_time = end_time - start_time
-        logger.info(f"Data sampled in {self._data_sample_time:.2f} seconds")
+        self.data_sample_time = end_time - start_time
+        logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
         self._train_indices = train_idx
         self._test_indices = test_idx
         self.X_train = self._X.iloc[self._train_indices].reset_index(drop=True)
@@ -413,7 +413,7 @@ class DataConfig(ConfigBase):
         For built-in datasets, calls the corresponding loader method.
         For CSV files, reads the file and splits features and target.
         Raises NotImplementedError for unsupported datasets or file types.
-        Updates ``self._X``, ``self._y``, and ``self._data_load_time`` with loaded data and timing information.
+        Updates ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
 
         Raises
         ------
@@ -440,15 +440,15 @@ class DataConfig(ConfigBase):
             )
         match self.dataset_name:
             case "adult":
-                self._load_adult_income_data(**self._data_params)
+                self._load_adult_income_data(**self.data_params)
             case "make_classification":
-                self._make_classification_data(**self._data_params)
+                self._make_classification_data(**self.data_params)
             case "make_regression":
-                self._make_regression_data(**self._data_params)
+                self._make_regression_data(**self.data_params)
             case "diabetes":
-                self._load_diabetes_data(**self._data_params)
+                self._load_diabetes_data(**self.data_params)
             case "digits":
-                self._load_digits_data(**self._data_params)
+                self._load_digits_data(**self.data_params)
             case _ if filetype == ".csv":
                 data = pd.read_csv(self.dataset_name)
                 if "target" not in data.columns:
@@ -458,9 +458,9 @@ class DataConfig(ConfigBase):
                 self._X = X
                 self._y = y
                 end_time = time.time()
-                self._data_load_time = end_time - time.time()
+                self.data_load_time = end_time - time.time()
                 logger.info(
-                    f"Data loaded from {self.dataset_name} in {self._data_load_time:.2f} seconds",
+                    f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
                 )
             case _ if filetype == ".npz":
                 raise NotImplementedError("Loading from .npz files not yet implemented")
@@ -523,14 +523,14 @@ class DataConfig(ConfigBase):
             scores = {}
 
         # Load data if not already loaded
-        if not hasattr(self, "_data_load_time") or self._data_load_time is None:
+        if not hasattr(self, "_data_load_time") or self.data_load_time is None:
             start_time = time.time()
             self._load_data()
             end_time = time.time()
-            self._data_load_time = end_time - start_time
-            logger.info(f"Data loaded in {self._data_load_time:.2f} seconds")
+            self.data_load_time = end_time - start_time
+            logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         # Sample data if not already sampled
-        if not hasattr(self, "_data_sample_time") or self._data_sample_time is None:
+        if not hasattr(self, "_data_sample_time") or self.data_sample_time is None:
             # Sample data
             self._sample()
             assert (
@@ -541,13 +541,13 @@ class DataConfig(ConfigBase):
             ), "Test indices must be set after sampling"
         # Prepare return dictionary
         time_dict = {
-            "data_load_time": self._data_load_time,
-            "data_sample_time": self._data_sample_time,
+            "data_load_time": self.data_load_time,
+            "data_sample_time": self.data_sample_time,
         }
         logger.info(
-            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}"
+            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
-        ## TODO: Add Scores for dataset
+        # TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
 
         if data_score_filepath is not None:
@@ -650,7 +650,7 @@ def data_main(args: argparse.Namespace = None) -> None:
         Path(data_score_filepath).parent.mkdir(parents=True, exist_ok=True)
         if Path(data_score_filepath).exists():
             logger.info(f"Loading existing scores from {data_score_filepath}")
-            self._score_dict.update(**self.load_scores(data_score_filepath))
+            data.score_dict.update(**self.load_scores(data_score_filepath))
     # setup logging
     logging.basicConfig(level=logging.INFO)
     # Load configuration from YAML file if provided
@@ -658,9 +658,9 @@ def data_main(args: argparse.Namespace = None) -> None:
     data_call_args = data_call_parser.parse_known_args(args=vars(args))[0]
     data(**dict(vars(data_call_args)))
     assert len(data.X_train) == len(
-        data.y_train
+        data.y_train,
     ), "X_train and y_train must have the same length"
     assert len(data.X_test) == len(
-        data.y_test
+        data.y_test,
     ), "X_test and y_test must have the same length"
     return data
