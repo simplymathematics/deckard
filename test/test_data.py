@@ -2,16 +2,25 @@ import unittest
 import pandas as pd
 from pathlib import Path
 from deckard.data import DataConfig
+
+
 class TestDataConfig(unittest.TestCase):
 
     def basic_config(self):
         # Minimal config for DataConfig
         return DataConfig(
             dataset_name="make_classification",
-            data_params={"n_samples": 100, "n_features": 5, "n_informative": 1, "n_redundant": 0, "random_state": 42, "n_clusters_per_class": 1 },
+            data_params={
+                "n_samples": 100,
+                "n_features": 5,
+                "n_informative": 1,
+                "n_redundant": 0,
+                "random_state": 42,
+                "n_clusters_per_class": 1,
+            },
             test_size=0.2,
             random_state=42,
-            stratify=True
+            stratify=True,
         )
 
     def test_make_classification_data_loading_and_sampling(self):
@@ -33,10 +42,15 @@ class TestDataConfig(unittest.TestCase):
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
             dataset_name="make_regression",
-            data_params={"n_samples": 50, "n_features": 4, "n_informative": 2, "random_state": 1},
+            data_params={
+                "n_samples": 50,
+                "n_features": 4,
+                "n_informative": 2,
+                "random_state": 1,
+            },
             test_size=0.3,
             random_state=1,
-            stratify=None
+            stratify=None,
         )
         cfg()
         X_train = cfg._X_train
@@ -57,7 +71,7 @@ class TestDataConfig(unittest.TestCase):
             data_params={},
             test_size=0.25,
             random_state=0,
-            stratify=None
+            stratify=None,
         )
         cfg()
         X_train = cfg._X_train
@@ -78,7 +92,7 @@ class TestDataConfig(unittest.TestCase):
             data_params={},
             test_size=0.1,
             random_state=123,
-            stratify=True
+            stratify=True,
         )
         cfg()
         X_train = cfg._X_train
@@ -100,7 +114,17 @@ class TestDataConfig(unittest.TestCase):
         self.assertEqual(h1, h2)
 
     def test_sample_raises_value_error_if_data_not_loaded(self):
-        cfg = DataConfig(dataset_name="make_classification", data_params={"n_samples": 60, "n_features": 6, "n_informative": 4, "random_state": 7, "n_redundant": 0, "n_repeated": 0})
+        cfg = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 60,
+                "n_features": 6,
+                "n_informative": 4,
+                "random_state": 7,
+                "n_redundant": 0,
+                "n_repeated": 0,
+            },
+        )
         cfg._X = None
         cfg._y = None
         with self.assertRaises(ValueError):
@@ -113,6 +137,7 @@ class TestDataConfig(unittest.TestCase):
 
     def test_load_data_raises_value_error_for_csv_without_target(self):
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdirname:
             csv_path = Path(tmpdirname) / "test.csv"
             pd.DataFrame({"a": [1, 2], "b": [3, 4]}).to_csv(csv_path, index=False)
@@ -123,10 +148,16 @@ class TestDataConfig(unittest.TestCase):
     def test_call_returns_expected_shapes_for_make_classification(self):
         cfg = DataConfig(
             dataset_name="make_classification",
-            data_params={"n_samples": 60, "n_features": 6, "n_informative": 4, "random_state": 7, "n_redundant": 0},
+            data_params={
+                "n_samples": 60,
+                "n_features": 6,
+                "n_informative": 4,
+                "random_state": 7,
+                "n_redundant": 0,
+            },
             test_size=0.5,
             random_state=7,
-            stratify=True
+            stratify=True,
         )
         cfg()
         X_train = cfg._X_train
@@ -140,9 +171,10 @@ class TestDataConfig(unittest.TestCase):
         self.assertEqual(len(X_train), len(y_train))
         self.assertEqual(len(X_test), len(y_test))
         self.assertEqual(len(X_train) + len(X_test), 60)
-    
+
     def test_save_self(self):
         import tempfile
+
         cfg = self.basic_config()
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -153,15 +185,17 @@ class TestDataConfig(unittest.TestCase):
             self.assertTrue(score_path.exists())
             self.assertIn("data_load_time", results)
             self.assertIn("data_sample_time", results)
-    
+
     def test_load_self(self):
         import tempfile
+
         cfg = self.basic_config()
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             cfg(data_filepath=str(data_path))
             self.assertTrue(cfg._X is not None)
-    
+
+
 if __name__ == "__main__":
     unittest.main()

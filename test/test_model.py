@@ -8,16 +8,21 @@ import shutil
 from deckard.model import ModelConfig
 from deckard.data import DataConfig
 
+
 class TestModelConfig(unittest.TestCase):
     def setUp(self):
         # Simple binary classification data
-        self.X_train = pd.DataFrame({'a': [0, 1, 2, 3], 'b': [1, 2, 3, 4]})
+        self.X_train = pd.DataFrame({"a": [0, 1, 2, 3], "b": [1, 2, 3, 4]})
         self.y_train = pd.Series([0, 1, 0, 1])
-        self.X_test = pd.DataFrame({'a': [4, 5], 'b': [5, 6]})
+        self.X_test = pd.DataFrame({"a": [4, 5], "b": [5, 6]})
         self.y_test = pd.Series([1, 0])
-        self.model_params = {'probability': True}
+        self.model_params = {"probability": True}
         self.model_type = "sklearn.ensemble.RandomForestClassifier"
-        self.model = ModelConfig(model_type=self.model_type, classifier=True, model_params={'n_estimators': 10})
+        self.model = ModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+        )
         self.tmpdir = tempfile.mkdtemp()
         self.model_file = os.path.join(self.tmpdir, "model.pkl")
         self.pred_file = os.path.join(self.tmpdir, "preds.pkl")
@@ -73,12 +78,16 @@ class TestModelConfig(unittest.TestCase):
 
     def test_call_training_and_prediction(self):
         data = DataConfig()
-        model = ModelConfig(model_type=self.model_type, classifier=True, model_params={'n_estimators': 10})
+        model = ModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+        )
         data()
         scores = model(data=data, model_filepath=self.model_file)
         self.assertIsInstance(scores, dict)
         self.assertTrue("training_time" in scores and "prediction_time" in scores)
-        self.assertTrue("accuracy" in scores )
+        self.assertTrue("accuracy" in scores)
 
     def test_load_predictions(self):
         preds = np.array([0, 1, 1, 0])
@@ -90,6 +99,7 @@ class TestModelConfig(unittest.TestCase):
         loaded = self.model._load_predictions(pred_file)
         self.assertTrue(np.array_equal(loaded, preds))
         self.model.load_data = orig_load_data
+
 
 if __name__ == "__main__":
     unittest.main()

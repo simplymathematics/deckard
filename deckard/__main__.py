@@ -10,19 +10,20 @@ supported_modules = ["data", "model", "attack"]
 
 # Assert that there is a parser and a main function for each supported module
 for module in supported_modules:
-    assert hasattr(sys.modules[__name__], f"{module}_parser"), f"Missing parser for module: {module}"
-    assert hasattr(sys.modules[__name__], f"{module}_main"), f"Missing main function for module: {module}"
-
-
+    assert hasattr(
+        sys.modules[__name__], f"{module}_parser"
+    ), f"Missing parser for module: {module}"
+    assert hasattr(
+        sys.modules[__name__], f"{module}_main"
+    ), f"Missing main function for module: {module}"
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Deckard Command Line Interface", )
+    parser = argparse.ArgumentParser(description="Deckard Command Line Interface")
     parser.add_argument(
         "module",
         choices=["data", "model", "attack", None],
         help="Module to run: data, model, or attack",
-        
     )
     args = parser.parse_args()
     match args.module:
@@ -54,8 +55,11 @@ def main():
             attack_main(args)
         case _:
             parser.print_help()
-            logging.error("No valid module specified. Please choose from: data, model, attack.")
+            logging.error(
+                "No valid module specified. Please choose from: data, model, attack."
+            )
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

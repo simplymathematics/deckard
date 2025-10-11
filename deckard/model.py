@@ -15,6 +15,7 @@ from pathlib import Path
 
 from deckard.data import data_parser, DataConfig, data_main
 from deckard.utils import initialize_config, ConfigBase, create_parser_from_function
+
 logger = logging.getLogger(__name__)
 
 supported_sklearn_libraries = ["sklearn"]
@@ -100,7 +101,6 @@ class ModelConfig(ConfigBase):
     model_params: dict = None
     _model = None
     probability: bool = False
-    
 
     def __post_init__(self):
         """
@@ -192,10 +192,9 @@ class ModelConfig(ConfigBase):
         if self._model is None:
             raise ValueError("Model not initialized")
         logger.debug(f"Type of X: {type(X)}, shape of X: {X.shape}")
-        
+
         y_pred = self._model.predict(X)
-        
-        
+
         return y_pred
 
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -217,7 +216,7 @@ class ModelConfig(ConfigBase):
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
         y_proba = self._model.predict_proba(X)
-    
+
         return y_proba
 
     def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
@@ -307,7 +306,7 @@ class ModelConfig(ConfigBase):
         else:
             start_time = time.process_time()
             scores = self._regression_scores(y_true, y_pred)
-        end_time = time.process_time()        
+        end_time = time.process_time()
         self._score_time = end_time - start_time
         logger.info(f"Scoring done in {self._score_time:.2f} seconds")
         sig_figs = np.log10(len(y_true)) + 1
@@ -341,11 +340,11 @@ class ModelConfig(ConfigBase):
                 check_is_fitted(self._model)
             except NotFittedError:
                 raise ValueError(
-                    "Model is not fitted yet. Train the model before saving."
+                    "Model is not fitted yet. Train the model before saving.",
                 )
         else:
             raise NotImplementedError(
-                "Model saving is only implemented for sklearn models."
+                "Model saving is only implemented for sklearn models.",
             )
         if self._training_time is None:
             raise ValueError("Model not trained")
@@ -394,7 +393,7 @@ class ModelConfig(ConfigBase):
         except Exception as e:
             logger.error(f"Error loading model: {e}")
             raise
-    
+
     def _load_predictions(self, filepath: str):
         """
         Loads predictions from a specified CSV file.
@@ -421,8 +420,10 @@ class ModelConfig(ConfigBase):
             logger.error(f"Error loading predictions: {e}")
             raise e
         return predictions
-    
-    def _load_all_predictions(self, training_predictions_filepath, predictions_filepath, times):
+
+    def _load_all_predictions(
+        self, training_predictions_filepath, predictions_filepath, times
+    ):
         """
         Loads training and prediction data from the specified file paths and updates the provided times dictionary
         with relevant metadata.
@@ -462,20 +463,29 @@ class ModelConfig(ConfigBase):
             If training or prediction time is not set when corresponding predictions are loaded.
         """
         # Load the training predictions if provided
-        if training_predictions_filepath is not None and Path(training_predictions_filepath).exists():
-            self._training_predictions = self._load_predictions(training_predictions_filepath)
-            assert self._training_prediction_time is not None, "Training prediction time must be set if training predictions are loaded"
+        if (
+            training_predictions_filepath is not None
+            and Path(training_predictions_filepath).exists()
+        ):
+            self._training_predictions = self._load_predictions(
+                training_predictions_filepath
+            )
+            assert (
+                self._training_prediction_time is not None
+            ), "Training prediction time must be set if training predictions are loaded"
             times["training_prediction_time"] = self._training_prediction_time
             times["training_n"] = len(self._training_predictions)
-        
+
         # Load the predictions if provided
         if predictions_filepath is not None and Path(predictions_filepath).exists():
             self._predictions = self._load_predictions(predictions_filepath)
-            assert self._prediction_time is not None, "Prediction time must be set if predictions are loaded"
+            assert (
+                self._prediction_time is not None
+            ), "Prediction time must be set if predictions are loaded"
             times["prediction_time"] = self._prediction_time
             times["prediction_n"] = len(self._predictions)
         return times
-    
+
     def _load_score_file(self, model_score_filepath):
         times = {}
         if model_score_filepath is not None and Path(model_score_filepath).exists():
@@ -491,21 +501,18 @@ class ModelConfig(ConfigBase):
         for key in times:
             setattr(self, f"_{key}", times[key])
         return times
-    
-    
-    
+
     def __call__(
         self,
         data: DataConfig,
         model_filepath: Union[str, None] = None,
         predictions_filepath: Union[str, None] = None,
         training_predictions_filepath: Union[str, None] = None,
-                
         model_score_filepath: Union[str, None] = None,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
-        
+
         Parameters
         ----------
         data : DataConfig
@@ -513,10 +520,10 @@ class ModelConfig(ConfigBase):
         model_filepath : str or None, optional
             Path to save or load the model. If provided, the model will be loaded from or saved to this path.
         predictions_filepath : str or None, optional
-            Path to save the predictions. If provided, the predictions will be saved to this path.  
+            Path to save the predictions. If provided, the predictions will be saved to this path.
         model_score_filepath : str or None, optional
             Path to load existing scores. If provided, scores will be loaded from this path.
-       
+
         Returns
         -------
         dict
@@ -525,23 +532,26 @@ class ModelConfig(ConfigBase):
         ------
         ValueError
             If prediction is requested without a trained or loaded model.
-            
+
         """
         # Ensure data is loaded
         if data.X_train is None or data.y_train is None:
-            raise ValueError("Data not loaded. Please load data before calling the model.")
-        
+            raise ValueError(
+                "Data not loaded. Please load data before calling the model."
+            )
+
         # Load the model_score_filepath if provided
         times = self._load_score_file(model_score_filepath)
 
         # Load predictions from filepaths and update times
-        pred_times = self._load_all_predictions(training_predictions_filepath, predictions_filepath, times)
+        pred_times = self._load_all_predictions(
+            training_predictions_filepath, predictions_filepath, times
+        )
         times.update(pred_times)
-        
-        # Train the model if training data is provided and model is not already trained   
+
+        # Train the model if training data is provided and model is not already trained
         self._load_or_train_model(data, model_filepath, times)
-    
-            
+
         # Make predictions on training data if not already done
         if self._training_predictions is None or self._training_prediction_time is None:
             start_time = time.process_time()
@@ -549,25 +559,31 @@ class ModelConfig(ConfigBase):
             end_time = time.process_time()
             self._training_prediction_time = end_time - start_time
             times["training_prediction_time"] = self._training_prediction_time
-            logger.info(f"Training predictions made in {self._training_prediction_time:.2f} seconds")
+            logger.info(
+                f"Training predictions made in {self._training_prediction_time:.2f} seconds"
+            )
             times["training_n"] = len(self._training_predictions)
-            
+
         # Score training predictions if true labels are available and scoring not already done
-        if (self._training_score_time is None or self._score_dict is None):
+        if self._training_score_time is None or self._score_dict is None:
             if data.y_train is not None and self._training_predictions is not None:
                 train_scores = self._score(data.y_train, self._training_predictions)
                 # Prefix training scores with 'train_'
-                train_scores = {f"train_{key}": value for key, value in train_scores.items()}
+                train_scores = {
+                    f"train_{key}": value for key, value in train_scores.items()
+                }
                 if self._score_dict is None:
                     self._score_dict = {}
                 self._score_dict.update(train_scores)
                 times["training_score_time"] = self._score_time
-                logger.info(f"Training scores computed in {self._score_time:.2f} seconds")
+                logger.info(
+                    f"Training scores computed in {self._score_time:.2f} seconds"
+                )
                 # Save scores if filepath provided
                 if model_score_filepath is not None:
                     self.save_scores(self._score_dict, model_score_filepath)
                     logger.info(f"Scores saved to {model_score_filepath}")
-        
+
         # Make predictions on test data if not already done
         if self._predictions is None or self._prediction_time is None:
             if data.X_test is not None:
@@ -581,21 +597,27 @@ class ModelConfig(ConfigBase):
             else:
                 logger.warning("No test data available for predictions.")
         # Score test predictions if true labels are available and scoring not already done
-        if (self._prediction_score_time is None or self._score_dict is None):
+        if self._prediction_score_time is None or self._score_dict is None:
             if data.y_test is not None and self._predictions is not None:
                 test_scores = self._score(data.y_test, self._predictions)
                 if self._score_dict is None:
                     self._score_dict = {}
                 self._score_dict.update(test_scores)
                 times["prediction_score_time"] = self._score_time
-                logger.info(f"Prediction scores computed in {self._score_time:.2f} seconds")
+                logger.info(
+                    f"Prediction scores computed in {self._score_time:.2f} seconds"
+                )
         all_scores = self._score_dict if self._score_dict is not None else {}
         all_scores.update(times)
-        
+
         # Save training predictions if filepath provided
         if training_predictions_filepath is not None:
-            self.save_data(filepath=training_predictions_filepath, data=self._training_predictions)
-            logger.info(f"Training predictions saved to {training_predictions_filepath}")
+            self.save_data(
+                filepath=training_predictions_filepath, data=self._training_predictions
+            )
+            logger.info(
+                f"Training predictions saved to {training_predictions_filepath}"
+            )
         # Save predictions if filepath provided
         if predictions_filepath is not None and self._predictions is not None:
             self.save_data(filepath=predictions_filepath, data=self._predictions)
@@ -611,14 +633,16 @@ class ModelConfig(ConfigBase):
 
     def _load_or_train_model(self, data, model_filepath, times):
         match self._model, model_filepath:
-            case None, None: # Neither model nor filepath provided
-                raise ValueError("Model not trained or loaded. Please train or load a model before prediction.")
-            case _, _: # Model and/or filepath provided
+            case None, None:  # Neither model nor filepath provided
+                raise ValueError(
+                    "Model not trained or loaded. Please train or load a model before prediction."
+                )
+            case _, _:  # Model and/or filepath provided
                 if model_filepath is not None and Path(model_filepath).exists():
                     logger.info(f"Model file {model_filepath} exists. Loading model.")
                     self._load_model(model_filepath)
                     assert isinstance(self._model, object)
-                    try: # validate that the  loaded model is trained
+                    try:  # validate that the  loaded model is trained
                         check_is_fitted(self._model)
                         logger.info("Model is already trained.")
                     except NotFittedError:
@@ -632,18 +656,17 @@ class ModelConfig(ConfigBase):
                     times["training_time"] = self._training_time
                     times["training_n"] = self._training_n
                     if model_filepath is not None:
-                        self._save_model(model_filepath)          
-        
+                        self._save_model(model_filepath)
+
         # Validate model is trained
         if self._model is None:
             raise NotFittedError("Model is not initialized")
         try:
             check_is_fitted(self._model)
         except NotFittedError:
-            raise ValueError("Model is not trained. Please train the model before prediction.")
-
-    
-                
+            raise ValueError(
+                "Model is not trained. Please train the model before prediction."
+            )
 
 
 # Argument parsing
@@ -653,7 +676,9 @@ model_init_parser = argparse.ArgumentParser(
     conflict_handler="resolve",
 )
 model_init_parser.add_argument(
-    "--model_config_file", type=str, help="Path to YAML config file"
+    "--model_config_file",
+    type=str,
+    help="Path to YAML config file",
 )
 model_init_parser.add_argument(
     "--model_config_params",
@@ -661,7 +686,9 @@ model_init_parser.add_argument(
     nargs="*",
     help="Override configuration parameters as key=value pairs",
 )
-model_call_parser = create_parser_from_function(ModelConfig.__call__, add_help=False, exclude=["data"], parser=None)
+model_call_parser = create_parser_from_function(
+    ModelConfig.__call__, add_help=False, exclude=["data"], parser=None
+)
 
 model_parser = argparse.ArgumentParser(
     description="ModelConfig parameters",
@@ -669,6 +696,7 @@ model_parser = argparse.ArgumentParser(
     add_help=False,
     conflict_handler="resolve",
 )
+
 
 def initialize_model_config() -> ModelConfig:
     """
@@ -691,8 +719,6 @@ def initialize_model_config() -> ModelConfig:
     assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
     return model
 
-    
-
 
 def model_main(args: argparse.Namespace = None) -> None:
     """
@@ -706,7 +732,7 @@ def model_main(args: argparse.Namespace = None) -> None:
     Returns:
         tuple: A tuple containing the loaded data and the initialized model instance.
     """
-    
+
     logging.basicConfig(level=logging.INFO)
     if args is None:
         parser = argparse.ArgumentParser(
@@ -715,16 +741,16 @@ def model_main(args: argparse.Namespace = None) -> None:
         )
         args = parser.parse_known_args()[0]
     else:
-        assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
-    
+        assert isinstance(
+            args, argparse.Namespace
+        ), "args must be an argparse.Namespace"
+
     data_args = data_parser.parse_known_args(args=vars(args))[0]
     data = data_main(data_args)
-    
 
     model = initialize_model_config()
     model_args = model_call_parser.parse_known_args()[0]
     model_params = dict(vars(model_args))
     model(data, **model_params)
-    
-        
+
     return data, model

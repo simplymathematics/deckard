@@ -118,7 +118,6 @@ class DataConfig(ConfigBase):
     test_size: float = 0.2
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    
 
     def __post_init__(self):
         """
@@ -372,7 +371,7 @@ class DataConfig(ConfigBase):
                     stratify_col = self._X[self.stratify]
                 else:
                     raise ValueError(
-                        f"Stratify column {self.stratify} not found in data columns"
+                        f"Stratify column {self.stratify} not found in data columns",
                     )
             else:
                 raise ValueError("stratify must be None, True, or a column name")
@@ -437,7 +436,7 @@ class DataConfig(ConfigBase):
             and self.dataset_name not in suppoted_datasets
         ):
             raise NotImplementedError(
-                f"Currently only {supported_filetypes} filetypes are supported for loading data"
+                f"Currently only {supported_filetypes} filetypes are supported for loading data",
             )
         match self.dataset_name:
             case "adult":
@@ -461,17 +460,20 @@ class DataConfig(ConfigBase):
                 end_time = time.time()
                 self._data_load_time = end_time - time.time()
                 logger.info(
-                    f"Data loaded from {self.dataset_name} in {self._data_load_time:.2f} seconds"
+                    f"Data loaded from {self.dataset_name} in {self._data_load_time:.2f} seconds",
                 )
             case _ if filetype == ".npz":
                 raise NotImplementedError("Loading from .npz files not yet implemented")
             case _:
                 raise NotImplementedError(
-                    f"Dataset {self.dataset_name} not implemented"
+                    f"Dataset {self.dataset_name} not implemented",
                 )
-    
-    
-    def __call__(self, data_filepath: Union[str, None] =None, data_score_filepath: Union[str, None] = None) -> dict:
+
+    def __call__(
+        self,
+        data_filepath: Union[str, None] = None,
+        data_score_filepath: Union[str, None] = None,
+    ) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Parameters
@@ -493,7 +495,7 @@ class DataConfig(ConfigBase):
         AssertionError
             If train or test indices are not set after sampling.
         """
-        
+
         # Load existing data if filepath is provided and file exists, else create directory
         if data_filepath is not None and Path(data_filepath).exists():
             # Load existing data
@@ -505,7 +507,7 @@ class DataConfig(ConfigBase):
             Path(data_filepath).parent.mkdir(parents=True, exist_ok=True)
         else:
             logger.debug("No data_filepath provided, data will not be saved")
-        
+
         # Load scores if filepath is provided and file exists, else create directory
         if data_score_filepath is not None and Path(data_score_filepath).exists():
             # Load existing scores
@@ -519,7 +521,7 @@ class DataConfig(ConfigBase):
         else:
             logger.debug("No data_score_filepath provided, scores will not be saved")
             scores = {}
-        
+
         # Load data if not already loaded
         if not hasattr(self, "_data_load_time") or self._data_load_time is None:
             start_time = time.time()
@@ -542,10 +544,12 @@ class DataConfig(ConfigBase):
             "data_load_time": self._data_load_time,
             "data_sample_time": self._data_sample_time,
         }
-        logger.info(f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}")
+        logger.info(
+            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}"
+        )
         ## TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
-        
+
         if data_score_filepath is not None:
             self.save_scores(all_scores, data_score_filepath)
         if data_filepath is not None:
@@ -559,7 +563,9 @@ data_init_parser = argparse.ArgumentParser(
     add_help=False,
 )
 data_init_parser.add_argument(
-    "--data_config_file", type=str, help="Path to YAML config file"
+    "--data_config_file",
+    type=str,
+    help="Path to YAML config file",
 )
 # data_params should be a dotlist of key=value pairs
 data_init_parser.add_argument(
@@ -577,6 +583,7 @@ data_parser = argparse.ArgumentParser(
     add_help=False,
     conflict_handler="resolve",
 )
+
 
 def initialize_data_config():
     """
@@ -600,13 +607,12 @@ def initialize_data_config():
 
 
 def data_main(args: argparse.Namespace = None) -> None:
-
     """
     Parameters
     ----------
     args : argparse.Namespace, optional
         Parsed command-line arguments. If None, arguments are parsed from sys.argv.
-    
+
     Main function for data initialization and validation.
 
     Parses command-line arguments, sets up logging, loads data configuration,
@@ -651,6 +657,10 @@ def data_main(args: argparse.Namespace = None) -> None:
     data = initialize_data_config()
     data_call_args = data_call_parser.parse_known_args(args=vars(args))[0]
     data(**dict(vars(data_call_args)))
-    assert len(data.X_train) == len(data.y_train), "X_train and y_train must have the same length"
-    assert len(data.X_test) == len(data.y_test), "X_test and y_test must have the same length"
-    return data 
+    assert len(data.X_train) == len(
+        data.y_train
+    ), "X_train and y_train must have the same length"
+    assert len(data.X_test) == len(
+        data.y_test
+    ), "X_test and y_test must have the same length"
+    return data

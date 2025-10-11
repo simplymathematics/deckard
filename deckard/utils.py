@@ -13,7 +13,6 @@ from hydra import initialize, compose
 from hydra.utils import instantiate
 
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -52,7 +51,8 @@ def initialize_config(config_file, params, target) -> object:
         if "_target_" not in keys:
             override_config = [f"++_target_={target}"] + override_config
         assert isinstance(
-            override_config, list
+            override_config,
+            list,
         ), "config must be a YAML list of dictionaries"
         if config_file is None:
             with initialize(config_path=None):
@@ -76,7 +76,7 @@ def initialize_config(config_file, params, target) -> object:
 @dataclass
 class ConfigBase:
     _target_: str = "deckard.utils.ConfigBase"
-    
+
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
         super().__init__()
@@ -88,14 +88,13 @@ class ConfigBase:
             setattr(self, k, v)
         # Call post init
         self.__post_init__()
-    
+
     def __post_init__(self):
         pass
 
     def __call__(self, *args, **kwds):
         raise NotImplementedError("This is an abstract base class.")
-    
-    
+
     def __hash__(self):
         """
         Computes a hash value for the instance.
@@ -113,8 +112,10 @@ class ConfigBase:
             f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_")
         )
         return int(md5(hash_input.encode()).hexdigest(), 16)
-    
-    def save_scores(self, scores: Union[dict, pd.Series], filepath: Union[str, None] = None):
+
+    def save_scores(
+        self, scores: Union[dict, pd.Series], filepath: Union[str, None] = None
+    ):
         """
         Saves the scores dictionary to a CSV file if a filepath is provided.
 
@@ -124,7 +125,7 @@ class ConfigBase:
             Dictionary containing score metrics to be saved.
         filepath : Union[str, None], optional
             Path to save the scores as a CSV file. If None, scores are not saved.
-            
+
         Raises
         ----------
         ValueError
@@ -147,13 +148,23 @@ class ConfigBase:
                     scores.to_excel(score_path, index=False)
         else:
             raise ValueError(
-                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}"
+                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}",
             )
         assert Path(score_path).exists(), f"Failed to save scores to {score_path}"
         logger.info(f"Scores saved to {score_path}")
 
-    def save_data(self, data: pd.DataFrame, filepath: Union[str, None] = None, **kwargs) -> None:
-        supported_filetypes = [".csv", ".parquet", ".pkl", ".html", ".json", ".xlsx", ".pkl"]
+    def save_data(
+        self, data: pd.DataFrame, filepath: Union[str, None] = None, **kwargs
+    ) -> None:
+        supported_filetypes = [
+            ".csv",
+            ".parquet",
+            ".pkl",
+            ".html",
+            ".json",
+            ".xlsx",
+            ".pkl",
+        ]
         assert filepath is not None, "Filepath must be provided to save data."
         data_path = Path(filepath)
         data_path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +186,7 @@ class ConfigBase:
                 data.to_excel(data_path, index=False, **kwargs)
             case _:
                 raise ValueError(
-                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}"
+                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
                 )
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
         logger.info(f"Data saved to {data_path}")
@@ -207,12 +218,14 @@ class ConfigBase:
                 case ".csv":
                     scores = pd.read_csv(score_path).to_dict(orient="records")[0]
                 case ".json":
-                    scores = pd.read_json(score_path, orient="records", lines=True).to_dict(orient="records")[0]
+                    scores = pd.read_json(
+                        score_path, orient="records", lines=True
+                    ).to_dict(orient="records")[0]
                 case "xlsx":
                     scores = pd.read_excel(score_path).to_dict(orient="records")[0]
         else:
             raise ValueError(
-                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}"
+                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
             )
         logger.info(f"Scores loaded from {score_path}")
         return scores
@@ -243,8 +256,16 @@ class ConfigBase:
         data_path = Path(filepath)
         if data_path is None or not data_path.exists():
             FileNotFoundError(f"File {filepath} does not exist.")
-        supported_filetypes = [".csv", ".json", ".xlsx", ".parquet", ".pkl", ".npz", ".html"]
-        
+        supported_filetypes = [
+            ".csv",
+            ".json",
+            ".xlsx",
+            ".parquet",
+            ".pkl",
+            ".npz",
+            ".html",
+        ]
+
         match data_path.suffix:
             case ".pkl":
                 data = pd.read_pickle(data_path, **kwargs)
@@ -260,7 +281,7 @@ class ConfigBase:
                 data = pd.read_html(data_path, **kwargs)[0]
             case _:
                 raise ValueError(
-                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}"
+                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
                 )
         logger.info(f"Data loaded from {data_path}")
         return data
@@ -298,8 +319,7 @@ class ConfigBase:
             obj = pickle.load(f)
         logger.info(f"Object loaded from {filepath}")
         return obj
-    
-    
+
     def save(self, filepath: str) -> None:
         """
         Saves the current instance to a file using pickle.
@@ -311,9 +331,7 @@ class ConfigBase:
         """
         self.save_object(self, filepath)
         logger.info(f"Instance of {self.__class__.__name__} saved to {filepath}")
-    
-    
-    
+
     def load(self, filepath: str) -> "ConfigBase":
         """
         Loads an instance of the class from a file using pickle.
@@ -336,7 +354,10 @@ class ConfigBase:
         self.__dict__.update(obj.__dict__)
         return self
 
-def create_parser_from_function(func, parser=None, exclude =[], **kwargs) -> argparse.ArgumentParser:
+
+def create_parser_from_function(
+    func, parser=None, exclude=[], **kwargs
+) -> argparse.ArgumentParser:
     """
     Creates an argparse.ArgumentParser from a function's signature.
 
@@ -350,13 +371,13 @@ def create_parser_from_function(func, parser=None, exclude =[], **kwargs) -> arg
         List of parameter names to exclude from the parser.
     **kwargs
         Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.
-    
+
     Raises
     ------
     ValueError
         If func is not callable or if parser is not an instance of argparse.ArgumentParser.
-    
-    
+
+
     Returns
     -------
     argparse.ArgumentParser
@@ -368,12 +389,16 @@ def create_parser_from_function(func, parser=None, exclude =[], **kwargs) -> arg
     conflict_handler = kwargs.pop("conflict_handler", "resolve")
     add_help = kwargs.pop("add_help", False)
     if parser is None:
-        parser = argparse.ArgumentParser(**kwargs, conflict_handler=conflict_handler, add_help=add_help)
+        parser = argparse.ArgumentParser(
+            **kwargs, conflict_handler=conflict_handler, add_help=add_help
+        )
     else:
         if len(kwargs) > 0:
             raise ValueError("Cannot pass kwargs when parser is provided.")
         if not isinstance(parser, argparse.ArgumentParser):
-            raise ValueError("parser must be an instance of argparse.ArgumentParser or None.")
+            raise ValueError(
+                "parser must be an instance of argparse.ArgumentParser or None."
+            )
     sig = inspect.signature(func)
     for name, param in sig.parameters.items():
         if name == "self" or name in exclude:
@@ -387,4 +412,3 @@ def create_parser_from_function(func, parser=None, exclude =[], **kwargs) -> arg
         else:
             parser.add_argument(f"--{name}", type=arg_type, default=param.default)
     return parser
-    

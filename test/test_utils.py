@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 from deckard.utils import ConfigBase, initialize_config, create_parser_from_function
 
+
 class DummyConfig(ConfigBase):
     a: int = 1
     b: str = "test"
@@ -24,6 +25,7 @@ class DummyConfig(ConfigBase):
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(scores, f)
+
 
 class TestConfigBase(unittest.TestCase):
 
@@ -47,19 +49,19 @@ class TestConfigBase(unittest.TestCase):
         self.assertEqual(cfg.a, 1)
         self.assertEqual(cfg.b, "test")
         self.assertEqual(cfg(), 1 + len("test"))
-    
+
     def test_initialize_config(self):
         cfg_list = []
         cfg = initialize_config(None, cfg_list, target="deckard.utils.ConfigBase")
         self.assertIsInstance(cfg, ConfigBase)
-        
+
     def test_hash(self):
         cfg1 = DummyConfig(a=2, b="hash")
         cfg2 = DummyConfig(a=2, b="hash")
         cfg3 = DummyConfig(a=3, b="hash")
         self.assertEqual(hash(cfg1), hash(cfg2))
         self.assertNotEqual(hash(cfg1), hash(cfg3))
-    
+
     def test_save_scores(self):
         cfg = DummyConfig(a=4, b="save")
         scores = {"accuracy": 0.95, "loss": 0.1}
@@ -78,12 +80,11 @@ class TestConfigBase(unittest.TestCase):
             cfg.save_data(data, data_path)
             self.assertTrue(data_path.exists())
 
-    
     def test_load_data_raises_error(self):
         cfg = DummyConfig()
         with self.assertRaises(FileNotFoundError):
             cfg.load_data("non_existent_file.pkl")
-    
+
     def test_load_data_success(self):
         cfg = DummyConfig()
         data = {"X": np.array([[5, 6], [7, 8]]), "y": np.array([1, 0])}
@@ -93,7 +94,7 @@ class TestConfigBase(unittest.TestCase):
             loaded_data = cfg.load_data(data_path)
             self.assertTrue(np.array_equal(loaded_data["X"], data["X"]))
             self.assertTrue(np.array_equal(loaded_data["y"], data["y"]))
-    
+
     def test_save_object(self):
         cfg = DummyConfig(a=7, b="object")
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -105,14 +106,14 @@ class TestConfigBase(unittest.TestCase):
             self.assertEqual(loaded_obj.a, 7)
             self.assertEqual(loaded_obj.b, "object")
             self.assertEqual(loaded_obj(), 7 + len("object"))
-    
+
     def test_save_self(self):
         cfg = DummyConfig(a=8, b="self")
         with tempfile.TemporaryDirectory() as tmpdirname:
             cfg()
             cfg.save(filepath=Path(tmpdirname) / "data.pkl")
             self.assertTrue(Path(tmpdirname, "data.pkl").exists())
-            
+
     def test_load_self(self):
         cfg = DummyConfig(a=9, b="load")
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -123,6 +124,7 @@ class TestConfigBase(unittest.TestCase):
             self.assertEqual(loaded_cfg.a, 9)
             self.assertEqual(loaded_cfg.b, "load")
             self.assertEqual(loaded_cfg(), 9 + len("load"))
+
 
 class TestCreateParserFromCallableDataclass(unittest.TestCase):
 
@@ -188,12 +190,14 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
                 return include, exclude, self_param
 
         parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(ExcludeConfig.__call__, parser, exclude=["exclude", "self_param"])
+        parser = create_parser_from_function(
+            ExcludeConfig.__call__, parser, exclude=["exclude", "self_param"]
+        )
         args = parser.parse_args(["--include", "5"])
         self.assertEqual(args.include, 5)
         self.assertFalse(hasattr(args, "exclude"))
         self.assertFalse(hasattr(args, "self_param"))
-    
+
 
 if __name__ == "__main__":
     unittest.main()
