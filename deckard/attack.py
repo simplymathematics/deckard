@@ -33,9 +33,9 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
-from .data import data_parser, initialize_data_config
-from .model import model_parser, train_and_evaluate
-from .utils import initialize_config
+from .data import initialize_data_config, DataConfig
+from .model import initialize_model_config, ModelConfig
+from .utils import initialize_config, ConfigBase, create_parser_from_function
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ sklearn_models = list(sklearn_dict.keys())
 
 
 @dataclass
-class AttackConfig:
+class AttackConfig(ConfigBase):
     """
     AttackConfig
     Configuration and execution class for adversarial attacks on machine learning models.
@@ -150,19 +150,7 @@ class AttackConfig:
     _score_dict: dict = None
 
     def __hash__(self):
-        """
-        Compute a hash value for the object by concatenating all non-private attribute names and values,
-        then hashing the resulting string using MD5.
-
-        Returns
-        -------
-        int
-            The hash value of the object based on its non-private attributes.
-        """
-        hash_input = "".join(
-            f"{k}:{v},\n" for k, v in self.__dict__.items() if not k.startswith("_")
-        )
-        return int(md5(hash_input.encode()).hexdigest(), 16)
+        return super().__hash__()
 
     def __post_init__(self):
         """
@@ -175,7 +163,7 @@ class AttackConfig:
         if self.attack_params is None:
             self.attack_params = {}
 
-    def __call__(self, data, estimator, train=False, **kwargs):
+    def __call__(self, data, estimator):
         """
         Executes the specified attack on the provided estimator using the given data.
 
@@ -204,13 +192,21 @@ class AttackConfig:
         AssertionError
             If the output scores or timing variables are not of the expected types.
         """
+        if isinstance(estimator, ModelConfig):
+            estimator = estimator._model
+        else:
+            check_is_fitted(estimator)
         module = importlib.import_module(self.attack_name.rsplit(".", 1)[0])
         attack_type = self.attack_name.split("attacks.")[-1].split(".")[0]
         attack_subtype = self.attack_name.split("attacks.")[-1].split(".")[1]
+        
+        # Validate attack type
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = getattr(module, self.attack_name.split(".")[-1])
         estimator_alias = type(estimator).__name__
+        
+        # Validate library support
         if estimator_alias in sklearn_models:
             try:
                 check_is_fitted(estimator)
@@ -219,12 +215,16 @@ class AttackConfig:
                 raise ValueError(f"Estimator {estimator_alias} is not fitted")
         else:
             raise ValueError(f"Unsupported estimator type: {estimator_alias}")
+        
+        # Initialize the attack
         try:  # Assume Whitebox attack if estimator can be passed to the attack constructor
             attack = attack_class(art_estimator, **self.attack_params)
         except ValueError as e:  # If ValueError, assume Blackbox attack
             attack = attack_class(**self.attack_params)
+        
+        # Execute the attack based on type and subtype
         if attack_type == "evasion":
-            scores = self._evade(data, art_estimator, attack, train=train)
+            scores = self._evade(data, art_estimator, attack)
         elif attack_type == "poisoning":
             raise NotImplementedError("Poisoning attack not implemented yet.")
         elif attack_type == "extraction":
@@ -233,8 +233,7 @@ class AttackConfig:
             match attack_subtype:
                 case "membership_inference":
                     scores = self._infer_membership(
-                        data, art_estimator, attack, train=train
-                    )
+                        data, art_estimator, attack)
                 case "attribute_inference":
                     assert (
                         self.targeted_attribute is not None
@@ -244,7 +243,6 @@ class AttackConfig:
                         data,
                         art_estimator,
                         attack,
-                        train=train,
                         targeted_attribute=targeted_attribute,
                     )
                 case _:
