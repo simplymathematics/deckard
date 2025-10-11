@@ -140,6 +140,28 @@ class TestDataConfig(unittest.TestCase):
         self.assertEqual(len(X_train), len(y_train))
         self.assertEqual(len(X_test), len(y_test))
         self.assertEqual(len(X_train) + len(X_test), 60)
-
+    
+    def test_save_self(self):
+        import tempfile
+        cfg = self.basic_config()
+        cfg()
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            data_path = Path(tmpdirname) / "data.pkl"
+            score_path = Path(tmpdirname) / "scores.json"
+            results = cfg(data_filepath=str(data_path), score_filepath=str(score_path))
+            self.assertTrue(data_path.exists())
+            self.assertTrue(score_path.exists())
+            self.assertIn("data_load_time", results)
+            self.assertIn("data_sample_time", results)
+    
+    def test_load_self(self):
+        import tempfile
+        cfg = self.basic_config()
+        cfg()
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            data_path = Path(tmpdirname) / "data.pkl"
+            cfg(data_filepath=str(data_path))
+            self.assertTrue(cfg._X is not None)
+    
 if __name__ == "__main__":
     unittest.main()

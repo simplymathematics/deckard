@@ -5,7 +5,7 @@ import logging
 import argparse
 
 from pathlib import Path
-from hashlib import md5
+
 from dataclasses import dataclass
 from typing import Union
 
@@ -21,14 +21,14 @@ import sklearn.model_selection
 
 
 # deckard
-from .utils import initialize_config
+from .utils import initialize_config, ConfigBase
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class DataConfig:
+class DataConfig(ConfigBase):
     """
     Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.
 
@@ -64,6 +64,8 @@ class DataConfig:
         Testing feature matrix.
     _y_test : pd.Series
         Testing target vector.
+    _score_dict : dict
+        Dictionary to store scores or metrics.
     _target_ : str
         Internal identifier for the class.
 
@@ -89,7 +91,10 @@ class DataConfig:
         Loads the dataset based on the specified name or file type.
     __call__(filepath=None)
         Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
-
+    save(filepath)
+        Saves the current state of the DataConfig instance to a file.
+    load(filepath)
+        Loads the state of the DataConfig instance from a file.
     Raises
     ------
     ValueError
@@ -118,6 +123,7 @@ class DataConfig:
     _y_train: pd.Series = None
     _X_test: pd.DataFrame = None
     _y_test: pd.Series = None
+    _score_dict: dict = None
     _target_: str = "DataConfig"
 
     def __post_init__(self):
@@ -146,22 +152,7 @@ class DataConfig:
         self._y_test = None
 
     def __hash__(self):
-        """
-        Computes a hash value for the instance.
-
-        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
-        The hash excludes attributes whose names start with an underscore.
-
-        Returns
-        -------
-        int
-            The integer representation of the MD5 hash of the concatenated attribute string.
-        """
-        # Hash all fields that do not start with an underscore
-        hash_input = "".join(
-            f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_")
-        )
-        return int(md5(hash_input.encode()).hexdigest(), 16)
+        return super().__hash__()
 
     def _load_adult_income_data(self):
         """
@@ -399,6 +390,10 @@ class DataConfig:
         logger.info(f"Data sampled in {self._data_sample_time:.2f} seconds")
         self._train_indices = train_idx
         self._test_indices = test_idx
+        self._X_train = self._X.iloc[self._train_indices].reset_index(drop=True)
+        self._y_train = self._y.iloc[self._train_indices].reset_index(drop=True)
+        self._X_test = self._X.iloc[self._test_indices].reset_index(drop=True)
+        self._y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
 
     def _load_data(self):
         """
@@ -474,16 +469,17 @@ class DataConfig:
                 raise NotImplementedError(
                     f"Dataset {self.dataset_name} not implemented"
                 )
-
-    def __call__(self, filepath=None) -> dict:
+    
+    
+    def __call__(self, data_filepath: Union[str, None] =None, score_filepath: Union[str, None] = None) -> dict:
         """
-        Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.
-
+        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Parameters
         ----------
-        filepath : str, optional
-            Path to the data file. If None, uses the default data source.
-
+        data_filepath : Union[str, None]
+            Path to save loaded data as CSV. If None, data is not saved.
+        score_filepath : Union[str, None]
+            Path to save scores as CSV. If None, scores are not saved.
         Returns
         -------
         dict:
@@ -497,35 +493,63 @@ class DataConfig:
         AssertionError
             If train or test indices are not set after sampling.
         """
-        start_time = time.time()
-        self._load_data()
-        end_time = time.time()
-        self._data_load_time = end_time - start_time
-        logger.info(f"Data loaded in {self._data_load_time:.2f} seconds")
-        # Sample data
-        self._sample()
-        assert (
-            hasattr(self, "_train_indices") and self._train_indices is not None
-        ), "Train indices must be set after sampling"
-        assert (
-            hasattr(self, "_test_indices") and self._test_indices is not None
-        ), "Test indices must be set after sampling"
-        train_indices = self._train_indices
-        test_indices = self._test_indices
-        # Create train and test sets
-        self._X_train = self._X.iloc[train_indices].reset_index(drop=True)
-        self._y_train = self._y.iloc[train_indices].reset_index(drop=True)
-        self._X_test = self._X.iloc[test_indices].reset_index(drop=True)
-        self._y_test = self._y.iloc[test_indices].reset_index(drop=True)
+        
+        # Load existing data if filepath is provided and file exists, else create directory
+        if data_filepath is not None and Path(data_filepath).exists():
+            # Load existing data
+            logger.info(f"Loading existing DataConfig from {data_filepath}")
+            self.load(data_filepath)
+        elif data_filepath is not None:
+            # Ensure directory exists
+            logger.debug(f"Creating directory for DataConfig at {data_filepath}")
+            Path(data_filepath).parent.mkdir(parents=True, exist_ok=True)
+        else:
+            logger.debug("No data_filepath provided, data will not be saved")
+        
+        # Load scores if filepath is provided and file exists, else create directory
+        if score_filepath is not None and Path(score_filepath).exists():
+            # Load existing scores
+            logger.info(f"Loading existing scores from {score_filepath}")
+            scores = self.save_scores(score_filepath)
+        elif score_filepath is not None:
+            # Ensure directory exists
+            logger.debug(f"Creating directory for scores at {score_filepath}")
+            Path(score_filepath).parent.mkdir(parents=True, exist_ok=True)
+            scores = {}
+        else:
+            logger.debug("No score_filepath provided, scores will not be saved")
+            scores = {}
+        
+        # Load data if not already loaded
+        if not hasattr(self, "_data_load_time") or self._data_load_time is None:
+            start_time = time.time()
+            self._load_data()
+            end_time = time.time()
+            self._data_load_time = end_time - start_time
+            logger.info(f"Data loaded in {self._data_load_time:.2f} seconds")
+        # Sample data if not already sampled
+        if not hasattr(self, "_data_sample_time") or self._data_sample_time is None:
+            # Sample data
+            self._sample()
+            assert (
+                hasattr(self, "_train_indices") and self._train_indices is not None
+            ), "Train indices must be set after sampling"
+            assert (
+                hasattr(self, "_test_indices") and self._test_indices is not None
+            ), "Test indices must be set after sampling"
+        # Prepare return dictionary
         time_dict = {
             "data_load_time": self._data_load_time,
             "data_sample_time": self._data_sample_time,
         }
         logger.info(f"Train set size: {len(self._X_train)}, Test set size: {len(self._X_test)}")
         ## TODO: Add Scores for dataset
-        
-        scores = {}
         all_scores = {**time_dict, **scores}
+        
+        if score_filepath is not None:
+            self.save_scores(all_scores, score_filepath)
+        if data_filepath is not None:
+            self.save(data_filepath)
         return all_scores
 
 
@@ -617,7 +641,3 @@ def data_main(args: argparse.Namespace = None):
     y_test = data._y_test
     assert len(X_train) == len(y_train), "X_train and y_train must have the same length"
     assert len(X_test) == len(y_test), "X_test and y_test must have the same length"
-
-
-if __name__ == "__main__":
-    data_main()
