@@ -8,4 +8,5 @@ deckard
    data
    model
    attack
+   utils
    

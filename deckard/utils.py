@@ -1,9 +1,15 @@
 import logging
 from pathlib import Path
-
+from hashlib import md5
+from typing import Union, Any
+from dataclasses import dataclass
+import pandas as pd
 import yaml
+import pickle
+import numpy as np
 from hydra import initialize, compose
 from hydra.utils import instantiate
+
 
 
 logger = logging.getLogger(__name__)
@@ -63,3 +69,269 @@ def initialize_config(config_file, params, target) -> object:
             config = compose(config_name=None, overrides=params)
     obj = instantiate(config)
     return obj
+
+
+@dataclass
+class ConfigBase:
+    _target_: str = "deckard.utils.ConfigBase"
+    
+    def __init__(self, *args, **kwds):
+        # Initialize dataclass super
+        super().__init__()
+        # Call post init
+        #  Set attributes from args and kwds
+        for i, arg in enumerate(args):
+            setattr(self, list(self.__dataclass_fields__.keys())[i], arg)
+        for k, v in kwds.items():
+            setattr(self, k, v)
+        # Call post init
+        self.__post_init__()
+    
+    def __post_init__(self):
+        pass
+
+    def __call__(self, *args, **kwds):
+        raise NotImplementedError("This is an abstract base class.")
+    
+    
+    def __hash__(self):
+        """
+        Computes a hash value for the instance.
+
+        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
+        The hash excludes attributes whose names start with an underscore.
+
+        Returns
+        -------
+        int
+            The integer representation of the MD5 hash of the concatenated attribute string.
+        """
+        # Hash all fields that do not start with an underscore
+        hash_input = "".join(
+            f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_")
+        )
+        return int(md5(hash_input.encode()).hexdigest(), 16)
+    
+    def save_scores(self, scores: Union[dict, pd.Series], filepath: Union[str, None] = None):
+        """
+        Saves the scores dictionary to a CSV file if a filepath is provided.
+
+        Parameters
+        ----------
+        scores : dict
+            Dictionary containing score metrics to be saved.
+        filepath : Union[str, None], optional
+            Path to save the scores as a CSV file. If None, scores are not saved.
+            
+        Raises
+        ----------
+        ValueError
+            If the file extension is not supported. Supported types are .csv, .json, and .xlsx.
+        """
+        assert filepath is not None, "Filepath must be provided to save scores."
+        score_path = Path(filepath)
+        score_path.parent.mkdir(parents=True, exist_ok=True)
+        # Assume this is a dictionary of of strings: floats
+        supported_filtypes = [".csv", ".json", ".xlsx"]
+        if not isinstance(scores, pd.Series):
+            scores = pd.Series(scores)
+        if score_path.suffix in supported_filtypes:
+            match score_path.suffix:
+                case ".csv":
+                    scores.to_csv(score_path, index=False)
+                case ".json":
+                    scores.to_json(score_path, orient="records", lines=True, indent=4)
+                case ".xlsx":
+                    scores.to_excel(score_path, index=False)
+        else:
+            raise ValueError(
+                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filtypes}"
+            )
+        assert Path(score_path).exists(), f"Failed to save scores to {score_path}"
+        logger.info(f"Scores saved to {score_path}")
+
+    def save_data(self, data: pd.DataFrame, filepath: Union[str, None] = None, **kwargs) -> None:
+        supported_filetypes = [".csv", ".parquet", ".pkl", ".html", ".json", ".xlsx", ".pkl"]
+        assert filepath is not None, "Filepath must be provided to save data."
+        data_path = Path(filepath)
+        data_path.parent.mkdir(parents=True, exist_ok=True)
+        filetype = data_path.suffix
+        match filetype:
+            case ".pkl":
+                data.to_pickle(data_path, **kwargs)
+            case ".csv":
+                data.to_csv(data_path, index=False, **kwargs)
+            case ".parquet":
+                data.to_parquet(data_path, index=False, **kwargs)
+            case ".pkl":
+                data.to_pickle(data_path, **kwargs)
+            case ".html":
+                data.to_html(data_path, index=False, **kwargs)
+            case ".json":
+                data.to_json(data_path, orient="records", lines=True, **kwargs)
+            case ".xlsx":
+                data.to_excel(data_path, index=False, **kwargs)
+            case _:
+                raise ValueError(
+                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}"
+                )
+        assert Path(data_path).exists(), f"Failed to save data to {data_path}"
+        logger.info(f"Data saved to {data_path}")
+
+    def load_scores(self, filepath: str) -> dict:
+        """
+        Loads scores from a CSV, JSON, or Excel file into a dictionary.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the scores file.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the loaded scores.
+
+        Raises
+        ------
+        ValueError
+            If the file extension is not supported. Supported types are .csv, .json, and .xlsx.
+        """
+        score_path = Path(filepath)
+        assert score_path.exists(), f"File {filepath} does not exist."
+        supported_filetypes = [".csv", ".json", ".xlsx"]
+        if score_path.suffix in supported_filetypes:
+            match score_path.suffix:
+                case ".csv":
+                    scores = pd.read_csv(score_path).to_dict(orient="records")[0]
+                case ".json":
+                    scores = pd.read_json(score_path, orient="records", lines=True).to_dict(orient="records")[0]
+                case "xlsx":
+                    scores = pd.read_excel(score_path).to_dict(orient="records")[0]
+        else:
+            raise ValueError(
+                f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}"
+            )
+        logger.info(f"Scores loaded from {score_path}")
+        return scores
+
+    def load_data(self, filepath: str, **kwargs) -> pd.DataFrame:
+        """
+        Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the data file.
+        **kwargs
+            Additional keyword arguments to pass to the pandas read function.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the loaded data.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        ValueError
+            If the file extension is not supported. Supported types are .csv, .json, .
+        """
+        data_path = Path(filepath)
+        if data_path is None or not data_path.exists():
+            FileNotFoundError(f"File {filepath} does not exist.")
+        supported_filetypes = [".csv", ".json", ".xlsx", ".parquet", ".pkl", ".npz", ".html"]
+        
+        match data_path.suffix:
+            case ".pkl":
+                data = pd.read_pickle(data_path, **kwargs)
+            case ".csv":
+                data = pd.read_csv(data_path, **kwargs)
+            case ".json":
+                data = pd.read_json(data_path, orient="records", lines=True, **kwargs)
+            case ".xlsx":
+                data = pd.read_excel(data_path, **kwargs)
+            case ".parquet":
+                data = pd.read_parquet(data_path, **kwargs)
+            case "html":
+                data = pd.read_html(data_path, **kwargs)[0]
+            case _:
+                raise ValueError(
+                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}"
+                )
+        logger.info(f"Data loaded from {data_path}")
+        return data
+
+    def save_object(self, obj: Any, filepath: str) -> None:
+        """
+        Saves a Serializable object to a file using pickle.
+
+        Parameters
+        ----------
+        obj : Any
+            The object to save.
+        filepath : str
+            The path to the file where the object will be saved.
+        """
+        with open(filepath, "wb") as f:
+            pickle.dump(obj, f)
+        logger.info(f"Object saved to {filepath}")
+
+    def load_object(self, filepath: str) -> Any:
+        """
+        Loads a Serializable object from a file using pickle.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the file from which the object will be loaded.
+
+        Returns
+        -------
+        Any
+            The loaded object.
+        """
+        with open(filepath, "rb") as f:
+            obj = pickle.load(f)
+        logger.info(f"Object loaded from {filepath}")
+        return obj
+    
+    
+    def save(self, filepath: str) -> None:
+        """
+        Saves the current instance to a file using pickle.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the file where the instance will be saved.
+        """
+        self.save_object(self, filepath)
+        logger.info(f"Instance of {self.__class__.__name__} saved to {filepath}")
+    
+    
+    def load(self, filepath: str) -> "ConfigBase":
+        """
+        Loads an instance of the class from a file using pickle.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the file from which the instance will be loaded.
+
+        Returns
+        -------
+        ConfigBase
+            The loaded instance.
+        """
+        obj = self.load_object(filepath)
+        if not isinstance(obj, self.__class__):
+            raise TypeError(f"Loaded object is not of type {self.__class__.__name__}")
+        logger.info(f"Instance of {self.__class__.__name__} loaded from {filepath}")
+        # Update the current instance's __dict__ with the loaded object's __dict__
+        self.__dict__.update(obj.__dict__)
+        return self
+
+    
+        
