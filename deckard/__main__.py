@@ -17,7 +17,7 @@ for module in supported_modules:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Deckard Command Line Interface", parents=[data_parser, model_parser, attack_parser])
+    parser = argparse.ArgumentParser(description="Deckard Command Line Interface", )
     parser.add_argument(
         "module",
         choices=["data", "model", "attack", None],

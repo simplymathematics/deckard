@@ -1,4 +1,6 @@
 import logging
+import argparse
+import inspect
 from pathlib import Path
 from hashlib import md5
 from typing import Union, Any
@@ -311,6 +313,7 @@ class ConfigBase:
         logger.info(f"Instance of {self.__class__.__name__} saved to {filepath}")
     
     
+    
     def load(self, filepath: str) -> "ConfigBase":
         """
         Loads an instance of the class from a file using pickle.
@@ -333,5 +336,55 @@ class ConfigBase:
         self.__dict__.update(obj.__dict__)
         return self
 
+def create_parser_from_function(func, parser=None, exclude =[], **kwargs) -> argparse.ArgumentParser:
+    """
+    Creates an argparse.ArgumentParser from a function's signature.
+
+    Parameters
+    ----------
+    func: callable
+        The function to create the parser from.
+    parser : argparse.ArgumentParser, optional
+        An existing parser to add arguments to. If None, a new parser is created.
+    exclude: list, optional
+        List of parameter names to exclude from the parser.
+    **kwargs
+        Additional keyword arguments to pass to the ArgumentParser constructor if a new parser is created.
     
-        
+    Raises
+    ------
+    ValueError
+        If func is not callable or if parser is not an instance of argparse.ArgumentParser.
+    
+    
+    Returns
+    -------
+    argparse.ArgumentParser
+        The updated parser with arguments corresponding to the function's signature.
+    """
+    # Validate that the func is callable
+    assert callable(func), "func must be a callable function or method."
+    # Validate the parser
+    conflict_handler = kwargs.pop("conflict_handler", "resolve")
+    add_help = kwargs.pop("add_help", False)
+    if parser is None:
+        parser = argparse.ArgumentParser(**kwargs, conflict_handler=conflict_handler, add_help=add_help)
+    else:
+        if len(kwargs) > 0:
+            raise ValueError("Cannot pass kwargs when parser is provided.")
+        if not isinstance(parser, argparse.ArgumentParser):
+            raise ValueError("parser must be an instance of argparse.ArgumentParser or None.")
+    sig = inspect.signature(func)
+    for name, param in sig.parameters.items():
+        if name == "self" or name in exclude:
+            continue
+        if param.annotation is not inspect._empty:
+            arg_type = param.annotation
+        else:
+            arg_type = str  # Default to string if no annotation
+        if param.default is inspect._empty:
+            parser.add_argument(f"--{name}", type=arg_type, required=True)
+        else:
+            parser.add_argument(f"--{name}", type=arg_type, default=param.default)
+    return parser
+    

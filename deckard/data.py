@@ -21,7 +21,7 @@ import sklearn.model_selection
 
 
 # deckard
-from .utils import initialize_config, ConfigBase
+from .utils import initialize_config, ConfigBase, create_parser_from_function
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -150,6 +150,7 @@ class DataConfig(ConfigBase):
         self._y_train = None
         self._X_test = None
         self._y_test = None
+        self._score_dict = {}
 
     def __hash__(self):
         return super().__hash__()
@@ -471,14 +472,14 @@ class DataConfig(ConfigBase):
                 )
     
     
-    def __call__(self, data_filepath: Union[str, None] =None, score_filepath: Union[str, None] = None) -> dict:
+    def __call__(self, data_filepath: Union[str, None] =None, data_score_filepath: Union[str, None] = None) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
         Parameters
         ----------
         data_filepath : Union[str, None]
             Path to save loaded data as CSV. If None, data is not saved.
-        score_filepath : Union[str, None]
+        data_score_filepath : Union[str, None]
             Path to save scores as CSV. If None, scores are not saved.
         Returns
         -------
@@ -507,17 +508,17 @@ class DataConfig(ConfigBase):
             logger.debug("No data_filepath provided, data will not be saved")
         
         # Load scores if filepath is provided and file exists, else create directory
-        if score_filepath is not None and Path(score_filepath).exists():
+        if data_score_filepath is not None and Path(data_score_filepath).exists():
             # Load existing scores
-            logger.info(f"Loading existing scores from {score_filepath}")
-            scores = self.save_scores(score_filepath)
-        elif score_filepath is not None:
+            logger.info(f"Loading existing scores from {data_score_filepath}")
+            scores = self.save_scores(data_score_filepath)
+        elif data_score_filepath is not None:
             # Ensure directory exists
-            logger.debug(f"Creating directory for scores at {score_filepath}")
-            Path(score_filepath).parent.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Creating directory for scores at {data_score_filepath}")
+            Path(data_score_filepath).parent.mkdir(parents=True, exist_ok=True)
             scores = {}
         else:
-            logger.debug("No score_filepath provided, scores will not be saved")
+            logger.debug("No data_score_filepath provided, scores will not be saved")
             scores = {}
         
         # Load data if not already loaded
@@ -546,32 +547,37 @@ class DataConfig(ConfigBase):
         ## TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
         
-        if score_filepath is not None:
-            self.save_scores(all_scores, score_filepath)
+        if data_score_filepath is not None:
+            self.save_scores(all_scores, data_score_filepath)
         if data_filepath is not None:
             self.save(data_filepath)
         return all_scores
 
 
 # Argument parsing
-data_parser = argparse.ArgumentParser(
+data_init_parser = argparse.ArgumentParser(
     description="DataConfig parameters",
     add_help=False,
 )
-data_parser.add_argument(
+data_init_parser.add_argument(
     "--data_config_file", type=str, help="Path to YAML config file"
 )
-data_parser.add_argument(
-    "--data_filepath", type=str, help="Path to save loaded data as CSV"
-)
 # data_params should be a dotlist of key=value pairs
-data_parser.add_argument(
-    "--data_params",
+data_init_parser.add_argument(
+    "--data_config_params",
     type=str,
     nargs="*",
     help="Override configuration parameters as key=value pairs",
 )
+data_call_parser = create_parser_from_function(DataConfig.__call__, add_help=False)
 
+# Create a final parser that includes both init and call arguments
+data_parser = argparse.ArgumentParser(
+    description="DataConfig parameters",
+    parents=[data_init_parser, data_call_parser],
+    add_help=False,
+    conflict_handler="resolve",
+)
 
 def initialize_data_config():
     """
@@ -585,9 +591,9 @@ def initialize_data_config():
     DataConfig
         An instance of DataConfig initialized with the specified configuration.
     """
-    args = data_parser.parse_known_args()[0]
+    args = data_init_parser.parse_known_args()[0]
     config_file = args.data_config_file
-    params = args.data_params if args.data_params is not None else []
+    params = args.data_config_params if args.data_config_params is not None else []
     target = "deckard.DataConfig"
     data = initialize_config(config_file, params, target)
     assert isinstance(data, DataConfig), "Config must be an instance of DataConfig"
@@ -627,17 +633,25 @@ def data_main(args: argparse.Namespace = None) -> None:
     Train and test set sizes.
     """
     if args is None:
-        args = data_parser.parse_known_args()[0]
+        args = data_call_parser.parse_known_args()[0]
     else:
-        assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
+        args = argparse.Namespace(**vars(args))
+    assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
+    data_filepath = getattr(args, "data_filepath", None)
+    data_score_filepath = getattr(args, "data_score_filepath", None)
+    if data_filepath is not None:
+        Path(data_filepath).parent.mkdir(parents=True, exist_ok=True)
+    if data_score_filepath is not None:
+        Path(data_score_filepath).parent.mkdir(parents=True, exist_ok=True)
+        if Path(data_score_filepath).exists():
+            logger.info(f"Loading existing scores from {data_score_filepath}")
+            self._score_dict.update(**self.load_scores(data_score_filepath))
     # setup logging
     logging.basicConfig(level=logging.INFO)
     # Load configuration from YAML file if provided
     data = initialize_data_config()
-    data(filepath=args.data_filepath)
-    X_train = data._X_train
-    y_train = data._y_train
-    X_test = data._X_test
-    y_test = data._y_test
-    assert len(X_train) == len(y_train), "X_train and y_train must have the same length"
-    assert len(X_test) == len(y_test), "X_test and y_test must have the same length"
+    data_call_args = data_call_parser.parse_known_args(args=vars(args))[0]
+    data(**dict(vars(data_call_args)))
+    assert len(data._X_train) == len(data._y_train), "X_train and y_train must have the same length"
+    assert len(data._X_test) == len(data._y_test), "X_test and y_test must have the same length"
+    return data 

@@ -1,9 +1,11 @@
 import unittest
+import argparse
+from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import tempfile
 from pathlib import Path
-from deckard.utils import ConfigBase, initialize_config
+from deckard.utils import ConfigBase, initialize_config, create_parser_from_function
 
 class DummyConfig(ConfigBase):
     a: int = 1
@@ -18,6 +20,7 @@ class DummyConfig(ConfigBase):
 
     def save_scores(self, scores, filepath):
         import json
+
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(scores, f)
@@ -120,6 +123,77 @@ class TestConfigBase(unittest.TestCase):
             self.assertEqual(loaded_cfg.a, 9)
             self.assertEqual(loaded_cfg.b, "load")
             self.assertEqual(loaded_cfg(), 9 + len("load"))
+
+class TestCreateParserFromCallableDataclass(unittest.TestCase):
+
+    def test_parser_with_required_and_default_args(self):
+        @dataclass
+        class MyConfig:
+            x: int = 1
+            y: str = "foo"
+            z: float = 2.5
+
+            def __call__(self, a: int, b: str = "bar"):
+                return a, b
+
+        parser = argparse.ArgumentParser()
+        parser = create_parser_from_function(MyConfig.__call__, parser)
+        args = parser.parse_args(["--a", "10"])
+        self.assertEqual(args.a, 10)
+        self.assertEqual(args.b, "bar")
+
+    def test_parser_with_type_annotations(self):
+        @dataclass
+        class AnotherConfig:
+            def __call__(self, alpha: float, beta: int = 42):
+                return alpha, beta
+
+        parser = argparse.ArgumentParser()
+        parser = create_parser_from_function(AnotherConfig.__call__, parser)
+        args = parser.parse_args(["--alpha", "3.14"])
+        self.assertAlmostEqual(args.alpha, 3.14)
+        self.assertEqual(args.beta, 42)
+
+    def test_parser_missing_required_argument(self):
+        @dataclass
+        class ConfigMissing:
+            def __call__(self, required: int):
+                return required
+
+        parser = argparse.ArgumentParser()
+        parser = create_parser_from_function(ConfigMissing.__call__, parser)
+        with self.assertRaises(SystemExit):
+            parser.parse_args([])
+
+    def test_parser_with_no_arguments(self):
+        @dataclass
+        class EmptyConfig:
+            def __call__(self):
+                return 0
+
+        parser = argparse.ArgumentParser()
+        parser = create_parser_from_function(EmptyConfig.__call__, parser)
+        args = parser.parse_args([])
+        self.assertEqual(vars(args), {})
+
+    def test_non_class_raises(self):
+        parser = argparse.ArgumentParser()
+        with self.assertRaises(AssertionError):
+            create_parser_from_function(parser, 42)
+
+    def test_exclude_parameter(self):
+        @dataclass
+        class ExcludeConfig:
+            def __call__(self, include: int, exclude: str, self_param: float):
+                return include, exclude, self_param
+
+        parser = argparse.ArgumentParser()
+        parser = create_parser_from_function(ExcludeConfig.__call__, parser, exclude=["exclude", "self_param"])
+        args = parser.parse_args(["--include", "5"])
+        self.assertEqual(args.include, 5)
+        self.assertFalse(hasattr(args, "exclude"))
+        self.assertFalse(hasattr(args, "self_param"))
+    
 
 if __name__ == "__main__":
     unittest.main()

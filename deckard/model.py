@@ -12,11 +12,9 @@ import argparse
 import importlib
 import numpy as np
 from pathlib import Path
-from hashlib import md5
 
-from .data import initialize_data_config, data_parser, DataConfig
-from .utils import initialize_config, ConfigBase
-
+from deckard.data import data_parser, DataConfig, data_main
+from deckard.utils import initialize_config, ConfigBase, create_parser_from_function
 logger = logging.getLogger(__name__)
 
 supported_sklearn_libraries = ["sklearn"]
@@ -89,7 +87,7 @@ class ModelConfig(ConfigBase):
     test_scores = model_config(data, train=False, score=True)
     """
 
-    model_type: str = "sklearn.svm.SVC"
+    model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
     model_params: dict = None
     _model = None
@@ -476,10 +474,10 @@ class ModelConfig(ConfigBase):
             times["prediction_n"] = len(self._predictions)
         return times
     
-    def _load_score_file(self, score_filepath):
+    def _load_score_file(self, model_score_filepath):
         times = {}
-        if score_filepath is not None and Path(score_filepath).exists():
-            new_score_dict = self.load_scores(score_filepath)
+        if model_score_filepath is not None and Path(model_score_filepath).exists():
+            new_score_dict = self.load_scores(model_score_filepath)
             old_score_dict = self._score_dict if self._score_dict is not None else {}
             # Update old_score_dict with new_score_dict
             score_dict = {**old_score_dict, **new_score_dict}
@@ -501,7 +499,7 @@ class ModelConfig(ConfigBase):
         predictions_filepath: Union[str, None] = None,
         training_predictions_filepath: Union[str, None] = None,
                 
-        score_filepath: Union[str, None] = None,
+        model_score_filepath: Union[str, None] = None,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
@@ -514,7 +512,7 @@ class ModelConfig(ConfigBase):
             Path to save or load the model. If provided, the model will be loaded from or saved to this path.
         predictions_filepath : str or None, optional
             Path to save the predictions. If provided, the predictions will be saved to this path.  
-        score_filepath : str or None, optional
+        model_score_filepath : str or None, optional
             Path to load existing scores. If provided, scores will be loaded from this path.
        
         Returns
@@ -531,8 +529,8 @@ class ModelConfig(ConfigBase):
         if data._X_train is None or data._y_train is None:
             raise ValueError("Data not loaded. Please load data before calling the model.")
         
-        # Load the score_filepath if provided
-        times = self._load_score_file(score_filepath)
+        # Load the model_score_filepath if provided
+        times = self._load_score_file(model_score_filepath)
 
         # Load predictions from filepaths and update times
         pred_times = self._load_all_predictions(training_predictions_filepath, predictions_filepath, times)
@@ -564,9 +562,9 @@ class ModelConfig(ConfigBase):
                 times["training_score_time"] = self._score_time
                 logger.info(f"Training scores computed in {self._score_time:.2f} seconds")
                 # Save scores if filepath provided
-                if score_filepath is not None:
-                    self.save_scores(self._score_dict, score_filepath)
-                    logger.info(f"Scores saved to {score_filepath}")
+                if model_score_filepath is not None:
+                    self.save_scores(self._score_dict, model_score_filepath)
+                    logger.info(f"Scores saved to {model_score_filepath}")
         
         # Make predictions on test data if not already done
         if self._predictions is None or self._prediction_time is None:
@@ -604,9 +602,9 @@ class ModelConfig(ConfigBase):
         if model_filepath is not None:
             self._save_model(model_filepath)
         # Save scores if filepath provided
-        if score_filepath is not None and Path(score_filepath).exists():
-            self.save_scores(all_scores, score_filepath)
-            logger.info(f"Scores saved to {score_filepath}")
+        if model_score_filepath is not None and Path(model_score_filepath).exists():
+            self.save_scores(all_scores, model_score_filepath)
+            logger.info(f"Scores saved to {model_score_filepath}")
         return all_scores
 
     def _load_or_train_model(self, data, model_filepath, times):
@@ -614,7 +612,7 @@ class ModelConfig(ConfigBase):
             case None, None: # Neither model nor filepath provided
                 raise ValueError("Model not trained or loaded. Please train or load a model before prediction.")
             case _, _: # Model and/or filepath provided
-                if Path(model_filepath).exists():
+                if model_filepath is not None and Path(model_filepath).exists():
                     logger.info(f"Model file {model_filepath} exists. Loading model.")
                     self._load_model(model_filepath)
                     assert isinstance(self._model, object)
@@ -647,29 +645,28 @@ class ModelConfig(ConfigBase):
 
 
 # Argument parsing
-model_parser = argparse.ArgumentParser(
-    description="DataConfig parameters",
+model_init_parser = argparse.ArgumentParser(
+    description="ModelConfig initialization parameters",
     add_help=False,
     conflict_handler="resolve",
 )
-model_parser.add_argument(
-    "--probability",
-    action="store_true",
-    help="Whether the model will output probabilities (True/False)",
-)
-model_parser.add_argument(
+model_init_parser.add_argument(
     "--model_config_file", type=str, help="Path to YAML config file"
 )
-model_parser.add_argument(
-    "--model_filepath", type=str, help="Path to save loaded data as CSV"
-)
-model_parser.add_argument(
-    "--model_params",
+model_init_parser.add_argument(
+    "--model_config_params",
     type=str,
     nargs="*",
     help="Override configuration parameters as key=value pairs",
 )
+model_call_parser = create_parser_from_function(ModelConfig.__call__, add_help=False, exclude=["data"], parser=None)
 
+model_parser = argparse.ArgumentParser(
+    description="ModelConfig parameters",
+    parents=[model_init_parser, model_call_parser],
+    add_help=False,
+    conflict_handler="resolve",
+)
 
 def initialize_model_config() -> ModelConfig:
     """
@@ -684,9 +681,9 @@ def initialize_model_config() -> ModelConfig:
     Returns:
         ModelConfig: An instance of ModelConfig initialized with the specified parameters.
     """
-    args = model_parser.parse_known_args()[0]
+    args = model_init_parser.parse_known_args()[0]
     config_file = args.model_config_file
-    params = args.model_params if args.model_params is not None else []
+    params = args.model_config_params if args.model_config_params is not None else []
     target = "deckard.ModelConfig"
     model = initialize_config(config_file, params, target)
     assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
@@ -697,35 +694,35 @@ def initialize_model_config() -> ModelConfig:
 
 def model_main(args: argparse.Namespace = None) -> None:
     """
-    Main entry point for model training and evaluation.
-    This function sets up logging, parses command-line arguments using the provided
-    parsers, and initiates the training and evaluation process.
+    Main entry point for initializing and running the model pipeline.
+    This function sets up logging, parses command-line arguments or uses the provided
+    argparse.Namespace, loads data, prepares model parameters, initializes the model,
+    and executes the model with the given parameters and data.
     Args:
-        args (argparse.Namespace, optional): Parsed command-line arguments. If None,
-            arguments are parsed from sys.argv.
-    Raises:
-        AssertionError: If `args` is provided and is not an instance of argparse.Namespace.
+        args (argparse.Namespace, optional): Namespace containing parsed arguments.
+            If None, arguments are parsed from the command line.
+    Returns:
+        tuple: A tuple containing the loaded data and the initialized model instance.
     """
+    
     logging.basicConfig(level=logging.INFO)
     if args is None:
         parser = argparse.ArgumentParser(
             description="ModelConfig parameters",
-            parents=[data_parser, model_parser],
+            parents=[data_parser, model_call_parser],
         )
         args = parser.parse_known_args()[0]
     else:
         assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
-    # Initialize DataConfig and load data
-    data = initialize_data_config()
-    assert isinstance(data, DataConfig)
-    data(filepath=args.data_filepath)
-    # Initialize model configuration
-    model = initialize_model_config()
-    # Train and score model on the training and test sets
-    estimator = model(
-        data._X_train,
-        data._y_train,
-        filepath=args.model_filepath,
-    )
-    model._model = estimator
+    
+    data_args = data_parser.parse_known_args(args=vars(args))[0]
+    data = data_main(data_args)
+    
 
+    model = initialize_model_config()
+    model_args = model_call_parser.parse_known_args()[0]
+    model_params = dict(vars(model_args))
+    model(data, **model_params)
+    
+        
+    return data, model

@@ -33,8 +33,8 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
-from .data import initialize_data_config, DataConfig
-from .model import initialize_model_config, ModelConfig
+from .data import DataConfig, data_parser, data_main
+from .model import  ModelConfig, initialize_model_config, model_call_parser
 from .utils import initialize_config, ConfigBase, create_parser_from_function
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -96,6 +96,8 @@ class AttackConfig(ConfigBase):
         Time taken to score the attack.
     _attack : object, optional
         Stores the result of the attack.
+    _attack_predictions : list, optional
+        Stores the predictions made by the attack.
     _score_dict : dict, optional
         Stores the computed scores and metrics for the attack.
 
@@ -162,36 +164,11 @@ class AttackConfig(ConfigBase):
         self._attack = None
         if self.attack_params is None:
             self.attack_params = {}
+        self._attack_predictions = None
+        self._attack = None
+        self._score_dict = {}
 
-    def __call__(self, data, estimator):
-        """
-        Executes the specified attack on the provided estimator using the given data.
-
-        Parameters
-        ----------
-        data : Any
-            The input data to be used for the attack.
-        estimator : object
-            The machine learning estimator to be attacked.
-        train : bool, optional
-            Indicates whether the attack should be performed on training data (default is False).
-        **kwargs
-            Additional keyword arguments for the attack.
-
-        Returns
-        -------
-        dict
-            A dictionary containing attack scores and timing information.
-
-        Raises
-        ------
-        ValueError
-            If the attack type, subtype, or estimator type is unsupported, or if the estimator is not fitted.
-        NotImplementedError
-            If the attack type or subtype is not implemented.
-        AssertionError
-            If the output scores or timing variables are not of the expected types.
-        """
+    def _initialize_attack(self, estimator):
         if isinstance(estimator, ModelConfig):
             estimator = estimator._model
         else:
@@ -221,6 +198,54 @@ class AttackConfig(ConfigBase):
             attack = attack_class(art_estimator, **self.attack_params)
         except ValueError as e:  # If ValueError, assume Blackbox attack
             attack = attack_class(**self.attack_params)
+        return attack, art_estimator, attack_type, attack_subtype
+    
+    def __call__(self, data, estimator, attack_file:Union[str, None] = None, attack_predictions_file:Union[str, None] = None, attack_scores_file:Union[str, None] = None,):
+        """
+        Executes the specified attack on the provided estimator using the given data.
+
+        Parameters
+        ----------
+        data : Any
+            The input data to be used for the attack.
+        estimator : object
+            The machine learning estimator to be attacked.
+        attack_file : str or None, optional
+            File path to save the attack object. If None, the attack object is not saved. Default is None.
+        attack_predictions_file : str or None, optional
+            File path to save the attack predictions. If None, predictions are not saved. Default is None.
+        attack_scores_file : str or None, optional
+            File path to save the attack scores. If None, scores are not saved. Default is None.
+        **kwargs
+            Additional keyword arguments for the attack.
+
+        Returns
+        -------
+        dict
+            A dictionary containing attack scores and timing information.
+
+        Raises
+        ------
+        ValueError
+            If the attack type, subtype, or estimator type is unsupported, or if the estimator is not fitted.
+        NotImplementedError
+            If the attack type or subtype is not implemented.
+        AssertionError
+            If the output scores or timing variables are not of the expected types.
+        """
+        if attack_file is not None and Path(attack_file).exists():
+            self._attack = self.load_object(attack_file)
+        if attack_predictions_file is not None and Path(attack_predictions_file).exists():
+            self._attack_predictions = self.load_object(attack_predictions_file)
+        if attack_scores_file is not None and Path(attack_scores_file).exists():
+            self._score_dict = self.load_object(attack_scores_file)
+        if self._attack is not None and self._score_dict is not None and self._attack_predictions is not None:
+            required_keys = {"attack_success", "attack_time", "attack_prediction_time", "attack_score_time"}
+            if not required_keys.issubset(self._score_dict.keys()):
+                raise ValueError(f"score_dict is missing required keys: {required_keys - self._score_dict.keys()}")
+            return self._score_dict
+        elif self._attack is None: # If attack is not already loaded, initialize and run it
+            attack, art_estimator, attack_type, attack_subtype = self._initialize_attack(estimator)
         
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
@@ -260,15 +285,23 @@ class AttackConfig(ConfigBase):
             self._attack_score_time, float
         ), "Attack score time should be a float"
         times = {
-            "training_time": self._attack_time,
-            "prediction_time": self._attack_prediction_time,
-            "score_time": self._attack_score_time,
+            "attack_generation_time": self._attack_time,
+            "attack_prediction_time": self._attack_prediction_time,
+            "attack_score_time": self._attack_score_time,
         }
         for time in times:
             if times[time] is not None:
                 logger.info(f"{time}: {times[time]:.2f} seconds")
         score_dict = {**scores, **times}
         self._score_dict = score_dict
+        
+        # Save attack, predictions, and scores if file paths are provided
+        if attack_file is not None:
+            self.save_object(self._attack, attack_file)
+        if attack_predictions_file is not None:
+            self.save_object(self._attack_predictions, attack_predictions_file)
+        if attack_scores_file is not None:
+            self.save_object(self._score_dict, attack_scores_file)
         return score_dict
 
     def _get_benign_preds(self, data, art_estimator, train=False):
@@ -299,18 +332,19 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            _, _, X_test, y_test = data()
+            X_train = data._X_train
+            y_train = data._y_train
+            X_test = data._X_test
+            y_test = data._y_test
             ben_preds = art_estimator.predict(X_test.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
         else:
-            (
-                X_train,
-                y_train,
-                _,
-                _,
-            ) = data()
+            X_train = data._X_train
+            y_train = data._y_train
+            X_test = data._X_test
+            y_test = data._y_test
             ben_preds = art_estimator.predict(X_train.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_train.iloc[:n]
@@ -732,39 +766,36 @@ class AttackConfig(ConfigBase):
         logger.info(f"AttackConfig saved to {filepath}")
 
 
-attack_parser = argparse.ArgumentParser(
+attack_init_parser = argparse.ArgumentParser(
     description="AttackConfig parameters",
     add_help=False,
+    conflict_handler="resolve",
 )
-attack_parser.add_argument(
-    "--attack_params",
+attack_init_parser.add_argument(
+    "--attack_config_params",
     type=str,
     nargs="*",
     help="Override configuration parameters as key=value pairs",
 )
-attack_parser.add_argument(
+attack_init_parser.add_argument(
     "--attack_config_file",
     type=str,
     default=None,
     help="Path to YAML config file for attack parameters",
 )
-attack_parser.add_argument(
-    "--attack_filepath",
-    type=str,
-    default=None,
-    help="Path to load/save attack from/to .pkl file",
-)
-attack_parser.add_argument(
-    "--attack_size",
-    type=int,
-    default=100,
-    help="Number of samples to use for the attack",
+
+attack_call_parser = create_parser_from_function(AttackConfig.__call__, exclude=["data", "estimator"], parser=None)
+attack_parser = argparse.ArgumentParser(
+    description="AttackConfig",
+    parents=[attack_init_parser, attack_call_parser],
+    conflict_handler="resolve",
+    add_help=False,
 )
 
 
 def initialize_attack_config() -> AttackConfig:
-    args = attack_parser.parse_known_args()[0]
-    params = args.attack_params if args.attack_params is not None else []
+    args = attack_init_parser.parse_known_args()[0]
+    params = args.attack_config_params if args.attack_config_params is not None else []
     target = "deckard.AttackConfig"
     assert isinstance(
         params, list
@@ -817,7 +848,7 @@ attack_defaults = {
 }
 
 
-def attack_main():
+def attack_main(args: argparse.Namespace = None):
     """
     Main function to execute the attack evaluation workflow.
     This function performs the following steps:
@@ -832,19 +863,34 @@ def attack_main():
     """
     # setup logging
     logging.basicConfig(level=logging.INFO)
+    if args is None:
+        parser = argparse.ArgumentParser(
+            description="Deckard Attack Evaluation",
+            parents=[data_parser, model_call_parser, attack_call_parser],
+            conflict_handler="resolve",
+            add_help=True,
+        )
+        args = parser.parse_args()
+    else:
+        assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
+    data_args = data_parser.parse_known_args(args=vars(args))[0]
+    data = data_main(data_args)
+    
 
-    parser = argparse.ArgumentParser(
-        description="Attack Evaluation",
-        parents=[attack_parser, model_parser, data_parser],
-    )
-    args = parser.parse_args()
-    data = initialize_data_config()
-    data(filepath=args.data_filepath)
-    _, _, model = train_and_evaluate(args, train=True, score=False, data=data)
-    check_is_fitted(model)
+    model = initialize_model_config()
+    model_args = model_call_parser.parse_known_args()[0]
+    model_params = dict(vars(model_args))
+    model(data, **model_params)
+    benign_scores = model._score_dict
+    assert isinstance(data, DataConfig), f"data is not of type DataConfig, got {type(data)}"
+    assert isinstance(model, ModelConfig), f"model is not of type ModelConfig, got {type(model)}"
+    attack_call_args = attack_call_parser.parse_known_args(args=vars(args))[0]
+    attack_params = dict(vars(attack_call_args))
     attack = initialize_attack_config()
-    attack(data, model)
-
-
-if __name__ == "__main__":
-    attack_main()
+    assert isinstance(attack, AttackConfig), f"attack is not of type AttackConfig, got {type(attack)}"
+    attack(data, model, **attack_params)
+    adversarial_scores = attack._score_dict
+    assert isinstance(adversarial_scores, dict), f"adversarial_scores is not a dict, got {type(adversarial_scores)}"
+    _ = {**benign_scores, **adversarial_scores}
+    return data, model, attack
+    
