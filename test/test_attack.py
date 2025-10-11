@@ -3,7 +3,6 @@ import numpy as np
 from deckard.attack import AttackConfig, attack_defaults
 
 
-
 def test_attackconfig_default_initialization():
     config = AttackConfig()
     assert isinstance(config, AttackConfig)
