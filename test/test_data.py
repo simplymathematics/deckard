@@ -26,10 +26,10 @@ class TestDataConfig(unittest.TestCase):
     def test_make_classification_data_loading_and_sampling(self):
         cfg = self.basic_config()
         cfg()
-        X_train = cfg._X_train
-        y_train = cfg._y_train
-        X_test = cfg._X_test
-        y_test = cfg._y_test
+        X_train = cfg.X_train
+        y_train = cfg.y_train
+        X_test = cfg.X_test
+        y_test = cfg.y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -53,10 +53,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=None,
         )
         cfg()
-        X_train = cfg._X_train
-        y_train = cfg._y_train
-        X_test = cfg._X_test
-        y_test = cfg._y_test
+        X_train = cfg.X_train
+        y_train = cfg.y_train
+        X_test = cfg.X_test
+        y_test = cfg.y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -74,10 +74,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=None,
         )
         cfg()
-        X_train = cfg._X_train
-        y_train = cfg._y_train
-        X_test = cfg._X_test
-        y_test = cfg._y_test
+        X_train = cfg.X_train
+        y_train = cfg.y_train
+        X_test = cfg.X_test
+        y_test = cfg.y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -95,10 +95,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=True,
         )
         cfg()
-        X_train = cfg._X_train
-        y_train = cfg._y_train
-        X_test = cfg._X_test
-        y_test = cfg._y_test
+        X_train = cfg.X_train
+        y_train = cfg.y_train
+        X_test = cfg.X_test
+        y_test = cfg.y_test
         self.assertIsInstance(X_train, pd.DataFrame)
         self.assertIsInstance(y_train, pd.Series)
         self.assertIsInstance(X_test, pd.DataFrame)
@@ -160,10 +160,10 @@ class TestDataConfig(unittest.TestCase):
             stratify=True,
         )
         cfg()
-        X_train = cfg._X_train
-        y_train = cfg._y_train
-        X_test = cfg._X_test
-        y_test = cfg._y_test
+        X_train = cfg.X_train
+        y_train = cfg.y_train
+        X_test = cfg.X_test
+        y_test = cfg.y_test
         self.assertEqual(X_train.shape[0], 30)
         self.assertEqual(X_test.shape[0], 30)
         self.assertEqual(X_train.shape[1], 6)
@@ -180,7 +180,7 @@ class TestDataConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             score_path = Path(tmpdirname) / "scores.json"
-            results = cfg(data_filepath=str(data_path), score_filepath=str(score_path))
+            results = cfg(data_filepath=str(data_path), data_score_filepath=str(score_path))
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
             self.assertIn("data_load_time", results)
