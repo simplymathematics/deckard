@@ -99,7 +99,6 @@ class ModelConfig(ConfigBase):
     model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
     model_params: dict = None
-    _model = None
     probability: bool = False
 
     def __post_init__(self):
@@ -145,6 +144,7 @@ class ModelConfig(ConfigBase):
         self.predictions = None
         if self._target_ is None:
             self._target_ = "deckard.ModelConfig"
+        
 
     def __hash__(self):
         return super().__hash__()
@@ -490,6 +490,24 @@ class ModelConfig(ConfigBase):
         return times
 
     def _load_score_file(self, model_score_filepath):
+        """
+        Loads score data from the specified file, merges it with existing scores, and extracts timing and count metrics.
+
+        Parameters
+        ----------
+        model_score_filepath : str or Path
+            Path to the score file to load.
+
+        Returns
+        -------
+        dict
+            A dictionary containing timing and count metrics (keys ending with '_time' or '_n') extracted from the score data.
+
+        Side Effects
+        -----------
+        Updates instance attributes with timing and count metrics, prefixed with an underscore.
+        Merges new score data with existing score data in `self.score_dict`.
+        """
         times = {}
         if model_score_filepath is not None and Path(model_score_filepath).exists():
             new_score_dict = self.load_scores(model_score_filepath)
@@ -553,10 +571,42 @@ class ModelConfig(ConfigBase):
             times,
         )
         times.update(pred_times)
+        
 
         # Train the model if training data is provided and model is not already trained
         self._load_or_train_model(data, model_filepath, times)
+        self._evaluate_and_score(data, times)
+        return data, self
+    
+    def _evaluate_and_score(self, data: DataConfig, times:dict = None):
+        """
+        Evaluates the model by making predictions and scoring them on both training and test data.
 
+        This method performs the following steps:
+        1. Makes predictions on the training data if not already available, and records the prediction time.
+        2. Scores the training predictions if true labels are available and scores have not already been computed.
+        3. Makes predictions on the test data if not already available, and records the prediction time.
+        4. Scores the test predictions if true labels are available and scores have not already been computed.
+        5. Updates the internal score dictionary with timing and scoring information.
+
+        Parameters
+        ----------
+        data : DataConfig
+            The data configuration object containing training and test data (X_train, y_train, X_test, y_test).
+        times : dict, optional
+            A dictionary to store timing information for predictions and scoring.
+
+        Raises
+        ------
+        ValueError
+            If training predictions are not available when attempting to score them.
+
+        Notes
+        -----
+        - Timing information for predictions and scoring is logged and stored in the `times` dictionary.
+        - Score metrics are prefixed with 'train_' for training scores.
+        - The method updates `self.score_dict` with all computed scores and timing information.
+        """
         # Make predictions on training data if not already done
         if self.training_predictions is None or self.training_prediction_time is None:
             start_time = time.process_time()
@@ -568,10 +618,13 @@ class ModelConfig(ConfigBase):
                 f"Training predictions made in {self.training_prediction_time:.2f} seconds",
             )
             times["training_n"] = len(self.training_predictions)
+            times["training_prediction_time"] = self.training_prediction_time
+        else:
+            logger.info("Training predictions already available, skipping prediction step.")
 
         # Score training predictions if true labels are available and scoring not already done
         if self.training_score_time is None or self.score_dict is None:
-            if data.y_train is not None and self.training_predictions is not None:
+            if self.training_predictions is not None:
                 train_scores = self._score(data.y_train, self.training_predictions)
                 # Prefix training scores with 'train_'
                 train_scores = {
@@ -584,11 +637,10 @@ class ModelConfig(ConfigBase):
                 logger.info(
                     f"Training scores computed in {self.score_time:.2f} seconds",
                 )
-                # Save scores if filepath provided
-                if model_score_filepath is not None:
-                    self.save_scores(self.score_dict, model_score_filepath)
-                    logger.info(f"Scores saved to {model_score_filepath}")
-
+            else:
+                raise ValueError("Training predictions not available for scoring.")
+        else:
+            pass                
         # Make predictions on test data if not already done
         if self.predictions is None or self.prediction_time is None:
             if data.X_test is not None:
@@ -612,30 +664,50 @@ class ModelConfig(ConfigBase):
                 logger.info(
                     f"Prediction scores computed in {self.score_time:.2f} seconds",
                 )
-        all_scores = self.score_dict if self.score_dict is not None else {}
-        all_scores.update(times)
+        self.score_dict.update(times)
 
-        # Save training predictions if filepath provided
-        if training_predictions_filepath is not None:
-            self.save_data(
-                filepath=training_predictions_filepath,
-                data=self.training_predictions,
-            )
-            logger.info(
-                f"Training predictions saved to {training_predictions_filepath}",
-            )
-        # Save predictions if filepath provided
-        if predictions_filepath is not None and self.predictions is not None:
-            self.save_data(filepath=predictions_filepath, data=self.predictions)
-            logger.info(f"Predictions saved to {predictions_filepath}")
-        # Save model if filepath provided
-        if model_filepath is not None:
-            self._save_model(model_filepath)
-        # Save scores if filepath provided
-        if model_score_filepath is not None and Path(model_score_filepath).exists():
-            self.save_scores(all_scores, model_score_filepath)
-            logger.info(f"Scores saved to {model_score_filepath}")
-        return all_scores
+    def save(self, training_predictions_filepath, predictions_filepath, model_filepath, model_score_filepath):
+            """
+            Saves model-related outputs to specified filepaths.
+
+            Parameters
+            ----------
+            training_predictions_filepath : str or None
+                Filepath to save training predictions. If None, training predictions are not saved.
+            predictions_filepath : str or None
+                Filepath to save predictions. If None, predictions are not saved.
+            model_filepath : str or None
+                Filepath to save the trained model. If None, model is not saved.
+            model_score_filepath : str or None
+                Filepath to save model scores. If None or file does not exist, scores are not saved.
+
+            Returns
+            -------
+            dict
+                Dictionary containing model scores.
+            """
+            # Save training predictions if filepath provided
+            if training_predictions_filepath is not None:
+                self.save_data(
+                    filepath=training_predictions_filepath,
+                    data=self.training_predictions,
+                )
+                logger.info(
+                    f"Training predictions saved to {training_predictions_filepath}",
+                )
+            # Save predictions if filepath provided
+            if predictions_filepath is not None and self.predictions is not None:
+                self.save_data(filepath=predictions_filepath, data=self.predictions)
+                logger.info(f"Predictions saved to {predictions_filepath}")
+            # Save model if filepath provided
+            if model_filepath is not None:
+                self._save_model(model_filepath)
+            # Save scores if filepath provided
+            all_scores = self.score_dict if self.score_dict is not None else {}
+            if model_score_filepath is not None and Path(model_score_filepath).exists():
+                self.save_scores(all_scores, model_score_filepath)
+                logger.info(f"Scores saved to {model_score_filepath}")
+            return all_scores
 
     def _load_or_train_model(self, data, model_filepath, times):
         match self._model, model_filepath:
