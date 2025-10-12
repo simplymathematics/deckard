@@ -84,7 +84,7 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         data()
-        data, model = model(data=data, model_filepath=self.model_file)
+        score_dict = model(data=data, model_filepath=self.model_file)
         scores = model.score_dict
         self.assertIsInstance(scores, dict)
         self.assertTrue("training_time" in scores and "prediction_time" in scores)

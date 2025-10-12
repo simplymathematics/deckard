@@ -576,7 +576,13 @@ class ModelConfig(ConfigBase):
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_filepath, times)
         self._evaluate_and_score(data, times)
-        return data, self
+        self.save(
+            training_predictions_filepath=training_predictions_filepath,
+            predictions_filepath=predictions_filepath,
+            model_filepath=model_filepath,
+            model_score_filepath=model_score_filepath,
+        )
+        return self.score_dict
     
     def _evaluate_and_score(self, data: DataConfig, times:dict = None):
         """
