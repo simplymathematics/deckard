@@ -574,7 +574,7 @@ class ModelConfig(ConfigBase):
         
 
         # Train the model if training data is provided and model is not already trained
-        self._load_or_train_model(data, model_filepath, times)
+        times = self._load_or_train_model(data, model_filepath, times)
         self._evaluate_and_score(data, times)
         return data, self
     
@@ -745,7 +745,7 @@ class ModelConfig(ConfigBase):
             raise ValueError(
                 "Model is not trained. Please train the model before prediction.",
             )
-
+        return times
 
 # Argument parsing
 model_init_parser = argparse.ArgumentParser(
