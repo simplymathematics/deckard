@@ -332,38 +332,6 @@ class DefenseConfig(ModelConfig):
         return self.score_dict
 
 
-def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
-    """
-    Initializes a DefenseConfig object using the provided command-line arguments.
-
-    This function parses the known arguments from the input argparse.Namespace,
-    retrieves the defense configuration file and optional parameters, and uses them
-    to initialize a DefenseConfig instance. It asserts that the returned object is
-    an instance of DefenseConfig.
-
-    Args
-    ---------
-        args (argparse.Namespace): Command-line arguments containing defense configuration options.
-
-    Returns
-    --------
-        DefenseConfig: The initialized defense configuration object.
-
-    Raises
-    ----------
-        AssertionError: If the initialized config is not an instance of DefenseConfig.
-    """
-    args = defense_init_parser.parse_know_args(args=args)[0]
-    config_file = args.defense_config_file
-    params = args.defense_config_params if args.defense_config_params else ""
-    target = "deckard.DefenseConfig"
-    config = initialize_config(config_file, params, target)
-    assert isinstance(
-        config,
-        DefenseConfig,
-    ), "Initialized config is not an instance of DefenseConfig"
-    return config
-
 
 defense_init_parser = argparse.ArgumentParser(
     description="Initialize DefenseConfig from YAML file",
@@ -396,6 +364,18 @@ defense_parser = argparse.ArgumentParser(
 
 
 def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
+    """
+    Initializes and returns a DefenseConfig object using command-line arguments.
+
+    Args:
+        args (argparse.Namespace): Namespace object containing parsed command-line arguments.
+
+    Returns:
+        DefenseConfig: An initialized DefenseConfig object based on the provided arguments.
+
+    Raises:
+        AssertionError: If the initialized config is not an instance of DefenseConfig.
+    """
     args = defense_parser.parse_args()
     config_file = args.defense_config_file
     params = args.defense_config_params if args.defense_config_params else ""
