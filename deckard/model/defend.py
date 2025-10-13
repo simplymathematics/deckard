@@ -71,13 +71,12 @@ class DefenseConfig(ModelConfig):
     clip_values: tuple = None
     defense_name: str = "art.defences.postprocessor.HighConfidence"
     defense_params: dict = None
-
-    """"
+    """
     Overview
     --------
     Configuration class for applying defenses to machine learning models using the Adversarial Robustness Toolbox (ART).
     Inherits from ModelConfig and extends it to include defense mechanisms.
-    
+
     Parameters
     ----------
     model_type : str
@@ -109,7 +108,7 @@ class DefenseConfig(ModelConfig):
         Time taken to score the defended model.
     score_dict : dict
         Dictionary to store scores and metrics related to the defense.
-    
+
     Methods
     -------
     apply_defense(defense, estimator=None, defense_params) -> BaseEstimator
@@ -129,7 +128,7 @@ class DefenseConfig(ModelConfig):
     _load_score_file(model_score_filepath=None) -> dict
         Load scores from a specified file path and update timing information.
     _evaluate_and_score(data, times=None) -> dict
-        Evaluate the model on the provided data and update scores and timing information.   
+        Evaluate the model on the provided data and update scores and timing information.
     """
 
     def __post_init__(self):
