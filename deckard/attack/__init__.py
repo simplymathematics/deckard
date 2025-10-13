@@ -76,14 +76,6 @@ class AttackConfig(ConfigBase):
     Attributes
     ----------
 
-    attack_name : str
-        The fully qualified name of the attack class to be used.
-    attack_params : dict, optional
-        Parameters to be passed to the attack class constructor.
-    attack_size : int, default=10
-        Number of samples to attack.
-    targeted_attribute : str, optional
-        The attribute to target for inference attacks.
     attack_time : float, optional
         Time taken to execute the attack.
     attack_prediction_time : float, optional
@@ -165,6 +157,34 @@ class AttackConfig(ConfigBase):
             self._target_ = "deckard.AttackConfig"
 
     def _initialize_attack(self, estimator):
+        """
+        Initialize an attack instance for a given estimator.
+
+        This method determines the appropriate attack class and estimator wrapper based on the provided estimator and attack name.
+        It validates the attack type and estimator compatibility, wraps the estimator if necessary, and instantiates the attack.
+        If the attack cannot be initialized with the estimator (Whitebox), it falls back to a Blackbox attack.
+
+        Parameters
+        ----------
+        estimator : object
+            The model or configuration object to attack. Can be a fitted scikit-learn estimator or a ModelConfig instance.
+
+        Returns
+        -------
+        attack : object
+            The initialized attack instance.
+        art_estimator : object
+            The ART-wrapped estimator compatible with the attack.
+        attack_type : str
+            The type of attack (evasion, poisoning, extraction, inference).
+        attack_subtype : str
+            The subtype of the attack.
+
+        Raises
+        ------
+        ValueError
+            If the attack type or estimator type is unsupported, or if the estimator is not fitted.
+        """
         if isinstance(estimator, ModelConfig):
             estimator = estimator._model
         else:

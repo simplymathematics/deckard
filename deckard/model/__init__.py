@@ -27,7 +27,7 @@ class ModelConfig(ConfigBase):
     A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.
 
     Attributes:
-    -------
+    -----------
 
     model_type : str
         The fully qualified class name of the scikit-learn model to instantiate (e.g., "sklearn.svm.SVC").
@@ -149,14 +149,17 @@ class ModelConfig(ConfigBase):
         """
         Trains the internal model using the provided feature matrix and target vector.
 
-        Args:
+        Args
+        -------
             X (pd.DataFrame): Feature matrix for training.
             y (pd.Series): Target vector for training.
 
-        Raises:
+        Raises
+        -------
             ValueError: If the internal model is not initialized.
 
-        Side Effects:
+        Side Effects
+        -------
             - Fits the internal model to the data.
             - Records the training time in seconds.
             - Logs the training duration.
@@ -197,13 +200,16 @@ class ModelConfig(ConfigBase):
         """
         Predicts class probabilities for the input data using the trained model.
 
-        Args:
+        Args
+        -------
             X (pd.DataFrame): Input features for which to predict probabilities.
 
-        Returns:
+        Returns
+        -------
             pd.DataFrame: Predicted class probabilities for each sample in X.
 
-        Raises:
+        Raises
+        -------
             ValueError: If the model is not initialized or does not support probability predictions.
 
         """
@@ -219,11 +225,13 @@ class ModelConfig(ConfigBase):
         """
         Computes classification metrics including accuracy, precision, recall, and F1-score.
 
-        Args:
+        Args
+        -------
             y_true (pd.Series): True labels of the classification task.
             y_pred (pd.Series): Predicted labels from the classifier.
 
-        Returns:
+        Returns
+        -------
             dict: A dictionary containing the following metrics:
                 - "accuracy": Accuracy score.
                 - "precision": Precision score.
@@ -251,17 +259,20 @@ class ModelConfig(ConfigBase):
         """
         Calculate regression error metrics between true and predicted values.
 
-        Args:
+        Args
+        -------
             y_true (pd.Series): Series of true target values.
             y_pred (pd.Series): Series of predicted target values.
 
-        Returns:
+        Returns
+        -------
             dict: Dictionary containing the following regression metrics:
                 - 'mse': Mean Squared Error
                 - 'rmse': Root Mean Squared Error
                 - 'mae': Mean Absolute Error
 
-        Raises:
+        Raises
+        -------
             AssertionError: If y_true and y_pred do not have the same length.
         """
         # Ensure that y_true and y_pred have the same length
@@ -280,14 +291,17 @@ class ModelConfig(ConfigBase):
         """
         Compute and log performance scores for classification or regression.
 
-        Args:
+        -----
+        Args
             y_true (pd.Series): True target values.
             y_pred (pd.Series): Predicted target values.
 
-        Returns:
+        -----
+        Returns
             dict: Dictionary of rounded performance scores.
 
-        Side Effects:
+        -----
+        Side Effects
             - Uses classification or regression scoring based on `self.classifier`.
             - Measures and logs scoring time.
             - Rounds scores based on the size of `y_true`.
@@ -313,13 +327,16 @@ class ModelConfig(ConfigBase):
         """
         Saves the trained model to the specified filepath using pickle.
 
-        Args:
+        Args
+        -------
             filepath (str): The path where the model should be saved.
 
-        Raises:
+        Raises
+        -------
             ValueError: If the model is not initialized.
 
-        Side Effects:
+        Side Effects
+        -------
             - Serializes the model and writes it to the specified file.
             - Logs the save operation.
         """
@@ -350,13 +367,16 @@ class ModelConfig(ConfigBase):
         """
         Loads a trained model from the specified filepath using pickle.
 
-        Args:
+        Args
+        -------
             filepath (str): The path from which the model should be loaded.
-        Raises:
+        Raises
+        -------
             FileNotFoundError: If the specified file does not exist.
             ValueError: If the loaded object is not a valid model instance.
             Exception: For any other issues during the loading process.
-        Side Effects:
+        Side Effects
+        -------
             - Deserializes the model from the specified file and assigns it to self._model.
             - Logs the load operation.
             - Updates self.model_params with the parameters of the loaded model.
@@ -386,13 +406,16 @@ class ModelConfig(ConfigBase):
         """
         Loads predictions from a specified CSV file.
 
-        Args:
+        Args
+        -------
             filepath (str): The path to the CSV file containing predictions.
-        Raises:
+        Raises
+        -------
             FileNotFoundError: If the specified file does not exist.
             ValueError: If the loaded predictions are not in a valid format.
             Exception: For any other issues during the loading process.
-        Side Effects:
+        Side Effects
+        -------
             - Reads predictions from the specified CSV file and assigns them to self.predictions.
             - Logs the load operation.
         """
@@ -418,6 +441,7 @@ class ModelConfig(ConfigBase):
         """
         Loads training and prediction data from the specified file paths and updates the provided times dictionary
         with relevant metadata.
+        
         Parameters
         ----------
         training_predictions_filepath : str or Path or None
@@ -426,6 +450,7 @@ class ModelConfig(ConfigBase):
             File path to the predictions. If None or the file does not exist, predictions are not loaded.
         times : dict
             Dictionary to be updated with timing and count information for training and prediction data.
+        
         Updates
         -------
         self.training_predictions : object
@@ -717,6 +742,22 @@ class ModelConfig(ConfigBase):
         return all_scores
 
     def _load_or_train_model(self, data, model_filepath, times):
+        """
+        Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.
+        If a model file exists at `model_filepath`, attempts to load and validate that the model is fitted.
+        If the loaded model is not fitted, or if no model file exists, trains a new model using `data.X_train` and `data.y_train`.
+        Updates the `times` dictionary with training time and number of training samples.
+        Saves the trained model to `model_filepath` if provided and a new model was trained.
+        Raises:
+            ValueError: If neither a model nor a filepath is provided, or if the model is not trained after loading/training.
+            NotFittedError: If the model is not initialized.
+        Args:
+            data: An object containing training data (`X_train`, `y_train`).
+            model_filepath (str or Path or None): Path to the model file to load or save.
+            times (dict): Dictionary to store training time and number of training samples.
+        Returns:
+            dict: Updated `times` dictionary with training metadata.
+        """
         match self._model, model_filepath:
             case None, None:  # Neither model nor filepath provided
                 raise ValueError(
@@ -797,7 +838,8 @@ def initialize_model_config() -> ModelConfig:
         - Applies any parameter overrides provided via command-line arguments.
         - Instantiates and returns a ModelConfig object based on the composed configuration.
 
-    Returns:
+    Returns
+    -------
         ModelConfig: An instance of ModelConfig initialized with the specified parameters.
     """
     args = model_init_parser.parse_known_args()[0]
@@ -815,10 +857,12 @@ def model_main(args: argparse.Namespace = None) -> None:
     This function sets up logging, parses command-line arguments or uses the provided
     argparse.Namespace, loads data, prepares model parameters, initializes the model,
     and executes the model with the given parameters and data.
-    Args:
+    Args
+    -------
         args (argparse.Namespace, optional): Namespace containing parsed arguments.
             If None, arguments are parsed from the command line.
-    Returns:
+    Returns
+    -------
         tuple: A tuple containing the loaded data and the initialized model instance.
     """
 

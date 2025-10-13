@@ -22,19 +22,21 @@ adversarial attacks. It supports:
 - Integration with :mod:`deckard.model` for training and evaluating models
 - Timing instrumentation for attack execution
 - CLI support for one-line attack execution
+
 Supported Attacks
 -----------------
 Currently supports a selection of attacks from ART, including:
-- Evasion Attacks:
-  - HopSkipJump
-  - BoundaryAttack
-  - AutoProjectedGradientDescent
-- Membership Inference Attacks:
-  - MembershipInferenceBlackBox
-  - MembershipInferenceBaseline
-- Attribute Inference Attacks:
-   - AttributeInferenceBaseline
-   - AttributeInferenceBlackBox
+Evasion Attacks:
+- HopSkipJump
+- BoundaryAttack
+- AutoProjectedGradientDescent
+Membership Inference Attacks:
+- MembershipInferenceBlackBox
+- MembershipInferenceBaseline
+Attribute Inference Attacks:
+- AttributeInferenceBaseline
+- AttributeInferenceBlackBox
+
 (Extendable to other attacks in future versions.)
 
 Usage
@@ -50,7 +52,7 @@ You can run attacks directly from the terminal:
 
 
 Programmatic example:
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 You can also use the API programmatically:
 
 .. code-block:: python
@@ -99,7 +101,7 @@ Internals
 ---------
 
 Timing and logging
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 :class:`~deckard.data.AttackConfig` uses the `time` module to measure execution time for key steps:
 - Attack setup time
 - Attack execution time
