@@ -88,7 +88,7 @@ def test_attackconfig_get_benign_preds_shape():
 
 def test_attackconfig_get_feature_vector_preds_shape():
     class DummyData:
-        def __call__(self, targeted_attribute):
+        def __call__(self):
             X_train = pd.DataFrame(np.random.rand(20, 3), columns=["a", "b", "c"])
             y_train = pd.Series([0] * 10 + [1] * 10)
             a_train = pd.Series(["x"] * 10 + ["y"] * 10)
