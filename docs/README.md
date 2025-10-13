@@ -10,16 +10,16 @@ It includes API references, usage guides, and configuration examples for modules
 ## Directory Structure
 
 docs/
-├── Makefile
-├── make.bat
-├── README.md ← this file
-└── source/
-├── conf.py ← Sphinx configuration
-├── index.rst ← main documentation entry point
-├── data.rst
-├── model.rst
-├── attack.rst
-└── _static/ ← optional static assets (CSS, images)
+├── Makefile  
+├── make.bat  
+├── README.md ← this file   
+└── source/  
+├── conf.py ← Sphinx configuration  
+├── index.rst ← main documentation entry point  
+├── data.rst  
+├── model.rst  
+├── attack.rst  
+└── _static/ ← optional static assets (CSS, images)  
 
 
 ## Prerequisites
