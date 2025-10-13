@@ -1,0 +1,1003 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deckard.model &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8f098830"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">deckard.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for deckard.model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">precision_score</span><span class="p">,</span> <span class="n">recall_score</span><span class="p">,</span> <span class="n">f1_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFittedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..data</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_parser</span><span class="p">,</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">data_main</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_config</span><span class="p">,</span> <span class="n">ConfigBase</span><span class="p">,</span> <span class="n">create_parser_from_function</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">supported_sklearn_libraries</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sklearn&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ModelConfig">
+<a class="viewcode-back" href="../../model.html#deckard.model.ModelConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">    -----------</span>
+
+<span class="sd">    model_type : str</span>
+<span class="sd">        The fully qualified class name of the scikit-learn model to instantiate (e.g., &quot;sklearn.svm.SVC&quot;).</span>
+<span class="sd">    classifier : bool</span>
+<span class="sd">        Indicates whether the model is a classifier (True) or a regressor (False).</span>
+<span class="sd">    model_params : dict or None</span>
+<span class="sd">        Dictionary of parameters to initialize the model with. If None, default parameters are used.</span>
+<span class="sd">    _model : object or None</span>
+<span class="sd">        The instantiated scikit-learn model object.</span>
+<span class="sd">    probability : bool</span>
+<span class="sd">        If True, enables probability prediction (requires model support).</span>
+<span class="sd">    training_time : float or None</span>
+<span class="sd">        Time taken to train the model (in seconds).</span>
+<span class="sd">    prediction_time : float or None</span>
+<span class="sd">        Time taken to make predictions (in seconds).</span>
+<span class="sd">    training_prediction_time : float or None</span>
+<span class="sd">        Time taken to make predictions during training (in seconds).</span>
+<span class="sd">    training_score_time : float or None</span>
+<span class="sd">        Time taken to compute training scoring metrics (in seconds).</span>
+<span class="sd">    prediction_score_time : float or None</span>
+<span class="sd">        Time taken to compute prediction scoring metrics (in seconds).</span>
+<span class="sd">    score_dict : dict or None</span>
+<span class="sd">        Dictionary containing the latest computed scores and timing information.</span>
+<span class="sd">    _training_n : int or None</span>
+<span class="sd">        Number of training samples.</span>
+<span class="sd">    _prediction_n : int or None</span>
+<span class="sd">        Number of prediction samples.</span>
+<span class="sd">    training_predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None</span>
+<span class="sd">        Predictions made on the training data.</span>
+<span class="sd">    predictions : pd.Series, pd.DataFrame, np.ndarray, list, or None</span>
+<span class="sd">        Predictions made on the prediction data.</span>
+<span class="sd">    _target_ : str</span>
+<span class="sd">        Internal identifier for the class.</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">    -------</span>
+<span class="sd">    __post_init__(): Initializes the model based on the provided type and parameters.</span>
+<span class="sd">    __hash__(): Computes a hash value for the instance based on its attributes.</span>
+<span class="sd">    _train(X, y): Trains the model using the provided feature matrix and target vector.</span>
+<span class="sd">    _predict(X): Generates predictions for the input data.</span>
+<span class="sd">    _predict_proba(X): Predicts class probabilities for the input data (if supported).</span>
+<span class="sd">    _classification_scores(y_true, y_pred): Computes classification metrics.</span>
+<span class="sd">    _regression_scores(y_true, y_pred): Computes regression metrics.</span>
+<span class="sd">    _score(y_true, y_pred, train): Computes and logs performance scores.</span>
+<span class="sd">    __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.</span>
+<span class="sd">    _save_model(filepath): Saves the model to the specified filepath.</span>
+<span class="sd">    _load_model(filepath): Loads the model from the specified filepath.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">    -------</span>
+<span class="sd">    AssertionError:</span>
+<span class="sd">        If the specified model type is not supported.</span>
+<span class="sd">    ValueError:</span>
+<span class="sd">        If the model is not initialized, not trained, or if prediction is attempted without a trained model.</span>
+<span class="sd">    NotImplementedError:</span>
+<span class="sd">        If model saving/loading is attempted for unsupported model types.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    -------</span>
+<span class="sd">    data_config = DataConfig()</span>
+<span class="sd">    data = data_config()</span>
+<span class="sd">    model_config = ModelConfig(model_type=&quot;sklearn.ensemble.RandomForestClassifier&quot;, classifier=True, model_params={&quot;n_estimators&quot;: 100})</span>
+<span class="sd">    train_scores = model_config(data, train=True, score=True)</span>
+<span class="sd">    test_scores = model_config(data, train=False, score=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sklearn.ensemble.RandomForestClassifier&quot;</span>
+    <span class="n">classifier</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">model_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">probability</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the scikit-learn model specified by `self.model_type` using the provided parameters.</span>
+
+<span class="sd">        This method:</span>
+<span class="sd">            - Ensures that only scikit-learn models are supported by checking the prefix of `self.model_type`.</span>
+<span class="sd">            - Dynamically imports the specified scikit-learn model class.</span>
+<span class="sd">            - Instantiates the model with `self.model_params` if provided, otherwise with default parameters.</span>
+<span class="sd">            - Updates `self.model_params` with the parameters of the instantiated model.</span>
+<span class="sd">            - Initializes an empty dictionary for storing model scores.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: If `self.model_type` does not start with &quot;sklearn.&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Import the model class from sklearn</span>
+        <span class="n">library</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">library</span> <span class="ow">in</span> <span class="n">supported_sklearn_libraries</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Only </span><span class="si">{</span><span class="n">supported_sklearn_libraries</span><span class="si">}</span><span class="s2"> models are supported&quot;</span>
+        <span class="c1"># Dynamically import the model class</span>
+        <span class="n">module_name</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+        <span class="n">model_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+        <span class="c1"># initialize model with parameters if provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">get_params</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_n</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prediction_n</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.ModelConfig&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Trains the internal model using the provided feature matrix and target vector.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            X (pd.DataFrame): Feature matrix for training.</span>
+<span class="sd">            y (pd.Series): Target vector for training.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            ValueError: If the internal model is not initialized.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        -------</span>
+<span class="sd">            - Fits the internal model to the data.</span>
+<span class="sd">            - Records the training time in seconds.</span>
+<span class="sd">            - Logs the training duration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="s2">&quot;fit&quot;</span><span class="p">),</span> <span class="s2">&quot;Model does not have a fit method&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_training_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model trained in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates predictions for the input data using the initialized model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (pd.DataFrame): Input features for prediction.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: Predicted values.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the model has not been initialized.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Type of X: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2">, shape of X: </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">y_pred</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts class probabilities for the input data using the trained model.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            X (pd.DataFrame): Input features for which to predict probabilities.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            pd.DataFrame: Predicted class probabilities for each sample in X.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            ValueError: If the model is not initialized or does not support probability predictions.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not initialized&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">probability</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model does not support probability predictions&quot;</span><span class="p">)</span>
+        <span class="n">y_proba</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">y_proba</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classification_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes classification metrics including accuracy, precision, recall, and F1-score.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            y_true (pd.Series): True labels of the classification task.</span>
+<span class="sd">            y_pred (pd.Series): Predicted labels from the classifier.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            dict: A dictionary containing the following metrics:</span>
+<span class="sd">                - &quot;accuracy&quot;: Accuracy score.</span>
+<span class="sd">                - &quot;precision&quot;: Precision score.</span>
+<span class="sd">                - &quot;recall&quot;: Recall score.</span>
+<span class="sd">                - &quot;f1-score&quot;: F1 score.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: If y_true and y_pred do not have the same length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure that y_true and y_pred have the same length</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">precision</span> <span class="o">=</span> <span class="n">precision_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">recall</span> <span class="o">=</span> <span class="n">recall_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">acc</span><span class="p">,</span>
+            <span class="s2">&quot;precision&quot;</span><span class="p">:</span> <span class="n">precision</span><span class="p">,</span>
+            <span class="s2">&quot;recall&quot;</span><span class="p">:</span> <span class="n">recall</span><span class="p">,</span>
+            <span class="s2">&quot;f1-score&quot;</span><span class="p">:</span> <span class="n">f1</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_regression_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate regression error metrics between true and predicted values.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            y_true (pd.Series): Series of true target values.</span>
+<span class="sd">            y_pred (pd.Series): Series of predicted target values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            dict: Dictionary containing the following regression metrics:</span>
+<span class="sd">                - &#39;mse&#39;: Mean Squared Error</span>
+<span class="sd">                - &#39;rmse&#39;: Root Mean Squared Error</span>
+<span class="sd">                - &#39;mae&#39;: Mean Absolute Error</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            AssertionError: If y_true and y_pred do not have the same length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure that y_true and y_pred have the same length</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="s2">&quot;y_true and y_pred must have the same length&quot;</span>
+        <span class="n">mse</span> <span class="o">=</span> <span class="p">((</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">rmse</span> <span class="o">=</span> <span class="n">mse</span><span class="o">**</span><span class="mf">0.5</span>
+        <span class="n">mae</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mse&quot;</span><span class="p">:</span> <span class="n">mse</span><span class="p">,</span>
+            <span class="s2">&quot;rmse&quot;</span><span class="p">:</span> <span class="n">rmse</span><span class="p">,</span>
+            <span class="s2">&quot;mae&quot;</span><span class="p">:</span> <span class="n">mae</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute and log performance scores for classification or regression.</span>
+
+<span class="sd">        -----</span>
+<span class="sd">        Args</span>
+<span class="sd">            y_true (pd.Series): True target values.</span>
+<span class="sd">            y_pred (pd.Series): Predicted target values.</span>
+
+<span class="sd">        -----</span>
+<span class="sd">        Returns</span>
+<span class="sd">            dict: Dictionary of rounded performance scores.</span>
+
+<span class="sd">        -----</span>
+<span class="sd">        Side Effects</span>
+<span class="sd">            - Uses classification or regression scoring based on `self.classifier`.</span>
+<span class="sd">            - Measures and logs scoring time.</span>
+<span class="sd">            - Rounds scores based on the size of `y_true`.</span>
+<span class="sd">            - Logs each rounded score.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classification_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regression_scores</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">sig_figs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">sig_figs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">sig_figs</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rounding scores to </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">sig_figs</span><span class="p">)</span><span class="si">}</span><span class="s2"> significant figures&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Scores:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scores</span><span class="p">:</span>
+            <span class="n">rounded</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="n">score</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">sig_figs</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">rounded</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">scores</span><span class="p">[</span><span class="n">score</span><span class="p">]</span> <span class="o">=</span> <span class="n">rounded</span>
+        <span class="k">return</span> <span class="n">scores</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the trained model to the specified filepath using pickle.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            filepath (str): The path where the model should be saved.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            ValueError: If the model is not initialized.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        -------</span>
+<span class="sd">            - Serializes the model and writes it to the specified file.</span>
+<span class="sd">            - Logs the save operation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">supported_sklearn_libraries</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">check_is_fitted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">NotFittedError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Model is not fitted yet. Train the model before saving.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Model saving is only implemented for sklearn models.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model not trained&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Ensure the directory exists</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># Touch the file to ensure it exists</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model saved to </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;Model file </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2"> was not created&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a trained model from the specified filepath using pickle.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            filepath (str): The path from which the model should be loaded.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">            ValueError: If the loaded object is not a valid model instance.</span>
+<span class="sd">            Exception: For any other issues during the loading process.</span>
+<span class="sd">        Side Effects</span>
+<span class="sd">        -------</span>
+<span class="sd">            - Deserializes the model from the specified file and assigns it to self._model.</span>
+<span class="sd">            - Logs the load operation.</span>
+<span class="sd">            - Updates self.model_params with the parameters of the loaded model.</span>
+<span class="sd">            - Updates self._model to the loaded model instance.</span>
+<span class="sd">            - Updates self.model_type to the class name of the loaded model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">loaded_model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">,</span> <span class="s2">&quot;predict&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Loaded object is not a valid model instance&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">loaded_model</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">get_params</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model loaded from </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error loading model: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_predictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads predictions from a specified CSV file.</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        -------</span>
+<span class="sd">            filepath (str): The path to the CSV file containing predictions.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">            FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">            ValueError: If the loaded predictions are not in a valid format.</span>
+<span class="sd">            Exception: For any other issues during the loading process.</span>
+<span class="sd">        Side Effects</span>
+<span class="sd">        -------</span>
+<span class="sd">            - Reads predictions from the specified CSV file and assigns them to self.predictions.</span>
+<span class="sd">            - Logs the load operation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Loaded predictions are not in a valid format&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions loaded from </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error loading predictions: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">predictions</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_all_predictions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">training_predictions_filepath</span><span class="p">,</span>
+        <span class="n">predictions_filepath</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads training and prediction data from the specified file paths and updates the provided times dictionary</span>
+<span class="sd">        with relevant metadata.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        training_predictions_filepath : str or Path or None</span>
+<span class="sd">            File path to the training predictions. If None or the file does not exist, training predictions are not loaded.</span>
+<span class="sd">        predictions_filepath : str or Path or None</span>
+<span class="sd">            File path to the predictions. If None or the file does not exist, predictions are not loaded.</span>
+<span class="sd">        times : dict</span>
+<span class="sd">            Dictionary to be updated with timing and count information for training and prediction data.</span>
+
+<span class="sd">        Updates</span>
+<span class="sd">        -------</span>
+<span class="sd">        self.training_predictions : object</span>
+<span class="sd">            Loaded training predictions, if available.</span>
+<span class="sd">        self.training_prediction_time : object</span>
+<span class="sd">            Time associated with training predictions, must be set if training predictions are loaded.</span>
+<span class="sd">        self.predictions : object</span>
+<span class="sd">            Loaded predictions, if available.</span>
+<span class="sd">        self.prediction_time : object</span>
+<span class="sd">            Time associated with predictions, must be set if predictions are loaded.</span>
+<span class="sd">        times[&quot;training_prediction_time&quot;] : object</span>
+<span class="sd">            Updated with training prediction time.</span>
+<span class="sd">        times[&quot;training_n&quot;] : int</span>
+<span class="sd">            Updated with the number of training predictions.</span>
+<span class="sd">        times[&quot;prediction_time&quot;] : object</span>
+<span class="sd">            Updated with prediction time.</span>
+<span class="sd">        times[&quot;prediction_n&quot;] : int</span>
+<span class="sd">            Updated with the number of predictions.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The updated times dictionary.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        AssertionError</span>
+<span class="sd">            If training or prediction time is not set when corresponding predictions are loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Load the training predictions if provided</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">training_predictions_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">training_predictions_filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_predictions</span><span class="p">(</span>
+                <span class="n">training_predictions_filepath</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">),</span> <span class="s2">&quot;Training prediction time must be set if training predictions are loaded&quot;</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_prediction_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">)</span>
+
+        <span class="c1"># Load the predictions if provided</span>
+        <span class="k">if</span> <span class="n">predictions_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">predictions_filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_predictions</span><span class="p">(</span><span class="n">predictions_filepath</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">),</span> <span class="s2">&quot;Prediction time must be set if predictions are loaded&quot;</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;prediction_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;prediction_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">times</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_score_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_score_filepath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads score data from the specified file, merges it with existing scores, and extracts timing and count metrics.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model_score_filepath : str or Path</span>
+<span class="sd">            Path to the score file to load.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing timing and count metrics (keys ending with &#39;_time&#39; or &#39;_n&#39;) extracted from the score data.</span>
+
+<span class="sd">        Side Effects</span>
+<span class="sd">        -----------</span>
+<span class="sd">        Updates instance attributes with timing and count metrics, prefixed with an underscore.</span>
+<span class="sd">        Merges new score data with existing score data in `self.score_dict`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">model_score_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_score_filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">new_score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_scores</span><span class="p">(</span><span class="n">model_score_filepath</span><span class="p">)</span>
+            <span class="n">old_score_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+            <span class="c1"># Update old_score_dict with new_score_dict</span>
+            <span class="n">score_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">old_score_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">new_score_dict</span><span class="p">}</span>
+            <span class="c1"># pop keys ending with _time and add to times dict</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">score_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_time&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_n&quot;</span><span class="p">):</span>
+                    <span class="n">times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">score_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="c1"># Update all attributes in times dict</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">times</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">times</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">times</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
+        <span class="n">model_filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">predictions_filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">training_predictions_filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">model_score_filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Executes the model workflow: training, prediction, scoring, and model persistence.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : DataConfig</span>
+<span class="sd">            An instance of DataConfig containing training and test data.</span>
+<span class="sd">        model_filepath : str or None, optional</span>
+<span class="sd">            Path to save or load the model. If provided, the model will be loaded from or saved to this path.</span>
+<span class="sd">        predictions_filepath : str or None, optional</span>
+<span class="sd">            Path to save the predictions. If provided, the predictions will be saved to this path.</span>
+<span class="sd">        model_score_filepath : str or None, optional</span>
+<span class="sd">            Path to load existing scores. If provided, scores will be loaded from this path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary containing scores and timing information for training, prediction, and scoring.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If prediction is requested without a trained or loaded model.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure data is loaded</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">X_train</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Data not loaded. Please load data before calling the model.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Load the model_score_filepath if provided</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_score_file</span><span class="p">(</span><span class="n">model_score_filepath</span><span class="p">)</span>
+
+        <span class="c1"># Load predictions from filepaths and update times</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_all_predictions</span><span class="p">(</span>
+            <span class="n">training_predictions_filepath</span><span class="p">,</span>
+            <span class="n">predictions_filepath</span><span class="p">,</span>
+            <span class="n">times</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Train the model if training data is provided and model is not already trained</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_or_train_model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model_filepath</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_and_score</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">training_predictions_filepath</span><span class="o">=</span><span class="n">training_predictions_filepath</span><span class="p">,</span>
+            <span class="n">predictions_filepath</span><span class="o">=</span><span class="n">predictions_filepath</span><span class="p">,</span>
+            <span class="n">model_filepath</span><span class="o">=</span><span class="n">model_filepath</span><span class="p">,</span>
+            <span class="n">model_score_filepath</span><span class="o">=</span><span class="n">model_score_filepath</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_and_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span> <span class="n">times</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluates the model by making predictions and scoring them on both training and test data.</span>
+
+<span class="sd">        This method performs the following steps:</span>
+<span class="sd">        1. Makes predictions on the training data if not already available, and records the prediction time.</span>
+<span class="sd">        2. Scores the training predictions if true labels are available and scores have not already been computed.</span>
+<span class="sd">        3. Makes predictions on the test data if not already available, and records the prediction time.</span>
+<span class="sd">        4. Scores the test predictions if true labels are available and scores have not already been computed.</span>
+<span class="sd">        5. Updates the internal score dictionary with timing and scoring information.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : DataConfig</span>
+<span class="sd">            The data configuration object containing training and test data (X_train, y_train, X_test, y_test).</span>
+<span class="sd">        times : dict, optional</span>
+<span class="sd">            A dictionary to store timing information for predictions and scoring.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If training predictions are not available when attempting to score them.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - Timing information for predictions and scoring is logged and stored in the `times` dictionary.</span>
+<span class="sd">        - Score metrics are prefixed with &#39;train_&#39; for training scores.</span>
+<span class="sd">        - The method updates `self.score_dict` with all computed scores and timing information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Make predictions on training data if not already done</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_prediction_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Training predictions made in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">)</span>
+            <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_prediction_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_prediction_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Training predictions already available, skipping prediction step.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Score training predictions if true labels are available and scoring not already done</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+                <span class="n">train_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+                <span class="c1"># Prefix training scores with &#39;train_&#39;</span>
+                <span class="n">train_scores</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">&quot;train_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">train_scores</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">train_scores</span><span class="p">)</span>
+                <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_score_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Training scores computed in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_score_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Training predictions not available for scoring.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="c1"># Make predictions on test data if not already done</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">X_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
+                <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+                <span class="n">times</span><span class="p">[</span><span class="s2">&quot;prediction_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions made in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prediction_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+                <span class="n">times</span><span class="p">[</span><span class="s2">&quot;prediction_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No test data available for prediction.&quot;</span><span class="p">)</span>
+        <span class="c1"># Score test predictions if true labels are available and scoring not already done</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">y_test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">test_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">test_scores</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+                <span class="n">times</span><span class="p">[</span><span class="s2">&quot;prediction_score_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Prediction scores computed in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prediction_score_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No test labels available for scoring.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModelConfig.save">
+<a class="viewcode-back" href="../../model.html#deckard.model.ModelConfig.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">training_predictions_filepath</span><span class="p">,</span>
+        <span class="n">predictions_filepath</span><span class="p">,</span>
+        <span class="n">model_filepath</span><span class="p">,</span>
+        <span class="n">model_score_filepath</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves model-related outputs to specified filepaths.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        training_predictions_filepath : str or None</span>
+<span class="sd">            Filepath to save training predictions. If None, training predictions are not saved.</span>
+<span class="sd">        predictions_filepath : str or None</span>
+<span class="sd">            Filepath to save predictions. If None, predictions are not saved.</span>
+<span class="sd">        model_filepath : str or None</span>
+<span class="sd">            Filepath to save the trained model. If None, model is not saved.</span>
+<span class="sd">        model_score_filepath : str or None</span>
+<span class="sd">            Filepath to save model scores. If None or file does not exist, scores are not saved.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary containing model scores.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Save training predictions if filepath provided</span>
+        <span class="k">if</span> <span class="n">training_predictions_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span>
+                <span class="n">filepath</span><span class="o">=</span><span class="n">training_predictions_filepath</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training_predictions</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Training predictions saved to </span><span class="si">{</span><span class="n">training_predictions_filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># Save predictions if filepath provided</span>
+        <span class="k">if</span> <span class="n">predictions_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">predictions_filepath</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions saved to </span><span class="si">{</span><span class="n">predictions_filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Save model if filepath provided</span>
+        <span class="k">if</span> <span class="n">model_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_model</span><span class="p">(</span><span class="n">model_filepath</span><span class="p">)</span>
+        <span class="c1"># Save scores if filepath provided</span>
+        <span class="n">all_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">model_score_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_score_filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">(</span><span class="n">all_scores</span><span class="p">,</span> <span class="n">model_score_filepath</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scores saved to </span><span class="si">{</span><span class="n">model_score_filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">all_scores</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_or_train_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">model_filepath</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.</span>
+<span class="sd">        If a model file exists at `model_filepath`, attempts to load and validate that the model is fitted.</span>
+<span class="sd">        If the loaded model is not fitted, or if no model file exists, trains a new model using `data.X_train` and `data.y_train`.</span>
+<span class="sd">        Updates the `times` dictionary with training time and number of training samples.</span>
+<span class="sd">        Saves the trained model to `model_filepath` if provided and a new model was trained.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If neither a model nor a filepath is provided, or if the model is not trained after loading/training.</span>
+<span class="sd">            NotFittedError: If the model is not initialized.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            data: An object containing training data (`X_train`, `y_train`).</span>
+<span class="sd">            model_filepath (str or Path or None): Path to the model file to load or save.</span>
+<span class="sd">            times (dict): Dictionary to store training time and number of training samples.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Updated `times` dictionary with training metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">model_filepath</span><span class="p">:</span>
+            <span class="k">case</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Neither model nor filepath provided</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Model not trained or loaded. Please train or load a model before prediction.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span>  <span class="c1"># Model and/or filepath provided</span>
+                <span class="k">if</span> <span class="n">model_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model file </span><span class="si">{</span><span class="n">model_filepath</span><span class="si">}</span><span class="s2"> exists. Loading model.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_load_model</span><span class="p">(</span><span class="n">model_filepath</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>  <span class="c1"># validate that the  loaded model is trained</span>
+                        <span class="n">check_is_fitted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model is already trained.&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">NotFittedError</span><span class="p">:</span>
+                        <span class="c1"># train the model if it is not fitted</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_train</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
+                        <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span>
+                        <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_training_n</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># train the model if no model exists at the filepath</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_train</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span><span class="p">)</span>
+                    <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_time</span>
+                    <span class="n">times</span><span class="p">[</span><span class="s2">&quot;training_n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_training_n</span>
+                    <span class="k">if</span> <span class="n">model_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_save_model</span><span class="p">(</span><span class="n">model_filepath</span><span class="p">)</span>
+
+        <span class="c1"># Validate model is trained</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s2">&quot;Model is not initialized&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">check_is_fitted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NotFittedError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Model is not trained. Please train the model before prediction.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">times</span></div>
+
+
+
+<span class="c1"># Argument parsing</span>
+<span class="n">model_init_parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ModelConfig initialization parameters&quot;</span><span class="p">,</span>
+    <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">conflict_handler</span><span class="o">=</span><span class="s2">&quot;resolve&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model_init_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--model_config_file&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to YAML config file&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model_init_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--model_config_params&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+    <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Override configuration parameters as key=value pairs&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model_call_parser</span> <span class="o">=</span> <span class="n">create_parser_from_function</span><span class="p">(</span>
+    <span class="n">ModelConfig</span><span class="o">.</span><span class="fm">__call__</span><span class="p">,</span>
+    <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">exclude</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+    <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">model_parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ModelConfig parameters&quot;</span><span class="p">,</span>
+    <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">model_init_parser</span><span class="p">,</span> <span class="n">model_call_parser</span><span class="p">],</span>
+    <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">conflict_handler</span><span class="o">=</span><span class="s2">&quot;resolve&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="initialize_model_config">
+<a class="viewcode-back" href="../../model.html#deckard.model.initialize_model_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_model_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ModelConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initializes a ModelConfig instance using command-line arguments and configuration files.</span>
+
+<span class="sd">    This function:</span>
+<span class="sd">        - Parses command-line arguments for model configuration.</span>
+<span class="sd">        - Loads a YAML configuration file if specified.</span>
+<span class="sd">        - Applies any parameter overrides provided via command-line arguments.</span>
+<span class="sd">        - Instantiates and returns a ModelConfig object based on the composed configuration.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        ModelConfig: An instance of ModelConfig initialized with the specified parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">model_init_parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">config_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model_config_file</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">model_config_params</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model_config_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="s2">&quot;deckard.ModelConfig&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_config</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">),</span> <span class="s2">&quot;Config must be an instance of ModelConfig&quot;</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+
+<div class="viewcode-block" id="model_main">
+<a class="viewcode-back" href="../../model.html#deckard.model.model_main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">model_main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main entry point for initializing and running the model pipeline.</span>
+<span class="sd">    This function sets up logging, parses command-line arguments or uses the provided</span>
+<span class="sd">    argparse.Namespace, loads data, prepares model parameters, initializes the model,</span>
+<span class="sd">    and executes the model with the given parameters and data.</span>
+<span class="sd">    Args</span>
+<span class="sd">    -------</span>
+<span class="sd">        args (argparse.Namespace, optional): Namespace containing parsed arguments.</span>
+<span class="sd">            If None, arguments are parsed from the command line.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        tuple: A tuple containing the loaded data and the initialized model instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ModelConfig parameters&quot;</span><span class="p">,</span>
+            <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">data_parser</span><span class="p">,</span> <span class="n">model_call_parser</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+        <span class="p">),</span> <span class="s2">&quot;args must be an argparse.Namespace&quot;</span>
+
+    <span class="n">data_args</span> <span class="o">=</span> <span class="n">data_parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data_main</span><span class="p">(</span><span class="n">data_args</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">()</span>
+    <span class="n">model_args</span> <span class="o">=</span> <span class="n">model_call_parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">model_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">model_args</span><span class="p">))</span>
+    <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">model_params</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">model</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

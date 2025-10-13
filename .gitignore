@@ -122,4 +122,5 @@ examples/*/.dvc/tmp/rwlock.lock
 old_examples
 
 
-./build/lib/
+
+build/lib/deckard/*

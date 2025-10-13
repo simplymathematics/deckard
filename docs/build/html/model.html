@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8f098830"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Attack" href="attack.html" />
+    <link rel="prev" title="Data" href="data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.ModelConfig.classifier"><code class="docutils literal notranslate"><span class="pre">ModelConfig.classifier</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.ModelConfig.model_params"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.ModelConfig.model_type"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.ModelConfig.probability"><code class="docutils literal notranslate"><span class="pre">ModelConfig.probability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.model.ModelConfig.save"><code class="docutils literal notranslate"><span class="pre">ModelConfig.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.initialize_model_config"><code class="docutils literal notranslate"><span class="pre">initialize_model_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.model.model_main"><code class="docutils literal notranslate"><span class="pre">model_main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#supported-frameworks">Supported frameworks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scoring">Scoring</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#persistence">Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Main Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#features">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
+      <li class="breadcrumb-item active">Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="model">
+<h1>Model<a class="headerlink" href="#model" title="Link to this heading"></a></h1>
+<p>The <a class="reference internal" href="#module-deckard.model" title="deckard.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">model</span></code></a> module defines the <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a> dataclass,
+which provides a complete pipeline for <strong>model configuration, training, evaluation, and persistence</strong>.
+It supports dynamic scikit-learn model instantiation, configurable parameters, CLI execution,
+and integration with the <a class="reference internal" href="data.html#module-deckard.data" title="deckard.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data</span></code></a> module.</p>
+<dl class="py class" id="module-deckard.model">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">ModelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deckard.utils.ConfigBase'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sklearn.ensemble.RandomForestClassifier'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model.html#ModelConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.ModelConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></p>
+<p>A configuration and utility class for managing scikit-learn model instantiation, training, prediction, scoring, and persistence.</p>
+<section id="attributes">
+<h2>Attributes:<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>model_type<span class="classifier">str</span></dt><dd><p>The fully qualified class name of the scikit-learn model to instantiate (e.g., “sklearn.svm.SVC”).</p>
+</dd>
+<dt>classifier<span class="classifier">bool</span></dt><dd><p>Indicates whether the model is a classifier (True) or a regressor (False).</p>
+</dd>
+<dt>model_params<span class="classifier">dict or None</span></dt><dd><p>Dictionary of parameters to initialize the model with. If None, default parameters are used.</p>
+</dd>
+<dt>_model<span class="classifier">object or None</span></dt><dd><p>The instantiated scikit-learn model object.</p>
+</dd>
+<dt>probability<span class="classifier">bool</span></dt><dd><p>If True, enables probability prediction (requires model support).</p>
+</dd>
+<dt>training_time<span class="classifier">float or None</span></dt><dd><p>Time taken to train the model (in seconds).</p>
+</dd>
+<dt>prediction_time<span class="classifier">float or None</span></dt><dd><p>Time taken to make predictions (in seconds).</p>
+</dd>
+<dt>training_prediction_time<span class="classifier">float or None</span></dt><dd><p>Time taken to make predictions during training (in seconds).</p>
+</dd>
+<dt>training_score_time<span class="classifier">float or None</span></dt><dd><p>Time taken to compute training scoring metrics (in seconds).</p>
+</dd>
+<dt>prediction_score_time<span class="classifier">float or None</span></dt><dd><p>Time taken to compute prediction scoring metrics (in seconds).</p>
+</dd>
+<dt>score_dict<span class="classifier">dict or None</span></dt><dd><p>Dictionary containing the latest computed scores and timing information.</p>
+</dd>
+<dt>_training_n<span class="classifier">int or None</span></dt><dd><p>Number of training samples.</p>
+</dd>
+<dt>_prediction_n<span class="classifier">int or None</span></dt><dd><p>Number of prediction samples.</p>
+</dd>
+<dt>training_predictions<span class="classifier">pd.Series, pd.DataFrame, np.ndarray, list, or None</span></dt><dd><p>Predictions made on the training data.</p>
+</dd>
+<dt>predictions<span class="classifier">pd.Series, pd.DataFrame, np.ndarray, list, or None</span></dt><dd><p>Predictions made on the prediction data.</p>
+</dd>
+<dt>_target_<span class="classifier">str</span></dt><dd><p>Internal identifier for the class.</p>
+</dd>
+</dl>
+</section>
+<section id="methods">
+<h2>Methods:<a class="headerlink" href="#methods" title="Link to this heading"></a></h2>
+<p>__post_init__(): Initializes the model based on the provided type and parameters.
+__hash__(): Computes a hash value for the instance based on its attributes.
+_train(X, y): Trains the model using the provided feature matrix and target vector.
+_predict(X): Generates predictions for the input data.
+_predict_proba(X): Predicts class probabilities for the input data (if supported).
+_classification_scores(y_true, y_pred): Computes classification metrics.
+_regression_scores(y_true, y_pred): Computes regression metrics.
+_score(y_true, y_pred, train): Computes and logs performance scores.
+__call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
+_save_model(filepath): Saves the model to the specified filepath.
+_load_model(filepath): Loads the model from the specified filepath.</p>
+</section>
+<section id="raises">
+<h2>Raises:<a class="headerlink" href="#raises" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>AssertionError:</dt><dd><p>If the specified model type is not supported.</p>
+</dd>
+<dt>ValueError:</dt><dd><p>If the model is not initialized, not trained, or if prediction is attempted without a trained model.</p>
+</dd>
+<dt>NotImplementedError:</dt><dd><p>If model saving/loading is attempted for unsupported model types.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>data_config = DataConfig()
+data = data_config()
+model_config = ModelConfig(model_type=”sklearn.ensemble.RandomForestClassifier”, classifier=True, model_params={“n_estimators”: 100})
+train_scores = model_config(data, train=True, score=True)
+test_scores = model_config(data, train=False, score=True)</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig.classifier">
+<span class="sig-name descname"><span class="pre">classifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#deckard.model.ModelConfig.classifier" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig.model_params">
+<span class="sig-name descname"><span class="pre">model_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.model.ModelConfig.model_params" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig.model_type">
+<span class="sig-name descname"><span class="pre">model_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sklearn.ensemble.RandomForestClassifier'</span></em><a class="headerlink" href="#deckard.model.ModelConfig.model_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig.probability">
+<span class="sig-name descname"><span class="pre">probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#deckard.model.ModelConfig.probability" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.model.ModelConfig.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_predictions_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_score_filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model.html#ModelConfig.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.ModelConfig.save" title="Link to this definition"></a></dt>
+<dd><p>Saves model-related outputs to specified filepaths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_predictions_filepath</strong> (<em>str</em><em> or </em><em>None</em>) – Filepath to save training predictions. If None, training predictions are not saved.</p></li>
+<li><p><strong>predictions_filepath</strong> (<em>str</em><em> or </em><em>None</em>) – Filepath to save predictions. If None, predictions are not saved.</p></li>
+<li><p><strong>model_filepath</strong> (<em>str</em><em> or </em><em>None</em>) – Filepath to save the trained model. If None, model is not saved.</p></li>
+<li><p><strong>model_score_filepath</strong> (<em>str</em><em> or </em><em>None</em>) – Filepath to save model scores. If None or file does not exist, scores are not saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing model scores.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.model.initialize_model_config">
+<span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">initialize_model_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model.html#initialize_model_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.initialize_model_config" title="Link to this definition"></a></dt>
+<dd><p>Initializes a ModelConfig instance using command-line arguments and configuration files.</p>
+<dl class="simple">
+<dt>This function:</dt><dd><ul class="simple">
+<li><p>Parses command-line arguments for model configuration.</p></li>
+<li><p>Loads a YAML configuration file if specified.</p></li>
+<li><p>Applies any parameter overrides provided via command-line arguments.</p></li>
+<li><p>Instantiates and returns a ModelConfig object based on the composed configuration.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ModelConfig: An instance of ModelConfig initialized with the specified parameters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.model.model_main">
+<span class="sig-prename descclassname"><span class="pre">deckard.model.</span></span><span class="sig-name descname"><span class="pre">model_main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/model.html#model_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.model.model_main" title="Link to this definition"></a></dt>
+<dd><p>Main entry point for initializing and running the model pipeline.
+This function sets up logging, parses command-line arguments or uses the provided
+argparse.Namespace, loads data, prepares model parameters, initializes the model,
+and executes the model with the given parameters and data.
+:param args (argparse.Namespace: If None, arguments are parsed from the command line.
+:type args (argparse.Namespace: Namespace containing parsed arguments.
+:param optional): If None, arguments are parsed from the command line.
+:type optional): Namespace containing parsed arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple: A tuple containing the loaded data and the initialized model instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a> automates the following steps:</p>
+<ul class="simple">
+<li><p>Dynamic instantiation of scikit-learn models via import strings (e.g. <code class="docutils literal notranslate"><span class="pre">sklearn.svm.SVC</span></code>)</p></li>
+<li><p>Training, prediction, and evaluation for both classification and regression</p></li>
+<li><p>Timing instrumentation for training, prediction, and scoring</p></li>
+<li><p>Model persistence (save/load with <code class="docutils literal notranslate"><span class="pre">pickle</span></code>)</p></li>
+<li><p>Hydra/YAML configuration for reproducibility and experiment management</p></li>
+<li><p>CLI support for one-line model training and testing</p></li>
+</ul>
+<section id="supported-frameworks">
+<h3>Supported frameworks<a class="headerlink" href="#supported-frameworks" title="Link to this heading"></a></h3>
+<p>Currently supports:
+- <strong>scikit-learn</strong></p>
+<p>(Extendable to other frameworks in future versions.)</p>
+</section>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="command-line-example">
+<h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
+<p>You can train and evaluate models directly from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Train and evaluate using defaults (Logistic Regression)</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard.model<span class="w"> </span>--model_filepath<span class="w"> </span>models/model.pkl
+
+<span class="c1"># Override model type and parameters</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard.model<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_params<span class="w"> </span><span class="nv">model_type</span><span class="o">=</span>sklearn.ensemble.RandomForestClassifier<span class="w"> </span><span class="nv">n_estimators</span><span class="o">=</span><span class="m">100</span><span class="w"> </span><span class="nv">max_depth</span><span class="o">=</span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_filepath<span class="w"> </span>models/rf.pkl
+
+<span class="c1"># Use a custom Hydra/YAML configuration</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard.model<span class="w"> </span>--model_config_file<span class="w"> </span>configs/model/rf.yaml<span class="w"> </span>--data_config_file<span class="w"> </span>configs/data/adult.yaml
+</pre></div>
+</div>
+</section>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<p>To use <a class="reference internal" href="#deckard.model.ModelConfig" title="deckard.model.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a> from Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_model_config</span>
+
+<span class="c1"># Load data and initialize model</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">()</span>
+
+<span class="c1"># Train and evaluate</span>
+<span class="n">train_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">_y_train</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;models/model.pkl&quot;</span><span class="p">)</span>
+<span class="n">test_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_X_test</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">_y_test</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;models/model.pkl&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training scores:&quot;</span><span class="p">,</span> <span class="n">train_scores</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Test scores:&quot;</span><span class="p">,</span> <span class="n">test_scores</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-configuration">
+<h3>Custom configuration<a class="headerlink" href="#custom-configuration" title="Link to this heading"></a></h3>
+<p>Example YAML configuration (<code class="docutils literal notranslate"><span class="pre">configs/model/rf.yaml</span></code>):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model.ModelConfig</span>
+<span class="nt">model_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sklearn.ensemble.RandomForestClassifier</span>
+<span class="nt">classifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="nt">probability</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="nt">model_params</span><span class="p">:</span>
+<span class="w">   </span><span class="nt">n_estimators</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">   </span><span class="nt">max_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">   </span><span class="nt">random_state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<section id="timing-and-logging">
+<h3>Timing and logging<a class="headerlink" href="#timing-and-logging" title="Link to this heading"></a></h3>
+<p>All major operations (training, prediction, scoring, saving/loading) record wall-clock time
+and log via Python’s <code class="docutils literal notranslate"><span class="pre">logging</span></code> module.</p>
+</section>
+<section id="scoring">
+<h3>Scoring<a class="headerlink" href="#scoring" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>For classifiers: accuracy, precision, recall, and F1 score.</p></li>
+<li><p>For regressors: MSE, RMSE, and MAE.</p></li>
+</ul>
+</section>
+<section id="persistence">
+<h3>Persistence<a class="headerlink" href="#persistence" title="Link to this heading"></a></h3>
+<p>Models are saved and loaded using <code class="docutils literal notranslate"><span class="pre">pickle</span></code> via <code class="docutils literal notranslate"><span class="pre">_save_model()</span></code> and <code class="docutils literal notranslate"><span class="pre">_load_model()</span></code>.</p>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Model not fitted error</strong> — train the model before calling <code class="docutils literal notranslate"><span class="pre">_save_model</span></code> or predictions.</p></li>
+<li><p><strong>Hydra config not found</strong> — ensure the YAML file path is valid or use inline overrides.</p></li>
+<li><p><strong>pickle EOFError</strong> — verify the model file is not corrupted.</p></li>
+<li><p><strong>CLI argument conflicts</strong> — use <code class="docutils literal notranslate"><span class="pre">conflict_handler='resolve'</span></code> when composing parsers.</p></li>
+<li><p><strong>Probability prediction errors</strong> — set <code class="docutils literal notranslate"><span class="pre">--probability</span></code> only for models that support <code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data.html" class="btn btn-neutral float-left" title="Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="attack.html" class="btn btn-neutral float-right" title="Attack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

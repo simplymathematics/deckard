@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8f098830"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Model" href="model.html" />
+    <link rel="prev" title="deckard" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.data.DataConfig"><code class="docutils literal notranslate"><span class="pre">DataConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.dataset_name"><code class="docutils literal notranslate"><span class="pre">DataConfig.dataset_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.data_params"><code class="docutils literal notranslate"><span class="pre">DataConfig.data_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.test_size"><code class="docutils literal notranslate"><span class="pre">DataConfig.test_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.random_state"><code class="docutils literal notranslate"><span class="pre">DataConfig.random_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.stratify"><code class="docutils literal notranslate"><span class="pre">DataConfig.stratify</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._X"><code class="docutils literal notranslate"><span class="pre">DataConfig._X</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._y"><code class="docutils literal notranslate"><span class="pre">DataConfig._y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._data_load_time"><code class="docutils literal notranslate"><span class="pre">DataConfig._data_load_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._data_sample_time"><code class="docutils literal notranslate"><span class="pre">DataConfig._data_sample_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._train_indices"><code class="docutils literal notranslate"><span class="pre">DataConfig._train_indices</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._test_indices"><code class="docutils literal notranslate"><span class="pre">DataConfig._test_indices</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._X_train"><code class="docutils literal notranslate"><span class="pre">DataConfig._X_train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._y_train"><code class="docutils literal notranslate"><span class="pre">DataConfig._y_train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._X_test"><code class="docutils literal notranslate"><span class="pre">DataConfig._X_test</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._y_test"><code class="docutils literal notranslate"><span class="pre">DataConfig._y_test</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.score_dict"><code class="docutils literal notranslate"><span class="pre">DataConfig.score_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._target_"><code class="docutils literal notranslate"><span class="pre">DataConfig._target_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.__post_init__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__post_init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.__hash__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__hash__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._load_adult_income_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_adult_income_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._load_diabetes_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_diabetes_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._load_digits_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_digits_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._make_classification_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._make_classification_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._make_regression_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._make_regression_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._sample"><code class="docutils literal notranslate"><span class="pre">DataConfig._sample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig._load_data"><code class="docutils literal notranslate"><span class="pre">DataConfig._load_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.__call__"><code class="docutils literal notranslate"><span class="pre">DataConfig.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.save"><code class="docutils literal notranslate"><span class="pre">DataConfig.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.DataConfig.load"><code class="docutils literal notranslate"><span class="pre">DataConfig.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">DataConfig.data_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">DataConfig.dataset_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">DataConfig.random_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">DataConfig.stratify</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">DataConfig.test_size</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.data.data_main"><code class="docutils literal notranslate"><span class="pre">data_main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.data.initialize_data_config"><code class="docutils literal notranslate"><span class="pre">initialize_data_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-usage">Programmatic usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
+      <li class="breadcrumb-item active">Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data">
+<h1>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h1>
+<p>The <a class="reference internal" href="#module-deckard.data" title="deckard.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data</span></code></a> module defines the <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> dataclass,
+which provides a unified interface for loading, generating, preprocessing, and
+splitting datasets for machine learning experiments.
+It supports both real and synthetic datasets, as well as YAML/Hydra-based configuration.</p>
+<dl class="py class" id="module-deckard.data">
+<dt class="sig sig-object py" id="deckard.data.DataConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">DataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_target_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'deckard.utils.ConfigBase'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></p>
+<p>Configuration and utility class for loading, preprocessing, and splitting datasets for machine learning tasks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.dataset_name">
+<span class="sig-name descname"><span class="pre">dataset_name</span></span><a class="headerlink" href="#deckard.data.DataConfig.dataset_name" title="Link to this definition"></a></dt>
+<dd><p>Name of the dataset to load or path to a data file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.data_params">
+<span class="sig-name descname"><span class="pre">data_params</span></span><a class="headerlink" href="#deckard.data.DataConfig.data_params" title="Link to this definition"></a></dt>
+<dd><p>Additional parameters for data loading or generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.test_size">
+<span class="sig-name descname"><span class="pre">test_size</span></span><a class="headerlink" href="#deckard.data.DataConfig.test_size" title="Link to this definition"></a></dt>
+<dd><p>Proportion of the dataset to include in the test split (between 0 and 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.random_state">
+<span class="sig-name descname"><span class="pre">random_state</span></span><a class="headerlink" href="#deckard.data.DataConfig.random_state" title="Link to this definition"></a></dt>
+<dd><p>Seed for random number generation to ensure reproducibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.stratify">
+<span class="sig-name descname"><span class="pre">stratify</span></span><a class="headerlink" href="#deckard.data.DataConfig.stratify" title="Link to this definition"></a></dt>
+<dd><p>Specifies stratification for sampling; can be None, True (use target), or a column name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[None, str, bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._X">
+<span class="sig-name descname"><span class="pre">_X</span></span><a class="headerlink" href="#deckard.data.DataConfig._X" title="Link to this definition"></a></dt>
+<dd><p>Loaded feature matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._y">
+<span class="sig-name descname"><span class="pre">_y</span></span><a class="headerlink" href="#deckard.data.DataConfig._y" title="Link to this definition"></a></dt>
+<dd><p>Loaded target vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._data_load_time">
+<span class="sig-name descname"><span class="pre">_data_load_time</span></span><a class="headerlink" href="#deckard.data.DataConfig._data_load_time" title="Link to this definition"></a></dt>
+<dd><p>Time taken to load the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._data_sample_time">
+<span class="sig-name descname"><span class="pre">_data_sample_time</span></span><a class="headerlink" href="#deckard.data.DataConfig._data_sample_time" title="Link to this definition"></a></dt>
+<dd><p>Time taken to sample/split the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._train_indices">
+<span class="sig-name descname"><span class="pre">_train_indices</span></span><a class="headerlink" href="#deckard.data.DataConfig._train_indices" title="Link to this definition"></a></dt>
+<dd><p>Indices for training samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._test_indices">
+<span class="sig-name descname"><span class="pre">_test_indices</span></span><a class="headerlink" href="#deckard.data.DataConfig._test_indices" title="Link to this definition"></a></dt>
+<dd><p>Indices for testing samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._X_train">
+<span class="sig-name descname"><span class="pre">_X_train</span></span><a class="headerlink" href="#deckard.data.DataConfig._X_train" title="Link to this definition"></a></dt>
+<dd><p>Training feature matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._y_train">
+<span class="sig-name descname"><span class="pre">_y_train</span></span><a class="headerlink" href="#deckard.data.DataConfig._y_train" title="Link to this definition"></a></dt>
+<dd><p>Training target vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._X_test">
+<span class="sig-name descname"><span class="pre">_X_test</span></span><a class="headerlink" href="#deckard.data.DataConfig._X_test" title="Link to this definition"></a></dt>
+<dd><p>Testing feature matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._y_test">
+<span class="sig-name descname"><span class="pre">_y_test</span></span><a class="headerlink" href="#deckard.data.DataConfig._y_test" title="Link to this definition"></a></dt>
+<dd><p>Testing target vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.score_dict">
+<span class="sig-name descname"><span class="pre">score_dict</span></span><a class="headerlink" href="#deckard.data.DataConfig.score_dict" title="Link to this definition"></a></dt>
+<dd><p>Dictionary to store scores or metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._target_">
+<span class="sig-name descname"><span class="pre">_target_</span></span><a class="headerlink" href="#deckard.data.DataConfig._target_" title="Link to this definition"></a></dt>
+<dd><p>Internal identifier for the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.__post_init__">
+<span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig.__post_init__" title="Link to this definition"></a></dt>
+<dd><p>Post-initialization method to validate parameters and initialize internal attributes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig.__hash__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig.__hash__" title="Link to this definition"></a></dt>
+<dd><p>Computes a hash value for the instance based on non-private attributes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._load_adult_income_data">
+<span class="sig-name descname"><span class="pre">_load_adult_income_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._load_adult_income_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._load_adult_income_data" title="Link to this definition"></a></dt>
+<dd><p>Loads and preprocesses the Adult Income dataset from OpenML.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._load_diabetes_data">
+<span class="sig-name descname"><span class="pre">_load_diabetes_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._load_diabetes_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._load_diabetes_data" title="Link to this definition"></a></dt>
+<dd><p>Loads and preprocesses the diabetes dataset from scikit-learn.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._load_digits_data">
+<span class="sig-name descname"><span class="pre">_load_digits_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._load_digits_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._load_digits_data" title="Link to this definition"></a></dt>
+<dd><p>Loads and preprocesses the digits dataset from scikit-learn.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._make_classification_data">
+<span class="sig-name descname"><span class="pre">_make_classification_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._make_classification_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._make_classification_data" title="Link to this definition"></a></dt>
+<dd><p>Generates a synthetic classification dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._make_regression_data">
+<span class="sig-name descname"><span class="pre">_make_regression_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._make_regression_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._make_regression_data" title="Link to this definition"></a></dt>
+<dd><p>Generates a synthetic regression dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._sample">
+<span class="sig-name descname"><span class="pre">_sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._sample" title="Link to this definition"></a></dt>
+<dd><p>Splits the loaded dataset into training and testing sets, optionally using stratification.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig._load_data">
+<span class="sig-name descname"><span class="pre">_load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig._load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig._load_data" title="Link to this definition"></a></dt>
+<dd><p>Loads the dataset based on the specified name or file type.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#DataConfig.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.DataConfig.__call__" title="Link to this definition"></a></dt>
+<dd><p>Loads and samples the dataset, splits it into training and testing sets, and returns the corresponding features and labels.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#deckard.data.DataConfig.save" title="Link to this definition"></a></dt>
+<dd><p>Saves the current state of the DataConfig instance to a file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.DataConfig.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#deckard.data.DataConfig.load" title="Link to this definition"></a></dt>
+<dd><p>Loads the state of the DataConfig instance from a file.</p>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – For invalid parameter values or missing data.</p></li>
+<li><p><strong>NotImplementedError</strong> – For unsupported datasets or file types.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>config = DataConfig(dataset_name=”adult”, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs)
+config()
+X_train = config.X_train
+y_train = config.y_train
+X_test = config.X_test
+y_test = config.y_test
+score_dict = config.score_dict</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">data_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">dataset_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'adult'</span></em><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">random_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">42</span></em><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">stratify</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><span class="pre">,</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#id5" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">test_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></em><a class="headerlink" href="#id6" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.data.data_main">
+<span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">data_main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#data_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.data_main" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>argparse.Namespace</em><em>, </em><em>optional</em>) – Parsed command-line arguments. If None, arguments are parsed from sys.argv.</p></li>
+<li><p><strong>validation.</strong> (<em>Main function for data initialization and</em>)</p></li>
+<li><p><strong>arguments</strong> (<em>Parses command-line</em>)</p></li>
+<li><p><strong>logging</strong> (<em>sets up</em>)</p></li>
+<li><p><strong>configuration</strong> (<em>loads data</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+<p>:param :
+:param and validates the consistency of training and testing datasets.:
+:param Steps:
+:param —–:
+:param 1. Parses known arguments for data file path.:
+:param 2. Sets up logging at INFO level.:
+:param 3. Loads data configuration using <code class="docutils literal notranslate"><span class="pre">initialize_data_config</span></code>.:
+:param 4. Loads data from the specified file path.:
+:param 5. Extracts training and testing features:
+:param labels:
+:param and optional attributes.:
+:param 6. Asserts that feature and label arrays have matching lengths for both train and test sets.:
+:param 7. Logs the sizes of the training and testing sets.:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AssertionError</strong> – If any of the data arrays have mismatched lengths.</p></li>
+<li><p><strong>Logs</strong> – </p></li>
+<li><p><strong>----</strong> – </p></li>
+<li><p><strong>Train and test set sizes.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="deckard.data.initialize_data_config">
+<span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">initialize_data_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data.html#initialize_data_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.initialize_data_config" title="Link to this definition"></a></dt>
+<dd><p>Initializes the data configuration using command-line arguments.</p>
+<p>Parses known arguments for data configuration file and parameters,
+then initializes the DataConfig instance using <code class="docutils literal notranslate"><span class="pre">initialize_config</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of DataConfig initialized with the specified configuration.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig">DataConfig</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> can load well-known datasets such as:</p>
+<ul class="simple">
+<li><p><strong>Adult Income</strong> (via OpenML)</p></li>
+<li><p><strong>Diabetes</strong> and <strong>Digits</strong> (from scikit-learn)</p></li>
+<li><p><strong>Synthetic datasets</strong> via <code class="docutils literal notranslate"><span class="pre">make_classification</span></code> or <code class="docutils literal notranslate"><span class="pre">make_regression</span></code></p></li>
+<li><p><strong>CSV files</strong> that contain a <code class="docutils literal notranslate"><span class="pre">target</span></code> column</p></li>
+</ul>
+<p>It also supports <strong>reproducible splits</strong> via <cite>train_test_split</cite> with optional stratification,
+timing instrumentation, and hashing for config tracking.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="command-line-example">
+<h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
+<p>Run data setup directly from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the Adult dataset with default settings</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_config_file<span class="w"> </span>configs/data/adult.yaml
+
+<span class="c1"># Override configuration parameters inline</span>
+python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_params<span class="w"> </span><span class="nv">dataset_name</span><span class="o">=</span>make_classification<span class="w"> </span><span class="nv">test_size</span><span class="o">=</span><span class="m">0</span>.25
+</pre></div>
+</div>
+</section>
+<section id="programmatic-usage">
+<h3>Programmatic usage<a class="headerlink" href="#programmatic-usage" title="Link to this heading"></a></h3>
+<p>Use <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> from within your Python scripts or notebooks:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
+
+<span class="c1"># Initialize using default or Hydra/YAML configuration</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
+
+<span class="c1"># Load and split the dataset</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">data</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> | Test size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-configuration">
+<h3>Custom configuration<a class="headerlink" href="#custom-configuration" title="Link to this heading"></a></h3>
+<p>You can define a YAML file or override config parameters inline.</p>
+<p>Example minimal YAML (<cite>adult.yaml</cite>):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data.DataConfig</span>
+<span class="nt">dataset_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">adult</span>
+<span class="nt">test_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="nt">random_state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+<span class="nt">stratify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+</div>
+<p>Example inline overrides:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_params<span class="w"> </span><span class="nv">dataset_name</span><span class="o">=</span>make_classification<span class="w"> </span><span class="nv">n_samples</span><span class="o">=</span><span class="m">2000</span><span class="w"> </span><span class="nv">n_features</span><span class="o">=</span><span class="m">20</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<section id="timing-and-logging">
+<h3>Timing and logging<a class="headerlink" href="#timing-and-logging" title="Link to this heading"></a></h3>
+<p>The data loading and splitting process is timed, and the duration is stored in
+the <cite>_data_load_time</cite> and <cite>_data_sample_time</cite> attributes of the <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> instance. This can be useful for comparing the run-time efficiency of different datasets of various methods.
+Logging is performed at key steps.</p>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>If you encounter issues with dataset loading, ensure that:
+- You have an active internet connection for datasets fetched from OpenML.
+- The specified CSV file path is correct and the file is accessible.
+- Otherwise, use one of the built-in datasets or synthetic data generation options.</p>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="deckard" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model.html" class="btn btn-neutral float-right" title="Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
