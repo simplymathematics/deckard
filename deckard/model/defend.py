@@ -332,7 +332,6 @@ class DefenseConfig(ModelConfig):
         return self.score_dict
 
 
-
 defense_init_parser = argparse.ArgumentParser(
     description="Initialize DefenseConfig from YAML file",
     add_help=False,
