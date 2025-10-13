@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Suppress ConvergenceWarnings from sklearn
 from sklearn.exceptions import ConvergenceWarning
+
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 # Set up logging

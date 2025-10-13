@@ -644,7 +644,7 @@ def data_main(args: argparse.Namespace = None) -> None:
     else:
         args = argparse.Namespace(**vars(args))
     assert isinstance(args, argparse.Namespace), "args must be an argparse.Namespace"
-    
+
     # setup logging
     logging.basicConfig(level=logging.INFO)
     # Load configuration from YAML file if provided
@@ -657,5 +657,5 @@ def data_main(args: argparse.Namespace = None) -> None:
     assert len(data.X_test) == len(
         data.y_test,
     ), "X_test and y_test must have the same length"
-    
+
     return data

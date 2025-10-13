@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 from deckard.attack import AttackConfig, attack_defaults
+
+
 class DummyEstimator:
-        def predict(self, X):
-            return np.zeros((len(X), 2))
+    def predict(self, X):
+        return np.zeros((len(X), 2))
+
 
 class DummyData:
     def __call__(self, *args, **kwargs):
@@ -16,6 +19,7 @@ class DummyData:
         self.X_test = X_test
         self.y_test = y_test
         return self
+
 
 def test_attackconfig_default_initialization():
     config = AttackConfig()
@@ -76,7 +80,6 @@ def test_attackconfig_score_attack_setsscore_dict():
 
 
 def test_attackconfig_get_benign_preds_shape():
-    
 
     config = AttackConfig(attack_size=5)
     n, ben_pred_labels, X_subset, y_subset = config._get_benign_preds(

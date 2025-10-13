@@ -425,7 +425,7 @@ class AttackConfig(ConfigBase):
             y_subset = y_test.iloc[:n]
             a_subset = a_test.iloc[:n]
         else:
-            
+
             assert (
                 len(X_train) == len(y_train) == len(a_train)
             ), "X_train, y_train, and a_train must have the same length, but got lengths: {}, {}, {}".format(

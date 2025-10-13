@@ -180,7 +180,9 @@ class TestDataConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
             score_path = Path(tmpdirname) / "scores.json"
-            results = cfg(data_filepath=str(data_path), data_score_filepath=str(score_path))
+            results = cfg(
+                data_filepath=str(data_path), data_score_filepath=str(score_path)
+            )
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
             self.assertIn("data_load_time", results)

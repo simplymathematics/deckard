@@ -2,7 +2,6 @@
 # https://adversarial-robustness-toolbox.readthedocs.io/en/latest
 
 import pandas as pd
-import pickle
 import time
 import logging
 import argparse
@@ -16,7 +15,6 @@ from typing import Union
 
 
 import numpy as np
-from pathlib import Path
 from art.estimators.classification.scikitlearn import (
     ScikitlearnAdaBoostClassifier,
     ScikitlearnBaggingClassifier,
@@ -34,7 +32,13 @@ from art.estimators.regression.scikitlearn import (
 )
 from .data import data_parser, DataConfig, initialize_data_config, data_call_parser
 from .model import ModelConfig, initialize_model_config, model_call_parser, model_parser
-from .attack import AttackConfig, attack_init_parser, attack_call_parser, attack_parser, initialize_attack_config
+from .attack import (
+    AttackConfig,
+    attack_init_parser,
+    attack_call_parser,
+    attack_parser,
+    initialize_attack_config,
+)
 from .utils import initialize_config, create_parser_from_function
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -71,10 +75,10 @@ class DefenseConfig(ModelConfig):
     classifier: bool = True
     model_params: dict = None
     probability: bool = False
-    clip_values : tuple  = None
+    clip_values: tuple = None
     defense_name: str = "art.defences.postprocessor.HighConfidence"
     defense_params: dict = None
-    
+
     """"
     Overview
     --------
@@ -147,12 +151,17 @@ class DefenseConfig(ModelConfig):
         if self._target_ is None:
             self._target_ = "deckard.DefenseConfig"
 
-
     def __hash__(self):
-        return hash((self.defense_name, frozenset(self.defense_params.items()) if self.defense_params else None, hash(self.model), hash(self.data)))
+        return hash(
+            (
+                self.defense_name,
+                frozenset(self.defense_params.items()) if self.defense_params else None,
+                hash(self.model),
+                hash(self.data),
+            )
+        )
 
-
-    def apply_defense(self, *args, **kwargs ) -> BaseEstimator:
+    def apply_defense(self, *args, **kwargs) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
 
         Parameters
@@ -169,10 +178,19 @@ class DefenseConfig(ModelConfig):
         BaseEstimator
             The estimator wrapped with the specified defense.
         """
-        supported_defense_types = ["detector", "preprocessor", "postprocessor", "trainer", "regularizer", "transformer"]
+        supported_defense_types = [
+            "detector",
+            "preprocessor",
+            "postprocessor",
+            "trainer",
+            "regularizer",
+            "transformer",
+        ]
         if self._model is None:
-            raise ValueError("ModelConfig must have a fitted estimator before applying defense")
-        
+            raise ValueError(
+                "ModelConfig must have a fitted estimator before applying defense"
+            )
+
         # Dynamically import the defense class with defense_params as kwargs
         module_name, class_name = self.defense_name.rsplit(".", 1)
         defense_type = module_name.split(".")[2]  # e.g., 'preprocessor'
@@ -184,20 +202,41 @@ class DefenseConfig(ModelConfig):
             module = importlib.import_module(module_name)
             defense_class = getattr(module, class_name)
         except (ImportError, AttributeError) as e:
-            raise ImportError(f"Could not import defense class {self.defense_name}") from e
-        assert defense_type in supported_defense_types, f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
+            raise ImportError(
+                f"Could not import defense class {self.defense_name}"
+            ) from e
+        assert (
+            defense_type in supported_defense_types
+        ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
         start = time.process_time()
-        art_class = classifier_dict[self.model_type.split(".")[-1]] if self.classifier else regressor_dict[self.model_type.split(".")[-1]]
+        art_class = (
+            classifier_dict[self.model_type.split(".")[-1]]
+            if self.classifier
+            else regressor_dict[self.model_type.split(".")[-1]]
+        )
         if isinstance(self._model, art_class):
             pass
         else:
-            match defense_type: #Note: only one defense can be applied at a time
-                case "preprocessor" :
+            match defense_type:  # Note: only one defense can be applied at a time
+                case "preprocessor":
                     defense = defense_class(**(self.defense_params or {}))
-                    defended_estimator = art_class(self._model, preprocessor=defense, preprocessing_defences=[defense], clip_values=self.clip_values, *args, **kwargs )
+                    defended_estimator = art_class(
+                        self._model,
+                        preprocessor=defense,
+                        preprocessing_defences=[defense],
+                        clip_values=self.clip_values,
+                        *args,
+                        **kwargs,
+                    )
                 case "postprocessor":
                     defense = defense_class(**(self.defense_params or {}))
-                    defended_estimator = art_class(self._model,  postprocessing_defences=[defense], clip_values=self.clip_values,  *args, **kwargs)
+                    defended_estimator = art_class(
+                        self._model,
+                        postprocessing_defences=[defense],
+                        clip_values=self.clip_values,
+                        *args,
+                        **kwargs,
+                    )
                 case "detector":
                     match defense_subtype:
                         case "evasion":
@@ -207,27 +246,38 @@ class DefenseConfig(ModelConfig):
                             defense = defense_class(**(self.defense_params or {}))
                             defended_estimator = defense(self._model, *args, **kwargs)
                         case _:
-                            raise NotImplementedError(f"Detector subtype '{defense_subtype}' is not implemented yet.")
-                    # Overwrite the _score method to handle each 
+                            raise NotImplementedError(
+                                f"Detector subtype '{defense_subtype}' is not implemented yet."
+                            )
+                    # Overwrite the _score method to handle each
                 case "trainer":
                     defense = defense_class(**(self.defense_params or {}))
                     defended_estimator = defense(self._model, *args, **kwargs)
                 case "transformer":
                     defense = defense_class(**(self.defense_params or {}))
-                    defended_estimator = defense(self._model, input_transformations=[defense], clip_values=self.clip_values, *args, **kwargs)
+                    defended_estimator = defense(
+                        self._model,
+                        input_transformations=[defense],
+                        clip_values=self.clip_values,
+                        *args,
+                        **kwargs,
+                    )
                 case "regularizer":
-                    raise NotImplementedError("Regularizer defenses are not implemented yet.")
+                    raise NotImplementedError(
+                        "Regularizer defenses are not implemented yet."
+                    )
                 case "_":
-                    raise NotImplementedError(f"Defense type '{defense_type}' is not implemented yet.")
-            # Some defences can optionally be applied during training or prediction 
+                    raise NotImplementedError(
+                        f"Defense type '{defense_type}' is not implemented yet."
+                    )
+            # Some defences can optionally be applied during training or prediction
             end = time.process_time()
             self._apply_fit = getattr(defense, "_apply_fit", True)
-            
+
             self.defense_application_time = end - start
             end = time.process_time()
         return defended_estimator
-        
-    
+
     def __call__(
         self,
         data: DataConfig,
@@ -275,7 +325,6 @@ class DefenseConfig(ModelConfig):
             predictions_filepath,
             times,
         )
-        
 
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_filepath, times)
@@ -288,7 +337,6 @@ class DefenseConfig(ModelConfig):
         )
         return self.score_dict
 
-    
 
 def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
     """
@@ -315,12 +363,18 @@ def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
     config_file = args.defense_config_file
     params = args.defense_config_params if args.defense_config_params else ""
     target = "deckard.DefenseConfig"
-    config = initialize_config(config_file,params, target)
-    assert isinstance(config, DefenseConfig), "Initialized config is not an instance of DefenseConfig"
+    config = initialize_config(config_file, params, target)
+    assert isinstance(
+        config, DefenseConfig
+    ), "Initialized config is not an instance of DefenseConfig"
     return config
-    
 
-defense_init_parser = argparse.ArgumentParser(description="Initialize DefenseConfig from YAML file", add_help=False, conflict_handler="resolve")
+
+defense_init_parser = argparse.ArgumentParser(
+    description="Initialize DefenseConfig from YAML file",
+    add_help=False,
+    conflict_handler="resolve",
+)
 defense_init_parser.add_argument(
     "--defense_config_file",
     type=str,
@@ -333,17 +387,27 @@ defense_init_parser.add_argument(
     default=None,
     help="Additional DefenseConfig parameters as a comma-separated list of key=value pairs",
 )
-defense_call_parser = create_parser_from_function(DefenseConfig.__call__, exclude=["data"])
+defense_call_parser = create_parser_from_function(
+    DefenseConfig.__call__, exclude=["data"]
+)
 
-defense_parser = argparse.ArgumentParser(description="DefenseConfig parameters", parents=[data_parser, model_parser, defense_init_parser, attack_parser], add_help=False, conflict_handler="resolve")
+defense_parser = argparse.ArgumentParser(
+    description="DefenseConfig parameters",
+    parents=[data_parser, model_parser, defense_init_parser, attack_parser],
+    add_help=False,
+    conflict_handler="resolve",
+)
+
 
 def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
     args = defense_parser.parse_args()
     config_file = args.defense_config_file
     params = args.defense_config_params if args.defense_config_params else ""
     target = "deckard.DefenseConfig"
-    config = initialize_config(config_file,params, target)
-    assert isinstance(config, DefenseConfig), "Initialized config is not an instance of DefenseConfig"
+    config = initialize_config(config_file, params, target)
+    assert isinstance(
+        config, DefenseConfig
+    ), "Initialized config is not an instance of DefenseConfig"
     return config
 
 
@@ -352,14 +416,13 @@ def defense_main(args: argparse.Namespace):
     defense_config = initialize_defense_config(args)
     data_config = initialize_data_config(args)
     model_config = initialize_model_config(args)
-    
-    
+
     data_call_args = data_call_parser.parse_known_args()[0]
     data_config(**vars(data_call_args))
-    
+
     model_call_args = model_call_parser.parse_known_args()[0]
     model_config(data=data_config, **vars(model_call_args))
-    
+
     defense_call_args = defense_call_parser.parse_known_args()[0]
     defense_config(data=data_config, **vars(defense_call_args))
     return defense_config.score_dict
