@@ -68,8 +68,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -119,13 +117,7 @@ env/
 # Python egg metadata
 **/*.egg-info/*
 **/*.egg-info
-deckard/deckard.egg-info/*
 
-# Compressed Data Files
-*.tar.gz
-
-*log.txt
-*.hydra
 
 
 # envs
@@ -148,3 +140,7 @@ examples/*/.dvc/tmp/lock
 examples/*/.dvc/tmp/rwlock
 examples/*/.dvc/tmp/rwlock.lock
 old_examples
+
+
+# ensure that docs/build/html is included
+!docs/build/html
