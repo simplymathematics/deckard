@@ -441,7 +441,7 @@ class ModelConfig(ConfigBase):
         """
         Loads training and prediction data from the specified file paths and updates the provided times dictionary
         with relevant metadata.
-        
+
         Parameters
         ----------
         training_predictions_filepath : str or Path or None
@@ -450,7 +450,7 @@ class ModelConfig(ConfigBase):
             File path to the predictions. If None or the file does not exist, predictions are not loaded.
         times : dict
             Dictionary to be updated with timing and count information for training and prediction data.
-        
+
         Updates
         -------
         self.training_predictions : object
