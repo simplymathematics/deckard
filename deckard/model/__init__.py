@@ -13,8 +13,8 @@ import importlib
 import numpy as np
 from pathlib import Path
 
-from deckard.data import data_parser, DataConfig, data_main
-from deckard.utils import initialize_config, ConfigBase, create_parser_from_function
+from ..data import data_parser, DataConfig, data_main
+from ..utils import initialize_config, ConfigBase, create_parser_from_function
 
 logger = logging.getLogger(__name__)
 

@@ -120,9 +120,18 @@ class DefenseConfig(ModelConfig):
         Validate the configuration after initialization.
     __hash__()
         Generate a hash for the configuration instance.
-    TODO: Add other methods as needed.
-    TODO: Add examples of usage.
-    TODO: Link to ART documentation for available defenses.
+    __call__(data, model_filepath=None, predictions_filepath=None, training_predictions_filepath=None, model_score_filepath=None) -> Union[pd.Series, pd.DataFrame]
+        Execute the model workflow: training, prediction, scoring, and model persistence.
+    save(model_filepath=None, predictions_filepath=None, training_predictions_filepath=None, model_score_filepath=None)
+        Save the model, predictions, and scores to specified file paths.
+    _load_or_train_model(data, model_filepath=None, times=None) -> dict
+        Load a model from a file or train a new model if not available.
+    _load_all_predictions(training_predictions_filepath=None, predictions_filepath=None, times=None) -> dict
+        Load predictions from specified file paths and update timing information.
+    _load_score_file(model_score_filepath=None) -> dict
+        Load scores from a specified file path and update timing information.
+    _evaluate_and_score(data, times=None) -> dict
+        Evaluate the model on the provided data and update scores and timing information.   
     """
 
     def __post_init__(self):
