@@ -613,7 +613,7 @@ class ModelConfig(ConfigBase):
             times["training_prediction_time"] = self.training_prediction_time
         else:
             logger.info(
-                "Training predictions already available, skipping prediction step."
+                "Training predictions already available, skipping prediction step.",
             )
 
         # Score training predictions if true labels are available and scoring not already done

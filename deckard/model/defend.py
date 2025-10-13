@@ -7,14 +7,11 @@ import logging
 import argparse
 import warnings
 import importlib
-from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator
 from dataclasses import dataclass
 from typing import Union
 
 
-import numpy as np
 from art.estimators.classification.scikitlearn import (
     ScikitlearnAdaBoostClassifier,
     ScikitlearnBaggingClassifier,
@@ -33,11 +30,7 @@ from art.estimators.regression.scikitlearn import (
 from .data import data_parser, DataConfig, initialize_data_config, data_call_parser
 from .model import ModelConfig, initialize_model_config, model_call_parser, model_parser
 from .attack import (
-    AttackConfig,
-    attack_init_parser,
-    attack_call_parser,
     attack_parser,
-    initialize_attack_config,
 )
 from .utils import initialize_config, create_parser_from_function
 
@@ -82,7 +75,8 @@ class DefenseConfig(ModelConfig):
     """"
     Overview
     --------
-    Configuration class for applying defenses to machine learning models using the Adversarial Robustness Toolbox (
+    Configuration class for applying defenses to machine learning models using the Adversarial Robustness Toolbox (ART).
+    Inherits from ModelConfig and extends it to include defense mechanisms.
     
     Parameters
     ----------
@@ -100,7 +94,7 @@ class DefenseConfig(ModelConfig):
         The full class path of the defense to apply (e.g., 'art.defences.preprocessor.JPEGCompression').
     defense_params : dict
         Parameters to initialize the defense.
-        
+
     Attributes
     ----------
     _model : BaseEstimator
@@ -158,7 +152,7 @@ class DefenseConfig(ModelConfig):
                 frozenset(self.defense_params.items()) if self.defense_params else None,
                 hash(self.model),
                 hash(self.data),
-            )
+            ),
         )
 
     def apply_defense(self, *args, **kwargs) -> BaseEstimator:
@@ -188,7 +182,7 @@ class DefenseConfig(ModelConfig):
         ]
         if self._model is None:
             raise ValueError(
-                "ModelConfig must have a fitted estimator before applying defense"
+                "ModelConfig must have a fitted estimator before applying defense",
             )
 
         # Dynamically import the defense class with defense_params as kwargs
@@ -203,7 +197,7 @@ class DefenseConfig(ModelConfig):
             defense_class = getattr(module, class_name)
         except (ImportError, AttributeError) as e:
             raise ImportError(
-                f"Could not import defense class {self.defense_name}"
+                f"Could not import defense class {self.defense_name}",
             ) from e
         assert (
             defense_type in supported_defense_types
@@ -247,7 +241,7 @@ class DefenseConfig(ModelConfig):
                             defended_estimator = defense(self._model, *args, **kwargs)
                         case _:
                             raise NotImplementedError(
-                                f"Detector subtype '{defense_subtype}' is not implemented yet."
+                                f"Detector subtype '{defense_subtype}' is not implemented yet.",
                             )
                     # Overwrite the _score method to handle each
                 case "trainer":
@@ -264,11 +258,11 @@ class DefenseConfig(ModelConfig):
                     )
                 case "regularizer":
                     raise NotImplementedError(
-                        "Regularizer defenses are not implemented yet."
+                        "Regularizer defenses are not implemented yet.",
                     )
                 case "_":
                     raise NotImplementedError(
-                        f"Defense type '{defense_type}' is not implemented yet."
+                        f"Defense type '{defense_type}' is not implemented yet.",
                     )
             # Some defences can optionally be applied during training or prediction
             end = time.process_time()
@@ -365,7 +359,8 @@ def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
     target = "deckard.DefenseConfig"
     config = initialize_config(config_file, params, target)
     assert isinstance(
-        config, DefenseConfig
+        config,
+        DefenseConfig,
     ), "Initialized config is not an instance of DefenseConfig"
     return config
 
@@ -388,7 +383,8 @@ defense_init_parser.add_argument(
     help="Additional DefenseConfig parameters as a comma-separated list of key=value pairs",
 )
 defense_call_parser = create_parser_from_function(
-    DefenseConfig.__call__, exclude=["data"]
+    DefenseConfig.__call__,
+    exclude=["data"],
 )
 
 defense_parser = argparse.ArgumentParser(
@@ -406,7 +402,8 @@ def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
     target = "deckard.DefenseConfig"
     config = initialize_config(config_file, params, target)
     assert isinstance(
-        config, DefenseConfig
+        config,
+        DefenseConfig,
     ), "Initialized config is not an instance of DefenseConfig"
     return config
 

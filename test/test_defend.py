@@ -32,16 +32,20 @@ def dummy_args(tmp_path):
 def patch_configs(monkeypatch):
     # Patch initialize_data_config, initialize_model_config, initialize_defense_config, initialize_attack_config
     monkeypatch.setattr(
-        "deckard.defend.initialize_data_config", lambda args: DataConfig()
+        "deckard.defend.initialize_data_config",
+        lambda args: DataConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_model_config", lambda args: ModelConfig()
+        "deckard.defend.initialize_model_config",
+        lambda args: ModelConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_defense_config", lambda args: DefenseConfig()
+        "deckard.defend.initialize_defense_config",
+        lambda args: DefenseConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_attack_config", lambda args: AttackConfig()
+        "deckard.defend.initialize_attack_config",
+        lambda args: AttackConfig(),
     )
     # Patch call parsers to return dummy args
     monkeypatch.setattr("deckard.defend.data_call_parser", argparse.ArgumentParser())
@@ -80,16 +84,20 @@ def test_defense_main_no_score_file(monkeypatch):
     args = DummyArgs()
     # Patch configs and parsers
     monkeypatch.setattr(
-        "deckard.defend.initialize_data_config", lambda args: DataConfig()
+        "deckard.defend.initialize_data_config",
+        lambda args: DataConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_model_config", lambda args: ModelConfig()
+        "deckard.defend.initialize_model_config",
+        lambda args: ModelConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_defense_config", lambda args: DefenseConfig()
+        "deckard.defend.initialize_defense_config",
+        lambda args: DefenseConfig(),
     )
     monkeypatch.setattr(
-        "deckard.defend.initialize_attack_config", lambda args: AttackConfig()
+        "deckard.defend.initialize_attack_config",
+        lambda args: AttackConfig(),
     )
     monkeypatch.setattr("deckard.defend.data_call_parser", argparse.ArgumentParser())
     monkeypatch.setattr("deckard.defend.model_call_parser", argparse.ArgumentParser())
