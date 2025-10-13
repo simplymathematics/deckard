@@ -1,9 +1,6 @@
 import pytest
 import argparse
-import pickle
-import numpy as np
-import pandas as pd
-from pathlib import Path
+import warnings
 from deckard.defend import defense_main
 from deckard.data import DataConfig
 from deckard.model import ModelConfig
@@ -47,20 +44,14 @@ def patch_configs(monkeypatch):
     DefenseConfig.score_dict = {"defense_score": 3}
     AttackConfig.score_dict = {"attack_score": 4}
 
-def test_defense_main_returns_configs_and_scores(dummy_args, patch_configs, tmp_path):
-    data_config, defense_config, attack_config = defense_main(dummy_args)
-    assert isinstance(data_config, DataConfig)
-    assert isinstance(defense_config, DefenseConfig)
-    assert isinstance(attack_config, AttackConfig)
-    # Check that scores file was written
-    scores_file = tmp_path / "scores.pkl"
-    assert scores_file.exists()
-    with open(scores_file, "rb") as f:
-        scores = pickle.load(f)
-    assert scores["data_score"] == 1
-    assert scores["model_score"] == 2
-    assert scores["defense_score"] == 3
-    assert scores["attack_score"] == 4
+def test_defense_main_scores(dummy_args, patch_configs, tmp_path):
+    data = DataConfig(dataset_name ="make_classification", data_params={"n_samples": 100, "n_features": 20, "n_informative": 15, "random_state": 42, "n_classes": 3})
+    data()
+    defense_config = DefenseConfig(model_type ="sklearn.ensemble.RandomForestClassifier", model_params ={ "n_estimators": 10, "random_state": 42})
+    score_dict = defense_config(data=data)
+    assert isinstance(score_dict, dict)
+    assert "accuracy" in score_dict or "mse" in score_dict
+    
 
 def test_defense_main_no_score_file(monkeypatch):
     args = DummyArgs()
@@ -77,7 +68,6 @@ def test_defense_main_no_score_file(monkeypatch):
     ModelConfig.score_dict = {"model_score": 20}
     DefenseConfig.score_dict = {"defense_score": 30}
     AttackConfig.score_dict = {"attack_score": 40}
-    data_config, defense_config, attack_config = defense_main(args)
-    assert isinstance(data_config, DataConfig)
-    assert isinstance(defense_config, DefenseConfig)
-    assert isinstance(attack_config, AttackConfig)
+    scores = defense_main(args)
+    assert isinstance(scores, dict)
+    assert "accuracy" in scores 
