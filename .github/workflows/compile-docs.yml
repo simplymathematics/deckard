@@ -23,4 +23,9 @@ jobs:
     #     git commit -m "Auto-compiled docs"
     #     git push
     #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: upload docs
+      uses: actions/upload-artifact@v4
+      with:
+        name: compiled-docs
+        path: docs/_build/html
