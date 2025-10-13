@@ -15,15 +15,15 @@ jobs:
       run: |
         cd docs
         make html
-    # - name: commit changes
-    #   run: |
-    #     git config --global user.name 'github-actions'
-    #     git config --global user.email 'github-actions@users.noreply.github.com'
-    #     git add .
-    #     git commit -m "Auto-compiled docs"
-    #     git push
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: commit changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@users.noreply.github.com'
+        git add .
+        git commit -m "Auto-compiled docs"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: upload docs
       uses: actions/upload-artifact@v4
       with:
