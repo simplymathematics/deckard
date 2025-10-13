@@ -43,8 +43,6 @@ class ModelConfig(ConfigBase):
         Time taken to train the model (in seconds).
     prediction_time : float or None
         Time taken to make predictions (in seconds).
-    score_time : float or None
-        Time taken to compute scoring metrics (in seconds).
     training_prediction_time : float or None
         Time taken to make predictions during training (in seconds).
     training_score_time : float or None
@@ -96,8 +94,8 @@ class ModelConfig(ConfigBase):
     test_scores = model_config(data, train=False, score=True)
     """
 
-    model_type: str = "sklearn.linear_model.LogisticRegression"
-    classifier: bool = True
+    model_type: str = "sklearn.ensemble.RandomForestClassifier"
+    classifier: bool = False
     model_params: dict = None
     probability: bool = False
 
@@ -134,7 +132,6 @@ class ModelConfig(ConfigBase):
         self.score_dict = {}
         self.training_time = None
         self.prediction_time = None
-        self.score_time = None
         self.training_prediction_time = None
         self.training_score_time = None
         self.prediction_score_time = None
@@ -240,9 +237,9 @@ class ModelConfig(ConfigBase):
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
         acc = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred)
-        recall = recall_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred, average="weighted", zero_division=0)
+        recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+        f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
         scores = {
             "accuracy": acc,
             "precision": precision,
@@ -287,7 +284,6 @@ class ModelConfig(ConfigBase):
         Args:
             y_true (pd.Series): True target values.
             y_pred (pd.Series): Predicted target values.
-            train (bool): If True, prefix score keys with 'train_'.
 
         Returns:
             dict: Dictionary of rounded performance scores.
@@ -297,18 +293,12 @@ class ModelConfig(ConfigBase):
             - Measures and logs scoring time.
             - Rounds scores based on the size of `y_true`.
             - Logs each rounded score.
-            - Updates `self.score_time`.
         """
         if self.classifier:
-            start_time = time.process_time()
             scores = self._classification_scores(y_true, y_pred)
 
         else:
-            start_time = time.process_time()
             scores = self._regression_scores(y_true, y_pred)
-        end_time = time.process_time()
-        self.score_time = end_time - start_time
-        logger.info(f"Scoring done in {self.score_time:.2f} seconds")
         sig_figs = np.log10(len(y_true)) + 1
         if sig_figs < 1:
             sig_figs = 1
@@ -318,7 +308,6 @@ class ModelConfig(ConfigBase):
             rounded = round(scores[score], int(sig_figs))
             logger.info(f"{score}: {rounded}")
             scores[score] = rounded
-        self.score_time = end_time - start_time
         return scores
 
     def _save_model(self, filepath: str):
@@ -520,7 +509,7 @@ class ModelConfig(ConfigBase):
                     times[key] = score_dict.pop(key)
         # Update all attributes in times dict
         for key in times:
-            setattr(self, f"_{key}", times[key])
+            setattr(self, f"{key}", times[key])
         return times
 
     def __call__(
@@ -565,12 +554,11 @@ class ModelConfig(ConfigBase):
         times = self._load_score_file(model_score_filepath)
 
         # Load predictions from filepaths and update times
-        pred_times = self._load_all_predictions(
+        times = self._load_all_predictions(
             training_predictions_filepath,
             predictions_filepath,
             times,
         )
-        times.update(pred_times)
         
 
         # Train the model if training data is provided and model is not already trained
@@ -631,7 +619,9 @@ class ModelConfig(ConfigBase):
         # Score training predictions if true labels are available and scoring not already done
         if self.training_score_time is None or self.score_dict is None:
             if self.training_predictions is not None:
+                start = time.process_time()
                 train_scores = self._score(data.y_train, self.training_predictions)
+                self.training_score_time = time.process_time() - start
                 # Prefix training scores with 'train_'
                 train_scores = {
                     f"train_{key}": value for key, value in train_scores.items()
@@ -639,9 +629,9 @@ class ModelConfig(ConfigBase):
                 if self.score_dict is None:
                     self.score_dict = {}
                 self.score_dict.update(train_scores)
-                times["training_score_time"] = self.score_time
+                times["training_score_time"] = self.training_score_time
                 logger.info(
-                    f"Training scores computed in {self.score_time:.2f} seconds",
+                    f"Training scores computed in {self.training_score_time:.2f} seconds",
                 )
             else:
                 raise ValueError("Training predictions not available for scoring.")
@@ -658,7 +648,7 @@ class ModelConfig(ConfigBase):
                 logger.info(f"Predictions made in {self.prediction_time:.2f} seconds")
                 times["prediction_n"] = len(self.predictions)
             else:
-                logger.warning("No test data available for predictions.")
+                raise ValueError("No test data available for prediction.")
         # Score test predictions if true labels are available and scoring not already done
         if self.prediction_score_time is None or self.score_dict is None:
             if data.y_test is not None and self.predictions is not None:
@@ -666,12 +656,19 @@ class ModelConfig(ConfigBase):
                 if self.score_dict is None:
                     self.score_dict = {}
                 self.score_dict.update(test_scores)
-                times["prediction_score_time"] = self.score_time
+                self.prediction_score_time = time.process_time() - start
+                times["prediction_score_time"] = self.prediction_score_time
                 logger.info(
-                    f"Prediction scores computed in {self.score_time:.2f} seconds",
+                    f"Prediction scores computed in {self.prediction_score_time:.2f} seconds",
                 )
+            else:
+                raise ValueError("No test labels available for scoring.")
+        else:
+            pass
         self.score_dict.update(times)
+                
 
+    
     def save(self, training_predictions_filepath, predictions_filepath, model_filepath, model_score_filepath):
             """
             Saves model-related outputs to specified filepaths.

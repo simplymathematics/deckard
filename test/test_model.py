@@ -43,7 +43,7 @@ class TestModelConfig(unittest.TestCase):
         self.model._train(self.X_train, self.y_train)
         self.model.probability = True
         proba = self.model._predict_proba(self.X_train)
-        self.assertEqual(proba.shape[0], len(self.y_train))
+        self.assertEqual(len(proba), len(self.y_train))
 
     def test_classification_scores(self):
         scores = self.model._classification_scores(self.y_train, self.y_train)
@@ -89,6 +89,20 @@ class TestModelConfig(unittest.TestCase):
         self.assertIsInstance(scores, dict)
         self.assertTrue("training_time" in scores and "prediction_time" in scores)
         self.assertTrue("accuracy" in scores)
+        self.assertTrue("training_time" in scores)
+        self.assertTrue("prediction_time" in scores)
+        self.assertTrue(hasattr(model, "score_dict"))
+        self.assertTrue(hasattr(model, "training_time"))
+        self.assertTrue(hasattr(model, "training_score_time"))
+        self.assertTrue(hasattr(model, "prediction_score_time"))
+        self.assertTrue(hasattr(model, "prediction_time"))
+        self.assertTrue(hasattr(model, "training_predictions"))
+        self.assertTrue(hasattr(model, "predictions"))
+        # Assert that the keys in score dict are also in the model.score_dit
+        for key in score_dict:
+            self.assertIn(key, scores)
+        for key in scores:
+            self.assertIn(key, score_dict)
 
     def test_load_predictions(self):
         preds = np.array([0, 1, 1, 0])

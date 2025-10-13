@@ -248,6 +248,7 @@ class DataConfig(ConfigBase):
         n_redundant=5,
         n_clusters_per_class=2,
         random_state=42,
+        **kwargs,
     ):
         """
         Generates a synthetic classification dataset and stores it as instance attributes.
@@ -286,6 +287,7 @@ class DataConfig(ConfigBase):
             n_redundant=n_redundant,
             n_clusters_per_class=n_clusters_per_class,
             random_state=random_state,
+            **kwargs,
         )
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
