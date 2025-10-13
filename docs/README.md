@@ -43,6 +43,4 @@ To get a live preview of the docs, run:
 ```bash
 sphinx-autobuild source build/html
 ```
-which will open a webserver at [sphinx-build -b html source build/html
-](sphinx-build -b html source build/html
-) on your local machine.
+which will open a webserver at (127.0.0.1:8000)[127.0.0.1:8000] on your local machine.
