@@ -14,20 +14,7 @@ from typing import Union
 
 import numpy as np
 from pathlib import Path
-from art.estimators.classification.scikitlearn import (
-    ScikitlearnAdaBoostClassifier,
-    ScikitlearnBaggingClassifier,
-    ScikitlearnClassifier,
-    ScikitlearnDecisionTreeClassifier,
-    ScikitlearnExtraTreesClassifier,
-    ScikitlearnGradientBoostingClassifier,
-    ScikitlearnLogisticRegression,
-    ScikitlearnRandomForestClassifier,
-    ScikitlearnSVC,
-)
-from art.estimators.regression.scikitlearn import (
-    ScikitlearnDecisionTreeRegressor,
-    ScikitlearnRegressor,
+from model import 
 )
 from ..data import DataConfig, data_parser, data_main
 from ..model import ModelConfig, initialize_model_config, model_call_parser
@@ -43,25 +30,7 @@ supported_attacks = [
     "blackbox_attribute_inference",
     "whitebox_attribute_inference",
 ]
-classifier_dict = {
-    "SVC": ScikitlearnSVC,
-    "LogisticRegression": ScikitlearnLogisticRegression,
-    "RandomForestClassifier": ScikitlearnRandomForestClassifier,
-    "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
-    "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
-    "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
-    "BaggingClassifier": ScikitlearnBaggingClassifier,
-    "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
-    "sklearn-classifier": ScikitlearnClassifier,
-}
 
-regressor_dict = {
-    "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
-    "sklearn-regressor": ScikitlearnRegressor,
-}
-
-sklearn_dict = {**classifier_dict, **regressor_dict}
-sklearn_models = list(sklearn_dict.keys())
 
 
 @dataclass

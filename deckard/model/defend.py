@@ -37,13 +37,6 @@ from .utils import initialize_config, create_parser_from_function
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
 
-supported_attacks = [
-    "blackbox_membership_inference",
-    "blackbox_evasion",
-    "whitebox_evasion",
-    "blackbox_attribute_inference",
-    "whitebox_attribute_inference",
-]
 classifier_dict = {
     "SVC": ScikitlearnSVC,
     "LogisticRegression": ScikitlearnLogisticRegression,
@@ -60,6 +53,9 @@ regressor_dict = {
     "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
     "sklearn-regressor": ScikitlearnRegressor,
 }
+
+sklearn_dict = {**classifier_dict, **regressor_dict}
+sklearn_models = list(sklearn_dict.keys())
 
 
 @dataclass
@@ -183,6 +179,11 @@ class DefenseConfig(ModelConfig):
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
+        else:
+            assert isinstance(
+                self._model,
+                BaseEstimator,
+            ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
 
         # Dynamically import the defense class with defense_params as kwargs
         module_name, class_name = self.defense_name.rsplit(".", 1)

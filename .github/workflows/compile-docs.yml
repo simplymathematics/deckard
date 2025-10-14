@@ -16,16 +16,13 @@ jobs:
         cd docs
         make html
     - name: commit changes
-      run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@users.noreply.github.com'
-        git add .
-        git commit -m "Auto-compiled docs"
-        git push origin HEAD:docs
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: upload docs
-      uses: actions/upload-artifact@v4
+      uses : stefanzweifel/git-auto-commit-action@v4
       with:
-        name: compiled-docs
-        path: docs/build/html
+        commit_message: Update docs
+        branch: main
+        file_pattern: docs/html/
+        commit_options: '--no-verify --signoff'
+        repository: .
+        commit_user_name: github-actions
+        commit_user_email: github-actions@users.noreply.github.com
+        commit_author: github-actions
