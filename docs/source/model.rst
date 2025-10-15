@@ -63,15 +63,15 @@ To use :class:`~deckard.model.ModelConfig` from Python:
    from deckard.model import initialize_model_config
 
    # Load data and initialize model
-   data = initialize_data_config()
-   model = initialize_model_config()
+   data = data_config(dataset_name="adult", test_size=0.2, random_state=42)
+   model = initialize_model_config(model_type="sklearn.ensemble.RandomForestClassifier", n_estimators=100, max_depth=5, random_state=42)
 
-   # Train and evaluate
-   train_scores = model(data._X_train, data._y_train, train=True, score=True, filepath="models/model.pkl")
-   test_scores = model(data._X_test, data._y_test, train=False, score=True, filepath="models/model.pkl")
+   # Call the data object to load/split the dataset
+   data(data_filepath="data.pkl", score_file="data_scores.json")
+   # Call the model object to train, predict, and score
+   scores = model(data=data, model_filepath="models/rf.pkl", score_file="model_scores.json")
 
-   print("Training scores:", train_scores)
-   print("Test scores:", test_scores)
+   print(f"Scores: {scores}")
 
 Custom configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -120,3 +120,5 @@ See also
 ~~~~~~~~
 * :doc:`data`
 * :doc:`attack`
+* :doc:`experiment`
+* :doc:`utils`

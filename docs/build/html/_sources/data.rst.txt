@@ -35,7 +35,7 @@ Run data setup directly from the terminal:
 .. code-block:: bash
 
    # Load the Adult dataset with default settings
-   python -m deckard.data --data_config_file configs/data/adult.yaml
+   python -m deckard data --data_config_file configs/data/adult.yaml
 
    # Override configuration parameters inline
    python -m deckard.data --data_params dataset_name=make_classification test_size=0.25
@@ -49,11 +49,15 @@ Use :class:`~deckard.data.DataConfig` from within your Python scripts or noteboo
 
    from deckard.data import initialize_data_config
 
-   # Initialize using default or Hydra/YAML configuration
-   data = initialize_data_config()
+   # Initialize using default, Hydra/YAML, or CLI configuration
+   data = initialize_data_config(dataset_name="adult", test_size=0.2, random_state=42)
 
    # Load and split the dataset
-   X_train, y_train, X_test, y_test = data()
+   data(data_filepath="data.pkl", score_file="data_scores.json")
+   X_train = data.X_train
+   X_test = data.X_test
+   y_train = data.y_train
+   y_test = data.y_test
 
    print(f"Train size: {len(X_train)} | Test size: {len(X_test)}")
 
@@ -99,3 +103,5 @@ See also
 ~~~~~~~~
 * :doc:`attack`
 * :doc:`model`
+* :doc:`experiment`
+* :doc:`utils`

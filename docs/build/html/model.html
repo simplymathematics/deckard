@@ -323,15 +323,15 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard.model<span class
 <span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_model_config</span>
 
 <span class="c1"># Load data and initialize model</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data_config</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;adult&quot;</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model_config</span><span class="p">(</span><span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;sklearn.ensemble.RandomForestClassifier&quot;</span><span class="p">,</span> <span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 
-<span class="c1"># Train and evaluate</span>
-<span class="n">train_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_X_train</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">_y_train</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;models/model.pkl&quot;</span><span class="p">)</span>
-<span class="n">test_scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_X_test</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">_y_test</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;models/model.pkl&quot;</span><span class="p">)</span>
+<span class="c1"># Call the data object to load/split the dataset</span>
+<span class="n">data</span><span class="p">(</span><span class="n">data_filepath</span><span class="o">=</span><span class="s2">&quot;data.pkl&quot;</span><span class="p">,</span> <span class="n">score_file</span><span class="o">=</span><span class="s2">&quot;data_scores.json&quot;</span><span class="p">)</span>
+<span class="c1"># Call the model object to train, predict, and score</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">model_filepath</span><span class="o">=</span><span class="s2">&quot;models/rf.pkl&quot;</span><span class="p">,</span> <span class="n">score_file</span><span class="o">=</span><span class="s2">&quot;model_scores.json&quot;</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training scores:&quot;</span><span class="p">,</span> <span class="n">train_scores</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Test scores:&quot;</span><span class="p">,</span> <span class="n">test_scores</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scores: </span><span class="si">{</span><span class="n">scores</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -383,6 +383,8 @@ and log via Python’s <code class="docutils literal notranslate"><span class="p
 <ul class="simple">
 <li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
 <li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+<li><p><span class="xref std std-doc">experiment</span></p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Main Components</span></a></p></li>
 </ul>
 </section>
 </section>

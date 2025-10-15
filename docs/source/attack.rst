@@ -59,20 +59,20 @@ You can also use the API programmatically:
 
    from deckard.attack import initialize_attack_config, AttackConfig
    from deckard.data import initialize_data_config
-   from deckard.model import train_and_evaluate
+   from deckard.model import initialize_model_config
 
    # initialize/load data
    data = initialize_data_config()
-   data(filepath="path/to/data.csv")
+   data_scores = data(filepath="path/to/data.csv")
 
    # train a model (example)
-   _, _, model = train_and_evaluate(..., train=True, score=False, data=data)
-
+   model = initialize_model_config()
+   benign_scores = model(data=data, model_filepath="models/rf.pkl", score_file="model_scores.json")
    # create an attack config (uses defaults or overrides)
    attack_cfg = initialize_attack_config()  # or AttackConfig(attack_name="art.attacks.evasion.HopSkipJump", attack_size=50)
 
    # run the attack against the trained model
-   results = attack_cfg(data, model)
+   benign_and_adversarial_scores = attack_cfg(data, model)
    print(results)
 
 Custom Configuration
@@ -123,3 +123,5 @@ See also
 ~~~~~~~~
 * :doc:`data`
 * :doc:`model`
+* :doc:`experiment`
+* :doc:`utils`

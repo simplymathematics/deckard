@@ -104,6 +104,10 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Main Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#features">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
 </ul>
 </li>
 </ul>
@@ -522,7 +526,7 @@ timing instrumentation, and hashing for config tracking.</p>
 <h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
 <p>Run data setup directly from the terminal:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the Adult dataset with default settings</span>
-python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_config_file<span class="w"> </span>configs/data/adult.yaml
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>data<span class="w"> </span>--data_config_file<span class="w"> </span>configs/data/adult.yaml
 
 <span class="c1"># Override configuration parameters inline</span>
 python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_params<span class="w"> </span><span class="nv">dataset_name</span><span class="o">=</span>make_classification<span class="w"> </span><span class="nv">test_size</span><span class="o">=</span><span class="m">0</span>.25
@@ -534,11 +538,15 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class=
 <p>Use <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> from within your Python scripts or notebooks:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
 
-<span class="c1"># Initialize using default or Hydra/YAML configuration</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
+<span class="c1"># Initialize using default, Hydra/YAML, or CLI configuration</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;adult&quot;</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 
 <span class="c1"># Load and split the dataset</span>
-<span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">data</span><span class="p">()</span>
+<span class="n">data</span><span class="p">(</span><span class="n">data_filepath</span><span class="o">=</span><span class="s2">&quot;data.pkl&quot;</span><span class="p">,</span> <span class="n">score_file</span><span class="o">=</span><span class="s2">&quot;data_scores.json&quot;</span><span class="p">)</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">X_train</span>
+<span class="n">X_test</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">X_test</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">y_train</span>
+<span class="n">y_test</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">y_test</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="si">}</span><span class="s2"> | Test size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
@@ -581,6 +589,8 @@ Logging is performed at key steps.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
 <li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+<li><p><span class="xref std std-doc">experiment</span></p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Main Components</span></a></p></li>
 </ul>
 </section>
 </section>
