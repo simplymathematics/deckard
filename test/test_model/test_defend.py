@@ -1,10 +1,10 @@
 import pytest
 import argparse
-from deckard.defend import defense_main
+from deckard.model.defend import defense_main
 from deckard.data import DataConfig
 from deckard.model import ModelConfig
 from deckard.attack import AttackConfig
-from deckard.defend import DefenseConfig
+from deckard.model.defend import DefenseConfig
 
 
 class DummyArgs(argparse.Namespace):
