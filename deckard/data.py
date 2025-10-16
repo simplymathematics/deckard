@@ -587,7 +587,7 @@ data_parser = argparse.ArgumentParser(
 )
 
 
-def initialize_data_config():
+def initialize_data_config(**kwargs):
     """
     Initializes the data configuration using command-line arguments.
 
@@ -603,7 +603,7 @@ def initialize_data_config():
     config_file = args.data_config_file
     params = args.data_config_params if args.data_config_params is not None else []
     target = "deckard.DataConfig"
-    data = initialize_config(config_file, params, target)
+    data = initialize_config(config_file, params, target, **kwargs)
     assert isinstance(data, DataConfig), "Config must be an instance of DataConfig"
     return data
 
