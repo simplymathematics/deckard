@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def initialize_config(config_file, params, target) -> object:
+def initialize_config(config_file, params, target, **kwargs) -> object:
     """
     Initializes and composes a Hydra configuration.
 
@@ -26,6 +26,7 @@ def initialize_config(config_file, params, target) -> object:
         config_file (str or list or None): Path to the configuration file, or a list of override strings.
         params (list or None): List of parameter overrides in the format ["key=value", ...].
         object_name (str): The object_name string to be included in the configuration if not already present.
+        **kwargs: Additional key-value pairs to be added to params.
 
     Returns:
         DictConfig: The composed Hydra configuration object.
@@ -33,6 +34,8 @@ def initialize_config(config_file, params, target) -> object:
     Raises:
         AssertionError: If the overrides or params are not provided as lists.
     """
+    if len(kwargs) > 0:
+        params = {**params, **kwargs} if params is not None else kwargs
     if config_file and not params:
         logger.info(f"Loading config from {config_file}")
         folder = str(Path(config_file).parent)

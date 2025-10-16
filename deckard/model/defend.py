@@ -27,12 +27,14 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
-from .data import data_parser, DataConfig, initialize_data_config, data_call_parser
-from .model import ModelConfig, initialize_model_config, model_call_parser, model_parser
-from .attack import (
-    attack_parser,
+from ..data import data_parser, DataConfig, initialize_data_config, data_call_parser
+from . import ModelConfig, initialize_model_config, model_call_parser, model_parser
+
+from ..utils import (
+    create_parser_from_function,
+    initialize_config,
 )
-from .utils import initialize_config, create_parser_from_function
+
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -356,13 +358,13 @@ defense_call_parser = create_parser_from_function(
 
 defense_parser = argparse.ArgumentParser(
     description="DefenseConfig parameters",
-    parents=[data_parser, model_parser, defense_init_parser, attack_parser],
+    parents=[data_parser, model_parser, defense_init_parser],
     add_help=False,
     conflict_handler="resolve",
 )
 
 
-def initialize_defense_config(args: argparse.Namespace) -> DefenseConfig:
+def initialize_defense_config(**kwargs) -> DefenseConfig:
     """
     Initializes and returns a DefenseConfig object using command-line arguments.
 
