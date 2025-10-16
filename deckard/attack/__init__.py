@@ -14,10 +14,10 @@ from typing import Union
 
 import numpy as np
 from pathlib import Path
-from model import 
-)
+
 from ..data import DataConfig, data_parser, data_main
 from ..model import ModelConfig, initialize_model_config, model_call_parser
+from ..model.defend import sklearn_dict, sklearn_models
 from ..utils import initialize_config, ConfigBase, create_parser_from_function
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -846,10 +846,11 @@ attack_parser = argparse.ArgumentParser(
 )
 
 
-def initialize_attack_config() -> AttackConfig:
+def initialize_attack_config(**kwargs) -> AttackConfig:
     args = attack_init_parser.parse_known_args()[0]
     params = args.attack_config_params if args.attack_config_params is not None else []
     target = "deckard.AttackConfig"
+    params.update(kwargs)
     assert isinstance(
         params,
         list,

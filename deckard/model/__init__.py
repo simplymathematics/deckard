@@ -827,7 +827,7 @@ model_parser = argparse.ArgumentParser(
 )
 
 
-def initialize_model_config() -> ModelConfig:
+def initialize_model_config(**kwargs) -> ModelConfig:
     """
     Initializes a ModelConfig instance using command-line arguments and configuration files.
 
@@ -845,7 +845,7 @@ def initialize_model_config() -> ModelConfig:
     config_file = args.model_config_file
     params = args.model_config_params if args.model_config_params is not None else []
     target = "deckard.ModelConfig"
-    model = initialize_config(config_file, params, target)
+    model = initialize_config(config_file, params, target, **kwargs)
     assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
     return model
 
