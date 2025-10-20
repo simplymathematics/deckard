@@ -15,10 +15,10 @@ from typing import Union
 import numpy as np
 from pathlib import Path
 
-from ..data import DataConfig, data_parser, data_main
-from ..model import ModelConfig, initialize_model_config, model_call_parser
+from ..data import DataConfig
+from ..model import ModelConfig
 from ..model.defend import sklearn_dict, sklearn_models
-from ..utils import initialize_config, ConfigBase, create_parser_from_function
+from ..utils import ConfigBase
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -63,18 +63,18 @@ class AttackConfig(ConfigBase):
         Computes a hash value for the object based on its non-private attributes.
     __post_init__()
         Initializes post-construction attributes and sets defaults.
-    __call__(data, estimator, train=False, **kwargs)
-    _get_benign_preds(data, art_estimator, train=False)
+    __call__(data, model, train=False, **kwargs)
+    _get_benign_preds(data, art_model, train=False)
         Generates benign predictions and corresponding labels for a subset of data.
     _get_feature_vector_preds(data, targeted_attribute, train=False)
         Extracts a subset of feature vectors, labels, and attributes from the provided data.
     _score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
-    _evade(data, art_estimator, attack, train=False)
+    _evade(data, art_model, attack, train=False)
     _pop_attribute(X, targeted_attribute)
-    _infer_attribute(data, art_estimator, attack, targeted_attribute, train=False)
-        Performs an attribute inference attack on a dataset using a specified attack model and estimator.
-    _infer_membership(data, art_estimator, attack, train=False)
-        Performs membership inference attack on the given dataset using the specified attack and estimator.
+    _infer_attribute(data, art_model, attack, targeted_attribute, train=False)
+        Performs an attribute inference attack on a dataset using a specified attack model and model.
+    _infer_membership(data, art_model, attack, train=False)
+        Performs membership inference attack on the given dataset using the specified attack and model.
     _poison()
     _extract()
     _save(filepath)
@@ -82,7 +82,7 @@ class AttackConfig(ConfigBase):
     Raises
     ------
     ValueError
-        If the attack type, subtype, or estimator type is unsupported, or if the estimator is not fitted.
+        If the attack type, subtype, or model type is unsupported, or if the model is not fitted.
     NotImplementedError
         If the attack type or subtype is not implemented.
     AssertionError
@@ -92,12 +92,12 @@ class AttackConfig(ConfigBase):
 
     Examples
     --------
-    >>> config = AttackConfig(attack_name="art.attacks.evasion.FastGradientMethod", attack_params={"eps": 0.2})
-    >>> results = config(data, estimator)
+    >>> config = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod", attack_params={"eps": 0.2})
+    >>> results = config(data, model)
     >>> print(results)
     """
 
-    attack_name: str = "art.attacks.evasion.HopSkipJump"
+    attack_type: str = "art.attacks.evasion.HopSkipJump"
     attack_params: dict = None
     attack_size: int = 10  # Number of samples to attack
     targeted_attribute: str = None  # For inference attacks
@@ -124,25 +124,25 @@ class AttackConfig(ConfigBase):
         if self._target_ is None:
             self._target_ = "deckard.AttackConfig"
 
-    def _initialize_attack(self, estimator):
+    def _initialize_attack(self, model):
         """
-        Initialize an attack instance for a given estimator.
+        Initialize an attack instance for a given model.
 
-        This method determines the appropriate attack class and estimator wrapper based on the provided estimator and attack name.
-        It validates the attack type and estimator compatibility, wraps the estimator if necessary, and instantiates the attack.
-        If the attack cannot be initialized with the estimator (Whitebox), it falls back to a Blackbox attack.
+        This method determines the appropriate attack class and model wrapper based on the provided model and attack name.
+        It validates the attack type and model compatibility, wraps the model if necessary, and instantiates the attack.
+        If the attack cannot be initialized with the model (Whitebox), it falls back to a Blackbox attack.
 
         Parameters
         ----------
-        estimator : object
-            The model or configuration object to attack. Can be a fitted scikit-learn estimator or a ModelConfig instance.
+        model : object
+            The model or configuration object to attack. Can be a fitted scikit-learn model or a ModelConfig instance.
 
         Returns
         -------
         attack : object
             The initialized attack instance.
-        art_estimator : object
-            The ART-wrapped estimator compatible with the attack.
+        art_model : object
+            The ART-wrapped model compatible with the attack.
         attack_type : str
             The type of attack (evasion, poisoning, extraction, inference).
         attack_subtype : str
@@ -151,57 +151,57 @@ class AttackConfig(ConfigBase):
         Raises
         ------
         ValueError
-            If the attack type or estimator type is unsupported, or if the estimator is not fitted.
+            If the attack type or model type is unsupported, or if the model is not fitted.
         """
-        if isinstance(estimator, ModelConfig):
-            estimator = estimator._model
+        if isinstance(model, ModelConfig):
+            model = model._model
         else:
-            check_is_fitted(estimator)
-        module = importlib.import_module(self.attack_name.rsplit(".", 1)[0])
-        attack_type = self.attack_name.split("attacks.")[-1].split(".")[0]
-        attack_subtype = self.attack_name.split("attacks.")[-1].split(".")[1]
+            check_is_fitted(model)
+        module = importlib.import_module(self.attack_type.rsplit(".", 1)[0])
+        attack_type = self.attack_type.split("attacks.")[-1].split(".")[0]
+        attack_subtype = self.attack_type.split("attacks.")[-1].split(".")[1]
 
         # Validate attack type
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
-        attack_class = getattr(module, self.attack_name.split(".")[-1])
-        estimator_alias = type(estimator).__name__
+        attack_class = getattr(module, self.attack_type.split(".")[-1])
+        model_alias = type(model).__name__
 
         # Validate library support
-        if estimator_alias in sklearn_models:
+        if model_alias in sklearn_models:
             try:
-                check_is_fitted(estimator)
-                art_estimator = sklearn_dict[estimator_alias](estimator)
+                check_is_fitted(model)
+                art_model = sklearn_dict[model_alias](model)
             except NotFittedError:
-                raise ValueError(f"Estimator {estimator_alias} is not fitted")
+                raise ValueError(f"model {model_alias} is not fitted")
         else:
-            raise ValueError(f"Unsupported estimator type: {estimator_alias}")
+            raise ValueError(f"Unsupported model type: {model_alias}")
 
         # Initialize the attack
-        try:  # Assume Whitebox attack if estimator can be passed to the attack constructor
-            attack = attack_class(art_estimator, **self.attack_params)
+        try:  # Assume Whitebox attack if model can be passed to the attack constructor
+            attack = attack_class(art_model, **self.attack_params)
         except ValueError as e:  # If ValueError, assume Blackbox attack
             logger.warning(f"Falling back to Blackbox attack due to error: {e}")
             attack = attack_class(**self.attack_params)
-        return attack, art_estimator, attack_type, attack_subtype
+        return attack, art_model, attack_type, attack_subtype
 
     def __call__(
         self,
         data,
-        estimator,
+        model,
         attack_file: Union[str, None] = None,
         attack_predictions_file: Union[str, None] = None,
         attack_scores_file: Union[str, None] = None,
     ):
         """
-        Executes the specified attack on the provided estimator using the given data.
+        Executes the specified attack on the provided model using the given data.
 
         Parameters
         ----------
         data : Any
             The input data to be used for the attack.
-        estimator : object
-            The machine learning estimator to be attacked.
+        model : object
+            The machine learning model to be attacked.
         attack_file : str or None, optional
             File path to save the attack object. If None, the attack object is not saved. Default is None.
         attack_predictions_file : str or None, optional
@@ -219,7 +219,7 @@ class AttackConfig(ConfigBase):
         Raises
         ------
         ValueError
-            If the attack type, subtype, or estimator type is unsupported, or if the estimator is not fitted.
+            If the attack type, subtype, or model type is unsupported, or if the model is not fitted.
         NotImplementedError
             If the attack type or subtype is not implemented.
         AssertionError
@@ -253,13 +253,13 @@ class AttackConfig(ConfigBase):
         elif (
             self._attack is None
         ):  # If attack is not already loaded, initialize and run it
-            attack, art_estimator, attack_type, attack_subtype = (
-                self._initialize_attack(estimator)
+            attack, art_model, attack_type, attack_subtype = (
+                self._initialize_attack(model)
             )
 
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
-            scores = self._evade(data, art_estimator, attack)
+            scores = self._evade(data, art_model, attack)
         elif attack_type == "poisoning":
             raise NotImplementedError("Poisoning attack not implemented yet.")
         elif attack_type == "extraction":
@@ -269,7 +269,7 @@ class AttackConfig(ConfigBase):
                 case "membership_inference":
                     scores = self._infer_membership(
                         data,
-                        art_estimator,
+                        art_model,
                         attack,
                     )
                 case "attribute_inference":
@@ -279,7 +279,7 @@ class AttackConfig(ConfigBase):
                     targeted_attribute = self.targeted_attribute
                     scores = self._infer_attribute(
                         data,
-                        art_estimator,
+                        art_model,
                         attack,
                         targeted_attribute=targeted_attribute,
                     )
@@ -316,12 +316,12 @@ class AttackConfig(ConfigBase):
             self.save_object(self.score_dict, attack_scores_file)
         return score_dict
 
-    def _get_benign_preds(self, data, art_estimator, train=False):
+    def _get_benign_preds(self, data, art_model, train=False):
         """
         Generate benign predictions and corresponding labels for a subset of data.
 
         Depending on the `train` flag, selects either the training or test set, obtains predictions
-        from the provided ART estimator, and returns the predicted labels along with the corresponding
+        from the provided ART model, and returns the predicted labels along with the corresponding
         data subset and true labels.
 
         Parameters
@@ -329,8 +329,8 @@ class AttackConfig(ConfigBase):
         data : callable
             A function that returns data splits. If `train` is True, should return
             (_, _, X_test, y_test). If `train` is False, should return (X_train, y_train, _, _).
-        art_estimator : object
-            An estimator object with a `predict` method that accepts numpy arrays.
+        art_model : object
+            An model object with a `predict` method that accepts numpy arrays.
         train : bool, optional
             If True, use the test set; otherwise, use the training set. Defaults to False.
 
@@ -348,7 +348,7 @@ class AttackConfig(ConfigBase):
             y_train = data.y_train
             X_test = data.X_test
             y_test = data.y_test
-            ben_preds = art_estimator.predict(X_test.iloc[:n].values)
+            ben_preds = art_model.predict(X_test.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
@@ -357,7 +357,7 @@ class AttackConfig(ConfigBase):
             y_train = data.y_train
             X_test = data.X_test
             y_test = data.y_test
-            ben_preds = art_estimator.predict(X_train.iloc[:n].values)
+            ben_preds = art_model.predict(X_train.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_train.iloc[:n]
             y_subset = y_train.iloc[:n]
@@ -484,9 +484,9 @@ class AttackConfig(ConfigBase):
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
 
-    def _evade(self, data, art_estimator, attack, train=False):
+    def _evade(self, data, art_model, attack, train=False):
         """
-        Executes an evasion attack on a given dataset using the specified ART estimator and attack method.
+        Executes an evasion attack on a given dataset using the specified ART model and attack method.
 
         This method assumes a classification task and generates adversarial examples from a subset of the test data.
         It measures and logs the time taken for both the attack generation and adversarial prediction steps.
@@ -497,8 +497,8 @@ class AttackConfig(ConfigBase):
         ----------
         data : object
             The dataset containing features and labels.
-        art_estimator : object
-            The adversarial robustness toolbox (ART) estimator used for predictions.
+        art_model : object
+            The adversarial robustness toolbox (ART) model used for predictions.
         attack : object
             The ART attack object used to generate adversarial examples.
         train : bool, optional
@@ -511,7 +511,7 @@ class AttackConfig(ConfigBase):
         """
         n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
             data,
-            art_estimator,
+            art_model,
             train=train,
         )
         start_time = time.process_time()
@@ -520,7 +520,7 @@ class AttackConfig(ConfigBase):
         self.attack_time = end_time - start_time
         logger.info(f"Evasion attack took {self.attack_time} seconds for {n} samples")
         start_time = time.process_time()
-        adv_pred = art_estimator.predict(X_test_adv)
+        adv_pred = art_model.predict(X_test_adv)
         adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
@@ -566,13 +566,13 @@ class AttackConfig(ConfigBase):
     def _infer_attribute(
         self,
         data,
-        art_estimator,
+        art_model,
         attack,
         targeted_attribute,
         train=False,
     ):
         """
-        Perform an attribute inference attack on a dataset using a specified attack model and estimator.
+        Perform an attribute inference attack on a dataset using a specified attack model and model.
 
         This method fits the attack model to the provided data, performs predictions, and evaluates the
         attack's performance in inferring the targeted attribute. It logs timing and scoring information
@@ -582,8 +582,8 @@ class AttackConfig(ConfigBase):
         ----------
         data : object
             An object containing training and test data with attributes `_X_train`, `_y_train`, `_X_test`, and `_y_test`.
-        art_estimator : object
-            The estimator used for predictions, expected to have a `predict` method.
+        art_model : object
+            The model used for predictions, expected to have a `predict` method.
         attack : object
             The attack model, expected to have `fit` and `infer` methods.
         targeted_attribute : str
@@ -641,7 +641,7 @@ class AttackConfig(ConfigBase):
         self.attack_time = attack_time
         start_time = time.process_time()
         attack_x_test_predictions = np.array(
-            [np.argmax(arr) for arr in art_estimator.predict(X_test)],
+            [np.argmax(arr) for arr in art_model.predict(X_test)],
         ).reshape(-1, 1)
         logger.info(
             f"Attribute inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
@@ -701,9 +701,9 @@ class AttackConfig(ConfigBase):
         self._attack = inferred
         return self.score_dict
 
-    def _infer_membership(self, data, art_estimator, attack, train=False):
+    def _infer_membership(self, data, art_model, attack, train=False):
         """
-        Perform membership inference attack on the given dataset using the specified attack and estimator.
+        Perform membership inference attack on the given dataset using the specified attack and model.
 
         This method fits the attack model using training and test data, obtains benign predictions,
         performs membership inference, and scores the attack's performance.
@@ -712,8 +712,8 @@ class AttackConfig(ConfigBase):
         ----------
         data : object
             An object containing training and test data attributes (_X_train, _y_train, _X_test, _y_test).
-        art_estimator : object
-            The estimator/model used for benign predictions.
+        art_model : object
+            The model/model used for benign predictions.
         attack : object
             The membership inference attack object with fit and infer methods.
         train : bool, optional
@@ -745,7 +745,7 @@ class AttackConfig(ConfigBase):
         self.attack_time = time.process_time() - start_time
         n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
             data,
-            art_estimator,
+            art_model,
             train=train,
         )
         logger.info(
@@ -809,159 +809,3 @@ class AttackConfig(ConfigBase):
         with open(filepath, "wb") as f:
             pickle.dump(self, f)
         logger.info(f"AttackConfig saved to {filepath}")
-
-
-attack_init_parser = argparse.ArgumentParser(
-    description="AttackConfig parameters",
-    add_help=False,
-    conflict_handler="resolve",
-)
-attack_init_parser.add_argument(
-    "--attack_config_params",
-    type=str,
-    nargs="*",
-    help="Override configuration parameters as key=value pairs",
-)
-attack_init_parser.add_argument(
-    "--attack_config_file",
-    type=str,
-    default=None,
-    help="Path to YAML config file for attack parameters",
-)
-
-attack_call_parser = create_parser_from_function(
-    AttackConfig.__call__,
-    exclude=["data", "estimator"],
-    parser=None,
-)
-attack_parser = argparse.ArgumentParser(
-    description="AttackConfig",
-    parents=[attack_init_parser, attack_call_parser],
-    conflict_handler="resolve",
-    add_help=False,
-)
-
-
-def initialize_attack_config(**kwargs) -> AttackConfig:
-    args = attack_init_parser.parse_known_args()[0]
-    params = args.attack_config_params if args.attack_config_params is not None else []
-    target = "deckard.AttackConfig"
-    assert isinstance(
-        params,
-        list,
-    ), "attack_params should be a list of key=value strings"
-    # Turn kwargs into params
-    for k, v in kwargs.items():
-        params.append(f"{k}={v}")
-    # Check if using predefined config
-    if args.attack_config_file in list(attack_defaults.keys()):
-        assert (
-            len(params) == 0
-        ), "Cannot use both predefined config and override parameters"
-        param_dict = attack_defaults[args.attack_config_file]
-        overrides = ["attack_name=" + param_dict["attack_name"]]
-        overrides += ["attack_params=" + " ".join(param_dict.get("attack_params", []))]
-        attack = initialize_config(config_file=None, params=params, target=target)
-        assert isinstance(
-            params,
-            list,
-        ), "attack_params should be a list of key=value strings"
-    elif args.attack_config_file is not None or len(params) > 0:
-        attack = initialize_config(
-            config_file=args.attack_config_file,
-            params=params,
-            target=target,
-        )
-    else:
-        attack = AttackConfig()
-    assert isinstance(
-        attack,
-        AttackConfig,
-    ), f"Initialized object is not of type AttackConfig, got {type(attack)}"
-    return attack
-
-
-attack_defaults = {
-    "blackbox_evasion": {
-        "attack_name": "art.attacks.evasion.HopSkipJump",
-        "attack_params": ["max_iter=10", "init_eval=5", "max_eval=20", "init_size=100"],
-    },
-    "whitebox_evasion": {
-        "attack_name": "art.attacks.evasion.FastGradientMethod",
-        "attack_params": ["eps=0.2", "eps_step=0.1", "norm=inf", "targeted=False"],
-    },
-    "blackbox_attribute_inference": {
-        "attack_name": "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
-        "targeted_attribute": "sex",
-        "attack_params": ["attack_model_type=svm"],
-    },
-    "whitebox_attribute_inference": {
-        "attack_name": "art.attacks.inference.attribute_inference.AttributeInferenceBaseline",
-        "targeted_attribute": "sex",
-    },
-    "blackbox_membership_inference": {
-        "attack_name": "art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
-        "attack_params": ["attack_model_type=rf"],
-    },
-}
-
-
-def attack_main(args: argparse.Namespace = None):
-    """
-    Main function to execute the attack evaluation workflow.
-    This function performs the following steps:
-    1. Sets up logging for the application.
-    2. Parses command-line arguments using predefined argument parsers.
-    3. Initializes and loads the data configuration.
-    4. Trains and evaluates the model using the provided data and arguments.
-    5. Checks if the model is properly fitted.
-    6. Initializes and executes the attack configuration using the data and trained model.
-    Returns:
-        None
-    """
-    # setup logging
-    logging.basicConfig(level=logging.INFO)
-    if args is None:
-        parser = argparse.ArgumentParser(
-            description="Deckard Attack Evaluation",
-            parents=[data_parser, model_call_parser, attack_call_parser],
-            conflict_handler="resolve",
-            add_help=True,
-        )
-        args = parser.parse_args()
-    else:
-        assert isinstance(
-            args,
-            argparse.Namespace,
-        ), "args must be an argparse.Namespace"
-    data_args = data_parser.parse_known_args(args=vars(args))[0]
-    data = data_main(data_args)
-
-    model = initialize_model_config()
-    model_args = model_call_parser.parse_known_args()[0]
-    model_params = dict(vars(model_args))
-    model(data, **model_params)
-    benign_scores = model.score_dict
-    assert isinstance(
-        data,
-        DataConfig,
-    ), f"data is not of type DataConfig, got {type(data)}"
-    assert isinstance(
-        model,
-        ModelConfig,
-    ), f"model is not of type ModelConfig, got {type(model)}"
-    attack_call_args = attack_call_parser.parse_known_args(args=vars(args))[0]
-    attack_params = dict(vars(attack_call_args))
-    attack = initialize_attack_config()
-    assert isinstance(
-        attack,
-        AttackConfig,
-    ), f"attack is not of type AttackConfig, got {type(attack)}"
-    attack(data, model, **attack_params)
-    adversarial_scores = attack.score_dict
-    assert isinstance(
-        adversarial_scores,
-        dict,
-    ), f"adversarial_scores is not a dict, got {type(adversarial_scores)}"
-    _ = {**benign_scores, **adversarial_scores}
-    return data, model, attack

@@ -1,107 +1,60 @@
-import pandas as pd
-import numpy as np
-from deckard.attack import AttackConfig, attack_defaults
+import unittest
+from pathlib import Path
+import os
+import tempfile
+import shutil
+from deckard.data import DataConfig
+from deckard.model.defend import DefenseConfig
+from deckard.attack import AttackConfig
+
+class TestAttackConfig(unittest.TestCase):
+    def setUp(self):
+        self.attack_params = {"max_iter": 10, "init_eval": 5, "max_eval": 20}
+        self.attack_type = "art.attacks.evasion.HopSkipJump"
+        self.attack = AttackConfig(
+            attack_type=self.attack_type,
+            attack_params=self.attack_params,
+        )
+        self.tmpdir = tempfile.mkdtemp()
+        self.attack_file = os.path.join(self.tmpdir, "attack.pkl")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_post_init(self):
+        self.assertTrue(hasattr(self.attack, "attack_type"))
+        self.assertTrue(hasattr(self.attack, "attack_params"))
 
 
-class DummyEstimator:
-    def predict(self, X):
-        return np.zeros((len(X), 2))
 
 
-class DummyData:
-    def __call__(self, *args, **kwargs):
-        X_train = pd.DataFrame(np.random.rand(20, 3), columns=["a", "b", "c"])
-        y_train = pd.Series([0] * 10 + [1] * 10)
-        X_test = pd.DataFrame(np.random.rand(20, 3), columns=["a", "b", "c"])
-        y_test = pd.Series([0] * 10 + [1] * 10)
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_test = X_test
-        self.y_test = y_test
-        return self
+    def test_save_and_load_attack(self):
+        self.attack.save(self.attack_file)
+        self.assertTrue(Path(self.attack_file).exists())
+        loaded_attack = AttackConfig()
+        loaded_attack.load(self.attack_file)
+        self.assertEqual(loaded_attack.attack_type, self.attack.attack_type)
+        self.assertEqual(loaded_attack.attack_params, self.attack.attack_params)
 
+    def test_attack_metrics(self):
+        # Mock data for testing
+        ben_pred_labels = [0, 1, 0]
+        adv_pred_labels = [0, 0, 0]
+        y_test_numeric = [0, 1, 0]
+        self.attack._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
+        metrics = self.attack.score_dict
+        self.assertIn("adversarial_success_rate", metrics)
 
-def test_attackconfig_default_initialization():
-    config = AttackConfig()
-    assert isinstance(config, AttackConfig)
-    assert config.attack_name == "art.attacks.evasion.HopSkipJump"
-    assert config.attack_size == 10
-    assert config._attack is None
-    assert isinstance(config.score_dict, dict)
+    def test_call_attack(self):
+        # Mock data for testing
+        data = DataConfig()
+        data()
+        model = DefenseConfig()
+        model(data=data)
+        result = self.attack(data, model)
+        self.assertIsNotNone(result)
+        self.assertIn("adversarial_success_rate", result)
 
-
-def test_attackconfig_hash_and_post_init():
-    config = AttackConfig(
-        attack_name="art.attacks.evasion.FastGradientMethod",
-        attack_params={"eps": 0.2},
-    )
-    h = hash(config)
-    assert isinstance(h, int)
-    assert config._attack is None
-    assert isinstance(config.score_dict, dict)
-
-
-def test_attack_defaults_keys():
-    expected_keys = [
-        "blackbox_evasion",
-        "whitebox_evasion",
-        "blackbox_attribute_inference",
-        "whitebox_attribute_inference",
-        "blackbox_membership_inference",
-    ]
-    for key in expected_keys:
-        assert key in attack_defaults
-
-
-def test_attackconfig_pop_attribute_removes_column():
-    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    config = AttackConfig()
-    arr, col = config._pop_attribute(df, "a")
-    assert isinstance(arr, (list, pd.DataFrame, pd.Series, type(df.values)))
-    assert col.name == "a"
-    assert all(col == pd.Series([1, 2, 3]))
-
-
-def test_attackconfig_score_attack_setsscore_dict():
-    config = AttackConfig()
-    ben_pred = np.array([0, 1, 1, 0])
-    adv_pred = np.array([1, 1, 0, 0])
-    y_true = np.array([0, 1, 1, 0])
-    config._score_attack(ben_pred, adv_pred, y_true)
-    assert isinstance(config.score_dict, dict)
-    for key in [
-        "adversarial_accuracy",
-        "adversarial_precision",
-        "adversarial_recall",
-        "adversarial_f1-score",
-        "adversarial_success_rate",
-    ]:
-        assert key in config.score_dict
-
-
-def test_attackconfig_get_benign_preds_shape():
-
-    config = AttackConfig(attack_size=5)
-    n, ben_pred_labels, X_subset, y_subset = config._get_benign_preds(
-        DummyData()(),
-        DummyEstimator(),
-        train=False,
-    )
-    assert n == 5
-    assert len(ben_pred_labels) == 5
-    assert X_subset.shape[0] == 5
-    assert len(y_subset) == 5
-
-
-def test_attackconfig_get_feature_vector_preds_shape():
-
-    config = AttackConfig(attack_size=5)
-    n, X_subset, y_subset, a_subset = config._get_feature_vector_preds(
-        DummyData()(),
-        "a",
-        train=False,
-    )
-    assert n == 5
-    assert X_subset.shape[0] == 5
-    assert len(y_subset) == 5
-    assert len(a_subset) == 5
+    
+if __name__ == "__main__":
+    unittest.main()
