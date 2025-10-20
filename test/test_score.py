@@ -1,5 +1,4 @@
 import unittest
-import numpy as np
 from deckard.score import (
     ScorerConfig,
     ScorerDictConfig,
