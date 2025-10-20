@@ -67,20 +67,20 @@ class FileConfig(ConfigBase):
     log_path = files["log_file"]
     """
 
-    experiment_name : str  = "{hash}"
-    result_directory : str = "results"
-    model_directory : str = "models"
-    data_directory : str = "data"
-    log_directory : str = "logs"
-    model_file : str = "model.pkl"
-    data_file : str = "data.csv"
-    log_file : str = "{experiment_name}.log"
-    training_predictions_file : str = "train_predictions.pkl"
-    test_predictions_file : str = "test_predictions.pkl"
-    attack_file : str = "attack_results.pkl"
-    attack_training_predictions_file : str = "attack_train_predictions.pkl"
-    attack_test_predictions_file : str = "attack_test_predictions.pkl"
-    score_file : str = "scores.json"
+    experiment_name: str = "{hash}"
+    result_directory: str = "results"
+    model_directory: str = "models"
+    data_directory: str = "data"
+    log_directory: str = "logs"
+    model_file: str = "model.pkl"
+    data_file: str = "data.csv"
+    log_file: str = "{experiment_name}.log"
+    training_predictions_file: str = "train_predictions.pkl"
+    test_predictions_file: str = "test_predictions.pkl"
+    attack_file: str = "attack_results.pkl"
+    attack_training_predictions_file: str = "attack_train_predictions.pkl"
+    attack_test_predictions_file: str = "attack_test_predictions.pkl"
+    score_file: str = "scores.json"
 
     def __hash__(self):
         """
@@ -118,13 +118,21 @@ class FileConfig(ConfigBase):
         elif self.experiment_name == "{timestamp}":
             self.experiment_name = time.strftime("%Y%m%d-%H%M%S")
         elif self.experiment_name == "{hash}":
-            hash_source = str({k: v for k, v in self.__dict__.items() if k != "experiment_name"})
+            hash_source = str(
+                {k: v for k, v in self.__dict__.items() if k != "experiment_name"}
+            )
             self.experiment_name = hashlib.md5(hash_source.encode()).hexdigest()
         elif "{hash}" in self.experiment_name:
-            hash_source = str({k: v for k, v in self.__dict__.items() if k != "experiment_name"})
-            self.experiment_name = self.experiment_name.replace("{hash}", hashlib.md5(hash_source.encode()).hexdigest())
+            hash_source = str(
+                {k: v for k, v in self.__dict__.items() if k != "experiment_name"}
+            )
+            self.experiment_name = self.experiment_name.replace(
+                "{hash}", hashlib.md5(hash_source.encode()).hexdigest()
+            )
         elif "{timestamp}" in self.experiment_name:
-            self.experiment_name = self.experiment_name.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
+            self.experiment_name = self.experiment_name.replace(
+                "{timestamp}", time.strftime("%Y%m%d-%H%M%S")
+            )
         # else: leave as is
 
         # Update _file attributes with placeholders and join with directories
@@ -135,9 +143,15 @@ class FileConfig(ConfigBase):
                 current_value = getattr(self, attr)
                 # Replace placeholders
                 if any(ph in current_value for ph in supported_placeholders):
-                    current_value = current_value.replace("{experiment_name}", self.experiment_name)
-                    current_value = current_value.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
-                    current_value = current_value.replace("{hash}", hashlib.md5(current_value.encode()).hexdigest())
+                    current_value = current_value.replace(
+                        "{experiment_name}", self.experiment_name
+                    )
+                    current_value = current_value.replace(
+                        "{timestamp}", time.strftime("%Y%m%d-%H%M%S")
+                    )
+                    current_value = current_value.replace(
+                        "{hash}", hashlib.md5(current_value.encode()).hexdigest()
+                    )
                 # Join with directory
                 directory_attr = attr.replace("_file", "_directory")
                 if hasattr(self, directory_attr):
@@ -154,7 +168,12 @@ class FileConfig(ConfigBase):
             if attr.endswith("_directory") and attr not in used_directories:
                 delattr(self, attr)
         # Ensure directories exist
-        for directory in [self.result_directory, self.model_directory, self.data_directory, self.log_directory]:
+        for directory in [
+            self.result_directory,
+            self.model_directory,
+            self.data_directory,
+            self.log_directory,
+        ]:
             directory = Path(directory)
             if not directory.exists():
                 logger.info(f"Creating directory: {directory}")
@@ -188,7 +207,9 @@ class FileConfig(ConfigBase):
             if hasattr(self, key):
                 setattr(self, key, value)
         self.__post_init__()
-        _files = {attr: getattr(self, attr) for attr in dir(self) if attr.endswith("_file")}
+        _files = {
+            attr: getattr(self, attr) for attr in dir(self) if attr.endswith("_file")
+        }
         # Ensure that the folders for each _file exists:
         for attr, filepath in _files.items():
             file_path = Path(filepath)

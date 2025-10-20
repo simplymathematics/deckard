@@ -551,7 +551,7 @@ class DataConfig(ConfigBase):
         )
         # TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
-        
+
         if data_score_filepath is not None:
             self.save_scores(all_scores, data_score_filepath)
         if data_filepath is not None:

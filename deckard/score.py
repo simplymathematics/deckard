@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 import logging
 from typing import Dict
@@ -16,23 +15,26 @@ from sklearn.metrics import (
 from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
+
+
 @dataclass
 class ScorerConfig:
     """
-   ScorerConfig is a data class that encapsulates a scoring function along with its name and runtime parameters.
-    It ensures the provided scoring function is callable and initializes a scorer using the specified function and parameters.
+    ScorerConfig is a data class that encapsulates a scoring function along with its name and runtime parameters.
+     It ensures the provided scoring function is callable and initializes a scorer using the specified function and parameters.
 
-    Attributes
-    ----------
-        score_name (str): The name of the scoring function.
-        score_function (callable): The scoring function to be used.
-        score_params (dict, optional): Runtime parameters for the scoring function. Defaults to an empty dictionary.
+     Attributes
+     ----------
+         score_name (str): The name of the scoring function.
+         score_function (callable): The scoring function to be used.
+         score_params (dict, optional): Runtime parameters for the scoring function. Defaults to an empty dictionary.
 
-    Methods
-    -------
-        __post_init__(): Validates the scoring function and initializes the scorer using make_scorer.
-    class ScorerConfig(ConfigBase):
+     Methods
+     -------
+         __post_init__(): Validates the scoring function and initializes the scorer using make_scorer.
+     class ScorerConfig(ConfigBase):
     """
+
     score_name: str
     score_function: callable
     score_params: dict = None
@@ -47,8 +49,7 @@ class ScorerConfig:
             self.score_params = {}
         assert callable(self.score_function), "score_function must be callable"
         # Create a scorer using the provided function and parameters
-        
-    
+
     def __call__(self, y_true, y_pred, swap=False, **kwargs):
         """
         Computes the score between true and predicted values using the specified score function.
@@ -72,7 +73,7 @@ class ScorerConfig:
             y_2 = y_pred
         all_params = {**self.score_params, **kwargs}
         return self.score_function(y_1, y_2, **all_params)
-        
+
 
 class ScorerDictConfig(ConfigBase):
     """
@@ -109,6 +110,7 @@ class ScorerDictConfig(ConfigBase):
 
     ----
     """
+
     def __init__(self, scorers: dict):
         """
         ----
@@ -138,7 +140,9 @@ class ScorerDictConfig(ConfigBase):
             If any value in `_scorers` is not an instance of `ScorerConfig`.
         """
         for key, value in self._scorers.items():
-            assert isinstance(value, ScorerConfig), f"Value for key '{key}' must be an instance of ScorerConfig"
+            assert isinstance(
+                value, ScorerConfig
+            ), f"Value for key '{key}' must be an instance of ScorerConfig"
             value.__post_init__()
 
     def __iter__(self):
@@ -146,7 +150,6 @@ class ScorerDictConfig(ConfigBase):
 
     def __getitem__(self, key):
         return self._scorers[key]
-
 
     def get_callables(self):
         """
@@ -186,8 +189,9 @@ class ScorerDictConfig(ConfigBase):
         """
         results = {}
         for key, scorer in self._scorers.items():
-            results[key] = scorer(y_true=y_true, y_pred=y_pred,  **kwargs)
+            results[key] = scorer(y_true=y_true, y_pred=y_pred, **kwargs)
         return results
+
 
 class DefaultClassifierDict:
     """
@@ -218,7 +222,8 @@ class DefaultClassifierDict:
     >>> scorers = DefaultClassifierDict.scorers
     >>> scorers["accuracy"].score_function(y_true, y_pred)
     """
-    scorers : ScorerDictConfig = ScorerDictConfig(
+
+    scorers: ScorerDictConfig = ScorerDictConfig(
         scorers={
             "accuracy": ScorerConfig(
                 score_name="accuracy",
@@ -250,8 +255,10 @@ class DefaultClassifierDict:
                 score_function=log_loss,
                 score_params={"labels": None},
             ),
-        }
+        },
     )
+
+
 class DefaultRegressorDict:
     """
     ----
@@ -270,7 +277,8 @@ class DefaultRegressorDict:
     Used to supply common regression metrics for scoring models in Deckard.
     ----
     """
-    scorers : ScorerDictConfig = ScorerDictConfig(
+
+    scorers: ScorerDictConfig = ScorerDictConfig(
         scorers={
             "mse": ScorerConfig(
                 score_name="mse",
@@ -287,5 +295,5 @@ class DefaultRegressorDict:
                 score_function=r2_score,
                 greater_is_better=True,
             ),
-        }
+        },
     )

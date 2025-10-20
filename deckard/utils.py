@@ -16,8 +16,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-
-
 def initialize_config(config_file, params, target, **kwargs) -> object:
     """
     Initializes and composes a Hydra configuration.
@@ -42,7 +40,9 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
     if config_file and not params:
         logger.info(f"Loading config from {config_file}")
         folder = str(Path(config_file).parent)
-        assert Path(folder).exists(), f"Config folder {folder} does not exist. Current working directory: {os.getcwd()}"
+        assert Path(
+            folder
+        ).exists(), f"Config folder {folder} does not exist. Current working directory: {os.getcwd()}"
         filename = str(Path(config_file).name)
         with initialize(config_path=folder):
             config = compose(config_name=filename)
@@ -80,7 +80,7 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
 
 
 @dataclass
-class ConfigBase:       
+class ConfigBase:
     _target_: str = "deckard.utils.ConfigBase"
 
     def __init__(self, *args, **kwds):

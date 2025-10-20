@@ -32,7 +32,6 @@ supported_attacks = [
 ]
 
 
-
 @dataclass
 class AttackConfig(ConfigBase):
     """

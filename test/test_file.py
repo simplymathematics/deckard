@@ -5,11 +5,17 @@ from deckard.file import FileConfig
 import tempfile
 import shutil
 
+
 class TestFileConfig(unittest.TestCase):
     def setUp(self):
         # Create temporary directories for testing
         self.temp_dirs = {}
-        for d in ["result_directory", "model_directory", "data_directory", "log_directory"]:
+        for d in [
+            "result_directory",
+            "model_directory",
+            "data_directory",
+            "log_directory",
+        ]:
             temp_dir = tempfile.mkdtemp()
             self.temp_dirs[d] = temp_dir
 
@@ -21,7 +27,7 @@ class TestFileConfig(unittest.TestCase):
             log_directory=self.temp_dirs["log_directory"],
             model_file="model_{experiment_name}.pkl",
             data_file="data_{experiment_name}.csv",
-            log_file="{experiment_name}.log"
+            log_file="{experiment_name}.log",
         )
 
     def tearDown(self):
@@ -40,7 +46,9 @@ class TestFileConfig(unittest.TestCase):
 
     def test_experiment_name_timestamp(self):
         self.assertNotEqual(self.config.experiment_name, "{timestamp}")
-        self.assertTrue(self.config.experiment_name.isdigit() or "-" in self.config.experiment_name)
+        self.assertTrue(
+            self.config.experiment_name.isdigit() or "-" in self.config.experiment_name
+        )
 
     def test_file_paths_contain_experiment_name(self):
         exp_name = self.config.experiment_name
@@ -51,7 +59,7 @@ class TestFileConfig(unittest.TestCase):
     def test_call_updates_and_creates_dirs(self):
         files = self.config(
             model_file="new_model_{experiment_name}.pkl",
-            model_directory="test_models2"
+            model_directory="test_models2",
         )
         self.assertIn("model_file", files)
         self.assertTrue(Path(files["model_file"]).parent.exists())

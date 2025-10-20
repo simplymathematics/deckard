@@ -30,7 +30,7 @@ def main():
         help="Module to run: data, model, or attack",
     )
     args = parser.parse_known_args()[0]
-    
+
     working_dir = Path(".").resolve()
     logging.basicConfig(
         level=logging.INFO,

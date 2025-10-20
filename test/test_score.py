@@ -1,14 +1,20 @@
 import unittest
 import numpy as np
-from deckard.score import ScorerConfig, ScorerDictConfig, DefaultClassifierDict, DefaultRegressorDict
+from deckard.score import (
+    ScorerConfig,
+    ScorerDictConfig,
+    DefaultClassifierDict,
+    DefaultRegressorDict,
+)
 from sklearn.metrics import accuracy_score, mean_squared_error
+
 
 class TestScorerConfig(unittest.TestCase):
     def test_scorer_config_initialization(self):
         config = ScorerConfig(
             score_name="accuracy",
             score_function=accuracy_score,
-            score_params={"normalize": True}
+            score_params={"normalize": True},
         )
         self.assertEqual(config.score_name, "accuracy")
         self.assertTrue(callable(config.score_function))
@@ -19,17 +25,18 @@ class TestScorerConfig(unittest.TestCase):
         config = ScorerConfig(
             score_name="accuracy",
             score_function=accuracy_score,
-            score_params={}
+            score_params={},
         )
         score = config(y_true=y_true, y_pred=y_pred)
         self.assertEqual(score, accuracy_score(y_true, y_pred))
+
     def test_scorer_config_swap(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         config = ScorerConfig(
             score_name="accuracy",
             score_function=accuracy_score,
-            score_params={}
+            score_params={},
         )
         score_swap = config(y_true=y_true, y_pred=y_pred, swap=True)
         score_normal = config(y_true=y_pred, y_pred=y_true)
@@ -43,14 +50,14 @@ class TestScorerConfig(unittest.TestCase):
                 "accuracy": ScorerConfig(
                     score_name="accuracy",
                     score_function=accuracy_score,
-                    score_params={}
+                    score_params={},
                 ),
                 "mse": ScorerConfig(
                     score_name="mse",
                     score_function=mean_squared_error,
-                    score_params={}
+                    score_params={},
                 ),
-            }
+            },
         )
         scores = scorer_dict(y_true=y_true, y_pred=y_pred)
         self.assertIn("accuracy", scores)
@@ -76,6 +83,7 @@ class TestScorerConfig(unittest.TestCase):
         self.assertIn("mse", scores)
         self.assertIn("mae", scores)
         self.assertIn("r2", scores)
+
 
 if __name__ == "__main__":
     unittest.main()

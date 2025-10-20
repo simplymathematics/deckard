@@ -9,8 +9,10 @@ from deckard.data import DataConfig
 from deckard.model import ModelConfig
 from deckard.model.defend import DefenseConfig
 from deckard.attack import AttackConfig
+
 # from deckard.score import ScorerDictConfig  # Removed unused import
 from deckard.file import FileConfig
+
 
 class DummyDataConfig(DataConfig):
     def __call__(self, **kwargs):
@@ -21,13 +23,16 @@ class DummyDataConfig(DataConfig):
         self.score_dict = {"acc": 1.0}
         return self
 
+
 class DummyModelConfig(ModelConfig):
     def __call__(self, data, **kwargs):
         class DummyModel:
             training_predictions = [0, 1, 0]
             predictions = [1, 0]
             score_dict = {"acc": 1.0}
+
         return data, DummyModel()
+
 
 class DummyDefenseConfig(DefenseConfig):
     def __call__(self, **kwargs):
@@ -35,9 +40,11 @@ class DummyDefenseConfig(DefenseConfig):
             training_predictions = [0, 1, 0]
             predictions = [1, 0]
             score_dict = {"acc": 1.0}
+
         data = MagicMock()
         data.score_dict = {"acc": 1.0}
         return data, DummyModel()
+
 
 class DummyAttackConfig(AttackConfig):
     def __call__(self, **kwargs):
@@ -46,9 +53,11 @@ class DummyAttackConfig(AttackConfig):
             attack_training_predictions = [0, 1, 0]
             attack_predictions = [1, 0]
             attack_score_dict = {"acc": 1.0}
+
         data = DataConfig()
         model = ModelConfig()
         return data, model, DummyAttack()
+
 
 class DummyFileConfig(FileConfig):
     def __call__(self, **kwargs):
@@ -63,6 +72,7 @@ class DummyFileConfig(FileConfig):
         for f in files.values():
             Path(f).touch()
         return files
+
 
 class TestExperimentConfig(unittest.TestCase):
     def setUp(self):
@@ -82,7 +92,7 @@ class TestExperimentConfig(unittest.TestCase):
             experiment_name="test",
             file_config=self.file_config,
             library="sklearn",
-            random_state=123
+            random_state=123,
         )
         config.set_random_seed()
         arr = np.random.rand(3)
@@ -95,7 +105,7 @@ class TestExperimentConfig(unittest.TestCase):
         config = ExperimentConfig(
             data_config=self.data_config,
             experiment_name="{hash}",
-            file_config=None
+            file_config=None,
         )
         config.results_path = self.temp_dir
         config.__post_init__()
@@ -106,17 +116,17 @@ class TestExperimentConfig(unittest.TestCase):
         config = ExperimentConfig(
             data_config=self.data_config,
             experiment_name="test",
-            file_config=self.file_config
+            file_config=self.file_config,
         )
         hash_str = config._hash_from_config_list([self.data_config])
         self.assertEqual(len(hash_str), 32)
-    
+
     def test_call_with_model_config(self):
         config = ExperimentConfig(
             data_config=self.data_config,
             model_config=self.model_config,
             experiment_name="test",
-            file_config=self.file_config
+            file_config=self.file_config,
         )
         config.results_path = self.temp_dir
         config.__call__()
@@ -126,7 +136,7 @@ class TestExperimentConfig(unittest.TestCase):
             data_config=self.data_config,
             defense_config=self.defense_config,
             experiment_name="test",
-            file_config=self.file_config
+            file_config=self.file_config,
         )
         config.results_path = self.temp_dir
         config.__call__()
@@ -137,7 +147,7 @@ class TestExperimentConfig(unittest.TestCase):
             model_config=self.model_config,
             attack_config=self.attack_config,
             experiment_name="test",
-            file_config=self.file_config
+            file_config=self.file_config,
         )
         config.results_path = self.temp_dir
         config.__call__()
@@ -146,17 +156,16 @@ class TestExperimentConfig(unittest.TestCase):
         class BadFileConfig(FileConfig):
             def __call__(self):
                 return {"model_file": "/tmp/nonexistent_file.pkl"}
+
         config = ExperimentConfig(
             data_config=self.data_config,
             experiment_name="test",
-            file_config=BadFileConfig(experiment_name="test")
+            file_config=BadFileConfig(experiment_name="test"),
         )
         config.results_path = self.temp_dir
         with self.assertRaises(FileNotFoundError):
             config.__call__()
-    
 
-    
-    
-if __name__ == "__main__":   
-        unittest.main()
+
+if __name__ == "__main__":
+    unittest.main()

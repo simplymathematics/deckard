@@ -27,7 +27,7 @@ repos:
         # supported by your project here, or alternatively use
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
-    language_version: python3
+    language_version: python3.10
 - repo: https://github.com/pycqa/flake8
   rev: 7.0.0      # pick a git hash / tag to point to
   hooks:

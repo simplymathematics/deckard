@@ -229,5 +229,7 @@ class TestDataConfig(unittest.TestCase):
             cfg = cfg.load(filepath=str(data_path))
             self.assertIsNotNone(cfg._X)
             self.assertIsNotNone(cfg._y)
+
+
 if __name__ == "__main__":
     unittest.main()

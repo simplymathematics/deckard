@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 supported_sklearn_libraries = ["sklearn"]
 
+
 @dataclass
 class ModelConfig(ConfigBase):
     """
