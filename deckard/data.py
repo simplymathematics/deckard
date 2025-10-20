@@ -514,7 +514,7 @@ class DataConfig(ConfigBase):
         if data_score_filepath is not None and Path(data_score_filepath).exists():
             # Load existing scores
             logger.info(f"Loading existing scores from {data_score_filepath}")
-            scores = self.save_scores(data_score_filepath)
+            scores = self.load_scores(data_score_filepath)
         elif data_score_filepath is not None:
             # Ensure directory exists
             logger.debug(f"Creating directory for scores at {data_score_filepath}")
@@ -551,7 +551,7 @@ class DataConfig(ConfigBase):
         )
         # TODO: Add Scores for dataset
         all_scores = {**time_dict, **scores}
-
+        
         if data_score_filepath is not None:
             self.save_scores(all_scores, data_score_filepath)
         if data_filepath is not None:

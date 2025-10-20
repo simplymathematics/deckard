@@ -7,12 +7,15 @@ from typing import Union, Any
 from dataclasses import dataclass
 import pandas as pd
 import pickle
+import os
 from hydra import initialize, compose
 from hydra.utils import instantiate
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
 
 
 def initialize_config(config_file, params, target, **kwargs) -> object:
@@ -39,6 +42,7 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
     if config_file and not params:
         logger.info(f"Loading config from {config_file}")
         folder = str(Path(config_file).parent)
+        assert Path(folder).exists(), f"Config folder {folder} does not exist. Current working directory: {os.getcwd()}"
         filename = str(Path(config_file).name)
         with initialize(config_path=folder):
             config = compose(config_name=filename)
@@ -71,11 +75,12 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
         with initialize(config_path=None):
             config = compose(config_name=None, overrides=params)
     obj = instantiate(config)
+    # Change back to original working directory
     return obj
 
 
 @dataclass
-class ConfigBase:
+class ConfigBase:       
     _target_: str = "deckard.utils.ConfigBase"
 
     def __init__(self, *args, **kwds):
@@ -146,7 +151,7 @@ class ConfigBase:
                 case ".csv":
                     scores.to_csv(score_path, index=False)
                 case ".json":
-                    scores.to_json(score_path, orient="records", lines=True, indent=4)
+                    scores.to_json(score_path, indent=4)
                 case ".xlsx":
                     scores.to_excel(score_path, index=False)
         else:
@@ -222,15 +227,14 @@ class ConfigBase:
         if score_path.suffix in supported_filetypes:
             match score_path.suffix:
                 case ".csv":
-                    scores = pd.read_csv(score_path).to_dict(orient="records")[0]
+                    scores = pd.read_csv(score_path)
                 case ".json":
                     scores = pd.read_json(
                         score_path,
-                        orient="records",
-                        lines=True,
-                    ).to_dict(orient="records")[0]
+                        typ="series",
+                    )
                 case "xlsx":
-                    scores = pd.read_excel(score_path).to_dict(orient="records")[0]
+                    scores = pd.read_excel(score_path)
         else:
             raise ValueError(
                 f"Unsupported file type {score_path.suffix}. Supported types: {supported_filetypes}",
@@ -280,7 +284,7 @@ class ConfigBase:
             case ".csv":
                 data = pd.read_csv(data_path, **kwargs)
             case ".json":
-                data = pd.read_json(data_path, orient="records", lines=True, **kwargs)
+                data = pd.read_json(data_path, orient="records", **kwargs)
             case ".xlsx":
                 data = pd.read_excel(data_path, **kwargs)
             case ".parquet":

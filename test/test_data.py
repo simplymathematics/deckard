@@ -1,4 +1,5 @@
 import unittest
+import tempfile
 import pandas as pd
 from pathlib import Path
 from deckard.data import DataConfig
@@ -199,6 +200,34 @@ class TestDataConfig(unittest.TestCase):
             cfg(data_filepath=str(data_path))
             self.assertTrue(cfg._X is not None)
 
+    def test_save_score_dict(self):
+        cfg = self.basic_config()
+        cfg()
+        cfg.score_dict = {"mutual_info": 0.95, "chisquare": 0.9}
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            score_path = Path(tmpdirname) / "scores.json"
+            # save scores
+            cfg.save_scores(cfg.score_dict, score_path)
+            loaded_scores = cfg.load_scores(score_path)
+            cfg(data_score_filepath=str(score_path))
+            self.assertTrue(score_path.exists())
+            self.assertIn("mutual_info", loaded_scores)
+            self.assertIn("chisquare", loaded_scores)
+            self.assertAlmostEqual(loaded_scores["mutual_info"], 0.95)
+            self.assertAlmostEqual(loaded_scores["chisquare"], 0.9)
 
+    def test_save_data_file(self):
+        import tempfile
+
+        cfg = self.basic_config()
+        cfg()
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            data_path = Path(tmpdirname) / "data.pkl"
+            cfg(data_filepath=str(data_path))
+            self.assertTrue(data_path.exists())
+            # Load the data back and verify
+            cfg = cfg.load(filepath=str(data_path))
+            self.assertIsNotNone(cfg._X)
+            self.assertIsNotNone(cfg._y)
 if __name__ == "__main__":
     unittest.main()
