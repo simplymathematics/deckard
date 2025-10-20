@@ -180,8 +180,8 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
 
     def test_non_class_raises(self):
         parser = argparse.ArgumentParser()
-        with self.assertRaises(AssertionError):
-            create_parser_from_function(parser, 42)
+        with self.assertRaises(TypeError):
+            create_parser_from_function(parser=parser, func=42)
 
     def test_exclude_parameter(self):
         @dataclass
@@ -200,6 +200,7 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
         self.assertFalse(hasattr(args, "exclude"))
         self.assertFalse(hasattr(args, "self_param"))
 
-
+    
+     
 if __name__ == "__main__":
     unittest.main()

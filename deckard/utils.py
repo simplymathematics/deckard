@@ -10,6 +10,7 @@ import pickle
 import os
 from hydra import initialize, compose
 from hydra.utils import instantiate
+from omegaconf import OmegaConf
 
 
 logger = logging.getLogger(__name__)
@@ -180,6 +181,8 @@ class ConfigBase:
         data_path = Path(filepath)
         data_path.parent.mkdir(parents=True, exist_ok=True)
         filetype = data_path.suffix
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data)
         match filetype:
             case ".pkl":
                 data.to_pickle(data_path, **kwargs)
@@ -201,6 +204,34 @@ class ConfigBase:
                 )
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
         logger.info(f"Data saved to {data_path}")
+
+    def run(self):
+        return self.__call__()
+    
+    
+    
+    
+    def get_call_params(self) -> dict:
+        """
+        Retrieves the parameters required to call the __call__ method of the instance.
+
+        Returns
+        -------
+        dict
+            A dictionary containing parameter names and their corresponding values.
+        """
+        sig = inspect.signature(self.__call__)
+        params = {}
+        for name, param in sig.parameters.items():
+            if name == "self":
+                continue
+            if hasattr(self, name):
+                params[name] = getattr(self, name)
+            else:
+                raise AttributeError(
+                    f"Instance of {self.__class__.__name__} does not have attribute {name} required for __call__",
+                )
+        return params
 
     def load_scores(self, filepath: str) -> dict:
         """
@@ -365,7 +396,73 @@ class ConfigBase:
         # Update the current instance's __dict__ with the loaded object's __dict__
         self.__dict__.update(obj.__dict__)
         return self
+    
+    @staticmethod
+    def from_yaml(filepath: str) -> "ConfigBase":
+        """
+        Creates an instance of the class from a YAML configuration file.
 
+        Parameters
+        ----------
+        filepath : str
+            The path to the YAML configuration file.
+
+        Returns
+        -------
+        ConfigBase
+            An instance of the class initialized with the configuration from the YAML file.
+        """
+        config = OmegaConf.load(filepath)
+        if not isinstance(config, dict):
+            raise TypeError(f"Loaded config is not a dictionary from {filepath}")
+        instance = ConfigBase(**config)
+        logger.info(f"Instance of {ConfigBase.__name__} created from {filepath}")
+        return instance
+    
+    @staticmethod
+    def from_dict(data: dict) -> "ConfigBase":
+        """
+        Creates an instance of the class from a dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary containing the configuration.
+
+        Returns
+        -------
+        ConfigBase
+            An instance of the class initialized with the configuration from the dictionary.
+        """
+        instance = instantiate(data)
+        return instance
+
+    def to_yaml(self, filepath: str=None) -> None:
+        """
+        Saves the current instance to a YAML configuration file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the YAML configuration file where the instance will be saved.
+        """
+        config = OmegaConf.create(self.__dict__)
+        if filepath is None:
+            return str(OmegaConf.to_yaml(config))
+        else:
+            OmegaConf.save(config, filepath)
+            logger.info(f"Instance of {self.__class__.__name__} saved to {filepath} as YAML")
+
+    def to_dict(self) -> dict:
+        """
+        Converts the current instance to a dictionary.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the instance.
+        """
+        return self.__dict__.copy()
 
 def create_parser_from_function(
     func,
@@ -398,8 +495,6 @@ def create_parser_from_function(
     argparse.ArgumentParser
         The updated parser with arguments corresponding to the function's signature.
     """
-    # Validate that the func is callable
-    assert callable(func), "func must be a callable function or method."
     # Validate the parser
     conflict_handler = kwargs.pop("conflict_handler", "resolve")
     add_help = kwargs.pop("add_help", False)
@@ -414,7 +509,7 @@ def create_parser_from_function(
             raise ValueError("Cannot pass kwargs when parser is provided.")
         if not isinstance(parser, argparse.ArgumentParser):
             raise ValueError(
-                "parser must be an instance of argparse.ArgumentParser or None.",
+                f"parser must be an instance of argparse.ArgumentParser or None. Got {type(parser)}",
             )
     sig = inspect.signature(func)
     for name, param in sig.parameters.items():
