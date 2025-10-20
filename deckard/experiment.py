@@ -3,6 +3,7 @@ import warnings
 from dataclasses import dataclass
 import hashlib
 from typing import List, Union, Literal
+from omegaconf import DictConfig
 
 
 import numpy as np
@@ -20,40 +21,19 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-data_call_parser = create_parser_from_function(DataConfig.__call__, exclude=["self"])
-model_call_parser = create_parser_from_function(
-    ModelConfig.__call__,
-    exclude=["self", "data"],
-)
-defense_call_parser = create_parser_from_function(
-    DefenseConfig.__call__,
-    exclude=["self", "data", "estimator"],
-)
-attack_call_parser = create_parser_from_function(
-    AttackConfig.__call__,
-    exclude=["self", "data", "estimator"],
-)
-
-
-data_call_kwargs = list(vars(data_call_parser.parse_known_args([])[0]).keys())
-model_call_kwargs = list(vars(model_call_parser.parse_known_args([])[0]).keys())
-defense_call_kwargs = list(vars(defense_call_parser.parse_known_args([])[0]).keys())
-attack_call_kwargs = list(vars(attack_call_parser.parse_known_args([])[0]).keys())
-
-
 @dataclass
 class PlotConfig(ConfigBase):
     pass
 
 
 class ExperimentConfig(ConfigBase):
-    data_config: DataConfig
-    experiment_name: str = "default_experiment"
-    model_config: ModelConfig = None
-    defense_config: DefenseConfig = None
-    attack_config: AttackConfig = None
-    file_config: FileConfig = None
-    score_config: ScorerDictConfig = None
+    data: DataConfig 
+    experiment_name: str = "{hash}"
+    model: ModelConfig = None
+    defense: DefenseConfig = None
+    attack: AttackConfig = None
+    files: FileConfig = None
+    score: ScorerDictConfig = None
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
 
@@ -123,45 +103,68 @@ class ExperimentConfig(ConfigBase):
         # Set random seed
         self.set_random_seed()
         # Set device
-        self.set_device()
+        if self.library not in ["sklearn"]:
+            self.set_device()
         # Validate and initialize configs
-        if self.data_config is None:
-            raise ValueError("data_config must be provided")
+        if self.data is None:
+            raise ValueError("data must be provided")
+        if isinstance(self.data, DictConfig):
+            self.data = DataConfig(**self.data)
         assert isinstance(
-            self.data_config,
+            self.data,
             DataConfig,
-        ), "data_config must be an instance of DataConfig"
-        self.data_config.__post_init__()
-        if self.model_config:
+        ), f"data must be an instance of DataConfig. Got {type(self.data)}"
+        self.data.__post_init__()
+        if self.model is not None:
+            if isinstance(self.model, DictConfig):
+                self.model = ModelConfig(**self.model)
             assert isinstance(
-                self.model_config,
+                self.model,
                 ModelConfig,
-            ), "model_config must be an instance of ModelConfig"
-            self.model_config.__post_init__()
-        if self.attack_config:
+            ), "model must be an instance of ModelConfig"
+            self.model.__post_init__()
+        if self.defense is not None:
+            if isinstance(self.defense, DictConfig):
+                self.defense = DefenseConfig(**self.defense)
             assert isinstance(
-                self.attack_config,
+                self.defense,
+                DefenseConfig,
+            ), "defense must be an instance of DefenseConfig"
+            self.defense.__post_init__()
+        if self.attack is not None:
+            if isinstance(self.attack, DictConfig):
+                self.attack = AttackConfig(**self.attack)
+            assert isinstance(
+                self.attack,
                 AttackConfig,
-            ), "attack_config must be an instance of AttackConfig"
-            self.attack_config.__post_init__()
+            ), "attack must be an instance of AttackConfig"
+            self.attack.__post_init__()
         # Set experiment name if not provided
         if self.experiment_name in [None, "", "{hash}", "*"]:
-            config_list = [self.data_config]
-            if self.model_config:
-                config_list.append(self.model_config)
-            if self.defense_config:
-                config_list.append(self.defense_config)
-            if self.attack_config:
-                config_list.append(self.attack_config)
-            self.experiment_name = self._hash_from_config_list(config_list)
-        if self.file_config is None:
-            self.file_config = FileConfig(experiment_name=self.experiment_name)
+            config_list = [self.data]
+            if self.model:
+                config_list.append(self.model)
+            if self.defense:
+                config_list.append(self.defense)
+            if self.attack:
+                config_list.append(self.attack)
+            self.experiment_name = self._hash_from_list(config_list)
+            logger.info(f"Generated experiment name: {self.experiment_name}")
         else:
+            logger.info(f"Using provided experiment name: {self.experiment_name}")
+            
+        if self.files is None:
+            self.files = FileConfig(experiment_name=self.experiment_name)
+        elif isinstance(self.files, FileConfig):
+            self.files.experiment_name = self.experiment_name
+            self.files.__post_init__()
+        else:
+            self.files = FileConfig(**self.files, experiment_name=self.experiment_name)
             assert isinstance(
-                self.file_config,
+                self.files,
                 FileConfig,
-            ), "file_config must be an instance of FileConfig"
-            self.file_config.__post_init__()
+            ), "file must be an instance of FileConfig"
+            self.files.__post_init__()
 
     def set_random_seed(self):
         if self.library in ["sklearn"]:
@@ -178,7 +181,7 @@ class ExperimentConfig(ConfigBase):
             raise ValueError(f"Unsupported library: {self.library}")
         # Set
 
-    def _hash_from_config_list(self, config_list: List[ConfigBase]) -> str:
+    def _hash_from_list(self, config_list: List[ConfigBase]) -> str:
         """
         Generate a hash string from a list of ConfigBase objects.
         The hash is generated by concatenating the string representations of the configurations
@@ -203,17 +206,28 @@ class ExperimentConfig(ConfigBase):
         return hashlib.md5(to_string.encode()).hexdigest()
 
     def __call__(self, **kwargs):
-        # Update any kwargs in file_config
+        
+        data_call_parser = create_parser_from_function(DataConfig.__call__, exclude=["self"])
+        model_call_parser = create_parser_from_function(
+            ModelConfig.__call__,
+            exclude=["self", "data"],
+        )
+        defense_call_parser = create_parser_from_function(
+            DefenseConfig.__call__,
+            exclude=["self", "data", "model"],
+        )
+        attack_call_parser = create_parser_from_function(
+            AttackConfig.__call__,
+            exclude=["self", "data", "model"],
+        )
+
+
+        
+
+        # Update any kwargs in file
         scores = {}
-        if self.file_config is None:
-            self.file_config = FileConfig(experiment_name=self.experiment_name)
-        else:
-            assert isinstance(
-                self.file_config,
-                FileConfig,
-            ), "file_config must be an instance of FileConfig"
-            self.file_config.__post_init__()
-        file_dict = self.file_config(**kwargs)
+        self.initialize_file_config(kwargs)
+        file_dict = self.files
 
         # Set random seed
         self.set_random_seed()
@@ -221,28 +235,29 @@ class ExperimentConfig(ConfigBase):
         self.set_device()
 
         # Get call params from data parser
-        data_call_params = vars(data_call_parser.parse_known_args([])[0])
-        data = self.data_config(**data_call_params, **file_dict)
+        data_call_params = vars(data_call_parser.parse_known_args(args={**kwargs})[0])
+        data = self.data(**data_call_params)
         assert hasattr(
             data,
             "X_train",
-        ), "data_config must return an object with X_train attribute"
+        ), "data must return an object with X_train attribute"
         assert hasattr(
             data,
             "y_train",
-        ), "data_config must return an object with y_train attribute"
+        ), "data must return an object with y_train attribute"
         assert hasattr(
             data,
             "X_test",
-        ), "data_config must return an object with X_test attribute"
+        ), "data must return an object with X_test attribute"
         assert hasattr(
             data,
             "y_test",
-        ), "data_config must return an object with y_test attribute"
+        ), "data must return an object with y_test attribute"
         scores.update(**data.score_dict)
-        if self.model_config:
+        if self.model:
             model_call_params = vars(model_call_parser.parse_known_args([])[0])
-            data, model = self.model_config(data=data, **model_call_params, **file_dict)
+            self.model(data=data, **model_call_params)
+            model = self.model
             assert hasattr(
                 model,
                 "training_predictions",
@@ -263,9 +278,10 @@ class ExperimentConfig(ConfigBase):
                     v == model.score_dict[k]
                 ), f"score {k} from data does not match model score_dict"
             scores.update(**model.score_dict)
-        elif self.defense_config:
+        elif self.defense:
             defense_call_params = vars(defense_call_parser.parse_known_args([])[0])
-            data, model = self.defense_config(**defense_call_params, **file_dict)
+            self.defense(**defense_call_params)
+            model = self.defense
             assert hasattr(
                 model,
                 "training_predictions",
@@ -289,45 +305,50 @@ class ExperimentConfig(ConfigBase):
         else:
             logger.info("No model or defense config provided, skipping model training.")
             model = None
-        if self.attack_config:
+        if self.attack:
             attack_call_params = vars(attack_call_parser.parse_known_args([])[0])
-            data, model, attack = self.attack_config(
+            self.attack(
                 data=data,
                 model=model,
                 **attack_call_params,
-                **file_dict,
             )
+            attack = self.attack
             assert hasattr(
                 attack,
                 "attack",
             ), "attack must have attack attribute after training"
             assert hasattr(
                 attack,
-                "attack_training_predictions",
-            ), "attack must have attack_training_predictions attribute after training"
+                "predictions",
+            ), "attack must have a predictions attribute after training"
             assert hasattr(
                 attack,
-                "attack_predictions",
-            ), "attack must have attack_predictions attribute after training"
-            assert hasattr(
-                attack,
-                "attack_score_dict",
-            ), "attack must have attack_score_dict attribute after training"
-            for k, v in model.score_dict.items():
-                assert (
-                    k in attack.attack_score_dict
-                ), f"score {k} from model not found in attack score_dict"
-                assert (
-                    v == attack.attack_score_dict[k]
-                ), f"score {k} from model does not match attack score_dict"
-            scores.update(**attack.attack_score_dict)
+                "score_dict",
+            ), "attack must have score_dict attribute after training"
+            scores.update(**attack.score_dict)
         else:
             logger.info("No attack config provided, skipping attack.")
             attack = None
         # Assert that all files in file_dict exist
         for attr, filepath in file_dict.items():
-            file_path = Path(filepath)
-            if not file_path.exists():
-                logger.error(f"File {attr} does not exist: {file_path}")
-                raise FileNotFoundError(f"File {attr} does not exist: {file_path}")
+            if filepath is None:
+                continue
+            if not filepath.endswith("_file"):
+                continue
+            else:
+                filepath = Path(filepath) if not isinstance(filepath, Path) else filepath
+            if filepath is not None and not filepath.exists():
+                logger.error(f"File {attr} does not exist: {filepath}")
+                raise FileNotFoundError(f"File {attr} does not exist: {filepath}")
         return scores
+
+    def initialize_file_config(self, kwargs):
+        if self.files is None:
+            self.files = FileConfig(experiment_name=self.experiment_name, **kwargs)
+        else:
+            assert isinstance(
+                self.files,
+                FileConfig,
+            ), "file must be an instance of FileConfig"
+            self.files.__post_init__()
+        self.files = vars(self.files)
