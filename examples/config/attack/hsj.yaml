@@ -1,0 +1,6 @@
+attack_name : "art.attacks.evasion.HopSkipJump"
+attack_params : 
+  - "max_iter=10"
+  - "init_eval=5"
+  - "max_eval=20"
+  - "init_size=100"
