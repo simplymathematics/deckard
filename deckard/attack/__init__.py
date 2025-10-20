@@ -305,9 +305,6 @@ class AttackConfig(ConfigBase):
             "attack_prediction_time": self.attack_prediction_time,
             "attack_score_time": self.attack_score_time,
         }
-        for t in times:
-            if times[t] is not None:
-                logger.info(f"{time}: {times[t]:.2f} seconds")
         score_dict = {**scores, **times}
         self.score_dict = score_dict
 
@@ -472,7 +469,7 @@ class AttackConfig(ConfigBase):
             zero_division=0,
             average="weighted",
         )
-        adv_success = accuracy_score(ben_pred_labels, adv_pred_labels)
+        adv_success = 1 - accuracy_score(ben_pred_labels, adv_pred_labels)
         end_time = time.process_time()
         self.attack_score_time = end_time - start_time
         self.score_dict = {
@@ -850,11 +847,14 @@ def initialize_attack_config(**kwargs) -> AttackConfig:
     args = attack_init_parser.parse_known_args()[0]
     params = args.attack_config_params if args.attack_config_params is not None else []
     target = "deckard.AttackConfig"
-    params.update(kwargs)
     assert isinstance(
         params,
         list,
     ), "attack_params should be a list of key=value strings"
+    # Turn kwargs into params
+    for k, v in kwargs.items():
+        params.append(f"{k}={v}")
+    # Check if using predefined config
     if args.attack_config_file in list(attack_defaults.keys()):
         assert (
             len(params) == 0

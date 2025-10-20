@@ -1,8 +1,10 @@
 import sys
-from deckard import data_parser, model_parser, attack_parser
-from deckard import data_main, model_main, attack_main
 import argparse
 import logging
+from pathlib import Path
+
+from deckard import data_parser, model_parser, attack_parser
+from deckard import data_main, model_main, attack_main
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,18 @@ def main():
         choices=["data", "model", "attack", None],
         help="Module to run: data, model, or attack",
     )
-    args = parser.parse_args()
+    args = parser.parse_known_args()[0]
+    
+    working_dir = Path(".").resolve()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(working_dir / "deckard.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+    logger.info(f"Working directory: {working_dir}")
     match args.module:
         case "data":
             args, unknown = data_parser.parse_known_args()
