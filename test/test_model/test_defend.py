@@ -5,9 +5,6 @@ from pathlib import Path
 import tempfile
 import os
 import shutil
-from deckard.data import DataConfig
-from deckard.model import ModelConfig
-from deckard.attack import AttackConfig
 from deckard.model.defend import DefenseConfig
 
 
@@ -30,7 +27,8 @@ class TestDefenseConfig(unittest.TestCase):
         self.model_file = os.path.join(self.temp_dir, "model.pkl")
         self.test_predictions_file = os.path.join(self.temp_dir, "predictions.csv")
         self.train_predictions_file = os.path.join(
-            self.temp_dir, "training_predictions.csv"
+            self.temp_dir,
+            "training_predictions.csv",
         )
         self.model_score_file = os.path.join(self.temp_dir, "model_score.json")
 
@@ -52,7 +50,8 @@ class TestDefenseConfig(unittest.TestCase):
     def test_defense_config_initialization(self):
         # Test default initialization
         self.assertEqual(
-            self.defense_config.model_type, "sklearn.linear_model.LogisticRegression"
+            self.defense_config.model_type,
+            "sklearn.linear_model.LogisticRegression",
         )
         self.assertTrue(self.defense_config.classifier)
         self.assertFalse(self.defense_config.probability)

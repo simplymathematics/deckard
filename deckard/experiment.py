@@ -209,7 +209,8 @@ class ExperimentConfig(ConfigBase):
     def __call__(self, **kwargs):
 
         data_call_parser = create_parser_from_function(
-            DataConfig.__call__, exclude=["self"]
+            DataConfig.__call__,
+            exclude=["self"],
         )
         model_call_parser = create_parser_from_function(
             ModelConfig.__call__,

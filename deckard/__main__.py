@@ -35,7 +35,8 @@ module_call_parsers = {
     ),
     "attack": (
         create_parser_from_function(
-            AttackConfig.__call__, exclude=["data", "estimator"]
+            AttackConfig.__call__,
+            exclude=["data", "estimator"],
         ),
         AttackConfig,
     ),
@@ -62,7 +63,10 @@ def main():
         help="Modules to run in the experiment pipeline",
     )
     parser.add_argument(
-        "--files", nargs="*", default=[], help="Specify what files should be saved."
+        "--files",
+        nargs="*",
+        default=[],
+        help="Specify what files should be saved.",
     )
     args = parser.parse_args()
 

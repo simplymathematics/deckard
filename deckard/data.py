@@ -20,8 +20,7 @@ import sklearn.model_selection
 
 
 # deckard
-from .utils import initialize_config, ConfigBase, create_parser_from_function
-
+from .utils import ConfigBase
 # Setup logger
 logger = logging.getLogger(__name__)
 
@@ -388,7 +387,7 @@ class DataConfig(ConfigBase):
             )
         except ValueError as e:
             raise ValueError(
-                f"Error during train/test split with train_size={train_n}, test_size={test_n}, random_state={self.random_state}, stratify={self.stratify}: {e} "
+                f"Error during train/test split with train_size={train_n}, test_size={test_n}, random_state={self.random_state}, stratify={self.stratify}: {e} ",
             )
         end_time = time.time()
         self.data_sample_time = end_time - start_time

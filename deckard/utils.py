@@ -449,7 +449,7 @@ class ConfigBase:
         else:
             OmegaConf.save(config, filepath)
             logger.info(
-                f"Instance of {self.__class__.__name__} saved to {filepath} as YAML"
+                f"Instance of {self.__class__.__name__} saved to {filepath} as YAML",
             )
 
     def to_dict(self) -> dict:
