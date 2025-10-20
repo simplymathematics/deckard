@@ -1,5 +1,4 @@
 import unittest
-import os
 from pathlib import Path
 from deckard.file import FileConfig
 import tempfile
@@ -47,7 +46,7 @@ class TestFileConfig(unittest.TestCase):
     def test_experiment_name_timestamp(self):
         self.assertNotEqual(self.config.experiment_name, "{timestamp}")
         self.assertTrue(
-            self.config.experiment_name.isdigit() or "-" in self.config.experiment_name
+            self.config.experiment_name.isdigit() or "-" in self.config.experiment_name,
         )
 
     def test_file_paths_contain_experiment_name(self):

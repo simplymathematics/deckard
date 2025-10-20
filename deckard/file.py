@@ -119,19 +119,21 @@ class FileConfig(ConfigBase):
             self.experiment_name = time.strftime("%Y%m%d-%H%M%S")
         elif self.experiment_name == "{hash}":
             hash_source = str(
-                {k: v for k, v in self.__dict__.items() if k != "experiment_name"}
+                {k: v for k, v in self.__dict__.items() if k != "experiment_name"},
             )
             self.experiment_name = hashlib.md5(hash_source.encode()).hexdigest()
         elif "{hash}" in self.experiment_name:
             hash_source = str(
-                {k: v for k, v in self.__dict__.items() if k != "experiment_name"}
+                {k: v for k, v in self.__dict__.items() if k != "experiment_name"},
             )
             self.experiment_name = self.experiment_name.replace(
-                "{hash}", hashlib.md5(hash_source.encode()).hexdigest()
+                "{hash}",
+                hashlib.md5(hash_source.encode()).hexdigest(),
             )
         elif "{timestamp}" in self.experiment_name:
             self.experiment_name = self.experiment_name.replace(
-                "{timestamp}", time.strftime("%Y%m%d-%H%M%S")
+                "{timestamp}",
+                time.strftime("%Y%m%d-%H%M%S"),
             )
         # else: leave as is
 
@@ -144,13 +146,16 @@ class FileConfig(ConfigBase):
                 # Replace placeholders
                 if any(ph in current_value for ph in supported_placeholders):
                     current_value = current_value.replace(
-                        "{experiment_name}", self.experiment_name
+                        "{experiment_name}",
+                        self.experiment_name,
                     )
                     current_value = current_value.replace(
-                        "{timestamp}", time.strftime("%Y%m%d-%H%M%S")
+                        "{timestamp}",
+                        time.strftime("%Y%m%d-%H%M%S"),
                     )
                     current_value = current_value.replace(
-                        "{hash}", hashlib.md5(current_value.encode()).hexdigest()
+                        "{hash}",
+                        hashlib.md5(current_value.encode()).hexdigest(),
                     )
                 # Join with directory
                 directory_attr = attr.replace("_file", "_directory")

@@ -1,10 +1,8 @@
-import time
 import logging
 import warnings
 from dataclasses import dataclass
 import hashlib
 from typing import List, Union, Literal
-import argparse
 
 
 import numpy as np
@@ -24,13 +22,16 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 data_call_parser = create_parser_from_function(DataConfig.__call__, exclude=["self"])
 model_call_parser = create_parser_from_function(
-    ModelConfig.__call__, exclude=["self", "data"]
+    ModelConfig.__call__,
+    exclude=["self", "data"],
 )
 defense_call_parser = create_parser_from_function(
-    DefenseConfig.__call__, exclude=["self", "data", "estimator"]
+    DefenseConfig.__call__,
+    exclude=["self", "data", "estimator"],
 )
 attack_call_parser = create_parser_from_function(
-    AttackConfig.__call__, exclude=["self", "data", "estimator"]
+    AttackConfig.__call__,
+    exclude=["self", "data", "estimator"],
 )
 
 
@@ -89,7 +90,7 @@ class ExperimentConfig(ConfigBase):
                     logger.error(e)
             else:
                 logger.warning(
-                    "Invalid device specified for TensorFlow, using default device."
+                    "Invalid device specified for TensorFlow, using default device.",
                 )
         elif self.library == "pytorch":
             import torch
@@ -127,17 +128,20 @@ class ExperimentConfig(ConfigBase):
         if self.data_config is None:
             raise ValueError("data_config must be provided")
         assert isinstance(
-            self.data_config, DataConfig
+            self.data_config,
+            DataConfig,
         ), "data_config must be an instance of DataConfig"
         self.data_config.__post_init__()
         if self.model_config:
             assert isinstance(
-                self.model_config, ModelConfig
+                self.model_config,
+                ModelConfig,
             ), "model_config must be an instance of ModelConfig"
             self.model_config.__post_init__()
         if self.attack_config:
             assert isinstance(
-                self.attack_config, AttackConfig
+                self.attack_config,
+                AttackConfig,
             ), "attack_config must be an instance of AttackConfig"
             self.attack_config.__post_init__()
         # Set experiment name if not provided
@@ -154,7 +158,8 @@ class ExperimentConfig(ConfigBase):
             self.file_config = FileConfig(experiment_name=self.experiment_name)
         else:
             assert isinstance(
-                self.file_config, FileConfig
+                self.file_config,
+                FileConfig,
             ), "file_config must be an instance of FileConfig"
             self.file_config.__post_init__()
 
@@ -185,14 +190,15 @@ class ExperimentConfig(ConfigBase):
         """
         for conf in config_list:
             assert isinstance(
-                conf, ConfigBase
+                conf,
+                ConfigBase,
             ), "All items in config_list must be instances of ConfigBase"
             to_string = "".join(
                 [
                     str(getattr(conf, attr))
                     for attr in dir(conf)
                     if not attr.startswith("_") and not callable(getattr(conf, attr))
-                ]
+                ],
             )
         return hashlib.md5(to_string.encode()).hexdigest()
 
@@ -203,7 +209,8 @@ class ExperimentConfig(ConfigBase):
             self.file_config = FileConfig(experiment_name=self.experiment_name)
         else:
             assert isinstance(
-                self.file_config, FileConfig
+                self.file_config,
+                FileConfig,
             ), "file_config must be an instance of FileConfig"
             self.file_config.__post_init__()
         file_dict = self.file_config(**kwargs)
@@ -217,29 +224,36 @@ class ExperimentConfig(ConfigBase):
         data_call_params = vars(data_call_parser.parse_known_args([])[0])
         data = self.data_config(**data_call_params, **file_dict)
         assert hasattr(
-            data, "X_train"
+            data,
+            "X_train",
         ), "data_config must return an object with X_train attribute"
         assert hasattr(
-            data, "y_train"
+            data,
+            "y_train",
         ), "data_config must return an object with y_train attribute"
         assert hasattr(
-            data, "X_test"
+            data,
+            "X_test",
         ), "data_config must return an object with X_test attribute"
         assert hasattr(
-            data, "y_test"
+            data,
+            "y_test",
         ), "data_config must return an object with y_test attribute"
         scores.update(**data.score_dict)
         if self.model_config:
             model_call_params = vars(model_call_parser.parse_known_args([])[0])
             data, model = self.model_config(data=data, **model_call_params, **file_dict)
             assert hasattr(
-                model, "training_predictions"
+                model,
+                "training_predictions",
             ), "model must have training_predictions attribute after training"
             assert hasattr(
-                model, "predictions"
+                model,
+                "predictions",
             ), "model must have predictions attribute after training"
             assert hasattr(
-                model, "score_dict"
+                model,
+                "score_dict",
             ), "model must have score_dict attribute after training"
             for k, v in data.score_dict.items():
                 assert (
@@ -253,13 +267,16 @@ class ExperimentConfig(ConfigBase):
             defense_call_params = vars(defense_call_parser.parse_known_args([])[0])
             data, model = self.defense_config(**defense_call_params, **file_dict)
             assert hasattr(
-                model, "training_predictions"
+                model,
+                "training_predictions",
             ), "model must have training_predictions attribute after training"
             assert hasattr(
-                model, "predictions"
+                model,
+                "predictions",
             ), "model must have predictions attribute after training"
             assert hasattr(
-                model, "score_dict"
+                model,
+                "score_dict",
             ), "model must have score_dict attribute after training"
             for k, v in data.score_dict.items():
                 assert (
@@ -275,19 +292,26 @@ class ExperimentConfig(ConfigBase):
         if self.attack_config:
             attack_call_params = vars(attack_call_parser.parse_known_args([])[0])
             data, model, attack = self.attack_config(
-                data=data, model=model, **attack_call_params, **file_dict
+                data=data,
+                model=model,
+                **attack_call_params,
+                **file_dict,
             )
             assert hasattr(
-                attack, "attack"
+                attack,
+                "attack",
             ), "attack must have attack attribute after training"
             assert hasattr(
-                attack, "attack_training_predictions"
+                attack,
+                "attack_training_predictions",
             ), "attack must have attack_training_predictions attribute after training"
             assert hasattr(
-                attack, "attack_predictions"
+                attack,
+                "attack_predictions",
             ), "attack must have attack_predictions attribute after training"
             assert hasattr(
-                attack, "attack_score_dict"
+                attack,
+                "attack_score_dict",
             ), "attack must have attack_score_dict attribute after training"
             for k, v in model.score_dict.items():
                 assert (

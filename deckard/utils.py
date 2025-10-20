@@ -41,7 +41,7 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
         logger.info(f"Loading config from {config_file}")
         folder = str(Path(config_file).parent)
         assert Path(
-            folder
+            folder,
         ).exists(), f"Config folder {folder} does not exist. Current working directory: {os.getcwd()}"
         filename = str(Path(config_file).name)
         with initialize(config_path=folder):

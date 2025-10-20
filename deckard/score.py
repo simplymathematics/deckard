@@ -141,7 +141,8 @@ class ScorerDictConfig(ConfigBase):
         """
         for key, value in self._scorers.items():
             assert isinstance(
-                value, ScorerConfig
+                value,
+                ScorerConfig,
             ), f"Value for key '{key}' must be an instance of ScorerConfig"
             value.__post_init__()
 
