@@ -182,8 +182,8 @@ class TestDataConfig(unittest.TestCase):
             data_path = Path(tmpdirname) / "data.pkl"
             score_path = Path(tmpdirname) / "scores.json"
             results = cfg(
-                data_filepath=str(data_path),
-                data_score_filepath=str(score_path),
+                data_file=str(data_path),
+                data_score_file=str(score_path),
             )
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
@@ -197,7 +197,7 @@ class TestDataConfig(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_filepath=str(data_path))
+            cfg(data_file=str(data_path))
             self.assertTrue(cfg._X is not None)
 
     def test_save_score_dict(self):
@@ -209,7 +209,7 @@ class TestDataConfig(unittest.TestCase):
             # save scores
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
-            cfg(data_score_filepath=str(score_path))
+            cfg(data_score_file=str(score_path))
             self.assertTrue(score_path.exists())
             self.assertIn("mutual_info", loaded_scores)
             self.assertIn("chisquare", loaded_scores)
@@ -223,7 +223,7 @@ class TestDataConfig(unittest.TestCase):
         cfg()
         with tempfile.TemporaryDirectory() as tmpdirname:
             data_path = Path(tmpdirname) / "data.pkl"
-            cfg(data_filepath=str(data_path))
+            cfg(data_file=str(data_path))
             self.assertTrue(data_path.exists())
             # Load the data back and verify
             cfg = cfg.load(filepath=str(data_path))
