@@ -50,7 +50,7 @@ class AttackConfig(ConfigBase):
         Time taken for adversarial prediction.
     attack_score_time : float, optional
         Time taken to score the attack.
-    _attack : object, optional
+    attack : object, optional
         Stores the result of the attack.
     attack_predictions : list, optional
         Stores the predictions made by the attack.
@@ -109,14 +109,13 @@ class AttackConfig(ConfigBase):
         """
         Initializes post-construction attributes for the class.
 
-        Sets the internal _attack attribute to None. If attack_params is not provided,
+        Sets the internal attack attribute to None. If attack_params is not provided,
         initializes it as an empty dictionary.
         """
-        self._attack = None
         if self.attack_params is None:
             self.attack_params = {}
         self.attack_predictions = None
-        self._attack = None
+        self.attack = None
         self.score_dict = {}
         self.attack_time = None
         self.attack_prediction_time = None
@@ -226,7 +225,7 @@ class AttackConfig(ConfigBase):
             If the output scores or timing variables are not of the expected types.
         """
         if attack_file is not None and Path(attack_file).exists():
-            self._attack = self.load_object(attack_file)
+            self.attack = self.load_object(attack_file)
         if (
             attack_predictions_file is not None
             and Path(attack_predictions_file).exists()
@@ -235,7 +234,7 @@ class AttackConfig(ConfigBase):
         if attack_scores_file is not None and Path(attack_scores_file).exists():
             self.score_dict = self.load_object(attack_scores_file)
         if (
-            self._attack is not None
+            self.attack is not None
             and self.score_dict is not None
             and self.attack_predictions is not None
         ):
@@ -251,7 +250,7 @@ class AttackConfig(ConfigBase):
                 )
             return self.score_dict
         elif (
-            self._attack is None
+            self.attack is None
         ):  # If attack is not already loaded, initialize and run it
             attack, art_model, attack_type, attack_subtype = (
                 self._initialize_attack(model)
@@ -309,7 +308,7 @@ class AttackConfig(ConfigBase):
 
         # Save attack, predictions, and scores if file paths are provided
         if attack_file is not None:
-            self.save_object(self._attack, attack_file)
+            self.save_object(self.attack, attack_file)
         if attack_predictions_file is not None:
             self.save_object(self.attack_predictions, attack_predictions_file)
         if attack_scores_file is not None:
@@ -484,7 +483,7 @@ class AttackConfig(ConfigBase):
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
 
-    def _evade(self, data, art_model, attack, train=False):
+    def _evade(self, data, art_model, attack):
         """
         Executes an evasion attack on a given dataset using the specified ART model and attack method.
 
@@ -512,7 +511,6 @@ class AttackConfig(ConfigBase):
         n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
             data,
             art_model,
-            train=train,
         )
         start_time = time.process_time()
         X_test_adv = attack.generate(x=X_test_subset.values)
@@ -521,6 +519,7 @@ class AttackConfig(ConfigBase):
         logger.info(f"Evasion attack took {self.attack_time} seconds for {n} samples")
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
+        self.predictions = adv_pred
         adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
@@ -529,7 +528,7 @@ class AttackConfig(ConfigBase):
         )
         y_test_numeric = y_test_subset.astype("category").cat.codes
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
-        self._attack = adv_pred
+        self.attack = adv_pred
         return self.score_dict
 
     def _pop_attribute(self, X: pd.DataFrame, targeted_attribute: str) -> pd.DataFrame:
@@ -633,7 +632,6 @@ class AttackConfig(ConfigBase):
                 attack.fit(x=X_test)
             else:
                 raise e
-        end_time = time.process_time()
         attack_time = time.process_time() - start_time
         logger.info(
             f"Attribute inference attack training took {attack_time} seconds for {n} samples",
@@ -643,6 +641,8 @@ class AttackConfig(ConfigBase):
         attack_x_test_predictions = np.array(
             [np.argmax(arr) for arr in art_model.predict(X_test)],
         ).reshape(-1, 1)
+        end_time = time.process_time()
+        self.predictions = attack_x_test_predictions
         logger.info(
             f"Attribute inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
@@ -698,7 +698,7 @@ class AttackConfig(ConfigBase):
         }
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
-        self._attack = inferred
+        self.attack = inferred
         return self.score_dict
 
     def _infer_membership(self, data, art_model, attack, train=False):
@@ -774,7 +774,7 @@ class AttackConfig(ConfigBase):
         y_test_numeric = y_test_subset.astype("category").cat.codes
         start_time = time.process_time()
         self._score_attack(ben_pred_labels, inferred, y_test_numeric)
-        self._attack = inferred
+        self.attack = inferred
         return self.score_dict
 
     def _poison(self):
