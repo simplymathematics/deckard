@@ -21,6 +21,7 @@ import sklearn.model_selection
 
 # deckard
 from .utils import ConfigBase
+
 # Setup logger
 logger = logging.getLogger(__name__)
 
