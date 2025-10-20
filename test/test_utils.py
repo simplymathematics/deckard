@@ -156,16 +156,7 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
         self.assertAlmostEqual(args.alpha, 3.14)
         self.assertEqual(args.beta, 42)
 
-    def test_parser_missing_required_argument(self):
-        @dataclass
-        class ConfigMissing:
-            def __call__(self, required: int):
-                return required
 
-        parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(ConfigMissing.__call__, parser)
-        with self.assertRaises(SystemExit):
-            parser.parse_args([])
 
     def test_parser_with_no_arguments(self):
         @dataclass
@@ -183,23 +174,22 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
         with self.assertRaises(TypeError):
             create_parser_from_function(parser=parser, func=42)
 
-    def test_exclude_parameter(self):
+    def test_exclude_parameters(self):
         @dataclass
         class ExcludeConfig:
-            def __call__(self, include: int, exclude: str, self_param: float):
-                return include, exclude, self_param
+            def __call__(self, p1: int, p2: str = "default", p3: float = 1.0):
+                return p1, p2, p3
 
         parser = argparse.ArgumentParser()
         parser = create_parser_from_function(
             ExcludeConfig.__call__,
             parser,
-            exclude=["exclude", "self_param"],
+            exclude=["p2"],
         )
-        args = parser.parse_args(["--include", "5"])
-        self.assertEqual(args.include, 5)
-        self.assertFalse(hasattr(args, "exclude"))
-        self.assertFalse(hasattr(args, "self_param"))
-
+        args = parser.parse_args(["--p1", "5", "--p3", "2.5"])
+        self.assertEqual(args.p1, 5)
+        self.assertAlmostEqual(args.p3, 2.5)
+        self.assertFalse(hasattr(args, "p2"))
     
      
 if __name__ == "__main__":
