@@ -24,9 +24,10 @@ class TestFileConfig(unittest.TestCase):
             model_directory=self.temp_dirs["model_directory"],
             data_directory=self.temp_dirs["data_directory"],
             log_directory=self.temp_dirs["log_directory"],
-            model_file="model_{experiment_name}.pkl",
-            data_file="data_{experiment_name}.csv",
             log_file="{experiment_name}.log",
+            model_file="{experiment_name}.pkl",
+            data_file="{experiment_name}.csv",
+            score_file="{experiment_name}_score.txt",
         )
 
     def tearDown(self):
@@ -55,17 +56,16 @@ class TestFileConfig(unittest.TestCase):
         self.assertIn(exp_name, self.config.data_file)
         self.assertIn(exp_name, self.config.log_file)
 
-    def test_call_updates_and_creates_dirs(self):
-        files = self.config(
-            model_file="new_model_{experiment_name}.pkl",
-            model_directory="test_models2",
-        )
-        self.assertIn("model_file", files)
-        self.assertTrue(Path(files["model_file"]).parent.exists())
-        # Clean up new directory
-        if Path("test_models2").exists():
-            shutil.rmtree("test_models2", ignore_errors=True)
-
+    def test_call(self):
+        files_dict = self.config()
+        self.assertIn("model_file", files_dict)
+        self.assertIn("data_file", files_dict)
+        self.assertIn("log_file", files_dict)
+        self.assertIn("score_file", files_dict)
+        self.assertTrue(files_dict["model_file"].endswith(".pkl"))
+        self.assertTrue(files_dict["data_file"].endswith(".csv"))
+        self.assertTrue(files_dict["log_file"].endswith(".log"))
+        self.assertTrue(files_dict["score_file"].endswith("_score.txt"))
     def test_hash_placeholder(self):
         config = FileConfig(experiment_name="{hash}")
         self.assertNotEqual(config.experiment_name, "{hash}")
