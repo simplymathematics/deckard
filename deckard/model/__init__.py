@@ -13,8 +13,8 @@ import importlib
 import numpy as np
 from pathlib import Path
 
-from ..data import data_parser, DataConfig, data_main
-from ..utils import initialize_config, ConfigBase, create_parser_from_function
+from ..data import DataConfig
+from ..utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +279,7 @@ class ModelConfig(ConfigBase):
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
         mse = ((y_true - y_pred) ** 2).mean()
         rmse = mse**0.5
-        mae = (y_true - y_pred).abs().mean()
+        mae = np.abs(y_true - y_pred).mean()
         scores = {
             "mse": mse,
             "rmse": rmse,
@@ -434,8 +434,8 @@ class ModelConfig(ConfigBase):
 
     def _load_all_predictions(
         self,
-        training_predictions_filepath,
-        predictions_filepath,
+        train_predictions_file,
+        test_predictions_file,
         times,
     ):
         """
@@ -444,9 +444,9 @@ class ModelConfig(ConfigBase):
 
         Parameters
         ----------
-        training_predictions_filepath : str or Path or None
+        train_predictions_file : str or Path or None
             File path to the training predictions. If None or the file does not exist, training predictions are not loaded.
-        predictions_filepath : str or Path or None
+        test_predictions_file : str or Path or None
             File path to the predictions. If None or the file does not exist, predictions are not loaded.
         times : dict
             Dictionary to be updated with timing and count information for training and prediction data.
@@ -480,11 +480,11 @@ class ModelConfig(ConfigBase):
         """
         # Load the training predictions if provided
         if (
-            training_predictions_filepath is not None
-            and Path(training_predictions_filepath).exists()
+            train_predictions_file is not None
+            and Path(train_predictions_file).exists()
         ):
             self.training_predictions = self._load_predictions(
-                training_predictions_filepath,
+                train_predictions_file,
             )
             assert (
                 self.training_prediction_time is not None
@@ -493,8 +493,8 @@ class ModelConfig(ConfigBase):
             times["training_n"] = len(self.training_predictions)
 
         # Load the predictions if provided
-        if predictions_filepath is not None and Path(predictions_filepath).exists():
-            self.predictions = self._load_predictions(predictions_filepath)
+        if test_predictions_file is not None and Path(test_predictions_file).exists():
+            self.predictions = self._load_predictions(test_predictions_file)
             assert (
                 self.prediction_time is not None
             ), "Prediction time must be set if predictions are loaded"
@@ -502,13 +502,13 @@ class ModelConfig(ConfigBase):
             times["prediction_n"] = len(self.predictions)
         return times
 
-    def _load_score_file(self, model_score_filepath):
+    def _load_score_file(self, score_file):
         """
         Loads score data from the specified file, merges it with existing scores, and extracts timing and count metrics.
 
         Parameters
         ----------
-        model_score_filepath : str or Path
+        score_file : str or Path
             Path to the score file to load.
 
         Returns
@@ -522,8 +522,8 @@ class ModelConfig(ConfigBase):
         Merges new score data with existing score data in `self.score_dict`.
         """
         times = {}
-        if model_score_filepath is not None and Path(model_score_filepath).exists():
-            new_score_dict = self.load_scores(model_score_filepath)
+        if score_file is not None and Path(score_file).exists():
+            new_score_dict = self.load_scores(score_file)
             old_score_dict = self.score_dict if self.score_dict is not None else {}
             # Update old_score_dict with new_score_dict
             score_dict = {**old_score_dict, **new_score_dict}
@@ -539,10 +539,10 @@ class ModelConfig(ConfigBase):
     def __call__(
         self,
         data: DataConfig,
-        model_filepath: Union[str, None] = None,
-        predictions_filepath: Union[str, None] = None,
-        training_predictions_filepath: Union[str, None] = None,
-        model_score_filepath: Union[str, None] = None,
+        model_file: Union[str, None] = None,
+        test_predictions_file: Union[str, None] = None,
+        train_predictions_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
@@ -551,11 +551,11 @@ class ModelConfig(ConfigBase):
         ----------
         data : DataConfig
             An instance of DataConfig containing training and test data.
-        model_filepath : str or None, optional
+        model_file : str or None, optional
             Path to save or load the model. If provided, the model will be loaded from or saved to this path.
-        predictions_filepath : str or None, optional
+        test_predictions_file : str or None, optional
             Path to save the predictions. If provided, the predictions will be saved to this path.
-        model_score_filepath : str or None, optional
+        score_file : str or None, optional
             Path to load existing scores. If provided, scores will be loaded from this path.
 
         Returns
@@ -574,24 +574,24 @@ class ModelConfig(ConfigBase):
                 "Data not loaded. Please load data before calling the model.",
             )
 
-        # Load the model_score_filepath if provided
-        times = self._load_score_file(model_score_filepath)
+        # Load the score_file if provided
+        times = self._load_score_file(score_file)
 
         # Load predictions from filepaths and update times
         times = self._load_all_predictions(
-            training_predictions_filepath,
-            predictions_filepath,
+            train_predictions_file,
+            test_predictions_file,
             times,
         )
 
         # Train the model if training data is provided and model is not already trained
-        times = self._load_or_train_model(data, model_filepath, times)
+        times = self._load_or_train_model(data, model_file, times)
         self._evaluate_and_score(data, times)
         self.save(
-            training_predictions_filepath=training_predictions_filepath,
-            predictions_filepath=predictions_filepath,
-            model_filepath=model_filepath,
-            model_score_filepath=model_score_filepath,
+            train_predictions_file=train_predictions_file,
+            test_predictions_file=test_predictions_file,
+            model_file=model_file,
+            score_file=score_file,
         )
         return self.score_dict
 
@@ -694,23 +694,23 @@ class ModelConfig(ConfigBase):
 
     def save(
         self,
-        training_predictions_filepath,
-        predictions_filepath,
-        model_filepath,
-        model_score_filepath,
+        train_predictions_file,
+        test_predictions_file,
+        model_file,
+        score_file,
     ):
         """
         Saves model-related outputs to specified filepaths.
 
         Parameters
         ----------
-        training_predictions_filepath : str or None
+        train_predictions_file : str or None
             Filepath to save training predictions. If None, training predictions are not saved.
-        predictions_filepath : str or None
+        test_predictions_file : str or None
             Filepath to save predictions. If None, predictions are not saved.
-        model_filepath : str or None
+        model_file : str or None
             Filepath to save the trained model. If None, model is not saved.
-        model_score_filepath : str or None
+        score_file : str or None
             Filepath to save model scores. If None or file does not exist, scores are not saved.
 
         Returns
@@ -719,54 +719,54 @@ class ModelConfig(ConfigBase):
             Dictionary containing model scores.
         """
         # Save training predictions if filepath provided
-        if training_predictions_filepath is not None:
+        if train_predictions_file is not None:
             self.save_data(
-                filepath=training_predictions_filepath,
+                filepath=train_predictions_file,
                 data=self.training_predictions,
             )
             logger.info(
-                f"Training predictions saved to {training_predictions_filepath}",
+                f"Training predictions saved to {train_predictions_file}",
             )
         # Save predictions if filepath provided
-        if predictions_filepath is not None and self.predictions is not None:
-            self.save_data(filepath=predictions_filepath, data=self.predictions)
-            logger.info(f"Predictions saved to {predictions_filepath}")
+        if test_predictions_file is not None and self.predictions is not None:
+            self.save_data(filepath=test_predictions_file, data=self.predictions)
+            logger.info(f"Predictions saved to {test_predictions_file}")
         # Save model if filepath provided
-        if model_filepath is not None:
-            self._save_model(model_filepath)
+        if model_file is not None:
+            self._save_model(model_file)
         # Save scores if filepath provided
         all_scores = self.score_dict if self.score_dict is not None else {}
-        if model_score_filepath is not None and Path(model_score_filepath).exists():
-            self.save_scores(all_scores, model_score_filepath)
-            logger.info(f"Scores saved to {model_score_filepath}")
+        if score_file is not None and Path(score_file).exists():
+            self.save_scores(all_scores, score_file)
+            logger.info(f"Scores saved to {score_file}")
         return all_scores
 
-    def _load_or_train_model(self, data, model_filepath, times):
+    def _load_or_train_model(self, data, model_file, times):
         """
         Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.
-        If a model file exists at `model_filepath`, attempts to load and validate that the model is fitted.
+        If a model file exists at `model_file`, attempts to load and validate that the model is fitted.
         If the loaded model is not fitted, or if no model file exists, trains a new model using `data.X_train` and `data.y_train`.
         Updates the `times` dictionary with training time and number of training samples.
-        Saves the trained model to `model_filepath` if provided and a new model was trained.
+        Saves the trained model to `model_file` if provided and a new model was trained.
         Raises:
             ValueError: If neither a model nor a filepath is provided, or if the model is not trained after loading/training.
             NotFittedError: If the model is not initialized.
         Args:
             data: An object containing training data (`X_train`, `y_train`).
-            model_filepath (str or Path or None): Path to the model file to load or save.
+            model_file (str or Path or None): Path to the model file to load or save.
             times (dict): Dictionary to store training time and number of training samples.
         Returns:
             dict: Updated `times` dictionary with training metadata.
         """
-        match self._model, model_filepath:
+        match self._model, model_file:
             case None, None:  # Neither model nor filepath provided
                 raise ValueError(
                     "Model not trained or loaded. Please train or load a model before prediction.",
                 )
             case _, _:  # Model and/or filepath provided
-                if model_filepath is not None and Path(model_filepath).exists():
-                    logger.info(f"Model file {model_filepath} exists. Loading model.")
-                    self._load_model(model_filepath)
+                if model_file is not None and Path(model_file).exists():
+                    logger.info(f"Model file {model_file} exists. Loading model.")
+                    self._load_model(model_file)
                     assert isinstance(self._model, object)
                     try:  # validate that the  loaded model is trained
                         check_is_fitted(self._model)
@@ -781,8 +781,8 @@ class ModelConfig(ConfigBase):
                     self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
-                    if model_filepath is not None:
-                        self._save_model(model_filepath)
+                    if model_file is not None:
+                        self._save_model(model_file)
 
         # Validate model is trained
         if self._model is None:
@@ -794,97 +794,3 @@ class ModelConfig(ConfigBase):
                 "Model is not trained. Please train the model before prediction.",
             )
         return times
-
-
-# Argument parsing
-model_init_parser = argparse.ArgumentParser(
-    description="ModelConfig initialization parameters",
-    add_help=False,
-    conflict_handler="resolve",
-)
-model_init_parser.add_argument(
-    "--model_config_file",
-    type=str,
-    help="Path to YAML config file",
-)
-model_init_parser.add_argument(
-    "--model_config_params",
-    type=str,
-    nargs="*",
-    help="Override configuration parameters as key=value pairs",
-)
-model_call_parser = create_parser_from_function(
-    ModelConfig.__call__,
-    add_help=False,
-    exclude=["data"],
-    parser=None,
-)
-
-model_parser = argparse.ArgumentParser(
-    description="ModelConfig parameters",
-    parents=[model_init_parser, model_call_parser],
-    add_help=False,
-    conflict_handler="resolve",
-)
-
-
-def initialize_model_config(**kwargs) -> ModelConfig:
-    """
-    Initializes a ModelConfig instance using command-line arguments and configuration files.
-
-    This function:
-        - Parses command-line arguments for model configuration.
-        - Loads a YAML configuration file if specified.
-        - Applies any parameter overrides provided via command-line arguments.
-        - Instantiates and returns a ModelConfig object based on the composed configuration.
-
-    Returns
-    -------
-        ModelConfig: An instance of ModelConfig initialized with the specified parameters.
-    """
-    args = model_init_parser.parse_known_args()[0]
-    config_file = args.model_config_file
-    params = args.model_config_params if args.model_config_params is not None else []
-    target = "deckard.ModelConfig"
-    model = initialize_config(config_file, params, target, **kwargs)
-    assert isinstance(model, ModelConfig), "Config must be an instance of ModelConfig"
-    return model
-
-
-def model_main(args: argparse.Namespace = None) -> None:
-    """
-    Main entry point for initializing and running the model pipeline.
-    This function sets up logging, parses command-line arguments or uses the provided
-    argparse.Namespace, loads data, prepares model parameters, initializes the model,
-    and executes the model with the given parameters and data.
-    Args
-    -------
-        args (argparse.Namespace, optional): Namespace containing parsed arguments.
-            If None, arguments are parsed from the command line.
-    Returns
-    -------
-        tuple: A tuple containing the loaded data and the initialized model instance.
-    """
-
-    logging.basicConfig(level=logging.INFO)
-    if args is None:
-        parser = argparse.ArgumentParser(
-            description="ModelConfig parameters",
-            parents=[data_parser, model_call_parser],
-        )
-        args = parser.parse_known_args()[0]
-    else:
-        assert isinstance(
-            args,
-            argparse.Namespace,
-        ), "args must be an argparse.Namespace"
-
-    data_args = data_parser.parse_known_args(args=vars(args))[0]
-    data = data_main(data_args)
-
-    model = initialize_model_config()
-    model_args = model_call_parser.parse_known_args()[0]
-    model_params = dict(vars(model_args))
-    model(data, **model_params)
-
-    return data, model
