@@ -1,0 +1,4 @@
+attack_name : "art.attacks.inference.membership_inference.MembershipInferenceBlackBox"
+targeted_attribute: "sex"
+
+

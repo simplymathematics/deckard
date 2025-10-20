@@ -1,0 +1,6 @@
+attack_name : "art.attacks.evasion.HopSkipJump"
+attack_params : 
+  - "eps=0.2"
+  - "eps_step=0.1"
+  - "norm=inf"
+  - "targeted=False"
