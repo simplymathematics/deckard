@@ -156,8 +156,6 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
         self.assertAlmostEqual(args.alpha, 3.14)
         self.assertEqual(args.beta, 42)
 
-
-
     def test_parser_with_no_arguments(self):
         @dataclass
         class EmptyConfig:
@@ -190,7 +188,7 @@ class TestCreateParserFromCallableDataclass(unittest.TestCase):
         self.assertEqual(args.p1, 5)
         self.assertAlmostEqual(args.p3, 2.5)
         self.assertFalse(hasattr(args, "p2"))
-    
-     
+
+
 if __name__ == "__main__":
     unittest.main()

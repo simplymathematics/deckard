@@ -7,13 +7,34 @@ from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 
-data_files = ["data_file", "data_score_file",]
-model_files =["model_file", "score_file", "training_predictions_file", "test_predictions_file", "score_file"]
-defense_files = ["defense_file", "defense_score_file", "training_predictions_file", "test_predictions_file", "defense_score_file"]
-log_files = ["log_file",]
-attack_files = ["attack_file", "attack_training_predictions_file", "attack_test_predictions_file", "attack_score_file"]
-other_files = ["score_file",]
-all_files = data_files + model_files + defense_files + log_files + attack_files + other_files
+data_files = ["data_file", "data_score_file"]
+model_files = [
+    "model_file",
+    "score_file",
+    "training_predictions_file",
+    "test_predictions_file",
+    "score_file",
+]
+defense_files = [
+    "defense_file",
+    "defense_score_file",
+    "training_predictions_file",
+    "test_predictions_file",
+    "defense_score_file",
+]
+log_files = ["log_file"]
+attack_files = [
+    "attack_file",
+    "attack_training_predictions_file",
+    "attack_test_predictions_file",
+    "attack_score_file",
+]
+other_files = ["score_file"]
+all_files = (
+    data_files + model_files + defense_files + log_files + attack_files + other_files
+)
+
+
 @dataclass
 class FileConfig(ConfigBase):
     """
@@ -79,8 +100,8 @@ class FileConfig(ConfigBase):
     data_directory: str = None
     attack_directory: str = None
     log_directory: str = None
-    model_file: str = None 
-    data_file: str = None 
+    model_file: str = None
+    data_file: str = None
     log_file: str = None
     training_predictions_file: str = None
     test_predictions_file: str = None
@@ -114,8 +135,12 @@ class FileConfig(ConfigBase):
             If directory creation fails.
         """
         # Convert string paths to Path objects and create directories if they don't exist
-        self.result_directory = Path(self.result_directory) if self.result_directory else None
-        self.model_directory = Path(self.model_directory) if self.model_directory else None
+        self.result_directory = (
+            Path(self.result_directory) if self.result_directory else None
+        )
+        self.model_directory = (
+            Path(self.model_directory) if self.model_directory else None
+        )
         self.data_directory = Path(self.data_directory) if self.data_directory else None
         self.log_directory = Path(self.log_directory) if self.log_directory else None
 
@@ -123,7 +148,7 @@ class FileConfig(ConfigBase):
         self.experiment_name = self._replace_placeholders(self.experiment_name)
         self._resolve_placeholders_in_files()
         self._drop_unused_directories()
-        
+
     def _drop_unused_directories(self):
         # Remove directory attributes if no corresponding files are defined
         if not any(getattr(self, f, None) for f in model_files):
@@ -139,7 +164,7 @@ class FileConfig(ConfigBase):
 
     def _resolve_placeholders_in_files(self):
         # Update file attributes with resolved placeholders and directory paths
-        for attr  in self.__dataclass_fields__.keys():
+        for attr in self.__dataclass_fields__.keys():
             if str(attr).endswith("_file"):
                 file_value = getattr(self, attr)
                 if file_value:
@@ -179,7 +204,7 @@ class FileConfig(ConfigBase):
         if "{seed}" in file:
             file = file.replace("{seed}", str(self.random_state))
         return file
-    
+
     def _prepend_directory(self, file_attr: str, directory_attr: str) -> str:
         """
         Prepends the appropriate directory path to the given file attribute.
@@ -201,7 +226,7 @@ class FileConfig(ConfigBase):
         if file_value and directory_value:
             return str(Path(directory_value) / file_value)
         return file_value
-    
+
     def __call__(self):
         """
         Allows updating attributes via keyword arguments, reinitializes configuration,
@@ -220,7 +245,7 @@ class FileConfig(ConfigBase):
         ValueError
             If any of the file attributes are not properly initialized.
         """
-        
+
         # Prepend relevant directories to file attributes
         files = {}
         for attr in self.__dataclass_fields__.keys():
@@ -237,6 +262,3 @@ class FileConfig(ConfigBase):
                     full_path = getattr(self, attr)
                 files[attr] = full_path
         return files
-        
-        
-        

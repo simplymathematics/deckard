@@ -1,79 +1,83 @@
-import sys
 import argparse
 import logging
-from pathlib import Path
+import hydra
+from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 
-from deckard import data_parser, model_parser, attack_parser
-from deckard import data_main, model_main, attack_main
+from .data import DataConfig
+from .model import ModelConfig
+from .model.defend import DefenseConfig
+from .attack import AttackConfig
+from .file import FileConfig
+from .score import ScorerDictConfig
+from .experiment import ExperimentConfig
+from .utils import create_parser_from_function
 
 logger = logging.getLogger(__name__)
 
-supported_modules = ["data", "model", "attack"]
+supported_modules = ["data", "model", "attack", "defense", "score"]
 
-# Assert that there is a parser and a main function for each supported module
-for module in supported_modules:
-    assert hasattr(
-        sys.modules[__name__],
-        f"{module}_parser",
-    ), f"Missing parser for module: {module}"
-    assert hasattr(
-        sys.modules[__name__],
-        f"{module}_main",
-    ), f"Missing main function for module: {module}"
+
+# For each module, create a parser and main function mapping
+# module_init_parsers = {
+#     "data": (create_parser_from_function(DataConfig.__init__, skip_params=["self"]), DataConfig),
+#     "model": (create_parser_from_function(ModelConfig.__init__, skip_params=["self"]), ModelConfig),
+#     "attack": (create_parser_from_function(AttackConfig.__init__, skip_params=["self"]), AttackConfig),
+#     "defense": (create_parser_from_function(DefenseConfig.__init__, skip_params=["self"]), DefenseConfig),
+#     "score": (create_parser_from_function(ScorerDictConfig.__init__, skip_params=["self"]), ScorerDictConfig),
+# }
+
+module_call_parsers = {
+    "data": (create_parser_from_function(DataConfig.__call__), DataConfig),
+    "model": (
+        create_parser_from_function(ModelConfig.__call__, exclude=["data"]),
+        ModelConfig,
+    ),
+    "attack": (
+        create_parser_from_function(
+            AttackConfig.__call__, exclude=["data", "estimator"]
+        ),
+        AttackConfig,
+    ),
+    "defense": (
+        create_parser_from_function(DefenseConfig.__call__, exclude=["data"]),
+        DefenseConfig,
+    ),
+    "score": (
+        create_parser_from_function(ScorerDictConfig.__call__, exclude=["data"]),
+        ScorerDictConfig,
+    ),
+}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Deckard Command Line Interface")
+    parser = argparse.ArgumentParser(
+        description="Deckard Will Run Your Experiment",
+        usage=f"python -m deckard <module>  <module>  --files [<args>]",
+    )
     parser.add_argument(
-        "module",
-        choices=["data", "model", "attack", None],
-        help="Module to run: data, model, or attack",
+        "modules",
+        nargs="+",
+        choices=supported_modules,
+        help="Modules to run in the experiment pipeline",
     )
-    args = parser.parse_known_args()[0]
+    parser.add_argument(
+        "--files", nargs="*", default=[], help="Specify what files should be saved."
+    )
+    args = parser.parse_args()
 
-    working_dir = Path(".").resolve()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(working_dir / "deckard.log"),
-            logging.StreamHandler(sys.stdout),
-        ],
-    )
-    logger.info(f"Working directory: {working_dir}")
-    match args.module:
-        case "data":
-            args, unknown = data_parser.parse_known_args()
-            if len(unknown) > 1:
-                logging.error(f"Unknown arguments for data module: {unknown}")
-                sys.exit(1)
-            data_main(args)
-        case "model":
-            subparser = argparse.ArgumentParser(
-                description="ModelConfig parameters",
-                parents=[data_parser, model_parser],
-            )
-            args, unknown = subparser.parse_known_args()
-            if len(unknown) > 1:
-                logging.error(f"Unknown arguments for model module: {unknown}")
-                sys.exit(1)
-            model_main(args)
-        case "attack":
-            subparser = argparse.ArgumentParser(
-                description="AttackConfig parameters",
-                parents=[data_parser, model_parser, attack_parser],
-            )
-            args, unknown = subparser.parse_known_args()
-            if len(unknown) > 1:
-                logging.error(f"Unknown arguments for attack module: {unknown}")
-                sys.exit(1)
-            attack_main(args)
-        case _:
-            parser.print_help()
-            logging.error(
-                "No valid module specified. Please choose from: data, model, attack.",
-            )
-            sys.exit(1)
+    # Initialize configs for each module
+    result = []
+    new_parser = parser
+    for module in args.modules:
+        new_parser = create_parser_from_function(
+            module_call_parsers[module][1].__call__,
+        )
+        module_args, unks = new_parser.parse_known_args(args=args.files)
+        print(f"Running module: {module} with args: {module_args}")
+        print(f"Unrecognized args: {unks}")
+        input("Press Enter to continue...")
+        # Add subparser arguments to main parser
 
 
 if __name__ == "__main__":

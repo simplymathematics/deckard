@@ -139,7 +139,7 @@ class DefenseConfig(ModelConfig):
 
     def __hash__(self):
         return super().__hash__()
-    
+
     def apply_defense(self, *args, **kwargs) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
 
@@ -335,5 +335,3 @@ class DefenseConfig(ModelConfig):
             score_file=score_file,
         )
         return self.score_dict
-
-

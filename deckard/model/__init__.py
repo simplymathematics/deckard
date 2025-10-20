@@ -479,10 +479,7 @@ class ModelConfig(ConfigBase):
             If training or prediction time is not set when corresponding predictions are loaded.
         """
         # Load the training predictions if provided
-        if (
-            train_predictions_file is not None
-            and Path(train_predictions_file).exists()
-        ):
+        if train_predictions_file is not None and Path(train_predictions_file).exists():
             self.training_predictions = self._load_predictions(
                 train_predictions_file,
             )

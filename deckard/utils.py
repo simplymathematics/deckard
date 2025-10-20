@@ -207,10 +207,7 @@ class ConfigBase:
 
     def run(self):
         return self.__call__()
-    
-    
-    
-    
+
     def get_call_params(self) -> dict:
         """
         Retrieves the parameters required to call the __call__ method of the instance.
@@ -396,7 +393,7 @@ class ConfigBase:
         # Update the current instance's __dict__ with the loaded object's __dict__
         self.__dict__.update(obj.__dict__)
         return self
-    
+
     @staticmethod
     def from_yaml(filepath: str) -> "ConfigBase":
         """
@@ -418,7 +415,7 @@ class ConfigBase:
         instance = ConfigBase(**config)
         logger.info(f"Instance of {ConfigBase.__name__} created from {filepath}")
         return instance
-    
+
     @staticmethod
     def from_dict(data: dict) -> "ConfigBase":
         """
@@ -437,7 +434,7 @@ class ConfigBase:
         instance = instantiate(data)
         return instance
 
-    def to_yaml(self, filepath: str=None) -> None:
+    def to_yaml(self, filepath: str = None) -> None:
         """
         Saves the current instance to a YAML configuration file.
 
@@ -451,7 +448,9 @@ class ConfigBase:
             return str(OmegaConf.to_yaml(config))
         else:
             OmegaConf.save(config, filepath)
-            logger.info(f"Instance of {self.__class__.__name__} saved to {filepath} as YAML")
+            logger.info(
+                f"Instance of {self.__class__.__name__} saved to {filepath} as YAML"
+            )
 
     def to_dict(self) -> dict:
         """
@@ -463,6 +462,7 @@ class ConfigBase:
             A dictionary representation of the instance.
         """
         return self.__dict__.copy()
+
 
 def create_parser_from_function(
     func,

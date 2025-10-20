@@ -10,6 +10,7 @@ from deckard.model import ModelConfig
 from deckard.attack import AttackConfig
 from deckard.model.defend import DefenseConfig
 
+
 class DummyDataConfig:
     def __init__(self, X_train, y_train, X_test, y_test):
         X_train = pd.DataFrame(X_train)
@@ -21,13 +22,16 @@ class DummyDataConfig:
         self.X_test = X_test
         self.y_test = y_test
 
+
 class TestDefenseConfig(unittest.TestCase):
     def setUp(self):
         # Set up temporary directories and mock data for testing
         self.temp_dir = tempfile.mkdtemp()
         self.model_file = os.path.join(self.temp_dir, "model.pkl")
         self.test_predictions_file = os.path.join(self.temp_dir, "predictions.csv")
-        self.train_predictions_file = os.path.join(self.temp_dir, "training_predictions.csv")
+        self.train_predictions_file = os.path.join(
+            self.temp_dir, "training_predictions.csv"
+        )
         self.model_score_file = os.path.join(self.temp_dir, "model_score.json")
 
         # Mock data
@@ -47,11 +51,16 @@ class TestDefenseConfig(unittest.TestCase):
 
     def test_defense_config_initialization(self):
         # Test default initialization
-        self.assertEqual(self.defense_config.model_type, "sklearn.linear_model.LogisticRegression")
+        self.assertEqual(
+            self.defense_config.model_type, "sklearn.linear_model.LogisticRegression"
+        )
         self.assertTrue(self.defense_config.classifier)
         self.assertFalse(self.defense_config.probability)
         self.assertIsNone(self.defense_config.clip_values)
-        self.assertEqual(self.defense_config.defense_name, "art.defences.postprocessor.HighConfidence")
+        self.assertEqual(
+            self.defense_config.defense_name,
+            "art.defences.postprocessor.HighConfidence",
+        )
 
     def test_apply_defense_without_model(self):
         # Test applying defense without a fitted model
@@ -121,4 +130,3 @@ class TestDefenseConfig(unittest.TestCase):
         ]
         self.assertIn("postprocessor", supported_types)
         self.assertNotIn("unsupported_type", supported_types)
-

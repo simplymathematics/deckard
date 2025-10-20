@@ -252,8 +252,8 @@ class AttackConfig(ConfigBase):
         elif (
             self.attack is None
         ):  # If attack is not already loaded, initialize and run it
-            attack, art_model, attack_type, attack_subtype = (
-                self._initialize_attack(model)
+            attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+                model
             )
 
         # Execute the attack based on type and subtype

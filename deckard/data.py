@@ -2,7 +2,6 @@
 import pandas as pd
 import time
 import logging
-import argparse
 
 from pathlib import Path
 
@@ -388,7 +387,9 @@ class DataConfig(ConfigBase):
                 stratify=stratify_col if self.stratify is not None else None,
             )
         except ValueError as e:
-            raise ValueError(f"Error during train/test split with train_size={train_n}, test_size={test_n}, random_state={self.random_state}, stratify={self.stratify}: {e} ")
+            raise ValueError(
+                f"Error during train/test split with train_size={train_n}, test_size={test_n}, random_state={self.random_state}, stratify={self.stratify}: {e} "
+            )
         end_time = time.time()
         self.data_sample_time = end_time - start_time
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
@@ -560,5 +561,3 @@ class DataConfig(ConfigBase):
         if data_file is not None:
             self.save(data_file)
         return self.score_dict
-
-

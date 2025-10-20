@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import tempfile
 import shutil
 from deckard.experiment import ExperimentConfig

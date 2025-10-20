@@ -66,6 +66,7 @@ class TestFileConfig(unittest.TestCase):
         self.assertTrue(files_dict["data_file"].endswith(".csv"))
         self.assertTrue(files_dict["log_file"].endswith(".log"))
         self.assertTrue(files_dict["score_file"].endswith("_score.txt"))
+
     def test_hash_placeholder(self):
         config = FileConfig(experiment_name="{hash}")
         self.assertNotEqual(config.experiment_name, "{hash}")

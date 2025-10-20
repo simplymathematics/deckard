@@ -7,6 +7,7 @@ from deckard.data import DataConfig
 from deckard.model.defend import DefenseConfig
 from deckard.attack import AttackConfig
 
+
 class TestAttackConfig(unittest.TestCase):
     def setUp(self):
         self.attack_params = {"max_iter": 10, "init_eval": 5, "max_eval": 20}
@@ -24,9 +25,6 @@ class TestAttackConfig(unittest.TestCase):
     def test_post_init(self):
         self.assertTrue(hasattr(self.attack, "attack_type"))
         self.assertTrue(hasattr(self.attack, "attack_params"))
-
-
-
 
     def test_save_and_load_attack(self):
         self.attack.save(self.attack_file)
@@ -55,6 +53,6 @@ class TestAttackConfig(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertIn("adversarial_success_rate", result)
 
-    
+
 if __name__ == "__main__":
     unittest.main()

@@ -21,13 +21,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
 
+
 @dataclass
 class PlotConfig(ConfigBase):
     pass
 
 
 class ExperimentConfig(ConfigBase):
-    data: DataConfig 
+    data: DataConfig
     experiment_name: str = "{hash}"
     model: ModelConfig = None
     defense: DefenseConfig = None
@@ -152,7 +153,7 @@ class ExperimentConfig(ConfigBase):
             logger.info(f"Generated experiment name: {self.experiment_name}")
         else:
             logger.info(f"Using provided experiment name: {self.experiment_name}")
-            
+
         if self.files is None:
             self.files = FileConfig(experiment_name=self.experiment_name)
         elif isinstance(self.files, FileConfig):
@@ -206,8 +207,10 @@ class ExperimentConfig(ConfigBase):
         return hashlib.md5(to_string.encode()).hexdigest()
 
     def __call__(self, **kwargs):
-        
-        data_call_parser = create_parser_from_function(DataConfig.__call__, exclude=["self"])
+
+        data_call_parser = create_parser_from_function(
+            DataConfig.__call__, exclude=["self"]
+        )
         model_call_parser = create_parser_from_function(
             ModelConfig.__call__,
             exclude=["self", "data"],
@@ -220,9 +223,6 @@ class ExperimentConfig(ConfigBase):
             AttackConfig.__call__,
             exclude=["self", "data", "model"],
         )
-
-
-        
 
         # Update any kwargs in file
         scores = {}
@@ -336,7 +336,9 @@ class ExperimentConfig(ConfigBase):
             if not filepath.endswith("_file"):
                 continue
             else:
-                filepath = Path(filepath) if not isinstance(filepath, Path) else filepath
+                filepath = (
+                    Path(filepath) if not isinstance(filepath, Path) else filepath
+                )
             if filepath is not None and not filepath.exists():
                 logger.error(f"File {attr} does not exist: {filepath}")
                 raise FileNotFoundError(f"File {attr} does not exist: {filepath}")
