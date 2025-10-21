@@ -16,8 +16,15 @@ from sklearn.datasets import (
     load_digits,
     load_diabetes,
 )
-import sklearn.model_selection
-
+from sklearn.feature_selection import (
+    mutual_info_classif,
+    mutual_info_regression,
+    chi2,
+    f_classif,
+    f_regression,
+    r_regression,
+)
+from sklearn.model_selection import train_test_split
 
 # deckard
 from .utils import ConfigBase
@@ -43,6 +50,8 @@ class DataConfig(ConfigBase):
         Seed for random number generation to ensure reproducibility.
     stratify : Union[None, str, bool]
         Specifies stratification for sampling; can be None, True (use target), or a column name.
+    classifier: bool
+        Whether the task is classification (True) or regression (False).
     _X : pd.DataFrame
         Loaded feature matrix.
     _y : pd.Series
@@ -117,6 +126,7 @@ class DataConfig(ConfigBase):
     test_size: float = 0.2
     random_state: int = 42
     stratify: Union[None, str, bool] = True
+    classifier: bool = True
 
     def __post_init__(self):
         """
@@ -146,6 +156,7 @@ class DataConfig(ConfigBase):
         self.data_sample_time = None
         self._train_indices = None
         self._test_indices = None
+        assert self.classifier in [True, False], "classifier must be a boolean value"
         if self._target_ is None:
             self._target_ = "DataConfig"
 
@@ -374,12 +385,14 @@ class DataConfig(ConfigBase):
                     raise ValueError(
                         f"Stratify column {self.stratify} not found in data columns",
                     )
+            elif self.stratify is False:
+                stratify_col = None
             else:
                 raise ValueError("stratify must be None, True, or a column name")
         indices = range(len(self._X))
         start_time = time.time()
         try:
-            train_idx, test_idx = sklearn.model_selection.train_test_split(
+            train_idx, test_idx = train_test_split(
                 indices,
                 train_size=train_n,
                 test_size=test_n,
@@ -442,7 +455,7 @@ class DataConfig(ConfigBase):
             and self.dataset_name not in suppoted_datasets
         ):
             raise NotImplementedError(
-                f"Currently only {supported_filetypes} filetypes are supported for loading data",
+                f"Currently only {supported_filetypes} filetypes are supported for loading data. Cannot load {self.dataset_name}",
             )
         match self.dataset_name:
             case "adult":
@@ -475,10 +488,83 @@ class DataConfig(ConfigBase):
                     f"Dataset {self.dataset_name} not implemented",
                 )
 
+    def _score(self, classifier=False) -> dict:
+        """
+        Computes feature importance scores based on the type of task (classification or regression).
+
+        Parameters
+        ----------
+        classifier : bool, optional
+            If True, computes classification feature scores; otherwise, computes regression feature scores. Default is False.
+
+        Returns
+        -------
+        dict
+            A dictionary containing feature importance scores.
+        """
+        if classifier:
+            return self._classification_feature_scores()
+        else:
+            return self._regression_feature_scores()
+        
+    def _classification_feature_scores(self) -> dict:
+        """
+        Computes feature importance scores for classification tasks using various statistical methods.
+
+        Returns
+        -------
+        dict
+            A dictionary containing feature importance scores from different methods:
+            - 'mutual_info_classif': Mutual information scores.
+            - 'chi2': Chi-squared scores.
+            - 'f_classif': ANOVA F-value scores.
+        """
+        scores = {}
+        if self.y_train.nunique() > 1:
+            scores["mutual_info_classif"] = mutual_info_classif(
+                self.X_train,
+                self.y_train,
+                random_state=self.random_state,
+            ).tolist()
+            try:
+                scores["chi2"] = chi2(self.X_train, self.y_train)[0].tolist()
+            except ValueError as e:
+                logger.warning(
+                    f"Chi-squared test could not be computed: {e}. Skipping chi2 scoring.",
+                )
+            scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
+        else:
+            logger.warning(
+                "Only one class present in y_train; skipping classification feature scoring.",
+            )
+        return scores
+    
+    def _regression_feature_scores(self) -> dict:
+        """
+        Computes feature importance scores for regression tasks using various statistical methods.
+
+        Returns
+        -------
+        dict
+            A dictionary containing feature importance scores from different methods:
+            - 'mutual_info_regression': Mutual information scores.
+            - 'f_regression': F-value scores.
+            - 'r_regression': Pearson correlation coefficients.
+        """
+        scores = {}
+        scores["mutual_info_regression"] = mutual_info_regression(
+            self.X_train,
+            self.y_train,
+            random_state=self.random_state,
+        ).tolist()
+        scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
+        scores["r_regression"] = r_regression(self.X_train, self.y_train).tolist()
+        return scores
+    
     def __call__(
         self,
         data_file: Union[str, None] = None,
-        data_score_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
     ) -> dict:
         """
         Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
@@ -486,7 +572,7 @@ class DataConfig(ConfigBase):
         ----------
         data_file : Union[str, None]
             Path to save loaded data as CSV. If None, data is not saved.
-        data_score_file : Union[str, None]
+        score_file : Union[str, None]
             Path to save scores as CSV. If None, scores are not saved.
         Returns
         -------
@@ -515,19 +601,18 @@ class DataConfig(ConfigBase):
             logger.debug("No data_file provided, data will not be saved")
 
         # Load scores if filepath is provided and file exists, else create directory
-        if data_score_file is not None and Path(data_score_file).exists():
+        if score_file is not None and Path(score_file).exists():
             # Load existing scores
-            logger.info(f"Loading existing scores from {data_score_file}")
-            scores = self.load_scores(data_score_file)
-        elif data_score_file is not None:
+            logger.info(f"Loading existing scores from {score_file}")
+            scores = self.load_scores(score_file)
+        elif score_file is not None:
             # Ensure directory exists
-            logger.debug(f"Creating directory for scores at {data_score_file}")
-            Path(data_score_file).parent.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Creating directory for scores at {score_file}")
+            Path(score_file).parent.mkdir(parents=True, exist_ok=True)
             scores = {}
         else:
-            logger.debug("No data_score_file provided, scores will not be saved")
+            logger.debug("No score_file provided, scores will not be saved")
             scores = {}
-
         # Load data if not already loaded
         if not hasattr(self, "_data_load_time") or self.data_load_time is None:
             start_time = time.time()
@@ -553,11 +638,11 @@ class DataConfig(ConfigBase):
         logger.info(
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
-        # TODO: Add Scores for dataset
-        all_scores = {**time_dict, **scores}
+        data_scores = self._score(classifier=self.classifier)
+        all_scores = {**time_dict, **scores,  **data_scores}
         self.score_dict = all_scores
-        if data_score_file is not None:
-            self.save_scores(all_scores, data_score_file)
+        if score_file is not None:
+            self.save_scores(all_scores, score_file)
         if data_file is not None:
             self.save(data_file)
         return self.score_dict
