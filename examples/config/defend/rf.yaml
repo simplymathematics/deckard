@@ -11,4 +11,7 @@ model_params:
   max_leaf_nodes: null
   min_impurity_decrease: 0.0
   bootstrap: true
-_target_ : deckard.model.ModelConfig
+_target_ : deckard.model.defend.DefenseConfig
+clip_values: null
+defense_name: null
+defense_params: {}

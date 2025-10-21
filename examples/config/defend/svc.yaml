@@ -16,4 +16,7 @@ model_params:
   decision_function_shape: ovr
   break_ties: false
   random_state: null
-_target_ : deckard.ModelConfig
+_target_ : deckard.model.defend.DefenseConfig
+clip_values: null
+defense_name: null
+defense_params: {}

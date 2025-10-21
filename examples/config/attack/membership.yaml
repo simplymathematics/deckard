@@ -1,2 +1,5 @@
-attack_name : "art.attacks.inference.membership_inference.MembershipInferenceBlackBox"
+attack_type : "art.attacks.inference.membership_inference.MembershipInferenceBlackBox"
 targeted_attribute: "sex"
+attack_size : 100
+attack_params:
+  attack_model_type: "rf"

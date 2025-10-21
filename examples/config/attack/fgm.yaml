@@ -1,6 +1,7 @@
-attack_name : "art.attacks.evasion.HopSkipJump"
+attack_type : "art.attacks.evasion.FastGradientMethod"
 attack_params : 
-  - "eps=0.2"
-  - "eps_step=0.1"
-  - "norm=inf"
-  - "targeted=False"
+  eps_step: .01
+  norm: inf
+  targeted: False
+  eps: 1
+  minimal : True
