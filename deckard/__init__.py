@@ -1,6 +1,7 @@
 import logging
 from .data import DataConfig
 from .model import ModelConfig
+from .model.defend import DefenseConfig
 from .attack import AttackConfig
 from .experiment import ExperimentConfig
 from .file import FileConfig
@@ -20,6 +21,7 @@ __all__ = [
     "ModelConfig",
     "AttackConfig",
     "ExperimentConfig",
+    "DefenseConfig",
     "FileConfig",
     "ScorerDictConfig",
 ]
