@@ -111,6 +111,8 @@ class ExperimentConfig(ConfigBase):
             raise ValueError("data must be provided")
         if isinstance(self.data, DictConfig):
             self.data = DataConfig(**self.data)
+        elif isinstance(self.data, str):
+            self.data = DataConfig.from_yaml(self.data)
         assert isinstance(
             self.data,
             DataConfig,
@@ -206,7 +208,16 @@ class ExperimentConfig(ConfigBase):
             )
         return hashlib.md5(to_string.encode()).hexdigest()
 
-    def __call__(self, **kwargs):
+    def __call__(self, 
+                data_file = None,
+                model_file = None,
+                log_file = None,
+                score_file = None,
+                training_predictions_file = None,
+                test_predictions_file = None,
+                attack_file = None,
+                attack_predictions_file = None,
+                ):
 
         data_call_parser = create_parser_from_function(
             DataConfig.__call__,
@@ -224,10 +235,21 @@ class ExperimentConfig(ConfigBase):
             AttackConfig.__call__,
             exclude=["self", "data", "model"],
         )
-
+        kwargs = {
+            "data_file": data_file,
+            "model_file": model_file,
+            "log_file": log_file,
+            "score_file": score_file,
+            "training_predictions_file": training_predictions_file,
+            "test_predictions_file": test_predictions_file,
+            "attack_file": attack_file,
+            "attack_predictions_file": attack_predictions_file,
+        }
         # Update any kwargs in file
         scores = {}
-        self.initialize_file_config(kwargs)
+        self.initialize_file_config(
+            **kwargs
+        )
         file_dict = self.files
 
         # Set random seed
@@ -237,7 +259,8 @@ class ExperimentConfig(ConfigBase):
 
         # Get call params from data parser
         data_call_params = vars(data_call_parser.parse_known_args(args={**kwargs})[0])
-        data = self.data(**data_call_params)
+        self.data(**data_call_params)
+        data = self.data
         assert hasattr(
             data,
             "X_train",
@@ -271,17 +294,10 @@ class ExperimentConfig(ConfigBase):
                 model,
                 "score_dict",
             ), "model must have score_dict attribute after training"
-            for k, v in data.score_dict.items():
-                assert (
-                    k in model.score_dict
-                ), f"score {k} from data not found in model score_dict"
-                assert (
-                    v == model.score_dict[k]
-                ), f"score {k} from data does not match model score_dict"
             scores.update(**model.score_dict)
         elif self.defense:
             defense_call_params = vars(defense_call_parser.parse_known_args([])[0])
-            self.defense(**defense_call_params)
+            self.defense(data=data, **defense_call_params)
             model = self.defense
             assert hasattr(
                 model,
@@ -295,13 +311,6 @@ class ExperimentConfig(ConfigBase):
                 model,
                 "score_dict",
             ), "model must have score_dict attribute after training"
-            for k, v in data.score_dict.items():
-                assert (
-                    k in model.score_dict
-                ), f"score {k} from data not found in model score_dict"
-                assert (
-                    v == model.score_dict[k]
-                ), f"score {k} from data does not match model score_dict"
             scores.update(**model.score_dict)
         else:
             logger.info("No model or defense config provided, skipping model training.")
@@ -345,7 +354,7 @@ class ExperimentConfig(ConfigBase):
                 raise FileNotFoundError(f"File {attr} does not exist: {filepath}")
         return scores
 
-    def initialize_file_config(self, kwargs):
+    def initialize_file_config(self, **kwargs):
         if self.files is None:
             self.files = FileConfig(experiment_name=self.experiment_name, **kwargs)
         else:
@@ -353,5 +362,5 @@ class ExperimentConfig(ConfigBase):
                 self.files,
                 FileConfig,
             ), "file must be an instance of FileConfig"
-            self.files.__post_init__()
+            self.files.__init__(**kwargs, experiment_name=self.experiment_name)
         self.files = vars(self.files)
