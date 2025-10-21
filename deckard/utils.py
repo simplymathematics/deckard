@@ -99,7 +99,7 @@ class ConfigBase:
     def __post_init__(self):
         pass
 
-    def __call__(self, *args, **kwds):
+    def __call__(self):
         raise NotImplementedError("This is an abstract base class.")
 
     def __hash__(self):
@@ -409,11 +409,11 @@ class ConfigBase:
         ConfigBase
             An instance of the class initialized with the configuration from the YAML file.
         """
-        config = OmegaConf.load(filepath)
+        config = OmegaConf.to_container(OmegaConf.load(filepath), resolve=True)
         if not isinstance(config, dict):
             raise TypeError(f"Loaded config is not a dictionary from {filepath}")
-        instance = ConfigBase(**config)
-        logger.info(f"Instance of {ConfigBase.__name__} created from {filepath}")
+        instance = instantiate(config)
+        logger.info(f"Instance of {instance.__class__.__name__} created from {filepath}")
         return instance
 
     @staticmethod
