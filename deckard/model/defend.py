@@ -62,7 +62,7 @@ class DefenseConfig(ModelConfig):
     model_params: dict = None
     probability: bool = False
     clip_values: tuple = None
-    defense_name: str = "art.defences.postprocessor.HighConfidence"
+    defense_name: str = None
     defense_params: dict = None
     """
     Overview
