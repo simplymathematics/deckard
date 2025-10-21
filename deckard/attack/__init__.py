@@ -168,6 +168,8 @@ class AttackConfig(ConfigBase):
 
         # Validate library support
         if model_alias in sklearn_models:
+            if isinstance(model, tuple(sklearn_dict.values())):
+                art_model = model
             try:
                 check_is_fitted(model)
                 art_model = sklearn_dict[model_alias](model)
@@ -580,7 +582,7 @@ class AttackConfig(ConfigBase):
         Parameters
         ----------
         data : object
-            An object containing training and test data with attributes `_X_train`, `_y_train`, `_X_test`, and `_y_test`.
+            An object containing training and test data with attributes `X_train`, `y_train`, `_X_test`, and `_y_test`.
         art_model : object
             The model used for predictions, expected to have a `predict` method.
         attack : object
@@ -602,10 +604,10 @@ class AttackConfig(ConfigBase):
         TypeError
             If the attack model's `fit` method does not accept the expected arguments.
         """
-        assert hasattr(data, "_X_train") and hasattr(
+        assert hasattr(data, "X_train") and hasattr(
             data,
-            "_y_train",
-        ), "DataConfig must have _X_train, _y_train attributes. Please ensure data() has been called."
+            "y_train",
+        ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
         X_train = data.X_train
         y_train = data.y_train
         X_test = data.X_test
@@ -637,12 +639,6 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack training took {attack_time} seconds for {n} samples",
         )
         self.attack_time = attack_time
-        start_time = time.process_time()
-        attack_x_test_predictions = np.array(
-            [np.argmax(arr) for arr in art_model.predict(X_test)],
-        ).reshape(-1, 1)
-        end_time = time.process_time()
-        self.predictions = attack_x_test_predictions
         logger.info(
             f"Attribute inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
@@ -653,7 +649,7 @@ class AttackConfig(ConfigBase):
         inferred = attack.infer(
             x=X_test_subset,
             y=y_test,
-            pred=attack_x_test_predictions,
+            pred=art_model.predict(X_test),
         )
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
@@ -711,7 +707,7 @@ class AttackConfig(ConfigBase):
         Parameters
         ----------
         data : object
-            An object containing training and test data attributes (_X_train, _y_train, _X_test, _y_test).
+            An object containing training and test data attributes (X_train, y_train, _X_test, _y_test).
         art_model : object
             The model/model used for benign predictions.
         attack : object
@@ -754,7 +750,7 @@ class AttackConfig(ConfigBase):
         start_time = time.process_time()
         inferred = attack.infer(x=X_test_subset.values, y=y_test_subset.values)
         end_time = time.process_time()
-        self.attack_prediction_time = end_time - start_time
+        self.attack_time = end_time - start_time
         logger.info(
             f"Membership inference attack took {self.attack_time} seconds for {n} samples",
         )
@@ -767,13 +763,25 @@ class AttackConfig(ConfigBase):
         assert (
             len(inferred) == n
         ), f"Length of inferred {len(inferred)} does not match number of samples {n}"
+        start = time.process_time()
         inferred = inferred.astype(int)
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
+        self.predictions = inferred
         y_test_numeric = y_test_subset.astype("category").cat.codes
+        end_time = time.process_time()
+        self.attack_prediction_time = end_time - start
+        logger.info(
+            f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
+        )
         start_time = time.process_time()
         self._score_attack(ben_pred_labels, inferred, y_test_numeric)
+        end_time = time.process_time()
+        self.attack_score_time = end_time - start_time
+        logger.info(
+            f"Membership inference attack scoring took {self.attack_score_time} seconds for {n} samples",
+        )
         self.attack = inferred
         return self.score_dict
 
