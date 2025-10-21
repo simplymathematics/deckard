@@ -1,5 +1,6 @@
 attack_type : "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
 targeted_attribute: "sex"
 attack_params : 
-  attack_model_type: "lr"
+  attack_model_type: "svm"
+  scale_range : (0, 1)
 attack_size : 1000

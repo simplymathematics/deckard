@@ -123,7 +123,7 @@ class AttackConfig(ConfigBase):
         if self._target_ is None:
             self._target_ = "deckard.AttackConfig"
 
-    def _initialize_attack(self, model):
+    def _initialize_attack(self, model, data):
         """
         Initialize an attack instance for a given model.
 
@@ -177,7 +177,10 @@ class AttackConfig(ConfigBase):
                 raise ValueError(f"model {model_alias} is not fitted")
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
-
+        if self.targeted_attribute is not None and isinstance(self.targeted_attribute, str):
+            feature_name = self.targeted_attribute
+            index = data.X_train.columns.get_loc(feature_name)
+            self.attack_params['attack_feature'] = index
         # Initialize the attack
         try:  # Assume Whitebox attack if model can be passed to the attack constructor
             attack = attack_class(art_model, **self.attack_params)
@@ -256,6 +259,7 @@ class AttackConfig(ConfigBase):
         ):  # If attack is not already loaded, initialize and run it
             attack, art_model, attack_type, attack_subtype = self._initialize_attack(
                 model,
+                data,
             )
 
         # Execute the attack based on type and subtype
@@ -570,7 +574,6 @@ class AttackConfig(ConfigBase):
         art_model,
         attack,
         targeted_attribute,
-        train=False,
     ):
         """
         Perform an attribute inference attack on a dataset using a specified attack model and model.
@@ -608,68 +611,50 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_train = data.X_train
-        y_train = data.y_train
-        X_test = data.X_test
-        y_test = data.y_test
-        if train is False:
-            X_test = X_test.iloc[: self.attack_size].values
-            y_test = y_test.iloc[: self.attack_size].values
-        else:
-            X_test = X_train.iloc[: self.attack_size].values
-            y_test = y_train.iloc[: self.attack_size].values
-        assert (
-            len(X_test) == self.attack_size
-        ), f"X_test length {len(X_test)} does not match attack_size {self.attack_size}"
-        n = len(X_test)
-        logger.info(
-            f"Performing attribute inference attack on {n} samples for attribute '{targeted_attribute}'",
-        )
-        start_time = time.process_time()
-        try:
-            attack.fit(x=X_test, y=y_test)
-        except TypeError as e:
-            if "got an unexpected keyword argument 'y'" in str(e):
-                start_time = time.process_time()
-                attack.fit(x=X_test)
-            else:
-                raise e
-        attack_time = time.process_time() - start_time
-        logger.info(
-            f"Attribute inference attack training took {attack_time} seconds for {n} samples",
-        )
-        self.attack_time = attack_time
-        logger.info(
-            f"Attribute inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
-        )
-        X_test_subset, target = self._pop_attribute(
-            pd.DataFrame(X_test, columns=data.X_train.columns),
+        X_train = data.X_train.copy().values
+        X_test = data.X_test.copy().values
+        y_test = data.y_test.copy().values
+        X_test_subset_without_feature, target = self._pop_attribute(
+            pd.DataFrame(X_test, columns=data.X_test.columns),
             targeted_attribute,
         )
+        target = target.tolist()
+        start_time = time.process_time()
+        try:
+            attack.fit(x=X_test)
+        except TypeError as e:
+            raise e
+        attack_time = time.process_time() - start_time
+        logger.info(
+            f"Attribute inference attack training took {attack_time} seconds for {self.attack_size} samples",
+        )
+        self.attack_time = attack_time
+        
+        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test)]).reshape(-1,1)
+        unique, counts = np.unique(preds, return_counts=True)
+        for u, c in zip(unique, counts):
+            logger.info(f"Class {u}: {c} samples")
+        possible_values = list(np.unique(target))
+        logger.info(
+            f"Possible values for targeted attribute '{targeted_attribute}': {possible_values}",
+        )
+        self.predictions = preds
+        start_time = time.process_time()
         inferred = attack.infer(
-            x=X_test_subset,
-            y=y_test,
-            pred=art_model.predict(X_test),
+            x=X_test_subset_without_feature,
+            pred=preds,
+            values=possible_values,
         )
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
         logger.info(
-            f"Attribute inference attack scoring took {self.attack_score_time} seconds for {n} samples",
+            f"Attribute inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
         start_time = time.process_time()
-        if isinstance(target, pd.DataFrame):
-            target = target.iloc[:, 0]
-        if isinstance(inferred, np.ndarray) and inferred.ndim > 1:
-            inferred = inferred[:, 0]
-        elif isinstance(inferred, pd.DataFrame):
-            inferred = inferred.iloc[:, 0]
-        else:
-            inferred = pd.Series(inferred)
-        assert (
-            len(target) == len(inferred) == n
-        ), f"Length mismatch: target {len(target)}, inferred {len(inferred)}, expected {n}"
-        inferred = list(inferred)
-        target = list(target)
+        
+        # Round inferred values if they are continuous
+        if any(isinstance(i, float) for i in inferred):
+            inferred = [round(i) for i in inferred]
         inferred_accuracy = accuracy_score(target, inferred)
         inferred_precision = precision_score(
             target,
@@ -727,6 +712,11 @@ class AttackConfig(ConfigBase):
         ValueError
             If the inferred membership type is unsupported or its length does not match the number of samples.
         """
+        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
+            data,
+            art_model,
+            train=train,
+        )
         start_time = time.process_time()
         try:
             attack.fit(
@@ -739,11 +729,7 @@ class AttackConfig(ConfigBase):
             raise e
         end_time = time.process_time()
         self.attack_time = time.process_time() - start_time
-        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
-            data,
-            art_model,
-            train=train,
-        )
+        
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {n} samples",
         )
@@ -763,7 +749,7 @@ class AttackConfig(ConfigBase):
         assert (
             len(inferred) == n
         ), f"Length of inferred {len(inferred)} does not match number of samples {n}"
-        start = time.process_time()
+        start_time = time.process_time()
         inferred = inferred.astype(int)
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {n} samples",
@@ -771,7 +757,7 @@ class AttackConfig(ConfigBase):
         self.predictions = inferred
         y_test_numeric = y_test_subset.astype("category").cat.codes
         end_time = time.process_time()
-        self.attack_prediction_time = end_time - start
+        self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
