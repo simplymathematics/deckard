@@ -40,13 +40,10 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
         params = {**params, **kwargs} if params is not None else kwargs
     if config_file and not params:
         logger.info(f"Loading config from {config_file}")
-        folder = str(Path(config_file).parent)
-        assert Path(
-            folder,
-        ).exists(), f"Config folder {folder} does not exist. Current working directory: {os.getcwd()}"
-        filename = str(Path(config_file).name)
-        with initialize(config_path=folder):
-            config = compose(config_name=filename)
+        # Assume that filename includes the name and the first parent
+        filename = str(Path(Path(config_file).parent) / str(Path(config_file).name))
+        config = compose(config_name=filename)
+        config = config.get(str(Path(config_file).parent.name), config)
     elif config_file:
         logger.info(f"Overriding config from {config_file} with params:")
         override_config = config_file
@@ -55,28 +52,28 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
             logger.info(f" - {param}")
             override_config.append(param)
         if "_target_" not in keys:
-            override_config = [f"++_target_={target}"] + override_config
+            override_config = [f"_target_={target}"] + override_config
         assert isinstance(
             override_config,
             list,
         ), "config must be a YAML list of dictionaries"
         if config_file is None:
-            with initialize(config_path=None):
-                config = compose(config_name=None, overrides=override_config)
+            config = compose(config_name=None, overrides=override_config)
         else:
-            folder = str(Path(config_file).parent)
-            filename = str(Path(config_file).name)
-            with initialize(config_path=folder):
-                config = compose(config_name=filename, overrides=override_config)
+            # Assume that filename includes the name and the first parent
+            filename = str(Path(Path(config_file).parent) / str(Path(config_file).name))
+            config = compose(config_name=filename, overrides=override_config)
+            config = config.get(str(Path(config_file).parent.name), config)
     else:
         params = params if params is not None else []
         keys = [k.split("=")[0] for k in params]
         if "_target_" not in keys:
-            params = [f"++_target_={target}"] + params
-        with initialize(config_path=None):
-            config = compose(config_name=None, overrides=params)
+            params = [f"_target_={target}"] + params
+        # Assume that filename includes the name and the first parent
+        filename = str(Path(Path(config_file).parent) / str(Path(config_file).name))
+        config = compose(config_name=filename)
+        config = config.get(str(Path(config_file).parent.name), config)
     obj = instantiate(config)
-    # Change back to original working directory
     return obj
 
 
