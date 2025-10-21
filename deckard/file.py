@@ -7,7 +7,7 @@ from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 
-data_files = ["data_file", "data_score_file"]
+data_files = ["data_file", "score_file"]
 model_files = [
     "model_file",
     "score_file",
@@ -17,17 +17,16 @@ model_files = [
 ]
 defense_files = [
     "defense_file",
-    "defense_score_file",
+    "score_file",
     "training_predictions_file",
     "test_predictions_file",
-    "defense_score_file",
+    "score_file",
 ]
 log_files = ["log_file"]
 attack_files = [
     "attack_file",
-    "attack_training_predictions_file",
-    "attack_test_predictions_file",
-    "attack_score_file",
+    "attack_predictions_file",
+    "score_file",
 ]
 other_files = ["score_file"]
 all_files = (
@@ -64,10 +63,8 @@ class FileConfig(ConfigBase):
         Filename for test predictions.
     attack_file : str
         Filename for attack results.
-    attack_training_predictions_file : str
+    attack_predictions_file : str
         Filename for attack training predictions.
-    attack_test_predictions_file : str
-        Filename for attack test predictions.
     score_file : str
         Filename for scores.
 
@@ -106,10 +103,13 @@ class FileConfig(ConfigBase):
     training_predictions_file: str = None
     test_predictions_file: str = None
     attack_file: str = None
-    attack_training_predictions_file: str = None
-    attack_test_predictions_file: str = None
+    attack_predictions_file: str = None
     score_file: str = None
-
+    
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
     def __hash__(self):
         """
         Computes a hash value for the instance based on non-private attributes.
