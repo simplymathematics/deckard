@@ -30,7 +30,7 @@ class TestDefenseConfig(unittest.TestCase):
             self.temp_dir,
             "training_predictions.csv",
         )
-        self.model_score_file = os.path.join(self.temp_dir, "model_score.json")
+        self.score_file = os.path.join(self.temp_dir, "model_score.json")
 
         # Mock data
         self.data = DummyDataConfig(
@@ -87,7 +87,7 @@ class TestDefenseConfig(unittest.TestCase):
             model_file=self.model_file,
             test_predictions_file=self.test_predictions_file,
             train_predictions_file=self.train_predictions_file,
-            score_file=self.model_score_file,
+            score_file=self.score_file,
         )
         self.assertIsInstance(score_dict, dict)
         self.assertIn("training_time", score_dict)
