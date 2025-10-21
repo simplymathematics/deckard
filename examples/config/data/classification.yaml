@@ -1,0 +1,10 @@
+dataset_name: make_classification
+data_params:
+  n_samples: 10000
+  n_features: 20
+  n_informative: 15
+  n_redundant: 5
+  n_classes: 2
+  random_state: 42
+_target_ : "deckard.DataConfig"
+classifier: True
