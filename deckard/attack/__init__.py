@@ -2,10 +2,9 @@ import pandas as pd
 import pickle
 import time
 import logging
-import argparse
 import warnings
 import importlib
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, mean_absolute_error, r2_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 from dataclasses import dataclass
@@ -15,7 +14,6 @@ from typing import Union
 import numpy as np
 from pathlib import Path
 
-from ..data import DataConfig
 from ..model import ModelConfig
 from ..model.defend import sklearn_dict, sklearn_models
 from ..utils import ConfigBase
@@ -476,13 +474,16 @@ class AttackConfig(ConfigBase):
         adv_success = 1 - accuracy_score(ben_pred_labels, adv_pred_labels)
         end_time = time.process_time()
         self.attack_score_time = end_time - start_time
-        self.score_dict = {
-            "adversarial_accuracy": adv_accuracy,
-            "adversarial_precision": adv_precision,
-            "adversarial_recall": adv_recall,
-            "adversarial_f1-score": adv_f1,
-            "adversarial_success_rate": adv_success,
+        score_dict = {
+            "evasion_accuracy": adv_accuracy,
+            "evasion_precision": adv_precision,
+            "evasion_recall": adv_recall,
+            "evasion_f1-score": adv_f1,
+            "evasion_success_rate": adv_success,
         }
+        sig_figs = np.floor(np.log10(len(adv_pred_labels))) + 1
+        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
+        self.score_dict = {**self.score_dict, **score_dict}
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
@@ -611,9 +612,7 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_train = data.X_train.copy().values
         X_test = data.X_test.copy().values
-        y_test = data.y_test.copy().values
         X_test_subset_without_feature, target = self._pop_attribute(
             pd.DataFrame(X_test, columns=data.X_test.columns),
             targeted_attribute,
@@ -650,39 +649,57 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Attribute inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
+        # Determine if the target is categorical or continuous
+        is_classification = not attack._is_continuous
         start_time = time.process_time()
-        
-        # Round inferred values if they are continuous
-        if any(isinstance(i, float) for i in inferred):
-            inferred = [round(i) for i in inferred]
-        inferred_accuracy = accuracy_score(target, inferred)
-        inferred_precision = precision_score(
-            target,
-            inferred,
-            zero_division=0,
-            average="weighted",
-        )
-        inferred_recall = recall_score(
-            target,
-            inferred,
-            zero_division=0,
-            average="weighted",
-        )
-        inferred_f1 = f1_score(target, inferred, zero_division=0, average="weighted")
-        end_time = time.process_time()
-        self.attack_score_time = end_time - start_time
-        self.score_dict = {
-            f"inferred_{targeted_attribute}_accuracy": inferred_accuracy,
-            f"inferred_{targeted_attribute}_precision": inferred_precision,
-            f"inferred_{targeted_attribute}_recall": inferred_recall,
-            f"inferred_{targeted_attribute}_f1": inferred_f1,
+
+        if is_classification:
+            inferred_accuracy = accuracy_score(target, inferred)
+            inferred_precision = precision_score(
+                target,
+                inferred,
+                zero_division=0,
+                average="weighted",
+            )
+            inferred_recall = recall_score(
+                target,
+                inferred,
+                zero_division=0,
+                average="weighted",
+            )
+            inferred_f1 = f1_score(target, inferred, zero_division=0, average="weighted")
+            end_time = time.process_time()
+            self.attack_score_time = end_time - start_time
+            score_dict = {
+                f"inferred_{targeted_attribute}_accuracy": inferred_accuracy,
+                f"inferred_{targeted_attribute}_precision": inferred_precision,
+                f"inferred_{targeted_attribute}_recall": inferred_recall,
+                f"inferred_{targeted_attribute}_f1": inferred_f1,
+            }
+        else:
+            
+
+            inferred_mse = mean_squared_error(target, inferred)
+            inferred_mae = mean_absolute_error(target, inferred)
+            inferred_r2 = r2_score(target, inferred)
+            end_time = time.process_time()
+            self.attack_score_time = end_time - start_time
+            score_dict = {
+                f"inferred_{targeted_attribute}_mse": inferred_mse,
+                f"inferred_{targeted_attribute}_mae": inferred_mae,
+                f"inferred_{targeted_attribute}_r2": inferred_r2,
+            }
+        sig_figs = np.floor(np.log10(len(target))) + 1
+        score_dict = {
+            k: round(v, int(sig_figs)) for k, v in score_dict.items()
         }
+        self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = inferred
         return self.score_dict
 
-    def _infer_membership(self, data, art_model, attack, train=False):
+    def _infer_membership(self, data, art_model, attack):
         """
         Perform membership inference attack on the given dataset using the specified attack and model.
 
@@ -697,8 +714,6 @@ class AttackConfig(ConfigBase):
             The model/model used for benign predictions.
         attack : object
             The membership inference attack object with fit and infer methods.
-        train : bool, optional
-            If True, uses training mode for benign predictions. Defaults to False.
 
         Returns
         -------
@@ -712,11 +727,6 @@ class AttackConfig(ConfigBase):
         ValueError
             If the inferred membership type is unsupported or its length does not match the number of samples.
         """
-        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
-            data,
-            art_model,
-            train=train,
-        )
         start_time = time.process_time()
         try:
             attack.fit(
@@ -731,14 +741,24 @@ class AttackConfig(ConfigBase):
         self.attack_time = time.process_time() - start_time
         
         logger.info(
-            f"Membership inference attack training took {self.attack_time} seconds for {n} samples",
+            f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
+        big_X = pd.concat([data.X_train, data.X_test], ignore_index=True)
+        big_y = pd.concat([data.y_train, data.y_test], ignore_index=True)
+        labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
+        # Randomly sample self.attack_size indices from big_X, big_y, and labels
+        n = self.attack_size
+        indices = np.random.choice(big_X.index, size=n, replace=False)
+        big_X = big_X.loc[indices]
+        big_y = big_y.loc[indices]
+        labels = labels[indices]
+
         start_time = time.process_time()
-        inferred = attack.infer(x=X_test_subset.values, y=y_test_subset.values)
+        inferred = attack.infer(x=big_X.values, y=big_y.values, pred=art_model.predict(big_X.values))
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(
-            f"Membership inference attack took {self.attack_time} seconds for {n} samples",
+            f"Membership inference attack took {self.attack_time} seconds for {self.attack_size} samples",
         )
         if isinstance(inferred, (list, np.ndarray)):
             inferred = np.array(inferred)
@@ -748,25 +768,59 @@ class AttackConfig(ConfigBase):
             raise ValueError(f"Unsupported inferred type: {type(inferred)}")
         assert (
             len(inferred) == n
-        ), f"Length of inferred {len(inferred)} does not match number of samples {n}"
+        ), f"Length of inferred {len(inferred)} does not match number of samples {self.attack_size}"
         start_time = time.process_time()
         inferred = inferred.astype(int)
         logger.info(
-            f"Membership inference prediction took {self.attack_prediction_time} seconds for {n} samples",
+            f"Membership inference prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         self.predictions = inferred
-        y_test_numeric = y_test_subset.astype("category").cat.codes
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
         logger.info(
-            f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {n} samples",
+            f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         start_time = time.process_time()
-        self._score_attack(ben_pred_labels, inferred, y_test_numeric)
+        inferred_accuracy = accuracy_score(
+            labels,
+            inferred,
+        )
+        inferred_precision = precision_score(
+            labels,
+            inferred,
+            zero_division=0,
+            average="weighted",
+        )
+        inferred_recall = recall_score(
+            labels,
+            inferred,
+            zero_division=0,
+            average="weighted",
+        )
+        inferred_f1 = f1_score(
+            labels,
+            inferred,
+            zero_division=0,
+            average="weighted",
+        )
+        score_dict = {
+            "membership_inference_accuracy": inferred_accuracy,
+            "membership_inference_precision": inferred_precision,
+            "membership_inference_recall": inferred_recall,
+            "membership_inference_f1": inferred_f1,
+        }
+        # Calculate the number of significant figures
+        sig_figs = np.floor(np.log10(len(labels))) + 1
+        score_dict = {
+            k: round(v, int(sig_figs)) for k, v in score_dict.items()
+        }
+        self.score_dict = {**self.score_dict, **score_dict}
+        for score in self.score_dict:
+            logger.info(f"{score}: {self.score_dict[score]}")
         end_time = time.process_time()
         self.attack_score_time = end_time - start_time
         logger.info(
-            f"Membership inference attack scoring took {self.attack_score_time} seconds for {n} samples",
+            f"Membership inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
         self.attack = inferred
         return self.score_dict
