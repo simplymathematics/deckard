@@ -94,7 +94,7 @@ class ModelConfig(ConfigBase):
     """
 
     model_type: str = "sklearn.ensemble.RandomForestClassifier"
-    classifier: bool = False
+    classifier: bool = True
     model_params: dict = None
     probability: bool = False
 

@@ -54,20 +54,12 @@ class TestExperimentConfig(unittest.TestCase):
 
     def test_call_with_mock_data(self):
         # Test the __call__ method with mock data
-        mock_data = MagicMock()
-        mock_data.X_train = pd.DataFrame(np.random.rand(100, 10))
-        mock_data.y_train = pd.Series(np.random.randint(0, 2, size=100))
-        mock_data.X_test = pd.DataFrame(np.random.rand(20, 10))
-        mock_data.y_test = pd.Series(np.random.randint(0, 2, size=20))
-        self.experiment_config.data = MagicMock(return_value=mock_data)
         scores = self.experiment_config()
         self.assertIsInstance(scores, dict)
+        self.assertIn("accuracy", scores)
+        self.assertIn("evasion_accuracy", scores)
+        self.assertIn("data_load_time", scores)
 
-    # def test_initialize_file_config(self):
-    #     # Test initializing file configuration
-    #     self.experiment_config.files = None
-    #     self.experiment_config.initialize_file_config({})
-    #     self.assertIsInstance(self.experiment_config.files, dict)
 
 
 if __name__ == "__main__":
