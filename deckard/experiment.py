@@ -1,7 +1,8 @@
 import logging
 import warnings
-from dataclasses import dataclass
 import hashlib
+from argparse import Namespace
+from dataclasses import dataclass
 from typing import List, Union, Literal
 from omegaconf import DictConfig
 
@@ -14,7 +15,7 @@ from .model import ModelConfig
 from .model.defend import DefenseConfig
 from .attack import AttackConfig
 from .score import ScorerDictConfig
-from .file import FileConfig
+from .file import FileConfig, data_files, model_files, defense_files, attack_files
 from .utils import ConfigBase, create_parser_from_function
 
 logger = logging.getLogger(__name__)
@@ -209,57 +210,29 @@ class ExperimentConfig(ConfigBase):
         return hashlib.md5(to_string.encode()).hexdigest()
 
     def __call__(self, 
-                data_file = None,
-                model_file = None,
-                log_file = None,
-                score_file = None,
-                training_predictions_file = None,
-                test_predictions_file = None,
-                attack_file = None,
-                attack_predictions_file = None,
+                
                 ):
-
-        data_call_parser = create_parser_from_function(
-            DataConfig.__call__,
-            exclude=["self"],
-        )
-        model_call_parser = create_parser_from_function(
-            ModelConfig.__call__,
-            exclude=["self", "data"],
-        )
-        defense_call_parser = create_parser_from_function(
-            DefenseConfig.__call__,
-            exclude=["self", "data", "model"],
-        )
-        attack_call_parser = create_parser_from_function(
-            AttackConfig.__call__,
-            exclude=["self", "data", "model"],
-        )
-        kwargs = {
-            "data_file": data_file,
-            "model_file": model_file,
-            "log_file": log_file,
-            "score_file": score_file,
-            "training_predictions_file": training_predictions_file,
-            "test_predictions_file": test_predictions_file,
-            "attack_file": attack_file,
-            "attack_predictions_file": attack_predictions_file,
-        }
-        # Update any kwargs in file
+        # Initialize Scores
         scores = {}
-        self.initialize_file_config(
-            **kwargs
-        )
-        file_dict = self.files
-
         # Set random seed
         self.set_random_seed()
         # Set device
-        self.set_device()
-
-        # Get call params from data parser
-        data_call_params = vars(data_call_parser.parse_known_args(args={**kwargs})[0])
-        self.data(**data_call_params)
+        if self.library not in ["sklearn"]:
+            self.set_device()
+        # Get file paths
+        file_dict = self.files()
+        data_file_outputs = {file: self.files._replace_placeholders(file_dict[file]) for file in data_files if file in file_dict}
+        model_file_outputs = {
+            file: self.files._replace_placeholders(file_dict[file]) for file in model_files if file in file_dict
+        }
+        defense_file_outputs = {
+            file: file_dict[file] for file in defense_files if file in file_dict
+        }
+        attack_file_outputs = {
+            file: file_dict[file] for file in attack_files if file in file_dict
+        }
+        
+        self.data(**data_file_outputs)
         data = self.data
         assert hasattr(
             data,
@@ -279,8 +252,7 @@ class ExperimentConfig(ConfigBase):
         ), "data must return an object with y_test attribute"
         scores.update(**data.score_dict)
         if self.model:
-            model_call_params = vars(model_call_parser.parse_known_args([])[0])
-            self.model(data=data, **model_call_params)
+            self.model(data=data, **model_file_outputs)
             model = self.model
             assert hasattr(
                 model,
@@ -296,8 +268,7 @@ class ExperimentConfig(ConfigBase):
             ), "model must have score_dict attribute after training"
             scores.update(**model.score_dict)
         elif self.defense:
-            defense_call_params = vars(defense_call_parser.parse_known_args([])[0])
-            self.defense(data=data, **defense_call_params)
+            self.defense(data=data, **defense_file_outputs)
             model = self.defense
             assert hasattr(
                 model,
@@ -316,11 +287,10 @@ class ExperimentConfig(ConfigBase):
             logger.info("No model or defense config provided, skipping model training.")
             model = None
         if self.attack:
-            attack_call_params = vars(attack_call_parser.parse_known_args([])[0])
             self.attack(
                 data=data,
                 model=model,
-                **attack_call_params,
+                **attack_file_outputs,
             )
             attack = self.attack
             assert hasattr(
@@ -340,27 +310,11 @@ class ExperimentConfig(ConfigBase):
             logger.info("No attack config provided, skipping attack.")
             attack = None
         # Assert that all files in file_dict exist
+        
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
-            if not filepath.endswith("_file"):
-                continue
-            else:
-                filepath = (
-                    Path(filepath) if not isinstance(filepath, Path) else filepath
-                )
-            if filepath is not None and not filepath.exists():
-                logger.error(f"File {attr} does not exist: {filepath}")
-                raise FileNotFoundError(f"File {attr} does not exist: {filepath}")
+            resolved_path = self.files._replace_placeholders(filepath)
+            assert Path(resolved_path).exists(), f"File {resolved_path} for {attr} does not exist."
         return scores
 
-    def initialize_file_config(self, **kwargs):
-        if self.files is None:
-            self.files = FileConfig(experiment_name=self.experiment_name, **kwargs)
-        else:
-            assert isinstance(
-                self.files,
-                FileConfig,
-            ), "file must be an instance of FileConfig"
-            self.files.__init__(**kwargs, experiment_name=self.experiment_name)
-        self.files = vars(self.files)
