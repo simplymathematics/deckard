@@ -1,0 +1,13 @@
+dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+target : label
+random_state : 0
+stratify: True
+test_size : .2
+pipeline:
+    encoder:
+        name : sklearn.preprocessing.OneHotEncoder
+        handle_unknown: ignore
+    preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: False
+        with_std: True

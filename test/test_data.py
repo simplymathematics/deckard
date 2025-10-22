@@ -2,8 +2,66 @@ import unittest
 import tempfile
 import pandas as pd
 from pathlib import Path
-from deckard.data import DataConfig
+from sklearn.pipeline import Pipeline
 
+import pandas as pd
+import numpy as np
+from deckard.data import DataConfig, DataPipelineConfig
+
+class TestDataPipelineConfig(unittest.TestCase):
+    def setUp(self):
+        self.pipeline_config_dict = {
+            "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean"},
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler"},
+        }
+        self.X_train = pd.DataFrame(
+            {
+                "feature1": [1.0, 2.0, np.nan, 4.0],
+                "feature2": [np.nan, 1.0, 2.0, 3.0],
+            }
+        )
+        self.y_train = pd.Series([0, 1, 0, 1])
+        self.X_test = pd.DataFrame(
+            {
+                "feature1": [5.0, 6.0],
+                "feature2": [4.0, np.nan],
+            }
+        )
+        self.y_test = pd.Series([1, 0])
+
+    def test_pipeline_initialization(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        self.assertIsInstance(config.pipeline, Pipeline)
+        self.assertEqual(len(config.pipeline.steps), 2)
+        self.assertEqual(config.pipeline.steps[0][0], "imputer")
+        self.assertEqual(config.pipeline.steps[1][0], "scaler")
+
+    def test_pipeline_fit_and_transform(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        X_train_transformed, X_test_transformed, _, _ = config(
+            self.X_train, self.X_test, self.y_train, self.y_test
+        )
+        self.assertEqual(X_train_transformed.shape, (4, 2))
+        self.assertEqual(X_test_transformed.shape, (2, 2))
+        self.assertFalse(np.isnan(X_train_transformed).any())
+        self.assertFalse(np.isnan(X_test_transformed).any())
+
+    def test_pipeline_fit_time(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config(self.X_train, self.X_test, self.y_train, self.y_test)
+        self.assertIsNotNone(config.pipeline_fit_time)
+        self.assertGreater(config.pipeline_fit_time, 0)
+
+    def test_pipeline_transform_time(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        config(self.X_train, self.X_test, self.y_train, self.y_test)
+        self.assertIsNotNone(config.pipeline_transform_time)
+        self.assertGreater(config.pipeline_transform_time, 0)
+
+    def test_invalid_pipeline_config(self):
+        invalid_pipeline_config = {"step1": {"name": "InvalidModule.InvalidClass"}}
+        with self.assertRaises(ModuleNotFoundError):
+            DataPipelineConfig(pipeline=invalid_pipeline_config)
 
 class TestDataConfig(unittest.TestCase):
 

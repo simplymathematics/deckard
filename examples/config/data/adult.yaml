@@ -4,3 +4,11 @@ random_state: 42
 _target_ : "deckard.DataConfig"
 classifier: True
 stratify : False
+pipeline:
+    preprocessor:
+        name: sklearn.preprocessing.StandardScaler
+        with_mean: False
+        with_std: True
+    feature_selector:
+        name: sklearn.feature_selection.VarianceThreshold
+        threshold: 0.001

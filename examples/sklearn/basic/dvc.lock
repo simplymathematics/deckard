@@ -25,10 +25,11 @@ stages:
     cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.score_file=scores/data/adult.json
       ~model  ~attack\n"
     deps:
-    - path: ../../../deckard/data.py
+    - path: ../../../deckard/data/
       hash: md5
-      md5: a925206003e39f336c67a635ec719047
-      size: 25575
+      md5: e4a9ae9bc1ad3c96d1a74479cf279995.dir
+      size: 55908
+      nfiles: 2
     - path: .config_paths_set
       hash: md5
       md5: e18a657d997e2179d54a96cd4f7e1cf8
@@ -38,26 +39,35 @@ stages:
         _target_: deckard.DataConfig
         classifier: true
         dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
         random_state: 42
         stratify: false
         test_size: 0.2
     outs:
     - path: data/adult.pkl
       hash: md5
-      md5: 884e198435cf4d3d19e09b1472a71163
-      size: 14514390
+      md5: e385adc11331cf9cda44fcff60f00ef0
+      size: 45631014
     - path: scores/data/adult.json
       hash: md5
-      md5: 077453cae407760496712a1fb04ef564
-      size: 6495
+      md5: 896648056ec2088d28978de11b1d9ee5
+      size: 6690
   generate_data@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
       \ +files.score_file=scores/data/classification.json ~model  ~attack\n"
     deps:
-    - path: ../../../deckard/data.py
+    - path: ../../../deckard/data/
       hash: md5
-      md5: a925206003e39f336c67a635ec719047
-      size: 25575
+      md5: 66e08dbafdffd2f74b42d6325eee13a6.dir
+      size: 54321
+      nfiles: 3
     - path: .config_paths_set
       hash: md5
       md5: e18a657d997e2179d54a96cd4f7e1cf8
@@ -77,11 +87,11 @@ stages:
     outs:
     - path: data/classification.pkl
       hash: md5
-      md5: beaa8316a11605a52e0fd42af01889d9
-      size: 3393317
+      md5: b288c14551ddc15b6f531646d20ba772
+      size: 3393354
     - path: scores/data/classification.json
       hash: md5
-      md5: 174ee3dce9c7734784a9235aee05d69c
+      md5: 468cea46701bfd6737db901f13d23db4
       size: 1094
   generate_data@diabetes:
     cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.score_file=scores/data/diabetes.json
@@ -255,13 +265,21 @@ stages:
       nfiles: 4
     - path: data/adult.pkl
       hash: md5
-      md5: 884e198435cf4d3d19e09b1472a71163
-      size: 14514390
+      md5: e385adc11331cf9cda44fcff60f00ef0
+      size: 45631014
     params:
       ../../config/data/adult.yaml:
         _target_: deckard.DataConfig
         classifier: true
         dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
         random_state: 42
         stratify: false
         test_size: 0.2
@@ -278,12 +296,12 @@ stages:
     outs:
     - path: models/adult/logistic.pkl
       hash: md5
-      md5: b1a13df0852a119c62177c58189fcc4e
-      size: 4467
+      md5: ac6f2bb3c385856c8ea5e50578545d3e
+      size: 4577
     - path: scores/models/adult/logistic.json
       hash: md5
-      md5: 6021eca9c53c814902c2d2429a7b8a62
-      size: 513
+      md5: bcd61592949e17f3a40a9eb23d5c8de0
+      size: 651
   train_logistic@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
       \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/models/classification/logistic.json
@@ -422,12 +440,12 @@ stages:
       nfiles: 2
     - path: data/adult.pkl
       hash: md5
-      md5: 884e198435cf4d3d19e09b1472a71163
-      size: 14514390
+      md5: e385adc11331cf9cda44fcff60f00ef0
+      size: 45631014
     - path: models/adult/logistic.pkl
       hash: md5
-      md5: b1a13df0852a119c62177c58189fcc4e
-      size: 4467
+      md5: ac6f2bb3c385856c8ea5e50578545d3e
+      size: 4577
     params:
       ../../config/attack/hsj.yaml:
         attack_params:
@@ -440,6 +458,14 @@ stages:
         _target_: deckard.DataConfig
         classifier: true
         dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
         random_state: 42
         stratify: false
         test_size: 0.2
@@ -456,8 +482,8 @@ stages:
     outs:
     - path: scores/attacks/adult/logistic/hsj.json
       hash: md5
-      md5: 193e8a4116c5a84c86339d0845d8b3f2
-      size: 738
+      md5: 8bb638efd62c79431bc81dd6dc3a6834
+      size: 877
   attack_logistic@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
       \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/attacks/classification/logistic/hsj.json
@@ -618,3 +644,41 @@ stages:
       hash: md5
       md5: b7a24c612b71efe4acd59b901fb6935d
       size: 3835
+  generate_data@kdd_nsl:
+    cmd: "deckard  data=kdd_nsl  +files.data_file=data/kdd_nsl.pkl  +files.score_file=scores/data/kdd_nsl.json
+      ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data/
+      hash: md5
+      md5: fcbe1530d8eff91320fc605b08d5e3a7.dir
+      size: 56268
+      nfiles: 2
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/kdd_nsl.yaml:
+        dataset_name: 
+          https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: ignore
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+        random_state: 0
+        stratify: true
+        target: label
+        test_size: 0.2
+    outs:
+    - path: data/kdd_nsl.pkl
+      hash: md5
+      md5: 6cc882a0776c77bdd3d4b276060afb01
+      size: 5369756
+    - path: scores/data/kdd_nsl.json
+      hash: md5
+      md5: 699acbf73ccb2798dba7f7b7eb5ca972
+      size: 291364

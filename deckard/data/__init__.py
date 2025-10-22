@@ -2,11 +2,12 @@
 import pandas as pd
 import time
 import logging
-
+import importlib
 from pathlib import Path
 
 from dataclasses import dataclass
-from typing import Union
+from typing import Tuple, Union, Dict
+from omegaconf import DictConfig, OmegaConf
 
 # Scikit-learn
 from sklearn.datasets import (
@@ -25,14 +26,87 @@ from sklearn.feature_selection import (
     r_regression,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 # deckard
-from .utils import ConfigBase
-
+from ..utils import ConfigBase
 # Setup logger
 logger = logging.getLogger(__name__)
 
-
+@dataclass
+class DataPipelineConfig(ConfigBase):
+    """Initializes a data pipeline configuration and fits it to the data in the call() method."""
+    pipeline: Union[Dict[str, dict], Pipeline] = None
+    pipeline_fit_time: float = None
+    pipeline_fit_n: int = None
+    pipeline_transform_time: float = None
+    pipeline_transform_n: int = None
+    
+    
+    def __post_init__(self):
+        assert isinstance(self.pipeline, dict), f"pipeline must be a dictionary, got {type(self.pipeline)}"
+        self.pipeline_fit_n = None
+        self.pipeline_transform_n = None
+        self.pipeline_fit_time = None
+        self.pipeline_transform_time = None
+        if isinstance(self.pipeline, (dict, DictConfig)):
+            # Validate the pipeline configuration
+            for k,v in self.pipeline.items():
+                assert isinstance(v, dict), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
+                assert "name" in v, f"Each step in pipeline must have a 'name' key, missing in step {k}"
+            # Build the pipeline
+            pipeline_steps = []
+            for step_name, step_config in self.pipeline.items():
+                step_class = step_config.pop("name")
+                module_name, class_name = step_class.rsplit(".", 1)
+                module = importlib.import_module(module_name)
+                cls = getattr(module, class_name)
+                step_instance = cls(**step_config)
+                pipeline_steps.append((step_name, step_instance))
+            pipeline = Pipeline(pipeline_steps)
+            self.pipeline = pipeline
+        return super().__post_init__()
+    
+    def __call__(self, X_train, X_test, y_train, y_test) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """Fits the data pipeline to the data and returns the transformed data.
+        
+        Parameters
+        ----------
+        data : DataConfig
+            The data configuration object containing the training and testing data.
+        
+        Returns
+        -------
+        pd.DataFrame
+            The transformed training and testing data.
+        """
+        if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
+            
+            logger.info("Fitting data pipeline to training data")
+            # Fit and transform the training data
+            start = time.process_time()
+            self.pipeline.fit(X_train.values, y_train.values)
+            end = time.process_time()
+            before_shape = X_train.shape
+            X_train = self.pipeline.transform(X_train.values)
+            after_shape = X_train.shape
+            assert before_shape[0] == after_shape[0], f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
+            self.pipeline_fit_time = end - start
+            self.pipeline_fit_n = X_train.shape[0]
+        if not hasattr(self, "pipeline_transform_time") or self.pipeline_transform_time is None:
+            # Record transform time
+            start = time.process_time()
+            # Transform the testing data
+            before_shape = X_test.shape
+            X_test = self.pipeline.transform(X_test.values)
+            after_shape = X_test.shape
+            assert before_shape[0] == after_shape[0], f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
+            end = time.process_time()
+            self.pipeline_transform_time = end - start
+            self.pipeline_transform_n = X_test.shape[0]
+        return X_train, X_test, y_train, y_test
+    
+    
 @dataclass
 class DataConfig(ConfigBase):
     """
@@ -52,25 +126,31 @@ class DataConfig(ConfigBase):
         Specifies stratification for sampling; can be None, True (use target), or a column name.
     classifier: bool
         Whether the task is classification (True) or regression (False).
+    pipeline: DataPipelineConfig
+        Optional data pipeline configuration for preprocessing steps.
     _X : pd.DataFrame
         Loaded feature matrix.
     _y : pd.Series
         Loaded target vector.
-    _data_load_time : float
+    data_load_time : float
         Time taken to load the data.
-    _data_sample_time : float
+    data_sample_time : float
         Time taken to sample/split the data.
+    train_n : int
+        Number of training samples.
+    test_n : int
+        Number of testing samples.
     _train_indices : list
         Indices for training samples.
     _test_indices : list
         Indices for testing samples.
-    _X_train : pd.DataFrame
+    X_train : pd.DataFrame
         Training feature matrix.
-    _y_train : pd.Series
+    y_train : pd.Series
         Training target vector.
-    _X_test : pd.DataFrame
+    X_test : pd.DataFrame
         Testing feature matrix.
-    _y_test : pd.Series
+    y_test : pd.Series
         Testing target vector.
     score_dict : dict
         Dictionary to store scores or metrics.
@@ -127,6 +207,8 @@ class DataConfig(ConfigBase):
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: bool = True
+    pipeline : Union[DataPipelineConfig, None] = None
+    target : Union[str, None] = None
 
     def __post_init__(self):
         """
@@ -152,10 +234,27 @@ class DataConfig(ConfigBase):
         self.y_train = None
         self.X_test = None
         self.y_test = None
+        self.train_n = None
+        self.test_n = None
         self.data_load_time = None
         self.data_sample_time = None
         self._train_indices = None
         self._test_indices = None
+        if self.pipeline is not None:
+            if isinstance(self.pipeline, dict):
+                self.pipeline = DataPipelineConfig(pipeline = self.pipeline)
+            elif isinstance(self.pipeline, DictConfig):
+                self.pipeline = DataPipelineConfig(pipeline = OmegaConf.to_container(self.pipeline))
+            elif isinstance(self.pipeline, DataPipelineConfig):
+                pass
+            else:
+                raise ValueError(
+                    f"pipeline must be a dict, DictConfig, or Pipeline instance, got {type(self.pipeline)}",
+                )
+            assert isinstance(
+                self.pipeline,
+                (DataPipelineConfig)
+            ), f"pipeline must be a DataPipelineConfig instance, got {type(self.pipeline)}"
         assert self.classifier in [True, False], "classifier must be a boolean value"
         if self._target_ is None:
             self._target_ = "DataConfig"
@@ -412,6 +511,8 @@ class DataConfig(ConfigBase):
         self.y_train = self._y.iloc[self._train_indices].reset_index(drop=True)
         self.X_test = self._X.iloc[self._test_indices].reset_index(drop=True)
         self.y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
+        self.train_n = len(self.X_train)
+        self.test_n = len(self.X_test)
 
     def _load_data(self):
         """
@@ -470,9 +571,15 @@ class DataConfig(ConfigBase):
                 self._load_digits_data(**self.data_params)
             case _ if filetype == ".csv":
                 data = pd.read_csv(self.dataset_name)
-                if "target" not in data.columns:
-                    raise ValueError("CSV file must contain 'target' column")
-                y = data.pop("target")
+                if "target" in data.columns:
+                    y = data.pop("target")
+                else:
+                    if self.target is None:
+                        raise ValueError(
+                            "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
+                        )
+                    y = data.pop(self.target)
+
                 X = data
                 self._X = X
                 self._y = y
@@ -657,14 +764,30 @@ class DataConfig(ConfigBase):
             assert (
                 hasattr(self, "_test_indices") and self._test_indices is not None
             ), "Test indices must be set after sampling"
-        # Prepare return dictionary
-        time_dict = {
-            "data_load_time": self.data_load_time,
-            "data_sample_time": self.data_sample_time,
-        }
-        logger.info(
-            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-        )
+        if self.pipeline is not None:
+            self.X_train, self.X_test, self.y_train, self.y_test = self.pipeline(
+                self.X_train,
+                self.X_test,
+                self.y_train,
+                self.y_test,
+            )
+            time_dict = {
+                "data_load_time": self.data_load_time,
+                "data_sample_time": self.data_sample_time,
+                "pipeline_fit_time": self.pipeline.pipeline_fit_time,
+                "pipeline_fit_n": self.pipeline.pipeline_fit_n,
+                "pipeline_transform_time": self.pipeline.pipeline_transform_time,
+                "pipeline_transform_n": self.pipeline.pipeline_transform_n,
+            }
+        else:
+            # Prepare return dictionary
+            time_dict = {
+                "data_load_time": self.data_load_time,
+                "data_sample_time": self.data_sample_time,
+            }
+            logger.info(
+                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+            )
         data_scores = self._score(classifier=self.classifier)
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
@@ -673,3 +796,5 @@ class DataConfig(ConfigBase):
         if save_flag:
             self.save(data_file)
         return self.score_dict
+
+

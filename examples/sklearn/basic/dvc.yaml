@@ -24,6 +24,7 @@ stages:
         - diabetes
         - digits
         - regression
+        - kdd_nsl
       do:
         cmd: >
           deckard 
@@ -38,7 +39,7 @@ stages:
           - scores/data/${item}.json
         deps:
           - .config_paths_set
-          - ../../../deckard/data.py
+          - ../../../deckard/data/
         params:
           - ../../config/data/${item}.yaml:
           ################################################
