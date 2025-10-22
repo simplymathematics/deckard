@@ -542,6 +542,25 @@ class DataConfig(ConfigBase):
         scores["class_counts"] = class_counts
         return scores
     
+    def _empirical_cdf(self, data: pd.Series) -> pd.Series:
+        """
+        Computes the empirical cumulative distribution function (CDF) for a given pandas Series.
+
+        Parameters
+        ----------
+        data : pd.Series
+            The input data for which to compute the empirical CDF.
+
+        Returns
+        -------
+        pd.Series
+            A pandas Series representing the empirical CDF values corresponding to the input data.
+        """
+        sorted_data = data.sort_values().reset_index(drop=True)
+        cdf_values = (sorted_data.rank(method='first') / len(sorted_data)).values
+        cdf_series = pd.Series(cdf_values, index=sorted_data.index)
+        return cdf_series
+    
     def _regression_feature_scores(self) -> dict:
         """
         Computes feature importance scores for regression tasks using various statistical methods.
@@ -562,6 +581,8 @@ class DataConfig(ConfigBase):
         ).tolist()
         scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
         scores["r_regression"] = r_regression(self.X_train, self.y_train).tolist()
+        cdf = self._empirical_cdf(self.y_train)
+        scores["y_train_cdf"] = cdf.tolist()
         return scores
     
     def __call__(
