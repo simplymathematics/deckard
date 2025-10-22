@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 from pathlib import Path
-from deckard.utils import ConfigBase, initialize_config, create_parser_from_function
+from deckard.utils import ConfigBase, create_parser_from_function
 
 
 class DummyConfig(ConfigBase):
@@ -50,10 +50,7 @@ class TestConfigBase(unittest.TestCase):
         self.assertEqual(cfg.b, "test")
         self.assertEqual(cfg(), 1 + len("test"))
 
-    def test_initialize_config(self):
-        cfg_list = []
-        cfg = initialize_config(None, cfg_list, target="deckard.utils.ConfigBase")
-        self.assertIsInstance(cfg, ConfigBase)
+
 
     def test_hash(self):
         cfg1 = DummyConfig(a=2, b="hash")
