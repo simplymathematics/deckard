@@ -69,9 +69,7 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
         keys = [k.split("=")[0] for k in params]
         if "_target_" not in keys:
             params = [f"_target_={target}"] + params
-        # Assume that filename includes the name and the first parent
-        filename = str(Path(Path(config_file).parent) / str(Path(config_file).name))
-        config = compose(config_name=filename)
+        config = compose(config_name=None, overrides=params)
         config = config.get(str(Path(config_file).parent.name), config)
     obj = instantiate(config)
     return obj
