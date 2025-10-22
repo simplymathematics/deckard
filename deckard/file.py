@@ -60,7 +60,8 @@ class FileConfig(ConfigBase):
                 file_attr,
             ), f"FileConfig is missing attribute: {file_attr}"
         self.experiment_name = self._replace_placeholders(
-            self.experiment_name, placeholder_dict=default_placeholder_dict
+            self.experiment_name,
+            placeholder_dict=default_placeholder_dict,
         )
         self._resolve_paths()
         super().__post_init__()

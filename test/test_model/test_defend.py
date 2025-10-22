@@ -42,7 +42,7 @@ class TestDefenseConfig(unittest.TestCase):
 
         # Default DefenseConfig
         self.defense_config = DefenseConfig(
-            defense_name="art.defences.postprocessor.HighConfidence"
+            defense_name="art.defences.postprocessor.HighConfidence",
         )
 
     def tearDown(self):
