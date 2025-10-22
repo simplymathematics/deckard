@@ -11,6 +11,12 @@ stages:
         - ../../config/default.yaml
       params:
         - ../../config/default.yaml:
+  simple_example:
+      cmd: deckard > deckard.log
+      outs:
+        - deckard.log
+      deps:
+        - .config_paths_set # Here to ensure config paths are set before running deckard
   generate_data:
       foreach:
         - adult
