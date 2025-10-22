@@ -34,7 +34,6 @@ class TestFileConfig(unittest.TestCase):
         if Path("test_models2").exists():
             shutil.rmtree("test_models2", ignore_errors=True)
 
-
     def test_experiment_name_timestamp(self):
         self.assertNotEqual(self.config.experiment_name, "{timestamp}")
         self.assertTrue(

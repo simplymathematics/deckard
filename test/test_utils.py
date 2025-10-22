@@ -50,8 +50,6 @@ class TestConfigBase(unittest.TestCase):
         self.assertEqual(cfg.b, "test")
         self.assertEqual(cfg(), 1 + len("test"))
 
-
-
     def test_hash(self):
         cfg1 = DummyConfig(a=2, b="hash")
         cfg2 = DummyConfig(a=2, b="hash")

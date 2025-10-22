@@ -244,7 +244,9 @@ class ModelConfig(ConfigBase):
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
         try:
             acc = accuracy_score(y_true, y_pred)
-            precision = precision_score(y_true, y_pred, average="weighted", zero_division=0)
+            precision = precision_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            )
             recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
         except ValueError as ve:

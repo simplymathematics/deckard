@@ -7,14 +7,12 @@ from typing import Union, Any
 from dataclasses import dataclass
 import pandas as pd
 import pickle
-from hydra import compose
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
 
 
 @dataclass

@@ -37,8 +37,11 @@ supported_attacks = [
     "whitebox_attribute_inference",
 ]
 
-sklearn_supported_models = [str(x).split(".")[-1].split("'")[0] for x in sklearn_dict.values()]
+sklearn_supported_models = [
+    str(x).split(".")[-1].split("'")[0] for x in sklearn_dict.values()
+]
 supported_models = sklearn_supported_models
+
 
 @dataclass
 class AttackConfig(ConfigBase):
@@ -181,11 +184,11 @@ class AttackConfig(ConfigBase):
                 art_model = sklearn_dict[model_alias](model)
             except NotFittedError:
                 raise ValueError(f"model {model_alias} is not fitted")
-        elif str(model_alias) in supported_models: # Model is already an ART model
+        elif str(model_alias) in supported_models:  # Model is already an ART model
             art_model = model
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
-        
+
         # Convert targeted attribute to index if necessary
         if self.targeted_attribute is not None and isinstance(
             self.targeted_attribute,

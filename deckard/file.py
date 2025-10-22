@@ -35,6 +35,8 @@ default_placeholder_dict = {
     "experiment_name": "experiment_{timestamp}",
     "hash": None,  # Placeholder for hash; to be filled in as needed
 }
+
+
 @dataclass
 class FileConfig(ConfigBase):
     """Configuration for file paths used in the experiment."""
@@ -57,10 +59,11 @@ class FileConfig(ConfigBase):
                 self,
                 file_attr,
             ), f"FileConfig is missing attribute: {file_attr}"
-        self.experiment_name = self._replace_placeholders(self.experiment_name, placeholder_dict=default_placeholder_dict)
+        self.experiment_name = self._replace_placeholders(
+            self.experiment_name, placeholder_dict=default_placeholder_dict
+        )
         self._resolve_paths()
         super().__post_init__()
-        
 
     def generate_file_hash(self, file_path: str) -> str:
         """

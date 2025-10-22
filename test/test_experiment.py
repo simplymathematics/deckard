@@ -1,7 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
 import numpy as np
-import pandas as pd
 import tempfile
 import shutil
 from deckard.experiment import ExperimentConfig
@@ -59,7 +57,6 @@ class TestExperimentConfig(unittest.TestCase):
         self.assertIn("accuracy", scores)
         self.assertIn("evasion_accuracy", scores)
         self.assertIn("data_load_time", scores)
-
 
 
 if __name__ == "__main__":

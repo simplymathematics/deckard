@@ -136,7 +136,6 @@ class DefenseConfig(ModelConfig):
         self._apply_fit = True  # Whether to apply fit during defense application
         if self._target_ is None:
             self._target_ = "deckard.DefenseConfig"
-            
 
     def __hash__(self):
         return super().__hash__()
