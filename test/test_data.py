@@ -22,6 +22,7 @@ class TestDataConfig(unittest.TestCase):
             test_size=0.2,
             random_state=42,
             stratify=True,
+            classifier=True,
         )
 
     def test_make_classification_data_loading_and_sampling(self):
@@ -52,6 +53,7 @@ class TestDataConfig(unittest.TestCase):
             test_size=0.3,
             random_state=1,
             stratify=None,
+            classifier=False,
         )
         cfg()
         X_train = cfg.X_train
@@ -183,7 +185,7 @@ class TestDataConfig(unittest.TestCase):
             score_path = Path(tmpdirname) / "scores.json"
             results = cfg(
                 data_file=str(data_path),
-                data_score_file=str(score_path),
+                score_file=str(score_path),
             )
             self.assertTrue(data_path.exists())
             self.assertTrue(score_path.exists())
@@ -209,7 +211,7 @@ class TestDataConfig(unittest.TestCase):
             # save scores
             cfg.save_scores(cfg.score_dict, score_path)
             loaded_scores = cfg.load_scores(score_path)
-            cfg(data_score_file=str(score_path))
+            cfg(score_file=str(score_path))
             self.assertTrue(score_path.exists())
             self.assertIn("mutual_info", loaded_scores)
             self.assertIn("chisquare", loaded_scores)
