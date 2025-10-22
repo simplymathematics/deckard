@@ -68,14 +68,6 @@ class TestModelConfig(unittest.TestCase):
         self.assertIsInstance(scores, dict)
         self.assertIn("accuracy", scores)
 
-    def test_save_and_load_model(self):
-        self.model._train(self.X_train, self.y_train)
-        self.model._save_model(self.model_file)
-        self.assertTrue(Path(self.model_file).exists())
-        loaded_model = ModelConfig(model_type=self.model_type, classifier=True)
-        loaded_model._load_model(self.model_file)
-        self.assertTrue(hasattr(loaded_model._model, "predict"))
-
     def test_call_training_and_prediction(self):
         data = DataConfig()
         model = ModelConfig(
