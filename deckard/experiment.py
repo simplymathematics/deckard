@@ -1,7 +1,6 @@
 import logging
 import warnings
 import hashlib
-from argparse import Namespace
 from dataclasses import dataclass
 from typing import List, Union, Literal
 from omegaconf import DictConfig
@@ -16,7 +15,7 @@ from .model.defend import DefenseConfig
 from .attack import AttackConfig
 from .score import ScorerDictConfig
 from .file import FileConfig, data_files, model_files, defense_files, attack_files
-from .utils import ConfigBase, create_parser_from_function
+from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -209,9 +208,9 @@ class ExperimentConfig(ConfigBase):
             )
         return hashlib.md5(to_string.encode()).hexdigest()
 
-    def __call__(self, 
-                
-                ):
+    def __call__(
+        self,
+    ):
         # Initialize Scores
         scores = {}
         # Set random seed
@@ -221,9 +220,15 @@ class ExperimentConfig(ConfigBase):
             self.set_device()
         # Get file paths
         file_dict = self.files()
-        data_file_outputs = {file: self.files._replace_placeholders(file_dict[file]) for file in data_files if file in file_dict}
+        data_file_outputs = {
+            file: self.files._replace_placeholders(file_dict[file])
+            for file in data_files
+            if file in file_dict
+        }
         model_file_outputs = {
-            file: self.files._replace_placeholders(file_dict[file]) for file in model_files if file in file_dict
+            file: self.files._replace_placeholders(file_dict[file])
+            for file in model_files
+            if file in file_dict
         }
         defense_file_outputs = {
             file: file_dict[file] for file in defense_files if file in file_dict
@@ -231,7 +236,7 @@ class ExperimentConfig(ConfigBase):
         attack_file_outputs = {
             file: file_dict[file] for file in attack_files if file in file_dict
         }
-        
+
         self.data(**data_file_outputs)
         data = self.data
         assert hasattr(
@@ -310,11 +315,12 @@ class ExperimentConfig(ConfigBase):
             logger.info("No attack config provided, skipping attack.")
             attack = None
         # Assert that all files in file_dict exist
-        
+
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
             resolved_path = self.files._replace_placeholders(filepath)
-            assert Path(resolved_path).exists(), f"File {resolved_path} for {attr} does not exist."
+            assert Path(
+                resolved_path
+            ).exists(), f"File {resolved_path} for {attr} does not exist."
         return scores
-

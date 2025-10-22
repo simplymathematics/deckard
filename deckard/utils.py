@@ -7,8 +7,7 @@ from typing import Union, Any
 from dataclasses import dataclass
 import pandas as pd
 import pickle
-import os
-from hydra import initialize, compose
+from hydra import compose
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -413,7 +412,9 @@ class ConfigBase:
         if not isinstance(config, dict):
             raise TypeError(f"Loaded config is not a dictionary from {filepath}")
         instance = instantiate(config)
-        logger.info(f"Instance of {instance.__class__.__name__} created from {filepath}")
+        logger.info(
+            f"Instance of {instance.__class__.__name__} created from {filepath}"
+        )
         return instance
 
     @staticmethod

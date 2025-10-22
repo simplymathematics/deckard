@@ -1,4 +1,3 @@
-from pathlib import Path
 from dataclasses import dataclass
 import time
 import hashlib
@@ -46,14 +45,15 @@ class FileConfig(ConfigBase):
     attack_predictions_file: str = None
     score_file: str = None
     experiment_name: str = None
-    
+
     def __post_init__(self):
         # Assert that all files in all_files are attributes of the class
         for file_attr in all_files:
-            assert hasattr(self, file_attr), f"FileConfig is missing attribute: {file_attr}"
+            assert hasattr(
+                self, file_attr
+            ), f"FileConfig is missing attribute: {file_attr}"
         return super().__post_init__()
-    
-    
+
     def generate_file_hash(self, file_path: str) -> str:
         """
         Generate a hash for the object in the given file path.
@@ -70,8 +70,8 @@ class FileConfig(ConfigBase):
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
-    
-    def _replace_placeholders(self, path: str, placeholder_dict ={}) -> str:
+
+    def _replace_placeholders(self, path: str, placeholder_dict={}) -> str:
         """Replace placeholders in the file path with actual values."""
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         path = path.replace("{timestamp}", timestamp)
@@ -81,7 +81,6 @@ class FileConfig(ConfigBase):
             path = path.replace("{" + placeholder + "}", str(value))
         return path
 
-
     def resolve_paths(self, placeholder_dict={}) -> None:
         """Resolve file paths by replacing placeholders with actual values."""
         for file_attr in all_files:
@@ -89,7 +88,7 @@ class FileConfig(ConfigBase):
             if file_path is not None:
                 resolved_path = self._replace_placeholders(file_path, placeholder_dict)
                 setattr(self, file_attr, resolved_path)
-                
+
     def __call__(self) -> dict:
         """Return a dictionary of file paths."""
         file_dict = {}

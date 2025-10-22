@@ -506,7 +506,7 @@ class DataConfig(ConfigBase):
             return self._classification_feature_scores()
         else:
             return self._regression_feature_scores()
-        
+
     def _classification_feature_scores(self) -> dict:
         """
         Computes feature importance scores for classification tasks using various statistical methods.
@@ -541,7 +541,7 @@ class DataConfig(ConfigBase):
         class_counts = self.y_train.value_counts().to_dict()
         scores["class_counts"] = class_counts
         return scores
-    
+
     def _empirical_cdf(self, data: pd.Series) -> pd.Series:
         """
         Computes the empirical cumulative distribution function (CDF) for a given pandas Series.
@@ -557,10 +557,10 @@ class DataConfig(ConfigBase):
             A pandas Series representing the empirical CDF values corresponding to the input data.
         """
         sorted_data = data.sort_values().reset_index(drop=True)
-        cdf_values = (sorted_data.rank(method='first') / len(sorted_data)).values
+        cdf_values = (sorted_data.rank(method="first") / len(sorted_data)).values
         cdf_series = pd.Series(cdf_values, index=sorted_data.index)
         return cdf_series
-    
+
     def _regression_feature_scores(self) -> dict:
         """
         Computes feature importance scores for regression tasks using various statistical methods.
@@ -584,7 +584,7 @@ class DataConfig(ConfigBase):
         scores["y_train_cdf"] = self._empirical_cdf(self.y_train).tolist()
         scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
         return scores
-    
+
     def __call__(
         self,
         data_file: Union[str, None] = None,
@@ -666,7 +666,7 @@ class DataConfig(ConfigBase):
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
         data_scores = self._score(classifier=self.classifier)
-        all_scores = {**scores,  **data_scores, **time_dict}
+        all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         if score_file is not None:
             self.save_scores(all_scores, score_file)

@@ -1,5 +1,4 @@
 import pandas as pd
-import pickle
 import time
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.exceptions import NotFittedError
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 supported_sklearn_libraries = ["sklearn"]
 
 __all__ = ["ModelConfig"]
+
 
 @dataclass
 class ModelConfig(ConfigBase):
@@ -322,9 +322,6 @@ class ModelConfig(ConfigBase):
             scores[score] = rounded
         return scores
 
-    
-
-
     def _load_predictions(self, filepath: str):
         """
         Loads predictions from a specified CSV file.
@@ -615,7 +612,6 @@ class ModelConfig(ConfigBase):
             pass
         self.score_dict.update(times)
 
-   
     def _load_or_train_model(self, data, model_file, times):
         """
         Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.

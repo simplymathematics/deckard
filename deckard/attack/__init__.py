@@ -4,7 +4,15 @@ import time
 import logging
 import warnings
 import importlib
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
+)
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 from dataclasses import dataclass
@@ -176,10 +184,12 @@ class AttackConfig(ConfigBase):
                     raise ValueError(f"model {model_alias} is not fitted")
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
-        if self.targeted_attribute is not None and isinstance(self.targeted_attribute, str):
+        if self.targeted_attribute is not None and isinstance(
+            self.targeted_attribute, str
+        ):
             feature_name = self.targeted_attribute
             index = data.X_train.columns.get_loc(feature_name)
-            self.attack_params['attack_feature'] = index
+            self.attack_params["attack_feature"] = index
         # Initialize the attack
         try:  # Assume Whitebox attack if model can be passed to the attack constructor
             attack = attack_class(art_model, **self.attack_params)
@@ -629,8 +639,10 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack training took {attack_time} seconds for {self.attack_size} samples",
         )
         self.attack_time = attack_time
-        
-        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test)]).reshape(-1,1)
+
+        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test)]).reshape(
+            -1, 1
+        )
         unique, counts = np.unique(preds, return_counts=True)
         for u, c in zip(unique, counts):
             logger.info(f"Class {u}: {c} samples")
@@ -668,7 +680,9 @@ class AttackConfig(ConfigBase):
                 zero_division=0,
                 average="weighted",
             )
-            inferred_f1 = f1_score(target, inferred, zero_division=0, average="weighted")
+            inferred_f1 = f1_score(
+                target, inferred, zero_division=0, average="weighted"
+            )
             end_time = time.process_time()
             self.attack_score_time = end_time - start_time
             score_dict = {
@@ -678,7 +692,6 @@ class AttackConfig(ConfigBase):
                 f"inferred_{targeted_attribute}_f1": inferred_f1,
             }
         else:
-            
 
             inferred_mse = mean_squared_error(target, inferred)
             inferred_mae = mean_absolute_error(target, inferred)
@@ -691,9 +704,7 @@ class AttackConfig(ConfigBase):
                 f"inferred_{targeted_attribute}_r2": inferred_r2,
             }
         sig_figs = np.floor(np.log10(len(target))) + 1
-        score_dict = {
-            k: round(v, int(sig_figs)) for k, v in score_dict.items()
-        }
+        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
@@ -740,7 +751,7 @@ class AttackConfig(ConfigBase):
             raise e
         end_time = time.process_time()
         self.attack_time = time.process_time() - start_time
-        
+
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
@@ -755,7 +766,9 @@ class AttackConfig(ConfigBase):
         labels = labels[indices]
 
         start_time = time.process_time()
-        inferred = attack.infer(x=big_X.values, y=big_y.values, pred=art_model.predict(big_X.values))
+        inferred = attack.infer(
+            x=big_X.values, y=big_y.values, pred=art_model.predict(big_X.values)
+        )
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(
@@ -812,9 +825,7 @@ class AttackConfig(ConfigBase):
         }
         # Calculate the number of significant figures
         sig_figs = np.floor(np.log10(len(labels))) + 1
-        score_dict = {
-            k: round(v, int(sig_figs)) for k, v in score_dict.items()
-        }
+        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
