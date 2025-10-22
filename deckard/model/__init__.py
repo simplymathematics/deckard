@@ -242,10 +242,22 @@ class ModelConfig(ConfigBase):
         """
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
-        acc = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average="weighted", zero_division=0)
-        recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
-        f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+        try:
+            acc = accuracy_score(y_true, y_pred)
+            precision = precision_score(y_true, y_pred, average="weighted", zero_division=0)
+            recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+            f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+        except ValueError as ve:
+            if "mix of binary and continuous" in str(ve):
+                logger.error("Error computing classification scores: Possible regression output for classification task.")
+                new_y_pred = np.argmax(y_pred, axis=1)
+                return self._classification_scores(y_true, new_y_pred)
+            else:
+                logger.error(f"Error computing classification scores: {ve}")
+                raise ve
+        except Exception as e:
+            logger.error(f"Error computing classification scores: {e}")
+            raise e
         scores = {
             "accuracy": acc,
             "precision": precision,

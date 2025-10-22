@@ -136,21 +136,13 @@ class DefenseConfig(ModelConfig):
         self._apply_fit = True  # Whether to apply fit during defense application
         if self._target_ is None:
             self._target_ = "deckard.DefenseConfig"
+            
 
     def __hash__(self):
         return super().__hash__()
 
-    def apply_defense(self, *args, **kwargs) -> BaseEstimator:
+    def apply_defense(self) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
-
-        Parameters
-        ----------
-        defense : str
-            The full class path of the defense to apply (e.g., 'art.defences.preprocessor.JPEGCompression').
-        estimator : BaseEstimator, optional
-            The estimator to which the defense will be applied. If None, uses self.model._model.
-        defense_params : dict, optional
-            Parameters to initialize the defense.
 
         Returns
         -------
@@ -224,8 +216,6 @@ class DefenseConfig(ModelConfig):
                         preprocessor=defense,
                         preprocessing_defences=[defense],
                         clip_values=self.clip_values,
-                        *args,
-                        **kwargs,
                     )
                 case "postprocessor":
                     defense = defense_class(**(self.defense_params or {}))
@@ -233,17 +223,15 @@ class DefenseConfig(ModelConfig):
                         self._model,
                         postprocessing_defences=[defense],
                         clip_values=self.clip_values,
-                        *args,
-                        **kwargs,
                     )
                 case "detector":
                     match defense_subtype:
                         case "evasion":
                             defense = defense_class(**(self.defense_params or {}))
-                            defended_estimator = defense(self._model, *args, **kwargs)
+                            defended_estimator = defense(self._model)
                         case "poison":
                             defense = defense_class(**(self.defense_params or {}))
-                            defended_estimator = defense(self._model, *args, **kwargs)
+                            defended_estimator = defense(self._model)
                         case _:
                             raise NotImplementedError(
                                 f"Detector subtype '{defense_subtype}' is not implemented yet.",
@@ -251,7 +239,7 @@ class DefenseConfig(ModelConfig):
                     # Overwrite the _score method to handle each
                 case "trainer":
                     defense = defense_class(**(self.defense_params or {}))
-                    defended_estimator = defense(self._model, *args, **kwargs)
+                    defended_estimator = defense(self._model)
                 case "transformer":
                     defense = defense_class(**(self.defense_params or {}))
                     defended_estimator = defense(
@@ -327,11 +315,15 @@ class DefenseConfig(ModelConfig):
 
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_file, times)
+        self._model = self.apply_defense()
         self._evaluate_and_score(data, times)
-        self.save(
-            train_predictions_file=train_predictions_file,
-            test_predictions_file=test_predictions_file,
-            model_file=model_file,
-            score_file=score_file,
-        )
+        if train_predictions_file is not None:
+            self.save_data(
+                self.training_predictions,
+                train_predictions_file,
+            )
+        if test_predictions_file is not None:
+            self.save_data(self.predictions, test_predictions_file)
+        if score_file is not None:
+            self.save_scores(self.score_dict, score_file)
         return self.score_dict
