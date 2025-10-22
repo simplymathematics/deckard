@@ -537,6 +537,9 @@ class DataConfig(ConfigBase):
             logger.warning(
                 "Only one class present in y_train; skipping classification feature scoring.",
             )
+        # Class counts
+        class_counts = self.y_train.value_counts().to_dict()
+        scores["class_counts"] = class_counts
         return scores
     
     def _regression_feature_scores(self) -> dict:
