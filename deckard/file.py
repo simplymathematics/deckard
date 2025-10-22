@@ -88,7 +88,6 @@ class FileConfig(ConfigBase):
             return None
         if "{hash}" in path:
             if placeholder_dict.get("hash") is None:
-                # Generate a dummy hash for demonstration; in practice, this should be based on file content
                 dummy_hash = hashlib.md5(self.experiment_name.encode()).hexdigest()
                 placeholder_dict["hash"] = dummy_hash
             path = str(path).replace("{hash}", placeholder_dict["hash"])
