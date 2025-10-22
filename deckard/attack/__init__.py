@@ -168,11 +168,12 @@ class AttackConfig(ConfigBase):
         if model_alias in sklearn_models:
             if isinstance(model, tuple(sklearn_dict.values())):
                 art_model = model
-            try:
-                check_is_fitted(model)
-                art_model = sklearn_dict[model_alias](model)
-            except NotFittedError:
-                raise ValueError(f"model {model_alias} is not fitted")
+            else:
+                try:
+                    check_is_fitted(model)
+                    art_model = sklearn_dict[model_alias](model)
+                except NotFittedError:
+                    raise ValueError(f"model {model_alias} is not fitted")
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
         if self.targeted_attribute is not None and isinstance(self.targeted_attribute, str):
@@ -193,7 +194,7 @@ class AttackConfig(ConfigBase):
         model,
         attack_file: Union[str, None] = None,
         attack_predictions_file: Union[str, None] = None,
-        attack_scores_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
     ):
         """
         Executes the specified attack on the provided model using the given data.
@@ -208,7 +209,7 @@ class AttackConfig(ConfigBase):
             File path to save the attack object. If None, the attack object is not saved. Default is None.
         attack_predictions_file : str or None, optional
             File path to save the attack predictions. If None, predictions are not saved. Default is None.
-        attack_scores_file : str or None, optional
+        score_file : str or None, optional
             File path to save the attack scores. If None, scores are not saved. Default is None.
         **kwargs
             Additional keyword arguments for the attack.
@@ -234,8 +235,8 @@ class AttackConfig(ConfigBase):
             and Path(attack_predictions_file).exists()
         ):
             self.attack_predictions = self.load_object(attack_predictions_file)
-        if attack_scores_file is not None and Path(attack_scores_file).exists():
-            self.score_dict = self.load_object(attack_scores_file)
+        if score_file is not None and Path(score_file).exists():
+            self.score_dict = self.load_scores(score_file)
         if (
             self.attack is not None
             and self.score_dict is not None
@@ -315,8 +316,8 @@ class AttackConfig(ConfigBase):
             self.save_object(self.attack, attack_file)
         if attack_predictions_file is not None:
             self.save_object(self.attack_predictions, attack_predictions_file)
-        if attack_scores_file is not None:
-            self.save_object(self.score_dict, attack_scores_file)
+        if score_file is not None:
+            self.save_scores(self.score_dict, score_file)
         return score_dict
 
     def _get_benign_preds(self, data, art_model, train=False):
@@ -347,19 +348,19 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            X_train = data.X_train
-            y_train = data.y_train
-            X_test = data.X_test
-            y_test = data.y_test
+            X_train = data.X_train.copy()
+            y_train = data.y_train.copy()
+            X_test = data.X_test.copy()
+            y_test = data.y_test.copy()
             ben_preds = art_model.predict(X_test.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_test.iloc[:n]
             y_subset = y_test.iloc[:n]
         else:
-            X_train = data.X_train
-            y_train = data.y_train
-            X_test = data.X_test
-            y_test = data.y_test
+            X_train = data.X_train.copy()
+            y_train = data.y_train.copy()
+            X_test = data.X_test.copy()
+            y_test = data.y_test.copy()
             ben_preds = art_model.predict(X_train.iloc[:n].values)
             ben_pred_labels = ben_preds.argmax(axis=1)
             X_subset = X_train.iloc[:n]
@@ -394,12 +395,12 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is False:
-            X_train = data.X_train
-            y_train = data.y_train
-            a_train = data.X_train[targeted_attribute]
-            X_test = data.X_test
-            y_test = data.y_test
-            a_test = data.X_test[targeted_attribute]
+            X_train = data.X_train.copy()
+            y_train = data.y_train.copy()
+            a_train = data.X_train[targeted_attribute].copy()
+            X_test = data.X_test.copy()
+            y_test = data.y_test.copy()
+            a_test = data.X_test[targeted_attribute].copy()
             X_train = X_train.drop(columns=[targeted_attribute])
             X_test = X_test.drop(columns=[targeted_attribute])
             assert (
