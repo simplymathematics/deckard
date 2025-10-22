@@ -1,0 +1,116 @@
+stages:
+  set_config_paths:
+      cmd: >
+        export DECKARD_CONFIG_DIR="~/deckard/examples/config" &&
+        export DECKARD_DEFAULT_CONFIG_FILE="default.yaml" &&
+        echo $DECKARD_CONFIG_DIR > .config_paths_set &&
+        echo $DECKARD_DEFAULT_CONFIG_FILE >> .config_paths_set
+      outs: 
+        - .config_paths_set
+      deps:
+        - ../../config/default.yaml
+      params:
+        - ../../config/default.yaml:
+  generate_data:
+      foreach:
+        - adult
+        - classification
+        - diabetes
+        - digits
+        - regression
+      do:
+        cmd: >
+          deckard 
+          data=${item} 
+          +files.data_file=data/${item}.pkl 
+          +files.score_file=scores/data/${item}.json
+          ~model 
+          ~attack
+        outs:
+          - data/${item}.pkl
+        metrics:
+          - scores/data/${item}.json
+        deps:
+          - .config_paths_set
+          - ../../../deckard/data.py
+        params:
+          - ../../config/data/${item}.yaml:
+          ################################################
+          #            Command Explanation:             #
+          ################################################
+          # deckard  <-- Calls the deckard CLI tool
+          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../../config/data/ for available datasets.
+          # +files.data_file=data/${item}.pkl <-- Specifies the output path for the generated data file.
+          # +files.score_file=scores/${item}.json <-- Specifies the output path for the score file.
+          # ~model <-- Drops default model configuration.
+          # ~attack <-- Drops default attack configuration.
+          ################################################
+  train_logistic:
+      foreach:
+        - adult
+        - classification
+        - diabetes
+        - digits
+      do:
+        cmd: >
+          deckard 
+          data=${item} 
+          +files.data_file=data/${item}.pkl 
+          +files.model_file=models/${item}/logistic.pkl
+          +files.score_file=scores/models/${item}/logistic.json
+          model=logistic.yaml 
+          ~attack
+        outs:
+          - models/${item}/logistic.pkl
+        metrics:
+          - scores/models/${item}/logistic.json
+        deps:
+          - data/${item}.pkl
+          - ../../../deckard/model
+        params:
+          - ../../config/model/logistic.yaml:
+          - ../../config/data/${item}.yaml:
+          ################################################
+          #            Command Explanation:             #
+          ################################################
+          # deckard  <-- Calls the deckard CLI tool
+          # model=${item}  <-- Specifies the model to be trained for this iteration. See ../../config/model/ for available models.
+          # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+          # +files.model_file=models/${item}/model.pkl <-- Specifies the output path for the trained model file.
+          # +files.score_file=scores/models/${item}/model.json <-- Specifies the output path for the model score file.
+          # model=logistic.yaml  <-- Specifies the model configuration to be used.
+          # ~attack <-- Drops default attack configuration.
+  attack_logistic:
+    foreach:
+      - adult
+      - classification
+      - diabetes
+      - digits
+    do:
+      cmd: >
+        deckard 
+        data=${item} 
+        +files.data_file=data/${item}.pkl 
+        +files.model_file=models/${item}/logistic.pkl
+        +files.score_file=scores/attacks/${item}/logistic/hsj.json
+        model=logistic.yaml 
+        attack=hsj.yaml
+      metrics:
+        - scores/attacks/${item}/logistic/hsj.json
+      deps:
+        - data/${item}.pkl
+        - models/${item}/logistic.pkl
+        - ../../../deckard/attack
+      params:
+        - ../../config/model/logistic.yaml:
+        - ../../config/attack/hsj.yaml:
+        - ../../config/data/${item}.yaml:
+        ################################################
+        #            Command Explanation:             #
+        ################################################
+        # deckard  <-- Calls the deckard CLI tool
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../../config/data/ for available datasets.
+        # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+        # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
+        # +files.score_file=scores/attacks/hsj/${item}_logistic_attack.json <-- Specifies the output path for the attack score file.
+        # model=logistic.yaml  <-- Specifies the model configuration to be used.

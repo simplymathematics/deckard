@@ -1,0 +1,590 @@
+schema: '2.0'
+stages:
+  set_config_paths:
+    cmd: "export DECKARD_CONFIG_DIR=\"~/deckard/examples/config\" && export DECKARD_DEFAULT_CONFIG_FILE=\"\
+      default.yaml\" && echo $DECKARD_CONFIG_DIR > .config_paths_set && echo $DECKARD_DEFAULT_CONFIG_FILE
+      >> .config_paths_set\n"
+    deps:
+    - path: ../../config/default.yaml
+      hash: md5
+      md5: 7dd34162f1c0181b54dabb935e4748b7
+      size: 82
+    params:
+      ../../config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: logistic
+        - attack: hsj
+    outs:
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+  generate_data@adult:
+    cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.score_file=scores/data/adult.json
+      ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data.py
+      hash: md5
+      md5: fd08888c0d25d820f783949f54d3626d
+      size: 25596
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        dataset_name: adult
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+    outs:
+    - path: data/adult.pkl
+      hash: md5
+      md5: 2091d7f3b96950692a7e25d569afd88b
+      size: 14514390
+    - path: scores/data/adult.json
+      hash: md5
+      md5: c8f78c1279acfd85facd6d5ac0996bf2
+      size: 6495
+  generate_data@classification:
+    cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
+      \ +files.score_file=scores/data/classification.json ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data.py
+      hash: md5
+      md5: fd08888c0d25d820f783949f54d3626d
+      size: 25596
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+    outs:
+    - path: data/classification.pkl
+      hash: md5
+      md5: a6f0a66192a0af00d5e5b2e175a96915
+      size: 3393317
+    - path: scores/data/classification.json
+      hash: md5
+      md5: 6931c1bf9668ca3de78428107426b576
+      size: 1093
+  generate_data@diabetes:
+    cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.score_file=scores/data/diabetes.json
+      ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data.py
+      hash: md5
+      md5: fd08888c0d25d820f783949f54d3626d
+      size: 25596
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/diabetes.yaml:
+        _target_: deckard.DataConfig
+        classifier: false
+        dataset_name: diabetes
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+    outs:
+    - path: data/diabetes.pkl
+      hash: md5
+      md5: 56835feb4e94edf63c65fd2bbfcc640f
+      size: 85224
+    - path: scores/data/diabetes.json
+      hash: md5
+      md5: f4c594d872f0999b446c017ed8c7b301
+      size: 10527
+  generate_data@digits:
+    cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.score_file=scores/data/digits.json
+      ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data.py
+      hash: md5
+      md5: fd08888c0d25d820f783949f54d3626d
+      size: 25596
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/digits.yaml: {}
+    outs:
+    - path: data/digits.pkl
+      hash: md5
+      md5: a9e2885e6e56f9acb2f8ab63e651b0ad
+      size: 14514390
+    - path: scores/data/digits.json
+      hash: md5
+      md5: dfe1de4e7ef6879b674206ac58dad7c2
+      size: 6562
+  generate_data@regression:
+    cmd: "deckard  data=regression  +files.data_file=data/regression.pkl  +files.score_file=scores/data/regression.json
+      ~model  ~attack\n"
+    deps:
+    - path: ../../../deckard/data.py
+      hash: md5
+      md5: fd08888c0d25d820f783949f54d3626d
+      size: 25596
+    - path: .config_paths_set
+      hash: md5
+      md5: e18a657d997e2179d54a96cd4f7e1cf8
+      size: 39
+    params:
+      ../../config/data/regression.yaml:
+        _target_: deckard.DataConfig
+        classifier: false
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 10
+          noise: 0.1
+          random_state: 42
+        dataset_name: make_regression
+        stratify: false
+    outs:
+    - path: data/regression.pkl
+      hash: md5
+      md5: 0e67b119683e6703f68285774bd9a3d7
+      size: 3483443
+    - path: scores/data/regression.json
+      hash: md5
+      md5: 388a64d2516f4ab497c7a761915067ab
+      size: 169287
+  train_models@adult:
+    cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult_logistic.pkl
+      +files.score_file=scores/adult_logistic_scores.json model=logistic.yaml  ~attack\n"
+    deps:
+    - path: data/adult.pkl
+      hash: md5
+      md5: 489604387dc76276c97cd37d69fd7f87
+      size: 14514390
+    outs:
+    - path: models/adult_logistic.pkl
+      hash: md5
+      md5: 9447dab69aa2e59d2d3e3b504251c2f2
+      size: 3935
+    - path: scores/adult_logistic_scores.json
+      hash: md5
+      md5: 36340a7b926224c981200a7f5e4aeb58
+      size: 514
+  train_models@classification:
+    cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
+      \ +files.model_file=models/classification_logistic.pkl +files.score_file=scores/classification_logistic_scores.json
+      model=logistic.yaml  ~attack\n"
+    deps:
+    - path: data/classification.pkl
+      hash: md5
+      md5: 2b5a9bca33a4e61042664ba2c42039b3
+      size: 3393327
+    outs:
+    - path: models/classification_logistic.pkl
+      hash: md5
+      md5: e2854e61e36dcb535d9f89d8d9c456ab
+      size: 1212
+    - path: scores/classification_logistic_scores.json
+      hash: md5
+      md5: 048af6f496722ce3bbcfcfcdf19c3ef7
+      size: 508
+  train_models@diabetes:
+    cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.model_file=models/diabetes_logistic.pkl
+      +files.score_file=scores/diabetes_logistic_scores.json model=logistic.yaml \
+      \ ~attack\n"
+    deps:
+    - path: data/diabetes.pkl
+      hash: md5
+      md5: 40eb8b3c1213fdda055f04ae260bc457
+      size: 81211
+    outs:
+    - path: models/diabetes_logistic.pkl
+      hash: md5
+      md5: 48ee884ed6da987c8014fdfd1bf559c7
+      size: 19910
+    - path: scores/diabetes_logistic_scores.json
+      hash: md5
+      md5: d6c256aa093c426642d9e1b36fd1909c
+      size: 489
+  train_models@digits:
+    cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.model_file=models/digits_logistic.pkl
+      +files.score_file=scores/digits_logistic_scores.json model=logistic.yaml  ~attack\n"
+    deps:
+    - path: data/digits.pkl
+      hash: md5
+      md5: fa92a8ece2ddabb846db7937380353c8
+      size: 14514390
+    outs:
+    - path: models/digits_logistic.pkl
+      hash: md5
+      md5: 73cd7a56ca41c36755246123cfcfdcf8
+      size: 3935
+    - path: scores/digits_logistic_scores.json
+      hash: md5
+      md5: 3b84d8e7c142a907c07a503dfcb08278
+      size: 512
+  train_logistic@adult:
+    cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult/logistic.pkl
+      +files.score_file=scores/models/adult/logistic.json model=logistic.yaml  ~attack\n"
+    deps:
+    - path: ../../../deckard/model
+      hash: md5
+      md5: b72d9c222d18ceffb28bc9d853fe905c.dir
+      size: 71875
+      nfiles: 4
+    - path: data/adult.pkl
+      hash: md5
+      md5: 2091d7f3b96950692a7e25d569afd88b
+      size: 14514390
+    params:
+      ../../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        dataset_name: adult
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: models/adult/logistic.pkl
+      hash: md5
+      md5: 534de2a9d46d03c901b83723f217e165
+      size: 4467
+    - path: scores/models/adult/logistic.json
+      hash: md5
+      md5: 0f9465e8d00efc32b3a6e13cb84ebff0
+      size: 514
+  train_logistic@classification:
+    cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
+      \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/models/classification/logistic.json
+      model=logistic.yaml  ~attack\n"
+    deps:
+    - path: ../../../deckard/model
+      hash: md5
+      md5: b72d9c222d18ceffb28bc9d853fe905c.dir
+      size: 71875
+      nfiles: 4
+    - path: data/classification.pkl
+      hash: md5
+      md5: a6f0a66192a0af00d5e5b2e175a96915
+      size: 3393317
+    params:
+      ../../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: models/classification/logistic.pkl
+      hash: md5
+      md5: a9f13591362f2b12f1ce2ed86e345d78
+      size: 1744
+    - path: scores/models/classification/logistic.json
+      hash: md5
+      md5: 97fc012914c13bde5964b56b394ad02b
+      size: 508
+  train_logistic@diabetes:
+    cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.model_file=models/diabetes/logistic.pkl
+      +files.score_file=scores/models/diabetes/logistic.json model=logistic.yaml \
+      \ ~attack\n"
+    deps:
+    - path: ../../../deckard/model
+      hash: md5
+      md5: b72d9c222d18ceffb28bc9d853fe905c.dir
+      size: 71875
+      nfiles: 4
+    - path: data/diabetes.pkl
+      hash: md5
+      md5: 56835feb4e94edf63c65fd2bbfcc640f
+      size: 85224
+    params:
+      ../../config/data/diabetes.yaml:
+        _target_: deckard.DataConfig
+        classifier: false
+        dataset_name: diabetes
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: models/diabetes/logistic.pkl
+      hash: md5
+      md5: 75c0862e27bf462aad10ef8c14eb1395
+      size: 20442
+    - path: scores/models/diabetes/logistic.json
+      hash: md5
+      md5: a842d9aa9f99f323cea90c9384e44a97
+      size: 490
+  train_logistic@digits:
+    cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.model_file=models/digits/logistic.pkl
+      +files.score_file=scores/models/digits/logistic.json model=logistic.yaml  ~attack\n"
+    deps:
+    - path: ../../../deckard/model
+      hash: md5
+      md5: b72d9c222d18ceffb28bc9d853fe905c.dir
+      size: 71875
+      nfiles: 4
+    - path: data/digits.pkl
+      hash: md5
+      md5: a9e2885e6e56f9acb2f8ab63e651b0ad
+      size: 14514390
+    params:
+      ../../config/data/digits.yaml: {}
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: models/digits/logistic.pkl
+      hash: md5
+      md5: a7522d6928e741eca5c8ed7a2137df3c
+      size: 4467
+    - path: scores/models/digits/logistic.json
+      hash: md5
+      md5: 97d5c6509f6c1b85afc662861de1deb6
+      size: 513
+  attack_logistic@adult:
+    cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult/logistic.pkl
+      +files.score_file=scores/attacks/adult/logistic/hsj.json model=logistic.yaml\
+      \  attack=hsj.yaml\n"
+    deps:
+    - path: ../../../deckard/attack
+      hash: md5
+      md5: da49a3bdc4517942b7af9043608a36fe.dir
+      size: 61129
+      nfiles: 2
+    - path: data/adult.pkl
+      hash: md5
+      md5: 2091d7f3b96950692a7e25d569afd88b
+      size: 14514390
+    - path: models/adult/logistic.pkl
+      hash: md5
+      md5: 534de2a9d46d03c901b83723f217e165
+      size: 4467
+    params:
+      ../../config/attack/hsj.yaml:
+        attack_params:
+          max_iter: 10
+          init_eval: 5
+          max_eval: 20
+          init_size: 100
+        attack_type: art.attacks.evasion.HopSkipJump
+      ../../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        dataset_name: adult
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: scores/attacks/adult/logistic/hsj.json
+      hash: md5
+      md5: 22c718ffc8b183a2ae7d08a52e388f4b
+      size: 737
+  attack_logistic@classification:
+    cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
+      \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/attacks/classification/logistic/hsj.json
+      model=logistic.yaml  attack=hsj.yaml\n"
+    deps:
+    - path: ../../../deckard/attack
+      hash: md5
+      md5: da49a3bdc4517942b7af9043608a36fe.dir
+      size: 61129
+      nfiles: 2
+    - path: data/classification.pkl
+      hash: md5
+      md5: a6f0a66192a0af00d5e5b2e175a96915
+      size: 3393317
+    - path: models/classification/logistic.pkl
+      hash: md5
+      md5: a9f13591362f2b12f1ce2ed86e345d78
+      size: 1744
+    params:
+      ../../config/attack/hsj.yaml:
+        attack_params:
+          max_iter: 10
+          init_eval: 5
+          max_eval: 20
+          init_size: 100
+        attack_type: art.attacks.evasion.HopSkipJump
+      ../../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: scores/attacks/classification/logistic/hsj.json
+      hash: md5
+      md5: 348f7a94f2e59b2408a5fe5ff4590ba4
+      size: 732
+  attack_logistic@diabetes:
+    cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.model_file=models/diabetes/logistic.pkl
+      +files.score_file=scores/attacks/diabetes/logistic/hsj.json model=logistic.yaml\
+      \  attack=hsj.yaml\n"
+    deps:
+    - path: ../../../deckard/attack
+      hash: md5
+      md5: da49a3bdc4517942b7af9043608a36fe.dir
+      size: 61129
+      nfiles: 2
+    - path: data/diabetes.pkl
+      hash: md5
+      md5: 56835feb4e94edf63c65fd2bbfcc640f
+      size: 85224
+    - path: models/diabetes/logistic.pkl
+      hash: md5
+      md5: 75c0862e27bf462aad10ef8c14eb1395
+      size: 20442
+    params:
+      ../../config/attack/hsj.yaml:
+        attack_params:
+          max_iter: 10
+          init_eval: 5
+          max_eval: 20
+          init_size: 100
+        attack_type: art.attacks.evasion.HopSkipJump
+      ../../config/data/diabetes.yaml:
+        _target_: deckard.DataConfig
+        classifier: false
+        dataset_name: diabetes
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: scores/attacks/diabetes/logistic/hsj.json
+      hash: md5
+      md5: 011ce42efb3389923945017628282f04
+      size: 713
+  attack_logistic@digits:
+    cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.model_file=models/digits/logistic.pkl
+      +files.score_file=scores/attacks/digits/logistic/hsj.json model=logistic.yaml\
+      \  attack=hsj.yaml\n"
+    deps:
+    - path: ../../../deckard/attack
+      hash: md5
+      md5: da49a3bdc4517942b7af9043608a36fe.dir
+      size: 61129
+      nfiles: 2
+    - path: data/digits.pkl
+      hash: md5
+      md5: a9e2885e6e56f9acb2f8ab63e651b0ad
+      size: 14514390
+    - path: models/digits/logistic.pkl
+      hash: md5
+      md5: a7522d6928e741eca5c8ed7a2137df3c
+      size: 4467
+    params:
+      ../../config/attack/hsj.yaml:
+        attack_params:
+          max_iter: 10
+          init_eval: 5
+          max_eval: 20
+          init_size: 100
+        attack_type: art.attacks.evasion.HopSkipJump
+      ../../config/data/digits.yaml: {}
+      ../../config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: scores/attacks/digits/logistic/hsj.json
+      hash: md5
+      md5: d7cecd355a6111c45adeef2fc4dfd560
+      size: 739
