@@ -272,6 +272,7 @@ class ConfigBase:
         filepath : str
             The path to the file where the object will be saved.
         """
+        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "wb") as f:
             pickle.dump(obj, f)
         logger.info(f"Object saved to {filepath}")

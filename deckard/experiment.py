@@ -319,8 +319,8 @@ class ExperimentConfig(ConfigBase):
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
-            resolved_path = self.files._replace_placeholders(filepath)
-            assert Path(
-                resolved_path,
-            ).exists(), f"File {resolved_path} for {attr} does not exist."
+            else:
+                filepath = self.files._replace_placeholders(filepath)
+                assert Path(filepath).exists(), f"File {filepath} for {attr} does not exist."
+            # 
         return scores

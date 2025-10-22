@@ -671,7 +671,7 @@ class ModelConfig(ConfigBase):
                     self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
-                    if model_file is not None and Path(model_file).parent.exists():
+                    if model_file is not None:
                         self.save(filepath=model_file)
 
         # Validate model is trained
