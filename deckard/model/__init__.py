@@ -7,7 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 from dataclasses import dataclass
 from typing import Union
 import logging
-import argparse
+
 
 import importlib
 import numpy as np
@@ -74,8 +74,6 @@ class ModelConfig(ConfigBase):
     _regression_scores(y_true, y_pred): Computes regression metrics.
     _score(y_true, y_pred, train): Computes and logs performance scores.
     __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
-    _save_model(filepath): Saves the model to the specified filepath.
-    _load_model(filepath): Loads the model from the specified filepath.
 
     Raises:
     -------
@@ -324,84 +322,8 @@ class ModelConfig(ConfigBase):
             scores[score] = rounded
         return scores
 
-    def _save_model(self, filepath: str):
-        """
-        Saves the trained model to the specified filepath using pickle.
+    
 
-        Args
-        -------
-            filepath (str): The path where the model should be saved.
-
-        Raises
-        -------
-            ValueError: If the model is not initialized.
-
-        Side Effects
-        -------
-            - Serializes the model and writes it to the specified file.
-            - Logs the save operation.
-        """
-        if type(self._model).__module__.split(".")[0] in supported_sklearn_libraries:
-            try:
-                check_is_fitted(self._model)
-            except NotFittedError:
-                raise ValueError(
-                    "Model is not fitted yet. Train the model before saving.",
-                )
-        else:
-            raise NotImplementedError(
-                "Model saving is only implemented for sklearn models.",
-            )
-        if self.training_time is None:
-            raise ValueError("Model not trained")
-        if filepath is not None:
-            # Ensure the directory exists
-            Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-            # Touch the file to ensure it exists
-            Path(filepath).touch()
-            with open(filepath, "wb") as f:
-                pickle.dump(self._model, f)
-            logger.info(f"Model saved to {filepath}")
-            assert Path(filepath).exists(), f"Model file {filepath} was not created"
-
-    def _load_model(self, filepath: str):
-        """
-        Loads a trained model from the specified filepath using pickle.
-
-        Args
-        -------
-            filepath (str): The path from which the model should be loaded.
-        Raises
-        -------
-            FileNotFoundError: If the specified file does not exist.
-            ValueError: If the loaded object is not a valid model instance.
-            Exception: For any other issues during the loading process.
-        Side Effects
-        -------
-            - Deserializes the model from the specified file and assigns it to self._model.
-            - Logs the load operation.
-            - Updates self.model_params with the parameters of the loaded model.
-            - Updates self._model to the loaded model instance.
-            - Updates self.model_type to the class name of the loaded model.
-        """
-        try:
-            logger.info(f"Loading model from {filepath}")
-            with open(filepath, "rb") as f:
-                loaded_model = pickle.load(f)
-            if not hasattr(loaded_model, "predict"):
-                raise ValueError("Loaded object is not a valid model instance")
-            self._model = loaded_model
-            self.model_params = self._model.get_params()
-            self.model_type = (
-                f"{self._model.__class__.__module__}.{self._model.__class__.__name__}"
-            )
-            logger.info(f"Model loaded from {filepath}")
-        except FileNotFoundError:
-            logger.error(f"File {filepath} not found")
-            raise
-        except Exception as e:
-            logger.error(f"Error loading model: {e}")
-            raise
 
     def _load_predictions(self, filepath: str):
         """
@@ -585,12 +507,15 @@ class ModelConfig(ConfigBase):
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_file, times)
         self._evaluate_and_score(data, times)
-        self.save(
-            train_predictions_file=train_predictions_file,
-            test_predictions_file=test_predictions_file,
-            model_file=model_file,
-            score_file=score_file,
-        )
+        if train_predictions_file is not None:
+            self.save_data(
+                self.training_predictions,
+                train_predictions_file,
+            )
+        if test_predictions_file is not None:
+            self.save_data(self.predictions, test_predictions_file)
+        if score_file is not None:
+            self.save_scores(self.score_dict, score_file)
         return self.score_dict
 
     def _evaluate_and_score(self, data: DataConfig, times: dict = None):
@@ -678,7 +603,7 @@ class ModelConfig(ConfigBase):
                 test_scores = self._score(data.y_test, self.predictions)
                 if self.score_dict is None:
                     self.score_dict = {}
-                self.score_dict.update(test_scores)
+                self.score_dict = {**self.score_dict, **test_scores}
                 self.prediction_score_time = time.process_time() - start
                 times["prediction_score_time"] = self.prediction_score_time
                 logger.info(
@@ -690,55 +615,7 @@ class ModelConfig(ConfigBase):
             pass
         self.score_dict.update(times)
 
-    def save(
-        self,
-        train_predictions_file,
-        test_predictions_file,
-        model_file,
-        score_file,
-    ):
-        """
-        Saves model-related outputs to specified filepaths.
-
-        Parameters
-        ----------
-        train_predictions_file : str or None
-            Filepath to save training predictions. If None, training predictions are not saved.
-        test_predictions_file : str or None
-            Filepath to save predictions. If None, predictions are not saved.
-        model_file : str or None
-            Filepath to save the trained model. If None, model is not saved.
-        score_file : str or None
-            Filepath to save model scores. If None or file does not exist, scores are not saved.
-
-        Returns
-        -------
-        dict
-            Dictionary containing model scores.
-        """
-        # Save training predictions if filepath provided
-        if train_predictions_file is not None:
-            self.save_data(
-                filepath=train_predictions_file,
-                data=self.training_predictions,
-            )
-            logger.info(
-                f"Training predictions saved to {train_predictions_file}",
-            )
-        # Save predictions if filepath provided
-        if test_predictions_file is not None and self.predictions is not None:
-            self.save_data(filepath=test_predictions_file, data=self.predictions)
-            logger.info(f"Predictions saved to {test_predictions_file}")
-        # Save model if filepath provided
-        if model_file is not None:
-            self._save_model(model_file)
-        # Save scores if filepath provided
-        all_scores = self.score_dict if self.score_dict is not None else {}
-        if score_file is not None and Path(score_file).exists():
-            self.save_scores(all_scores, score_file)
-            logger.info(f"Scores saved to {score_file}")
-        return all_scores
-
+   
     def _load_or_train_model(self, data, model_file, times):
         """
         Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.
@@ -764,23 +641,26 @@ class ModelConfig(ConfigBase):
             case _, _:  # Model and/or filepath provided
                 if model_file is not None and Path(model_file).exists():
                     logger.info(f"Model file {model_file} exists. Loading model.")
-                    self._load_model(model_file)
-                    assert isinstance(self._model, object)
-                    try:  # validate that the  loaded model is trained
+                    self = self.load(model_file)
+                    try:
+                        # Validate that the loaded model is fitted
                         check_is_fitted(self._model)
-                        logger.info("Model is already trained.")
+                        logger.info("Model loaded and is fitted.")
                     except NotFittedError:
-                        # train the model if it is not fitted
+                        logger.warning(
+                            "Loaded model is not fitted. Training a new model.",
+                        )
                         self._train(data.X_train, data.y_train)
                         times["training_time"] = self.training_time
                         times["training_n"] = self._training_n
+                        # Save the newly trained mode
                 else:
                     # train the model if no model exists at the filepath
                     self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
-                    if model_file is not None:
-                        self._save_model(model_file)
+                    if model_file is not None and Path(model_file).parent.exists():
+                        self.save(filepath=model_file)
 
         # Validate model is trained
         if self._model is None:
