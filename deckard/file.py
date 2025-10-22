@@ -30,7 +30,11 @@ all_files = (
     data_files + model_files + defense_files + log_files + attack_files + other_files
 )
 
-
+default_placeholder_dict = {
+    "timestamp": time.strftime("%Y%m%d-%H%M%S"),
+    "experiment_name": "experiment_{timestamp}",
+    "hash": None,  # Placeholder for hash; to be filled in as needed
+}
 @dataclass
 class FileConfig(ConfigBase):
     """Configuration for file paths used in the experiment."""
@@ -53,7 +57,10 @@ class FileConfig(ConfigBase):
                 self,
                 file_attr,
             ), f"FileConfig is missing attribute: {file_attr}"
-        return super().__post_init__()
+        self.experiment_name = self._replace_placeholders(self.experiment_name, placeholder_dict=default_placeholder_dict)
+        self._resolve_paths()
+        super().__post_init__()
+        
 
     def generate_file_hash(self, file_path: str) -> str:
         """
@@ -75,14 +82,25 @@ class FileConfig(ConfigBase):
     def _replace_placeholders(self, path: str, placeholder_dict={}) -> str:
         """Replace placeholders in the file path with actual values."""
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        path = path.replace("{timestamp}", timestamp)
         if self.experiment_name:
-            path = path.replace("{experiment_name}", self.experiment_name)
+            path = str(path).replace("{experiment_name}", self.experiment_name)
+        if path is None:
+            return None
+        if "{hash}" in path:
+            if placeholder_dict.get("hash") is None:
+                # Generate a dummy hash for demonstration; in practice, this should be based on file content
+                dummy_hash = hashlib.md5(self.experiment_name.encode()).hexdigest()
+                placeholder_dict["hash"] = dummy_hash
+            path = str(path).replace("{hash}", placeholder_dict["hash"])
+        if "{experiment_name}" in path:
+            path = str(path).replace("{experiment_name}", self.experiment_name)
+        if "{timestamp}" in path:
+            path = str(path).replace("{timestamp}", timestamp)
         for placeholder, value in placeholder_dict.items():
-            path = path.replace("{" + placeholder + "}", str(value))
+            path = str(path).replace("{" + placeholder + "}", str(value))
         return path
 
-    def resolve_paths(self, placeholder_dict={}) -> None:
+    def _resolve_paths(self, placeholder_dict={}) -> None:
         """Resolve file paths by replacing placeholders with actual values."""
         for file_attr in all_files:
             file_path = getattr(self, file_attr)

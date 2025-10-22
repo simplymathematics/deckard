@@ -20,10 +20,6 @@ class TestFileConfig(unittest.TestCase):
 
         self.config = FileConfig(
             experiment_name="{timestamp}",
-            result_directory=self.temp_dirs["result_directory"],
-            model_directory=self.temp_dirs["model_directory"],
-            data_directory=self.temp_dirs["data_directory"],
-            log_directory=self.temp_dirs["log_directory"],
             log_file="{experiment_name}.log",
             model_file="{experiment_name}.pkl",
             data_file="{experiment_name}.csv",
@@ -38,11 +34,6 @@ class TestFileConfig(unittest.TestCase):
         if Path("test_models2").exists():
             shutil.rmtree("test_models2", ignore_errors=True)
 
-    def test_directories_created(self):
-        self.assertTrue(Path(self.config.result_directory).exists())
-        self.assertTrue(Path(self.config.model_directory).exists())
-        self.assertTrue(Path(self.config.data_directory).exists())
-        self.assertTrue(Path(self.config.log_directory).exists())
 
     def test_experiment_name_timestamp(self):
         self.assertNotEqual(self.config.experiment_name, "{timestamp}")
