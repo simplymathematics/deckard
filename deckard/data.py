@@ -581,8 +581,8 @@ class DataConfig(ConfigBase):
         ).tolist()
         scores["f_regression"] = f_regression(self.X_train, self.y_train)[0].tolist()
         scores["r_regression"] = r_regression(self.X_train, self.y_train).tolist()
-        cdf = self._empirical_cdf(self.y_train)
-        scores["y_train_cdf"] = cdf.tolist()
+        scores["y_train_cdf"] = self._empirical_cdf(self.y_train).tolist()
+        scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
         return scores
     
     def __call__(
@@ -616,13 +616,16 @@ class DataConfig(ConfigBase):
         if data_file is not None and Path(data_file).exists():
             # Load existing data
             logger.info(f"Loading existing DataConfig from {data_file}")
-            self.load(data_file)
-        elif data_file is not None:
+            self = self.load(data_file)
+            save_flag = False
+        elif data_file is not None and not Path(data_file).exists():
             # Ensure directory exists
             logger.debug(f"Creating directory for DataConfig at {data_file}")
             Path(data_file).parent.mkdir(parents=True, exist_ok=True)
+            save_flag = True
         else:
             logger.debug("No data_file provided, data will not be saved")
+            save_flag = False
 
         # Load scores if filepath is provided and file exists, else create directory
         if score_file is not None and Path(score_file).exists():
@@ -663,10 +666,10 @@ class DataConfig(ConfigBase):
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
         data_scores = self._score(classifier=self.classifier)
-        all_scores = {**time_dict, **scores,  **data_scores}
+        all_scores = {**scores,  **data_scores, **time_dict}
         self.score_dict = all_scores
         if score_file is not None:
             self.save_scores(all_scores, score_file)
-        if data_file is not None:
+        if save_flag:
             self.save(data_file)
         return self.score_dict
