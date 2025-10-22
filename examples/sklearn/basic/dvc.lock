@@ -44,11 +44,11 @@ stages:
     outs:
     - path: data/adult.pkl
       hash: md5
-      md5: 134cef045a255fd7ffdabc3611e7606f
+      md5: 884e198435cf4d3d19e09b1472a71163
       size: 14514390
     - path: scores/data/adult.json
       hash: md5
-      md5: cd9b0a7a6bd5b9ede9bf5818d616b6dc
+      md5: 077453cae407760496712a1fb04ef564
       size: 6495
   generate_data@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
@@ -77,11 +77,11 @@ stages:
     outs:
     - path: data/classification.pkl
       hash: md5
-      md5: 1d1c0908fe813a07706e76c13ce8a125
+      md5: beaa8316a11605a52e0fd42af01889d9
       size: 3393317
     - path: scores/data/classification.json
       hash: md5
-      md5: 359b8dbb662f2676849a24c32049d3ef
+      md5: 174ee3dce9c7734784a9235aee05d69c
       size: 1094
   generate_data@diabetes:
     cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.score_file=scores/data/diabetes.json
@@ -106,12 +106,12 @@ stages:
     outs:
     - path: data/diabetes.pkl
       hash: md5
-      md5: 29b3709c876a3f18df775c9f047bd12c
+      md5: fbec1fc7deef1c96c296cf1abd37ae1b
       size: 85224
     - path: scores/data/diabetes.json
       hash: md5
-      md5: a07ae51822a1446aa7a2862b49094195
-      size: 10528
+      md5: 21447eae4a96e3add4c8f84d8c95e66d
+      size: 10527
   generate_data@digits:
     cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.score_file=scores/data/digits.json
       ~model  ~attack\n"
@@ -135,12 +135,12 @@ stages:
     outs:
     - path: data/digits.pkl
       hash: md5
-      md5: 1c8329b7c3011b7f80760c9186ea5acf
+      md5: 35cf622812b04cfe104f888e4c3e5ff8
       size: 1878646
     - path: scores/data/digits.json
       hash: md5
-      md5: 91fd9e079105f9a73a7d89115d0ced0e
-      size: 4702
+      md5: 0321d592d594b1822d096c627c169ede
+      size: 4703
   generate_data@regression:
     cmd: "deckard  data=regression  +files.data_file=data/regression.pkl  +files.score_file=scores/data/regression.json
       ~model  ~attack\n"
@@ -168,11 +168,11 @@ stages:
     outs:
     - path: data/regression.pkl
       hash: md5
-      md5: 4b3ae10ade862f4bfdb3f4a0a4cbba1b
+      md5: ab7e0b78e482f8f35d32b27332f1729d
       size: 3483443
     - path: scores/data/regression.json
       hash: md5
-      md5: fcb62de6ced5e885f109f62989c2c445
+      md5: 20d926c4855ca703a78995d2e86bd2d4
       size: 169287
   train_models@adult:
     cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult_logistic.pkl
@@ -255,7 +255,7 @@ stages:
       nfiles: 4
     - path: data/adult.pkl
       hash: md5
-      md5: 134cef045a255fd7ffdabc3611e7606f
+      md5: 884e198435cf4d3d19e09b1472a71163
       size: 14514390
     params:
       ../../config/data/adult.yaml:
@@ -278,12 +278,12 @@ stages:
     outs:
     - path: models/adult/logistic.pkl
       hash: md5
-      md5: d9cd68b80a7a0a20ea1d09d0ef3cbeb2
+      md5: b1a13df0852a119c62177c58189fcc4e
       size: 4467
     - path: scores/models/adult/logistic.json
       hash: md5
-      md5: 29ba367c278d1c78b30af4e9f50281dd
-      size: 510
+      md5: 6021eca9c53c814902c2d2429a7b8a62
+      size: 513
   train_logistic@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
       \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/models/classification/logistic.json
@@ -296,7 +296,7 @@ stages:
       nfiles: 4
     - path: data/classification.pkl
       hash: md5
-      md5: 1d1c0908fe813a07706e76c13ce8a125
+      md5: beaa8316a11605a52e0fd42af01889d9
       size: 3393317
     params:
       ../../config/data/classification.yaml:
@@ -323,11 +323,11 @@ stages:
     outs:
     - path: models/classification/logistic.pkl
       hash: md5
-      md5: bd812e2ebd5d0d27c80aa904fcee0d6f
+      md5: bb15cdea2c5ac1d3343405ace8c2ee81
       size: 1744
     - path: scores/models/classification/logistic.json
       hash: md5
-      md5: e3e282193d132fc2154fac23186530dc
+      md5: 7647337169130093b2e6bf63dcd2d43d
       size: 507
   train_logistic@diabetes:
     cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.model_file=models/diabetes/logistic.pkl
@@ -341,7 +341,7 @@ stages:
       nfiles: 4
     - path: data/diabetes.pkl
       hash: md5
-      md5: 29b3709c876a3f18df775c9f047bd12c
+      md5: fbec1fc7deef1c96c296cf1abd37ae1b
       size: 85224
     params:
       ../../config/data/diabetes.yaml:
@@ -364,12 +364,12 @@ stages:
     outs:
     - path: models/diabetes/logistic.pkl
       hash: md5
-      md5: 6251bc1b467e4370ba085a217c11b116
+      md5: eefc0fdb522eff49d04b5e138c662d3f
       size: 20442
     - path: scores/models/diabetes/logistic.json
       hash: md5
-      md5: 4acf03d207ee45d5aef9b326eec85150
-      size: 489
+      md5: e90c34f7f19827eb8866ba7ec062dbc3
+      size: 490
   train_logistic@digits:
     cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.model_file=models/digits/logistic.pkl
       +files.score_file=scores/models/digits/logistic.json model=logistic.yaml  ~attack\n"
@@ -381,7 +381,7 @@ stages:
       nfiles: 4
     - path: data/digits.pkl
       hash: md5
-      md5: 1c8329b7c3011b7f80760c9186ea5acf
+      md5: 35cf622812b04cfe104f888e4c3e5ff8
       size: 1878646
     params:
       ../../config/data/digits.yaml:
@@ -404,12 +404,12 @@ stages:
     outs:
     - path: models/digits/logistic.pkl
       hash: md5
-      md5: 028e060ffbdeeb452f2f2c1d8aed4f63
+      md5: 3bfdee278b54d92643bf2a0e4f26873b
       size: 7361
     - path: scores/models/digits/logistic.json
       hash: md5
-      md5: f68d1ae26e32236500b9f69aa6e0f48b
-      size: 490
+      md5: ba8d9f224168bcefa7283ef97c56c3b5
+      size: 487
   attack_logistic@adult:
     cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult/logistic.pkl
       +files.score_file=scores/attacks/adult/logistic/hsj.json model=logistic.yaml\
@@ -422,11 +422,11 @@ stages:
       nfiles: 2
     - path: data/adult.pkl
       hash: md5
-      md5: 134cef045a255fd7ffdabc3611e7606f
+      md5: 884e198435cf4d3d19e09b1472a71163
       size: 14514390
     - path: models/adult/logistic.pkl
       hash: md5
-      md5: d9cd68b80a7a0a20ea1d09d0ef3cbeb2
+      md5: b1a13df0852a119c62177c58189fcc4e
       size: 4467
     params:
       ../../config/attack/hsj.yaml:
@@ -456,8 +456,8 @@ stages:
     outs:
     - path: scores/attacks/adult/logistic/hsj.json
       hash: md5
-      md5: d88819d905bac10837869e8758997e70
-      size: 736
+      md5: 193e8a4116c5a84c86339d0845d8b3f2
+      size: 738
   attack_logistic@classification:
     cmd: "deckard  data=classification  +files.data_file=data/classification.pkl \
       \ +files.model_file=models/classification/logistic.pkl +files.score_file=scores/attacks/classification/logistic/hsj.json
@@ -470,11 +470,11 @@ stages:
       nfiles: 2
     - path: data/classification.pkl
       hash: md5
-      md5: 1d1c0908fe813a07706e76c13ce8a125
+      md5: beaa8316a11605a52e0fd42af01889d9
       size: 3393317
     - path: models/classification/logistic.pkl
       hash: md5
-      md5: bd812e2ebd5d0d27c80aa904fcee0d6f
+      md5: bb15cdea2c5ac1d3343405ace8c2ee81
       size: 1744
     params:
       ../../config/attack/hsj.yaml:
@@ -508,8 +508,8 @@ stages:
     outs:
     - path: scores/attacks/classification/logistic/hsj.json
       hash: md5
-      md5: 120fc3f3632b7888bf69fa6c339521d5
-      size: 733
+      md5: 64772fc77d68733a84b082b994d45ceb
+      size: 732
   attack_logistic@diabetes:
     cmd: "deckard  data=diabetes  +files.data_file=data/diabetes.pkl  +files.model_file=models/diabetes/logistic.pkl
       +files.score_file=scores/attacks/diabetes/logistic/hsj.json model=logistic.yaml\
@@ -522,11 +522,11 @@ stages:
       nfiles: 2
     - path: data/diabetes.pkl
       hash: md5
-      md5: 29b3709c876a3f18df775c9f047bd12c
+      md5: fbec1fc7deef1c96c296cf1abd37ae1b
       size: 85224
     - path: models/diabetes/logistic.pkl
       hash: md5
-      md5: 6251bc1b467e4370ba085a217c11b116
+      md5: eefc0fdb522eff49d04b5e138c662d3f
       size: 20442
     params:
       ../../config/attack/hsj.yaml:
@@ -556,7 +556,7 @@ stages:
     outs:
     - path: scores/attacks/diabetes/logistic/hsj.json
       hash: md5
-      md5: ff239dcf7f933cd2e76c7a96a224bc38
+      md5: 8b79a883f15f8ba3242257f8b5cead52
       size: 713
   attack_logistic@digits:
     cmd: "deckard  data=digits  +files.data_file=data/digits.pkl  +files.model_file=models/digits/logistic.pkl
@@ -570,11 +570,11 @@ stages:
       nfiles: 2
     - path: data/digits.pkl
       hash: md5
-      md5: 1c8329b7c3011b7f80760c9186ea5acf
+      md5: 35cf622812b04cfe104f888e4c3e5ff8
       size: 1878646
     - path: models/digits/logistic.pkl
       hash: md5
-      md5: 028e060ffbdeeb452f2f2c1d8aed4f63
+      md5: 3bfdee278b54d92643bf2a0e4f26873b
       size: 7361
     params:
       ../../config/attack/hsj.yaml:
@@ -604,8 +604,8 @@ stages:
     outs:
     - path: scores/attacks/digits/logistic/hsj.json
       hash: md5
-      md5: 802174ef7ca9848ec3de4a8da3c477d8
-      size: 712
+      md5: 895372f4a51393a76552402c4a95e6a3
+      size: 713
   simple_example:
     cmd: deckard > deckard.log
     deps:
@@ -616,5 +616,5 @@ stages:
     outs:
     - path: deckard.log
       hash: md5
-      md5: 7fe638780fbf17b84e66c67c5302b183
-      size: 3836
+      md5: b7a24c612b71efe4acd59b901fb6935d
+      size: 3835
