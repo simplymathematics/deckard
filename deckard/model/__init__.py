@@ -249,7 +249,6 @@ class ModelConfig(ConfigBase):
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
         except ValueError as ve:
             if "mix of binary and continuous" in str(ve):
-                logger.error("Error computing classification scores: Possible regression output for classification task.")
                 new_y_pred = np.argmax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
             else:
