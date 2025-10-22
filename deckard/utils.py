@@ -46,11 +46,12 @@ def initialize_config(config_file, params, target, **kwargs) -> object:
         config = config.get(str(Path(config_file).parent.name), config)
     elif config_file:
         logger.info(f"Overriding config from {config_file} with params:")
-        override_config = config_file
-        keys = [k.split("=")[0] for k in override_config]
+
+        override_config = []
         for param in params:
-            logger.info(f" - {param}")
+            logger.info(f"{param}")
             override_config.append(param)
+        keys = [k.split("=")[0] for k in params]
         if "_target_" not in keys:
             override_config = [f"_target_={target}"] + override_config
         assert isinstance(
@@ -366,6 +367,8 @@ class ConfigBase:
         filepath : str
             The path to the file where the instance will be saved.
         """
+        if Path(filepath).exists():
+            raise ValueError(f"File {filepath} already exists. Will not overwrite.")
         self.save_object(self, filepath)
         logger.info(f"Instance of {self.__class__.__name__} saved to {filepath}")
 
