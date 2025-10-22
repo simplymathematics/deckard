@@ -160,6 +160,7 @@ class DefenseConfig(ModelConfig):
             "trainer",
             "regularizer",
             "transformer",
+            None,
         ]
         if self._model is None:
             raise ValueError(
@@ -172,28 +173,38 @@ class DefenseConfig(ModelConfig):
             ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
 
         # Dynamically import the defense class with defense_params as kwargs
-        module_name, class_name = self.defense_name.rsplit(".", 1)
-        try:
-            defense_type = module_name.split(".")[2]  # e.g., 'preprocessor'
-        except IndexError:
-            raise ImportError(
-                f"Could not parse defense type from defense name {self.defense_name}",
-            )
-        if len(module_name.split(".")) >= 4:
+        if self.defense_name is not None:
+            module_name, class_name = self.defense_name.rsplit(".", 1)
+        else:
+            module_name = None
+            class_name = None
+        if module_name is None or class_name is None:
+            defense_type = None
+        else:
+            try:
+                defense_type = module_name.split(".")[2]  # e.g., 'preprocessor'
+            except IndexError:
+                raise ImportError(
+                    f"Could not parse defense type from defense name {self.defense_name}",
+                )
+        if module_name is not None and len(module_name.split(".")) >= 4:
             defense_subtype = module_name.split(".")[3]  # e.g., 'FeatureSqueezing'
         else:
             defense_subtype = None
-        try:
-            module = importlib.import_module(module_name)
-            defense_class = getattr(module, class_name)
-        except (ImportError, AttributeError) as e:
-            raise ImportError(
-                f"Could not import defense class {self.defense_name}",
-            ) from e
+        if defense_type is not None:
+            try:
+                module = importlib.import_module(module_name)
+                defense_class = getattr(module, class_name)
+            except (ImportError, AttributeError) as e:
+                raise ImportError(
+                    f"Could not import defense class {self.defense_name}",
+                ) from e
+        else:
+            defense_class = None
+            module = None
         assert (
             defense_type in supported_defense_types
         ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
-        start = time.process_time()
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
             if self.classifier
@@ -208,6 +219,7 @@ class DefenseConfig(ModelConfig):
         if isinstance(self._model, art_class):
             pass
         else:
+            start = time.process_time()
             match defense_type:  # Note: only one defense can be applied at a time
                 case "preprocessor":
                     defense = defense_class(**(self.defense_params or {}))
@@ -246,12 +258,17 @@ class DefenseConfig(ModelConfig):
                         self._model,
                         input_transformations=[defense],
                         clip_values=self.clip_values,
-                        *args,
-                        **kwargs,
                     )
                 case "regularizer":
                     raise NotImplementedError(
                         "Regularizer defenses are not implemented yet.",
+                    )
+                case None:
+                    defense = None
+                    defended_estimator = art_class(
+                        self._model,
+                        clip_values=self.clip_values,
+                        **self.defense_params,
                     )
                 case "_":
                     raise NotImplementedError(
