@@ -50,7 +50,8 @@ class FileConfig(ConfigBase):
         # Assert that all files in all_files are attributes of the class
         for file_attr in all_files:
             assert hasattr(
-                self, file_attr
+                self,
+                file_attr,
             ), f"FileConfig is missing attribute: {file_attr}"
         return super().__post_init__()
 

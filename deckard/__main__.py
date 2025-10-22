@@ -58,7 +58,9 @@ def main():
         sys.exit(1)
 
     @hydra.main(
-        config_path=config_dir, config_name=str(config_file.name), version_base="1.3"
+        config_path=config_dir,
+        config_name=str(config_file.name),
+        version_base="1.3",
     )
     def main_hydra(cfg: ExperimentConfig) -> None:
         scores = optimize(cfg=cfg)

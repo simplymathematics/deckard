@@ -321,6 +321,6 @@ class ExperimentConfig(ConfigBase):
                 continue
             resolved_path = self.files._replace_placeholders(filepath)
             assert Path(
-                resolved_path
+                resolved_path,
             ).exists(), f"File {resolved_path} for {attr} does not exist."
         return scores

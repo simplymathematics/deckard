@@ -185,7 +185,8 @@ class AttackConfig(ConfigBase):
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
         if self.targeted_attribute is not None and isinstance(
-            self.targeted_attribute, str
+            self.targeted_attribute,
+            str,
         ):
             feature_name = self.targeted_attribute
             index = data.X_train.columns.get_loc(feature_name)
@@ -641,7 +642,8 @@ class AttackConfig(ConfigBase):
         self.attack_time = attack_time
 
         preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test)]).reshape(
-            -1, 1
+            -1,
+            1,
         )
         unique, counts = np.unique(preds, return_counts=True)
         for u, c in zip(unique, counts):
@@ -681,7 +683,10 @@ class AttackConfig(ConfigBase):
                 average="weighted",
             )
             inferred_f1 = f1_score(
-                target, inferred, zero_division=0, average="weighted"
+                target,
+                inferred,
+                zero_division=0,
+                average="weighted",
             )
             end_time = time.process_time()
             self.attack_score_time = end_time - start_time
@@ -767,7 +772,9 @@ class AttackConfig(ConfigBase):
 
         start_time = time.process_time()
         inferred = attack.infer(
-            x=big_X.values, y=big_y.values, pred=art_model.predict(big_X.values)
+            x=big_X.values,
+            y=big_y.values,
+            pred=art_model.predict(big_X.values),
         )
         end_time = time.process_time()
         self.attack_time = end_time - start_time

@@ -413,7 +413,7 @@ class ConfigBase:
             raise TypeError(f"Loaded config is not a dictionary from {filepath}")
         instance = instantiate(config)
         logger.info(
-            f"Instance of {instance.__class__.__name__} created from {filepath}"
+            f"Instance of {instance.__class__.__name__} created from {filepath}",
         )
         return instance
 
