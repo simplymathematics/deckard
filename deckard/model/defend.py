@@ -60,7 +60,8 @@ class DefenseConfig(ModelConfig):
     model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
     model_params: dict = field(
-        default_factory=dict, metadata={"help": "Parameters for the model."}
+        default_factory=dict,
+        metadata={"help": "Parameters for the model."},
     )
     probability: bool = False
     clip_values: tuple = field(
@@ -68,10 +69,12 @@ class DefenseConfig(ModelConfig):
         metadata={"help": "Tuple of the form (min, max) to clip input features."},
     )
     defense_name: str = field(
-        default_factory=str, metadata={"help": "Name of the defense to apply."}
+        default_factory=str,
+        metadata={"help": "Name of the defense to apply."},
     )
     defense_params: dict = field(
-        default_factory=dict, metadata={"help": "Parameters for the defense."}
+        default_factory=dict,
+        metadata={"help": "Parameters for the defense."},
     )
     """
     Overview

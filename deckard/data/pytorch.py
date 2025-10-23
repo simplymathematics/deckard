@@ -8,7 +8,6 @@ from pathlib import Path
 
 from dataclasses import dataclass, field
 from typing import Union, Dict
-from omegaconf import DictConfig, OmegaConf
 
 # PyTorch
 import torch
@@ -18,9 +17,8 @@ from torchvision import datasets, transforms
 
 
 # deckard
-from . import DataConfig
-from sklearn.feature_selection import mutual_info_classif, chi2, f_classif
-from sklearn.feature_selection import mutual_info_regression, f_regression
+from deckard.data import DataConfig
+from sklearn.feature_selection import mutual_info_classif, chi2, f_classif, mutual_info_regression, f_regression
 from scipy.stats import pearsonr
 import numpy as np
 
@@ -131,7 +129,7 @@ class PytorchDataConfig(DataConfig):
             download = False
         else:  # Otherwise, create directory and download dataset
             logger.info(
-                f"Data directory {self.data_dir} does not exist. Creating and downloading dataset."
+                f"Data directory {self.data_dir} does not exist. Creating and downloading dataset.",
             )
             Path(self.data_dir).mkdir(parents=True, exist_ok=True)
             download = True
@@ -154,10 +152,12 @@ class PytorchDataConfig(DataConfig):
         self.data_load_time = end - start
         logger.info(f"Loaded {dataset_name} dataset in {self.data_load_time} seconds.")
         assert isinstance(
-            self._X, Tensor
+            self._X,
+            Tensor,
         ), f"Expected _X to be a tuple, got {type(self._X)}."
         assert isinstance(
-            self._y, Tensor
+            self._y,
+            Tensor,
         ), f"Expected _y to be a tuple, got {type(self._y)}."
         assert isinstance(self.data_load_time, float), "data_load_time is not a float."
 
@@ -193,22 +193,34 @@ class PytorchDataConfig(DataConfig):
         end = time.process_time()
         # Create DataLoaders
         self.X_train = DataLoader(
-            train_data.dataset, batch_size=self.batch_size, shuffle=True
+            train_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
         )
         self.y_train = DataLoader(
-            train_data.dataset, batch_size=self.batch_size, shuffle=True
+            train_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
         )
         self.X_val = DataLoader(
-            val_data.dataset, batch_size=self.batch_size, shuffle=False
+            val_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.y_val = DataLoader(
-            val_data.dataset, batch_size=self.batch_size, shuffle=False
+            val_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.X_test = DataLoader(
-            test_data.dataset, batch_size=self.batch_size, shuffle=False
+            test_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.y_test = DataLoader(
-            test_data.dataset, batch_size=self.batch_size, shuffle=False
+            test_data.dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.train_n = train_n
         self.val_n = val_n
@@ -216,25 +228,32 @@ class PytorchDataConfig(DataConfig):
         self.data_sample_time = end - start
         logger.info(f"Sampled dataset in {self.data_sample_time} seconds.")
         assert isinstance(
-            self.X_train, DataLoader
+            self.X_train,
+            DataLoader,
         ), "Sampled training data is not a PyTorch Dataset."
         assert isinstance(
-            self.y_train, DataLoader
+            self.y_train,
+            DataLoader,
         ), "Sampled training targets are not a PyTorch Dataset."
         assert isinstance(
-            self.X_val, DataLoader
+            self.X_val,
+            DataLoader,
         ), "Sampled validation data is not a PyTorch Dataset."
         assert isinstance(
-            self.y_val, DataLoader
+            self.y_val,
+            DataLoader,
         ), "Sampled validation targets are not a PyTorch Dataset."
         assert isinstance(
-            self.X_test, DataLoader
+            self.X_test,
+            DataLoader,
         ), "Sampled test data is not a PyTorch Dataset."
         assert isinstance(
-            self.y_test, DataLoader
+            self.y_test,
+            DataLoader,
         ), "Sampled test targets are not a PyTorch Dataset."
         assert isinstance(
-            self.data_sample_time, float
+            self.data_sample_time,
+            float,
         ), "data_sample_time is not a float."
 
     def _classification_feature_scores(self):
@@ -370,10 +389,12 @@ class PytorchDataConfig(DataConfig):
             else:
                 self = self.load_object(data_file)
                 assert hasattr(
-                    self, "data_load_time"
+                    self,
+                    "data_load_time",
                 ), "Loaded object does not have data_load_time attribute."
                 assert hasattr(
-                    self, "data_sample_time"
+                    self,
+                    "data_sample_time",
                 ), "Loaded object does not have data_sample_time attribute."
         if score_file is not None:
             assert isinstance(score_file, str), "score_file must be a string path."

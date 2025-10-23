@@ -41,7 +41,8 @@ class TestMain(unittest.TestCase):
 
     def test_initialize_config(self):
         runner = initialize_config(
-            self.mock_dict, target="deckard.experiment.ExperimentConfig"
+            self.mock_dict,
+            target="deckard.experiment.ExperimentConfig",
         )
         self.assertIsNotNone(runner)
         self.assertEqual(runner.__class__.__name__, "ExperimentConfig")

@@ -42,34 +42,44 @@ class FileConfig(ConfigBase):
     """Configuration for file paths used in the experiment."""
 
     data_file: str = field(
-        default_factory=str, metadata={"help": "Path to the data file."}
+        default_factory=str,
+        metadata={"help": "Path to the data file."},
     )
     model_file: str = field(
-        default_factory=str, metadata={"help": "Path to the model file."}
+        default_factory=str,
+        metadata={"help": "Path to the model file."},
     )
     defense_file: str = field(
-        default_factory=str, metadata={"help": "Path to the defense file."}
+        default_factory=str,
+        metadata={"help": "Path to the defense file."},
     )
     attack_file: str = field(
-        default_factory=str, metadata={"help": "Path to the attack file."}
+        default_factory=str,
+        metadata={"help": "Path to the attack file."},
     )
     log_file: str = field(
-        default_factory=str, metadata={"help": "Path to the log file."}
+        default_factory=str,
+        metadata={"help": "Path to the log file."},
     )
     training_predictions_file: str = field(
-        default_factory=str, metadata={"help": "Path to the training predictions file."}
+        default_factory=str,
+        metadata={"help": "Path to the training predictions file."},
     )
     test_predictions_file: str = field(
-        default_factory=str, metadata={"help": "Path to the test predictions file."}
+        default_factory=str,
+        metadata={"help": "Path to the test predictions file."},
     )
     attack_predictions_file: str = field(
-        default_factory=str, metadata={"help": "Path to the attack predictions file."}
+        default_factory=str,
+        metadata={"help": "Path to the attack predictions file."},
     )
     score_file: str = field(
-        default_factory=str, metadata={"help": "Path to the score file."}
+        default_factory=str,
+        metadata={"help": "Path to the score file."},
     )
     experiment_name: str = field(
-        default_factory=str, metadata={"help": "Name of the experiment."}
+        default_factory=str,
+        metadata={"help": "Name of the experiment."},
     )
 
     def __post_init__(self):

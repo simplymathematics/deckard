@@ -180,7 +180,7 @@ class ExperimentConfig(ConfigBase):
                     attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
                 else:
                     raise ValueError(
-                        f"Unsupported type for attack: {type(self.attack)}"
+                        f"Unsupported type for attack: {type(self.attack)}",
                     )
                 if "_target_" not in attack_dict:
                     self.attack = AttackConfig(**attack_dict)
@@ -387,7 +387,7 @@ class ExperimentConfig(ConfigBase):
             else:
                 filepath = self.files._replace_placeholders(filepath)
                 assert Path(
-                    filepath
+                    filepath,
                 ).exists(), f"File {filepath} for {attr} does not exist."
             #
         if self.score:

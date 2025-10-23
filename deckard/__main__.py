@@ -87,14 +87,14 @@ def optimize(
         cfg.pop("optimizers")
         if return_runner is not False:
             logger.warning(
-                "optimizers can only be used when return_runner is False. Setting return_runner to False."
+                "optimizers can only be used when return_runner is False. Setting return_runner to False.",
             )
     else:
         optimizers = []
     if "directions" in cfg and cfg["directions"] and len(cfg["directions"]) > 0:
         directions = cfg.pop("directions")
         assert len(directions) == len(
-            optimizers
+            optimizers,
         ), "Length of directions must match length of optimizers."
         for direction in directions:
             assert direction in [
@@ -144,7 +144,7 @@ def optimize(
                 scores = optimize_scores
             else:
                 raise ValueError(
-                    "No optimization scores found for the specified directions."
+                    "No optimization scores found for the specified directions.",
                 )
         else:
             scores = values
@@ -152,7 +152,7 @@ def optimize(
         if len(attributes) > 0:
             # TODO: Save these somewhere that optuna can access, but are not used in optimization
             raise NotImplementedError(
-                "Experiment attribute tracking not yet implemented."
+                "Experiment attribute tracking not yet implemented.",
             )
     if return_runner is False:
         return scores
@@ -163,7 +163,9 @@ def optimize(
 
 
 def initialize_config(
-    cfg: ConfigBase, target: str = "deckard.experiment.ExperimentConfig", **kwargs
+    cfg: ConfigBase,
+    target: str = "deckard.experiment.ExperimentConfig",
+    **kwargs,
 ) -> None:
     """
     ----
@@ -235,7 +237,7 @@ def parse_optional_args():
         logger.info(f"Detected modules in optional arguments: {modules}")
     elif len(modules) >= 1:
         raise NotImplementedError(
-            "Multiple modules specified in command-line arguments. Only one module at a time is supported."
+            "Multiple modules specified in command-line arguments. Only one module at a time is supported.",
         )
     # Remove modules from sys.argv to prevent Hydra from complaining about unknown arguments
     for module in modules:
@@ -390,7 +392,7 @@ def handle_default_module(config_dir):
     logger.info(f"Resolved config file path: {config_file.resolve()}")
     if not config_file.exists():
         logger.error(
-            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?"
+            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
         )
         sys.exit(1)
 
@@ -438,7 +440,7 @@ def handle_other_modules(config_dir, optional_args, module, args):
     files = parse_files_from_optional_args(optional_args, module)
     if module not in supported_modules:
         logger.error(
-            f"Unsupported module: {module}. Supported modules are: {supported_modules}"
+            f"Unsupported module: {module}. Supported modules are: {supported_modules}",
         )
         sys.exit(1)
     module_config_file = validate_module_and_files(module, files, optional_args)
@@ -486,7 +488,7 @@ def validate_module_and_files(module, files, optional_args=None):
     if module == "data":
         if "data_config_file" not in files:
             assert "data=" in str(
-                optional_args
+                optional_args,
             ), "data_config_file argument is required for data module"
             data_arg = [arg for arg in optional_args if arg.startswith("data=")]
             assert (
@@ -502,7 +504,7 @@ def validate_module_and_files(module, files, optional_args=None):
     elif module == "attack":
         if "attack_config_file" not in files:
             raise ValueError(
-                "attack_config_file argument is required for attack module"
+                "attack_config_file argument is required for attack module",
             )
         module_config_file = files["attack_config_file"]
     else:
@@ -533,7 +535,7 @@ def validate_files(files, supported_files, module_name):
     for file in files:
         if file not in supported_files:
             logger.error(
-                f"Unsupported {module_name} file argument: {file}. Supported {module_name} file arguments are: {supported_files}"
+                f"Unsupported {module_name} file argument: {file}. Supported {module_name} file arguments are: {supported_files}",
             )
             sys.exit(1)
 

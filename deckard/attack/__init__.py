@@ -110,10 +110,12 @@ class AttackConfig(ConfigBase):
 
     attack_type: str = "art.attacks.evasion.HopSkipJump"
     attack_params: dict = field(
-        default_factory=dict, metadata={"help": "Parameters for the attack."}
+        default_factory=dict,
+        metadata={"help": "Parameters for the attack."},
     )
     attack_size: int = field(
-        default=1000, metadata={"help": "Number of samples to use for the attack."}
+        default=1000,
+        metadata={"help": "Number of samples to use for the attack."},
     )
     targeted_attribute: str = field(
         default_factory=str,

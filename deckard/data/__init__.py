@@ -45,7 +45,8 @@ class DataPipelineConfig(ConfigBase):
 
     def __post_init__(self):
         assert isinstance(
-            self.pipeline, dict
+            self.pipeline,
+            dict,
         ), f"pipeline must be a dictionary, got {type(self.pipeline)}"
         self.pipeline_fit_n = None
         self.pipeline_transform_n = None
@@ -54,7 +55,8 @@ class DataPipelineConfig(ConfigBase):
         # Validate the pipeline configuration
         for k, v in self.pipeline.items():
             assert isinstance(
-                v, dict
+                v,
+                dict,
             ), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
             assert (
                 "name" in v
@@ -68,7 +70,8 @@ class DataPipelineConfig(ConfigBase):
         pipeline_steps = []
         for step_name, step_config in self.pipeline.items():
             step_class = step_config.get(
-                "name", ValueError(f"Step {step_name} missing 'name' key")
+                "name",
+                ValueError(f"Step {step_name} missing 'name' key"),
             )
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
@@ -81,7 +84,11 @@ class DataPipelineConfig(ConfigBase):
         return pipeline
 
     def __call__(
-        self, X_train, X_test, y_train, y_test
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
 
@@ -289,7 +296,7 @@ class DataConfig(ConfigBase):
                 self.pipeline = DataPipelineConfig(pipeline=self.pipeline)
             elif isinstance(self.pipeline, DictConfig):
                 self.pipeline = DataPipelineConfig(
-                    pipeline=OmegaConf.to_container(self.pipeline)
+                    pipeline=OmegaConf.to_container(self.pipeline),
                 )
             elif isinstance(self.pipeline, DataPipelineConfig):
                 pass
@@ -559,11 +566,13 @@ class DataConfig(ConfigBase):
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
         assert isinstance(
-            self.X_train, (pd.DataFrame, pd.Series)
+            self.X_train,
+            (pd.DataFrame, pd.Series),
         ), "X_train must be a DataFrame"
         assert isinstance(self.y_train, pd.Series), "y_train must be a Series"
         assert isinstance(
-            self.X_test, (pd.DataFrame, pd.Series)
+            self.X_test,
+            (pd.DataFrame, pd.Series),
         ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
 
@@ -651,7 +660,8 @@ class DataConfig(ConfigBase):
                     f"Dataset {self.dataset_name} not implemented",
                 )
         assert isinstance(
-            self._X, (pd.DataFrame, pd.Series)
+            self._X,
+            (pd.DataFrame, pd.Series),
         ), "_X must be a DataFrame after loading data"
         assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
 

@@ -232,20 +232,24 @@ class ScorerDictConfig(ConfigBase):
                 y_true = data.y_train
             elif mode == "attack":
                 assert isinstance(
-                    attack, AttackConfig
+                    attack,
+                    AttackConfig,
                 ), "attack must be an instance of AttackConfig"
                 y_true = data.y_test[: attack.attack_size]
             else:
                 assert y_true is not None, "y_true must be provided if mode is None"
             if model is not None:
                 assert isinstance(
-                    model, ModelConfig
+                    model,
+                    ModelConfig,
                 ), "model must be an instance of ModelConfig"
                 assert hasattr(
-                    model, "_model"
+                    model,
+                    "_model",
                 ), "model must have a loaded _model attribute. Call model() first."
                 assert hasattr(
-                    model, "predictions"
+                    model,
+                    "predictions",
                 ), "model must have predictions attribute. Call model() first."
                 loaded_model = model._model
                 # Replace the {model} placeholder in kwargs if present
@@ -261,7 +265,8 @@ class ScorerDictConfig(ConfigBase):
                 y_pred = model.predictions
             elif mode == "attack":
                 assert isinstance(
-                    attack, AttackConfig
+                    attack,
+                    AttackConfig,
                 ), "attack must be an instance of AttackConfig"
                 y_pred = attack.attack_predictions
             else:
@@ -270,10 +275,12 @@ class ScorerDictConfig(ConfigBase):
             for k, v in kwargs.items():
                 if v == "{attack}":
                     assert isinstance(
-                        attack, AttackConfig
+                        attack,
+                        AttackConfig,
                     ), "attack must be an instance of AttackConfig"
                     assert hasattr(
-                        attack, "_attack"
+                        attack,
+                        "_attack",
                     ), "attack must have a loaded _attack attribute. Call attack() first."
                     kwargs[k] = attack._attack
         for key, scorer in self._scorers.items():
