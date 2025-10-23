@@ -334,6 +334,7 @@ class ConfigBase:
         ConfigBase
             The loaded instance.
         """
+        assert Path(filepath).exists(), f"File {filepath} does not exist."
         obj = self.load_object(filepath)
         if not isinstance(obj, self.__class__):
             raise TypeError(f"Loaded object is not of type {self.__class__.__name__}")

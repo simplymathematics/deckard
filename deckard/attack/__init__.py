@@ -15,7 +15,7 @@ from sklearn.metrics import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union
 
 
@@ -106,9 +106,9 @@ class AttackConfig(ConfigBase):
     """
 
     attack_type: str = "art.attacks.evasion.HopSkipJump"
-    attack_params: dict = None
-    attack_size: int = 10  # Number of samples to attack
-    targeted_attribute: str = None  # For inference attacks
+    attack_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the attack."})
+    attack_size: int = field(default=1000, metadata={"help": "Number of samples to use for the attack."})
+    targeted_attribute: str = field(default_factory=str, metadata={"help": "Targeted attribute for inference attacks."})
 
     def __hash__(self):
         return super().__hash__()

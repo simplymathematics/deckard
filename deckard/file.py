@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import time
 import hashlib
 import logging
@@ -41,16 +41,16 @@ default_placeholder_dict = {
 class FileConfig(ConfigBase):
     """Configuration for file paths used in the experiment."""
 
-    data_file: str = None
-    model_file: str = None
-    defense_file: str = None
-    attack_file: str = None
-    log_file: str = None
-    training_predictions_file: str = None
-    test_predictions_file: str = None
-    attack_predictions_file: str = None
-    score_file: str = None
-    experiment_name: str = None
+    data_file: str = field(default_factory=str, metadata={"help": "Path to the data file."})
+    model_file: str = field(default_factory=str, metadata={"help": "Path to the model file."})
+    defense_file: str = field(default_factory=str, metadata={"help": "Path to the defense file."})
+    attack_file: str = field(default_factory=str, metadata={"help": "Path to the attack file."})
+    log_file: str = field(default_factory=str, metadata={"help": "Path to the log file."})
+    training_predictions_file: str = field(default_factory=str, metadata={"help": "Path to the training predictions file."})
+    test_predictions_file: str = field(default_factory=str, metadata={"help": "Path to the test predictions file."})
+    attack_predictions_file: str = field(default_factory=str, metadata={"help": "Path to the attack predictions file."})
+    score_file: str = field(default_factory=str, metadata={"help": "Path to the score file."})
+    experiment_name: str = field(default_factory=str, metadata={"help": "Name of the experiment."})
 
     def __post_init__(self):
         # Assert that all files in all_files are attributes of the class
@@ -107,7 +107,7 @@ class FileConfig(ConfigBase):
         """Resolve file paths by replacing placeholders with actual values."""
         for file_attr in all_files:
             file_path = getattr(self, file_attr)
-            if file_path is not None:
+            if len(file_path) > 0:
                 resolved_path = self._replace_placeholders(file_path, placeholder_dict)
                 setattr(self, file_attr, resolved_path)
 
@@ -116,6 +116,14 @@ class FileConfig(ConfigBase):
         file_dict = {}
         for file_attr in all_files:
             file_path = getattr(self, file_attr)
-            if file_path is not None:
+            if len(file_path) > 0:
                 file_dict[file_attr] = file_path
         return file_dict
+
+    # Define the len method to count non-None file attributes
+    def __len__(self) -> int:
+        count = 0
+        for file_attr in all_files:
+            if getattr(self, file_attr) is not None:
+                count += 1
+        return count

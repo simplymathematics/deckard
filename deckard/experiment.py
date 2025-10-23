@@ -35,7 +35,6 @@ class ExperimentConfig(ConfigBase):
     files: FileConfig = None
     score: ScorerDictConfig = None
     random_state: int = 42
-    classifier : str = None
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
 
     def set_device(self, device: Union[str, int] = "cpu"):
@@ -101,6 +100,7 @@ class ExperimentConfig(ConfigBase):
             logger.info("Device selection not supported for library: %s", self.library)
 
     def __post_init__(self):
+        
         # Set random seed
         self.set_random_seed()
         # Set device
@@ -114,13 +114,14 @@ class ExperimentConfig(ConfigBase):
         else:
             if isinstance(self.data, DictConfig):
                 data_dict = OmegaConf.to_container(self.data)
+            elif isinstance(self.data, ConfigBase):
+                data_dict = self.data.to_dict()
             elif isinstance(self.data, str):
                 data_dict = DataConfig.from_yaml(self.data).to_dict()
             elif isinstance(self.data, dict):
                 data_dict = OmegaConf.to_container(OmegaConf.create(self.data))
             else:
                 raise ValueError(f"Unsupported type for data: {type(self.data)}")
-            
             if "_target_" not in data_dict:
                 self.data = DataConfig(**data_dict)
             else:
@@ -130,7 +131,7 @@ class ExperimentConfig(ConfigBase):
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
         self.data.__post_init__()
-        if self.classifier is None:
+        if not hasattr(self,  "classifier"):
             self.classifier = self.data.classifier
         else:
             assert self.classifier == self.data.classifier, (
@@ -142,6 +143,8 @@ class ExperimentConfig(ConfigBase):
             else:
                 if isinstance(self.model, DictConfig):
                     model_dict = OmegaConf.to_container(self.model)
+                elif isinstance(self.model, ConfigBase):
+                    model_dict = self.model.to_dict()
                 elif isinstance(self.model, str):
                     model_dict = ModelConfig.from_yaml(self.model).to_dict()
                 elif isinstance(self.model, dict):
@@ -171,6 +174,8 @@ class ExperimentConfig(ConfigBase):
                     attack_dict = OmegaConf.to_container(self.attack)
                 elif isinstance(self.attack, str):
                     attack_dict = AttackConfig.from_yaml(self.attack).to_dict()
+                elif isinstance(self.attack, ConfigBase):
+                    attack_dict = self.attack.to_dict()
                 elif isinstance(self.attack, dict):
                     attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
                 else:
@@ -203,6 +208,10 @@ class ExperimentConfig(ConfigBase):
         elif isinstance(self.files, FileConfig):
             self.files.experiment_name = self.experiment_name
             self.files.__post_init__()
+        elif isinstance(self.files, ConfigBase):
+            file_dict = self.files.to_dict()
+            file_dict["experiment_name"] = self.experiment_name
+            self.files = FileConfig(**file_dict)
         elif isinstance(self.files, DictConfig):
             file_dict = OmegaConf.to_container(self.files)
             file_dict["experiment_name"] = self.experiment_name
@@ -229,6 +238,9 @@ class ExperimentConfig(ConfigBase):
         # Set scorers
         if isinstance(self.score, DictConfig):
             score_dict = OmegaConf.to_container(self.score)
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, ConfigBase):
+            score_dict = self.score.to_dict()
             self.score = ScorerDictConfig(**score_dict)
         elif isinstance(self.score, str):
             score_dict = ScorerDictConfig.from_yaml(self.score).to_dict()
@@ -305,7 +317,6 @@ class ExperimentConfig(ConfigBase):
         attack_file_outputs = {
             file: file_dict[file] for file in attack_files if file in file_dict
         }
-
         self.data(**data_file_outputs)
         data = self.data
         assert hasattr(

@@ -7,7 +7,7 @@ import logging
 import warnings
 import importlib
 from sklearn.base import BaseEstimator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
@@ -59,11 +59,11 @@ sklearn_models = list(sklearn_dict.keys())
 class DefenseConfig(ModelConfig):
     model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
-    model_params: dict = None
-    probability: bool = False
-    clip_values: tuple = None
-    defense_name: str = None
-    defense_params: dict = None
+    model_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the model."})
+    probability: bool = field(default=True, metadata={"help": "Whether to use predict_proba() (True)estimates."})
+    clip_values: tuple = field(default=None, metadata={"help": "Tuple of the form (min, max) to clip input features."})
+    defense_name: str = field(default_factory=str, metadata={"help": "Name of the defense to apply."})
+    defense_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the defense."})
     """
     Overview
     --------
