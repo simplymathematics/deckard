@@ -1,10 +1,11 @@
 import unittest
 import tempfile
 import shutil
-from pathlib import Path    
+from pathlib import Path
 from deckard.data.pytorch import PytorchDataConfig
 from torch import Tensor
 from torch.utils.data import DataLoader
+
 
 class TestPytorchDataConfig(unittest.TestCase):
 
@@ -18,12 +19,12 @@ class TestPytorchDataConfig(unittest.TestCase):
             val_size=0.1,
             random_state=42,
         )
-    
+
     @classmethod
     def setUpClass(cls):
         # Create temporary directory for data storage
         cls.temp_dir = Path(tempfile.mkdtemp())
-    
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.temp_dir, ignore_errors=True)
@@ -55,7 +56,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertIsInstance(self.config.y_test, DataLoader)
 
     def test_call(self):
-        scores = self.config(data_file = str(Path(self.temp_dir) / "data.pt"))
+        scores = self.config(data_file=str(Path(self.temp_dir) / "data.pt"))
         self.assertIn("data_load_time", scores)
         self.assertIn("data_sample_time", scores)
         self.assertGreater(scores["data_load_time"], 0)
@@ -70,6 +71,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         h1 = hash(self.config)
         h2 = hash(self.config)
         self.assertEqual(h1, h2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -59,11 +59,20 @@ sklearn_models = list(sklearn_dict.keys())
 class DefenseConfig(ModelConfig):
     model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
-    model_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the model."})
+    model_params: dict = field(
+        default_factory=dict, metadata={"help": "Parameters for the model."}
+    )
     probability: bool = False
-    clip_values: tuple = field(default=None, metadata={"help": "Tuple of the form (min, max) to clip input features."})
-    defense_name: str = field(default_factory=str, metadata={"help": "Name of the defense to apply."})
-    defense_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the defense."})
+    clip_values: tuple = field(
+        default=None,
+        metadata={"help": "Tuple of the form (min, max) to clip input features."},
+    )
+    defense_name: str = field(
+        default_factory=str, metadata={"help": "Name of the defense to apply."}
+    )
+    defense_params: dict = field(
+        default_factory=dict, metadata={"help": "Parameters for the defense."}
+    )
     """
     Overview
     --------

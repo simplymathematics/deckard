@@ -1,5 +1,4 @@
 import unittest
-from tempfile import TemporaryDirectory
 import os
 import sys
 from deckard import ExperimentConfig, DataConfig, ModelConfig
@@ -17,6 +16,7 @@ from deckard.__main__ import (
     main,
 )
 
+
 class TestMain(unittest.TestCase):
 
     @classmethod
@@ -24,19 +24,25 @@ class TestMain(unittest.TestCase):
         cls.mock_cfg = ExperimentConfig(
             data=DataConfig(),
             model=ModelConfig(),
-            attack = None,
-            optimizers = ["accuracy"],
+            attack=None,
+            optimizers=["accuracy"],
         )
         cls.mock_dict = cls.mock_cfg.to_dict()
 
     def test_optimize(self):
-        result = optimize(self.mock_cfg, target="deckard.experiment.ExperimentConfig", return_runner=False)
+        result = optimize(
+            self.mock_cfg,
+            target="deckard.experiment.ExperimentConfig",
+            return_runner=False,
+        )
         self.assertIsInstance(result, list)
         for entry in result:
             self.assertIsInstance(entry, (float, int))
-            
+
     def test_initialize_config(self):
-        runner = initialize_config(self.mock_dict, target="deckard.experiment.ExperimentConfig")
+        runner = initialize_config(
+            self.mock_dict, target="deckard.experiment.ExperimentConfig"
+        )
         self.assertIsNotNone(runner)
         self.assertEqual(runner.__class__.__name__, "ExperimentConfig")
 
@@ -72,6 +78,6 @@ class TestMain(unittest.TestCase):
         except SystemExit:
             self.fail("validate_files raised SystemExit unexpectedly!")
 
-            
+
 if __name__ == "__main__":
     unittest.main()

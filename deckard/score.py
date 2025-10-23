@@ -172,7 +172,17 @@ class ScorerDictConfig(ConfigBase):
         """
         return {key: scorer for key, scorer in self._scorers.items()}
 
-    def __call__(self, mode: Literal["test", "train", "attack", None] = "test", data: DataConfig =None,  model: ModelConfig = None, attack: AttackConfig = None, y_pred =None, y_true = None, score_file =None, **kwargs) -> Dict[str, float]:
+    def __call__(
+        self,
+        mode: Literal["test", "train", "attack", None] = "test",
+        data: DataConfig = None,
+        model: ModelConfig = None,
+        attack: AttackConfig = None,
+        y_pred=None,
+        y_true=None,
+        score_file=None,
+        **kwargs,
+    ) -> Dict[str, float]:
         """
         ----
         Computes and returns a dictionary of scores for the given true and predicted labels.
@@ -186,7 +196,7 @@ class ScorerDictConfig(ConfigBase):
         attack : AttackConfig, optional
             The attack configuration (not used in scoring).
         mode : Literal["test", "train", "attack", None], optional
-            The mode indicating which dataset to use for scoring. 
+            The mode indicating which dataset to use for scoring.
             Default is "test" where y_true is data.y_test and y_pred=model.test_predictions.
             "train" uses data.y_train and model.training_predictions.
             "attack" uses data.y_test[:attack.attack_size] and attack.attack_predictions.
@@ -212,24 +222,36 @@ class ScorerDictConfig(ConfigBase):
         else:
             results = {}
         if y_pred is not None:
-            assert y_true is not None, "If y_pred is provided, y_true must also be provided. Otherwise, set y_pred to None and let the scorer fetch from data/model."
+            assert (
+                y_true is not None
+            ), "If y_pred is provided, y_true must also be provided. Otherwise, set y_pred to None and let the scorer fetch from data/model."
         else:
             if mode == "test":
                 y_true = data.y_test
             elif mode == "train":
                 y_true = data.y_train
             elif mode == "attack":
-                assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
-                y_true = data.y_test[:attack.attack_size]
+                assert isinstance(
+                    attack, AttackConfig
+                ), "attack must be an instance of AttackConfig"
+                y_true = data.y_test[: attack.attack_size]
             else:
                 assert y_true is not None, "y_true must be provided if mode is None"
             if model is not None:
-                assert isinstance(model, ModelConfig), "model must be an instance of ModelConfig"
-                assert hasattr(model, "_model"), "model must have a loaded _model attribute. Call model() first."
-                assert hasattr(model, "predictions"), "model must have predictions attribute. Call model() first."
+                assert isinstance(
+                    model, ModelConfig
+                ), "model must be an instance of ModelConfig"
+                assert hasattr(
+                    model, "_model"
+                ), "model must have a loaded _model attribute. Call model() first."
+                assert hasattr(
+                    model, "predictions"
+                ), "model must have predictions attribute. Call model() first."
                 loaded_model = model._model
                 # Replace the {model} placeholder in kwargs if present
-                assert "{model}" in kwargs.values(), "If model is provided, '{model}' must be in kwargs"
+                assert (
+                    "{model}" in kwargs.values()
+                ), "If model is provided, '{model}' must be in kwargs"
                 for k, v in kwargs.items():
                     if v == "{model}":
                         kwargs[k] = loaded_model
@@ -238,16 +260,22 @@ class ScorerDictConfig(ConfigBase):
             elif mode == "test":
                 y_pred = model.predictions
             elif mode == "attack":
-                assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
+                assert isinstance(
+                    attack, AttackConfig
+                ), "attack must be an instance of AttackConfig"
                 y_pred = attack.attack_predictions
             else:
                 assert y_pred is not None, "y_pred must be provided if mode is None"
         if attack is not None:
             for k, v in kwargs.items():
-                    if v == "{attack}":
-                        assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
-                        assert hasattr(attack, "_attack"), "attack must have a loaded _attack attribute. Call attack() first."
-                        kwargs[k] = attack._attack
+                if v == "{attack}":
+                    assert isinstance(
+                        attack, AttackConfig
+                    ), "attack must be an instance of AttackConfig"
+                    assert hasattr(
+                        attack, "_attack"
+                    ), "attack must have a loaded _attack attribute. Call attack() first."
+                    kwargs[k] = attack._attack
         for key, scorer in self._scorers.items():
             if mode == "test":
                 pass

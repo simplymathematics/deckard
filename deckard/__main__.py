@@ -18,10 +18,9 @@ module_file_dict = {
     "model": model_files + ["model_config_file"],
     "attack": attack_files + ["attack_config_file"],
     "experiment": all_files,
-    "optimize": all_files ,
+    "optimize": all_files,
     None: all_files,
 }
-
 
 
 logger = logging.getLogger(__name__)
@@ -35,21 +34,21 @@ supported_modules = ["data", "model", "attack", "experiment", "optimize", None]
 
 
 def optimize(
-    cfg: ConfigBase, 
-    target: str, 
-    return_runner: bool = False, 
-    args: list = [], 
-    **kwargs: dict
+    cfg: ConfigBase,
+    target: str,
+    return_runner: bool = False,
+    args: list = [],
+    **kwargs: dict,
 ) -> dict | tuple[dict, ConfigBase]:
     """
     ----
     cfg : ConfigBase
-        The configuration object to be used for optimization. It is converted 
+        The configuration object to be used for optimization. It is converted
         to a dictionary-like structure for processing.
     target : str
         The target object or function to be optimized.
     return_runner : bool, optional
-        If True, the function returns both the scores and the runner object. 
+        If True, the function returns both the scores and the runner object.
         If False, only the scores are returned. Default is False.
     args : list, optional
         Additional positional arguments to be passed to the runner. Default is an empty list.
@@ -59,7 +58,7 @@ def optimize(
     Returns
     ----
     dict or tuple[dict, ConfigBase]
-        If `return_runner` is False, returns the scores as a dictionary. 
+        If `return_runner` is False, returns the scores as a dictionary.
         If `return_runner` is True, returns a tuple containing the scores and the runner object.
 
     Raises
@@ -69,10 +68,10 @@ def optimize(
 
     Notes
     ----
-    - If the `cfg` contains an "optimizers" key, the scores are filtered to include 
+    - If the `cfg` contains an "optimizers" key, the scores are filtered to include
       only those corresponding to the specified optimizers.
     - If the `cfg` contains a "files" key, it is used to initialize a `FileConfig` object.
-    - The function initializes an experiment configuration or runner based on the `cfg` 
+    - The function initializes an experiment configuration or runner based on the `cfg`
       and executes the optimization process.
     """
     try:
@@ -87,14 +86,22 @@ def optimize(
         optimizers = cfg["optimizers"]
         cfg.pop("optimizers")
         if return_runner is not False:
-            logger.warning("optimizers can only be used when return_runner is False. Setting return_runner to False.")
+            logger.warning(
+                "optimizers can only be used when return_runner is False. Setting return_runner to False."
+            )
     else:
         optimizers = []
     if "directions" in cfg and cfg["directions"] and len(cfg["directions"]) > 0:
         directions = cfg.pop("directions")
-        assert len(directions) == len(optimizers), "Length of directions must match length of optimizers."
+        assert len(directions) == len(
+            optimizers
+        ), "Length of directions must match length of optimizers."
         for direction in directions:
-            assert direction in ["minimize", "maximize", "diff"], "Directions must be either 'minimize' or 'maximize'."
+            assert direction in [
+                "minimize",
+                "maximize",
+                "diff",
+            ], "Directions must be either 'minimize' or 'maximize'."
     else:
         directions = []
     if "files" in cfg and len(cfg["files"]) > 0:
@@ -136,13 +143,17 @@ def optimize(
             if len(optimize_scores) > 0:
                 scores = optimize_scores
             else:
-                raise ValueError("No optimization scores found for the specified directions.")
+                raise ValueError(
+                    "No optimization scores found for the specified directions."
+                )
         else:
             scores = values
             attributes = []
         if len(attributes) > 0:
             # TODO: Save these somewhere that optuna can access, but are not used in optimization
-            raise NotImplementedError("Experiment attribute tracking not yet implemented.")
+            raise NotImplementedError(
+                "Experiment attribute tracking not yet implemented."
+            )
     if return_runner is False:
         return scores
     elif return_runner is True:
@@ -150,7 +161,10 @@ def optimize(
     else:
         raise ValueError("return_runner must be a boolean value.")
 
-def initialize_config(cfg: ConfigBase, target: str = "deckard.experiment.ExperimentConfig", **kwargs) -> None:
+
+def initialize_config(
+    cfg: ConfigBase, target: str = "deckard.experiment.ExperimentConfig", **kwargs
+) -> None:
     """
     ----
     Summary:
@@ -159,7 +173,7 @@ def initialize_config(cfg: ConfigBase, target: str = "deckard.experiment.Experim
     ----
     Parameters:
         cfg (ConfigBase): The configuration object to be initialized. It is expected to be a dictionary-like object.
-        target (str, optional): The default target class path to be used if "_target_" is not already in the configuration. 
+        target (str, optional): The default target class path to be used if "_target_" is not already in the configuration.
                                 Defaults to "deckard.experiment.ExperimentConfig".
         **kwargs: Additional keyword arguments that may be passed to the instantiation process.
 
@@ -171,6 +185,7 @@ def initialize_config(cfg: ConfigBase, target: str = "deckard.experiment.Experim
         cfg["_target_"] = target
     runner = instantiate(cfg)
     return runner
+
 
 def parse_optional_args():
     """
@@ -207,10 +222,10 @@ def parse_optional_args():
     optional_args = [arg for arg in args if not arg.startswith("--")]
     modules = []
     for m in supported_modules:
-        if m in optional_args :
+        if m in optional_args:
             for opt_arg in optional_args:
                 if opt_arg == m:
-                # Find the index of the module in optional_args
+                    # Find the index of the module in optional_args
                     i = optional_args.index(m)
                     module = optional_args.pop(i)
                     modules.append(module)
@@ -218,26 +233,29 @@ def parse_optional_args():
         logger.info(f"All optional arguments: {optional_args}")
     if len(modules) > 0:
         logger.info(f"Detected modules in optional arguments: {modules}")
-    elif len(modules) >=1:
-        raise NotImplementedError("Multiple modules specified in command-line arguments. Only one module at a time is supported.")
+    elif len(modules) >= 1:
+        raise NotImplementedError(
+            "Multiple modules specified in command-line arguments. Only one module at a time is supported."
+        )
     # Remove modules from sys.argv to prevent Hydra from complaining about unknown arguments
     for module in modules:
         sys.argv.remove(module)
-    return optional_args,modules
+    return optional_args, modules
+
 
 def parse_files_from_optional_args(optional_args, module):
     """
     ----
     Summary
     ----
-    Parses file arguments from a list of optional arguments and filters them 
+    Parses file arguments from a list of optional arguments and filters them
     based on the specified module.
 
     ----
     Parameters
     ----
     optional_args : list of str
-        A list of optional arguments, where some arguments may be in the 
+        A list of optional arguments, where some arguments may be in the
         format "key=value".
     module : str
         The name of the module used to filter the parsed file arguments.
@@ -246,7 +264,7 @@ def parse_files_from_optional_args(optional_args, module):
     Returns
     ----
     dict
-        A dictionary containing the filtered file arguments, where the keys 
+        A dictionary containing the filtered file arguments, where the keys
         are file names and the values are their corresponding values.
 
     ----
@@ -257,24 +275,24 @@ def parse_files_from_optional_args(optional_args, module):
     ----
     Notes
     ----
-    - Arguments starting with "~", "++", or "+" will have these prefixes 
+    - Arguments starting with "~", "++", or "+" will have these prefixes
       stripped from their keys.
-    - Only files that are part of the module's file list (as defined in 
+    - Only files that are part of the module's file list (as defined in
       `module_file_dict`) will be included in the returned dictionary.
-    - The function logs the parsed file arguments and validates the final 
+    - The function logs the parsed file arguments and validates the final
       subset of files.
     """
     files = {}
     pop_these = []
     for arg in optional_args:
         try:
-            k,v = arg.split("=")
+            k, v = arg.split("=")
             pop_these.append(arg)
             k = k.lstrip("~")
             k = k.lstrip("++")
             k = k.lstrip("+")
             files[k] = v
-        except ValueError: #raised when there is no "=" in arg
+        except ValueError:  # raised when there is no "=" in arg
             pass
     logger.info(f"Parsed file arguments from optional args: {files}")
     module_files = module_file_dict.get(module, [])
@@ -285,15 +303,16 @@ def parse_files_from_optional_args(optional_args, module):
     files = file_subset
     validate_files(files.keys(), module_files, module)
     return files
-        
+
+
 def main():
     """
     ----
     Main entry point for the application.
 
-    This function retrieves the configuration directory from the environment variable 
-    `DECKARD_CONFIG_DIR`, resolves its absolute path, and processes optional arguments 
-    and modules. Depending on the specified modules, it delegates handling to appropriate 
+    This function retrieves the configuration directory from the environment variable
+    `DECKARD_CONFIG_DIR`, resolves its absolute path, and processes optional arguments
+    and modules. Depending on the specified modules, it delegates handling to appropriate
     functions.
 
     ----
@@ -315,7 +334,7 @@ def main():
         "DECKARD_CONFIG_DIR",
         ValueError("DECKARD_CONFIG_DIR environment variable not set."),
     )
-    config_dir = str(Path(config_dir).resolve())        
+    config_dir = str(Path(config_dir).resolve())
     optional_args, modules = parse_optional_args()
     if len(modules) >= 1:
         pass
@@ -327,6 +346,7 @@ def main():
             handle_default_module(config_dir)
         else:
             handle_other_modules(config_dir, optional_args, module, args)
+
 
 def handle_default_module(config_dir):
     """
@@ -369,7 +389,9 @@ def handle_default_module(config_dir):
     config_file = Path(config_dir) / config_file
     logger.info(f"Resolved config file path: {config_file.resolve()}")
     if not config_file.exists():
-        logger.error(f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?")
+        logger.error(
+            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?"
+        )
         sys.exit(1)
 
     @hydra.main(
@@ -380,7 +402,9 @@ def handle_default_module(config_dir):
     def main_hydra(cfg: ExperimentConfig) -> None:
         scores = optimize(cfg=cfg, target="deckard.experiment.ExperimentConfig")
         return scores
+
     return main_hydra()
+
 
 def handle_other_modules(config_dir, optional_args, module, args):
     """
@@ -413,9 +437,12 @@ def handle_other_modules(config_dir, optional_args, module, args):
     logger.info(f"Optional args after module: {optional_args}")
     files = parse_files_from_optional_args(optional_args, module)
     if module not in supported_modules:
-        logger.error(f"Unsupported module: {module}. Supported modules are: {supported_modules}")
+        logger.error(
+            f"Unsupported module: {module}. Supported modules are: {supported_modules}"
+        )
         sys.exit(1)
     module_config_file = validate_module_and_files(module, files, optional_args)
+
     @hydra.main(
         config_path=str(Path(config_dir)),
         config_name=str(Path(module, module_config_file)),
@@ -425,16 +452,24 @@ def handle_other_modules(config_dir, optional_args, module, args):
         sub_dict = cfg.get(module)
         # pop {module}_config_file from files to avoid passing it to optimize
         files.pop(f"{module}_config_file", None)
-        scores, runner = optimize(cfg=sub_dict, target=f"deckard.{module}.{module.capitalize()}Config", return_runner=True, args=args, **files)
+        scores, runner = optimize(
+            cfg=sub_dict,
+            target=f"deckard.{module}.{module.capitalize()}Config",
+            return_runner=True,
+            args=args,
+            **files,
+        )
         args.append(runner)
         return scores
+
     return main_hydra()
+
 
 def validate_module_and_files(module, files, optional_args=None):
     """
     Validate the provided module and its associated configuration files.
 
-    ----param module: The name of the module to validate. 
+    ----param module: The name of the module to validate.
                       Supported values are "data", "model", and "attack".
     ----type module: str
     ----param files: A dictionary containing configuration file paths for the module.
@@ -443,16 +478,20 @@ def validate_module_and_files(module, files, optional_args=None):
                      - "model": Requires "model_config_file".
                      - "attack": Requires "attack_config_file".
     ----type files: dict
-    ----raises ValueError: If the module is unsupported or the required configuration 
+    ----raises ValueError: If the module is unsupported or the required configuration
                            file key is missing in the files dictionary.
     ----return: The path to the module's configuration file.
     ----rtype: str
     """
     if module == "data":
         if "data_config_file" not in files:
-            assert "data=" in str(optional_args), "data_config_file argument is required for data module"
+            assert "data=" in str(
+                optional_args
+            ), "data_config_file argument is required for data module"
             data_arg = [arg for arg in optional_args if arg.startswith("data=")]
-            assert len(data_arg) == 1, "data_config_file argument is required for data module"
+            assert (
+                len(data_arg) == 1
+            ), "data_config_file argument is required for data module"
             module_config_file = data_arg[0].split("=")[1]
         else:
             module_config_file = files["data_config_file"]
@@ -462,11 +501,14 @@ def validate_module_and_files(module, files, optional_args=None):
         module_config_file = files["model_config_file"]
     elif module == "attack":
         if "attack_config_file" not in files:
-            raise ValueError("attack_config_file argument is required for attack module")
+            raise ValueError(
+                "attack_config_file argument is required for attack module"
+            )
         module_config_file = files["attack_config_file"]
     else:
         raise ValueError(f"Unsupported module: {module}")
     return module_config_file
+
 
 def validate_files(files, supported_files, module_name):
     """
@@ -485,14 +527,17 @@ def validate_files(files, supported_files, module_name):
     Raises
     ----
     SystemExit
-        If any file in the `files` list is not in the `supported_files` list, 
+        If any file in the `files` list is not in the `supported_files` list,
         logs an error message and exits the program.
     """
     for file in files:
         if file not in supported_files:
-            logger.error(f"Unsupported {module_name} file argument: {file}. Supported {module_name} file arguments are: {supported_files}")
+            logger.error(
+                f"Unsupported {module_name} file argument: {file}. Supported {module_name} file arguments are: {supported_files}"
+            )
             sys.exit(1)
-    
+
+
 if __name__ == "__main__":
 
     main()

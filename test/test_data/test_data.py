@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from deckard.data import DataConfig, DataPipelineConfig
 
+
 class TestDataPipelineConfig(unittest.TestCase):
     def setUp(self):
         self.pipeline_config_dict = {
@@ -18,14 +19,14 @@ class TestDataPipelineConfig(unittest.TestCase):
             {
                 "feature1": [1.0, 2.0, np.nan, 4.0],
                 "feature2": [np.nan, 1.0, 2.0, 3.0],
-            }
+            },
         )
         self.y_train = pd.Series([0, 1, 0, 1])
         self.X_test = pd.DataFrame(
             {
                 "feature1": [5.0, 6.0],
                 "feature2": [4.0, np.nan],
-            }
+            },
         )
         self.y_test = pd.Series([1, 0])
 
@@ -34,7 +35,7 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertIsInstance(config.pipeline, dict)
         self.assertIn("imputer", config.pipeline)
         self.assertIn("scaler", config.pipeline)
-        
+
     def test_pipeline_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
         pipeline = config._init_pipeline()
@@ -46,7 +47,10 @@ class TestDataPipelineConfig(unittest.TestCase):
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
         X_train_transformed, X_test_transformed, _, _ = config(
-            self.X_train, self.X_test, self.y_train, self.y_test
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
         )
         self.assertEqual(X_train_transformed.shape, (4, 2))
         self.assertEqual(X_test_transformed.shape, (2, 2))
@@ -219,7 +223,7 @@ class TestDataConfig(unittest.TestCase):
                 "random_state": 7,
                 "n_redundant": 0,
             },
-            train_size=.5,
+            train_size=0.5,
             test_size=0.5,
             random_state=7,
             stratify=True,

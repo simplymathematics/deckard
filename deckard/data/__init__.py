@@ -36,31 +36,40 @@ from ..utils import ConfigBase, data_supported_filetypes
 # Setup logger
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class DataPipelineConfig(ConfigBase):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
+
     pipeline: dict = field(default_factory=dict)
-    
-    
-    
+
     def __post_init__(self):
-        assert isinstance(self.pipeline, dict), f"pipeline must be a dictionary, got {type(self.pipeline)}"
+        assert isinstance(
+            self.pipeline, dict
+        ), f"pipeline must be a dictionary, got {type(self.pipeline)}"
         self.pipeline_fit_n = None
         self.pipeline_transform_n = None
         self.pipeline_fit_time = None
         self.pipeline_transform_time = None
         # Validate the pipeline configuration
-        for k,v in self.pipeline.items():
-            assert isinstance(v, dict), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
-            assert "name" in v, f"Each step in pipeline must have a 'name' key, missing in step {k}"
-        
+        for k, v in self.pipeline.items():
+            assert isinstance(
+                v, dict
+            ), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
+            assert (
+                "name" in v
+            ), f"Each step in pipeline must have a 'name' key, missing in step {k}"
+
         return super().__post_init__()
+
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):
             raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
         pipeline_steps = []
         for step_name, step_config in self.pipeline.items():
-            step_class = step_config.get("name", ValueError(f"Step {step_name} missing 'name' key"))
+            step_class = step_config.get(
+                "name", ValueError(f"Step {step_name} missing 'name' key")
+            )
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
             module_name, class_name = step_class.rsplit(".", 1)
@@ -70,15 +79,17 @@ class DataPipelineConfig(ConfigBase):
             pipeline_steps.append((step_name, step_instance))
         pipeline = Pipeline(pipeline_steps)
         return pipeline
-    
-    def __call__(self, X_train, X_test, y_train, y_test) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+
+    def __call__(
+        self, X_train, X_test, y_train, y_test
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
-        
+
         Parameters
         ----------
         data : DataConfig
             The data configuration object containing the training and testing data.
-        
+
         Returns
         -------
         pd.DataFrame
@@ -94,23 +105,30 @@ class DataPipelineConfig(ConfigBase):
             before_shape = X_train.shape
             X_train = pipeline.transform(X_train)
             after_shape = X_train.shape
-            assert before_shape[0] == after_shape[0], f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
+            assert (
+                before_shape[0] == after_shape[0]
+            ), f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
             self.pipeline_fit_time = end - start
             self.pipeline_fit_n = X_train.shape[0]
-        if not hasattr(self, "pipeline_transform_time") or self.pipeline_transform_time is None:
+        if (
+            not hasattr(self, "pipeline_transform_time")
+            or self.pipeline_transform_time is None
+        ):
             # Record transform time
             start = time.process_time()
             # Transform the testing data
             before_shape = X_test.shape
             X_test = pipeline.transform(X_test.values)
             after_shape = X_test.shape
-            assert before_shape[0] == after_shape[0], f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
+            assert (
+                before_shape[0] == after_shape[0]
+            ), f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
             end = time.process_time()
             self.pipeline_transform_time = end - start
             self.pipeline_transform_n = X_test.shape[0]
         return X_train, X_test, y_train, y_test
-    
-    
+
+
 @dataclass
 class DataConfig(ConfigBase):
     """
@@ -218,8 +236,8 @@ class DataConfig(ConfigBase):
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: bool = True
-    pipeline : Union[DataPipelineConfig, None] = None
-    target : Union[str, None] = None
+    pipeline: Union[DataPipelineConfig, None] = None
+    target: Union[str, None] = None
     drop: list = None
     keep: list = None
 
@@ -268,9 +286,11 @@ class DataConfig(ConfigBase):
         self._test_indices = None
         if self.pipeline is not None:
             if isinstance(self.pipeline, dict):
-                self.pipeline = DataPipelineConfig(pipeline = self.pipeline)
+                self.pipeline = DataPipelineConfig(pipeline=self.pipeline)
             elif isinstance(self.pipeline, DictConfig):
-                self.pipeline = DataPipelineConfig(pipeline = OmegaConf.to_container(self.pipeline))
+                self.pipeline = DataPipelineConfig(
+                    pipeline=OmegaConf.to_container(self.pipeline)
+                )
             elif isinstance(self.pipeline, DataPipelineConfig):
                 pass
             else:
@@ -279,10 +299,10 @@ class DataConfig(ConfigBase):
                 )
             assert isinstance(
                 self.pipeline,
-                (DataPipelineConfig)
+                (DataPipelineConfig),
             ), f"pipeline must be a DataPipelineConfig instance, got {type(self.pipeline)}"
         assert self.classifier in [True, False], "classifier must be a boolean value"
-        
+
         if self._target_ is None:
             self._target_ = "DataConfig"
 
@@ -538,9 +558,13 @@ class DataConfig(ConfigBase):
         self.y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
-        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), "X_train must be a DataFrame"
+        assert isinstance(
+            self.X_train, (pd.DataFrame, pd.Series)
+        ), "X_train must be a DataFrame"
         assert isinstance(self.y_train, pd.Series), "y_train must be a Series"
-        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), "X_test must be a DataFrame"
+        assert isinstance(
+            self.X_test, (pd.DataFrame, pd.Series)
+        ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
 
     def _load_data(self):
@@ -601,16 +625,18 @@ class DataConfig(ConfigBase):
             case _ if filetype in supported_filetypes:
                 data = self.load_data(self.dataset_name)
                 if self.target is None:
-                        raise ValueError(
-                            "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
-                        )
+                    raise ValueError(
+                        "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
+                    )
                 y = data.pop(self.target)
                 if len(self.keep) > 1:
                     data = data[self.keep]
                 elif len(self.keep) == 1:
                     data = data[self.keep[0]]
                 for del_col in self.drop:
-                    assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
+                    assert (
+                        len(self.keep) == 0
+                    ), "Cannot specify both keep and drop columns"
                     if del_col in data.columns:
                         data = data.drop(columns=del_col)
                 self._X = data
@@ -624,7 +650,9 @@ class DataConfig(ConfigBase):
                 raise NotImplementedError(
                     f"Dataset {self.dataset_name} not implemented",
                 )
-        assert isinstance(self._X, (pd.DataFrame, pd.Series)), "_X must be a DataFrame after loading data"
+        assert isinstance(
+            self._X, (pd.DataFrame, pd.Series)
+        ), "_X must be a DataFrame after loading data"
         assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
 
     def _score(self) -> dict:
@@ -831,6 +859,3 @@ class DataConfig(ConfigBase):
         if save_flag:
             self.save(data_file)
         return self.score_dict
-    
-
-

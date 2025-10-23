@@ -100,7 +100,7 @@ class ExperimentConfig(ConfigBase):
             logger.info("Device selection not supported for library: %s", self.library)
 
     def __post_init__(self):
-        
+
         # Set random seed
         self.set_random_seed()
         # Set device
@@ -131,12 +131,12 @@ class ExperimentConfig(ConfigBase):
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
         self.data.__post_init__()
-        if not hasattr(self,  "classifier"):
+        if not hasattr(self, "classifier"):
             self.classifier = self.data.classifier
         else:
-            assert self.classifier == self.data.classifier, (
-                f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
-            )
+            assert (
+                self.classifier == self.data.classifier
+            ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
         if self.model is not None:
             if isinstance(self.model, ModelConfig):
                 pass
@@ -163,9 +163,9 @@ class ExperimentConfig(ConfigBase):
             if self.classifier is None:
                 self.classifier = self.model.classifier
             else:
-                assert self.classifier == self.model.classifier, (
-                    f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
-                )
+                assert (
+                    self.classifier == self.model.classifier
+                ), f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
         if self.attack is not None:
             if isinstance(self.attack, AttackConfig):
                 pass
@@ -179,7 +179,9 @@ class ExperimentConfig(ConfigBase):
                 elif isinstance(self.attack, dict):
                     attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
                 else:
-                    raise ValueError(f"Unsupported type for attack: {type(self.attack)}")
+                    raise ValueError(
+                        f"Unsupported type for attack: {type(self.attack)}"
+                    )
                 if "_target_" not in attack_dict:
                     self.attack = AttackConfig(**attack_dict)
                 else:
@@ -234,7 +236,7 @@ class ExperimentConfig(ConfigBase):
         assert self.files.experiment_name == self.experiment_name, (
             f"files.experiment_name must match experiment_name. Got {self.files.experiment_name} vs {self.experiment_name}",
         )
-    
+
         # Set scorers
         if isinstance(self.score, DictConfig):
             score_dict = OmegaConf.to_container(self.score)
@@ -252,7 +254,7 @@ class ExperimentConfig(ConfigBase):
             pass
         else:
             raise ValueError(f"Unsupported type for score: {type(self.score)}")
-        
+
     def set_random_seed(self):
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
@@ -266,7 +268,6 @@ class ExperimentConfig(ConfigBase):
             torch.manual_seed(self.random_state)
         else:
             raise ValueError(f"Unsupported library: {self.library}")
-        
 
     def _hash_from_list(self, config_list: List[ConfigBase]) -> str:
         """
@@ -380,21 +381,22 @@ class ExperimentConfig(ConfigBase):
             attack = None
         # Assert that all files in file_dict exist
 
-        
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
             else:
                 filepath = self.files._replace_placeholders(filepath)
-                assert Path(filepath).exists(), f"File {filepath} for {attr} does not exist."
-            # 
+                assert Path(
+                    filepath
+                ).exists(), f"File {filepath} for {attr} does not exist."
+            #
         if self.score:
             custom_scores = self.score(
                 data=data,
                 model=model,
                 attack=attack,
                 mode="train",
-                score_file=file_dict.get("score_file", None)
+                score_file=file_dict.get("score_file", None),
             )
             scores = {**scores, **custom_scores}
             # TODO: override existing score functions

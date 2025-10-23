@@ -50,7 +50,9 @@ class TestScorerConfig(unittest.TestCase):
             score_params={"average": "binary", "zero_division": 0},
         )
         score = config(y_true=y_true, y_pred=y_pred)
-        self.assertEqual(score, precision_score(y_true, y_pred, average="binary", zero_division=0))
+        self.assertEqual(
+            score, precision_score(y_true, y_pred, average="binary", zero_division=0)
+        )
 
 
 class TestScorerDictConfig(unittest.TestCase):

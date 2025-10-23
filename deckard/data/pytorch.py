@@ -2,14 +2,12 @@
 import pandas as pd
 import time
 import logging
-import importlib
 import tempfile
-import sys
 from pathlib import Path
 
 
 from dataclasses import dataclass, field
-from typing import Tuple, Union, Dict
+from typing import Union, Dict
 from omegaconf import DictConfig, OmegaConf
 
 # PyTorch
@@ -37,9 +35,11 @@ pytorch_dataset_dict = {
     # Add more datasets as needed
 }
 
+
 @dataclass
 class PytorchDataPipelineConfig:
     pass
+
 
 @dataclass
 class PytorchDataConfig(DataConfig):
@@ -54,38 +54,52 @@ class PytorchDataConfig(DataConfig):
         stratify (Union[None, str, bool]): Whether to stratify the split.
         pipeline (Dict[str, DataPipelineConfig]): Data processing pipelines.
 
-        """
+    """
 
     dataset_name: str = "mnist"
     batch_size: int = 32
-    device : str = "cpu"
-    data_dir : str = "./raw_data"
-    test_size: Union[float, int, None] = .2
-    train_size: Union[float, int, None] = .7
-    val_size : Union[float, int, None] = .1
+    device: str = "cpu"
+    data_dir: str = "./raw_data"
+    test_size: Union[float, int, None] = 0.2
+    train_size: Union[float, int, None] = 0.7
+    val_size: Union[float, int, None] = 0.1
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     pipeline: Dict[str, PytorchDataPipelineConfig] = field(default_factory=dict)
-    classifier : bool = True
+    classifier: bool = True
     target: None = None
     drop: None = None
     keep: None = None
-    
+
     def __post_init__(self):
         super().__post_init__()
-        
+
         # Ensure
-        assert self.target is None, f"Target variable should not be set for PyTorch datasets. Got {self.target}."
-        assert len(self.drop) == 0, f"Drop columns should not be set for PyTorch datasets. Got {self.drop}."
-        assert len(self.keep) == 0, f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
-        assert len(self.data_params) == 0, f"data_params should not be set for PyTorch datasets. Got {self.data_params}."
-        
+        assert (
+            self.target is None
+        ), f"Target variable should not be set for PyTorch datasets. Got {self.target}."
+        assert (
+            len(self.drop) == 0
+        ), f"Drop columns should not be set for PyTorch datasets. Got {self.drop}."
+        assert (
+            len(self.keep) == 0
+        ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
+        assert (
+            len(self.data_params) == 0
+        ), f"data_params should not be set for PyTorch datasets. Got {self.data_params}."
+
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
-        assert self.train_size is not None, "train_size must be specified for PyTorch datasets."
-        assert self.test_size is not None, "test_size must be specified for PyTorch datasets."
-        assert self.val_size is not None, "val_size must be specified for PyTorch datasets."
-        
+        assert (
+            self.train_size is not None
+        ), "train_size must be specified for PyTorch datasets."
+        assert (
+            self.test_size is not None
+        ), "test_size must be specified for PyTorch datasets."
+        assert (
+            self.val_size is not None
+        ), "val_size must be specified for PyTorch datasets."
+
         self.X_val = None
         self.y_val = None
         self.val_n = None
@@ -106,13 +120,19 @@ class PytorchDataConfig(DataConfig):
         if dataset_name not in pytorch_dataset_dict:
             raise NotImplementedError(f"Dataset {dataset_name} is not supported.")
         dataset_class = pytorch_dataset_dict[dataset_name]
-        
+
         # Check if data directory exists, is a directory, and is non-empty
-        if Path(self.data_dir).exists() and Path(self.data_dir).is_dir() and any(Path(self.data_dir).iterdir()):
+        if (
+            Path(self.data_dir).exists()
+            and Path(self.data_dir).is_dir()
+            and any(Path(self.data_dir).iterdir())
+        ):
             logger.info(f"Using existing data directory at {self.data_dir}.")
             download = False
-        else: # Otherwise, create directory and download dataset
-            logger.info(f"Data directory {self.data_dir} does not exist. Creating and downloading dataset.")
+        else:  # Otherwise, create directory and download dataset
+            logger.info(
+                f"Data directory {self.data_dir} does not exist. Creating and downloading dataset."
+            )
             Path(self.data_dir).mkdir(parents=True, exist_ok=True)
             download = True
         start = time.process_time()
@@ -133,17 +153,33 @@ class PytorchDataConfig(DataConfig):
         end = time.process_time()
         self.data_load_time = end - start
         logger.info(f"Loaded {dataset_name} dataset in {self.data_load_time} seconds.")
-        assert isinstance(self._X, Tensor), f"Expected _X to be a tuple, got {type(self._X)}."
-        assert isinstance(self._y, Tensor), f"Expected _y to be a tuple, got {type(self._y)}."
+        assert isinstance(
+            self._X, Tensor
+        ), f"Expected _X to be a tuple, got {type(self._X)}."
+        assert isinstance(
+            self._y, Tensor
+        ), f"Expected _y to be a tuple, got {type(self._y)}."
         assert isinstance(self.data_load_time, float), "data_load_time is not a float."
 
     def _sample(self):
         """Sample the dataset if needed."""
         # Sampling logic can be implemented here if required
         total_size = len(self._X)
-        train_n = self.train_size if isinstance(self.train_size, int) else int(self.train_size * total_size)
-        val_n = self.val_size if isinstance(self.val_size, int) else int(self.val_size * total_size)
-        test_n = self.test_size if isinstance(self.test_size, int) else int(self.test_size * total_size)
+        train_n = (
+            self.train_size
+            if isinstance(self.train_size, int)
+            else int(self.train_size * total_size)
+        )
+        val_n = (
+            self.val_size
+            if isinstance(self.val_size, int)
+            else int(self.val_size * total_size)
+        )
+        test_n = (
+            self.test_size
+            if isinstance(self.test_size, int)
+            else int(self.test_size * total_size)
+        )
         remaining = total_size - (train_n + val_n + test_n)
         if remaining > 0:
             test_n += remaining  # Adjust test size to use all data
@@ -156,38 +192,64 @@ class PytorchDataConfig(DataConfig):
         )
         end = time.process_time()
         # Create DataLoaders
-        self.X_train = DataLoader(train_data.dataset, batch_size=self.batch_size, shuffle=True)
-        self.y_train = DataLoader(train_data.dataset, batch_size=self.batch_size, shuffle=True)
-        self.X_val = DataLoader(val_data.dataset, batch_size=self.batch_size, shuffle=False)
-        self.y_val = DataLoader(val_data.dataset, batch_size=self.batch_size, shuffle=False)
-        self.X_test = DataLoader(test_data.dataset, batch_size=self.batch_size, shuffle=False)
-        self.y_test = DataLoader(test_data.dataset, batch_size=self.batch_size, shuffle=False)
+        self.X_train = DataLoader(
+            train_data.dataset, batch_size=self.batch_size, shuffle=True
+        )
+        self.y_train = DataLoader(
+            train_data.dataset, batch_size=self.batch_size, shuffle=True
+        )
+        self.X_val = DataLoader(
+            val_data.dataset, batch_size=self.batch_size, shuffle=False
+        )
+        self.y_val = DataLoader(
+            val_data.dataset, batch_size=self.batch_size, shuffle=False
+        )
+        self.X_test = DataLoader(
+            test_data.dataset, batch_size=self.batch_size, shuffle=False
+        )
+        self.y_test = DataLoader(
+            test_data.dataset, batch_size=self.batch_size, shuffle=False
+        )
         self.train_n = train_n
         self.val_n = val_n
         self.test_n = test_n
         self.data_sample_time = end - start
         logger.info(f"Sampled dataset in {self.data_sample_time} seconds.")
-        assert isinstance(self.X_train, DataLoader), "Sampled training data is not a PyTorch Dataset."
-        assert isinstance(self.y_train, DataLoader), "Sampled training targets are not a PyTorch Dataset."
-        assert isinstance(self.X_val, DataLoader), "Sampled validation data is not a PyTorch Dataset."
-        assert isinstance(self.y_val, DataLoader), "Sampled validation targets are not a PyTorch Dataset."
-        assert isinstance(self.X_test, DataLoader), "Sampled test data is not a PyTorch Dataset."
-        assert isinstance(self.y_test, DataLoader), "Sampled test targets are not a PyTorch Dataset."
-        assert isinstance(self.data_sample_time, float), "data_sample_time is not a float."
+        assert isinstance(
+            self.X_train, DataLoader
+        ), "Sampled training data is not a PyTorch Dataset."
+        assert isinstance(
+            self.y_train, DataLoader
+        ), "Sampled training targets are not a PyTorch Dataset."
+        assert isinstance(
+            self.X_val, DataLoader
+        ), "Sampled validation data is not a PyTorch Dataset."
+        assert isinstance(
+            self.y_val, DataLoader
+        ), "Sampled validation targets are not a PyTorch Dataset."
+        assert isinstance(
+            self.X_test, DataLoader
+        ), "Sampled test data is not a PyTorch Dataset."
+        assert isinstance(
+            self.y_test, DataLoader
+        ), "Sampled test targets are not a PyTorch Dataset."
+        assert isinstance(
+            self.data_sample_time, float
+        ), "data_sample_time is not a float."
 
     def _classification_feature_scores(self):
         """
-            Computes feature importance scores for classification tasks using various statistical methods.
+        Computes feature importance scores for classification tasks using various statistical methods.
 
-            Returns
-            -------
-            dict
-            A dictionary containing feature importance scores from different methods:
-            - 'mutual_info_classif': Mutual information scores.
-            - 'chi2': Chi-squared scores.
-            - 'f_classif': ANOVA F-value scores.
-            - 'class_counts': Counts of each class in the training target.
-            """
+        Returns
+        -------
+        dict
+        A dictionary containing feature importance scores from different methods:
+        - 'mutual_info_classif': Mutual information scores.
+        - 'chi2': Chi-squared scores.
+        - 'f_classif': ANOVA F-value scores.
+        - 'class_counts': Counts of each class in the training target.
+        """
 
         # Ensure data is on CPU for compatibility with sklearn
         X_train_np = self._X.cpu().numpy()
@@ -216,22 +278,20 @@ class PytorchDataConfig(DataConfig):
         score_dict["class_counts"] = class_counts
         return score_dict
         # Feature importance logic can be implemented here if required
-        
-        
 
     def _regression_feature_scores(self):
-        """"
-            Computes feature importance scores for regression tasks using various statistical methods.
+        """ "
+        Computes feature importance scores for regression tasks using various statistical methods.
 
-            Returns
-            -------
-            dict
-                A dictionary containing feature importance scores from different methods:
-                - 'mutual_info_regression': Mutual information scores.
-                - 'f_regression': F-value scores.
-                - 'r_regression': Pearson correlation coefficients.
-                - 'y_train_cdf': Empirical CDF of the training target.
-                - 'y_test_cdf': Empirical CDF of the testing target.
+        Returns
+        -------
+        dict
+            A dictionary containing feature importance scores from different methods:
+            - 'mutual_info_regression': Mutual information scores.
+            - 'f_regression': F-value scores.
+            - 'r_regression': Pearson correlation coefficients.
+            - 'y_train_cdf': Empirical CDF of the training target.
+            - 'y_test_cdf': Empirical CDF of the testing target.
         """
 
         # Ensure data is on CPU for compatibility with sklearn
@@ -255,7 +315,10 @@ class PytorchDataConfig(DataConfig):
             logger.warning(f"f_regression failed with error: {e}")
         # Pearson Correlation
         try:
-            pearson_scores = [pearsonr(X_train_np[:, i], y_train_np)[0] for i in range(X_train_np.shape[1])]
+            pearson_scores = [
+                pearsonr(X_train_np[:, i], y_train_np)[0]
+                for i in range(X_train_np.shape[1])
+            ]
             score_dict["r_regression"] = pearson_scores
         except Exception as e:
             logger.warning(f"pearsonr failed with error: {e}")
@@ -265,9 +328,8 @@ class PytorchDataConfig(DataConfig):
         y_train_cdf = np.arange(1, len(y_train_sorted) + 1) / len(y_train_sorted)
         y_test_cdf = np.arange(1, len(y_test_sorted) + 1) / len(y_test_sorted)
         score_dict["y_train_cdf"] = y_train_cdf.tolist()
-        score_dict["y_test_cdf"] = y_test_cdf.tolist()  
+        score_dict["y_test_cdf"] = y_test_cdf.tolist()
         return score_dict
-        
 
     def _score(self) -> dict:
         """Computes feature importance scores based on the type of task (classification or regression).
@@ -279,73 +341,85 @@ class PytorchDataConfig(DataConfig):
             return self._classification_feature_scores()
         else:
             return self._regression_feature_scores()
-        
+
     def __call__(
-            self,
-            data_file: Union[str, None] = None,
-            score_file: Union[str, None] = None,
-        ) -> dict:
-            """
-            Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
-            Parameters
-            ----------
-            data_file : Union[str, None]
-                Path to save loaded data as CSV. If None, data is not saved.
-            score_file : Union[str, None]
-                Path to save scores as CSV. If None, scores are not saved.
-            Returns
-            -------
-            dict:
-                A dictionary containing:
-                - 'data_load_time': Time taken to load the data.
-                - 'data_sample_time': Time taken to sample/split the data.
-                - Additional times/scores can be added in the future.
-            """
-            if data_file is not None:
-                assert isinstance(data_file, str), "data_file must be a string path."
-                if not Path(data_file).exists():
-                    Path(data_file).parent.mkdir(parents=True, exist_ok=True)
-                else:
-                    self = self.load_object(data_file)
-                    assert hasattr(self, "data_load_time"), "Loaded object does not have data_load_time attribute."
-                    assert hasattr(self, "data_sample_time"), "Loaded object does not have data_sample_time attribute."
-            if score_file is not None:
-                assert isinstance(score_file, str), "score_file must be a string path."
-                if Path(score_file).exists():
-                    scores = self.load_scores(score_file)
+        self,
+        data_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
+    ) -> dict:
+        """
+        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
+        Parameters
+        ----------
+        data_file : Union[str, None]
+            Path to save loaded data as CSV. If None, data is not saved.
+        score_file : Union[str, None]
+            Path to save scores as CSV. If None, scores are not saved.
+        Returns
+        -------
+        dict:
+            A dictionary containing:
+            - 'data_load_time': Time taken to load the data.
+            - 'data_sample_time': Time taken to sample/split the data.
+            - Additional times/scores can be added in the future.
+        """
+        if data_file is not None:
+            assert isinstance(data_file, str), "data_file must be a string path."
+            if not Path(data_file).exists():
+                Path(data_file).parent.mkdir(parents=True, exist_ok=True)
             else:
-                scores = {}
-            if self.data_load_time is None:
-                self._load_data()
-            assert self._X is not None, "_X attribute not found after loading data."
-            assert self._y is not None, "_y attribute not found after loading data."
-            if self.data_sample_time is None:
-                self._sample()
-            assert self.X_train is not None, "X_train attribute not found after sampling data."
-            assert self.X_test is not None, "X_test attribute not found after sampling data."
-            assert self.y_train is not None, "y_train attribute not found after sampling data."
-            assert self.y_test is not None, "y_test attribute not found after sampling data."
-            assert self.X_val is not None, "X_val attribute not found after sampling data."
-            assert self.y_val is not None, "y_val attribute not found after sampling data."
-            time_dict = {
-                "data_load_time": self.data_load_time,
-                "data_sample_time": self.data_sample_time,
-            }
-            logger.info(
-                f"Data loaded and sampled. Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-            )
-            if data_file is not None:
-                # Save data logic can be implemented here if required
-                pass
-            logger.info(
-                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-            )
-            data_scores = self._score()
-            all_scores = {**scores, **data_scores, **time_dict}
-            self.score_dict = all_scores
-            if score_file is not None:
-                self.save_scores(scores, score_file)
-            if data_file is not None:
-                if not Path(data_file).exists():
-                    self.save(data_file)
-            return all_scores
+                self = self.load_object(data_file)
+                assert hasattr(
+                    self, "data_load_time"
+                ), "Loaded object does not have data_load_time attribute."
+                assert hasattr(
+                    self, "data_sample_time"
+                ), "Loaded object does not have data_sample_time attribute."
+        if score_file is not None:
+            assert isinstance(score_file, str), "score_file must be a string path."
+            if Path(score_file).exists():
+                scores = self.load_scores(score_file)
+        else:
+            scores = {}
+        if self.data_load_time is None:
+            self._load_data()
+        assert self._X is not None, "_X attribute not found after loading data."
+        assert self._y is not None, "_y attribute not found after loading data."
+        if self.data_sample_time is None:
+            self._sample()
+        assert (
+            self.X_train is not None
+        ), "X_train attribute not found after sampling data."
+        assert (
+            self.X_test is not None
+        ), "X_test attribute not found after sampling data."
+        assert (
+            self.y_train is not None
+        ), "y_train attribute not found after sampling data."
+        assert (
+            self.y_test is not None
+        ), "y_test attribute not found after sampling data."
+        assert self.X_val is not None, "X_val attribute not found after sampling data."
+        assert self.y_val is not None, "y_val attribute not found after sampling data."
+        time_dict = {
+            "data_load_time": self.data_load_time,
+            "data_sample_time": self.data_sample_time,
+        }
+        logger.info(
+            f"Data loaded and sampled. Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+        )
+        if data_file is not None:
+            # Save data logic can be implemented here if required
+            pass
+        logger.info(
+            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+        )
+        data_scores = self._score()
+        all_scores = {**scores, **data_scores, **time_dict}
+        self.score_dict = all_scores
+        if score_file is not None:
+            self.save_scores(scores, score_file)
+        if data_file is not None:
+            if not Path(data_file).exists():
+                self.save(data_file)
+        return all_scores

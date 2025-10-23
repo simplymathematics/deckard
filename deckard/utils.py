@@ -12,7 +12,6 @@ from omegaconf import OmegaConf
 from urllib.parse import urlparse
 
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -25,6 +24,8 @@ data_supported_filetypes = [
     ".xlsx",
     ".pkl",
 ]
+
+
 @dataclass
 class ConfigBase:
     _target_: str = "deckard.utils.ConfigBase"
@@ -238,7 +239,7 @@ class ConfigBase:
         ValueError
             If the file extension is not supported. Supported types are .csv, .json, .
         """
-        
+
         if filepath is None:
             raise FileNotFoundError(f"Filepath is None.")
         supported_filetypes = [
