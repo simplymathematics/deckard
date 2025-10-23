@@ -9,9 +9,6 @@ import hydra
 from hydra.utils import instantiate
 
 
-from .data import DataConfig
-from .model import ModelConfig
-from .attack import AttackConfig
 from .file import FileConfig, data_files, model_files, attack_files, all_files
 from .experiment import ExperimentConfig
 from .utils import ConfigBase
@@ -24,6 +21,8 @@ module_file_dict = {
     "optimize": all_files ,
     None: all_files,
 }
+
+
 
 logger = logging.getLogger(__name__)
 
