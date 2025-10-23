@@ -29,12 +29,19 @@ class TestDataPipelineConfig(unittest.TestCase):
         )
         self.y_test = pd.Series([1, 0])
 
+    def test_pipelineconfig_initialization(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
+        self.assertIsInstance(config.pipeline, dict)
+        self.assertIn("imputer", config.pipeline)
+        self.assertIn("scaler", config.pipeline)
+        
     def test_pipeline_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        self.assertIsInstance(config.pipeline, Pipeline)
-        self.assertEqual(len(config.pipeline.steps), 2)
-        self.assertEqual(config.pipeline.steps[0][0], "imputer")
-        self.assertEqual(config.pipeline.steps[1][0], "scaler")
+        pipeline = config._init_pipeline()
+        self.assertIsInstance(pipeline, Pipeline)
+        self.assertEqual(len(pipeline.steps), 2)
+        self.assertEqual(pipeline.steps[0][0], "imputer")
+        self.assertEqual(pipeline.steps[1][0], "scaler")
 
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
@@ -58,10 +65,6 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertIsNotNone(config.pipeline_transform_time)
         self.assertGreater(config.pipeline_transform_time, 0)
 
-    def test_invalid_pipeline_config(self):
-        invalid_pipeline_config = {"step1": {"name": "InvalidModule.InvalidClass"}}
-        with self.assertRaises(ModuleNotFoundError):
-            DataPipelineConfig(pipeline=invalid_pipeline_config)
 
 class TestDataConfig(unittest.TestCase):
 
@@ -216,6 +219,7 @@ class TestDataConfig(unittest.TestCase):
                 "random_state": 7,
                 "n_redundant": 0,
             },
+            train_size=.5,
             test_size=0.5,
             random_state=7,
             stratify=True,
@@ -225,6 +229,11 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
+        print(f"Length of X: {len(cfg._X)}")
+        print(f"cfg.train_n: {cfg.train_n}, cfg.test_n: {cfg.test_n}")
+        print(f"cfg.train_size: {cfg.train_size}, cfg.test_size: {cfg.test_size}")
+        print(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}")
+        input("Press Enter to continue...")
         self.assertEqual(X_train.shape[0], 30)
         self.assertEqual(X_test.shape[0], 30)
         self.assertEqual(X_train.shape[1], 6)

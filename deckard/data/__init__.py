@@ -64,7 +64,7 @@ class DataPipelineConfig(ConfigBase):
             del step_config_without_name["name"]
             module_name, class_name = step_class.rsplit(".", 1)
             module = importlib.import_module(module_name)
-            cls = getattr(module, class_name)
+            cls = module.__dict__[class_name]
             step_instance = cls(**step_config_without_name)
             pipeline_steps.append((step_name, step_instance))
         pipeline = Pipeline(pipeline_steps)
@@ -211,7 +211,7 @@ class DataConfig(ConfigBase):
 
     dataset_name: str = "adult"
     data_params: dict = None
-    test_size: Union[float, int, None] = 0.2
+    test_size: Union[float, int, None] = None
     train_size: Union[float, int, None] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
@@ -231,6 +231,19 @@ class DataConfig(ConfigBase):
         Raises:
             ValueError: If `test_size` is not between 0 and 1.
         """
+        if self.train_size is None:
+            if self.test_size is None:
+                self.test_size = 0.2
+                self.train_size = 0.8
+            else:
+                if isinstance(self.test_size, float):
+                    if not (0 < self.test_size < 1):
+                        raise ValueError("test_size must be between 0 and 1")
+                    self.train_size = 1 - self.test_size
+                elif isinstance(self.test_size, int):
+                    self.train_size = None
+                else:
+                    raise ValueError("test_size must be a float or int")
         self.data_load_time = None
         self.data_sample_time = None
         self.data_params = self.data_params if self.data_params is not None else {}
@@ -481,8 +494,6 @@ class DataConfig(ConfigBase):
         """
         if not hasattr(self, "_X") or self._X is None:
             raise ValueError("Data not loaded. Cannot sample.")
-        train_n = self.train_n
-        test_n = self.test_n
         stratify_col = None
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Cannot sample.")
@@ -505,14 +516,14 @@ class DataConfig(ConfigBase):
         try:
             train_idx, test_idx = train_test_split(
                 indices,
-                train_size=train_n,
-                test_size=test_n,
+                train_size=self.train_size,
+                test_size=self.test_size,
                 random_state=self.random_state,
                 stratify=stratify_col if self.stratify is not None else None,
             )
         except ValueError as e:
             raise ValueError(
-                f"Error during train/test split with train_size={train_n}, test_size={test_n}, random_state={self.random_state}, stratify={self.stratify}: {e} ",
+                f"Error during train/test split with train_size={self.train_size}, test_size={self.test_size}, random_state={self.random_state}, stratify={self.stratify}: {e} ",
             )
         end_time = time.time()
         self.data_sample_time = end_time - start_time
