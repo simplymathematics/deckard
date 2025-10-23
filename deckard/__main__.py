@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf
 import hydra
 from hydra.utils import instantiate
 
