@@ -77,7 +77,6 @@ def main():
     i = 0
     for m in supported_modules:
         if m in optional_args:
-            print(f"Found module argument: {m}")
             module = m
             optional_args.pop(i)
             break

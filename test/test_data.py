@@ -229,11 +229,6 @@ class TestDataConfig(unittest.TestCase):
         y_train = cfg.y_train
         X_test = cfg.X_test
         y_test = cfg.y_test
-        print(f"Length of X: {len(cfg._X)}")
-        print(f"cfg.train_n: {cfg.train_n}, cfg.test_n: {cfg.test_n}")
-        print(f"cfg.train_size: {cfg.train_size}, cfg.test_size: {cfg.test_size}")
-        print(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}")
-        input("Press Enter to continue...")
         self.assertEqual(X_train.shape[0], 30)
         self.assertEqual(X_test.shape[0], 30)
         self.assertEqual(X_train.shape[1], 6)
