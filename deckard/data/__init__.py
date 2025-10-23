@@ -32,6 +32,7 @@ from sklearn.pipeline import Pipeline
 
 # deckard
 from ..utils import ConfigBase, data_supported_filetypes
+
 # Setup logger
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,7 @@ class DataPipelineConfig(ConfigBase):
             pipeline_steps.append((step_name, step_instance))
         pipeline = Pipeline(pipeline_steps)
         return pipeline
+    
     def __call__(self, X_train, X_test, y_train, y_test) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
         
@@ -307,7 +309,7 @@ class DataConfig(ConfigBase):
         self : DataConfig
             The instance with loaded and preprocessed data.
         """
-        start_time = time.time()
+        start_time = time.process_time()
         adult = fetch_openml(name=self.dataset_name, version=2, as_frame=True)
         df = adult.frame
         X = df.drop(columns="class")
@@ -326,7 +328,7 @@ class DataConfig(ConfigBase):
         X = pd.get_dummies(X, drop_first=True)
         X["sex"] = sex.cat.rename_categories({"Male": 0, "Female": 1})
         # Convert categorical variables to numeric using one-hot encoding
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
@@ -342,11 +344,11 @@ class DataConfig(ConfigBase):
         self : DataConfig
             The instance of the class with loaded data.
         """
-        start_time = time.time()
+        start_time = time.process_time()
         diabetes = load_diabetes(as_frame=True)
         X = diabetes.frame.drop(columns="target")
         y = diabetes.frame["target"]
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
@@ -364,11 +366,11 @@ class DataConfig(ConfigBase):
         self : DataConfig
             The instance with loaded data and updated attributes.
         """
-        start_time = time.time()
+        start_time = time.process_time()
         digits = load_digits(as_frame=True)
         X = digits.frame.drop(columns="target")
         y = digits.frame["target"]
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
@@ -413,7 +415,7 @@ class DataConfig(ConfigBase):
         Sets self._y (pd.Series): Target vector.
         Sets self.data_load_time (float): Time taken to generate the data.
         """
-        start_time = time.time()
+        start_time = time.process_time()
         X, y = make_classification(
             n_samples=n_samples,
             n_features=n_features,
@@ -425,7 +427,7 @@ class DataConfig(ConfigBase):
         )
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_load_time = end_time - start_time
         return self
 
@@ -458,7 +460,7 @@ class DataConfig(ConfigBase):
         self : DataConfig
             The instance with generated data stored in self._X (DataFrame), self._y (Series), and self.data_load_time (float).
         """
-        start_time = time.time()
+        start_time = time.process_time()
         X, y = make_regression(
             n_samples=n_samples,
             n_features=n_features,
@@ -468,7 +470,7 @@ class DataConfig(ConfigBase):
         )
         self._X = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
         self._y = pd.Series(y)
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_load_time = end_time - start_time
         return self
 
@@ -512,7 +514,7 @@ class DataConfig(ConfigBase):
             else:
                 raise ValueError("stratify must be None, True, or a column name")
         indices = range(len(self._X))
-        start_time = time.time()
+        start_time = time.process_time()
         try:
             train_idx, test_idx = train_test_split(
                 indices,
@@ -525,7 +527,7 @@ class DataConfig(ConfigBase):
             raise ValueError(
                 f"Error during train/test split with train_size={self.train_size}, test_size={self.test_size}, random_state={self.random_state}, stratify={self.stratify}: {e} ",
             )
-        end_time = time.time()
+        end_time = time.process_time()
         self.data_sample_time = end_time - start_time
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
         self._train_indices = train_idx
@@ -613,8 +615,8 @@ class DataConfig(ConfigBase):
                         data = data.drop(columns=del_col)
                 self._X = data
                 self._y = y
-                end_time = time.time()
-                self.data_load_time = end_time - time.time()
+                end_time = time.process_time()
+                self.data_load_time = end_time - time.process_time()
                 logger.info(
                     f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
                 )
@@ -779,9 +781,9 @@ class DataConfig(ConfigBase):
             scores = {}
         # Load data if not already loaded
         if not hasattr(self, "_data_load_time") or self.data_load_time is None:
-            start_time = time.time()
+            start_time = time.process_time()
             self._load_data()
-            end_time = time.time()
+            end_time = time.process_time()
             self.data_load_time = end_time - start_time
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
         # Sample data if not already sampled
