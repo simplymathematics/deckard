@@ -3,18 +3,18 @@ import warnings
 import hashlib
 from dataclasses import dataclass
 from typing import List, Union, Literal
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 
 import numpy as np
 from pathlib import Path
+from hydra.utils import instantiate
 
 from .data import DataConfig
 from .model import ModelConfig
-from .model.defend import DefenseConfig
 from .attack import AttackConfig
 from .score import ScorerDictConfig
-from .file import FileConfig, data_files, model_files, defense_files, attack_files
+from .file import FileConfig, data_files, model_files, attack_files
 from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
@@ -31,11 +31,11 @@ class ExperimentConfig(ConfigBase):
     data: DataConfig
     experiment_name: str = "{hash}"
     model: ModelConfig = None
-    defense: DefenseConfig = None
     attack: AttackConfig = None
     files: FileConfig = None
     score: ScorerDictConfig = None
     random_state: int = 42
+    classifier : str = False
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
 
     def set_device(self, device: Union[str, int] = "cpu"):
@@ -110,9 +110,17 @@ class ExperimentConfig(ConfigBase):
         if self.data is None:
             raise ValueError("data must be provided")
         if isinstance(self.data, DictConfig):
-            self.data = DataConfig(**self.data)
+            data_dict = OmegaConf.to_container(self.data)
         elif isinstance(self.data, str):
-            self.data = DataConfig.from_yaml(self.data)
+            data_dict = DataConfig.from_yaml(self.data).to_dict()
+        elif isinstance(self.data, dict):
+            data_dict = OmegaConf.to_container(OmegaConf.create(self.data))
+        else:
+            raise ValueError(f"Unsupported type for data: {type(self.data)}")
+        if "_target_" not in data_dict:
+            self.data = DataConfig(**data_dict)
+        else:
+            self.data = instantiate(self.data)
         assert isinstance(
             self.data,
             DataConfig,
@@ -120,23 +128,36 @@ class ExperimentConfig(ConfigBase):
         self.data.__post_init__()
         if self.model is not None:
             if isinstance(self.model, DictConfig):
-                self.model = ModelConfig(**self.model)
+                model_dict = OmegaConf.to_container(self.model)
+            elif isinstance(self.model, str):
+                model_dict = ModelConfig.from_yaml(self.model).to_dict()
+            elif isinstance(self.model, dict):
+                model_dict = OmegaConf.to_container(OmegaConf.create(self.model))
+            else:
+                raise ValueError(f"Unsupported type for model: {type(self.model)}")
+            if "_target_" not in model_dict:
+                self.model = ModelConfig(**model_dict)
+            else:
+                self.model = instantiate(self.model)
             assert isinstance(
                 self.model,
                 ModelConfig,
             ), "model must be an instance of ModelConfig"
             self.model.__post_init__()
-        if self.defense is not None:
-            if isinstance(self.defense, DictConfig):
-                self.defense = DefenseConfig(**self.defense)
-            assert isinstance(
-                self.defense,
-                DefenseConfig,
-            ), "defense must be an instance of DefenseConfig"
-            self.defense.__post_init__()
+
         if self.attack is not None:
             if isinstance(self.attack, DictConfig):
-                self.attack = AttackConfig(**self.attack)
+                attack_dict = OmegaConf.to_container(self.attack)
+            elif isinstance(self.attack, str):
+                attack_dict = AttackConfig.from_yaml(self.attack).to_dict()
+            elif isinstance(self.attack, dict):
+                attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
+            else:
+                raise ValueError(f"Unsupported type for attack: {type(self.attack)}")
+            if "_target_" not in attack_dict:
+                self.attack = AttackConfig(**attack_dict)
+            else:
+                self.attack = instantiate(self.attack)
             assert isinstance(
                 self.attack,
                 AttackConfig,
@@ -147,28 +168,46 @@ class ExperimentConfig(ConfigBase):
             config_list = [self.data]
             if self.model:
                 config_list.append(self.model)
-            if self.defense:
-                config_list.append(self.defense)
             if self.attack:
                 config_list.append(self.attack)
             self.experiment_name = self._hash_from_list(config_list)
             logger.info(f"Generated experiment name: {self.experiment_name}")
         else:
             logger.info(f"Using provided experiment name: {self.experiment_name}")
-
+        # Initialize FileConfig, ensuring experiment_name is set
         if self.files is None:
             self.files = FileConfig(experiment_name=self.experiment_name)
         elif isinstance(self.files, FileConfig):
             self.files.experiment_name = self.experiment_name
             self.files.__post_init__()
+        elif isinstance(self.files, DictConfig):
+            file_dict = OmegaConf.to_container(self.files)
+            file_dict["experiment_name"] = self.experiment_name
+            self.files = FileConfig(**file_dict)
+        elif isinstance(self.files, str):
+            file_dict = FileConfig.from_yaml(self.files).to_dict()
+            file_dict["experiment_name"] = self.experiment_name
+            self.files = FileConfig(**file_dict)
+        elif isinstance(self.files, dict):
+            file_dict = self.files
+            file_dict["experiment_name"] = self.experiment_name
+            self.files = FileConfig(**file_dict)
         else:
-            self.files = FileConfig(**self.files, experiment_name=self.experiment_name)
-            assert isinstance(
-                self.files,
-                FileConfig,
-            ), "file must be an instance of FileConfig"
-            self.files.__post_init__()
-
+            raise ValueError(f"Unsupported type for files: {type(self.files)}")
+        assert isinstance(
+            self.files,
+            FileConfig,
+        ), "file must be an instance of FileConfig"
+        self.files.__post_init__()
+        assert self.files.experiment_name == self.experiment_name, (
+            f"files.experiment_name must match experiment_name. Got {self.files.experiment_name} vs {self.experiment_name}",
+        )
+        # Set classifier
+        
+        # Set scorers
+        if self.scorer is None:
+            if self.classifier 
+        
     def set_random_seed(self):
         if self.library in ["sklearn"]:
             np.random.seed(self.random_state)
@@ -182,7 +221,7 @@ class ExperimentConfig(ConfigBase):
             torch.manual_seed(self.random_state)
         else:
             raise ValueError(f"Unsupported library: {self.library}")
-        # Set
+        
 
     def _hash_from_list(self, config_list: List[ConfigBase]) -> str:
         """
@@ -230,9 +269,6 @@ class ExperimentConfig(ConfigBase):
             for file in model_files
             if file in file_dict
         }
-        defense_file_outputs = {
-            file: file_dict[file] for file in defense_files if file in file_dict
-        }
         attack_file_outputs = {
             file: file_dict[file] for file in attack_files if file in file_dict
         }
@@ -272,24 +308,8 @@ class ExperimentConfig(ConfigBase):
                 "score_dict",
             ), "model must have score_dict attribute after training"
             scores.update(**model.score_dict)
-        elif self.defense:
-            self.defense(data=data, **defense_file_outputs)
-            model = self.defense
-            assert hasattr(
-                model,
-                "training_predictions",
-            ), "model must have training_predictions attribute after training"
-            assert hasattr(
-                model,
-                "predictions",
-            ), "model must have predictions attribute after training"
-            assert hasattr(
-                model,
-                "score_dict",
-            ), "model must have score_dict attribute after training"
-            scores.update(**model.score_dict)
         else:
-            logger.info("No model or defense config provided, skipping model training.")
+            logger.info("No model config provided, skipping model training.")
             model = None
         if self.attack:
             self.attack(
