@@ -5,7 +5,7 @@ from deckard.score import (
     DefaultClassifierDict,
     DefaultRegressorDict,
 )
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 
 class TestScorerConfig(unittest.TestCase):
@@ -41,6 +41,19 @@ class TestScorerConfig(unittest.TestCase):
         score_normal = config(y_true=y_pred, y_pred=y_true)
         self.assertEqual(score_swap, score_normal)
 
+    def test_scorer_config_with_additional_params(self):
+        y_true = [1, 0, 1, 1]
+        y_pred = [1, 0, 0, 1]
+        config = ScorerConfig(
+            score_name="precision",
+            score_function=precision_score,
+            score_params={"average": "binary", "zero_division": 0},
+        )
+        score = config(y_true=y_true, y_pred=y_pred)
+        self.assertEqual(score, precision_score(y_true, y_pred, average="binary", zero_division=0))
+
+
+class TestScorerDictConfig(unittest.TestCase):
     def test_scorer_dict_config_initialization_and_call(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
@@ -64,6 +77,22 @@ class TestScorerConfig(unittest.TestCase):
         self.assertEqual(scores["accuracy"], accuracy_score(y_true, y_pred))
         self.assertEqual(scores["mse"], mean_squared_error(y_true, y_pred))
 
+    def test_scorer_dict_config_get_callables(self):
+        scorer_dict = ScorerDictConfig(
+            scorers={
+                "accuracy": ScorerConfig(
+                    score_name="accuracy",
+                    score_function=accuracy_score,
+                    score_params={},
+                ),
+            },
+        )
+        callables = scorer_dict.get_callables()
+        self.assertIn("accuracy", callables)
+        self.assertTrue(callable(callables["accuracy"]))
+
+
+class TestDefaultScorerDicts(unittest.TestCase):
     def test_default_classifier_dict(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
@@ -82,6 +111,18 @@ class TestScorerConfig(unittest.TestCase):
         self.assertIn("mse", scores)
         self.assertIn("mae", scores)
         self.assertIn("r2", scores)
+
+    def test_default_classifier_dict_with_empty_predictions(self):
+        y_true = []
+        y_pred = []
+        with self.assertRaises(ValueError):
+            DefaultClassifierDict.scorers(y_true=y_true, y_pred=y_pred)
+
+    def test_default_regressor_dict_with_empty_predictions(self):
+        y_true = []
+        y_pred = []
+        with self.assertRaises(ValueError):
+            DefaultRegressorDict.scorers(y_true=y_true, y_pred=y_pred)
 
 
 if __name__ == "__main__":

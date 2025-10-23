@@ -35,7 +35,7 @@ class ExperimentConfig(ConfigBase):
     files: FileConfig = None
     score: ScorerDictConfig = None
     random_state: int = 42
-    classifier : str = False
+    classifier : str = None
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
 
     def set_device(self, device: Union[str, int] = "cpu"):
@@ -109,55 +109,76 @@ class ExperimentConfig(ConfigBase):
         # Validate and initialize configs
         if self.data is None:
             raise ValueError("data must be provided")
-        if isinstance(self.data, DictConfig):
-            data_dict = OmegaConf.to_container(self.data)
-        elif isinstance(self.data, str):
-            data_dict = DataConfig.from_yaml(self.data).to_dict()
-        elif isinstance(self.data, dict):
-            data_dict = OmegaConf.to_container(OmegaConf.create(self.data))
+        if isinstance(self.data, DataConfig):
+            pass
         else:
-            raise ValueError(f"Unsupported type for data: {type(self.data)}")
-        if "_target_" not in data_dict:
-            self.data = DataConfig(**data_dict)
-        else:
-            self.data = instantiate(self.data)
+            if isinstance(self.data, DictConfig):
+                data_dict = OmegaConf.to_container(self.data)
+            elif isinstance(self.data, str):
+                data_dict = DataConfig.from_yaml(self.data).to_dict()
+            elif isinstance(self.data, dict):
+                data_dict = OmegaConf.to_container(OmegaConf.create(self.data))
+            else:
+                raise ValueError(f"Unsupported type for data: {type(self.data)}")
+            
+            if "_target_" not in data_dict:
+                self.data = DataConfig(**data_dict)
+            else:
+                self.data = instantiate(self.data)
         assert isinstance(
             self.data,
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
         self.data.__post_init__()
+        if self.classifier is None:
+            self.classifier = self.data.classifier
+        else:
+            assert self.classifier == self.data.classifier, (
+                f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
+            )
         if self.model is not None:
-            if isinstance(self.model, DictConfig):
-                model_dict = OmegaConf.to_container(self.model)
-            elif isinstance(self.model, str):
-                model_dict = ModelConfig.from_yaml(self.model).to_dict()
-            elif isinstance(self.model, dict):
-                model_dict = OmegaConf.to_container(OmegaConf.create(self.model))
+            if isinstance(self.model, ModelConfig):
+                pass
             else:
-                raise ValueError(f"Unsupported type for model: {type(self.model)}")
-            if "_target_" not in model_dict:
-                self.model = ModelConfig(**model_dict)
-            else:
-                self.model = instantiate(self.model)
+                if isinstance(self.model, DictConfig):
+                    model_dict = OmegaConf.to_container(self.model)
+                elif isinstance(self.model, str):
+                    model_dict = ModelConfig.from_yaml(self.model).to_dict()
+                elif isinstance(self.model, dict):
+                    model_dict = OmegaConf.to_container(OmegaConf.create(self.model))
+                else:
+                    raise ValueError(f"Unsupported type for model: {type(self.model)}")
+                if "_target_" not in model_dict:
+                    self.model = ModelConfig(**model_dict)
+                else:
+                    self.model = instantiate(self.model)
             assert isinstance(
                 self.model,
                 ModelConfig,
             ), "model must be an instance of ModelConfig"
             self.model.__post_init__()
-
+            if self.classifier is None:
+                self.classifier = self.model.classifier
+            else:
+                assert self.classifier == self.model.classifier, (
+                    f"classifier in experiment must match model.classifier. Got {self.classifier} vs {self.model.classifier}"
+                )
         if self.attack is not None:
-            if isinstance(self.attack, DictConfig):
-                attack_dict = OmegaConf.to_container(self.attack)
-            elif isinstance(self.attack, str):
-                attack_dict = AttackConfig.from_yaml(self.attack).to_dict()
-            elif isinstance(self.attack, dict):
-                attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
+            if isinstance(self.attack, AttackConfig):
+                pass
             else:
-                raise ValueError(f"Unsupported type for attack: {type(self.attack)}")
-            if "_target_" not in attack_dict:
-                self.attack = AttackConfig(**attack_dict)
-            else:
-                self.attack = instantiate(self.attack)
+                if isinstance(self.attack, DictConfig):
+                    attack_dict = OmegaConf.to_container(self.attack)
+                elif isinstance(self.attack, str):
+                    attack_dict = AttackConfig.from_yaml(self.attack).to_dict()
+                elif isinstance(self.attack, dict):
+                    attack_dict = OmegaConf.to_container(OmegaConf.create(self.attack))
+                else:
+                    raise ValueError(f"Unsupported type for attack: {type(self.attack)}")
+                if "_target_" not in attack_dict:
+                    self.attack = AttackConfig(**attack_dict)
+                else:
+                    self.attack = instantiate(self.attack)
             assert isinstance(
                 self.attack,
                 AttackConfig,
@@ -170,6 +191,8 @@ class ExperimentConfig(ConfigBase):
                 config_list.append(self.model)
             if self.attack:
                 config_list.append(self.attack)
+            if self.score:
+                config_list.append(self.score)
             self.experiment_name = self._hash_from_list(config_list)
             logger.info(f"Generated experiment name: {self.experiment_name}")
         else:
@@ -202,11 +225,21 @@ class ExperimentConfig(ConfigBase):
         assert self.files.experiment_name == self.experiment_name, (
             f"files.experiment_name must match experiment_name. Got {self.files.experiment_name} vs {self.experiment_name}",
         )
-        # Set classifier
-        
+    
         # Set scorers
-        if self.scorer is None:
-            if self.classifier 
+        if isinstance(self.score, DictConfig):
+            score_dict = OmegaConf.to_container(self.score)
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, str):
+            score_dict = ScorerDictConfig.from_yaml(self.score).to_dict()
+            self.score = ScorerDictConfig(**score_dict)
+        elif isinstance(self.score, dict):
+            score_dict = self.score
+            self.score = ScorerDictConfig(**score_dict)
+        elif self.score is None:
+            pass
+        else:
+            raise ValueError(f"Unsupported type for score: {type(self.score)}")
         
     def set_random_seed(self):
         if self.library in ["sklearn"]:
@@ -336,6 +369,7 @@ class ExperimentConfig(ConfigBase):
             attack = None
         # Assert that all files in file_dict exist
 
+        
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
@@ -343,4 +377,14 @@ class ExperimentConfig(ConfigBase):
                 filepath = self.files._replace_placeholders(filepath)
                 assert Path(filepath).exists(), f"File {filepath} for {attr} does not exist."
             # 
+        if self.score:
+            custom_scores = self.score(
+                data=data,
+                model=model,
+                attack=attack,
+                mode="train",
+                score_file=file_dict.get("score_file", None)
+            )
+            scores = {**scores, **custom_scores}
+            # TODO: override existing score functions
         return scores

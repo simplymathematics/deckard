@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import logging
-from typing import Dict
+from typing import Literal, Dict
+from pathlib import Path
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -12,6 +13,9 @@ from sklearn.metrics import (
     r2_score,
     log_loss,
 )
+from .data import DataConfig
+from .model import ModelConfig
+from .attack import AttackConfig
 from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
@@ -168,17 +172,31 @@ class ScorerDictConfig(ConfigBase):
         """
         return {key: scorer for key, scorer in self._scorers.items()}
 
-    def __call__(self, y_true, y_pred, **kwargs) -> Dict[str, float]:
+    def __call__(self, mode: Literal["test", "train", "attack", None] = "test", data: DataConfig =None,  model: ModelConfig = None, attack: AttackConfig = None, y_pred =None, y_true = None, score_file =None, **kwargs) -> Dict[str, float]:
         """
         ----
         Computes and returns a dictionary of scores for the given true and predicted labels.
 
         Parameters
         ----------
+        data : DataConfig
+            The data configuration containing true and predicted labels.
+        model : ModelConfig, optional
+            The model configuration (not used in scoring).
+        attack : AttackConfig, optional
+            The attack configuration (not used in scoring).
+        mode : Literal["test", "train", "attack", None], optional
+            The mode indicating which dataset to use for scoring. 
+            Default is "test" where y_true is data.y_test and y_pred=model.test_predictions.
+            "train" uses data.y_train and model.training_predictions.
+            "attack" uses data.y_test[:attack.attack_size] and attack.attack_predictions.
+            If None, y_true and y_pred must be provided directly.
+        y_pred : array-like, optional
+            The predicted labels. If None, predictions will be fetched from the model/data based on the mode.
         y_true : array-like
-            Ground truth (correct) target values.
-        y_pred : array-like
-            Estimated target values.
+            The true labels.
+        score_file : str, optional
+            Path to a file containing precomputed scores. If provided and the file exists,
         **kwargs : dict, optional
             Additional keyword arguments passed to each scorer.
 
@@ -188,9 +206,61 @@ class ScorerDictConfig(ConfigBase):
             A dictionary mapping scorer names to their computed score values.
         ----
         """
-        results = {}
+        if score_file is not None:
+            if Path(score_file).exists():
+                results = self.load_scores(score_file)
+        else:
+            results = {}
+        if y_pred is not None:
+            assert y_true is not None, "If y_pred is provided, y_true must also be provided. Otherwise, set y_pred to None and let the scorer fetch from data/model."
+        else:
+            if mode == "test":
+                y_true = data.y_test
+            elif mode == "train":
+                y_true = data.y_train
+            elif mode == "attack":
+                assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
+                y_true = data.y_test[:attack.attack_size]
+            else:
+                assert y_true is not None, "y_true must be provided if mode is None"
+            if model is not None:
+                assert isinstance(model, ModelConfig), "model must be an instance of ModelConfig"
+                assert hasattr(model, "_model"), "model must have a loaded _model attribute. Call model() first."
+                assert hasattr(model, "predictions"), "model must have predictions attribute. Call model() first."
+                loaded_model = model._model
+                # Replace the {model} placeholder in kwargs if present
+                assert "{model}" in kwargs.values(), "If model is provided, '{model}' must be in kwargs"
+                for k, v in kwargs.items():
+                    if v == "{model}":
+                        kwargs[k] = loaded_model
+            if mode == "train":
+                y_pred = model.training_predictions
+            elif mode == "test":
+                y_pred = model.predictions
+            elif mode == "attack":
+                assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
+                y_pred = attack.attack_predictions
+            else:
+                assert y_pred is not None, "y_pred must be provided if mode is None"
+        if attack is not None:
+            for k, v in kwargs.items():
+                    if v == "{attack}":
+                        assert isinstance(attack, AttackConfig), "attack must be an instance of AttackConfig"
+                        assert hasattr(attack, "_attack"), "attack must have a loaded _attack attribute. Call attack() first."
+                        kwargs[k] = attack._attack
         for key, scorer in self._scorers.items():
-            results[key] = scorer(y_true=y_true, y_pred=y_pred, **kwargs)
+            if mode == "test":
+                pass
+            elif model == "train":
+                key = f"training_{key}"
+            elif mode == "attack":
+                key = f"attack_{key}"
+            if results.get(key) is None:
+                results[key] = scorer(y_true=y_true, y_pred=y_pred, **kwargs)
+            else:
+                pass
+        if score_file is not None:
+            self.save_scores(score_file, results)
         return results
 
 
