@@ -499,14 +499,28 @@ def validate_module_and_files(module, files, optional_args=None):
             module_config_file = files["data_config_file"]
     elif module == "model":
         if "model_config_file" not in files:
-            raise ValueError("model_config_file argument is required for model module")
-        module_config_file = files["model_config_file"]
+            assert "model=" in str(
+                optional_args,
+            ), "model_config_file argument is required for model module"
+            model_arg = [arg for arg in optional_args if arg.startswith("model=")]
+            assert (
+                len(model_arg) == 1
+            ), "model_config_file argument is required for model module"
+            module_config_file = model_arg[0].split("=")[1]
+        else:
+            module_config_file = files["model_config_file"]
     elif module == "attack":
         if "attack_config_file" not in files:
-            raise ValueError(
-                "attack_config_file argument is required for attack module",
-            )
-        module_config_file = files["attack_config_file"]
+            assert "attack=" in str(
+                optional_args,
+            ), "attack_config_file argument is required for attack module"
+            attack_arg = [arg for arg in optional_args if arg.startswith("attack=")]
+            assert (
+                len(attack_arg) == 1
+            ), "attack_config_file argument is required for attack module"
+            module_config_file = attack_arg[0].split("=")[1]
+        else:
+            module_config_file = files["attack_config_file"]
     else:
         raise ValueError(f"Unsupported module: {module}")
     return module_config_file
