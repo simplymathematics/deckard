@@ -6,8 +6,8 @@ import importlib
 import sys
 from pathlib import Path
 
-from dataclasses import dataclass
-from typing import Tuple, Union, Dict
+from dataclasses import dataclass, field
+from typing import Tuple, Union
 from omegaconf import DictConfig, OmegaConf
 
 # Scikit-learn
@@ -38,11 +38,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DataPipelineConfig(ConfigBase):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
-    pipeline: Union[Dict[str, dict], Pipeline] = None
-    pipeline_fit_time: float = None
-    pipeline_fit_n: int = None
-    pipeline_transform_time: float = None
-    pipeline_transform_n: int = None
+    pipeline: dict = field(default_factory=dict)
+    
     
     
     def __post_init__(self):
@@ -51,6 +48,9 @@ class DataPipelineConfig(ConfigBase):
         self.pipeline_transform_n = None
         self.pipeline_fit_time = None
         self.pipeline_transform_time = None
+        
+        return super().__post_init__()
+    def _init_pipeline(self):
         if isinstance(self.pipeline, (dict, DictConfig)):
             # Validate the pipeline configuration
             for k,v in self.pipeline.items():
@@ -66,9 +66,7 @@ class DataPipelineConfig(ConfigBase):
                 step_instance = cls(**step_config)
                 pipeline_steps.append((step_name, step_instance))
             pipeline = Pipeline(pipeline_steps)
-            self.pipeline = pipeline
-        return super().__post_init__()
-    
+            return pipeline
     def __call__(self, X_train, X_test, y_train, y_test) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
         
@@ -82,14 +80,15 @@ class DataPipelineConfig(ConfigBase):
         pd.DataFrame
             The transformed training and testing data.
         """
+        pipeline = self._init_pipeline()
         if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
             logger.info("Fitting data pipeline to training data")
             # Fit and transform the training data
             start = time.process_time()
-            self.pipeline.fit(X_train, y_train)
+            pipeline.fit(X_train, y_train)
             end = time.process_time()
             before_shape = X_train.shape
-            X_train = self.pipeline.transform(X_train)
+            X_train = pipeline.transform(X_train)
             after_shape = X_train.shape
             assert before_shape[0] == after_shape[0], f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
             self.pipeline_fit_time = end - start
@@ -99,7 +98,7 @@ class DataPipelineConfig(ConfigBase):
             start = time.process_time()
             # Transform the testing data
             before_shape = X_test.shape
-            X_test = self.pipeline.transform(X_test.values)
+            X_test = pipeline.transform(X_test.values)
             after_shape = X_test.shape
             assert before_shape[0] == after_shape[0], f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
             end = time.process_time()
@@ -210,8 +209,8 @@ class DataConfig(ConfigBase):
 
     dataset_name: str = "adult"
     data_params: dict = None
-    test_size: Union[float, int] = 0.2
-    train_size: Union[float, int] = None
+    test_size: Union[float, int, None] = 0.2
+    train_size: Union[float, int, None] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: bool = True
