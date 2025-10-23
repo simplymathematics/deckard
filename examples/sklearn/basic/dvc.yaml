@@ -25,6 +25,9 @@ stages:
         - digits
         - regression
         - kdd_nsl
+        - ddos
+        - sms_spam
+        - truthseeker
       do:
         cmd: >
           deckard 

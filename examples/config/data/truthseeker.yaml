@@ -1,0 +1,12 @@
+dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/34e546e4813f154d11d4f13869b9e3481fc3e829/truthseeker.csv
+target: 'BotScoreBinary'
+keep :
+    - 'tweet'
+random_state : 0
+test_size : .2
+stratify: True
+pipeline:
+    string_embedding:
+        name : sklearn.feature_extraction.text.TfidfVectorizer
+        max_features : 100
+        stop_words : 'english'
