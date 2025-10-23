@@ -99,6 +99,9 @@ def optimize(
         directions = []
     if "files" in cfg and len(cfg["files"]) > 0:
         files = cfg.pop("files", {})
+    else:
+        files = {}
+    # Initialize FileConfig
     if isinstance(files, dict):
         files = FileConfig(**files)()
     elif isinstance(files, FileConfig):

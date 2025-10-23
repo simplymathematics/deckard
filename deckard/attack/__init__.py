@@ -120,8 +120,6 @@ class AttackConfig(ConfigBase):
         Sets the internal attack attribute to None. If attack_params is not provided,
         initializes it as an empty dictionary.
         """
-        if self.attack_params is None:
-            self.attack_params = {}
         self.attack_predictions = None
         self.attack = None
         self.score_dict = {}
@@ -187,7 +185,7 @@ class AttackConfig(ConfigBase):
             raise ValueError(f"Unsupported model type: {model_alias}")
         
         # Convert targeted attribute to index if necessary
-        if self.targeted_attribute is not None and isinstance(
+        if len(self.targeted_attribute) > 0 and isinstance(
             self.targeted_attribute,
             str,
         ):

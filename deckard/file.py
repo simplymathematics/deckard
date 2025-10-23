@@ -88,10 +88,10 @@ class FileConfig(ConfigBase):
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         if self.experiment_name:
             path = str(path).replace("{experiment_name}", self.experiment_name)
-        if path is None:
+        if path is None or len(path) == 0:
             return None
         if "{hash}" in path:
-            if placeholder_dict.get("hash") is None:
+            if placeholder_dict.get("hash", None) is None:
                 dummy_hash = hashlib.md5(self.experiment_name.encode()).hexdigest()
                 placeholder_dict["hash"] = dummy_hash
             path = str(path).replace("{hash}", placeholder_dict["hash"])

@@ -49,7 +49,7 @@ class ScorerConfig:
         """
         Validates the scoring function and initializes the scorer using make_scorer.
         """
-        if self.score_params is None:
+        if len(self.score_params) == 0:
             self.score_params = {}
         assert callable(self.score_function), "score_function must be callable"
         # Create a scorer using the provided function and parameters
