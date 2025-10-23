@@ -9,7 +9,6 @@ from typing import Union, Any
 from dataclasses import dataclass
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
-from urllib.parse import urlparse
 
 
 logger = logging.getLogger(__name__)
@@ -241,7 +240,7 @@ class ConfigBase:
         """
 
         if filepath is None:
-            raise FileNotFoundError(f"Filepath is None.")
+            raise FileNotFoundError("Filepath is None.")
         supported_filetypes = [
             ".csv",
             ".json",

@@ -18,7 +18,13 @@ from torchvision import datasets, transforms
 
 # deckard
 from deckard.data import DataConfig
-from sklearn.feature_selection import mutual_info_classif, chi2, f_classif, mutual_info_regression, f_regression
+from sklearn.feature_selection import (
+    mutual_info_classif,
+    chi2,
+    f_classif,
+    mutual_info_regression,
+    f_regression,
+)
 from scipy.stats import pearsonr
 import numpy as np
 

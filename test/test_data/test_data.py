@@ -4,7 +4,6 @@ import pandas as pd
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 
-import pandas as pd
 import numpy as np
 from deckard.data import DataConfig, DataPipelineConfig
 

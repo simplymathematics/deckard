@@ -11,9 +11,6 @@ from deckard.__main__ import (
     handle_default_module,
     validate_module_and_files,
     validate_files,
-    handle_other_modules,
-    module_file_dict,
-    main,
 )
 
 
