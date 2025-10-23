@@ -627,7 +627,7 @@ class DataConfig(ConfigBase):
         assert isinstance(self._X, (pd.DataFrame, pd.Series)), "_X must be a DataFrame after loading data"
         assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
 
-    def _score(self, classifier=False) -> dict:
+    def _score(self) -> dict:
         """
         Computes feature importance scores based on the type of task (classification or regression).
 
@@ -641,7 +641,7 @@ class DataConfig(ConfigBase):
         dict
             A dictionary containing feature importance scores.
         """
-        if classifier:
+        if self.classifier:
             return self._classification_feature_scores()
         else:
             return self._regression_feature_scores()
@@ -657,6 +657,7 @@ class DataConfig(ConfigBase):
             - 'mutual_info_classif': Mutual information scores.
             - 'chi2': Chi-squared scores.
             - 'f_classif': ANOVA F-value scores.
+            - 'class_counts': Counts of each class in the training target.
         """
         scores = {}
         if self.y_train.nunique() > 1:
@@ -711,6 +712,8 @@ class DataConfig(ConfigBase):
             - 'mutual_info_regression': Mutual information scores.
             - 'f_regression': F-value scores.
             - 'r_regression': Pearson correlation coefficients.
+            - 'y_train_cdf': Empirical CDF of the training target.
+            - 'y_test_cdf': Empirical CDF of the testing target.
         """
         scores = {}
         scores["mutual_info_regression"] = mutual_info_regression(
@@ -820,7 +823,7 @@ class DataConfig(ConfigBase):
             logger.info(
                 f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
             )
-        data_scores = self._score(classifier=self.classifier)
+        data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         if score_file is not None:
