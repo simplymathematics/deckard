@@ -10,8 +10,8 @@ from deckard.attack import AttackConfig
 
 class TestAttackConfig(unittest.TestCase):
     def setUp(self):
-        self.attack_params = {"max_iter": 10, "init_eval": 5, "max_eval": 20}
-        self.attack_type = "art.attacks.evasion.HopSkipJump"
+        self.attack_params = {}
+        self.attack_type = "art.attacks.evasion.FastGradientMethod"
         self.attack = AttackConfig(
             attack_type=self.attack_type,
             attack_params=self.attack_params,
