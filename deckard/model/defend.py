@@ -60,7 +60,7 @@ class DefenseConfig(ModelConfig):
     model_type: str = "sklearn.linear_model.LogisticRegression"
     classifier: bool = True
     model_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the model."})
-    probability: bool = field(default=True, metadata={"help": "Whether to use predict_proba() (True)estimates."})
+    probability: bool = False
     clip_values: tuple = field(default=None, metadata={"help": "Tuple of the form (min, max) to clip input features."})
     defense_name: str = field(default_factory=str, metadata={"help": "Name of the defense to apply."})
     defense_params: dict = field(default_factory=dict, metadata={"help": "Parameters for the defense."})
@@ -172,7 +172,7 @@ class DefenseConfig(ModelConfig):
             ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
 
         # Dynamically import the defense class with defense_params as kwargs
-        if self.defense_name is not None:
+        if len(self.defense_name) > 0:
             module_name, class_name = self.defense_name.rsplit(".", 1)
         else:
             module_name = None
