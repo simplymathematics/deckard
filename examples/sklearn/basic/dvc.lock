@@ -640,8 +640,8 @@ stages:
     deps:
     - path: ../../../deckard
       hash: md5
-      md5: b00adec3ad8956a9acf63fa50f41ed47.dir
-      size: 437909
+      md5: 2885e8a4fa439f2830c2d1391ed02b70.dir
+      size: 437949
       nfiles: 26
     - path: .config_paths_set
       hash: md5
@@ -650,8 +650,8 @@ stages:
     outs:
     - path: deckard.log
       hash: md5
-      md5: c6bfff5f94133e9d4aeee95af4928229
-      size: 126729
+      md5: 34774ae8c05771295efbc28256ec7c19
+      size: 126720
   generate_data@kdd_nsl:
     cmd: "deckard  data=kdd_nsl  +files.data_file=data/kdd_nsl.pkl  +files.score_file=scores/data/kdd_nsl.json
       ~model  ~attack\n"

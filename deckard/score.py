@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from typing import Literal, Dict
 from pathlib import Path
@@ -41,7 +41,7 @@ class ScorerConfig:
 
     score_name: str
     score_function: callable
-    score_params: dict = None
+    score_params: dict = field(default_factory=dict)
     greater_is_better: bool = True
     needs_proba: bool = False
 
