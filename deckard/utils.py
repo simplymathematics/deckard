@@ -1,20 +1,30 @@
 import logging
 import argparse
 import inspect
+import pandas as pd
+import pickle
 from pathlib import Path
 from hashlib import md5
 from typing import Union, Any
 from dataclasses import dataclass
-import pandas as pd
-import pickle
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from urllib.parse import urlparse
+
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
+data_supported_filetypes = [
+    ".csv",
+    ".parquet",
+    ".pkl",
+    ".html",
+    ".json",
+    ".xlsx",
+    ".pkl",
+]
 @dataclass
 class ConfigBase:
     _target_: str = "deckard.utils.ConfigBase"
@@ -228,9 +238,9 @@ class ConfigBase:
         ValueError
             If the file extension is not supported. Supported types are .csv, .json, .
         """
-        data_path = Path(filepath)
-        if data_path is None or not data_path.exists():
-            FileNotFoundError(f"File {filepath} does not exist.")
+        
+        if filepath is None:
+            raise FileNotFoundError(f"Filepath is None.")
         supported_filetypes = [
             ".csv",
             ".json",
@@ -241,24 +251,24 @@ class ConfigBase:
             ".html",
         ]
 
-        match data_path.suffix:
+        match Path(filepath).suffix:
             case ".pkl":
-                data = pd.read_pickle(data_path, **kwargs)
+                data = pd.read_pickle(filepath, **kwargs)
             case ".csv":
-                data = pd.read_csv(data_path, **kwargs)
+                data = pd.read_csv(filepath, **kwargs)
             case ".json":
-                data = pd.read_json(data_path, orient="records", **kwargs)
+                data = pd.read_json(filepath, orient="records", **kwargs)
             case ".xlsx":
-                data = pd.read_excel(data_path, **kwargs)
+                data = pd.read_excel(filepath, **kwargs)
             case ".parquet":
-                data = pd.read_parquet(data_path, **kwargs)
+                data = pd.read_parquet(filepath, **kwargs)
             case "html":
-                data = pd.read_html(data_path, **kwargs)[0]
+                data = pd.read_html(filepath, **kwargs)[0]
             case _:
                 raise ValueError(
-                    f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
+                    f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
                 )
-        logger.info(f"Data loaded from {data_path}")
+        logger.info(f"Data loaded from {Path(filepath)}")
         return data
 
     def save_object(self, obj: Any, filepath: str) -> None:

@@ -3,6 +3,7 @@ import pandas as pd
 import time
 import logging
 import importlib
+import sys
 from pathlib import Path
 
 from dataclasses import dataclass
@@ -28,8 +29,9 @@ from sklearn.feature_selection import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
+
 # deckard
-from ..utils import ConfigBase
+from ..utils import ConfigBase, data_supported_filetypes
 # Setup logger
 logger = logging.getLogger(__name__)
 
@@ -81,14 +83,13 @@ class DataPipelineConfig(ConfigBase):
             The transformed training and testing data.
         """
         if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
-            
             logger.info("Fitting data pipeline to training data")
             # Fit and transform the training data
             start = time.process_time()
-            self.pipeline.fit(X_train.values, y_train.values)
+            self.pipeline.fit(X_train, y_train)
             end = time.process_time()
             before_shape = X_train.shape
-            X_train = self.pipeline.transform(X_train.values)
+            X_train = self.pipeline.transform(X_train)
             after_shape = X_train.shape
             assert before_shape[0] == after_shape[0], f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
             self.pipeline_fit_time = end - start
@@ -128,6 +129,12 @@ class DataConfig(ConfigBase):
         Whether the task is classification (True) or regression (False).
     pipeline: DataPipelineConfig
         Optional data pipeline configuration for preprocessing steps.
+    drop: list
+        List of columns to drop from the dataset.
+    target: Union[str, None]
+        Name of the target column in the dataset (if applicable).
+    keep: list
+        List of columns to keep in the dataset.
     _X : pd.DataFrame
         Loaded feature matrix.
     _y : pd.Series
@@ -203,12 +210,15 @@ class DataConfig(ConfigBase):
 
     dataset_name: str = "adult"
     data_params: dict = None
-    test_size: float = 0.2
+    test_size: Union[float, int] = 0.2
+    train_size: Union[float, int] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: bool = True
     pipeline : Union[DataPipelineConfig, None] = None
     target : Union[str, None] = None
+    drop: list = None
+    keep: list = None
 
     def __post_init__(self):
         """
@@ -220,12 +230,12 @@ class DataConfig(ConfigBase):
         Raises:
             ValueError: If `test_size` is not between 0 and 1.
         """
-        if not (0 < self.test_size < 1):
-            raise ValueError("test_size must be between 0 and 1")
-        self.train_size = 1 - self.test_size
         self.data_load_time = None
         self.data_sample_time = None
         self.data_params = self.data_params if self.data_params is not None else {}
+        self.target = self.target
+        self.drop = [] if not hasattr(self, "drop") or self.drop is None else self.drop
+        self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
         self._X = None
         self._y = None
         self._train_indices = None
@@ -256,6 +266,7 @@ class DataConfig(ConfigBase):
                 (DataPipelineConfig)
             ), f"pipeline must be a DataPipelineConfig instance, got {type(self.pipeline)}"
         assert self.classifier in [True, False], "classifier must be a boolean value"
+        
         if self._target_ is None:
             self._target_ = "DataConfig"
 
@@ -469,8 +480,8 @@ class DataConfig(ConfigBase):
         """
         if not hasattr(self, "_X") or self._X is None:
             raise ValueError("Data not loaded. Cannot sample.")
-        train_n = int(self.train_size * len(self._X))
-        test_n = len(self._X) - train_n
+        train_n = self.train_n
+        test_n = self.test_n
         stratify_col = None
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Cannot sample.")
@@ -513,6 +524,10 @@ class DataConfig(ConfigBase):
         self.y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
+        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), "X_train must be a DataFrame"
+        assert isinstance(self.y_train, pd.Series), "y_train must be a Series"
+        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), "X_test must be a DataFrame"
+        assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
 
     def _load_data(self):
         """
@@ -543,7 +558,7 @@ class DataConfig(ConfigBase):
             If a CSV file does not contain a 'target' column.
         """
         filetype = Path(self.dataset_name).suffix
-        supported_filetypes = [".csv"]
+        supported_filetypes = data_supported_filetypes
         suppoted_datasets = [
             "adult",
             "make_classification",
@@ -569,31 +584,34 @@ class DataConfig(ConfigBase):
                 self._load_diabetes_data(**self.data_params)
             case "digits":
                 self._load_digits_data(**self.data_params)
-            case _ if filetype == ".csv":
-                data = pd.read_csv(self.dataset_name)
-                if "target" in data.columns:
-                    y = data.pop("target")
-                else:
-                    if self.target is None:
+            case _ if filetype in supported_filetypes:
+                data = self.load_data(self.dataset_name)
+                if self.target is None:
                         raise ValueError(
                             "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
                         )
-                    y = data.pop(self.target)
-
-                X = data
-                self._X = X
+                y = data.pop(self.target)
+                if len(self.keep) > 1:
+                    data = data[self.keep]
+                elif len(self.keep) == 1:
+                    data = data[self.keep[0]]
+                for del_col in self.drop:
+                    assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
+                    if del_col in data.columns:
+                        data = data.drop(columns=del_col)
+                self._X = data
                 self._y = y
                 end_time = time.time()
                 self.data_load_time = end_time - time.time()
                 logger.info(
                     f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
                 )
-            case _ if filetype == ".npz":
-                raise NotImplementedError("Loading from .npz files not yet implemented")
             case _:
                 raise NotImplementedError(
                     f"Dataset {self.dataset_name} not implemented",
                 )
+        assert isinstance(self._X, (pd.DataFrame, pd.Series)), "_X must be a DataFrame after loading data"
+        assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
 
     def _score(self, classifier=False) -> dict:
         """
@@ -796,5 +814,6 @@ class DataConfig(ConfigBase):
         if save_flag:
             self.save(data_file)
         return self.score_dict
+    
 
 
