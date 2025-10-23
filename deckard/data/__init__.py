@@ -48,25 +48,27 @@ class DataPipelineConfig(ConfigBase):
         self.pipeline_transform_n = None
         self.pipeline_fit_time = None
         self.pipeline_transform_time = None
+        # Validate the pipeline configuration
+        for k,v in self.pipeline.items():
+            assert isinstance(v, dict), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
+            assert "name" in v, f"Each step in pipeline must have a 'name' key, missing in step {k}"
         
         return super().__post_init__()
     def _init_pipeline(self):
-        if isinstance(self.pipeline, (dict, DictConfig)):
-            # Validate the pipeline configuration
-            for k,v in self.pipeline.items():
-                assert isinstance(v, dict), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
-                assert "name" in v, f"Each step in pipeline must have a 'name' key, missing in step {k}"
-            # Build the pipeline
-            pipeline_steps = []
-            for step_name, step_config in self.pipeline.items():
-                step_class = step_config.pop("name")
-                module_name, class_name = step_class.rsplit(".", 1)
-                module = importlib.import_module(module_name)
-                cls = getattr(module, class_name)
-                step_instance = cls(**step_config)
-                pipeline_steps.append((step_name, step_instance))
-            pipeline = Pipeline(pipeline_steps)
-            return pipeline
+        if not isinstance(self.pipeline, (dict, DictConfig)):
+            raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
+        pipeline_steps = []
+        for step_name, step_config in self.pipeline.items():
+            step_class = step_config.get("name", ValueError(f"Step {step_name} missing 'name' key"))
+            step_config_without_name = {**step_config}
+            del step_config_without_name["name"]
+            module_name, class_name = step_class.rsplit(".", 1)
+            module = importlib.import_module(module_name)
+            cls = getattr(module, class_name)
+            step_instance = cls(**step_config_without_name)
+            pipeline_steps.append((step_name, step_instance))
+        pipeline = Pipeline(pipeline_steps)
+        return pipeline
     def __call__(self, X_train, X_test, y_train, y_test) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
         
