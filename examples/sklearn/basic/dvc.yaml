@@ -17,6 +17,7 @@ stages:
         - deckard.log
       deps:
         - .config_paths_set # Here to ensure config paths are set before running deckard
+        - ../../../deckard
   generate_data:
       foreach:
         - adult
