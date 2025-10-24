@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import time
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -6,7 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 from dataclasses import dataclass
 from typing import Union
 import logging
-import inspect
+from omegaconf import DictConfig
 
 import importlib
 import numpy as np
@@ -137,7 +138,7 @@ class ModelConfig(ConfigBase):
         if hasattr(self._model, "get_params"):
             self.model_params = self._model.get_params()
         else:
-            assert isinstance(self.model_params, dict), "model_params must be a dict if model does not have get_params method"
+            assert isinstance(self.model_params, (dict, DictConfig)), f"model_params must be a dict if model does not have get_params method. Got {type(self.model_params)}"
             
 
     def __hash__(self):
