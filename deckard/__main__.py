@@ -561,7 +561,6 @@ def handle_default_module(config_dir):
         logger.error(
             f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
         )
-        input("This is a fatal error. Press Enter to exit...    ")
         sys.exit(1)
 
     @hydra.main(
