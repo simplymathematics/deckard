@@ -6,7 +6,7 @@ from sklearn.utils.validation import check_is_fitted
 from dataclasses import dataclass
 from typing import Union
 import logging
-
+import inspect
 
 import importlib
 import numpy as np
@@ -16,8 +16,6 @@ from ..data import DataConfig
 from ..utils import ConfigBase
 
 logger = logging.getLogger(__name__)
-
-supported_sklearn_libraries = ["sklearn"]
 
 __all__ = ["ModelConfig"]
 
@@ -112,22 +110,8 @@ class ModelConfig(ConfigBase):
         Raises:
             AssertionError: If `self.model_type` does not start with "sklearn.".
         """
-        # Import the model class from sklearn
-        library = self.model_type.split(".")[0]
-
-        assert (
-            library in supported_sklearn_libraries
-        ), f"Only {supported_sklearn_libraries} models are supported"
         # Dynamically import the model class
-        module_name, class_name = self.model_type.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        model_class = getattr(module, class_name)
-        # initialize model with parameters if provided
-        if self.model_params is not None:
-            self._model = model_class(**self.model_params)
-        else:
-            self._model = model_class()
-        self.model_params = self._model.get_params()
+        self._initialize_model()
         self.score_dict = {}
         self.training_time = None
         self.prediction_time = None
@@ -140,6 +124,21 @@ class ModelConfig(ConfigBase):
         self.predictions = None
         if self._target_ is None:
             self._target_ = "deckard.ModelConfig"
+
+    def _initialize_model(self):
+        module_name, class_name = self.model_type.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        model_class = getattr(module, class_name)
+        # initialize model with parameters if provided
+        if self.model_params is not None:
+            self._model = model_class(**self.model_params)
+        else:
+            self._model = model_class()
+        if hasattr(self._model, "get_params"):
+            self.model_params = self._model.get_params()
+        else:
+            assert isinstance(self.model_params, dict), "model_params must be a dict if model does not have get_params method"
+            
 
     def __hash__(self):
         return super().__hash__()
@@ -269,7 +268,7 @@ class ModelConfig(ConfigBase):
             "f1-score": f1,
         }
         return scores
-
+    
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         """
         Calculate regression error metrics between true and predicted values.
