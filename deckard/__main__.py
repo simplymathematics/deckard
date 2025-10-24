@@ -491,9 +491,19 @@ def main():
     # Get config dir from environment variable if set
     config_dir = os.environ.get(
         "DECKARD_CONFIG_DIR",
-        ValueError("DECKARD_CONFIG_DIR environment variable not set."),
+        None,
     )
-    config_dir = str(Path(config_dir).resolve())
+    while config_dir is None or not Path(config_dir).exists():
+        # Deckard_config dir does not exist, have the user set it using input()
+        config_dir = input(
+            "DECKARD_CONFIG_DIR environment variable not set or path does not exist. Please enter the config directory path: ",
+        )
+        # Prompt user to confirm the path exists
+        if not Path(config_dir).exists():
+            config_dir = None
+    # Set the environment variable for future use
+    os.environ["DECKARD_CONFIG_DIR"] = Path(config_dir).resolve().as_posix()
+    # strip the username from the path for logging
     optional_args, modules = parse_optional_args()
     if len(modules) >= 1:
         pass
@@ -537,19 +547,25 @@ def handle_default_module(config_dir):
     """
     logger.debug("No optional arguments provided.")
     config_file = os.environ.get("DECKARD_DEFAULT_CONFIG_FILE", "default.yaml")
-    logger.info(f"Working directory: {os.getcwd()}")
+    working_dir = os.getcwd
+    logger.info(f"Current working directory: {working_dir()}")
     logger.info("Starting Deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
     config_file = Path(config_dir) / config_file
-    logger.info(f"Resolved config file path: {config_file.resolve()}")
-    if not config_file.exists():
+    # Make config_dir is relatve to working dir
+    if not Path(config_dir).is_absolute():
+        config_dir = os.path.relpath(config_dir, working_dir())
+    config_file = Path(config_dir) / config_file.name
+    logger.info(f"Resolved config file path: {config_file}")
+    if not Path(config_file).exists():
         logger.error(
             f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
         )
+        input("This is a fatal error. Press Enter to exit...    ")
         sys.exit(1)
 
     @hydra.main(
-        config_path=config_dir,
+        config_path=str(Path(config_dir).resolve()),
         config_name=str(config_file.name),
         version_base="1.3",
     )
