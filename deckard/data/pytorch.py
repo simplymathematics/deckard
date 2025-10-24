@@ -12,7 +12,7 @@ from typing import Union, Dict
 # PyTorch
 import torch
 from torch import Tensor
-from torch.utils.data import random_split, DataLoader, TensorDataset
+from torch.utils.data import random_split, TensorDataset
 from torchvision import datasets, transforms
 
 
@@ -36,6 +36,9 @@ pytorch_dataset_dict = {
     "mnist": datasets.MNIST,
     "cifar10": datasets.CIFAR10,
     "fashionmnist": datasets.FashionMNIST,
+    "torch_mnist": datasets.MNIST,
+    "torch_cifar10": datasets.CIFAR10,
+    "torch_fashionmnist": datasets.FashionMNIST,
     # Add more datasets as needed
 }
 
@@ -196,10 +199,10 @@ class PytorchDataConfig(DataConfig):
             generator=torch.Generator().manual_seed(self.random_state),
         )
         end = time.process_time()
-        # Create DataLoaders
-        self.X_train, self.y_train = train_data
-        self.X_val, self.y_val = val_data
-        self.X_test, self.y_test = test_data
+        # Unpack datasets
+        self.X_train, self.y_train = train_data[:]
+        self.X_val, self.y_val = val_data[:]
+        self.X_test, self.y_test = test_data[:]
         self.train_n = train_n
         self.val_n = val_n
         self.test_n = test_n
