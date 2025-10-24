@@ -1,4 +1,6 @@
 from typing import Union
+import sys
+import os
 import importlib
 import logging
 import torch.nn as nn
@@ -9,6 +11,7 @@ from tqdm import tqdm
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from omegaconf import DictConfig
+from pathlib import Path
 from . import ModelConfig
 logger = logging.getLogger(__name__)
 
@@ -77,20 +80,16 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y, epochs=1, batch_size=32, verbose=False, log_interval=10):
         # Store the classes seen during fit
         self.classes_ = torch.unique(y)
-        self.X_ = X
-        self.y_ = y
-        # X,y are already tensors
-        dataset = torch.utils.data.TensorDataset(X, y)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         batch_index = 0
         # Move data and model to device
         self.model.to(self.device)
         # Training loop
         self.model.train()
         for epoch in range(epochs):
-            pbar = tqdm(dataloader, total=len(dataloader), desc=f"Epoch {epoch+1}/{epochs}")
+            pbar = tqdm(zip(X.split(batch_size), y.split(batch_size)), total=len(X) // batch_size, desc=f"Epoch {epoch+1}/{epochs}")
             for batch_X, batch_y in pbar:
-                batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
+                batch_X = batch_X.to(self.device)
+                batch_y = batch_y.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(batch_X)
                 loss = self.criterion(outputs, batch_y)
@@ -112,19 +111,15 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         # Check if fit has been called
         check_is_fitted(self)
         self.model.eval()
-        # Create DataLoader
         # Move data to device
         X = X.to(self.device)
-        return self.model(X)
+        with torch.no_grad():
+            return self.model(X)
     
     
     def predict(self, X):
-        check_is_fitted(self)
-        self.model.eval()
-        X = X.to(self.device)
-        self.predict_proba(X)
-        with torch.no_grad():
-            return np.argmax(self.predict_proba(X), axis=1)
+        probs = self.predict_proba(X)
+        return torch.argmax(probs, dim=1)
 
     def score(self, X, y):
         check_is_fitted(self)
@@ -192,13 +187,36 @@ class PytorchModelConfig(ModelConfig):
     def to(self, device):
         self.device = device
         self._model.to(device)
+    
+    def load_class(self, file_path, class_name, module_name=None):
+        if not Path(file_path).exists():
+            raise FileNotFoundError(f"Module file {file_path} does not exist.")
+        if module_name is None:
+            module_name = os.path.splitext(os.path.basename(file_path))[0]
+
+        spec = importlib.util.spec_from_file_location(module_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module   # <-- this is the key line
+        spec.loader.exec_module(module)
+        return getattr(module, class_name)
 
     def _initialize_model(self):
-        super()._initialize_model()
-        assert hasattr(self, "_model"), "Model initialization failed."
+        # Add the directory containing the model file to sys.path
+        model_dir = os.path.dirname(os.path.abspath(self.model_type))
+        sys.path.append(model_dir)
+        module_name, class_name = self.model_type.rsplit(".", 1)
+        model_class = self.load_class(
+            file_path=Path(model_dir, f"{module_name}.py"),
+            class_name=class_name,
+            module_name=module_name,
+        )
+        if self.model_params is not None:
+            model = model_class(**self.model_params)
+        else:
+            model = model_class()
         if self.classifier:
             self._model = PytorchTemplateClassifier(
-                model=self._model,
+                model=model,
                 criterion=self.criterion,
                 optimizer=self.optimizer,
             )
@@ -209,15 +227,22 @@ class PytorchModelConfig(ModelConfig):
         
     
     def __post_init__(self):
-        super().__post_init__()
         if self.clip_values is not None:
             self.clip_values = (float(self.clip_values[0]), float(self.clip_values[1]))
-        # set the device
-        self.to(self.device)
-        # set the random seed
-        torch.manual_seed(self.random_seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self.random_seed)
+        self._initialize_model()
+        self.training_prediction_time = None
+        self.test_prediction_time = None
+        self.training_time = None
+        self.scoring_time = None
+        self.training_predictions = None
+        self.predictions = None
+        self.prediction_n = None
+        self.classes_ = None
+        self.training_n = None
+        self.training_score_time = None
+        self.prediction_score_time = None
+        self.score_time = None
+        self.score_dict = None
     
 
 
