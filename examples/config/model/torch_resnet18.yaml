@@ -9,8 +9,7 @@ fit_params:
   batch_size: 1024
   verbose: True
 library : pytorch
-criterion:
-    name : CrossEntropyLoss
+criterion: CrossEntropyLoss
 optimizer:
     name : SGD
     lr : 0.01
