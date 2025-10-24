@@ -3,7 +3,7 @@ model_params:
     num_channels: 3
     num_classes: 10
 classifier : False
-_target_ : deckard.PytorchModelConfig
+_target_ : deckard.model.pytorch.PytorchModelConfig
 fit_params:
   nb_epochs: 1
   batch_size: 1024
