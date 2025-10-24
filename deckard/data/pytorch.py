@@ -61,7 +61,6 @@ class PytorchDataConfig(DataConfig):
     """
 
     dataset_name: str = "mnist"
-    batch_size: int = 32
     device: str = "cpu"
     data_dir: str = "./raw_data"
     test_size: Union[float, int, None] = 0.2
@@ -198,36 +197,9 @@ class PytorchDataConfig(DataConfig):
         )
         end = time.process_time()
         # Create DataLoaders
-        self.X_train = DataLoader(
-            train_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
-        self.y_train = DataLoader(
-            train_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
-        self.X_val = DataLoader(
-            val_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-        )
-        self.y_val = DataLoader(
-            val_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-        )
-        self.X_test = DataLoader(
-            test_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-        )
-        self.y_test = DataLoader(
-            test_data.dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-        )
+        self.X_train, self.y_train = train_data
+        self.X_val, self.y_val = val_data
+        self.X_test, self.y_test = test_data
         self.train_n = train_n
         self.val_n = val_n
         self.test_n = test_n
@@ -235,27 +207,27 @@ class PytorchDataConfig(DataConfig):
         logger.info(f"Sampled dataset in {self.data_sample_time} seconds.")
         assert isinstance(
             self.X_train,
-            DataLoader,
+            Tensor,
         ), "Sampled training data is not a PyTorch Dataset."
         assert isinstance(
             self.y_train,
-            DataLoader,
+            Tensor,
         ), "Sampled training targets are not a PyTorch Dataset."
         assert isinstance(
             self.X_val,
-            DataLoader,
+            Tensor,
         ), "Sampled validation data is not a PyTorch Dataset."
         assert isinstance(
             self.y_val,
-            DataLoader,
+            Tensor,
         ), "Sampled validation targets are not a PyTorch Dataset."
         assert isinstance(
             self.X_test,
-            DataLoader,
+            Tensor,
         ), "Sampled test data is not a PyTorch Dataset."
         assert isinstance(
             self.y_test,
-            DataLoader,
+            Tensor,
         ), "Sampled test targets are not a PyTorch Dataset."
         assert isinstance(
             self.data_sample_time,

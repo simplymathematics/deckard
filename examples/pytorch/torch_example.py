@@ -5,7 +5,7 @@ from torchvision import models
 import torch
 
 
-from deckard.data import DataConfig
+from deckard.data.pytorch import PytorchDataConfig
 from deckard.model.pytorch import PytorchTemplateClassifier, PytorchModelConfig
 
 __all__ = [
@@ -46,18 +46,24 @@ class ResNet18(nn.Module):
 if __name__ == "__main__":
     # Example usage
     model = ResNet18(num_channels=1, num_classes=10)
-    classifier = PytorchTemplateClassifier(model=model)
+    classifier = PytorchTemplateClassifier(
+        model=model,
+        criterion="CrossEntropyLoss",
+        optimizer="SGD",
+    )
     # Dummy data
-    X_dummy = torch.randn(100, 1, 28, 28)  # 100 samples of 1 channel 28x28 images
-    y_dummy = torch.randint(0, 10, (100,))  # 100 labels for 10 classes
+    n_samples = 100
+    X_dummy = torch.randn(n_samples, 1, 28, 28)  # 100 samples of 1 channel 28x28 images
+    y_dummy = torch.randint(0, 10, (n_samples,))  # 100 labels for 10 classes
     # Fit the model
-    classifier.fit(X_dummy, y_dummy, epochs=1, batch_size=32, verbose=True)
+    classifier.fit(X_dummy, y_dummy, epochs=1, batch_size =32, verbose=True)
     # Predict
     predictions = classifier.predict(X_dummy)
-    score = classifier.score(X_dummy, y_dummy)
+    score = (predictions == y_dummy).float().mean().item()
+    print(f"Accuracy on dummy data: {score}")
     assert score >=0.0, "Score should be between 0 and 1"
     
-    class DummyDataConfig(DataConfig):
+    class DummyDataConfig(PytorchDataConfig):
         def __call__(self, **kwargs):
             self.X_train = X_dummy
             self.y_train = y_dummy
@@ -74,8 +80,7 @@ if __name__ == "__main__":
         optimizer="SGD",
         classifier=True,
         fit_params={
-            "epochs": 1,
-            "batch_size": 32,
+            "epochs": 100,
             "verbose": True,
             "log_interval": 10,
         },
@@ -83,4 +88,6 @@ if __name__ == "__main__":
     )
     data_conf = DummyDataConfig()
     data_conf() # Initialize data
-    new_score = model_conf(data_conf)['accuracy']
+    new_score = model_conf(data_conf, model_file ="tmp.pkl")['accuracy']
+    print(f"Score from model config on dummy data: {new_score}")
+    assert new_score >=0.0, "Score should be between 0 and 1"

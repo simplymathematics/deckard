@@ -8,7 +8,6 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import unique_labels
 
 from . import ModelConfig
 logger = logging.getLogger(__name__)
@@ -31,9 +30,16 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         self.model = model
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = torch.device(device)
         self.criterion = self._initialize_criterion(criterion)
         self.optimizer = self._initialize_optimizer(optimizer)
         self.loss_curve = []
+
+    def _set_random_seed(self, seed):
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
 
     def _initialize_criterion(self, criterion):
         if isinstance(criterion, str):
@@ -70,16 +76,16 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     
     def fit(self, X, y, epochs=1, batch_size=32, verbose=False, log_interval=10):
         # Store the classes seen during fit
-        self.classes_ = unique_labels(y)
+        self.classes_ = torch.unique(y)
         self.X_ = X
         self.y_ = y
-        # Create DataLoader
-        dataset = torch.utils.data.TensorDataset(self.X_, self.y_)
+        # X,y are already tensors
+        print(f"Shape of X: {X.shape}, Shape of y: {y.shape}")
+        input(f"Press Enter to continue...")
+        dataset = torch.utils.data.TensorDataset(X, y)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         batch_index = 0
         # Move data and model to device
-        self.X_ = self.X_.to(self.device)
-        self.y_ = self.y_.to(self.device)
         self.model.to(self.device)
         # Training loop
         self.model.train()
@@ -146,6 +152,7 @@ class PytorchModelConfig(ModelConfig):
     criterion: Union[dict, str] = field(default="CrossEntropyLoss")
     optimizer: Union[dict, str] = field(default="SGD")
     clip_values: Union[tuple, None] = None
+    random_seed: int = 42
     """
     Overview
     --------
@@ -200,13 +207,19 @@ class PytorchModelConfig(ModelConfig):
         else:
             raise NotImplementedError("Only classifier models are currently supported.")
         self._model.to(self.device)
+        self._model._set_random_seed(self.random_seed)
         
     
     def __post_init__(self):
         super().__post_init__()
         if self.clip_values is not None:
             self.clip_values = (float(self.clip_values[0]), float(self.clip_values[1]))
-    
+        # set the device
+        self.to(self.device)
+        # set the random seed
+        torch.manual_seed(self.random_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.random_seed)
     
 
 
