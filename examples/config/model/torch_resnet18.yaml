@@ -1,0 +1,18 @@
+model_type: torch_example.ResNet18
+model_params:
+    num_channels: 3
+    num_classes: 10
+classifier : False
+_target_ : deckard.PytorchModelConfig
+fit_params:
+  nb_epochs: 1
+  batch_size: 1024
+  verbose: True
+library : pytorch
+criterion:
+    name : torch.nn.CrossEntropyLoss
+optimizer:
+    name : torch.optim.SGD
+    lr : 0.01
+    momentum : 0.9
+clip_values : [0, 255]
