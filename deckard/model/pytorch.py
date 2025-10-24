@@ -1,21 +1,24 @@
-from typing import Union
+
+# OS imports
 import sys
 import os
 import importlib
 import logging
-import torch.nn as nn
-from dataclasses import dataclass, field
-import torch
-import numpy as np
+from pathlib import Path
 from tqdm import tqdm
+# Typing imports
+from dataclasses import dataclass, field
+from omegaconf import DictConfig
+from typing import Union
+# Torch imports
+import torch.nn as nn
+import torch
+# Sklearn imports
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from omegaconf import DictConfig
-from pathlib import Path
 from . import ModelConfig
 logger = logging.getLogger(__name__)
 
-supported_sklearn_libraries = ["sklearn"]
 
 __all__ = ["PytorchModelConfig"]
 
@@ -225,6 +228,7 @@ class PytorchModelConfig(ModelConfig):
         self._model.to(self.device)
         self._model._set_random_seed(self.random_seed)
         
+        
     
     def __post_init__(self):
         if self.clip_values is not None:
@@ -244,6 +248,14 @@ class PytorchModelConfig(ModelConfig):
         self.score_time = None
         self.score_dict = None
     
+    def __hash__(self):
+        arch = str(self._model.model)
+        params = f"model_type={self.model_type}, model_params={self.model_params}, classifier={self.classifier}"
+        model_params = b"".join(p.detach().cpu().numpy().tobytes() for p in self._model.model.parameters())
+        return hash((arch, params, model_params))
+    
+    def get_art_model(self):
+        
 
 
     
