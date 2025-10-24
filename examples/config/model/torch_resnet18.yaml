@@ -1,8 +1,8 @@
 model_type: torch_example.ResNet18
 model_params:
-    num_channels: 3
-    num_classes: 10
-classifier : False
+    num_channels: 1 # For grayscale images like MNIST
+    num_classes: 10 # Number of classes in the dataset
+classifier : True
 _target_ : deckard.model.pytorch.PytorchModelConfig
 fit_params:
   nb_epochs: 1
@@ -10,9 +10,9 @@ fit_params:
   verbose: True
 library : pytorch
 criterion:
-    name : torch.nn.CrossEntropyLoss
+    name : CrossEntropyLoss
 optimizer:
-    name : torch.optim.SGD
+    name : SGD
     lr : 0.01
     momentum : 0.9
 clip_values : [0, 255]
