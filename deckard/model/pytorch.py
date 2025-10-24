@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-
+from omegaconf import DictConfig
 from . import ModelConfig
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         if isinstance(criterion, str):
             criterion_name = criterion
             criterion_params = {}
-        elif isinstance(criterion, dict):
+        elif isinstance(criterion, (dict, DictConfig)):
             criterion_name = criterion.get("name")
             criterion_params = {k: v for k, v in criterion.items() if k != "name"}
         else:
@@ -60,7 +60,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         if isinstance(optimizer, str):
             optimizer_name = optimizer
             optimizer_params = {}
-        elif isinstance(optimizer, dict):
+        elif isinstance(optimizer, (dict, DictConfig)):
             optimizer_name = optimizer.get("name")
             optimizer_params = {k: v for k, v in optimizer.items() if k != "name"}
         else:
@@ -80,8 +80,6 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         self.X_ = X
         self.y_ = y
         # X,y are already tensors
-        print(f"Shape of X: {X.shape}, Shape of y: {y.shape}")
-        input(f"Press Enter to continue...")
         dataset = torch.utils.data.TensorDataset(X, y)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
         batch_index = 0
