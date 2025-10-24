@@ -23,6 +23,7 @@ import numpy as np
 from pathlib import Path
 
 from ..model import ModelConfig
+from ..model.pytorch import PytorchTemplateClassifier
 from ..model.defend import sklearn_dict, sklearn_models
 from ..utils import ConfigBase
 
@@ -193,6 +194,8 @@ class AttackConfig(ConfigBase):
                 raise ValueError(f"model {model_alias} is not fitted")
         elif str(model_alias) in supported_models:  # Model is already an ART model
             art_model = model
+        elif isinstance(model, PytorchTemplateClassifier):
+            art_model = model.get_art_model()
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
 
