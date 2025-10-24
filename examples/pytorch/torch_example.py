@@ -6,7 +6,7 @@ import torch
 
 
 from deckard.data import DataConfig
-from deckard.model.pytorch import TemplateClassifier, PytorchModelConfig
+from deckard.model.pytorch import PytorchTemplateClassifier, PytorchModelConfig
 
 __all__ = [
     "ResNet18",
@@ -46,7 +46,7 @@ class ResNet18(nn.Module):
 if __name__ == "__main__":
     # Example usage
     model = ResNet18(num_channels=1, num_classes=10)
-    classifier = TemplateClassifier(model=model)
+    classifier = PytorchTemplateClassifier(model=model)
     # Dummy data
     X_dummy = torch.randn(100, 1, 28, 28)  # 100 samples of 1 channel 28x28 images
     y_dummy = torch.randint(0, 10, (100,))  # 100 labels for 10 classes

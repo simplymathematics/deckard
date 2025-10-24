@@ -20,7 +20,7 @@ __all__ = ["PytorchModelConfig"]
 
 
 
-class TemplateClassifier(ClassifierMixin, BaseEstimator):
+class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     def __init__(
             self, 
             model: nn.Module, 
@@ -192,7 +192,7 @@ class PytorchModelConfig(ModelConfig):
         super()._initialize_model()
         assert hasattr(self, "_model"), "Model initialization failed."
         if self.classifier:
-            self._model = TemplateClassifier(
+            self._model = PytorchTemplateClassifier(
                 model=self._model,
                 criterion=self.criterion,
                 optimizer=self.optimizer,
