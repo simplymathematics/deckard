@@ -611,7 +611,7 @@ class ModelConfig(ConfigBase):
             else:
                 raise ValueError("No test data available for prediction.")
         # Score test predictions if true labels are available and scoring not already done
-        if self.prediction_score_time is None or self.score_dict is None:
+        if self.score_time is None or self.score_dict is None:
             if data.y_test is not None and self.predictions is not None:
                 test_scores = self._score(data.y_test, self.predictions)
                 if self.score_dict is None:
