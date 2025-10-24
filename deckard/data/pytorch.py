@@ -38,6 +38,7 @@ pytorch_dataset_dict = {
     "fashionmnist": datasets.FashionMNIST,
     "torch_mnist": datasets.MNIST,
     "torch_cifar10": datasets.CIFAR10,
+    "torch_cifar": datasets.CIFAR10,
     "torch_fashionmnist": datasets.FashionMNIST,
     # Add more datasets as needed
 }
@@ -68,7 +69,6 @@ class PytorchDataConfig(DataConfig):
     data_dir: str = "./raw_data"
     test_size: Union[float, int, None] = 0.2
     train_size: Union[float, int, None] = 0.7
-    val_size: Union[float, int, None] = 0.1
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     pipeline: Dict[str, PytorchDataPipelineConfig] = field(default_factory=dict)
@@ -97,18 +97,11 @@ class PytorchDataConfig(DataConfig):
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
         assert (
-            self.train_size is not None
+            self.train_size > 0
         ), "train_size must be specified for PyTorch datasets."
         assert (
-            self.test_size is not None
+            self.test_size > 0
         ), "test_size must be specified for PyTorch datasets."
-        assert (
-            self.val_size is not None
-        ), "val_size must be specified for PyTorch datasets."
-
-        self.X_val = None
-        self.y_val = None
-        self.val_n = None
 
     def __hash__(self):
         return super().__hash__()
@@ -154,8 +147,11 @@ class PytorchDataConfig(DataConfig):
             download=download,
             transform=transforms.ToTensor(),
         )
-        self._X = torch.cat((train_loader.data, test_loader.data), dim=0)
-        self._y = torch.cat((train_loader.targets, test_loader.targets), dim=0)
+        # Combine train and test datasets
+        full_data = torch.utils.data.ConcatDataset([train_loader, test_loader])
+        # Extract data and targets
+        self._X = torch.stack([full_data[i][0] for i in range(len(full_data))])
+        self._y = torch.tensor([full_data[i][1] for i in range(len(full_data))])        
         end = time.process_time()
         self.data_load_time = end - start
         logger.info(f"Loaded {dataset_name} dataset in {self.data_load_time} seconds.")
@@ -169,74 +165,97 @@ class PytorchDataConfig(DataConfig):
         ), f"Expected _y to be a tuple, got {type(self._y)}."
         assert isinstance(self.data_load_time, float), "data_load_time is not a float."
 
-    def _sample(self):
-        """Sample the dataset if needed."""
-        # Sampling logic can be implemented here if required
-        total_size = len(self._X)
-        train_n = (
-            self.train_size
-            if isinstance(self.train_size, int)
-            else int(self.train_size * total_size)
-        )
-        val_n = (
-            self.val_size
-            if isinstance(self.val_size, int)
-            else int(self.val_size * total_size)
-        )
-        test_n = (
-            self.test_size
-            if isinstance(self.test_size, int)
-            else int(self.test_size * total_size)
-        )
-        remaining = total_size - (train_n + val_n + test_n)
-        if remaining > 0:
-            test_n += remaining  # Adjust test size to use all data
-        start = time.process_time()
-        torch_dataset = TensorDataset(self._X, self._y)
-        train_data, val_data, test_data = random_split(
-            torch_dataset,
-            [train_n, val_n, test_n],
-            generator=torch.Generator().manual_seed(self.random_state),
-        )
-        end = time.process_time()
-        # Unpack datasets
-        self.X_train, self.y_train = train_data[:]
-        self.X_val, self.y_val = val_data[:]
-        self.X_test, self.y_test = test_data[:]
-        self.train_n = train_n
-        self.val_n = val_n
-        self.test_n = test_n
-        self.data_sample_time = end - start
-        logger.info(f"Sampled dataset in {self.data_sample_time} seconds.")
-        assert isinstance(
-            self.X_train,
-            Tensor,
-        ), "Sampled training data is not a PyTorch Dataset."
-        assert isinstance(
-            self.y_train,
-            Tensor,
-        ), "Sampled training targets are not a PyTorch Dataset."
-        assert isinstance(
-            self.X_val,
-            Tensor,
-        ), "Sampled validation data is not a PyTorch Dataset."
-        assert isinstance(
-            self.y_val,
-            Tensor,
-        ), "Sampled validation targets are not a PyTorch Dataset."
-        assert isinstance(
-            self.X_test,
-            Tensor,
-        ), "Sampled test data is not a PyTorch Dataset."
-        assert isinstance(
-            self.y_test,
-            Tensor,
-        ), "Sampled test targets are not a PyTorch Dataset."
-        assert isinstance(
-            self.data_sample_time,
-            float,
-        ), "data_sample_time is not a float."
+    
+    def _sample(
+        self,
+    ):
+        """
+        Samples training and testing indices from the loaded dataset, optionally using stratification.
 
+        Calculates the number of samples for training and testing based on ``train_size`` and ``test_size``.
+        Supports stratified sampling using the target variable.
+        Splits the data into training and testing sets, records the sampling time, and stores the resulting indices.
+
+        Raises
+        ------
+        ValueError
+            If data is not loaded, or if ``stratify`` is invalid.
+
+        Side Effects
+        ------------
+        Sets ``self._train_indices``, ``self._test_indices``, and ``self.data_sample_time``.
+        Logs the time taken for sampling.
+        """
+        if not hasattr(self, "_X") or self._X is None:
+            raise ValueError("Data not loaded. Cannot sample.")
+        if self._X is None or self._y is None:
+            raise ValueError("Data not loaded. Cannot sample.")
+
+        num_samples = len(self._X)
+        indices = torch.arange(num_samples)
+        # Determine stratification
+        stratify_col = None
+        if self.stratify is not None:
+            if self.stratify is True:
+                stratify_col = self._y
+            else:
+                raise ValueError(f"stratify must be None or True for PyTorch datasets")
+
+        # Calculate train and test sizes
+        if isinstance(self.train_size, float):
+            train_size = int(self.train_size * num_samples)
+        elif isinstance(self.train_size, int):
+            train_size = self.train_size
+        else:
+            assert isinstance(self.test_size, (float, int)), "test_size must be float or int if train_size is None"
+
+        if isinstance(self.test_size, float):
+            test_size = int(self.test_size * num_samples)
+        else:
+            test_size = self.test_size
+
+        if self.train_size is None:
+            if isinstance(self.test_size, float):
+                self.train_size = 1.0 - self.test_size
+                train_size = int(self.train_size * num_samples)
+            elif isinstance(self.test_size, int):
+                self.train_size = num_samples - self.test_size
+                train_size = self.train_size
+            else:
+                raise ValueError("Either train_size or test_size must be specified.")
+        
+        if train_size + test_size > num_samples:
+            raise ValueError("Train size and test size exceed the total number of samples")
+        start_time = time.process_time()
+
+    
+        # Randomly shuffle indices
+        indices = indices[torch.randperm(num_samples, generator=torch.Generator().manual_seed(self.random_state))]
+        # The first train_size indices are for training
+        train_idx = indices[:train_size]
+        # The next test_size indices are for testing
+        test_idx = indices[train_size : train_size + test_size]
+        end_time = time.process_time()
+        self.data_sample_time = end_time - start_time
+        logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
+
+        # Split the data
+        self.X_train = self._X[train_idx]
+        self.y_train = self._y[train_idx]
+        self.X_test = self._X[test_idx]
+        self.y_test = self._y[test_idx]
+        logger.info(
+            f"Training samples: {len(self.X_train)}, Testing samples: {len(self.X_test)}",
+        )
+        self.train_n = len(self.X_train)
+        self.test_n = len(self.X_test)
+
+        assert isinstance(self.X_train, Tensor), "X_train must be a Tensor"
+        assert isinstance(self.y_train, Tensor), "y_train must be a Tensor"
+        assert isinstance(self.X_test, Tensor), "X_test must be a Tensor"
+        assert isinstance(self.y_test, Tensor), "y_test must be a Tensor"
+    
+    
     def _classification_feature_scores(self):
         """
         Computes feature importance scores for classification tasks using various statistical methods.
@@ -401,8 +420,6 @@ class PytorchDataConfig(DataConfig):
         assert (
             self.y_test is not None
         ), "y_test attribute not found after sampling data."
-        assert self.X_val is not None, "X_val attribute not found after sampling data."
-        assert self.y_val is not None, "y_val attribute not found after sampling data."
         time_dict = {
             "data_load_time": self.data_load_time,
             "data_sample_time": self.data_sample_time,
