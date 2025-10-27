@@ -202,10 +202,10 @@ class DataConfig(ConfigBase):
         Computes a hash value for the instance based on non-private attributes.
     _load_adult_income_data()
         Loads and preprocesses the Adult Income dataset from OpenML.
-    _load_diabetes_data()
-        Loads and preprocesses the diabetes dataset from scikit-learn.
-    _load_digits_data()
-        Loads and preprocesses the digits dataset from scikit-learn.
+    _load_generic_sklearn(loader_func, **loader_params)
+        Loads a dataset using a generic scikit-learn loader function.
+    _load_generic_openml(dataset_name, version=1, **loader_params)
+        Loads a dataset from OpenML using the specified dataset name and version.
     _make_classification_data()
         Generates a synthetic classification dataset.
     _make_regression_data()
@@ -357,48 +357,6 @@ class DataConfig(ConfigBase):
         X = pd.get_dummies(X, drop_first=True)
         X["sex"] = sex.cat.rename_categories({"Male": 0, "Female": 1})
         # Convert categorical variables to numeric using one-hot encoding
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = X
-        self._y = pd.Series(y)
-        return self
-
-    def _load_diabetes_data(self):
-        """
-        Loads the diabetes dataset using scikit-learn, separates features and target,
-        and stores them as instance variables. Also records the time taken to load the data.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance of the class with loaded data.
-        """
-        start_time = time.process_time()
-        diabetes = load_diabetes(as_frame=True)
-        X = diabetes.frame.drop(columns="target")
-        y = diabetes.frame["target"]
-        end_time = time.process_time()
-        self.data_load_time = end_time - start_time
-        self._X = X
-        self._y = pd.Series(y)
-        return self
-
-    def _load_digits_data(self):
-        """
-        Loads the scikit-learn digits dataset into the instance variables.
-
-        Loads the digits dataset as a pandas DataFrame, separates the features (X) and target labels (y),
-        records the time taken to load the data, and stores the results in instance variables.
-
-        Returns
-        -------
-        self : DataConfig
-            The instance with loaded data and updated attributes.
-        """
-        start_time = time.process_time()
-        digits = load_digits(as_frame=True)
-        X = digits.frame.drop(columns="target")
-        y = digits.frame["target"]
         end_time = time.process_time()
         self.data_load_time = end_time - start_time
         self._X = X
@@ -577,6 +535,7 @@ class DataConfig(ConfigBase):
             (pd.DataFrame, pd.Series),
         ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
+    
     def _load_generic_sklearn(self, loader_func, **loader_params):
         """
         Loads a dataset using a generic scikit-learn loader function.
@@ -599,6 +558,43 @@ class DataConfig(ConfigBase):
         """
         start_time = time.process_time()
         dataset = loader_func(**loader_params)
+        X = dataset.data
+        y = dataset.target
+        end_time = time.process_time()
+        self.data_load_time = end_time - start_time
+        self._X = pd.DataFrame(X)
+        self._y = pd.Series(y)
+        return self
+    
+    def _load_generic_openml(self, dataset_name, version=1, **loader_params):
+        """
+        Loads a dataset from OpenML using the specified dataset name and version.
+
+        Parameters
+        ----------
+        dataset_name : str
+            The name of the dataset to load from OpenML.
+        version : int, optional
+            The version of the dataset to load. Default is 1.
+        loader_params : dict
+            Additional parameters to pass to the fetch_openml function.
+
+        Returns
+        -------
+        self : DataConfig
+            The instance with loaded data and timing information.
+
+        Side Effects
+        ------------
+        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
+        """
+        start_time = time.process_time()
+        dataset = fetch_openml(
+            name=dataset_name,
+            version=version,
+            as_frame=True,
+            **loader_params,
+        )
         X = dataset.data
         y = dataset.target
         end_time = time.process_time()
