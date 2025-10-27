@@ -1,7 +1,0 @@
-dataset_name: torch_cifar10
-test_size: 128
-test_size: 128
-random_state: 42
-_target_ : "deckard.PytorchDataConfig"
-classifier: True
-stratify : True

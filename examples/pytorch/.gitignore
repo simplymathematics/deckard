@@ -1,2 +1,3 @@
 outputs/
-raw_data/
+torch_mnist/
+torch_cifar10/
