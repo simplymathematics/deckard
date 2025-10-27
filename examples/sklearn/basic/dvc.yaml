@@ -1,12 +1,11 @@
 stages:
   set_config_paths:
       cmd: >
-        export DECKARD_CONFIG_DIR="~/deckard/examples/config" &&
-        export DECKARD_DEFAULT_CONFIG_FILE="default.yaml" &&
-        echo $DECKARD_CONFIG_DIR > .config_paths_set &&
-        echo $DECKARD_DEFAULT_CONFIG_FILE >> .config_paths_set
+        echo "export DECKARD_CONFIG_DIR=../../config" > .deckard_rc &&
+        echo "export DECKARD_DEFAULT_CONFIG_FILE=default.yaml" >> .deckard_rc &&
+        source .deckard_rc
       outs: 
-        - .config_paths_set
+        - .deckard_rc
       deps:
         - ../../config/default.yaml
       params:
@@ -16,7 +15,7 @@ stages:
       outs:
         - deckard.log
       deps:
-        - .config_paths_set # Here to ensure config paths are set before running deckard
+        - .deckard_rc # Here to ensure config paths are set before running deckard
         - ../../../deckard
   generate_data:
       foreach:
@@ -42,7 +41,7 @@ stages:
         metrics:
           - scores/data/${item}.json
         deps:
-          - .config_paths_set
+          - .deckard_rc
           - ../../../deckard/data/
         params:
           - ../../config/data/${item}.yaml:

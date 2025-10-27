@@ -3,7 +3,6 @@ import pandas as pd
 import time
 import logging
 import importlib
-import sys
 from pathlib import Path
 
 from dataclasses import dataclass, field
@@ -17,6 +16,7 @@ from sklearn.datasets import (
     make_regression,
     load_digits,
     load_diabetes,
+    load_iris,
 )
 from sklearn.feature_selection import (
     mutual_info_classif,
@@ -35,6 +35,8 @@ from ..utils import ConfigBase, data_supported_filetypes
 
 # Setup logger
 logger = logging.getLogger(__name__)
+
+
 
 
 @dataclass
@@ -575,7 +577,36 @@ class DataConfig(ConfigBase):
             (pd.DataFrame, pd.Series),
         ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
+    def _load_generic_sklearn(self, loader_func, **loader_params):
+        """
+        Loads a dataset using a generic scikit-learn loader function.
 
+        Parameters
+        ----------
+        loader_func : callable
+            A scikit-learn dataset loader function that returns a Bunch object with 'data' and 'target' attributes.
+        loader_params : dict
+            Additional parameters to pass to the loader function.
+
+        Returns
+        -------
+        self : DataConfig
+            The instance with loaded data and timing information.
+
+        Side Effects
+        ------------
+        Sets ``self._X``, ``self._y``, and ``self.data_load_time`` with loaded data and timing information.
+        """
+        start_time = time.process_time()
+        dataset = loader_func(**loader_params)
+        X = dataset.data
+        y = dataset.target
+        end_time = time.process_time()
+        self.data_load_time = end_time - start_time
+        self._X = pd.DataFrame(X)
+        self._y = pd.Series(y)
+        return self
+    
     def _load_data(self):
         """
         Loads dataset based on the provided dataset name or file type.
@@ -587,6 +618,7 @@ class DataConfig(ConfigBase):
         - "make_regression"
         - "diabetes"
         - "digits"
+        - "iris"
 
         Supported file types
         --------------------
@@ -604,66 +636,63 @@ class DataConfig(ConfigBase):
         ValueError
             If a CSV file does not contain a 'target' column.
         """
+        supported_datasets = {
+            "adult": self._load_adult_income_data,
+            "make_classification": self._make_classification_data,
+            "make_regression": self._make_regression_data,
+            "diabetes": lambda **params: self._load_generic_sklearn(load_diabetes, **params),
+            "digits": lambda **params: self._load_generic_sklearn(load_digits, **params),
+            "iris": lambda **params: self._load_generic_sklearn(load_iris, **params),
+        }
         filetype = Path(self.dataset_name).suffix
         supported_filetypes = data_supported_filetypes
-        suppoted_datasets = [
-            "adult",
-            "make_classification",
-            "make_regression",
-            "diabetes",
-            "digits",
-        ]
         if (
             filetype not in supported_filetypes
-            and self.dataset_name not in suppoted_datasets
+            and self.dataset_name not in supported_datasets
         ):
             raise NotImplementedError(
                 f"Currently only {supported_filetypes} filetypes are supported for loading data. Cannot load {self.dataset_name}",
             )
-        match self.dataset_name:
-            case "adult":
-                self._load_adult_income_data(**self.data_params)
-            case "make_classification":
-                self._make_classification_data(**self.data_params)
-            case "make_regression":
-                self._make_regression_data(**self.data_params)
-            case "diabetes":
-                self._load_diabetes_data(**self.data_params)
-            case "digits":
-                self._load_digits_data(**self.data_params)
-            case _ if filetype in supported_filetypes:
-                data = self.load_data(self.dataset_name)
-                if self.target is None:
-                    raise ValueError(
-                        "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
-                    )
-                y = data.pop(self.target)
-                if len(self.keep) > 1:
-                    data = data[self.keep]
-                elif len(self.keep) == 1:
-                    data = data[self.keep[0]]
-                for del_col in self.drop:
-                    assert (
-                        len(self.keep) == 0
-                    ), "Cannot specify both keep and drop columns"
-                    if del_col in data.columns:
-                        data = data.drop(columns=del_col)
-                self._X = data
-                self._y = y
-                end_time = time.process_time()
-                self.data_load_time = end_time - time.process_time()
-                logger.info(
-                    f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
-                )
-            case _:
-                raise NotImplementedError(
-                    f"Dataset {self.dataset_name} not implemented",
-                )
+        if self.dataset_name in supported_datasets:
+            start_time = time.process_time()
+            supported_datasets[self.dataset_name](**self.data_params)
+        elif filetype in supported_filetypes:
+            start_time = time.process_time()
+            self._load_from_csv(**self.data_params)
+        else:
+            raise NotImplementedError(
+            f"Dataset {self.dataset_name} not implemented",
+            )
+        end_time = time.process_time()
         assert isinstance(
             self._X,
             (pd.DataFrame, pd.Series),
         ), "_X must be a DataFrame after loading data"
         assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
+        self.data_load_time = end_time - start_time
+        logger.info(
+            f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
+        )
+
+    def _load_from_csv(self):
+        data = self.load_data(self.dataset_name)
+        if self.target is None:
+            raise ValueError(
+                        "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
+                    )
+        y = data.pop(self.target)
+        if len(self.keep) > 1:
+            data = data[self.keep]
+        elif len(self.keep) == 1:
+            data = data[self.keep[0]]
+        for del_col in self.drop:
+            assert (
+                        len(self.keep) == 0
+                    ), "Cannot specify both keep and drop columns"
+            if del_col in data.columns:
+                data = data.drop(columns=del_col)
+        self._X = data
+        self._y = y
 
     def _score(self) -> dict:
         """

@@ -1,0 +1,2 @@
+export DECKARD_CONFIG_DIR=../../config
+export DECKARD_DEFAULT_CONFIG_FILE=default.yaml
