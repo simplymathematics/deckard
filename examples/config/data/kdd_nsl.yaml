@@ -3,6 +3,7 @@ target : label
 random_state : 0
 stratify: True
 test_size : .2
+alias: kdd_nsl
 pipeline:
     encoder:
         name : sklearn.preprocessing.OneHotEncoder

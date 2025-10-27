@@ -4,3 +4,5 @@ attack_params :
   attack_model_type: "svm"
   scale_range : (0, 1)
 attack_size : 1000
+_target_ : deckard.attack.AttackConfig
+alias: attribute_bb

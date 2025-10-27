@@ -1,4 +1,4 @@
-model_type: sklearn.linear_model.LogisticRegression
+model_type: sklearn.linear_model.LinearRegression
 classifier : False
 model_params:
   penalty: l2
@@ -10,3 +10,4 @@ _target_ : deckard.model.defend.DefenseConfig
 clip_values: null
 defense_name: null
 defense_params: {}
+alias: defended_linear

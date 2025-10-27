@@ -15,3 +15,4 @@ optimizer:
     lr : 0.01
     momentum : 0.9
 clip_values : [0, 255]
+alias: torch_resnet18

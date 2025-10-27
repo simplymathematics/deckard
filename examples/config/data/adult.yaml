@@ -4,6 +4,7 @@ random_state: 42
 _target_ : "deckard.DataConfig"
 classifier: True
 stratify : False
+alias: adult
 pipeline:
     preprocessor:
         name: sklearn.preprocessing.StandardScaler

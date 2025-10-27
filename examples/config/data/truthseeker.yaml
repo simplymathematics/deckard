@@ -5,6 +5,7 @@ keep :
 random_state : 0
 test_size : .2
 stratify: True
+alias: truthseeker
 pipeline:
     string_embedding:
         name : sklearn.feature_extraction.text.TfidfVectorizer

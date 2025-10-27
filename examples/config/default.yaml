@@ -3,3 +3,4 @@ defaults:
   - data: classification
   - model: logistic
   - attack: hsj
+experiment_name : "{hash}"

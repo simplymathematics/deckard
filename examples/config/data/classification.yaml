@@ -8,3 +8,4 @@ data_params:
   random_state: 42
 _target_ : "deckard.DataConfig"
 classifier: True
+alias: make_classification

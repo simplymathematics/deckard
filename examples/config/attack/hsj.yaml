@@ -8,3 +8,5 @@ attack_params :
   targeted: false
   verbose : true
 attack_size : 10
+_target_ : deckard.attack.AttackConfig
+alias: hsj

@@ -9,3 +9,4 @@ data_params:
 _target_ : "deckard.DataConfig"
 stratify: False
 classifier: False
+alias: make_regression

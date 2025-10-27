@@ -12,3 +12,4 @@ model_params:
   min_impurity_decrease: 0.0
   bootstrap: true
 _target_ : deckard.model.ModelConfig
+alias: rf

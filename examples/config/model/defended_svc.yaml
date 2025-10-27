@@ -20,3 +20,4 @@ _target_ : deckard.model.defend.DefenseConfig
 clip_values: null
 defense_name: null
 defense_params: {}
+alias: defended_svc

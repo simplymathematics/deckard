@@ -1,4 +1,4 @@
-model_type: sklearn.linear_model.LogisticRegression
+model_type: sklearn.linear_model.LinearRegression
 classifier : False
 model_params:
   penalty: l2
@@ -7,3 +7,4 @@ model_params:
   C: 1.0
   fit_intercept: true
 _target_ : deckard.ModelConfig
+alias: linear

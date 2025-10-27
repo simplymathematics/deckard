@@ -12,3 +12,4 @@ random_state : 0
 train_size : 100
 test_size : 100
 stratify: True
+alias: ddos

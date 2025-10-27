@@ -7,3 +7,4 @@ model_params:
   C: 1.0
   fit_intercept: true
 _target_ : deckard.ModelConfig
+alias: logistic

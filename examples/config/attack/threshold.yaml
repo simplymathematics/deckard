@@ -1,0 +1,6 @@
+attack_type : "art.attacks.evasion.ThresholdAttack"
+attack_params : 
+  max_iter: 10
+  th: .5
+_target_ : deckard.attack.AttackConfig
+alias: threshold

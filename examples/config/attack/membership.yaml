@@ -2,4 +2,6 @@ attack_type : "art.attacks.inference.membership_inference.MembershipInferenceBla
 attack_size : 1000
 attack_params:
   attack_model_type: "rf"
+_target_ : deckard.attack.AttackConfig
+alias: membership
   

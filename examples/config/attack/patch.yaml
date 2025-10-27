@@ -1,0 +1,6 @@
+attack_type : "art.attacks.evasion.AdversarialPatch"
+attack_params : 
+  max_iter: 10
+  learning_rate: .5
+_target_ : deckard.attack.AttackConfig
+alias: patch

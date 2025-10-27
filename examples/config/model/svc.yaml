@@ -17,3 +17,4 @@ model_params:
   break_ties: false
   random_state: null
 _target_ : deckard.ModelConfig
+alias: svc
