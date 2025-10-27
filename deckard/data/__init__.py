@@ -652,20 +652,28 @@ class DataConfig(ConfigBase):
         if self.dataset_name in supported_datasets:
             start_time = time.process_time()
             supported_datasets[self.dataset_name](**self.data_params)
+        elif filetype == ".openml":
+            start_time = time.process_time()
+            dataset_base_name = Path(self.dataset_name).stem
+            self._load_generic_openml(
+                dataset_name=dataset_base_name,
+                **self.data_params,
+            )
         elif filetype in supported_filetypes:
             start_time = time.process_time()
             self._load_from_csv(**self.data_params)
+            end_time = time.process_time()
+            self.data_load_time = end_time - start_time
         else:
             raise NotImplementedError(
             f"Dataset {self.dataset_name} not implemented",
             )
-        end_time = time.process_time()
+        
         assert isinstance(
             self._X,
             (pd.DataFrame, pd.Series),
         ), "_X must be a DataFrame after loading data"
         assert isinstance(self._y, pd.Series), "_y must be a Series after loading data"
-        self.data_load_time = end_time - start_time
         logger.info(
             f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
         )
@@ -724,18 +732,28 @@ class DataConfig(ConfigBase):
         """
         scores = {}
         if self.y_train.nunique() > 1:
-            scores["mutual_info_classif"] = mutual_info_classif(
-                self.X_train,
-                self.y_train,
-                random_state=self.random_state,
-            ).tolist()
+            try:
+                scores["mutual_info_classif"] = mutual_info_classif(
+                    self.X_train,
+                    self.y_train,
+                    random_state=self.random_state,
+                ).tolist()
+            except ValueError as e:
+                logger.warning(
+                    f"Mutual information could not be computed: {e}. Skipping mutual_info_classif scoring.",
+                )
             try:
                 scores["chi2"] = chi2(self.X_train, self.y_train)[0].tolist()
             except ValueError as e:
                 logger.warning(
                     f"Chi-squared test could not be computed: {e}. Skipping chi2 scoring.",
                 )
-            scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
+            try:
+                scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
+            except ValueError as e:
+                logger.warning(
+                    f"ANOVA F-value could not be computed: {e}. Skipping f_classif scoring.",
+                )
         else:
             logger.warning(
                 "Only one class present in y_train; skipping classification feature scoring.",
@@ -743,6 +761,8 @@ class DataConfig(ConfigBase):
         # Class counts
         class_counts = self.y_train.value_counts().to_dict()
         scores["class_counts"] = class_counts
+        for score, value in scores.items():
+            logger.info(f"Classification feature score - {score}: {value}")
         return scores
 
     def _empirical_cdf(self, data: pd.Series) -> pd.Series:

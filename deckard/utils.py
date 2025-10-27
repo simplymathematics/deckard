@@ -22,6 +22,7 @@ data_supported_filetypes = [
     ".json",
     ".xlsx",
     ".pkl",
+    ".openml",
 ]
 
 
