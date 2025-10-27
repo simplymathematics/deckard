@@ -256,6 +256,9 @@ class ModelConfig(ConfigBase):
             if "mix of binary and continuous" in str(ve):
                 new_y_pred = np.argmax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
+            elif "mix of multiclass and continuous-multioutput" in str(ve):
+                new_y_pred = np.argmax(y_pred, axis=1)
+                return self._classification_scores(y_true, new_y_pred)
             else:
                 logger.error(f"Error computing classification scores: {ve}")
                 raise ve
@@ -611,7 +614,7 @@ class ModelConfig(ConfigBase):
             else:
                 raise ValueError("No test data available for prediction.")
         # Score test predictions if true labels are available and scoring not already done
-        if self.score_time is None or self.score_dict is None:
+        if self.training_score_time is None or self.prediction_score_time is None or self.score_dict is None:
             if data.y_test is not None and self.predictions is not None:
                 test_scores = self._score(data.y_test, self.predictions)
                 if self.score_dict is None:

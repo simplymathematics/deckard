@@ -12,7 +12,7 @@ stages:
       params:
         - ../../config/default.yaml:
   simple_example:
-      cmd: deckard > deckard.log
+      cmd: deckard && echo "Deckard ran successfully!" > deckard.log
       outs:
         - deckard.log
       deps:

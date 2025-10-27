@@ -16,7 +16,12 @@ import torch
 # Sklearn imports
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
+# ART imports
+from art.estimators.classification import PyTorchClassifier
+from art.estimators.regression import PyTorchRegressor
+
 from . import ModelConfig
+from ..data import DataConfig
 logger = logging.getLogger(__name__)
 
 
@@ -32,6 +37,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             device=None,
             criterion:Union[dict, str]="CrossEntropyLoss",
             optimizer:Union[dict, str]="SGD",
+            clip_values:Union[tuple, None]=None,
         ):
         self.model = model
         if device is None:
@@ -40,6 +46,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             self.device = torch.device(device)
         self.criterion = self._initialize_criterion(criterion)
         self.optimizer = self._initialize_optimizer(optimizer)
+        self.clip_values = clip_values
         self.loss_curve = []
 
     def _set_random_seed(self, seed):
@@ -113,17 +120,24 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     def predict_proba(self, X):
         # Check if fit has been called
         check_is_fitted(self)
-        self.model.eval()
         # Move data to device
-        X = X.to(self.device)
         with torch.no_grad():
-            return self.model(X)
+            probs = self.model.forward(X)
+            return probs
     
     
     def predict(self, X):
-        probs = self.predict_proba(X)
-        return torch.argmax(probs, dim=1)
+        with torch.no_grad():
+            model_dtype = next(self.model.parameters()).dtype
+            X_dtype = X.dtype
+            if X_dtype != model_dtype:
+                model_device = next(self.model.parameters()).device
+                X = X.to(device=model_device, dtype=model_dtype)
+            probs = self.model(X)
+            # predictions = torch.argmax(probs, dim=1)
+            return probs
 
+    
     def score(self, X, y):
         check_is_fitted(self)
         self.model.eval()
@@ -136,6 +150,36 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             score = loss_function(y_pred, y).item()
             score /= len(y)
             return score
+        
+    def get_art_model(self, data:DataConfig ):
+        classifier = data.classifier
+        if self.clip_values is None or len(self.clip_values) == 0:
+            min_ = data.X_train.min().item()
+            max_ = data.X_train.max().item()
+            self.clip_values = (min_, max_)
+        if classifier:
+            art_model = PyTorchClassifier(
+                model=self.model,
+                loss=self.criterion,
+                optimizer=self.optimizer,
+                input_shape=input_shape_from_data_config(data),
+                nb_classes=len(self.classes_),
+                clip_values=self.clip_values,
+                device_type="gpu" if "cuda" in str(self.device) else "cpu",
+                channels_first=True,
+            )
+        else:
+            art_model = PyTorchRegressor(
+                model=self.model,
+                loss=self.model.criterion,
+                optimizer=self.model.optimizer,
+                input_shape=input_shape_from_data_config(data),
+                clip_values=self.clip_values,
+                device_type="gpu" if "cuda" in str(self.device) else "cpu",
+                channels_first=True,
+            )
+        art_model._device = self.device
+        return art_model
 
 @dataclass
 class PytorchModelConfig(ModelConfig):
@@ -231,8 +275,6 @@ class PytorchModelConfig(ModelConfig):
         
     
     def __post_init__(self):
-        if self.clip_values is not None:
-            self.clip_values = (float(self.clip_values[0]), float(self.clip_values[1]))
         self._initialize_model()
         self.training_prediction_time = None
         self.test_prediction_time = None
@@ -249,12 +291,18 @@ class PytorchModelConfig(ModelConfig):
         self.score_dict = None
     
     def __hash__(self):
+        self._model.model.hash = super().__hash__
         arch = str(self._model.model)
         params = f"model_type={self.model_type}, model_params={self.model_params}, classifier={self.classifier}"
         model_params = b"".join(p.detach().cpu().numpy().tobytes() for p in self._model.model.parameters())
         return hash((arch, params, model_params))
     
-    def get_art_model(self):
+def input_shape_from_data_config(data:DataConfig):
+    # Assuming data.X_train is a torch.Tensor
+    return data.X_train.shape[1:]
+    
+    
+        
         
 
 

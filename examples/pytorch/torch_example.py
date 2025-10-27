@@ -2,9 +2,10 @@
 import logging
 import torch.nn as nn
 from torchvision import models
-import torch
+
 from dataclasses import dataclass
 
+from art.config import ART_NUMPY_DTYPE
 from deckard.data.pytorch import PytorchDataConfig
 from deckard.model.pytorch import PytorchTemplateClassifier, PytorchModelConfig
 
@@ -67,9 +68,9 @@ if __name__ == "__main__":
     data_conf() # Initialize data
     classifier.fit(data_conf.X_train, data_conf.y_train, epochs=1, batch_size=32, verbose=True)
     # Predict
-    predictions = classifier.predict(data_conf.X_test)
+    probs = classifier.predict(data_conf.X_test)
+    predictions = probs.argmax(axis=1)
     score = (predictions == data_conf.y_test).float().mean().item()
-    print(f"Accuracy on dummy data: {score}")
     assert score >=0.0, "Score should be between 0 and 1"
     
     
@@ -93,5 +94,4 @@ if __name__ == "__main__":
     )
     
     new_score = model_conf(data_conf)['accuracy']
-    print(f"Score from model config on dummy data: {new_score}")
     assert new_score >=0.0, "Score should be between 0 and 1"

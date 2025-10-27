@@ -1,9 +1,17 @@
-import pandas as pd
+
+# Standard library imports
 import pickle
 import time
 import logging
 import warnings
 import importlib
+from pathlib import Path
+import pandas as pd
+
+# Typing imports
+from dataclasses import dataclass, field
+from typing import Union
+# Sklearn, torch, numpy imports
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -15,12 +23,14 @@ from sklearn.metrics import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-from dataclasses import dataclass, field
-from typing import Union
-
-
+from torch import Tensor
 import numpy as np
-from pathlib import Path
+
+# ART imports
+from art.estimators.classification import PyTorchClassifier
+from art.estimators.regression import PyTorchRegressor
+from art.config import ART_NUMPY_DTYPE
+from torch import int32 as torchint32
 
 from ..model import ModelConfig
 from ..model.pytorch import PytorchTemplateClassifier
@@ -195,7 +205,10 @@ class AttackConfig(ConfigBase):
         elif str(model_alias) in supported_models:  # Model is already an ART model
             art_model = model
         elif isinstance(model, PytorchTemplateClassifier):
-            art_model = model.get_art_model()
+            art_model = model.get_art_model(data=data)
+            assert isinstance(art_model, PyTorchClassifier)
+        elif isinstance(model, PyTorchClassifier) or isinstance(model, PyTorchRegressor):
+            art_model = model
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
 
@@ -321,7 +334,7 @@ class AttackConfig(ConfigBase):
         else:
             raise NotImplementedError(f"Attack type {attack_type} not implemented yet.")
         assert isinstance(scores, dict), "Scores should be a dictionary"
-        assert isinstance(self.attack_time, float), "Attack time should be a float"
+        assert isinstance(self.attack_time, float), f"Attack time should be a float, got {type(self.attack_time)}"
         assert isinstance(
             self.attack_prediction_time,
             float,
@@ -375,23 +388,30 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            X_train = data.X_train.copy()
-            y_train = data.y_train.copy()
-            X_test = data.X_test.copy()
-            y_test = data.y_test.copy()
-            ben_preds = art_model.predict(X_test.iloc[:n].values)
+            X_train = data.X_train
+            y_train = data.y_train
+            X_test = data.X_test
+            y_test = data.y_test
+            ben_preds = art_model.predict(X_test)
             ben_pred_labels = ben_preds.argmax(axis=1)
-            X_subset = X_test.iloc[:n]
-            y_subset = y_test.iloc[:n]
+            X_subset = X_test[:n]
+            y_subset = y_test[:n]
         else:
-            X_train = data.X_train.copy()
-            y_train = data.y_train.copy()
-            X_test = data.X_test.copy()
-            y_test = data.y_test.copy()
-            ben_preds = art_model.predict(X_train.iloc[:n].values)
+            X_train = data.X_train
+            y_train = data.y_train
+            X_test = data.X_test
+            y_test = data.y_test
+            ben_preds = art_model.predict(X_train)
+            if isinstance(ben_preds, Tensor):
+                ben_preds = ben_preds.cpu().numpy().astype(ART_NUMPY_DTYPE)
             ben_pred_labels = ben_preds.argmax(axis=1)
-            X_subset = X_train.iloc[:n]
-            y_subset = y_train.iloc[:n]
+            X_subset = X_train[:n]
+            y_subset = y_train[:n]
+        if isinstance(y_subset, Tensor):
+            y_subset = y_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
+        assert isinstance(ben_pred_labels, np.ndarray), f"ben_pred_labels should be np.ndarray, got {type(ben_pred_labels)}"
+        assert isinstance(X_subset, np.ndarray), f"X_subset should be np.ndarray, got {type(X_subset)}"
+        assert isinstance(y_subset, np.ndarray), f"y_subset should be np.ndarray, got {type(y_subset)}"
         return n, ben_pred_labels, X_subset, y_subset
 
     def _get_feature_vector_preds(self, data, targeted_attribute, train=False):
@@ -422,12 +442,12 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is False:
-            X_train = data.X_train.copy()
-            y_train = data.y_train.copy()
-            a_train = data.X_train[targeted_attribute].copy()
-            X_test = data.X_test.copy()
-            y_test = data.y_test.copy()
-            a_test = data.X_test[targeted_attribute].copy()
+            X_train = data.X_train
+            y_train = data.y_train
+            a_train = data.X_train[targeted_attribute]
+            X_test = data.X_test
+            y_test = data.y_test
+            a_test = data.X_test[targeted_attribute]
             X_train = X_train.drop(columns=[targeted_attribute])
             X_test = X_test.drop(columns=[targeted_attribute])
             assert (
@@ -437,9 +457,9 @@ class AttackConfig(ConfigBase):
                 len(y_test),
                 len(a_test),
             )
-            X_subset = X_test.iloc[:n]
-            y_subset = y_test.iloc[:n]
-            a_subset = a_test.iloc[:n]
+            X_subset = X_test[:n]
+            y_subset = y_test[:n]
+            a_subset = a_test[:n]
         else:
 
             assert (
@@ -449,9 +469,9 @@ class AttackConfig(ConfigBase):
                 len(y_train),
                 len(a_train),
             )
-            X_subset = X_train.iloc[:n]
-            y_subset = y_train.iloc[:n]
-            a_subset = a_train.iloc[:n]
+            X_subset = X_train[:n]
+            y_subset = y_train[:n]
+            a_subset = a_train[:n]
         return n, X_subset, y_subset, a_subset
 
     def _score_attack(self, ben_pred_labels, adv_pred_labels, y_test_numeric):
@@ -536,32 +556,61 @@ class AttackConfig(ConfigBase):
         attack : object
             The ART attack object used to generate adversarial examples.
         train : bool, optional
-            If True, uses the training set for evaluation; otherwise, uses the test set. Defaults to False.
+            If True, uses the training set for evaluation; otherwie, uses the test set. Defaults to False.
 
         Returns
         -------
         dict
             A dictionary containing the scores and metrics of the attack evaluation.
         """
-        n, ben_pred_labels, X_test_subset, y_test_subset = self._get_benign_preds(
-            data,
-            art_model,
-        )
         start_time = time.process_time()
-        X_test_adv = attack.generate(x=X_test_subset.values)
+        n = self.attack_size
+        x_subset = data.X_test[:n]
+        y_subset = data.y_test[:n]
+        if isinstance(x_subset, Tensor):
+            x_subset = x_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
+            art_model._model.to("cpu")
+        elif isinstance(x_subset, pd.DataFrame):
+            x_subset = x_subset.values
+        else:
+            x_subset = x_subset.astype(ART_NUMPY_DTYPE)
+        if isinstance(y_subset, Tensor):
+            y_subset = y_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
+        elif isinstance(y_subset, pd.Series):
+            y_subset = y_subset.values
+        else:
+            assert isinstance(y_subset, (list, np.ndarray)), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
+        # Move model to appropriate device
+        ben_preds = art_model.predict(x_subset)
+        ben_pred_labels = ben_preds.argmax(axis=1)
+        if isinstance(ben_pred_labels, Tensor):
+            ben_pred_labels = ben_pred_labels.cpu().numpy().astype(ART_NUMPY_DTYPE)
+        X_test_adv = attack.generate(x=x_subset)
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(f"Evasion attack took {self.attack_time} seconds for {n} samples")
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
         self.predictions = adv_pred
-        adv_pred_labels = adv_pred.argmax(axis=1)
+        # adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Adversarial prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
-        y_test_numeric = y_test_subset.astype("category").cat.codes
+        adv_pred_labels = adv_pred.argmax(axis=1)
+        if isinstance(y_subset, pd.Series):
+            y_test_numeric = y_subset.astype("category").cat.codes
+        elif isinstance(y_subset, pd.DataFrame):
+            y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
+        elif isinstance(y_subset, np.ndarray):
+            y_test_numeric = y_subset
+        elif isinstance(y_subset, Tensor):
+            y_test_numeric = y_subset
+        else:
+            raise TypeError(
+                f"Unsupported type for y_subset: {type(y_subset)}",
+            )        
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         self.attack = adv_pred
         return self.score_dict
@@ -592,9 +641,7 @@ class AttackConfig(ConfigBase):
         assert (
             targeted_attribute in X.columns
         ), f"Targeted attribute {targeted_attribute} not found in data columns"
-        X = X.copy()
         target = X.pop(targeted_attribute)
-        X = X.values
         return X, target
 
     def _infer_attribute(
@@ -640,7 +687,7 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_test = data.X_test.copy().values
+        X_test = data.X_test
         X_test_subset_without_feature, target = self._pop_attribute(
             pd.DataFrame(X_test, columns=data.X_test.columns),
             targeted_attribute,
@@ -763,10 +810,10 @@ class AttackConfig(ConfigBase):
         start_time = time.process_time()
         try:
             attack.fit(
-                x=data.X_train.values,
-                y=data.y_train.values,
-                test_x=data.X_test.values,
-                test_y=data.y_test.values,
+                x=data.X_train,
+                y=data.y_train,
+                test_x=data.X_test,
+                test_y=data.y_test,
             )
         except Exception as e:
             raise e
@@ -788,9 +835,9 @@ class AttackConfig(ConfigBase):
 
         start_time = time.process_time()
         inferred = attack.infer(
-            x=big_X.values,
-            y=big_y.values,
-            pred=art_model.predict(big_X.values),
+            x=big_X,
+            y=big_y,
+            pred=art_model.predict(big_X),
         )
         end_time = time.process_time()
         self.attack_time = end_time - start_time
@@ -800,14 +847,17 @@ class AttackConfig(ConfigBase):
         if isinstance(inferred, (list, np.ndarray)):
             inferred = np.array(inferred)
         elif isinstance(inferred, pd.Series):
-            inferred = inferred.values
+            inferred = inferred
         else:
             raise ValueError(f"Unsupported inferred type: {type(inferred)}")
         assert (
             len(inferred) == n
         ), f"Length of inferred {len(inferred)} does not match number of samples {self.attack_size}"
         start_time = time.process_time()
-        inferred = inferred.astype(int)
+        if isinstance(inferred, (pd.Series, pd.DataFrame, np.ndarray)):
+            inferred = inferred.astype(int)
+        elif isinstance(inferred, Tensor):
+            inferred = Tensor(inferred, dtype=torchint32)
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )

@@ -3,4 +3,8 @@ attack_params :
   max_iter: 10
   init_eval: 5
   max_eval: 20
-  init_size: 100
+  init_size: 10
+  norm: 2
+  targeted: false
+  verbose : true
+attack_size : 10
