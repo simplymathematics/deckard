@@ -269,6 +269,10 @@ class PytorchDataConfig(DataConfig):
         - 'f_classif': ANOVA F-value scores.
         - 'class_counts': Counts of each class in the training target.
         """
+        
+        # Exit early if data already scores:
+        if "class_counts" in getattr(self, "score_dict", {}):
+            return self.score_dict
 
         # Ensure data is on CPU for compatibility with sklearn
         X_train_np = self._X.cpu().numpy()
@@ -296,7 +300,6 @@ class PytorchDataConfig(DataConfig):
         class_counts = pd.Series(y_train_np).value_counts().to_dict()
         score_dict["class_counts"] = class_counts
         return score_dict
-        # Feature importance logic can be implemented here if required
 
     def _regression_feature_scores(self):
         """ "
@@ -312,6 +315,10 @@ class PytorchDataConfig(DataConfig):
             - 'y_train_cdf': Empirical CDF of the training target.
             - 'y_test_cdf': Empirical CDF of the testing target.
         """
+        
+        # Exit early if data already scores:
+        if "y_test_cdf" in getattr(self, "score_dict", {}):
+            return self.score_dict
 
         # Ensure data is on CPU for compatibility with sklearn
         X_train_np = self.X_train.cpu().numpy()
@@ -400,6 +407,9 @@ class PytorchDataConfig(DataConfig):
             assert isinstance(score_file, str), "score_file must be a string path."
             if Path(score_file).exists():
                 scores = self.load_scores(score_file)
+                self.score_dict = {**self.score_dict, **scores} if hasattr(self, "score_dict") else scores
+            else:
+                scores = {}
         else:
             scores = {}
         if self.data_load_time is None:
@@ -433,12 +443,19 @@ class PytorchDataConfig(DataConfig):
         logger.info(
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
-        data_scores = self._score()
-        all_scores = {**scores, **data_scores, **time_dict}
+        
+        scores = self._score()
+        all_scores = {**time_dict, **scores}
         self.score_dict = all_scores
+        assert len(self.score_dict) >= 3, f"Score dictionary does not contain expected number of entries. Found these keys: {list(self.score_dict.keys())}"
+        logger.info(f"Computed scores: {list(self.score_dict.keys())}")
         if score_file is not None:
             self.save_scores(scores, score_file)
         if data_file is not None:
             if not Path(data_file).exists():
                 self.save(data_file)
+        assert hasattr(
+            self,
+            "score_dict",
+        ), "score_dict attribute not found after scoring data."
         return all_scores

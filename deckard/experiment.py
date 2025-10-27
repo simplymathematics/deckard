@@ -318,27 +318,37 @@ class ExperimentConfig(ConfigBase):
         attack_file_outputs = {
             file: file_dict[file] for file in attack_files if file in file_dict
         }
-        self.data(**data_file_outputs)
-        data = self.data
+        if "data_file" in data_file_outputs and Path(
+            data_file_outputs["data_file"],
+        ).exists():
+            self.data =self.load_object(
+                data_file_outputs["data_file"],
+            )
+        else:
+            self.data(**data_file_outputs)
         assert hasattr(
-            data,
+            self.data,
             "X_train",
         ), "data must return an object with X_train attribute"
         assert hasattr(
-            data,
+            self.data,
             "y_train",
         ), "data must return an object with y_train attribute"
         assert hasattr(
-            data,
+            self.data,
             "X_test",
         ), "data must return an object with X_test attribute"
         assert hasattr(
-            data,
+            self.data,
             "y_test",
         ), "data must return an object with y_test attribute"
-        scores.update(**data.score_dict)
+        assert hasattr(
+            self.data,
+            "score_dict",
+        ), "data must have score_dict attribute after loading"
+        scores.update(**self.data.score_dict)
         if self.model:
-            self.model(data=data, **model_file_outputs)
+            self.model(data=self.data, **model_file_outputs)
             model = self.model
             assert hasattr(
                 model,
@@ -358,7 +368,7 @@ class ExperimentConfig(ConfigBase):
             model = None
         if self.attack:
             self.attack(
-                data=data,
+                data=self.data,
                 model=model,
                 **attack_file_outputs,
             )

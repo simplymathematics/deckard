@@ -177,6 +177,8 @@ class DataConfig(ConfigBase):
         Number of training samples.
     test_n : int
         Number of testing samples.
+    alias: str
+        Optional alias for the dataset configuration.
     _train_indices : list
         Indices for training samples.
     _test_indices : list
@@ -249,6 +251,7 @@ class DataConfig(ConfigBase):
     target: Union[str, None] = None
     drop: list = None
     keep: list = None
+    alias: Union[str, None] = None
 
     def __post_init__(self):
         """
@@ -712,10 +715,16 @@ class DataConfig(ConfigBase):
         dict
             A dictionary containing feature importance scores.
         """
-        if self.classifier:
-            return self._classification_feature_scores()
+        if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
+            if self.classifier:
+                return self._classification_feature_scores()
+            else:
+                return self._regression_feature_scores()
         else:
-            return self._regression_feature_scores()
+            # Class counts only
+            class_counts = self.y_train.value_counts().to_dict()
+            logger.info(f"Classification feature score - class_counts: {class_counts}")
+            return {"class_counts": class_counts}
 
     def _classification_feature_scores(self) -> dict:
         """
@@ -909,6 +918,7 @@ class DataConfig(ConfigBase):
         data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
+        assert hasattr(self, "score_dict"), "score_dict must be set"
         if score_file is not None:
             self.save_scores(all_scores, score_file)
         if save_flag:
