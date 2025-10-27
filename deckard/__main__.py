@@ -217,7 +217,7 @@ def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
     if isinstance(runner, ExperimentConfig):
         runner.files = FileConfig(**files, experiment_name=runner.experiment_name)
         runner.__post_init__()
-        return runner.run()
+        return runner()
     return runner(*args, **files)
 
 

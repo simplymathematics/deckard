@@ -151,8 +151,6 @@ class ConfigBase:
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
         logger.info(f"Data saved to {data_path}")
 
-    def run(self):
-        return self.__call__()
 
     def get_call_params(self) -> dict:
         """
