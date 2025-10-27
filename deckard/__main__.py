@@ -493,10 +493,12 @@ def main():
         "DECKARD_CONFIG_DIR",
         None,
     )
-    while config_dir is None or not Path(config_dir).exists():
+    if config_dir is None:
+        config_dir = input("Please enter the config directory path: ")
+    while not Path(config_dir).exists():
         # Deckard_config dir does not exist, have the user set it using input()
         config_dir = input(
-            "DECKARD_CONFIG_DIR environment variable not set or path does not exist. Please enter the config directory path: ",
+            f"The provided config directory path '{config_dir}' does not exist. Please enter a valid config directory path: ",
         )
         # Prompt user to confirm the path exists
         if not Path(config_dir).exists():
