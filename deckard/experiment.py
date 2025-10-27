@@ -390,7 +390,11 @@ class ExperimentConfig(ConfigBase):
             logger.info("No attack config provided, skipping attack.")
             attack = None
         # Assert that all files in file_dict exist
-
+        if "score_file" in file_dict:
+            score_file_path = self.files._replace_placeholders(
+                file_dict["score_file"],
+            )
+            self.save_scores(scores, score_file_path)
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
@@ -402,7 +406,7 @@ class ExperimentConfig(ConfigBase):
             #
         if self.score:
             custom_scores = self.score(
-                data=data,
+                data=self.data,
                 model=model,
                 attack=attack,
                 mode="train",

@@ -78,6 +78,8 @@ class AttackConfig(ConfigBase):
         Stores the predictions made by the attack.
     score_dict : dict, optional
         Stores the computed scores and metrics for the attack.
+    alias: str or None
+        An optional alias for the attack configuration.
 
     Methods
     -------
@@ -132,6 +134,7 @@ class AttackConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Targeted attribute for inference attacks."},
     )
+    alias: Union[str, None] = None
 
     def __hash__(self):
         return super().__hash__()

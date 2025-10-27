@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ../config/default.yaml
       hash: md5
-      md5: 7dd34162f1c0181b54dabb935e4748b7
-      size: 82
+      md5: 4d9515fbfa04ed909f373f74a0262939
+      size: 109
     params:
       ../config/default.yaml:
         defaults:
@@ -15,6 +15,7 @@ stages:
         - data: classification
         - model: logistic
         - attack: hsj
+        experiment_name: '{hash}'
     outs:
     - path: .deckard_rc
       hash: md5
@@ -25,8 +26,8 @@ stages:
     deps:
     - path: ../../deckard/__main__.py
       hash: md5
-      md5: a17f211a2e530cb3f17b22f11519a447
-      size: 24471
+      md5: 1f2dceb6ab5eb2302aed39d04e8d8ef6
+      size: 24310
     - path: .deckard_rc
       hash: md5
       md5: c86ee25c7bb64c8aff81d16e24d23461
@@ -62,12 +63,12 @@ stages:
     outs:
     - path: data/torch_mnist.pkl
       hash: md5
-      md5: b5bfc71d2ef577024f71ec342da346cc
+      md5: ef6b61ff3029e3f3166e73a4e6c7bf08
       size: 220887472
     - path: scores/data/torch_mnist.json
       hash: md5
-      md5: 4407e5c44a0f28af47acd62b19bacd30
-      size: 209
+      md5: 17beed80e4da64d066f4bfa67314f8b6
+      size: 273
   generate_data@torch_cifar:
     cmd: "deckard  data=torch_cifar  +files.data_file=data/torch_cifar.pkl  +files.score_file=scores/data/torch_cifar.json
       ~model  ~attack\n"
@@ -129,6 +130,7 @@ stages:
         train_size: 128
       ../config/model/torch_resnet18.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
         classifier: true
         clip_values:
         - 0
@@ -150,8 +152,8 @@ stages:
     outs:
     - path: models/torch_mnist_resnet18.pkl
       hash: md5
-      md5: 6cba34cf1789356ad634b39e25cf68e9
-      size: 89512966
+      md5: daea57b4728a3cd1804e28a99953a639
+      size: 89512994
   generate_data@torch_cifar10:
     cmd: "deckard  data=torch_cifar10  +files.data_file=data/torch_cifar10.pkl  +files.score_file=scores/data/torch_cifar10.json
       ~model  ~attack\n"
@@ -178,12 +180,12 @@ stages:
     outs:
     - path: data/torch_cifar10.pkl
       hash: md5
-      md5: a8f7324ed1a1954cea129716f2ab8847
+      md5: 503135c96c160248776dc2de1bd55e27
       size: 740910384
     - path: scores/data/torch_cifar10.json
       hash: md5
-      md5: 96f127d0e1f159072b409d559443a307
-      size: 209
+      md5: 6df12f8b9732bedb9c33a9894eb21d82
+      size: 273
   train@1:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 ~attack ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10 +files.data_file=data/torch_cifar10.pkl
@@ -214,6 +216,7 @@ stages:
         train_size: 128
       ../config/model/torch_resnet18.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
         classifier: true
         clip_values:
         - 0
@@ -235,5 +238,5 @@ stages:
     outs:
     - path: models/torch_cifar10_resnet18.pkl
       hash: md5
-      md5: 806bf4f1f0ab88316e41ffac17bf052e
-      size: 89563151
+      md5: eba87bf0e342c68823200a0f450007b8
+      size: 89563179

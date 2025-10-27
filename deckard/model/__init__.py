@@ -49,6 +49,8 @@ class ModelConfig(ConfigBase):
         Time taken to compute training scoring metrics (in seconds).
     prediction_score_time : float or None
         Time taken to compute prediction scoring metrics (in seconds).
+    alias : str or None
+        An optional alias for the model configuration.
     score_dict : dict or None
         Dictionary containing the latest computed scores and timing information.
     _training_n : int or None
@@ -96,6 +98,7 @@ class ModelConfig(ConfigBase):
     classifier: bool = True
     model_params: dict = None
     probability: bool = False
+    alias : Union[str, None] = None
 
     def __post_init__(self):
         """
