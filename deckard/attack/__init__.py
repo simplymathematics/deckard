@@ -223,12 +223,9 @@ class AttackConfig(ConfigBase):
             feature_name = self.targeted_attribute
             index = data.X_train.columns.get_loc(feature_name)
             self.attack_params["attack_feature"] = index
-        # Initialize the attack
-        try:  # Assume Whitebox attack if model can be passed to the attack constructor
-            attack = attack_class(art_model, **self.attack_params)
-        except ValueError as e:  # If ValueError, assume Blackbox attack
-            logger.warning(f"Falling back to Blackbox attack due to error: {e}")
-            attack = attack_class(**self.attack_params)
+        attack = attack_class(art_model, **self.attack_params)
+        self._attack_type = attack_type
+        self._attack_subtype = attack_subtype
         return attack, art_model, attack_type, attack_subtype
 
     def __call__(
@@ -272,7 +269,7 @@ class AttackConfig(ConfigBase):
             If the output scores or timing variables are not of the expected types.
         """
         if attack_file is not None and Path(attack_file).exists():
-            self.attack = self.load_object(attack_file)
+            self = self.load_object(attack_file)
         if (
             attack_predictions_file is not None
             and Path(attack_predictions_file).exists()
@@ -280,30 +277,16 @@ class AttackConfig(ConfigBase):
             self.attack_predictions = self.load_object(attack_predictions_file)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
-        if (
-            self.attack is not None
-            and self.score_dict is not None
-            and self.attack_predictions is not None
-        ):
-            required_keys = {
-                "attack_success",
-                "attack_time",
-                "attack_prediction_time",
-                "attack_score_time",
-            }
-            if not required_keys.issubset(self.score_dict.keys()):
-                raise ValueError(
-                    f"score_dict is missing required keys: {required_keys - self.score_dict.keys()}",
-                )
-            return self.score_dict
-        elif (
-            self.attack is None
-        ):  # If attack is not already loaded, initialize and run it
+        if not hasattr(self,  "_attack_type") or not hasattr(self, "_attack_subtype"):  # If attack is not already loaded, initialize and run it
             attack, art_model, attack_type, attack_subtype = self._initialize_attack(
                 model,
                 data,
             )
-
+        else:
+            attack = self.attack
+            art_model = model
+            attack_type = self._attack_type
+            attack_subtype = self._attack_subtype
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
             scores = self._evade(data, art_model, attack)
@@ -355,8 +338,8 @@ class AttackConfig(ConfigBase):
         self.score_dict = score_dict
 
         # Save attack, predictions, and scores if file paths are provided
-        if attack_file is not None:
-            self.save_object(self.attack, attack_file)
+        if attack_file is not None and not Path(attack_file).exists():
+            self.save_object(self, attack_file)
         if attack_predictions_file is not None:
             self.save_object(self.attack_predictions, attack_predictions_file)
         if score_file is not None:
@@ -588,7 +571,18 @@ class AttackConfig(ConfigBase):
         ben_pred_labels = ben_preds.argmax(axis=1)
         if isinstance(ben_pred_labels, Tensor):
             ben_pred_labels = ben_pred_labels.cpu().numpy().astype(ART_NUMPY_DTYPE)
-        X_test_adv = attack.generate(x=x_subset)
+        if "AdversarialPatch" in str(type(attack)):
+            # Special handling for AdversarialPatch attack
+            patches = attack.generate(x=x_subset, y=ben_pred_labels)
+            # Caclulate the scale of the patch, relative to the input size
+            input_shape = x_subset[0].shape[1:]  # Exclude batch dimension, channel dimension
+            patch_shape = patches[0].shape[1:]  # Exclude batch dimension, channel dimension
+            # Assume that the patch is square (required by the attack)
+            # Calculate the scale based on the larger input_dimension
+            scale = max(patch_shape[0] / input_shape[0], patch_shape[1] / input_shape[1])
+            X_test_adv = attack.apply_patch(x_subset, scale=scale)
+        else:
+            X_test_adv = attack.generate(x=x_subset)
         end_time = time.process_time()
         self.attack_time = end_time - start_time
         logger.info(f"Evasion attack took {self.attack_time} seconds for {n} samples")
