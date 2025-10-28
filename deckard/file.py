@@ -137,7 +137,7 @@ class FileConfig(ConfigBase):
         """Resolve file paths by replacing placeholders with actual values."""
         for file_attr in all_files:
             file_path = getattr(self, file_attr)
-            if len(file_path) > 0:
+            if file_path is not None and len(file_path) > 0:
                 resolved_path = self._replace_placeholders(file_path, placeholder_dict)
                 setattr(self, file_attr, resolved_path)
 
@@ -146,7 +146,7 @@ class FileConfig(ConfigBase):
         file_dict = {}
         for file_attr in all_files:
             file_path = getattr(self, file_attr)
-            if len(file_path) > 0:
+            if file_path is not None and len(file_path) > 0:
                 file_dict[file_attr] = file_path
         return file_dict
 
