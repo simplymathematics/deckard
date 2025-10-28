@@ -170,7 +170,8 @@ class ModelConfig(ConfigBase):
             raise ValueError("Model not initialized")
         start_time = time.process_time()
         assert hasattr(self._model, "fit"), "Model does not have a fit method"
-        self._model.fit(X, y)
+        fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
+        self._model.fit(X, y, **fit_params)
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self._training_n = len(y)
