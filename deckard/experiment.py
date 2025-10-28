@@ -397,11 +397,7 @@ class ExperimentConfig(ConfigBase):
                     filepath,
                 ).exists(), f"File {filepath} for {attr} does not exist."
             #
-        if "score_file" in file_dict:
-            score_file_path = self.files._replace_placeholders(
-                file_dict["score_file"],
-            )
-            self.save_scores(scores, score_file_path)
+        
         if self.score:
             custom_scores = self.score(
                 data=self.data,
@@ -412,4 +408,6 @@ class ExperimentConfig(ConfigBase):
             )
             scores = {**scores, **custom_scores}
             # TODO: override existing score functions
+        if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
+            self.save_scores(scores, file_dict["score_file"])
         return scores
