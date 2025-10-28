@@ -21,6 +21,7 @@ from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 
 from .defend import DefenseConfig
+from .  import ModelConfig
 from ..data import DataConfig
 logger = logging.getLogger(__name__)
 
@@ -140,6 +141,22 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             # predictions = torch.argmax(probs, dim=1)
             return probs
 
+    def get_art_model(self, data):
+        if self.clip_values is None or len(self.clip_values) == 0:
+            clip_values = (0.0, 1.0)
+        else:
+            clip_values = self.clip_values
+        art_class = PyTorchClassifier
+        init_params = {
+            "model": self.model,
+            "loss": self.criterion,
+            "optimizer": self.optimizer,
+            "input_shape": data.X_train.shape[1:],
+            "nb_classes": len(torch.unique(data.y_train)),
+            "clip_values": clip_values,
+            "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
+        }
+        return art_class(**init_params)
     
     def score(self, X, y):
         check_is_fitted(self)
@@ -235,7 +252,7 @@ class PytorchModelConfig(DefenseConfig):
     
     
     def get_art_model(self, data:DataConfig ):
-        loss = self._initialize_criterion(self.criterion)
+        loss = self._model._initialize_criterion(self.criterion)
         assert isinstance(loss, nn.Module), "Loss must be a torch.nn.Module."
         input_shape = data.X_train.shape[1:]
         if self.classifier:
