@@ -19,7 +19,10 @@ dependencies = [
     "dvc",
     "optuna",
     "ipykernel",
-    "kagglehub"
+    "kagglehub",
+    "cma",
+    "optuna",
+    "optuna-dashboard",
 ]
 
 [build-system]
@@ -53,7 +56,8 @@ test = [
 torch = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
-    "torchaudio>=2.0.0"
+    "torchaudio>=2.0.0",
+    "cma",
 ]
 
 # Linting
@@ -94,6 +98,7 @@ all  = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "torchaudio>=2.0.0"
+    "cma",
 ]
 
 [tool.black]
