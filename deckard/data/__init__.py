@@ -734,17 +734,11 @@ class DataConfig(ConfigBase):
       
     def _compute_class_counts(self, y: pd.Series) -> dict:
         if isinstance(y, pd.Series):
-            class_dict = y.value_counts().to_dict()
-            classes = set(self.y_train)
-            class_dict = {cls: sum(1 for label in self.y_train if label == cls) for cls in classes}
+            class_dict = y.value_counts()
+            
         else:
-            class_dict = unique(y, return_counts=True)
-        # {class_label: count, ...}
-        # We need [{"class_name" : class_label, "count": count}, ... for each class]
-        # So we convert the dict to a list of dicts
-        class_list = []
-        for class_label, count in class_dict.items():
-            class_list.append({"class_name": class_label, "count": count})
+            class_dict = pd.Series(y).value_counts()
+        class_list = class_dict
         return class_list
             
             

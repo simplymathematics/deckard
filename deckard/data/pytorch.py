@@ -297,8 +297,7 @@ class PytorchDataConfig(DataConfig):
             logger.warning(f"f_classif failed with error: {e}")
 
         # Class counts
-        class_counts = pd.Series(y_train_np).value_counts().to_dict()
-        score_dict["class_counts"] = class_counts
+        score_dict["class_counts"] = self._compute_class_counts(self.y_train)
         return score_dict
 
     def _regression_feature_scores(self):
