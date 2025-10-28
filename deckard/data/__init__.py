@@ -715,16 +715,40 @@ class DataConfig(ConfigBase):
         dict
             A dictionary containing feature importance scores.
         """
-        if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-            if self.classifier:
+        if self.classifier:
+            if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
                 return self._classification_feature_scores()
             else:
-                return self._regression_feature_scores()
+                return self._compute_class_counts(self.y_train)
         else:
-            # Class counts only
-            class_counts = self.y_train.value_counts().to_dict()
-            logger.info(f"Classification feature score - class_counts: {class_counts}")
-            return {"class_counts": class_counts}
+            if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
+                return self._regression_feature_scores()
+            else:
+                y_train_cdf = self._empirical_cdf(self.y_train).tolist()
+                y_test_cdf = self._empirical_cdf(self.y_test).tolist()
+                return {
+                    "y_train_cdf": y_train_cdf,
+                    "y_test_cdf": y_test_cdf,
+                }
+                
+      
+    def _compute_class_counts(self, y: pd.Series) -> dict:
+        if isinstance(y, pd.Series):
+            class_dict = y.value_counts().to_dict()
+            classes = set(self.y_train)
+            class_dict = {cls: sum(1 for label in self.y_train if label == cls) for cls in classes}
+        else:
+            class_dict = unique(y, return_counts=True)
+        # {class_label: count, ...}
+        # We need [{"class_name" : class_label, "count": count}, ... for each class]
+        # So we convert the dict to a list of dicts
+        class_list = []
+        for class_label, count in class_dict.items():
+            class_list.append({"class_name": class_label, "count": count})
+        return class_list
+            
+            
+        
 
     def _classification_feature_scores(self) -> dict:
         """
@@ -768,8 +792,7 @@ class DataConfig(ConfigBase):
                 "Only one class present in y_train; skipping classification feature scoring.",
             )
         # Class counts
-        class_counts = self.y_train.value_counts().to_dict()
-        scores["class_counts"] = class_counts
+        scores["class_counts"] = self._compute_class_counts(self.y_train)
         for score, value in scores.items():
             logger.info(f"Classification feature score - {score}: {value}")
         return scores
@@ -919,7 +942,7 @@ class DataConfig(ConfigBase):
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
-        if score_file is not None:
+        if score_file is not None and not Path(score_file).exists():
             self.save_scores(all_scores, score_file)
         if save_flag:
             self.save(data_file)
