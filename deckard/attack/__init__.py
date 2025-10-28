@@ -48,10 +48,10 @@ supported_attacks = [
     "whitebox_attribute_inference",
 ]
 
-sklearn_supported_models = [
-    str(x).split(".")[-1].split("'")[0] for x in sklearn_dict.values()
-]
-supported_models = sklearn_supported_models
+sklearn_supported_models = list(sklearn_dict.values())
+pytorch_supported_models = [PyTorchRegressor, PyTorchClassifier]
+
+supported_models = sklearn_supported_models + pytorch_supported_models
 
 
 @dataclass
@@ -197,24 +197,20 @@ class AttackConfig(ConfigBase):
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = getattr(module, self.attack_type.split(".")[-1])
         model_alias = type(model).__name__
-
-        # Validate library support
-        if model_alias in sklearn_models:
+        if isinstance(model, tuple(sklearn_supported_models)):
             try:
                 check_is_fitted(model)
                 art_model = sklearn_dict[model_alias](model)
             except NotFittedError:
                 raise ValueError(f"model {model_alias} is not fitted")
-        elif str(model_alias) in supported_models:  # Model is already an ART model
-            art_model = model
         elif isinstance(model, PytorchTemplateClassifier):
             art_model = model.get_art_model(data=data)
             assert isinstance(art_model, PyTorchClassifier)
-        elif isinstance(model, PyTorchClassifier) or isinstance(model, PyTorchRegressor):
+        elif isinstance(model, tuple(supported_models)):
             art_model = model
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
-
+        assert isinstance(art_model, tuple(supported_models)), f"art_model must be one of {supported_models}, got {type(art_model)}"
         # Convert targeted attribute to index if necessary
         if len(self.targeted_attribute) > 0 and isinstance(
             self.targeted_attribute,
@@ -277,16 +273,10 @@ class AttackConfig(ConfigBase):
             self.attack_predictions = self.load_object(attack_predictions_file)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
-        if not hasattr(self,  "_attack_type") or not hasattr(self, "_attack_subtype"):  # If attack is not already loaded, initialize and run it
-            attack, art_model, attack_type, attack_subtype = self._initialize_attack(
-                model,
-                data,
-            )
-        else:
-            attack = self.attack
-            art_model = model
-            attack_type = self._attack_type
-            attack_subtype = self._attack_subtype
+        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+            model,
+            data,
+        )
         # Execute the attack based on type and subtype
         if attack_type == "evasion":
             scores = self._evade(data, art_model, attack)
@@ -555,7 +545,12 @@ class AttackConfig(ConfigBase):
         y_subset = data.y_test[:n]
         if isinstance(x_subset, Tensor):
             x_subset = x_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
-            art_model._model.to("cpu")
+            if hasattr(art_model, "_model") and hasattr(art_model._model, "to"):
+                art_model._model.to("cpu")
+            elif hasattr(art_model, "_model") and hasattr(art_model._model, "_device"):
+                art_model._model._device = "cpu"
+            else:
+                logger.warning("Unable to move model to CPU for prediction.")
         elif isinstance(x_subset, pd.DataFrame):
             x_subset = x_subset.values
         else:
