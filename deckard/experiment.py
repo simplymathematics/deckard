@@ -349,52 +349,45 @@ class ExperimentConfig(ConfigBase):
         scores.update(**self.data.score_dict)
         if self.model:
             self.model(data=self.data, **model_file_outputs)
-            model = self.model
             assert hasattr(
-                model,
+                self.model,
                 "training_predictions",
             ), "model must have training_predictions attribute after training"
             assert hasattr(
-                model,
+                self.model,
                 "predictions",
             ), "model must have predictions attribute after training"
             assert hasattr(
-                model,
+                self.model,
                 "score_dict",
             ), "model must have score_dict attribute after training"
-            scores.update(**model.score_dict)
+            scores.update(**self.model.score_dict)
         else:
             logger.info("No model config provided, skipping model training.")
-            model = None
+            self.model = None
         if self.attack:
             self.attack(
                 data=self.data,
-                model=model,
+                model=self.model,
                 **attack_file_outputs,
             )
-            attack = self.attack
             assert hasattr(
-                attack,
+                self.attack,
                 "attack",
             ), "attack must have attack attribute after training"
             assert hasattr(
-                attack,
-                "predictions",
+                self.attack,
+                "attack_predictions",
             ), "attack must have a predictions attribute after training"
             assert hasattr(
-                attack,
+                self.attack,
                 "score_dict",
             ), "attack must have score_dict attribute after training"
-            scores.update(**attack.score_dict)
+            scores.update(**self.attack.score_dict)
         else:
             logger.info("No attack config provided, skipping attack.")
-            attack = None
         # Assert that all files in file_dict exist
-        if "score_file" in file_dict:
-            score_file_path = self.files._replace_placeholders(
-                file_dict["score_file"],
-            )
-            self.save_scores(scores, score_file_path)
+        
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
@@ -404,11 +397,16 @@ class ExperimentConfig(ConfigBase):
                     filepath,
                 ).exists(), f"File {filepath} for {attr} does not exist."
             #
+        if "score_file" in file_dict:
+            score_file_path = self.files._replace_placeholders(
+                file_dict["score_file"],
+            )
+            self.save_scores(scores, score_file_path)
         if self.score:
             custom_scores = self.score(
                 data=self.data,
-                model=model,
-                attack=attack,
+                model=self.model,
+                attack=self.attack,
                 mode="train",
                 score_file=file_dict.get("score_file", None),
             )
