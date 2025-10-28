@@ -5,5 +5,6 @@ attack_params :
   targeted: False
   eps: 1
   minimal : False
+  batch_size : ${model.fit_params.batch_size}
 _target_ : deckard.attack.AttackConfig
 alias: fgm

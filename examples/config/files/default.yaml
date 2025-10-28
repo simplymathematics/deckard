@@ -1,3 +1,0 @@
-data_file : output/data/${dataset_name}.pkl
-model_file : output/model/${model_name}.pkl
-score_file : output/scores/${experiment_name}.json

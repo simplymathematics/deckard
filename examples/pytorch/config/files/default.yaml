@@ -1,0 +1,5 @@
+data_file : output/data/${experiment_name}.pkl
+model_file : output/models/${experiment_name}.pkl
+score_file : output/scores/${experiment_name}.json
+attack_file : output/attacks/${experiment_name}.pkl
+_target_ : deckard.file.FileConfig
