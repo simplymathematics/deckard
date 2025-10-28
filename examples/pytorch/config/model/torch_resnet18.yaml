@@ -5,7 +5,7 @@ model_params:
 classifier : True
 _target_ : deckard.model.pytorch.PytorchModelConfig
 fit_params:
-  nb_epochs: 1
+  nb_epochs: 3
   batch_size: 1024
   verbose: True
 library : pytorch

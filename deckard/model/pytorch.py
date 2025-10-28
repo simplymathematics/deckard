@@ -91,7 +91,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         self.device = device
         self.model.to(device)
     
-    def fit(self, X, y, epochs=1, batch_size=32, verbose=False, log_interval=10):
+    def fit(self, X, y, nb_epochs=1, batch_size=32, verbose=False, log_interval=1):
         # Store the classes seen during fit
         self.classes_ = torch.unique(y)
         batch_index = 0
@@ -99,8 +99,8 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         self.model.to(self.device)
         # Training loop
         self.model.train()
-        for epoch in range(epochs):
-            pbar = tqdm(zip(X.split(batch_size), y.split(batch_size)), total=len(X) // batch_size, desc=f"Epoch {epoch+1}/{epochs}")
+        for epoch in range(nb_epochs):
+            pbar = tqdm(zip(X.split(batch_size), y.split(batch_size)), total=len(X) // batch_size, desc=f"Epoch {epoch+1}/{nb_epochs}")
             for batch_X, batch_y in pbar:
                 batch_X = batch_X.to(self.device)
                 batch_y = batch_y.to(self.device)
@@ -111,11 +111,10 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
                 self.optimizer.step()
                 batch_index += 1
                 if verbose:
-                    logger.info(f"Epoch {epoch+1}/{epochs}, Batch {batch_index}, Loss: {loss.item()}")
-            if epoch % log_interval == 0:
+                    logger.info(f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}")
+            if log_interval > 0 and (epoch) % log_interval == 0:
                 train_loss = loss.item()
                 self.loss_curve.append(train_loss)
-                logger.info(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss}")
         # Return the classifier
         return self
     
@@ -371,6 +370,15 @@ class PytorchModelConfig(DefenseConfig):
         params = f"model_type={self.model_type}, model_params={self.model_params}, classifier={self.classifier}"
         model_params = b"".join(p.detach().cpu().numpy().tobytes() for p in self._model.model.parameters())
         return hash((arch, params, model_params))
+    
+    
+    def _score(self, y_true: torch.Tensor, y_pred: torch.Tensor):
+        if hasattr(self._model, "loss_curve") and len(self._model.loss_curve) > 0:
+            self.score_dict["loss_curve"] = self._model.loss_curve
+        elif hasattr(self._model, "model") and hasattr(self._model.model, "loss_curve") and len(self._model.model.loss_curve) > 0:
+            self.score_dict["loss_curve"] = self._model.model.loss_curve
+        scores = super()._score(y_true, y_pred)
+        return scores
     
 def input_shape_from_data_config(data:DataConfig):
     # Assuming data.X_train is a torch.Tensor
