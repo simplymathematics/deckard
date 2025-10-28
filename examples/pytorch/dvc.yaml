@@ -7,9 +7,7 @@ stages:
       outs: 
         - .deckard_rc
       deps:
-        - ../config/default.yaml
-      params:
-        - ../config/default.yaml:
+        - ./config/
   simple_example:
       cmd: deckard && echo "Deckard ran successfully!" > deckard.log
       outs:
@@ -38,12 +36,12 @@ stages:
           - .deckard_rc
           - ../../deckard/data/pytorch.py
         params:
-          - ../config/data/${item}.yaml:
+          - ./config/data/${item}.yaml:
           ################################################
           #            Command Explanation:             #
           ################################################
           # deckard  data <-- Calls the deckard CLI tool for the DataConfig object.
-          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
           # ~model  <-- Skips the model configuration for this run.
           # ~attack  <-- Skips the attack configuration for this run.
           # ~files.model_file  <-- Skips the model file specification.
@@ -72,8 +70,8 @@ stages:
       metrics:
         - output/scores/${item.data}_resnet18_training.json
       params:
-        - ../config/data/${item.data}.yaml:
-        - ../config/model/torch_resnet18.yaml:
+        - ./config/data/${item.data}.yaml:
+        - ./config/model/torch_resnet18.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
@@ -85,7 +83,52 @@ stages:
         # +files.data_file=data/${item.data}.pkl <-- Specifies the input data file
         # +files.model_file=models/${item.data}_resnet18.pkl <-- Specifies the output model file
         ################################################
-  # defend:
-  #   matrix:
-  #     data: [{name : torch_mnist, num_channels: 1, num_classes: 10}, {name : torch_cifar10, num_channels: 3, num_classes: 10}]
-      
+  attack:
+    matrix:
+      data:
+        - {name: torch_mnist, num_channels: 1, num_classes: 10}
+        - {name: torch_cifar10, num_channels: 3, num_classes: 10}
+      attack:
+          # - carlini_l0
+          - carlini_l2
+          - carlini_linf
+          - deepfool
+          - fgm
+          - hsj #This one has an upstream bug in ART that causes it to error out on some datasets
+          - patch
+          - pgd
+          - pixel
+          - threshold
+    cmd: >
+      deckard 
+      data=${item.data.name} 
+      model=torch_resnet18
+      attack=${item.attack}
+      files.model_file=output/models/${item.data.name}_resnet18_training.pkl
+      experiment_name=${item.data.name}_torch_resnet18_${item.attack}
+      ++model.model_params.num_channels=${item.data.num_channels}
+      ++model.model_params.num_classes=${item.data.num_classes}
+    outs:
+      - output/attacks/${item.data.name}_torch_resnet18_${item.attack}.pkl
+    deps:
+      - .deckard_rc
+      - ../../deckard/data/pytorch.py
+      - ../../deckard/model/pytorch.py
+      - ../../deckard/attack/__init__.py
+    metrics:
+      - output/scores/${item.data.name}_torch_resnet18_${item.attack}.json
+    params:
+      - ./config/data/${item.data.name}.yaml:
+      - ./config/model/torch_resnet18.yaml:
+      - ./config/attack/${item.attack}.yaml:
+      ################################################
+      #            Command Explanation:             #
+      ################################################
+      # deckard  <-- Calls the deckard CLI tool
+      # data=${item.data.name}  <-- Specifies the dataset to be used in this iteration.
+      # model=torch_resnet18  <-- Specifies the model architecture to be used.
+      # attack=${item.attack}  <-- Specifies the attack method to be used in this iteration.
+      # files.model_file=models/${item.data.name}_resnet18_training.pkl <-- Specifies the input trained model file
+      # ++model.num_channels=${item.data.num_channels}  <-- Sets the number of input channels
+      # ++model.num_classes=${item.data.num_classes}  <-- Sets the number of output classes
+      ################################################

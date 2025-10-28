@@ -1,8 +1,13 @@
 
 attack_type : "art.attacks.evasion.CarliniL0Method"
 attack_params : 
-  batch_size: 100
-  max_iter: 10
-  confidence: [.1, .9, .99]
+  batch_size: 2
+  max_iter: 1
+  confidence: .99
+  verbose : true
+  binary_search_steps : 1
+  max_halving: 1
+  max_doubling: 1 
+attack_size : 4
 _target_ : deckard.attack.AttackConfig
 alias: carlini_l0

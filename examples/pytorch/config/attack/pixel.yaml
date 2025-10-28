@@ -1,7 +1,8 @@
 attack_type : "art.attacks.evasion.PixelAttack"
 attack_params : 
-  max_iter: 10
-  th: .1
-  batch_size: 100
+  max_iter: 1
+  th: 255
+  verbose : true
 _target_ : deckard.attack.AttackConfig
 alias: pixel
+attack_size : 3

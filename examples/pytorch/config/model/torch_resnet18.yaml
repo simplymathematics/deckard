@@ -16,3 +16,5 @@ optimizer:
     momentum : 0.9
 clip_values : [0, 255]
 alias: torch_resnet18
+defense_name: null
+defense_params: {}

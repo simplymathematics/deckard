@@ -2,5 +2,9 @@ attack_type : "art.attacks.evasion.AdversarialPatch"
 attack_params : 
   max_iter: 10
   learning_rate: .5
+  patch_shape: 
+    - ${model.model_params.num_channels}
+    - 4 # height
+    - 4 # width
 _target_ : deckard.attack.AttackConfig
 alias: patch

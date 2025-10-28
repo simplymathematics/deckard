@@ -4,7 +4,6 @@ attack_params :
   norm: inf
   targeted: False
   eps: 1
-  minimal : True
   max_iter: 10
 _target_ : deckard.attack.AttackConfig
 alias: pgd
