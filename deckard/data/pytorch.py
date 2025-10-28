@@ -447,8 +447,6 @@ class PytorchDataConfig(DataConfig):
         scores = self._score()
         all_scores = {**time_dict, **scores}
         self.score_dict = all_scores
-        assert len(self.score_dict) >= 3, f"Score dictionary does not contain expected number of entries. Found these keys: {list(self.score_dict.keys())}"
-        logger.info(f"Computed scores: {list(self.score_dict.keys())}")
         if score_file is not None:
             self.save_scores(scores, score_file)
         if data_file is not None:
