@@ -20,7 +20,7 @@ from sklearn.utils.validation import check_is_fitted
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 
-from . import ModelConfig
+from .defend import DefenseConfig
 from ..data import DataConfig
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         module = importlib.import_module("torch.nn")
         criterion_class = getattr(module, criterion_name)
         criterion = criterion_class(**criterion_params)
+        assert callable(criterion), f"Criterion must be callable, got {type(criterion)}"
         return criterion
     
     def _initialize_optimizer(self, optimizer):
@@ -81,7 +82,9 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         # Use torch.optim to get the optimizer class
         module = importlib.import_module("torch.optim")
         optimizer_class = getattr(module, optimizer_name)
-        return optimizer_class(self.model.parameters(), **optimizer_params)
+        optimizer_class = optimizer_class(self.model.parameters(), **optimizer_params)
+        assert isinstance(optimizer_class, torch.optim.Optimizer), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
+        return optimizer_class
     
     def to(self, device):
         self.device = device
@@ -151,38 +154,10 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             score /= len(y)
             return score
         
-    def get_art_model(self, data:DataConfig ):
-        classifier = data.classifier
-        if self.clip_values is None or len(self.clip_values) == 0:
-            min_ = data.X_train.min().item()
-            max_ = data.X_train.max().item()
-            self.clip_values = (min_, max_)
-        if classifier:
-            art_model = PyTorchClassifier(
-                model=self.model,
-                loss=self.criterion,
-                optimizer=self.optimizer,
-                input_shape=input_shape_from_data_config(data),
-                nb_classes=len(self.classes_),
-                clip_values=self.clip_values,
-                device_type="gpu" if "cuda" in str(self.device) else "cpu",
-                channels_first=True,
-            )
-        else:
-            art_model = PyTorchRegressor(
-                model=self.model,
-                loss=self.model.criterion,
-                optimizer=self.model.optimizer,
-                input_shape=input_shape_from_data_config(data),
-                clip_values=self.clip_values,
-                device_type="gpu" if "cuda" in str(self.device) else "cpu",
-                channels_first=True,
-            )
-        art_model._device = self.device
-        return art_model
-
+    
+        
 @dataclass
-class PytorchModelConfig(ModelConfig):
+class PytorchModelConfig(DefenseConfig):
     model_type: str = "torch_example.ResNet18"
     model_params: dict = field(default_factory=dict)
     classifier: bool = False
@@ -193,6 +168,9 @@ class PytorchModelConfig(ModelConfig):
     optimizer: Union[dict, str] = field(default="SGD")
     clip_values: Union[tuple, None] = None
     random_seed: int = 42
+    channels_first: bool = True
+    defense_name: Union[str, None] = None
+    defense_params: dict = field(default_factory=dict)
     """
     Overview
     --------
@@ -216,6 +194,14 @@ class PytorchModelConfig(ModelConfig):
         Dictionary specifying the optimizer.
     clip_values : tuple
         Tuple of the form (min, max) to clip input features.
+    random_seed : int
+        Random seed for reproducibility.
+    channels_first : bool
+        Whether the input data has channels first format.
+    defense_name : str or None
+        Name of the defense method to apply.
+    defense_params : dict
+        Parameters for the defense method.
     
 
     Methods
@@ -246,6 +232,42 @@ class PytorchModelConfig(ModelConfig):
         sys.modules[module_name] = module   # <-- this is the key line
         spec.loader.exec_module(module)
         return getattr(module, class_name)
+    
+    
+    def get_art_model(self, data:DataConfig ):
+        loss = self._initialize_criterion(self.criterion)
+        assert isinstance(loss, nn.Module), "Loss must be a torch.nn.Module."
+        input_shape = data.X_train.shape[1:]
+        if self.classifier:
+            
+            nb_classes = len(torch.unique(data.y_train))
+            if self.clip_values is None or len(self.clip_values) == 0:
+                clip_values = (data.X_train.min().item(), data.X_train.max().item())
+            else:
+                clip_values = self.clip_values
+            art_class = PyTorchClassifier
+            init_params = {
+                "loss": loss,
+                "input_shape": input_shape,
+                "nb_classes": nb_classes,
+                "clip_values": clip_values,
+                "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
+                "channels_first": self.channels_first,
+            }
+        else:
+            if self.clip_values is None or len(self.clip_values) == 0:
+                clip_values = (data.X_train.min().item(), data.X_train.max().item())
+            else:
+                clip_values = self.clip_values
+            art_class = PyTorchRegressor
+            init_params = {
+                "loss": loss,
+                "input_shape": input_shape,
+                "clip_values": clip_values,
+                "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
+                "channels_first": self.channels_first,
+            }
+        return art_class, init_params
 
     def _initialize_model(self):
         # Add the directory containing the model file to sys.path
@@ -272,10 +294,46 @@ class PytorchModelConfig(ModelConfig):
         self._model.to(self.device)
         self._model._set_random_seed(self.random_seed)
         
+    def get_art_class(self, data):
+        if self.classifier:
+            loss = self._model._initialize_criterion(self.criterion)
+            input_shape = data.X_train.shape[1:]
+            optimizer = self._model._initialize_optimizer(self.optimizer)
+            nb_classes = len(torch.unique(data.y_train))
+            if self.clip_values is None or len(self.clip_values) == 0:
+                clip_values = (data.X_train.min().item(), data.X_train.max().item())
+            else:
+                clip_values = self.clip_values
+            art_class = PyTorchClassifier
+        else:
+            input_shape = data.X_train.shape[1:]
+            loss = self._model._initialize_criterion(self.criterion)
+            optimizer = self._model._initialize_optimizer(self.optimizer)
+            if self.clip_values is None or len(self.clip_values) == 0:
+                clip_values = (data.X_train.min().item(), data.X_train.max().item())
+            else:
+                clip_values = self.clip_values
+            art_class = PyTorchRegressor
+        return art_class, {
+            "loss": loss,
+            "input_shape": input_shape,
+            "nb_classes": nb_classes if self.classifier else None,
+            "clip_values": clip_values,
+            "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
+            "optimizer": optimizer,
+        }
         
+    def get_model(self):
+        assert hasattr(self, "_model"), "Model is not initialized. Call _initialize_model() first."
+        assert hasattr(self._model, "model"), "Model does not have 'model' attribute."
+        assert isinstance(self._model.model, nn.Module), "'model' attribute is not a torch.nn.Module."
+        return self._model.model
+    
+    def __call__(self, data:DataConfig, **kwargs):
+        self._initialize_model()
+        return super().__call__(data, **kwargs)
     
     def __post_init__(self):
-        self._initialize_model()
         self.training_prediction_time = None
         self.test_prediction_time = None
         self.training_time = None
