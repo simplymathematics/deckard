@@ -366,14 +366,8 @@ class DefenseConfig(ModelConfig):
 
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_file, times)
-        if hasattr(self._model, "loss_curve"):
-            loss_curve = self._model.loss_curve
-        else:
-            loss_curve = None
         self._model = self.apply_defense(data)
         self._evaluate_and_score(data, times)
-        if loss_curve is not None:
-            self.score_dict["loss_curve"] = loss_curve
         if train_predictions_file is not None:
             self.save_data(
                 self.training_predictions,
