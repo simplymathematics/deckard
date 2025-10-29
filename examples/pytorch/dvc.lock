@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/
       hash: md5
-      md5: abb4f31ae89640cb3925ac84f4371d9d.dir
-      size: 3699
+      md5: 48c884ea429ce54f746563d3abc5fa1b.dir
+      size: 3826
       nfiles: 15
     outs:
     - path: .deckard_rc
@@ -56,12 +56,12 @@ stages:
     outs:
     - path: output/data/torch_mnist.pkl
       hash: md5
-      md5: 930044c6bf678176ff69c1fe8b4501a4
+      md5: 7d1aa1ce90db8e89a0d9ffa165999348
       size: 220888259
     - path: output/scores/torch_mnist.json
       hash: md5
-      md5: aafad3601987d50930922cc4ced7be6a
-      size: 251
+      md5: 172f4becf84a81f3773f8807999985ac
+      size: 187
   generate_data@torch_cifar:
     cmd: "deckard  data=torch_cifar  +files.data_file=data/torch_cifar.pkl  +files.score_file=scores/data/torch_cifar.json
       ~model  ~attack\n"
@@ -105,8 +105,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -130,8 +130,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -148,12 +146,12 @@ stages:
     outs:
     - path: output/models/torch_mnist_resnet18_training.pkl
       hash: md5
-      md5: ba68ea7141e83730dd3effc858049ede
-      size: 89513337
+      md5: 69849ebe0039d273d83ebac5c642cfc8
+      size: 89513278
     - path: output/scores/torch_mnist_resnet18_training.json
       hash: md5
-      md5: 1d9637dc1b91639ef69be797d635aded
-      size: 758
+      md5: ad67a67f1f4f06c24c546026eff0ba10
+      size: 525
   generate_data@torch_cifar10:
     cmd: "deckard data=torch_cifar10  ~model ~attack files.model_file=null files.attack_file=null
       experiment_name=torch_cifar10\n"
@@ -180,12 +178,12 @@ stages:
     outs:
     - path: output/data/torch_cifar10.pkl
       hash: md5
-      md5: 8e283491a2ad08d4a8831f61f90d8280
+      md5: 841529cb3a858c8795e1f2b7a51a85e4
       size: 740911171
     - path: output/scores/torch_cifar10.json
       hash: md5
-      md5: 4b8272c2fe3ecab3b074bd43827c5e7c
-      size: 252
+      md5: ad4007343a08904d265e266a1202e42d
+      size: 188
   train@1:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 ~attack files.attack_file=null
       experiment_name=torch_cifar10_resnet18_training ++model.model_params.num_channels=3
@@ -197,8 +195,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -222,8 +220,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -240,12 +236,12 @@ stages:
     outs:
     - path: output/models/torch_cifar10_resnet18_training.pkl
       hash: md5
-      md5: 81f4de9dc88bd9788cbcbfc8d5b5c343
-      size: 89563522
+      md5: c63fcdacb37c3f6104fe50bfa25b0cf4
+      size: 89563463
     - path: output/scores/torch_cifar10_resnet18_training.json
       hash: md5
-      md5: e20850ae521d42eba4264632862f2355
-      size: 763
+      md5: 8eb17f1c1c9234b6dacd2d8be766e865
+      size: 523
   attack@data0-deepfool:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=deepfool files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_deepfool ++model.model_params.num_channels=1
@@ -261,8 +257,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -294,8 +290,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -312,12 +306,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_deepfool.pkl
       hash: md5
-      md5: 4f026f5c5e1a0de9ac1e626406187eb9
-      size: 6863
+      md5: 38d174e618c483f3e233134c738a8ae4
+      size: 6875
     - path: output/scores/torch_mnist_torch_resnet18_deepfool.json
       hash: md5
-      md5: 5700cdf26547b63703e1298dbdd59701
-      size: 991
+      md5: be72daab67c82f9ca0a0e102e4d0f075
+      size: 760
   attack@data0-fgm:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=fgm files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_fgm ++model.model_params.num_channels=1
@@ -333,8 +327,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -369,8 +363,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -387,12 +379,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_fgm.pkl
       hash: md5
-      md5: ee959e3eeacafc145be597ba7cd42bf8
-      size: 7094
+      md5: 695467049951ab822688d1fcb64804f2
+      size: 7106
     - path: output/scores/torch_mnist_torch_resnet18_fgm.json
       hash: md5
-      md5: 6193ddcd772821b9ad1be8d783b08ffa
-      size: 991
+      md5: de0af41ab9ac658b1851695237f813b6
+      size: 760
   attack@data0-patch:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=patch files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_patch ++model.model_params.num_channels=1
@@ -408,8 +400,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -444,8 +436,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -462,12 +452,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_patch.pkl
       hash: md5
-      md5: 827bfd20967c4494d39608e42e64751b
-      size: 7140
+      md5: c420f66637e2ab221fa2ab00aacf9c0c
+      size: 7152
     - path: output/scores/torch_mnist_torch_resnet18_patch.json
       hash: md5
-      md5: fafb20eca5b24c33d2a9f5530a751e11
-      size: 990
+      md5: 67f16dcdc8ee758746db0eefd775eb83
+      size: 759
   attack@data0-pgd:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=pgd files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_pgd ++model.model_params.num_channels=1
@@ -483,8 +473,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -518,8 +508,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -536,12 +524,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_pgd.pkl
       hash: md5
-      md5: 7283d4b1ef63f5da67ac7ada695b7000
-      size: 7033
+      md5: 33d815e250159f507789dbe3e6382734
+      size: 7045
     - path: output/scores/torch_mnist_torch_resnet18_pgd.json
       hash: md5
-      md5: 8ff2a28ad9b8a4d0d7f3b46371ffd0bf
-      size: 992
+      md5: ea9efda8de438c3d4253b768ff4a8abc
+      size: 758
   attack@data0-pixel:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=pixel files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_pixel ++model.model_params.num_channels=1
@@ -557,8 +545,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -591,8 +579,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -609,12 +595,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_pixel.pkl
       hash: md5
-      md5: 3925510a30e7687ce401849e7d2ecc68
-      size: 1852
+      md5: 1eafd25a9fa10a166b4b6fb0f69d6b28
+      size: 1864
     - path: output/scores/torch_mnist_torch_resnet18_pixel.json
       hash: md5
-      md5: 79aa505851e1397ba6990d85451b9787
-      size: 984
+      md5: 006b7376263c4504b040e14a21fe523e
+      size: 749
   attack@data0-threshold:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=threshold files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_threshold ++model.model_params.num_channels=1
@@ -630,8 +616,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -664,8 +650,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -682,12 +666,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_threshold.pkl
       hash: md5
-      md5: 7135689625e31c1933b1fe3b76fa12d6
-      size: 1864
+      md5: f973d99b007f90559ee35683041d00be
+      size: 1876
     - path: output/scores/torch_mnist_torch_resnet18_threshold.json
       hash: md5
-      md5: 3e78f9f3049ba4f91ef7af98d2da1de8
-      size: 981
+      md5: 9da2208eaab28c0d6167f530f102e9b8
+      size: 749
   attack@data1-deepfool:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=deepfool files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_deepfool ++model.model_params.num_channels=3
@@ -703,8 +687,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -736,8 +720,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -754,12 +736,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_deepfool.pkl
       hash: md5
-      md5: 9fd77ab44a1ed3964ac299ca92cf0c6f
-      size: 6863
+      md5: d368e5c8352e3af8d5b8b7810cec12a6
+      size: 6875
     - path: output/scores/torch_cifar10_torch_resnet18_deepfool.json
       hash: md5
-      md5: a6abc94d150b9f3064b410349041e253
-      size: 996
+      md5: 4eeac50a76dc8101245e7b78270d65c9
+      size: 760
   attack@data1-fgm:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=fgm files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_fgm ++model.model_params.num_channels=3
@@ -775,8 +757,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -811,8 +793,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -829,12 +809,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_fgm.pkl
       hash: md5
-      md5: 432c245fafd30de97d34b80eb62235bd
-      size: 7094
+      md5: 361e36c5de67763f66b3d7b99b4c213d
+      size: 7106
     - path: output/scores/torch_cifar10_torch_resnet18_fgm.json
       hash: md5
-      md5: 648c6e23c03510287f8b676c8f2b032a
-      size: 997
+      md5: 3f3b61f1f800e18a429b039b1ca97979
+      size: 757
   attack@data1-patch:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=patch files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_patch ++model.model_params.num_channels=3
@@ -850,8 +830,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -886,8 +866,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -904,12 +882,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_patch.pkl
       hash: md5
-      md5: f52fe84fed0cc09259fa6c8218c532bb
-      size: 7140
+      md5: 3c0422e1788ef4259d6dfcce828d1356
+      size: 7152
     - path: output/scores/torch_cifar10_torch_resnet18_patch.json
       hash: md5
-      md5: 7834a87125c0f2cd19560833a26838ed
-      size: 998
+      md5: 75e6aca677061e23e81c1d640b56089f
+      size: 756
   attack@data1-pgd:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=pgd files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_pgd ++model.model_params.num_channels=3
@@ -925,8 +903,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -960,8 +938,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -978,12 +954,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_pgd.pkl
       hash: md5
-      md5: 469bf228cccf31665d5c3ced03ac2121
-      size: 7033
+      md5: 45ef0cc808919d52a9bcf4b09c838e67
+      size: 7045
     - path: output/scores/torch_cifar10_torch_resnet18_pgd.json
       hash: md5
-      md5: ed6de86d760edf3590858a8821b1706b
-      size: 995
+      md5: 035bdbf43711bd386876cf1220b156f9
+      size: 757
   attack@data0-carlini_l2:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=carlini_l2 files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_l2 ++model.model_params.num_channels=1
@@ -999,8 +975,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1037,8 +1013,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1055,12 +1029,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_l2.pkl
       hash: md5
-      md5: 5c22e1268671096651064d29c3894b45
-      size: 2228
+      md5: 5bdb57c56538dfb8400e5d188b381c2a
+      size: 2240
     - path: output/scores/torch_mnist_torch_resnet18_carlini_l2.json
       hash: md5
-      md5: e613f267c360f9411fb1987e6dcd6e80
-      size: 982
+      md5: 977fcdd98f229171be124650167f0b52
+      size: 749
   attack@data0-carlini_linf:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=carlini_linf files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_linf ++model.model_params.num_channels=1
@@ -1076,8 +1050,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1111,8 +1085,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1129,12 +1101,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_linf.pkl
       hash: md5
-      md5: 42649af9b193efca0a489468352fdf06
-      size: 2000
+      md5: ca1d56e8c9e8ed1cb7c7a3f26eceb0d9
+      size: 2012
     - path: output/scores/torch_mnist_torch_resnet18_carlini_linf.json
       hash: md5
-      md5: 726ece33fe5a130de0ec706b61d6c958
-      size: 983
+      md5: b2b45adfe794c48ef158d1cc1a6466c8
+      size: 751
   attack@data0-hsj:
     cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=hsj files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_hsj ++model.model_params.num_channels=1
@@ -1150,8 +1122,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1189,8 +1161,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1207,12 +1177,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_hsj.pkl
       hash: md5
-      md5: 0de9ff8c76eaa6a41b944b602e916677
-      size: 2499
+      md5: da01c9bccb2fdb48df57466a793ac697
+      size: 2511
     - path: output/scores/torch_mnist_torch_resnet18_hsj.json
       hash: md5
-      md5: 6bbc249577ccac239d4b87c941100aab
-      size: 986
+      md5: ba52b75e56a864fa610980c7f1368c41
+      size: 753
   attack@data1-carlini_l2:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=carlini_l2 files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_carlini_l2 ++model.model_params.num_channels=3
@@ -1228,8 +1198,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1266,8 +1236,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1284,12 +1252,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_carlini_l2.pkl
       hash: md5
-      md5: 6204f23427a4cc48e2ca8d6e50f19ca8
-      size: 2228
+      md5: 360babc3b9555c5765132cdf372c2ca0
+      size: 2240
     - path: output/scores/torch_cifar10_torch_resnet18_carlini_l2.json
       hash: md5
-      md5: 2654d37024872de0983d55563a888500
-      size: 985
+      md5: e432b145bfe509e5169e711346199c17
+      size: 747
   attack@data1-carlini_linf:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=carlini_linf files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_carlini_linf ++model.model_params.num_channels=3
@@ -1305,8 +1273,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1340,8 +1308,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1358,12 +1324,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_carlini_linf.pkl
       hash: md5
-      md5: 8aff9f3e7b35d95d51219983f04243d9
-      size: 2000
+      md5: 0a906d885d9ac3d204460d1003679946
+      size: 2012
     - path: output/scores/torch_cifar10_torch_resnet18_carlini_linf.json
       hash: md5
-      md5: 5905ebcd01f30c94e5ac3489f1ab183c
-      size: 988
+      md5: 0239263ce3d68251880ce1751c7785ab
+      size: 749
   attack@data1-hsj:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=hsj files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_hsj ++model.model_params.num_channels=3
@@ -1379,8 +1345,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1418,8 +1384,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1436,12 +1400,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_hsj.pkl
       hash: md5
-      md5: 2a264112c7b6e72c017a231b68b65007
-      size: 2499
+      md5: 0aed1aa29502252dd09b397b686354da
+      size: 2511
     - path: output/scores/torch_cifar10_torch_resnet18_hsj.json
       hash: md5
-      md5: b5de2bcd61f398d999c45e8eeca38c60
-      size: 991
+      md5: c172fb07c1dd6e0459b281ad6540b1dd
+      size: 750
   attack@data1-pixel:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=pixel files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_pixel ++model.model_params.num_channels=3
@@ -1457,8 +1421,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1491,8 +1455,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1509,12 +1471,12 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_pixel.pkl
       hash: md5
-      md5: 36ef7178efab0c5712ff53fed5c40f06
-      size: 1852
+      md5: 0f03a3cd8242c64c009efa53b7ddbf3e
+      size: 1864
     - path: output/scores/torch_cifar10_torch_resnet18_pixel.json
       hash: md5
-      md5: cc3ae726b1b54cdb9aaf6216d1776885
-      size: 987
+      md5: 263765b45714de97d5788acee7db584c
+      size: 750
   attack@data1-threshold:
     cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=threshold files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_threshold ++model.model_params.num_channels=3
@@ -1530,8 +1492,8 @@ stages:
       size: 17335
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 444e0f9caebf47bf4a33fdee00512c15
-      size: 15121
+      md5: 6da36d8a7cbd641731e75632cf316d4f
+      size: 15703
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1564,8 +1526,6 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
-        defense_name:
-        defense_params: {}
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1582,9 +1542,9 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_threshold.pkl
       hash: md5
-      md5: 0459e80e02f02ff6ffe4d6ea1a3d840e
-      size: 1864
+      md5: 3ccb1ec9c472a73bb453254a4c9b1f13
+      size: 1876
     - path: output/scores/torch_cifar10_torch_resnet18_threshold.json
       hash: md5
-      md5: 9d17ebd560fa82bc58a30aff72889ad9
-      size: 987
+      md5: b83535da24c19046350a981b42b2fb9e
+      size: 749
