@@ -1,17 +1,34 @@
-import sys
-import pandas as pd
 import time
+import importlib
+import logging
+from typing import Union
+from pathlib import Path
+from dataclasses import dataclass, field
+from omegaconf import DictConfig
+
+import numpy as np
+import pandas as pd
+
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
-from dataclasses import dataclass
-from typing import Union
-import logging
-from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 
-import importlib
-import numpy as np
-from pathlib import Path
+from art.estimators.classification.scikitlearn import (
+    ScikitlearnAdaBoostClassifier,
+    ScikitlearnBaggingClassifier,
+    ScikitlearnClassifier,
+    ScikitlearnDecisionTreeClassifier,
+    ScikitlearnExtraTreesClassifier,
+    ScikitlearnGradientBoostingClassifier,
+    ScikitlearnLogisticRegression,
+    ScikitlearnRandomForestClassifier,
+    ScikitlearnSVC,
+)
+from art.estimators.regression.scikitlearn import (
+    ScikitlearnDecisionTreeRegressor,
+    ScikitlearnRegressor,
+)
 
 from ..data import DataConfig
 from ..utils import ConfigBase
@@ -20,6 +37,41 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["ModelConfig"]
 
+
+classifier_dict = {
+    "SVC": ScikitlearnSVC,
+    "LogisticRegression": ScikitlearnLogisticRegression,
+    "RandomForestClassifier": ScikitlearnRandomForestClassifier,
+    "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
+    "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
+    "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
+    "BaggingClassifier": ScikitlearnBaggingClassifier,
+    "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
+    "sklearn-classifier": ScikitlearnClassifier,
+}
+
+regressor_dict = {
+    "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
+    "sklearn-regressor": ScikitlearnRegressor,
+}
+
+sklearn_dict = {**classifier_dict, **regressor_dict}
+sklearn_models = list(sklearn_dict.keys())
+
+supported_defense_types = [
+            "detector",
+            "preprocessor",
+            "postprocessor",
+            "trainer",
+            "regularizer",
+            "transformer",
+            None,
+        ]
+@dataclass
+class DefenseConfig(ConfigBase):
+    """Stores the name and parameters of a defense to be applied to a model."""
+    defense_type: Union[str, None] = None
+    defense_params: dict = field(default_factory=dict)
 
 @dataclass
 class ModelConfig(ConfigBase):
@@ -99,6 +151,7 @@ class ModelConfig(ConfigBase):
     model_params: dict = None
     probability: bool = False
     alias : Union[str, None] = None
+    defense: Union[DefenseConfig, None] = None
 
     def __post_init__(self):
         """
@@ -146,6 +199,163 @@ class ModelConfig(ConfigBase):
 
     def __hash__(self):
         return super().__hash__()
+    
+    def parse_defense_name(self,):
+        defense_name = self.defense.defense_type if self.defense is not None else None
+        assert defense_name is not None, "defense_type must be provided in ModelConfig"
+        defense_params = self.defense.defense_params if self.defense is not None else {}
+        if defense_name is not None and len(defense_name) > 0:
+            module_name, class_name = defense_name.rsplit(".", 1)
+        else:
+            module_name = None
+            class_name = None
+        if module_name is None or class_name is None:
+            defense_type = None
+        else:
+            try:
+                defense_type = module_name.split(".")[2]  # e.g., 'preprocessor'
+            except IndexError:
+                raise ImportError(
+                    f"Could not parse defense type from defense name {self.defense_name}",
+                )
+        if module_name is not None and len(module_name.split(".")) >= 4:
+            defense_subtype = module_name.split(".")[3]  # e.g., 'FeatureSqueezing'
+        else:
+            defense_subtype = None
+        if defense_type is not None:
+            try:
+                module = importlib.import_module(module_name)
+                defense_class = getattr(module, class_name)
+            except (ImportError, AttributeError) as e:
+                raise ImportError(
+                    f"Could not import defense class {class_name} from module {module_name}",
+                ) from e
+        else:
+            defense_class = None
+            module = None
+        assert (
+            defense_type in supported_defense_types
+        ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
+        
+        return defense_type,defense_subtype,defense_class
+
+    def get_art_class(self, data):
+        art_class = (
+            classifier_dict[self.model_type.split(".")[-1]]
+            if self.classifier
+            else regressor_dict[self.model_type.split(".")[-1]]
+        )
+        init_params = {
+            "input_shape": data.X_train.shape[1:],
+            "nb_classes": len(set(data.y_train)) if self.classifier else None,
+        }
+        return art_class, init_params
+    
+    def get_model(self) -> BaseEstimator:
+        """Get the model's estimator.
+
+        Returns
+        -------
+        BaseEstimator
+            The model's estimator.
+        """
+        if self._model is None:
+            raise ValueError("Model is not fitted yet.")
+        return self._model
+    
+    def _apply_defense(self, data) -> BaseEstimator:
+        """Apply the specified defense to the model's estimator.
+
+        Returns
+        -------
+        BaseEstimator
+            The estimator wrapped with the specified defense.
+        Raises
+        ------
+        ValueError
+            If the model is not fitted before applying the defense.
+        """
+        
+        if self._model is None:
+            raise ValueError(
+                "ModelConfig must have a fitted estimator before applying defense",
+            )
+        else:
+            assert isinstance(
+                self._model,
+                BaseEstimator,
+            ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
+
+        # Dynamically import the defense class with defense_params as kwargs
+        defense_type, defense_subtype, defense_class = self.parse_defense_name()
+        art_class, init_params = self.get_art_class(data)
+        try:
+            check_is_fitted(self._model)
+        except NotFittedError as e:
+            raise ValueError(
+                "ModelConfig must have a fitted estimator before applying defense",
+            ) from e
+        start = time.process_time()
+        match defense_type:  # Note: only one defense can be applied at a time
+            case "preprocessor":
+                defense = defense_class(**(self.defense.defense_params or {}),)
+                defended_estimator = art_class(
+                    self.get_model(),
+                    preprocessing_defences=[defense],
+                    **init_params,
+                )
+            case "postprocessor":
+                defense = defense_class(**(self.defense.defense_params or {}))
+                defended_estimator = art_class(
+                    self.get_model(),
+                    postprocessing_defences=[defense],
+                    **init_params,
+                )
+            case "detector":
+                match defense_subtype:
+                    case "evasion":
+                        defense = defense_class(**(self.defense.defense_params or {}))
+                        defended_estimator = defense(self.get_model(), **init_params)
+                    case "poison":
+                        defense = defense_class(**(self.defense.defense_params or {}))
+                        defended_estimator = defense(self.get_model(), **init_params)
+                    case _:
+                        raise NotImplementedError(
+                            f"Detector subtype '{defense_subtype}' is not implemented yet.",
+                        )
+                # Overwrite the _score method to handle each
+            case "trainer":
+                defense = defense_class(**(self.defense.defense_params or {}))
+                defended_estimator = defense(self._model, **init_params)
+            case "transformer":
+                defense = defense_class(**(self.defense.defense_params or {}))
+                defended_estimator = defense(
+                    self._model,
+                    input_transformations=[defense],
+                    **init_params,
+                )
+            case "regularizer":
+                raise NotImplementedError(
+                    "Regularizer defenses are not implemented yet.",
+                )
+            case None:
+                defense = None
+                defense_params = {**self.defense.defense_params, **init_params}
+                defended_estimator = art_class(
+                    self.get_model(),
+                    **defense_params,
+                )
+            case "_":
+                raise NotImplementedError(
+                    f"Defense type '{defense_type}' is not implemented yet.",
+                )
+        # Some defences can optionally be applied during training or prediction
+        end = time.process_time()
+        self._apply_fit = getattr(defense, "_apply_fit", True)
+
+        self.defense_application_time = end - start
+        end = time.process_time()
+        return defended_estimator
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
         """
@@ -193,8 +403,6 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model not initialized")
-        logger.debug(f"Type of X: {type(X)}, shape of X: {X.shape}")
-
         y_pred = self._model.predict(X)
 
         return y_pred
@@ -526,6 +734,8 @@ class ModelConfig(ConfigBase):
 
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_file, times)
+        # Apply defense if specified
+        
         self._evaluate_and_score(data, times)
         if train_predictions_file is not None:
             self.save_data(
@@ -592,8 +802,10 @@ class ModelConfig(ConfigBase):
                 self.training_score_time = time.process_time() - start
                 # Prefix training scores with 'train_'
                 train_scores = {
-                    f"train_{key}": value for key, value in train_scores.items()
+                    f"training_{key}": value for key, value in train_scores.items()
                 }
+                if "training_loss_curve" in train_scores:
+                    del train_scores["training_loss_curve"]
                 if self.score_dict is None:
                     self.score_dict = {}
                 self.score_dict.update(train_scores)
@@ -670,24 +882,35 @@ class ModelConfig(ConfigBase):
                             "Loaded model is not fitted. Training a new model.",
                         )
                         self._train(data.X_train, data.y_train)
+                        try:
+                            check_is_fitted(self._model)
+                        except NotFittedError:
+                            raise ValueError(
+                                "Model is not trained. Please train the model before prediction.",
+                            )
+                        assert hasattr(self, "_model"), "Model not initialized after training"
+                        if self.defense is not None:
+                            self._model = self._apply_defense(data)
                         times["training_time"] = self.training_time
                         times["training_n"] = self._training_n
                         # Save the newly trained mode
                 else:
                     # train the model if no model exists at the filepath
                     self._train(data.X_train, data.y_train)
+                    try:
+                        check_is_fitted(self._model)
+                    except NotFittedError:
+                        raise ValueError(
+                            "Model is not trained. Please train the model before prediction.",
+                        )
                     times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
+                    if self.defense is not None:
+                        self._model = self._apply_defense(data)
                     if model_file is not None:
                         self.save(filepath=model_file)
-
         # Validate model is trained
         if self._model is None:
             raise NotFittedError("Model is not initialized")
-        try:
-            check_is_fitted(self._model)
-        except NotFittedError:
-            raise ValueError(
-                "Model is not trained. Please train the model before prediction.",
-            )
+        
         return times
