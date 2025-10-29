@@ -20,7 +20,6 @@ from sklearn.utils.validation import check_is_fitted
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 
-from .defend import DefenseConfig
 from .  import ModelConfig
 from ..data import DataConfig
 logger = logging.getLogger(__name__)
@@ -141,6 +140,8 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             return probs
 
     def get_art_model(self, data):
+        if isinstance(self, (PyTorchClassifier, PyTorchRegressor)):
+            return self
         if self.clip_values is None or len(self.clip_values) == 0:
             clip_values = (0.0, 1.0)
         else:
@@ -173,7 +174,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     
         
 @dataclass
-class PytorchModelConfig(DefenseConfig):
+class PytorchModelConfig(ModelConfig):
     model_type: str = "torch_example.ResNet18"
     model_params: dict = field(default_factory=dict)
     classifier: bool = False
@@ -374,10 +375,16 @@ class PytorchModelConfig(DefenseConfig):
     
     def _score(self, y_true: torch.Tensor, y_pred: torch.Tensor):
         if hasattr(self._model, "loss_curve") and len(self._model.loss_curve) > 0:
-            self.score_dict["loss_curve"] = self._model.loss_curve
+            loss_curve = self._model.loss_curve
         elif hasattr(self._model, "model") and hasattr(self._model.model, "loss_curve") and len(self._model.model.loss_curve) > 0:
-            self.score_dict["loss_curve"] = self._model.model.loss_curve
+            loss_curve  = self._model.model.loss_curve
+        else:
+            loss_curve = None
         scores = super()._score(y_true, y_pred)
+        if loss_curve is not None:
+            scores["loss_curve"] = loss_curve
+        if "train_loss_curve" in scores:
+            del scores["train_loss_curve"]
         return scores
     
 def input_shape_from_data_config(data:DataConfig):
