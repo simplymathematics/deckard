@@ -21,8 +21,10 @@ dependencies = [
     "ipykernel",
     "kagglehub",
     "cma",
-    "optuna",
     "optuna-dashboard",
+    "hydra-joblib-launcher",
+    "hydra-optuna-sweeper",
+    "optuna",
 ]
 
 [build-system]
