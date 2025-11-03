@@ -741,7 +741,6 @@ class DataConfig(ConfigBase):
         class_counts = class_dict.to_dict()
         dict_ = {}
         dict_["class_counts"] = class_counts
-        logger.info(f"Class counts: {class_counts}")
         return dict_
         
 
