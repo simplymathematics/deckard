@@ -81,7 +81,10 @@ def optimize(
     runner = initialize_config(cfg, target=target)
     scores = _run_experiment(runner, files, args)
     scores = _filter_scores(scores, optimizers, directions)
-    return _return_scores(scores, runner, return_runner)
+    if return_runner:
+        return scores, runner
+    else:
+        return scores
 
 
 def _convert_config_to_dict(cfg: ConfigBase) -> dict:
@@ -263,62 +266,26 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     scores = {k: v for k, v in scores.items() if k in optimizers}
     values = list(scores.values())
     if directions:
+        assert len(directions) == len(
+            optimizers,
+        ), f"Length of directions must match length of optimizers. Got {len(directions)} and {len(optimizers)}."
         optimize_scores = []
         attributes = []
         for i, direction in enumerate(directions):
             match direction:
                 case "minimize" | "maximize":
-                    optimize_scores.append(values[i])
+                    optimize_scores.append(float(values[i]))
                 case "diff":
-                    attributes.append(values[i])
+                    attributes.append(float(values[i]))
         if optimize_scores:
             return optimize_scores
         raise ValueError("No optimization scores found for the specified directions.")
+    if len(attributes) > 0:
+        raise NotImplementedError("Storing metrics not used for optimization not yet implemented.")
+    values = tuple(values)
     return values
 
 
-def _return_scores(scores: dict, runner: ConfigBase, return_runner: bool) -> dict | tuple[dict, ConfigBase]:
-    """
-    ---
-    Overview
-    ---
-    Determines the return value based on the `return_runner` flag. Returns either
-    the scores alone or a tuple containing the scores and the runner object.
-
-    ---
-    Parameters
-    ---
-    scores : dict
-        The dictionary containing the scores to be returned.
-    runner : ConfigBase
-        The runner object to be optionally included in the return value.
-    return_runner : bool
-        A flag indicating whether to include the runner object in the return value.
-
-    ---
-    Returns
-    ---
-    dict or tuple[dict, ConfigBase]
-        - If `return_runner` is False, returns the scores as a dictionary.
-        - If `return_runner` is True, returns a tuple containing the scores and the runner object.
-
-    ---
-    Raises
-    ---
-    ValueError
-        If `return_runner` is not a boolean value.
-
-    ---
-    Notes
-    ---
-    - This function ensures that the return value is consistent with the `return_runner` flag.
-    - The `return_runner` flag must be explicitly set to either True or False.
-    """
-    if return_runner is False:
-        return scores
-    if return_runner is True:
-        return scores, runner
-    raise ValueError("return_runner must be a boolean value.")
 
 
 def initialize_config(
