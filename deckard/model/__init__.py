@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator
@@ -67,6 +67,8 @@ supported_defense_types = [
             "transformer",
             None,
         ]
+
+
 @dataclass
 class DefenseConfig(ConfigBase):
     """Stores the name and parameters of a defense to be applied to a model."""
@@ -464,6 +466,7 @@ class ModelConfig(ConfigBase):
             )
             recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+            logloss = log_loss(y_pred=y_pred, y_true=y_true)
         except ValueError as ve:
             if "mix of binary and continuous" in str(ve):
                 new_y_pred = np.argmax(y_pred, axis=1)
@@ -471,6 +474,13 @@ class ModelConfig(ConfigBase):
             elif "mix of multiclass and continuous-multioutput" in str(ve):
                 new_y_pred = np.argmax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
+            elif "y_prob contains values greater than 1" in str(ve):
+                # Convert class labels to one-hot encoding
+                classes = np.unique(y_true)
+                y_pred_one_hot = np.zeros((len(y_pred), len(classes)))
+                for i, class_label in enumerate(classes):
+                    y_pred_one_hot[:, i] = (y_pred == class_label).astype(int)
+                    logloss = log_loss(y_true=y_true, y_pred=y_pred_one_hot)
             else:
                 logger.error(f"Error computing classification scores: {ve}")
                 raise ve
@@ -482,6 +492,7 @@ class ModelConfig(ConfigBase):
             "precision": precision,
             "recall": recall,
             "f1-score": f1,
+            "log_loss" : logloss,
         }
         return scores
     
@@ -510,10 +521,12 @@ class ModelConfig(ConfigBase):
         mse = ((y_true - y_pred) ** 2).mean()
         rmse = mse**0.5
         mae = np.abs(y_true - y_pred).mean()
+        logloss = log_loss(y_true=y_true, y_pred=y_pred)
         scores = {
             "mse": mse,
             "rmse": rmse,
             "mae": mae,
+            "log_loss" : logloss,
         }
         return scores
 
