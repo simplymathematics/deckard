@@ -2,10 +2,10 @@ defaults:
     - _self_
     - data: adult
     - model: rf
-    - attack: hsj
+    - attack: membership
     - files: null
     - override hydra/sweeper : optuna
-experiment_name: adult_rf_hsj
+experiment_name: ???
 directions:
 - maximize
 - maximize

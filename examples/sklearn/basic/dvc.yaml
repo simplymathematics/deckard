@@ -11,7 +11,7 @@ stages:
       params:
         - ../../config/default.yaml:
   simple_example:
-      cmd: deckard && echo "Deckard ran successfully!" > deckard.log
+      cmd: deckard experiment_name=default && echo "Deckard ran successfully!" > deckard.log
       outs:
         - deckard.log
       deps:
@@ -34,6 +34,7 @@ stages:
           data=${item} 
           +files.data_file=data/${item}.pkl 
           +files.score_file=scores/data/${item}.json
+          experiment_name=${item}
           ~model 
           ~attack
         outs:
@@ -55,30 +56,30 @@ stages:
           # ~model <-- Drops default model configuration.
           # ~attack <-- Drops default attack configuration.
           ################################################
-  train_logistic:
+  train_rf:
       foreach:
         - adult
         - classification
-        - diabetes
         - digits
       do:
         cmd: >
           deckard 
           data=${item} 
           +files.data_file=data/${item}.pkl 
-          +files.model_file=models/${item}/logistic.pkl
-          +files.score_file=scores/models/${item}/logistic.json
-          model=logistic.yaml 
+          +files.model_file=models/${item}/rf.pkl
+          +files.score_file=scores/models/${item}/rf.json
+          experiment_name=${item}_rf
+          model=rf.yaml 
           ~attack
         outs:
-          - models/${item}/logistic.pkl
+          - models/${item}/rf.pkl
         metrics:
-          - scores/models/${item}/logistic.json
+          - scores/models/${item}/rf.json
         deps:
           - data/${item}.pkl
           - ../../../deckard/model
         params:
-          - ../../config/model/logistic.yaml:
+          - ../../config/model/rf.yaml:
           - ../../config/data/${item}.yaml:
           ################################################
           #            Command Explanation:             #
@@ -88,9 +89,9 @@ stages:
           # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
           # +files.model_file=models/${item}/model.pkl <-- Specifies the output path for the trained model file.
           # +files.score_file=scores/models/${item}/model.json <-- Specifies the output path for the model score file.
-          # model=logistic.yaml  <-- Specifies the model configuration to be used.
+          # model=rf.yaml  <-- Specifies the model configuration to be used.
           # ~attack <-- Drops default attack configuration.
-  attack_logistic:
+  attack_rf:
     foreach:
       - adult
       - classification
@@ -101,18 +102,19 @@ stages:
         deckard 
         data=${item} 
         +files.data_file=data/${item}.pkl 
-        +files.model_file=models/${item}/logistic.pkl
-        +files.score_file=scores/attacks/${item}/logistic/hsj.json
-        model=logistic.yaml 
+        +files.model_file=models/${item}/rf.pkl
+        +files.score_file=scores/attacks/${item}/rf/hsj.json
+        model=rf.yaml 
         attack=hsj.yaml
+        experiment_name=${item}_rf_hsj
       metrics:
-        - scores/attacks/${item}/logistic/hsj.json
+        - scores/attacks/${item}/rf/hsj.json
       deps:
         - data/${item}.pkl
-        - models/${item}/logistic.pkl
+        - models/${item}/rf.pkl
         - ../../../deckard/attack
       params:
-        - ../../config/model/logistic.yaml:
+        - ../../config/model/rf.yaml:
         - ../../config/attack/hsj.yaml:
         - ../../config/data/${item}.yaml:
         ################################################
@@ -122,5 +124,29 @@ stages:
         # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../../config/data/ for available datasets.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
-        # +files.score_file=scores/attacks/hsj/${item}_logistic_attack.json <-- Specifies the output path for the attack score file.
-        # model=logistic.yaml  <-- Specifies the model configuration to be used.
+        # +files.score_file=scores/attacks/hsj/${item}_rf_attack.json <-- Specifies the output path for the attack score file.
+        # model=rf.yaml  <-- Specifies the model configuration to be used.
+  evade_rf:
+    foreach:
+      - adult
+      - classification
+      - digits
+    do:
+      cmd: >
+        deckard 
+        data=${item} 
+        +files.data_file=data/${item}.pkl 
+        experiment_name=${item}_rf_hsj
+        hydra.sweeper.study_name=evasion_${item}
+        model=rf.yaml 
+        --multirun
+      outs:
+        - models/${item}/rf_optimized.pkl
+      metrics:
+        - scores/models/${item}/rf_optimized.json
+      deps:
+        - data/${item}.pkl
+        - ../../../deckard/model
+      params:
+        - ../../config/model/rf.yaml:
+        - ../../config/data/${item}.yaml:
