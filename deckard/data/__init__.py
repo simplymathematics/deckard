@@ -738,10 +738,11 @@ class DataConfig(ConfigBase):
             
         else:
             class_dict = pd.Series(y).value_counts()
-        class_list = class_dict
-        return class_list
-            
-            
+        class_counts = class_dict.to_dict()
+        dict_ = {}
+        dict_["class_counts"] = class_counts
+        logger.info(f"Class counts: {class_counts}")
+        return dict_
         
 
     def _classification_feature_scores(self) -> dict:
