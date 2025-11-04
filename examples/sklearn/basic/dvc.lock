@@ -1416,11 +1416,10 @@ stages:
       md5: bff0b2506bf7c8a4febdff0ed29c8f77
       size: 731
   infer_membership_rf@adult:
-    cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.model_file=outputs/models/adult/rf.pkl
-      +files.score_file=outputs/scores/membership_inference/adult/rf.json model=rf.yaml\
-      \  attack=membership.yaml experiment_name=adult_rf_membership_inference optimizers=[\"\
-      accuracy\",\"membership_inference_accuracy\"] directions=[\"maximize\",\"minimize\"\
-      ]\n"
+    cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  model=rf.yaml\
+      \  attack=membership.yaml experiment_name=\"*\" hydra.sweeper.study_name=membership_inference_adult
+      optimizers=[\"accuracy\",\"membership_inference_accuracy\"] directions=[\"maximize\"\
+      ,\"minimize\"] --multirun\n"
     deps:
     - path: ../../../deckard/attack
       hash: md5
@@ -1431,10 +1430,6 @@ stages:
       hash: md5
       md5: e3ae2849f7d787b3d1d1dfb196240bef
       size: 45624033
-    - path: outputs/models/adult/rf.pkl
-      hash: md5
-      md5: 1997e663d598d408e1408b095e8ffeed
-      size: 109564806
     params:
       ../../config/attack/membership.yaml:
         _target_: deckard.attack.AttackConfig
@@ -1477,10 +1472,11 @@ stages:
           bootstrap: true
         model_type: sklearn.ensemble.RandomForestClassifier
     outs:
-    - path: outputs/scores/membership_inference/adult/rf.json
+    - path: outputs/logs/membership_inference_adult
       hash: md5
-      md5: b1a9c0f7bbaaa99884f22d9ed594a5a8
-      size: 759
+      md5: f39360abc014ac767cf8c448dc544bf3.dir
+      size: 899964
+      nfiles: 400
   infer_membership_rf@classification:
     cmd: "deckard  data=classification  +files.data_file=outputs/data/classification.pkl\
       \  +files.model_file=outputs/models/classification/rf.pkl +files.score_file=outputs/scores/membership_inference/classification/rf.json

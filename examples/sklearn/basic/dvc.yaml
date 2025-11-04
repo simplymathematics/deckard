@@ -200,3 +200,39 @@ stages:
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
         # +files.score_file=scores/membership_inference/${item}_rf_membership_inference.json <-- Specifies the output path for the membership inference attack score file.
         # model=rf.yaml  <-- Specifies the model configuration to be used.
+  infer_attribute_rf:
+    foreach:
+      - adult
+      # - classification
+      # - digits
+    do:
+      cmd: >
+        deckard 
+        data=${item} 
+        +files.data_file=outputs/data/${item}.pkl 
+        model=rf.yaml 
+        attack=attribute.yaml
+        experiment_name="*"
+        hydra.sweeper.study_name=attribute_inference_${item}
+        optimizers=["accuracy","inferred_sex_accuracy"]
+        directions=["maximize","minimize"]
+        --multirun
+      outs:
+        - outputs/logs/attribute_inference_${item}:
+            cache: false
+      deps:
+        - outputs/data/${item}.pkl
+        - ../../../deckard/attack
+      params:
+        - ../../config/model/rf.yaml:
+        - ../../config/attack/attribute.yaml:
+        - ../../config/data/${item}.yaml:
+        ################################################
+        #            Command Explanation:             #
+        ################################################
+        # deckard  <-- Calls the deckard CLI tool
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../../config/data/ for available datasets.
+        # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+        # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
+        # +files.score_file=scores/attribute_inference/${item}_rf_attribute_inference.json <-- Specifies the output path for the attribute inference attack score file.
+        # model=rf.yaml  <-- Specifies the model configuration to be used.
