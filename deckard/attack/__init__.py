@@ -815,14 +815,15 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
-        big_X = pd.concat([data.X_train, data.X_test], ignore_index=True)
-        big_y = pd.concat([data.y_train, data.y_test], ignore_index=True)
+        big_X = np.concatenate([data.X_train, data.X_test], axis=0)
+        big_y = np.concatenate([data.y_train, data.y_test], axis=0)
         labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
         # Randomly sample self.attack_size indices from big_X, big_y, and labels
         n = self.attack_size
-        indices = np.random.choice(big_X.index, size=n, replace=False)
-        big_X = big_X.loc[indices]
-        big_y = big_y.loc[indices]
+        indices = np.arange(len(big_X))
+        indices = np.random.choice(indices, size=n, replace=False)
+        big_X = big_X[indices]
+        big_y = big_y[indices]
         labels = labels[indices]
 
         start_time = time.process_time()
