@@ -1,3 +1,4 @@
+import hashlib
 import warnings
 import logging
 import os
@@ -176,6 +177,15 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
         ValueError: If the "files" key in the configuration is not a dictionary or a FileConfig instance.
     """
     files = cfg.pop("files", {}) if "files" in cfg else {}
+    hash_ = hashlib.md5(str(cfg).encode()).hexdigest()
+    if "experiment_name" not in files:
+        files["experiment_name"] = "*"
+    for k, path in files.items():
+        if isinstance(path, str):
+            path = path.replace("*", hash_)
+            path = path.replace("{hash}", hash_)
+            path = path.replace("{experiment_name}", files["experiment_name"])
+            files[k] = path
     if isinstance(files, dict):
         files = FileConfig(**files)()
     elif isinstance(files, FileConfig):
