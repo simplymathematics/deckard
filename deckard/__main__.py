@@ -91,7 +91,7 @@ def optimize(
 def _convert_config_to_dict(cfg: ConfigBase) -> dict:
     """
     Converts a configuration object to a dictionary.
-    
+
     Parameters
     ----------
         -  cfg (ConfigBase): The configuration object to be converted.
@@ -110,7 +110,10 @@ def _convert_config_to_dict(cfg: ConfigBase) -> dict:
         raise e
 
 
-def _extract_optimizers_and_directions(cfg: dict, return_runner: bool) -> tuple[list, list]:
+def _extract_optimizers_and_directions(
+    cfg: dict,
+    return_runner: bool,
+) -> tuple[list, list]:
     """
     Overview
     --------
@@ -164,7 +167,7 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
     Overview
     ---------
     Initializes file configurations from the provided configuration dictionary.
-    
+
     Parameters
     ----------
         - cfg (dict): The configuration dictionary, which may contain a "files" key.
@@ -291,11 +294,11 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
             return optimize_scores
         raise ValueError("No optimization scores found for the specified directions.")
     if len(attributes) > 0:
-        raise NotImplementedError("Storing metrics not used for optimization not yet implemented.")
+        raise NotImplementedError(
+            "Storing metrics not used for optimization not yet implemented.",
+        )
     values = tuple(values)
     return values
-
-
 
 
 def initialize_config(

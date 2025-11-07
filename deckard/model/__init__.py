@@ -9,7 +9,13 @@ from omegaconf import DictConfig
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    log_loss,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import BaseEstimator
@@ -59,21 +65,23 @@ sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.keys())
 
 supported_defense_types = [
-            "detector",
-            "preprocessor",
-            "postprocessor",
-            "trainer",
-            "regularizer",
-            "transformer",
-            None,
-        ]
+    "detector",
+    "preprocessor",
+    "postprocessor",
+    "trainer",
+    "regularizer",
+    "transformer",
+    None,
+]
 
 
 @dataclass
 class DefenseConfig(ConfigBase):
     """Stores the name and parameters of a defense to be applied to a model."""
+
     defense_type: Union[str, None] = None
     defense_params: dict = field(default_factory=dict)
+
 
 @dataclass
 class ModelConfig(ConfigBase):
@@ -152,7 +160,7 @@ class ModelConfig(ConfigBase):
     classifier: bool = True
     model_params: dict = None
     probability: bool = False
-    alias : Union[str, None] = None
+    alias: Union[str, None] = None
     defense: Union[DefenseConfig, None] = None
 
     def __post_init__(self):
@@ -196,13 +204,15 @@ class ModelConfig(ConfigBase):
         if hasattr(self._model, "get_params"):
             self.model_params = self._model.get_params()
         else:
-            assert isinstance(self.model_params, (dict, DictConfig)), f"model_params must be a dict if model does not have get_params method. Got {type(self.model_params)}"
-            
+            assert isinstance(
+                self.model_params,
+                (dict, DictConfig),
+            ), f"model_params must be a dict if model does not have get_params method. Got {type(self.model_params)}"
 
     def __hash__(self):
         return super().__hash__()
-    
-    def parse_defense_name(self,):
+
+    def parse_defense_name(self):
         defense_name = self.defense.defense_type if self.defense is not None else None
         assert defense_name is not None, "defense_type must be provided in ModelConfig"
         defense_params = self.defense.defense_params if self.defense is not None else {}
@@ -238,8 +248,8 @@ class ModelConfig(ConfigBase):
         assert (
             defense_type in supported_defense_types
         ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
-        
-        return defense_type,defense_subtype,defense_class
+
+        return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
         art_class = (
@@ -252,7 +262,7 @@ class ModelConfig(ConfigBase):
             "nb_classes": len(set(data.y_train)) if self.classifier else None,
         }
         return art_class, init_params
-    
+
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
 
@@ -264,7 +274,7 @@ class ModelConfig(ConfigBase):
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
         return self._model
-    
+
     def _apply_defense(self, data) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
 
@@ -277,7 +287,7 @@ class ModelConfig(ConfigBase):
         ValueError
             If the model is not fitted before applying the defense.
         """
-        
+
         if self._model is None:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
@@ -300,7 +310,7 @@ class ModelConfig(ConfigBase):
         start = time.process_time()
         match defense_type:  # Note: only one defense can be applied at a time
             case "preprocessor":
-                defense = defense_class(**(self.defense.defense_params or {}),)
+                defense = defense_class(**(self.defense.defense_params or {}))
                 defended_estimator = art_class(
                     self.get_model(),
                     preprocessing_defences=[defense],
@@ -492,10 +502,10 @@ class ModelConfig(ConfigBase):
             "precision": precision,
             "recall": recall,
             "f1-score": f1,
-            "log_loss" : logloss,
+            "log_loss": logloss,
         }
         return scores
-    
+
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         """
         Calculate regression error metrics between true and predicted values.
@@ -521,12 +531,16 @@ class ModelConfig(ConfigBase):
         mse = ((y_true - y_pred) ** 2).mean()
         rmse = mse**0.5
         mae = np.abs(y_true - y_pred).mean()
-        logloss = log_loss(y_true=y_true, y_pred=y_pred)
+        try:
+            logloss = log_loss(y_true=y_true, y_pred=y_pred)
+        except Exception as e:
+            logger.error(f"Error computing log loss: {e}")
+            logloss = np.nan
         scores = {
             "mse": mse,
             "rmse": rmse,
             "mae": mae,
-            "log_loss" : logloss,
+            "log_loss": logloss,
         }
         return scores
 
@@ -748,7 +762,7 @@ class ModelConfig(ConfigBase):
         # Train the model if training data is provided and model is not already trained
         times = self._load_or_train_model(data, model_file, times)
         # Apply defense if specified
-        
+
         self._evaluate_and_score(data, times)
         if train_predictions_file is not None:
             self.save_data(
@@ -843,7 +857,11 @@ class ModelConfig(ConfigBase):
             else:
                 raise ValueError("No test data available for prediction.")
         # Score test predictions if true labels are available and scoring not already done
-        if self.training_score_time is None or self.prediction_score_time is None or self.score_dict is None:
+        if (
+            self.training_score_time is None
+            or self.prediction_score_time is None
+            or self.score_dict is None
+        ):
             if data.y_test is not None and self.predictions is not None:
                 test_scores = self._score(data.y_test, self.predictions)
                 if self.score_dict is None:
@@ -901,7 +919,10 @@ class ModelConfig(ConfigBase):
                             raise ValueError(
                                 "Model is not trained. Please train the model before prediction.",
                             )
-                        assert hasattr(self, "_model"), "Model not initialized after training"
+                        assert hasattr(
+                            self,
+                            "_model",
+                        ), "Model not initialized after training"
                         if self.defense is not None:
                             self._model = self._apply_defense(data)
                         times["training_time"] = self.training_time
@@ -925,5 +946,5 @@ class ModelConfig(ConfigBase):
         # Validate model is trained
         if self._model is None:
             raise NotFittedError("Model is not initialized")
-        
+
         return times

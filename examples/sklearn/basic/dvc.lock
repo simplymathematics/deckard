@@ -1423,8 +1423,8 @@ stages:
     deps:
     - path: ../../../deckard/attack
       hash: md5
-      md5: 4ec7e90a2d53bf45a52f8508b0310c26.dir
-      size: 66451
+      md5: ad224e6eaf1dff008c3e0862c74b09e5.dir
+      size: 66697
       nfiles: 2
     - path: outputs/data/adult.pkl
       hash: md5
@@ -1474,8 +1474,8 @@ stages:
     outs:
     - path: outputs/logs/membership_inference_adult
       hash: md5
-      md5: dab1309d84a8f2ada166a95dee74ad44.dir
-      size: 900007
+      md5: 3e7e6341c8ff1f74570f1ee1480dc046.dir
+      size: 900004
       nfiles: 400
   infer_membership_rf@classification:
     cmd: "deckard  data=classification  +files.data_file=outputs/data/classification.pkl\

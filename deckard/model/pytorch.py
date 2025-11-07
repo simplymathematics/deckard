@@ -1,4 +1,3 @@
-
 # OS imports
 import sys
 import os
@@ -6,39 +5,42 @@ import importlib
 import logging
 from pathlib import Path
 from tqdm import tqdm
+
 # Typing imports
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
 from typing import Union
+
 # Torch imports
 import torch.nn as nn
 import torch
+
 # Sklearn imports
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
+
 # ART imports
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 
-from .  import ModelConfig
+from . import ModelConfig
 from ..data import DataConfig
+
 logger = logging.getLogger(__name__)
 
 
 __all__ = ["PytorchModelConfig"]
 
 
-
-
 class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
     def __init__(
-            self, 
-            model: nn.Module, 
-            device=None,
-            criterion:Union[dict, str]="CrossEntropyLoss",
-            optimizer:Union[dict, str]="SGD",
-            clip_values:Union[tuple, None]=None,
-        ):
+        self,
+        model: nn.Module,
+        device=None,
+        criterion: Union[dict, str] = "CrossEntropyLoss",
+        optimizer: Union[dict, str] = "SGD",
+        clip_values: Union[tuple, None] = None,
+    ):
         self.model = model
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,7 +71,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         criterion = criterion_class(**criterion_params)
         assert callable(criterion), f"Criterion must be callable, got {type(criterion)}"
         return criterion
-    
+
     def _initialize_optimizer(self, optimizer):
         if isinstance(optimizer, str):
             optimizer_name = optimizer
@@ -83,13 +85,16 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         module = importlib.import_module("torch.optim")
         optimizer_class = getattr(module, optimizer_name)
         optimizer_class = optimizer_class(self.model.parameters(), **optimizer_params)
-        assert isinstance(optimizer_class, torch.optim.Optimizer), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
+        assert isinstance(
+            optimizer_class,
+            torch.optim.Optimizer,
+        ), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
         return optimizer_class
-    
+
     def to(self, device):
         self.device = device
         self.model.to(device)
-    
+
     def fit(self, X, y, nb_epochs=1, batch_size=32, verbose=False, log_interval=1):
         # Store the classes seen during fit
         self.classes_ = torch.unique(y)
@@ -99,7 +104,11 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         # Training loop
         self.model.train()
         for epoch in range(nb_epochs):
-            pbar = tqdm(zip(X.split(batch_size), y.split(batch_size)), total=len(X) // batch_size, desc=f"Epoch {epoch+1}/{nb_epochs}")
+            pbar = tqdm(
+                zip(X.split(batch_size), y.split(batch_size)),
+                total=len(X) // batch_size,
+                desc=f"Epoch {epoch+1}/{nb_epochs}",
+            )
             for batch_X, batch_y in pbar:
                 batch_X = batch_X.to(self.device)
                 batch_y = batch_y.to(self.device)
@@ -110,15 +119,15 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
                 self.optimizer.step()
                 batch_index += 1
                 if verbose:
-                    logger.info(f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}")
+                    logger.info(
+                        f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}",
+                    )
             if log_interval > 0 and (epoch) % log_interval == 0:
                 train_loss = loss.item()
                 self.loss_curve.append(train_loss)
         # Return the classifier
         return self
-    
-    
-    
+
     def predict_proba(self, X):
         # Check if fit has been called
         check_is_fitted(self)
@@ -126,8 +135,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         with torch.no_grad():
             probs = self.model.forward(X)
             return probs
-    
-    
+
     def predict(self, X):
         with torch.no_grad():
             model_dtype = next(self.model.parameters()).dtype
@@ -157,7 +165,7 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
         }
         return art_class(**init_params)
-    
+
     def score(self, X, y):
         check_is_fitted(self)
         self.model.eval()
@@ -170,9 +178,8 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             score = loss_function(y_pred, y).item()
             score /= len(y)
             return score
-        
-    
-        
+
+
 @dataclass
 class PytorchModelConfig(ModelConfig):
     model_type: str = "torch_example.ResNet18"
@@ -180,7 +187,11 @@ class PytorchModelConfig(ModelConfig):
     classifier: bool = False
     fit_params: dict = field(default_factory=dict)
     library: str = "pytorch"
-    device: torch.device = field(default_factory=lambda: torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    device: torch.device = field(
+        default_factory=lambda: torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu",
+        ),
+    )
     criterion: Union[dict, str] = field(default="CrossEntropyLoss")
     optimizer: Union[dict, str] = field(default="SGD")
     clip_values: Union[tuple, None] = None
@@ -218,8 +229,7 @@ class PytorchModelConfig(ModelConfig):
     defense_name : str or None
         Name of the defense method to apply.
     defense_params : dict
-        Parameters for the defense method.
-    
+        Parameters for the defense method.    
 
     Methods
     -------
@@ -233,11 +243,11 @@ class PytorchModelConfig(ModelConfig):
     _score(y_true, y_pred, train): Computes and logs performance scores.
     __call__(X, y, train, score, filepath): Executes the model workflow including training, prediction, scoring, and model persistence.
     """
-    
+
     def to(self, device):
         self.device = device
         self._model.to(device)
-    
+
     def load_class(self, file_path, class_name, module_name=None):
         if not Path(file_path).exists():
             raise FileNotFoundError(f"Module file {file_path} does not exist.")
@@ -246,17 +256,16 @@ class PytorchModelConfig(ModelConfig):
 
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module   # <-- this is the key line
+        sys.modules[module_name] = module  # <-- this is the key line
         spec.loader.exec_module(module)
         return getattr(module, class_name)
-    
-    
-    def get_art_model(self, data:DataConfig ):
+
+    def get_art_model(self, data: DataConfig):
         loss = self._model._initialize_criterion(self.criterion)
         assert isinstance(loss, nn.Module), "Loss must be a torch.nn.Module."
         input_shape = data.X_train.shape[1:]
         if self.classifier:
-            
+
             nb_classes = len(torch.unique(data.y_train))
             if self.clip_values is None or len(self.clip_values) == 0:
                 clip_values = (data.X_train.min().item(), data.X_train.max().item())
@@ -310,7 +319,7 @@ class PytorchModelConfig(ModelConfig):
             raise NotImplementedError("Only classifier models are currently supported.")
         self._model.to(self.device)
         self._model._set_random_seed(self.random_seed)
-        
+
     def get_art_class(self, data):
         if self.classifier:
             loss = self._model._initialize_criterion(self.criterion)
@@ -339,17 +348,23 @@ class PytorchModelConfig(ModelConfig):
             "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
             "optimizer": optimizer,
         }
-        
+
     def get_model(self):
-        assert hasattr(self, "_model"), "Model is not initialized. Call _initialize_model() first."
+        assert hasattr(
+            self,
+            "_model",
+        ), "Model is not initialized. Call _initialize_model() first."
         assert hasattr(self._model, "model"), "Model does not have 'model' attribute."
-        assert isinstance(self._model.model, nn.Module), "'model' attribute is not a torch.nn.Module."
+        assert isinstance(
+            self._model.model,
+            nn.Module,
+        ), "'model' attribute is not a torch.nn.Module."
         return self._model.model
-    
-    def __call__(self, data:DataConfig, **kwargs):
+
+    def __call__(self, data: DataConfig, **kwargs):
         self._initialize_model()
         return super().__call__(data, **kwargs)
-    
+
     def __post_init__(self):
         self.training_prediction_time = None
         self.test_prediction_time = None
@@ -364,20 +379,25 @@ class PytorchModelConfig(ModelConfig):
         self.prediction_score_time = None
         self.score_time = None
         self.score_dict = None
-    
+
     def __hash__(self):
         self._model.model.hash = super().__hash__
         arch = str(self._model.model)
         params = f"model_type={self.model_type}, model_params={self.model_params}, classifier={self.classifier}"
-        model_params = b"".join(p.detach().cpu().numpy().tobytes() for p in self._model.model.parameters())
+        model_params = b"".join(
+            p.detach().cpu().numpy().tobytes() for p in self._model.model.parameters()
+        )
         return hash((arch, params, model_params))
-    
-    
+
     def _score(self, y_true: torch.Tensor, y_pred: torch.Tensor):
         if hasattr(self._model, "loss_curve") and len(self._model.loss_curve) > 0:
             loss_curve = self._model.loss_curve
-        elif hasattr(self._model, "model") and hasattr(self._model.model, "loss_curve") and len(self._model.model.loss_curve) > 0:
-            loss_curve  = self._model.model.loss_curve
+        elif (
+            hasattr(self._model, "model")
+            and hasattr(self._model.model, "loss_curve")
+            and len(self._model.model.loss_curve) > 0
+        ):
+            loss_curve = self._model.model.loss_curve
         else:
             loss_curve = None
         scores = super()._score(y_true, y_pred)
@@ -386,14 +406,8 @@ class PytorchModelConfig(ModelConfig):
         if "train_loss_curve" in scores:
             del scores["train_loss_curve"]
         return scores
-    
-def input_shape_from_data_config(data:DataConfig):
+
+
+def input_shape_from_data_config(data: DataConfig):
     # Assuming data.X_train is a torch.Tensor
     return data.X_train.shape[1:]
-    
-    
-        
-        
-
-
-    

@@ -5,7 +5,6 @@ import shutil
 from deckard.experiment import ExperimentConfig
 from deckard.data import DataConfig
 from deckard.model import ModelConfig
-from deckard.model.defend import DefenseConfig
 from deckard.attack import AttackConfig
 
 # from deckard.score import ScorerDictConfig  # Removed unused import
@@ -18,7 +17,6 @@ class TestExperimentConfig(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.data_config = DataConfig()
         self.model_config = ModelConfig()
-        self.defense_config = DefenseConfig()
         self.attack_config = AttackConfig(attack_size=1)
         self.file_config = FileConfig()
         self.experiment_config = ExperimentConfig(
@@ -39,7 +37,6 @@ class TestExperimentConfig(unittest.TestCase):
         self.assertEqual(self.experiment_config.experiment_name, "test_experiment")
         self.assertIsInstance(self.experiment_config.data, DataConfig)
         self.assertIsInstance(self.experiment_config.model, ModelConfig)
-        self.assertIsInstance(self.experiment_config.defense, DefenseConfig)
         self.assertIsInstance(self.experiment_config.attack, AttackConfig)
         self.assertIsInstance(self.experiment_config.files, FileConfig)
 

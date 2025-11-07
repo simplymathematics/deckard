@@ -55,14 +55,15 @@ sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.keys())
 
 supported_defense_types = [
-            "detector",
-            "preprocessor",
-            "postprocessor",
-            "trainer",
-            "regularizer",
-            "transformer",
-            None,
-        ]
+    "detector",
+    "preprocessor",
+    "postprocessor",
+    "trainer",
+    "regularizer",
+    "transformer",
+    None,
+]
+
 
 @dataclass
 class DefenseConfig(ModelConfig):
@@ -160,7 +161,7 @@ class DefenseConfig(ModelConfig):
 
     def __hash__(self):
         return super().__hash__()
-    
+
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
 
@@ -185,7 +186,7 @@ class DefenseConfig(ModelConfig):
         ValueError
             If the model is not fitted before applying the defense.
         """
-        
+
         if self._model is None:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
@@ -268,7 +269,7 @@ class DefenseConfig(ModelConfig):
         end = time.process_time()
         return defended_estimator
 
-    def parse_defense_name(self,):
+    def parse_defense_name(self):
         if self.defense_name is not None and len(self.defense_name) > 0:
             module_name, class_name = self.defense_name.rsplit(".", 1)
         else:
@@ -301,8 +302,8 @@ class DefenseConfig(ModelConfig):
         assert (
             defense_type in supported_defense_types
         ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
-        
-        return defense_type,defense_subtype,defense_class
+
+        return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
         art_class = (

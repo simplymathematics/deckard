@@ -1,5 +1,5 @@
 # Imports
-import pandas as pd
+# import pandas as pd
 import time
 import logging
 import tempfile
@@ -12,7 +12,8 @@ from typing import Union, Dict
 # PyTorch
 import torch
 from torch import Tensor
-from torch.utils.data import random_split, TensorDataset
+
+# from torch.utils.data import random_split, TensorDataset
 from torchvision import datasets, transforms
 
 
@@ -96,12 +97,8 @@ class PytorchDataConfig(DataConfig):
 
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
-        assert (
-            self.train_size > 0
-        ), "train_size must be specified for PyTorch datasets."
-        assert (
-            self.test_size > 0
-        ), "test_size must be specified for PyTorch datasets."
+        assert self.train_size > 0, "train_size must be specified for PyTorch datasets."
+        assert self.test_size > 0, "test_size must be specified for PyTorch datasets."
 
     def __hash__(self):
         return super().__hash__()
@@ -151,7 +148,7 @@ class PytorchDataConfig(DataConfig):
         full_data = torch.utils.data.ConcatDataset([train_loader, test_loader])
         # Extract data and targets
         self._X = torch.stack([full_data[i][0] for i in range(len(full_data))])
-        self._y = torch.tensor([full_data[i][1] for i in range(len(full_data))])        
+        self._y = torch.tensor([full_data[i][1] for i in range(len(full_data))])
         end = time.process_time()
         self.data_load_time = end - start
         logger.info(f"Loaded {dataset_name} dataset in {self.data_load_time} seconds.")
@@ -165,7 +162,6 @@ class PytorchDataConfig(DataConfig):
         ), f"Expected _y to be a tuple, got {type(self._y)}."
         assert isinstance(self.data_load_time, float), "data_load_time is not a float."
 
-    
     def _sample(
         self,
     ):
@@ -194,12 +190,13 @@ class PytorchDataConfig(DataConfig):
         num_samples = len(self._X)
         indices = torch.arange(num_samples)
         # Determine stratification
-        stratify_col = None
         if self.stratify is not None:
             if self.stratify is True:
-                stratify_col = self._y
+                _ = self._y
             else:
-                raise ValueError(f"stratify must be None or True for PyTorch datasets")
+                raise ValueError(
+                    f"stratify must be None or True for PyTorch datasets: got {self.stratify}."
+                )
 
         # Calculate train and test sizes
         if isinstance(self.train_size, float):
@@ -207,7 +204,10 @@ class PytorchDataConfig(DataConfig):
         elif isinstance(self.train_size, int):
             train_size = self.train_size
         else:
-            assert isinstance(self.test_size, (float, int)), "test_size must be float or int if train_size is None"
+            assert isinstance(
+                self.test_size,
+                (float, int),
+            ), "test_size must be float or int if train_size is None"
 
         if isinstance(self.test_size, float):
             test_size = int(self.test_size * num_samples)
@@ -223,14 +223,20 @@ class PytorchDataConfig(DataConfig):
                 train_size = self.train_size
             else:
                 raise ValueError("Either train_size or test_size must be specified.")
-        
+
         if train_size + test_size > num_samples:
-            raise ValueError("Train size and test size exceed the total number of samples")
+            raise ValueError(
+                "Train size and test size exceed the total number of samples",
+            )
         start_time = time.process_time()
 
-    
         # Randomly shuffle indices
-        indices = indices[torch.randperm(num_samples, generator=torch.Generator().manual_seed(self.random_state))]
+        indices = indices[
+            torch.randperm(
+                num_samples,
+                generator=torch.Generator().manual_seed(self.random_state),
+            )
+        ]
         # The first train_size indices are for training
         train_idx = indices[:train_size]
         # The next test_size indices are for testing
@@ -254,8 +260,7 @@ class PytorchDataConfig(DataConfig):
         assert isinstance(self.y_train, Tensor), "y_train must be a Tensor"
         assert isinstance(self.X_test, Tensor), "X_test must be a Tensor"
         assert isinstance(self.y_test, Tensor), "y_test must be a Tensor"
-    
-    
+
     def _classification_feature_scores(self):
         """
         Computes feature importance scores for classification tasks using various statistical methods.
@@ -269,7 +274,7 @@ class PytorchDataConfig(DataConfig):
         - 'f_classif': ANOVA F-value scores.
         - 'class_counts': Counts of each class in the training target.
         """
-        
+
         # Exit early if data already scores:
         if "class_counts" in getattr(self, "score_dict", {}):
             return self.score_dict
@@ -314,7 +319,7 @@ class PytorchDataConfig(DataConfig):
             - 'y_train_cdf': Empirical CDF of the training target.
             - 'y_test_cdf': Empirical CDF of the testing target.
         """
-        
+
         # Exit early if data already scores:
         if "y_test_cdf" in getattr(self, "score_dict", {}):
             return self.score_dict
@@ -406,7 +411,11 @@ class PytorchDataConfig(DataConfig):
             assert isinstance(score_file, str), "score_file must be a string path."
             if Path(score_file).exists():
                 scores = self.load_scores(score_file)
-                self.score_dict = {**self.score_dict, **scores} if hasattr(self, "score_dict") else scores
+                self.score_dict = (
+                    {**self.score_dict, **scores}
+                    if hasattr(self, "score_dict")
+                    else scores
+                )
             else:
                 scores = {}
         else:
@@ -442,7 +451,7 @@ class PytorchDataConfig(DataConfig):
         logger.info(
             f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
         )
-        
+
         scores = self._score()
         all_scores = {**time_dict, **scores}
         self.score_dict = all_scores

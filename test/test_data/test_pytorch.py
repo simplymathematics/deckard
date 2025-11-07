@@ -12,7 +12,6 @@ class TestPytorchDataConfig(unittest.TestCase):
     def setUp(self):
         self.config = PytorchDataConfig(
             dataset_name="mnist",
-            batch_size=32,
             data_dir=self.temp_dir,
             test_size=0.2,
             train_size=0.7,

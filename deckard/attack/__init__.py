@@ -1,4 +1,3 @@
-
 # Standard library imports
 import pickle
 import time
@@ -11,6 +10,7 @@ import pandas as pd
 # Typing imports
 from dataclasses import dataclass, field
 from typing import Union
+
 # Sklearn, torch, numpy imports
 from sklearn.metrics import (
     accuracy_score,
@@ -197,7 +197,10 @@ class AttackConfig(ConfigBase):
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = getattr(module, self.attack_type.split(".")[-1])
         model_alias = type(model).__name__
-        if isinstance(model, tuple(sklearn_supported_models)) or model_alias in sklearn_dict:
+        if (
+            isinstance(model, tuple(sklearn_supported_models))
+            or model_alias in sklearn_dict
+        ):
             try:
                 check_is_fitted(model)
                 art_model = sklearn_dict[model_alias](model)
@@ -210,17 +213,25 @@ class AttackConfig(ConfigBase):
             art_model = model
         else:
             raise ValueError(f"Unsupported model type: {model_alias}")
-        assert isinstance(art_model, tuple(supported_models)), f"art_model must be one of {supported_models}, got {type(art_model)}"
+        assert isinstance(
+            art_model,
+            tuple(supported_models),
+        ), f"art_model must be one of {supported_models}, got {type(art_model)}"
         # Convert targeted attribute to index if necessary
         if len(self.targeted_attribute) > 0 and isinstance(
             self.targeted_attribute,
             str,
         ):
             feature_name = self.targeted_attribute
-            assert isinstance(data.X_train, pd.DataFrame), f"Expected Dataframe got {type(data.X_train)}"
+            assert isinstance(
+                data.X_train,
+                pd.DataFrame,
+            ), f"Expected Dataframe got {type(data.X_train)}"
             index = data.X_train.columns.get_loc(feature_name)
             self.attack_params["attack_feature"] = index
-            assert "attack_feature" in self.attack_params, "attack_feature must be specified in attack_params for attribute inference attacks"
+            assert (
+                "attack_feature" in self.attack_params
+            ), "attack_feature must be specified in attack_params for attribute inference attacks"
         attack = attack_class(art_model, **self.attack_params)
         self._attack_type = attack_type
         self._attack_subtype = attack_subtype
@@ -312,7 +323,10 @@ class AttackConfig(ConfigBase):
         else:
             raise NotImplementedError(f"Attack type {attack_type} not implemented yet.")
         assert isinstance(scores, dict), "Scores should be a dictionary"
-        assert isinstance(self.attack_time, float), f"Attack time should be a float, got {type(self.attack_time)}"
+        assert isinstance(
+            self.attack_time,
+            float,
+        ), f"Attack time should be a float, got {type(self.attack_time)}"
         assert isinstance(
             self.attack_prediction_time,
             float,
@@ -387,9 +401,18 @@ class AttackConfig(ConfigBase):
             y_subset = y_train[:n]
         if isinstance(y_subset, Tensor):
             y_subset = y_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
-        assert isinstance(ben_pred_labels, np.ndarray), f"ben_pred_labels should be np.ndarray, got {type(ben_pred_labels)}"
-        assert isinstance(X_subset, np.ndarray), f"X_subset should be np.ndarray, got {type(X_subset)}"
-        assert isinstance(y_subset, np.ndarray), f"y_subset should be np.ndarray, got {type(y_subset)}"
+        assert isinstance(
+            ben_pred_labels,
+            np.ndarray,
+        ), f"ben_pred_labels should be np.ndarray, got {type(ben_pred_labels)}"
+        assert isinstance(
+            X_subset,
+            np.ndarray,
+        ), f"X_subset should be np.ndarray, got {type(X_subset)}"
+        assert isinstance(
+            y_subset,
+            np.ndarray,
+        ), f"y_subset should be np.ndarray, got {type(y_subset)}"
         return n, ben_pred_labels, X_subset, y_subset
 
     def _get_feature_vector_preds(self, data, targeted_attribute, train=False):
@@ -562,7 +585,10 @@ class AttackConfig(ConfigBase):
         elif isinstance(y_subset, pd.Series):
             y_subset = y_subset.values
         else:
-            assert isinstance(y_subset, (list, np.ndarray)), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
+            assert isinstance(
+                y_subset,
+                (list, np.ndarray),
+            ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
         # Move model to appropriate device
         ben_preds = art_model.predict(x_subset)
         ben_pred_labels = ben_preds.argmax(axis=1)
@@ -572,11 +598,18 @@ class AttackConfig(ConfigBase):
             # Special handling for AdversarialPatch attack
             patches = attack.generate(x=x_subset, y=ben_pred_labels)
             # Caclulate the scale of the patch, relative to the input size
-            input_shape = x_subset[0].shape[1:]  # Exclude batch dimension, channel dimension
-            patch_shape = patches[0].shape[1:]  # Exclude batch dimension, channel dimension
+            input_shape = x_subset[0].shape[
+                1:
+            ]  # Exclude batch dimension, channel dimension
+            patch_shape = patches[0].shape[
+                1:
+            ]  # Exclude batch dimension, channel dimension
             # Assume that the patch is square (required by the attack)
             # Calculate the scale based on the larger input_dimension
-            scale = max(patch_shape[0] / input_shape[0], patch_shape[1] / input_shape[1])
+            scale = max(
+                patch_shape[0] / input_shape[0],
+                patch_shape[1] / input_shape[1],
+            )
             X_test_adv = attack.apply_patch(x_subset, scale=scale)
         else:
             X_test_adv = attack.generate(x=x_subset)
@@ -604,7 +637,7 @@ class AttackConfig(ConfigBase):
         else:
             raise TypeError(
                 f"Unsupported type for y_subset: {type(y_subset)}",
-            )        
+            )
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         self.attack = adv_pred
         return self.score_dict

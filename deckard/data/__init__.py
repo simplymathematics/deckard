@@ -37,8 +37,6 @@ from ..utils import ConfigBase, data_supported_filetypes
 logger = logging.getLogger(__name__)
 
 
-
-
 @dataclass
 class DataPipelineConfig(ConfigBase):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
@@ -370,7 +368,10 @@ class DataConfig(ConfigBase):
         self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
-        assert isinstance(self._X, pd.DataFrame), f"Expected DataFrame got {type(self._X)}"
+        assert isinstance(
+            self._X,
+            pd.DataFrame,
+        ), f"Expected DataFrame got {type(self._X)}"
         assert isinstance(self._y, pd.Series), f"Expected Series got {type(self._y)}"
         return self
 
@@ -546,7 +547,7 @@ class DataConfig(ConfigBase):
             (pd.DataFrame, pd.Series),
         ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
-    
+
     def _load_generic_sklearn(self, loader_func, **loader_params):
         """
         Loads a dataset using a generic scikit-learn loader function.
@@ -576,7 +577,7 @@ class DataConfig(ConfigBase):
         self._X = pd.DataFrame(X)
         self._y = pd.Series(y)
         return self
-    
+
     def _load_generic_openml(self, dataset_name, version=1, **loader_params):
         """
         Loads a dataset from OpenML using the specified dataset name and version.
@@ -613,7 +614,7 @@ class DataConfig(ConfigBase):
         self._X = pd.DataFrame(X)
         self._y = pd.Series(y)
         return self
-    
+
     def _load_data(self):
         """
         Loads dataset based on the provided dataset name or file type.
@@ -647,8 +648,14 @@ class DataConfig(ConfigBase):
             "adult": self._load_adult_income_data,
             "make_classification": self._make_classification_data,
             "make_regression": self._make_regression_data,
-            "diabetes": lambda **params: self._load_generic_sklearn(load_diabetes, **params),
-            "digits": lambda **params: self._load_generic_sklearn(load_digits, **params),
+            "diabetes": lambda **params: self._load_generic_sklearn(
+                load_diabetes,
+                **params,
+            ),
+            "digits": lambda **params: self._load_generic_sklearn(
+                load_digits,
+                **params,
+            ),
             "iris": lambda **params: self._load_generic_sklearn(load_iris, **params),
         }
         filetype = Path(self.dataset_name).suffix
@@ -677,9 +684,9 @@ class DataConfig(ConfigBase):
             self.data_load_time = end_time - start_time
         else:
             raise NotImplementedError(
-            f"Dataset {self.dataset_name} not implemented",
+                f"Dataset {self.dataset_name} not implemented",
             )
-        
+
         assert isinstance(
             self._X,
             (pd.DataFrame, pd.Series),
@@ -693,17 +700,15 @@ class DataConfig(ConfigBase):
         data = self.load_data(self.dataset_name)
         if self.target is None:
             raise ValueError(
-                        "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
-                    )
+                "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
+            )
         y = data.pop(self.target)
         if len(self.keep) > 1:
             data = data[self.keep]
         elif len(self.keep) == 1:
             data = data[self.keep[0]]
         for del_col in self.drop:
-            assert (
-                        len(self.keep) == 0
-                    ), "Cannot specify both keep and drop columns"
+            assert len(self.keep) == 0, "Cannot specify both keep and drop columns"
             if del_col in data.columns:
                 data = data.drop(columns=del_col)
         self._X = data
@@ -738,19 +743,17 @@ class DataConfig(ConfigBase):
                     "y_train_cdf": y_train_cdf,
                     "y_test_cdf": y_test_cdf,
                 }
-                
-      
+
     def _compute_class_counts(self, y: pd.Series) -> dict:
         if isinstance(y, pd.Series):
             class_dict = y.value_counts()
-            
+
         else:
             class_dict = pd.Series(y).value_counts()
         class_counts = class_dict.to_dict()
         dict_ = {}
         dict_["class_counts"] = class_counts
         return dict_
-        
 
     def _classification_feature_scores(self) -> dict:
         """
@@ -916,10 +919,22 @@ class DataConfig(ConfigBase):
             assert (
                 hasattr(self, "_test_indices") and self._test_indices is not None
             ), "Test indices must be set after sampling"
-        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
-        assert isinstance(self.y_train, pd.Series), f"y_train must be a Series, got {type(self.y_train)}"
-        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
-        assert isinstance(self.y_test, pd.Series), f"y_test must be a Series, got {type(self.y_test)}"
+        assert isinstance(
+            self.X_train,
+            (pd.DataFrame, pd.Series),
+        ), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
+        assert isinstance(
+            self.y_train,
+            pd.Series,
+        ), f"y_train must be a Series, got {type(self.y_train)}"
+        assert isinstance(
+            self.X_test,
+            (pd.DataFrame, pd.Series),
+        ), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
+        assert isinstance(
+            self.y_test,
+            pd.Series,
+        ), f"y_test must be a Series, got {type(self.y_test)}"
         if self.pipeline is not None:
             self.X_train, self.X_test, self.y_train, self.y_test = self.pipeline(
                 self.X_train,
@@ -948,10 +963,22 @@ class DataConfig(ConfigBase):
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
-        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
-        assert isinstance(self.y_train, pd.Series), f"y_train must be a Series, got {type(self.y_train)}"
-        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
-        assert isinstance(self.y_test, pd.Series), f"y_test must be a Series, got {type(self.y_test)}"
+        assert isinstance(
+            self.X_train,
+            (pd.DataFrame, pd.Series),
+        ), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
+        assert isinstance(
+            self.y_train,
+            pd.Series,
+        ), f"y_train must be a Series, got {type(self.y_train)}"
+        assert isinstance(
+            self.X_test,
+            (pd.DataFrame, pd.Series),
+        ), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
+        assert isinstance(
+            self.y_test,
+            pd.Series,
+        ), f"y_test must be a Series, got {type(self.y_test)}"
         if score_file is not None and not Path(score_file).exists():
             self.save_scores(all_scores, score_file)
         if save_flag:

@@ -318,10 +318,13 @@ class ExperimentConfig(ConfigBase):
         attack_file_outputs = {
             file: file_dict[file] for file in attack_files if file in file_dict
         }
-        if "data_file" in data_file_outputs and Path(
-            data_file_outputs["data_file"],
-        ).exists():
-            self.data =self.load_object(
+        if (
+            "data_file" in data_file_outputs
+            and Path(
+                data_file_outputs["data_file"],
+            ).exists()
+        ):
+            self.data = self.load_object(
                 data_file_outputs["data_file"],
             )
         else:
@@ -387,7 +390,7 @@ class ExperimentConfig(ConfigBase):
         else:
             logger.info("No attack config provided, skipping attack.")
         # Assert that all files in file_dict exist
-        
+
         for attr, filepath in file_dict.items():
             if filepath is None:
                 continue
@@ -397,7 +400,7 @@ class ExperimentConfig(ConfigBase):
                     filepath,
                 ).exists(), f"File {filepath} for {attr} does not exist."
             #
-        
+
         if self.score:
             custom_scores = self.score(
                 data=self.data,
