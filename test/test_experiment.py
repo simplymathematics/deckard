@@ -22,7 +22,6 @@ class TestExperimentConfig(unittest.TestCase):
         self.experiment_config = ExperimentConfig(
             data=self.data_config,
             model=self.model_config,
-            defense=self.defense_config,
             attack=self.attack_config,
             files=self.file_config,
             experiment_name="test_experiment",

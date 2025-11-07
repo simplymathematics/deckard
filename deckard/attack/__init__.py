@@ -198,8 +198,7 @@ class AttackConfig(ConfigBase):
         attack_class = getattr(module, self.attack_type.split(".")[-1])
         model_alias = type(model).__name__
         if (
-            isinstance(model, tuple(sklearn_supported_models))
-            or model_alias in sklearn_dict
+           model_alias in sklearn_dict
         ):
             try:
                 check_is_fitted(model)
