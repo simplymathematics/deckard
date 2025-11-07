@@ -112,7 +112,10 @@ class DataPipelineConfig(ConfigBase):
             pipeline.fit(X_train, y_train)
             end = time.process_time()
             before_shape = X_train.shape
+            train_cols = X_train.columns
             X_train = pipeline.transform(X_train)
+            # Ensure transformed data is a DataFrame with correct columns
+            X_train = pd.DataFrame(X_train, columns=train_cols)
             after_shape = X_train.shape
             assert (
                 before_shape[0] == after_shape[0]
@@ -127,7 +130,10 @@ class DataPipelineConfig(ConfigBase):
             start = time.process_time()
             # Transform the testing data
             before_shape = X_test.shape
-            X_test = pipeline.transform(X_test.values)
+            test_cols = X_test.columns
+            X_test = pipeline.transform(X_test)
+            # Ensure transformed data is a DataFrame with correct columns
+            X_test = pd.DataFrame(X_test, columns=test_cols)
             after_shape = X_test.shape
             assert (
                 before_shape[0] == after_shape[0]
@@ -364,6 +370,8 @@ class DataConfig(ConfigBase):
         self.data_load_time = end_time - start_time
         self._X = X
         self._y = pd.Series(y)
+        assert isinstance(self._X, pd.DataFrame), f"Expected DataFrame got {type(self._X)}"
+        assert isinstance(self._y, pd.Series), f"Expected Series got {type(self._y)}"
         return self
 
     def _make_classification_data(
@@ -908,6 +916,10 @@ class DataConfig(ConfigBase):
             assert (
                 hasattr(self, "_test_indices") and self._test_indices is not None
             ), "Test indices must be set after sampling"
+        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
+        assert isinstance(self.y_train, pd.Series), f"y_train must be a Series, got {type(self.y_train)}"
+        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
+        assert isinstance(self.y_test, pd.Series), f"y_test must be a Series, got {type(self.y_test)}"
         if self.pipeline is not None:
             self.X_train, self.X_test, self.y_train, self.y_test = self.pipeline(
                 self.X_train,
@@ -936,6 +948,10 @@ class DataConfig(ConfigBase):
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
+        assert isinstance(self.X_train, (pd.DataFrame, pd.Series)), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
+        assert isinstance(self.y_train, pd.Series), f"y_train must be a Series, got {type(self.y_train)}"
+        assert isinstance(self.X_test, (pd.DataFrame, pd.Series)), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
+        assert isinstance(self.y_test, pd.Series), f"y_test must be a Series, got {type(self.y_test)}"
         if score_file is not None and not Path(score_file).exists():
             self.save_scores(all_scores, score_file)
         if save_flag:
