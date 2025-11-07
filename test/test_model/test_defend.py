@@ -66,13 +66,13 @@ class TestDefenseConfig(unittest.TestCase):
     def test_apply_defense_without_model(self):
         # Test applying defense without a fitted model
         with self.assertRaises(ValueError):
-            self.defense_config.apply_defense()
+            self.defense_config.apply_defense(data=self.data)
 
     def test_apply_defense_with_invalid_defense_name(self):
         # Test applying defense with an invalid defense name
         self.defense_config.defense_name = "invalid.defense.Class"
         with self.assertRaises(ImportError):
-            self.defense_config.apply_defense()
+            self.defense_config.apply_defense(data=self.data)
 
     def test_call_with_unloaded_data(self):
         # Test calling the DefenseConfig with unloaded data

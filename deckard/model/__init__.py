@@ -257,10 +257,13 @@ class ModelConfig(ConfigBase):
             if self.classifier
             else regressor_dict[self.model_type.split(".")[-1]]
         )
-        init_params = {
-            "input_shape": data.X_train.shape[1:],
-            "nb_classes": len(set(data.y_train)) if self.classifier else None,
-        }
+        if art_class in sklearn_dict.values():
+            init_params = {}
+        else:
+            init_params = {
+                "input_shape": data.X_train.shape[1:],
+                "nb_classes": len(set(data.y_train)) if self.classifier else None,
+            }
         return art_class, init_params
 
     def get_model(self) -> BaseEstimator:
