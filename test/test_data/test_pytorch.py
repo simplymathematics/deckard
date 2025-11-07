@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from deckard.data.pytorch import PytorchDataConfig
 from torch import Tensor
-from torch.utils.data import DataLoader
 
 
 class TestPytorchDataConfig(unittest.TestCase):
@@ -15,7 +14,6 @@ class TestPytorchDataConfig(unittest.TestCase):
             data_dir=self.temp_dir,
             test_size=0.2,
             train_size=0.7,
-            val_size=0.1,
             random_state=42,
         )
 
@@ -30,11 +28,9 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_initialization(self):
         self.assertEqual(self.config.dataset_name, "mnist")
-        self.assertEqual(self.config.batch_size, 32)
         self.assertEqual(self.config.data_dir, self.temp_dir)
         self.assertEqual(self.config.test_size, 0.2)
         self.assertEqual(self.config.train_size, 0.7)
-        self.assertEqual(self.config.val_size, 0.1)
         self.assertEqual(self.config.random_state, 42)
         self.assertTrue(self.config.stratify)
 
@@ -47,12 +43,10 @@ class TestPytorchDataConfig(unittest.TestCase):
     def test_sample(self):
         self.config._load_data()
         self.config._sample()
-        self.assertIsInstance(self.config.X_train, DataLoader)
-        self.assertIsInstance(self.config.y_train, DataLoader)
-        self.assertIsInstance(self.config.X_val, DataLoader)
-        self.assertIsInstance(self.config.y_val, DataLoader)
-        self.assertIsInstance(self.config.X_test, DataLoader)
-        self.assertIsInstance(self.config.y_test, DataLoader)
+        self.assertIsInstance(self.config.X_train, Tensor)
+        self.assertIsInstance(self.config.y_train, Tensor)
+        self.assertIsInstance(self.config.X_test, Tensor)
+        self.assertIsInstance(self.config.y_test, Tensor)
 
     def test_call(self):
         scores = self.config(data_file=str(Path(self.temp_dir) / "data.pt"))

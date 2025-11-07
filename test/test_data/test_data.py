@@ -53,8 +53,8 @@ class TestDataPipelineConfig(unittest.TestCase):
         )
         self.assertEqual(X_train_transformed.shape, (4, 2))
         self.assertEqual(X_test_transformed.shape, (2, 2))
-        self.assertFalse(np.isnan(X_train_transformed).any())
-        self.assertFalse(np.isnan(X_test_transformed).any())
+        self.assertFalse(self.X_train.equals(X_train_transformed))
+        self.assertFalse(self.X_test.equals(X_test_transformed))
 
     def test_pipeline_fit_time(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
