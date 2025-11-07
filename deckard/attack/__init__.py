@@ -217,8 +217,10 @@ class AttackConfig(ConfigBase):
             str,
         ):
             feature_name = self.targeted_attribute
+            assert isinstance(data.X_train, pd.DataFrame), f"Expected Dataframe got {type(data.X_train)}"
             index = data.X_train.columns.get_loc(feature_name)
             self.attack_params["attack_feature"] = index
+            assert "attack_feature" in self.attack_params, "attack_feature must be specified in attack_params for attribute inference attacks"
         attack = attack_class(art_model, **self.attack_params)
         self._attack_type = attack_type
         self._attack_subtype = attack_subtype
