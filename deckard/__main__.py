@@ -180,6 +180,8 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
         ValueError: If the "files" key in the configuration is not a dictionary or a FileConfig instance.
     """
     files = cfg.pop("files", {}) if "files" in cfg else {}
+    if not isinstance(files, dict):
+        files = files.to_dict()
     hash_ = hashlib.md5(str(cfg).encode()).hexdigest()
     if "experiment_name" not in files:
         files["experiment_name"] = "*"
@@ -293,6 +295,8 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
         if optimize_scores:
             return optimize_scores
         raise ValueError("No optimization scores found for the specified directions.")
+    else:
+        attributes = []
     if len(attributes) > 0:
         raise NotImplementedError(
             "Storing metrics not used for optimization not yet implemented.",

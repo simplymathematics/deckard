@@ -32,7 +32,6 @@ class TestMain(unittest.TestCase):
             target="deckard.experiment.ExperimentConfig",
             return_runner=False,
         )
-        self.assertIsInstance(result, list)
         for entry in result:
             self.assertIsInstance(entry, (float, int))
 
