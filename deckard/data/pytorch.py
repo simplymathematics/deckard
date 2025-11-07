@@ -195,7 +195,7 @@ class PytorchDataConfig(DataConfig):
                 _ = self._y
             else:
                 raise ValueError(
-                    f"stratify must be None or True for PyTorch datasets: got {self.stratify}."
+                    f"stratify must be None or True for PyTorch datasets: got {self.stratify}.",
                 )
 
         # Calculate train and test sizes
@@ -240,7 +240,7 @@ class PytorchDataConfig(DataConfig):
         # The first train_size indices are for training
         train_idx = indices[:train_size]
         # The next test_size indices are for testing
-        test_idx = indices[train_size : train_size + test_size]
+        test_idx = indices[train_size : train_size + test_size]  # NOQA E203
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")

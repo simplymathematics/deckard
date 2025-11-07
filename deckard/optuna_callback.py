@@ -81,7 +81,3 @@ class OptunaStudyDumpCallback(Callback):
         df = study.trials_dataframe()
         df.to_csv(self.output_file, index=False)
         print(f"Saved to {self.output_file}")
-        
-
-
-

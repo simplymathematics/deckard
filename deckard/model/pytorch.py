@@ -229,7 +229,7 @@ class PytorchModelConfig(ModelConfig):
     defense_name : str or None
         Name of the defense method to apply.
     defense_params : dict
-        Parameters for the defense method.    
+        Parameters for the defense method.
 
     Methods
     -------
