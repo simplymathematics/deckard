@@ -211,7 +211,7 @@ stages:
         data=${item} 
         +files.data_file=outputs/data/${item}.pkl 
         model=rf.yaml 
-        attack=attribute.yaml
+        attack=attribute-bb.yaml
         experiment_name="*"
         hydra.sweeper.study_name=attribute_inference_${item}
         optimizers=["accuracy","inferred_sex_accuracy"]
@@ -225,7 +225,7 @@ stages:
         - ../../../deckard/attack
       params:
         - ../../config/model/rf.yaml:
-        - ../../config/attack/attribute.yaml:
+        - ../../config/attack/attribute-bb.yaml:
         - ../../config/data/${item}.yaml:
         ################################################
         #            Command Explanation:             #
