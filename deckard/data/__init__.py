@@ -111,7 +111,12 @@ class DataPipelineConfig(ConfigBase):
             pipeline.fit(X_train, y_train)
             end = time.process_time()
             before_shape = X_train.shape
-            train_cols = X_train.columns
+            if isinstance(X_train, pd.DataFrame):
+                train_cols = X_train.columns
+            elif isinstance(X_train, pd.Series):
+                train_cols = [X_train.name]
+            else:
+                train_cols = [f"feature_{i}" for i in range(X_train.shape[1])]
             X_train = pipeline.transform(X_train)
             # If csr_matrix, convert to dense
             if isinstance(X_train, csr_matrix):
@@ -132,7 +137,12 @@ class DataPipelineConfig(ConfigBase):
             start = time.process_time()
             # Transform the testing data
             before_shape = X_test.shape
-            test_cols = X_test.columns
+            if isinstance(X_test, pd.DataFrame):
+                test_cols = X_test.columns
+            elif isinstance(X_test, pd.Series):
+                test_cols = [X_test.name]
+            else:
+                test_cols = [f"feature_{i}" for i in range(X_test.shape[1])]
             X_test = pipeline.transform(X_test)
             if isinstance(X_test, csr_matrix):
                 X_test = X_test.toarray()
