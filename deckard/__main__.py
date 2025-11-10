@@ -3,9 +3,10 @@ import warnings
 import logging
 import os
 import sys
+import json
 from pathlib import Path
 
-from omegaconf import OmegaConf
+from omegaconf import ListConfig, OmegaConf, DictConfig
 import hydra
 from hydra.utils import instantiate
 
@@ -79,6 +80,7 @@ def optimize(
     cfg = _convert_config_to_dict(cfg)
     optimizers, directions = _extract_optimizers_and_directions(cfg, return_runner)
     files = _initialize_files(cfg, kwargs)
+    cfg = save_params_file(cfg, files)
     runner = initialize_config(cfg, target=target)
     scores = _run_experiment(runner, files, args)
     scores = _filter_scores(scores, optimizers, directions)
@@ -86,6 +88,29 @@ def optimize(
         return scores, runner
     else:
         return scores
+
+def save_params_file(cfg, files):
+    if "score_file" in files and "params_file" not in files:
+        if Path(files["score_file"]).exists():
+            with open(files["score_file"], "r") as f:
+                existing_scores = json.load(f)
+            existing_scores = existing_scores.get("params", {})
+            for k, v in existing_scores.items():
+                if k not in dot_dict:
+                    dot_dict[k] = v
+            cfg = OmegaConf.merge(OmegaConf.create(dot_dict), OmegaConf.create(cfg))
+        dot_dict = {"params" : cfg}
+        Path(files["score_file"]).parent.mkdir(parents=True, exist_ok=True)
+        with open(files["score_file"], "w") as f:
+            json.dump(dot_dict, f, indent=4)
+    elif "params_file" in files:
+        if Path(files["params_file"]).exists():
+            existing_cfg = OmegaConf.load(files["params_file"])
+        cfg = OmegaConf.merge(existing_cfg, OmegaConf.create(cfg))
+        OmegaConf.save(cfg, files["params_file"])
+    else:
+        logger.info(f"Configuration parameters: \n {json.dumps(cfg, indent=4)}")
+    return cfg
 
 
 def _convert_config_to_dict(cfg: ConfigBase) -> dict:
