@@ -1,6 +1,6 @@
 attack_type : "art.attacks.evasion.ZooAttack"
 attack_params : 
-  confidence: float 0.0
+  confidence: 0.0
   targeted: false
   max_iter : 10
   binary_search_steps : 1

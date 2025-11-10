@@ -3,7 +3,6 @@ classifier : True
 model_params:
   C: 1.0
   kernel: rbf
-  degree: 3
   gamma: scale
   coef0: 0.0
   shrinking: true
@@ -11,10 +10,10 @@ model_params:
   tol: 0.001
   cache_size: 200
   class_weight: null
-  verbose: false
-  max_iter: -1
   decision_function_shape: ovr
   break_ties: false
   random_state: null
+  max_iter: 100
+  verbose: true
 _target_ : deckard.ModelConfig
 alias: svc

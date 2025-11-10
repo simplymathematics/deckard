@@ -2,7 +2,8 @@ dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd15195
 target : label
 random_state : 0
 stratify: True
-test_size : .2
+train_size : .1
+test_size : .1
 alias: kdd_nsl
 pipeline:
     encoder:

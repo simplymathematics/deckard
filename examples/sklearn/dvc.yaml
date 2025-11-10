@@ -59,85 +59,90 @@ stages:
           # ~model <-- Drops default model configuration.
           # ~attack <-- Drops default attack configuration.
           ################################################
-  train_rf:
-      foreach:
-        - adult
-        - classification
-        - digits
-      do:
-        cmd: >
-          deckard 
-          data=${item} 
-          +files.data_file=outputs/data/${item}.pkl 
-          +files.model_file=outputs/models/${item}/rf.pkl
-          +files.score_file=outputs/scores/models/${item}/rf.json
-          experiment_name=${item}_rf
-          model=rf.yaml 
-          ~attack
-          ~directions
-          ~optimizers
-        outs:
-          - outputs/models/${item}/rf.pkl
-        metrics:
-          - outputs/scores/models/${item}/rf.json
-        deps:
-          - outputs/data/${item}.pkl
-          - ../../deckard/model
-        params:
-          - ./config/model/rf.yaml:
-          - ./config/data/${item}.yaml:
-          ################################################
-          #            Command Explanation:             #
-          ################################################
-          # deckard  <-- Calls the deckard CLI tool
-          # model=${item}  <-- Specifies the model to be trained for this iteration. See ./config/model/ for available models.
-          # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
-          # +files.model_file=models/${item}/model.pkl <-- Specifies the output path for the trained model file.
-          # +files.score_file=scores/models/${item}/model.json <-- Specifies the output path for the model score file.
-          # model=rf.yaml  <-- Specifies the model configuration to be used.
-          # ~attack <-- Drops default attack configuration.
-  attack_rf:
-    foreach:
-      - adult
-      - classification
-      - digits
-    do:
+  train:
+      matrix:
+        data: 
+          - adult
+          - classification
+          - digits
+        model:
+          - rf
+          - svc
+          - logistic
       cmd: >
         deckard 
-        data=${item} 
-        +files.data_file=outputs/data/${item}.pkl 
-        +files.model_file=outputs/models/${item}/rf.pkl
-        +files.score_file=outputs/scores/attacks/${item}/rf/hsj.json
-        model=rf.yaml 
-        attack=hsj.yaml
-        experiment_name=${item}_rf_hsj
+        data=${item.data} 
+        +files.data_file=outputs/data/${item.data}.pkl 
+        +files.model_file=outputs/models/${item.data}/${item.model}.pkl
+        +files.score_file=outputs/scores/models/${item.data}/${item.model}.json
+        experiment_name=${item.data}_${item.model}
+        model=${item.model}.yaml 
+        ~attack
         ~directions
         ~optimizers
+      outs:
+        - outputs/models/${item.data}/${item.model}.pkl
       metrics:
-        - outputs/scores/attacks/${item}/rf/hsj.json
+        - outputs/scores/models/${item.data}/${item.model}.json
       deps:
-        - outputs/data/${item}.pkl
-        - outputs/models/${item}/rf.pkl
-        - ../../deckard/attack
+        - outputs/data/${item.data}.pkl
+        - ../../deckard/model
       params:
-        - ./config/model/rf.yaml:
-        - ./config/attack/hsj.yaml:
-        - ./config/data/${item}.yaml:
+        - ./config/model/${item.model}.yaml:
+        - ./config/data/${item.data}.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
         # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+        # model=${item}  <-- Specifies the model to be trained for this iteration. See ./config/model/ for available models.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
-        # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
-        # +files.score_file=scores/attacks/hsj/${item}_rf_attack.json <-- Specifies the output path for the attack score file.
+        # +files.model_file=models/${item}/model.pkl <-- Specifies the output path for the trained model file.
+        # +files.score_file=scores/models/${item}/model.json <-- Specifies the output path for the model score file.
         # model=rf.yaml  <-- Specifies the model configuration to be used.
+        # ~attack <-- Drops default attack configuration.
+  attack_rf:
+    matrix:
+      data: 
+        - adult
+      model:
+        - rf
+        - svc
+        - logistic
+      attack:
+        # Evasion attacks
+        - hsj
+        - boundary
+        # TODO: Poisoning attacks
+        # Membership inference attacks
+        - membership
+        # Attribute inference attacks
+        - attribute-bb
+    cmd: >
+      deckard 
+      data=${item.data} 
+      +files.data_file=outputs/data/${item.data}.pkl 
+      +files.model_file=outputs/models/${item.data}/${item.model}.pkl
+      +files.score_file=outputs/scores/attacks/${item.data}/${item.model}/${item.attack}.json
+      model=${item.model}.yaml 
+      attack=${item.attack}.yaml
+      experiment_name=${item.data}_${item.model}_${item.attack}
+      ~directions
+      ~optimizers
+    metrics:
+      - outputs/scores/attacks/${item.data}/${item.model}/${item.attack}.json
+    deps:
+      - outputs/data/${item.data}.pkl
+      - outputs/models/${item.data}/${item.model}.pkl
   defend_rf:
     matrix:
       data: 
         - adult
         - classification
         - digits
+      model:
+        - rf
+        - svc
+        - logistic
       defense:
           # Postprocessing defenses
           - class_labels
@@ -159,18 +164,19 @@ stages:
       deckard 
       data=${item.data} 
       +files.data_file=outputs/data/${item.data}.pkl 
-      +files.model_file=outputs/models/${item.data}/rf_defended_${item.defense}.pkl
-      +files.score_file=outputs/scores/defenses/${item.data}/rf_${item.defense}.json
-      model=rf.yaml 
+      +files.model_file=outputs/models/${item.data}/${item.model}_defended_${item.defense}.pkl
+      +files.score_file=outputs/scores/defenses/${item.data}/${item.model}_${item.defense}.json
+      model=${item.model}.yaml 
+      model.alias=${item.model}_${item.defense}
       +defense=${item.defense}.yaml
-      experiment_name=${item.data}_rf_defended_${item.defense}
+      experiment_name=${item.data}_${item.model}_defended_${item.defense}
       ~attack
       ~directions
       ~optimizers
     outs:
-      - outputs/models/${item.data}/rf_defended_${item.defense}.pkl
+      - outputs/models/${item.data}/${item.model}_defended_${item.defense}.pkl
     metrics:
-      - outputs/scores/defenses/${item.data}/rf_${item.defense}.json
+      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}.json
     deps:
       - outputs/data/${item.data}.pkl
       - ../../deckard/model
@@ -178,108 +184,106 @@ stages:
       - ./config/model/rf.yaml:
       - ./config/defense/${item.defense}.yaml:
       - ./config/data/${item.data}.yaml:
-  evade_rf:
-    foreach:
-      - adult
-      # - classification
-      # - digits
-    do:
-      cmd: >
-        deckard 
-        data=${item} 
-        +files.data_file=outputs/data/${item}.pkl
-        experiment_name="*"
-        hydra.sweeper.study_name=evasion_${item}
-        model=rf.yaml 
-        --multirun
-      deps:
-        - outputs/data/${item}.pkl
-        - ../../deckard/model
-      outs:
-        - outputs/logs/evasion_${item}:
-            cache: false
-      params:
-        - ./config/model/rf.yaml:
-        - ./config/data/${item}.yaml:
-        ################################################
-        #            Command Explanation:             #
-        ################################################
-        # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
-        # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
-        # +files.score_file=scores/evade/${item}/{{hash}}.json <-- Specifies the output path for the evasion attack score file, where {{hash}} is replaced by the experiment hash.
-        # experiment_name=${item}_rf_hsj  <-- Specifies the experiment name for logging and output organization.
-        # hydra.sweeper.study_name=evasion_${item}  <-- Sets the Optuna study name for hyperparameter optimization.
-        # model
-  infer_membership_rf:
-    foreach:
-      - adult
-      # - classification
-      # - digits
-    do:
-      cmd: >
-        deckard 
-        data=${item} 
-        +files.data_file=outputs/data/${item}.pkl 
-        model=rf.yaml 
-        attack=membership.yaml
-        experiment_name="*"
-        hydra.sweeper.study_name=membership_inference_${item}
-        optimizers=["accuracy","membership_inference_accuracy"]
-        directions=["maximize","minimize"]
-        --multirun
-      outs:
-        - outputs/logs/membership_inference_${item}:
-            cache: false
-      deps:
-        - outputs/data/${item}.pkl
-        - ../../deckard/attack
-      params:
-        - ./config/model/rf.yaml:
-        - ./config/attack/membership.yaml:
-        - ./config/data/${item}.yaml:
-        ################################################
-        #            Command Explanation:             #
-        ################################################
-        # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
-        # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
-        # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
-        # +files.score_file=scores/membership_inference/${item}_rf_membership_inference.json <-- Specifies the output path for the membership inference attack score file.
-        # model=rf.yaml  <-- Specifies the model configuration to be used.
-  infer_attribute_rf:
-    foreach:
-      - adult
-      # - classification
-      # - digits
-    do:
-      cmd: >
-        deckard 
-        data=${item} 
-        +files.data_file=outputs/data/${item}.pkl 
-        model=rf.yaml 
-        attack=attribute-bb.yaml
-        experiment_name="*"
-        hydra.sweeper.study_name=attribute_inference_${item}
-        optimizers=["accuracy","inferred_sex_accuracy"]
-        directions=["maximize","minimize"]
-        --multirun
-      outs:
-        - outputs/logs/attribute_inference_${item}:
-            cache: false
-      deps:
-        - outputs/data/${item}.pkl
-        - ../../deckard/attack
-      params:
-        - ./config/model/rf.yaml:
-        - ./config/attack/attribute-bb.yaml:
-        - ./config/data/${item}.yaml:
-        ################################################
-        #            Command Explanation:             #
-        ################################################
-        # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
-        # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
-        # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
-        # +files.score_file=scores/attribute_inference/${item}_rf_attribute_inference.json <-- Specifies the output path for the attribute inference attack score file.
-        # model=rf.yaml  <-- Specifies the model configuration to be used.
+  # evade_rf:
+  #   foreach:
+  #     - default
+  #     - feature_squeezing
+  #   do:
+  #     cmd: >
+  #       deckard 
+  #       data=adult
+  #       +files.data_file=outputs/data/adult.pkl
+  #       experiment_name="*"
+  #       hydra.sweeper.study_name=evasion_${item}
+  #       model=rf.yaml 
+  #       --multirun
+  #     deps:
+  #       - outputs/data/adult.pkl
+  #       - ../../deckard/model
+  #     outs:
+  #       - outputs/logs/evasion_${item}:
+  #           cache: false
+  #     params:
+  #       - ./config/model/rf.yaml:
+  #       - ./config/data/${item}.yaml:
+  #       ################################################
+  #       #            Command Explanation:             #
+  #       ################################################
+  #       # deckard  <-- Calls the deckard CLI tool
+  #       # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+  #       # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+  #       # +files.score_file=scores/evade/${item}/{{hash}}.json <-- Specifies the output path for the evasion attack score file, where {{hash}} is replaced by the experiment hash.
+  #       # experiment_name=${item}_rf_hsj  <-- Specifies the experiment name for logging and output organization.
+  #       # hydra.sweeper.study_name=evasion_${item}  <-- Sets the Optuna study name for hyperparameter optimization.
+  #       # model
+  # infer_membership_rf:
+  #   foreach:
+  #     - default
+  #     - feature_squeezing
+  #   do:
+  #     cmd: >
+  #       deckard 
+  #       data=${item} 
+  #       +files.data_file=outputs/data/${item}.pkl 
+  #       model=rf.yaml 
+  #       attack=membership.yaml
+  #       experiment_name="*"
+  #       hydra.sweeper.study_name=membership_inference_${item}
+  #       optimizers=["accuracy","membership_inference_accuracy"]
+  #       directions=["maximize","minimize"]
+  #       --multirun
+  #     outs:
+  #       - outputs/logs/membership_inference_${item}:
+  #           cache: false
+  #     deps:
+  #       - outputs/data/${item}.pkl
+  #       - ../../deckard/attack
+  #     params:
+  #       - ./config/model/rf.yaml:
+  #       - ./config/attack/membership.yaml:
+  #       - ./config/data/${item}.yaml:
+  #       ################################################
+  #       #            Command Explanation:             #
+  #       ################################################
+  #       # deckard  <-- Calls the deckard CLI tool
+  #       # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+  #       # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+  #       # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
+  #       # +files.score_file=scores/membership_inference/${item}_rf_membership_inference.json <-- Specifies the output path for the membership inference attack score file.
+  #       # model=rf.yaml  <-- Specifies the model configuration to be used.
+  # infer_attribute_rf:
+  #   foreach:
+  #     - adult
+  #     # - classification
+  #     # - digits
+  #   do:
+  #     cmd: >
+  #       deckard 
+  #       data=${item} 
+  #       +files.data_file=outputs/data/${item}.pkl 
+  #       model=rf.yaml 
+  #       attack=attribute-bb.yaml
+  #       experiment_name="*"
+  #       hydra.sweeper.study_name=attribute_inference_${item}
+  #       optimizers=["accuracy","inferred_sex_accuracy"]
+  #       directions=["maximize","minimize"]
+  #       --multirun
+  #     outs:
+  #       - outputs/logs/attribute_inference_${item}:
+  #           cache: false
+  #     deps:
+  #       - outputs/data/${item}.pkl
+  #       - ../../deckard/attack
+  #     params:
+  #       - ./config/model/rf.yaml:
+  #       - ./config/attack/attribute-bb.yaml:
+  #       - ./config/data/${item}.yaml:
+  #       ################################################
+  #       #            Command Explanation:             #
+  #       ################################################
+  #       # deckard  <-- Calls the deckard CLI tool
+  #       # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+  #       # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+  #       # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
+  #       # +files.score_file=scores/attribute_inference/${item}_rf_attribute_inference.json <-- Specifies the output path for the attribute inference attack score file.
+  #       # model=rf.yaml  <-- Specifies the model configuration to be used.

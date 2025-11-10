@@ -1,4 +1,3 @@
-# @package _global_
 defaults:
     - _self_
     - data: adult
@@ -40,3 +39,6 @@ hydra:
         ++model.model_params.n_estimators: int(range(1,1000))
         ++model.model_params.max_depth: int(range(1,101))
         ++model.model_params.max_leaf_nodes: int(range(2,1000))
+        ++model.defense.defense_type: categorical("art.defences.preprocessor.FeatureSqueezing")
+        ++model.defense.defense_params.bit_depth: choice(1,2,4,8,16,32,64)
+
