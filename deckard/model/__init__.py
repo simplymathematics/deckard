@@ -497,9 +497,13 @@ class ModelConfig(ConfigBase):
             raise e
         try:
             logloss = log_loss(y_true=y_true, y_pred=y_pred)
-        except Exception as e:
-            logger.error(f"Error computing log loss: {e}")
-            logloss = np.nan
+        except ValueError as e:
+            if "y_prob contains values greater than 1" in str(e):
+                y_true = pd.get_dummies(y_true).values
+                y_pred = pd.get_dummies(y_pred).values
+                logloss = log_loss(y_true=y_true, y_pred=y_pred)
+            else:
+                raise e
         scores = {
             "accuracy": acc,
             "precision": precision,
@@ -536,9 +540,13 @@ class ModelConfig(ConfigBase):
         mae = np.abs(y_true - y_pred).mean()
         try:
             logloss = log_loss(y_true=y_true, y_pred=y_pred)
-        except Exception as e:
-            logger.error(f"Error computing log loss: {e}")
-            logloss = np.nan
+        except ValueError as e:
+            if "y_prob contains values greater than 1" in str(e):
+                y_true = pd.get_dummies(y_true).values
+                y_pred = pd.get_dummies(y_pred).values
+                logloss = log_loss(y_true=y_true, y_pred=y_pred)
+            else:
+                raise e
         scores = {
             "mse": mse,
             "rmse": rmse,
