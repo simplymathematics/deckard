@@ -1,0 +1,6 @@
+defense_type: art.defences.preprocessor.CutMix
+defense_params:
+    apply_fit : True
+    apply_predict : False
+    alpha: 1.0
+    probability: .5

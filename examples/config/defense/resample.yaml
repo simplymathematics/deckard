@@ -1,0 +1,6 @@
+defense_type: art.defences.preprocessor.Resample
+defense_params:
+    apply_fit : False
+    apply_predict : True
+    sr_original : 15
+    sr_new : 10

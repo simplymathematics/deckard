@@ -1,15 +1,15 @@
 schema: '2.0'
 stages:
   set_config_paths:
-    cmd: "echo \"export DECKARD_CONFIG_DIR=../../config\" > .deckard_rc && echo \"\
-      export DECKARD_DEFAULT_CONFIG_FILE=default.yaml\" >> .deckard_rc && source .deckard_rc\n"
+    cmd: "echo \"export DECKARD_CONFIG_DIR=../config\" > .deckard_rc && echo \"export
+      DECKARD_DEFAULT_CONFIG_FILE=default.yaml\" >> .deckard_rc && source .deckard_rc\n"
     deps:
-    - path: ../../config/default.yaml
+    - path: ../config/default.yaml
       hash: md5
-      md5: 38a4125a70ccbab5ff645ba27dc4d028
-      size: 1079
+      md5: 8d7238a98083bf360d80c95e7dc75a9e
+      size: 1078
     params:
-      ../../config/default.yaml:
+      ../config/default.yaml:
         defaults:
         - _self_
         - data: adult
@@ -55,23 +55,23 @@ stages:
     outs:
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
   generate_data@adult:
     cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.score_file=outputs/scores/data/adult.json
       experiment_name=adult ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 309f4e4fb5c67607e7b3bbd8a9785d45.dir
-      size: 98476
+      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
+      size: 99274
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/adult.yaml:
+      ../config/data/adult.yaml:
         _target_: deckard.DataConfig
         alias: adult
         classifier: true
@@ -90,28 +90,28 @@ stages:
     outs:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 07fb6db940c8f47611b0b504b731ea7a
-      size: 45627001
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
     - path: outputs/scores/data/adult.json
       hash: md5
-      md5: 5636782fe71d0a3720634d9feb355a52
+      md5: 1b964c4d3802aee0960d3971550d9b89
       size: 6726
   generate_data@classification:
     cmd: "deckard  data=classification  +files.data_file=outputs/data/classification.pkl\
       \  +files.score_file=outputs/scores/data/classification.json experiment_name=classification
       ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 309f4e4fb5c67607e7b3bbd8a9785d45.dir
-      size: 98476
+      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
+      size: 99274
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/classification.yaml:
+      ../config/data/classification.yaml:
         _target_: deckard.DataConfig
         alias: make_classification
         classifier: true
@@ -126,27 +126,27 @@ stages:
     outs:
     - path: outputs/data/classification.pkl
       hash: md5
-      md5: 2b45bae9ffbbc5deaa5642d4161f7b12
+      md5: 0490aaf4443f48d93151495c706d8ad1
       size: 3393441
     - path: outputs/scores/data/classification.json
       hash: md5
-      md5: 85524668fc05d94e022466de6c1d564f
-      size: 1129
+      md5: 20eaec8e100b50b3506d5c7b581e957d
+      size: 1128
   generate_data@diabetes:
     cmd: "deckard  data=diabetes  +files.data_file=outputs/data/diabetes.pkl  +files.score_file=outputs/scores/data/diabetes.json
       experiment_name=diabetes ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 309f4e4fb5c67607e7b3bbd8a9785d45.dir
-      size: 98476
+      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
+      size: 99274
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/diabetes.yaml:
+      ../config/data/diabetes.yaml:
         _target_: deckard.DataConfig
         alias: diabetes
         classifier: false
@@ -157,27 +157,27 @@ stages:
     outs:
     - path: outputs/data/diabetes.pkl
       hash: md5
-      md5: 0770867706d00f1720d5ff96a9bb6275
+      md5: c3e4c20c6a79b627c3d2d0e2724718ec
       size: 85214
     - path: outputs/scores/data/diabetes.json
       hash: md5
-      md5: 39058011bc4ff59bbd01f688a22fe8ed
-      size: 10520
+      md5: 7e0f5ad2865835fab8cea4948fc934a1
+      size: 10519
   generate_data@digits:
     cmd: "deckard  data=digits  +files.data_file=outputs/data/digits.pkl  +files.score_file=outputs/scores/data/digits.json
       experiment_name=digits ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 309f4e4fb5c67607e7b3bbd8a9785d45.dir
-      size: 98476
+      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
+      size: 99274
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/digits.yaml:
+      ../config/data/digits.yaml:
         _target_: deckard.DataConfig
         alias: digits
         classifier: true
@@ -188,28 +188,28 @@ stages:
     outs:
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: ca352d974f33e82bd792036a79b18a08
+      md5: 5be7c231bb347b60196f28bf35e475b1
       size: 1877922
     - path: outputs/scores/data/digits.json
       hash: md5
-      md5: 59e225c2930e3361e90cec35ee15bbfe
+      md5: 8a53e778c33e49d319758d4c4d8bde81
       size: 4770
   generate_data@regression:
     cmd: "deckard  data=regression  +files.data_file=outputs/data/regression.pkl \
       \ +files.score_file=outputs/scores/data/regression.json experiment_name=regression
       ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 309f4e4fb5c67607e7b3bbd8a9785d45.dir
-      size: 98476
+      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
+      size: 99274
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/regression.yaml:
+      ../config/data/regression.yaml:
         _target_: deckard.DataConfig
         alias: make_regression
         classifier: false
@@ -224,12 +224,12 @@ stages:
     outs:
     - path: outputs/data/regression.pkl
       hash: md5
-      md5: e4d5d84801d39da790760d3a6485c20a
+      md5: 560d6f975b76134b2a6aea3a9e2d31b6
       size: 3483534
     - path: outputs/scores/data/regression.json
       hash: md5
-      md5: e6300c9ccac74bac8a60a0469b9fd019
-      size: 169279
+      md5: 89ac982175da400cee581e20be1895d8
+      size: 169277
   train_models@adult:
     cmd: "deckard  data=adult  +files.data_file=data/adult.pkl  +files.model_file=models/adult_logistic.pkl
       +files.score_file=scores/adult_logistic_scores.json model=logistic.yaml  ~attack\n"
@@ -722,15 +722,15 @@ stages:
     cmd: deckard experiment_name=default && echo "Deckard ran successfully!" > 
       deckard.log
     deps:
-    - path: ../../../deckard
+    - path: ../../deckard
       hash: md5
-      md5: 7bba43eb6a317ec40399508a60e756d9.dir
-      size: 514069
+      md5: efd3e041bb0eaa1fda39fb0c9c9613ed.dir
+      size: 527418
       nfiles: 29
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     outs:
     - path: deckard.log
       hash: md5
@@ -740,17 +740,17 @@ stages:
     cmd: "deckard  data=kdd_nsl  +files.data_file=outputs/data/kdd_nsl.pkl  +files.score_file=outputs/scores/data/kdd_nsl.json
       experiment_name=kdd_nsl ~model  ~attack ~directions ~optimizers\n"
     deps:
-    - path: ../../../deckard/data/
+    - path: ../../deckard/data/
       hash: md5
-      md5: 59eed6e2fb1a3bd10f4f7e6c24c4b1fa.dir
-      size: 96265
+      md5: e4054b05f15d5311a16189a986887a5e.dir
+      size: 99428
       nfiles: 4
     - path: .deckard_rc
       hash: md5
-      md5: d9ec184ac23a216473577fedd725be07
-      size: 87
+      md5: c86ee25c7bb64c8aff81d16e24d23461
+      size: 84
     params:
-      ../../config/data/kdd_nsl.yaml:
+      ../config/data/kdd_nsl.yaml:
         alias: kdd_nsl
         dataset_name: 
           https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/d6a22cdb42a1db624c89f0298cb4f654d3812703/kdd_nsl.csv
@@ -769,12 +769,12 @@ stages:
     outs:
     - path: outputs/data/kdd_nsl.pkl
       hash: md5
-      md5: ce902126af26fef720fe960adafff373
-      size: 5129210
+      md5: ae32132bd314e1d432e416f1d4cdf7b4
+      size: 212957497
     - path: outputs/scores/data/kdd_nsl.json
       hash: md5
-      md5: f3c4e56c7461c6353a9058c98825e4ee
-      size: 263
+      md5: 46fce52a650231ac47fc874140b3f67b
+      size: 272625
   generate_data@truthseeker:
     cmd: "deckard  data=truthseeker  +files.data_file=outputs/data/truthseeker.pkl\
       \  +files.score_file=outputs/scores/data/truthseeker.json experiment_name=truthseeker
