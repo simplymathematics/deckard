@@ -474,10 +474,10 @@ class ModelConfig(ConfigBase):
             
         except ValueError as ve:
             if "mix of binary and continuous" in str(ve):
-                new_y_pred = np.argmax(y_pred, axis=1)
+                new_y_pred = np.amax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
             elif "mix of multiclass and continuous-multioutput" in str(ve):
-                new_y_pred = np.argmax(y_pred, axis=1)
+                new_y_pred = np.amax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
             elif "y_prob contains values greater than 1" in str(ve):
                 # Convert class labels to one-hot encoding
@@ -487,7 +487,7 @@ class ModelConfig(ConfigBase):
                     y_pred_one_hot[:, i] = np.array(y_pred == class_label).astype(int)
                     logloss = log_loss(y_true=y_true, y_pred=y_pred_one_hot)
             elif "mix of multiclass and multilabel-indicator" in str(ve):
-                new_y_pred = np.argmax(y_pred, axis=1)
+                new_y_pred = np.amax(y_pred, axis=1)
                 return self._classification_scores(y_true, new_y_pred)
             else:
                 logger.error(f"Error computing classification scores: {ve}")
@@ -923,6 +923,7 @@ class ModelConfig(ConfigBase):
                         logger.warning(
                             "Loaded model is not fitted. Training a new model.",
                         )
+                        logger.info(f"Training model on {len(data.y_train)} samples...")
                         self._train(data.X_train, data.y_train)
                         try:
                             check_is_fitted(self._model)
@@ -941,6 +942,7 @@ class ModelConfig(ConfigBase):
                         # Save the newly trained mode
                 else:
                     # train the model if no model exists at the filepath
+                    logger.info(f"Training model on {len(data.y_train)} samples...")
                     self._train(data.X_train, data.y_train)
                     try:
                         check_is_fitted(self._model)
