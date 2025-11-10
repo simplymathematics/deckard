@@ -81,6 +81,10 @@ class DefenseConfig(ConfigBase):
 
     defense_type: Union[str, None] = None
     defense_params: dict = field(default_factory=dict)
+    
+    def __post_init__(self):
+        self._target_ = "deckard.model.DefenseConfig"
+        return super().__post_init__()
 
 
 @dataclass
@@ -215,7 +219,6 @@ class ModelConfig(ConfigBase):
     def parse_defense_name(self):
         defense_name = self.defense.defense_type if self.defense is not None else None
         assert defense_name is not None, "defense_type must be provided in ModelConfig"
-        defense_params = self.defense.defense_params if self.defense is not None else {}
         if defense_name is not None and len(defense_name) > 0:
             module_name, class_name = defense_name.rsplit(".", 1)
         else:
@@ -252,6 +255,7 @@ class ModelConfig(ConfigBase):
         return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
+        
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
             if self.classifier
@@ -295,21 +299,9 @@ class ModelConfig(ConfigBase):
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
-        else:
-            assert isinstance(
-                self._model,
-                BaseEstimator,
-            ), "ModelConfig's _model must be a scikit-learn BaseEstimator"
-
         # Dynamically import the defense class with defense_params as kwargs
         defense_type, defense_subtype, defense_class = self.parse_defense_name()
         art_class, init_params = self.get_art_class(data)
-        try:
-            check_is_fitted(self._model)
-        except NotFittedError as e:
-            raise ValueError(
-                "ModelConfig must have a fitted estimator before applying defense",
-            ) from e
         start = time.process_time()
         match defense_type:  # Note: only one defense can be applied at a time
             case "preprocessor":
