@@ -94,7 +94,6 @@ class AttackConfig(ConfigBase):
         Extracts a subset of feature vectors, labels, and attributes from the provided data.
     _score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
     _evade(data, art_model, attack, train=False)
-    _pop_attribute(X, targeted_attribute)
     _infer_attribute(data, art_model, attack, targeted_attribute, train=False)
         Performs an attribute inference attack on a dataset using a specified attack model and model.
     _infer_membership(data, art_model, attack, train=False)
@@ -308,12 +307,11 @@ class AttackConfig(ConfigBase):
                     assert (
                         self.targeted_attribute is not None
                     ), "targeted_attribute must be specified for inference attacks"
-                    targeted_attribute = self.targeted_attribute
                     scores = self._infer_attribute(
                         data,
                         art_model,
                         attack,
-                        targeted_attribute=targeted_attribute,
+                        targeted_attribute=self.targeted_attribute,
                     )
                 case _:
                     raise ValueError(
@@ -640,35 +638,6 @@ class AttackConfig(ConfigBase):
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         self.attack = adv_pred
         return self.score_dict
-
-    def _pop_attribute(self, X: pd.DataFrame, targeted_attribute: str) -> pd.DataFrame:
-        """
-        Removes the specified attribute (column) from the given DataFrame and returns the remaining data and the removed column.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            The input DataFrame containing the data.
-        targeted_attribute : str
-            The name of the attribute (column) to remove from the DataFrame.
-
-        Returns
-        -------
-        Tuple[np.ndarray, pd.Series]
-            A tuple containing:
-                - The DataFrame values as a NumPy array with the targeted attribute removed.
-                - The removed attribute as a pandas Series.
-
-        Raises
-        ------
-        AssertionError
-            If the targeted attribute is not found in the DataFrame columns.
-        """
-        assert (
-            targeted_attribute in X.columns
-        ), f"Targeted attribute {targeted_attribute} not found in data columns"
-        target = X.pop(targeted_attribute)
-        return X, target
 
     def _infer_attribute(
         self,
