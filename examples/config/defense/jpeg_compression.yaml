@@ -1,6 +1,6 @@
 defense_type: art.defences.preprocessor.JpegCompression
 defense_params:
-    clip_values: ${model.clip_values}
+    clip_values: [0, 255]
     quality: 50
     apply_fit: True
     apply_predict: True

@@ -169,8 +169,8 @@ stages:
     deps:
     - path: ../../deckard/data/
       hash: md5
-      md5: 8f0bfface596c96e4e2f99fa6fe91671.dir
-      size: 99274
+      md5: e4054b05f15d5311a16189a986887a5e.dir
+      size: 99428
       nfiles: 4
     - path: .deckard_rc
       hash: md5
@@ -188,11 +188,11 @@ stages:
     outs:
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: 5be7c231bb347b60196f28bf35e475b1
+      md5: dd6eb9b566aabe4d849dad579d6b39a8
       size: 1877922
     - path: outputs/scores/data/digits.json
       hash: md5
-      md5: 8a53e778c33e49d319758d4c4d8bde81
+      md5: 283f820c829a2efe396c6a698087af0d
       size: 4770
   generate_data@regression:
     cmd: "deckard  data=regression  +files.data_file=outputs/data/regression.pkl \
@@ -1539,3 +1539,2618 @@ stages:
       hash: md5
       md5: cae1b158ea28c3246dfbf3b34d11d4bb
       size: 733
+  defend_rf@adult-class_labels:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_class_labels.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_class_labels.json 
+      model=rf.yaml +defense=class_labels.yaml 
+      experiment_name=adult_rf_defended_class_labels ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/class_labels.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_class_labels.pkl
+      hash: md5
+      md5: 3cff22ef763445528681e338b7d38451
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_class_labels.json
+      hash: md5
+      md5: 381fb1d26e59277f7f42b85f54fc9940
+      size: 510
+  defend_rf@adult-feature_squeezing:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_feature_squeezing.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_feature_squeezing.json 
+      model=rf.yaml +defense=feature_squeezing.yaml 
+      experiment_name=adult_rf_defended_feature_squeezing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_feature_squeezing.pkl
+      hash: md5
+      md5: 32f99cca7e76b665ca37234e282f2e7a
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_feature_squeezing.json
+      hash: md5
+      md5: 5dc70f89e3f905795f1a17995c6db8d0
+      size: 510
+  defend_rf@adult-gaussian_noise:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_gaussian_noise.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_gaussian_noise.json 
+      model=rf.yaml +defense=gaussian_noise.yaml 
+      experiment_name=adult_rf_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 9c724fe7301fd60b1e05404918b27026
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_gaussian_noise.json
+      hash: md5
+      md5: edaf722a4a83caae32690b8e8b40bc01
+      size: 510
+  defend_rf@adult-high_confidence:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_high_confidence.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_high_confidence.json 
+      model=rf.yaml +defense=high_confidence.yaml 
+      experiment_name=adult_rf_defended_high_confidence ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_high_confidence.pkl
+      hash: md5
+      md5: a755176384c1f4dd484e7292d28eaf54
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_high_confidence.json
+      hash: md5
+      md5: e5aaea8d0be2851b6074cc3ab8ae559a
+      size: 509
+  defend_rf@adult-reverse_sigmoid:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_reverse_sigmoid.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_reverse_sigmoid.json 
+      model=rf.yaml +defense=reverse_sigmoid.yaml 
+      experiment_name=adult_rf_defended_reverse_sigmoid ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: b8728ba93a84927622bf45d7a30ff73c
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_reverse_sigmoid.json
+      hash: md5
+      md5: 83a9819624f6a4e752d528fe589cc641
+      size: 510
+  defend_rf@adult-rounded:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_rounded.json 
+      model=rf.yaml +defense=rounded.yaml 
+      experiment_name=adult_rf_defended_rounded ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_rounded.pkl
+      hash: md5
+      md5: 82956f3d02f683a486dc1688080e2e29
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_rounded.json
+      hash: md5
+      md5: b84bcc23c8db733d13628b40722e61f9
+      size: 510
+  defend_rf@adult-cut_mix:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_cut_mix.json 
+      model=rf.yaml +defense=cut_mix.yaml 
+      experiment_name=adult_rf_defended_cut_mix ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+        defense_type: art.defences.preprocessor.CutMix
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_cut_mix.pkl
+      hash: md5
+      md5: 5223eb7a4a7647da1e1ad1a80dfe693b
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_cut_mix.json
+      hash: md5
+      md5: 048f40d30334f6710091dcce350f90f4
+      size: 510
+  defend_rf@adult-cutout:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_cutout.json 
+      model=rf.yaml +defense=cutout.yaml 
+      experiment_name=adult_rf_defended_cutout ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_cutout.pkl
+      hash: md5
+      md5: b1fbdc77614cd2b9b3d153b9d007a1b5
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_cutout.json
+      hash: md5
+      md5: 35a16fb95db6beed7cd7b27354ef137c
+      size: 508
+  defend_rf@adult-gaussian_augmentation:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/adult/rf_gaussian_augmentation.json
+      model=rf.yaml +defense=gaussian_augmentation.yaml 
+      experiment_name=adult_rf_defended_gaussian_augmentation ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: 07b9c43af3060a32882eb983b0bb5e26
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_gaussian_augmentation.json
+      hash: md5
+      md5: 78de2240b5a7011529ad5d16c6225205
+      size: 509
+  defend_rf@adult-jpeg_compression:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_jpeg_compression.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_jpeg_compression.json 
+      model=rf.yaml +defense=jpeg_compression.yaml 
+      experiment_name=adult_rf_defended_jpeg_compression ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/jpeg_compression.yaml:
+        defense_params:
+          clip_values:
+          - 0
+          - 255
+          quality: 50
+          apply_fit: true
+          apply_predict: true
+        defense_type: art.defences.preprocessor.JpegCompression
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_jpeg_compression.pkl
+      hash: md5
+      md5: 5f6e0cf3047fa4f3c5ebc60e2d3e1707
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_jpeg_compression.json
+      hash: md5
+      md5: b43124e1c2c9cea765316e10c6bd1799
+      size: 508
+  defend_rf@adult-label_smoothing:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_label_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_label_smoothing.json 
+      model=rf.yaml +defense=label_smoothing.yaml 
+      experiment_name=adult_rf_defended_label_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_label_smoothing.pkl
+      hash: md5
+      md5: fd4956672a7673137ec1e8a11aa5b9c9
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_label_smoothing.json
+      hash: md5
+      md5: 0a04a384fb2a2c54377142542022e91e
+      size: 508
+  defend_rf@adult-mixup:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_mixup.json 
+      model=rf.yaml +defense=mixup.yaml experiment_name=adult_rf_defended_mixup 
+      ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_mixup.pkl
+      hash: md5
+      md5: 7527e8574fa575bea0295fcc22639f05
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_mixup.json
+      hash: md5
+      md5: 5c378c704a22f3107ce16dcf6bd9b6bb
+      size: 510
+  defend_rf@adult-resample:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_resample.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_resample.json 
+      model=rf.yaml +defense=resample.yaml 
+      experiment_name=adult_rf_defended_resample ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/resample.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          sr_original: 15
+          sr_new: 10
+        defense_type: art.defences.preprocessor.Resample
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_resample.pkl
+      hash: md5
+      md5: 66a969d8d4fc8631f5d53543a8607b41
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_resample.json
+      hash: md5
+      md5: b0708c53e53215991d19a419ee9eb7a7
+      size: 510
+  defend_rf@adult-spatial_smoothing:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_spatial_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_spatial_smoothing.json 
+      model=rf.yaml +defense=spatial_smoothing.yaml 
+      experiment_name=adult_rf_defended_spatial_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: ad2c36a525fbbfad5e3ec75cbc737142
+      size: 45627813
+    params:
+      ../config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        pipeline:
+          preprocessor:
+            name: sklearn.preprocessing.StandardScaler
+            with_mean: false
+            with_std: true
+          feature_selector:
+            name: sklearn.feature_selection.VarianceThreshold
+            threshold: 0.001
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/spatial_smoothing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          window_size: 3
+          clip_values:
+          - 0
+          - 255
+          device_type: gpu
+        defense_type: art.defences.preprocessor.SpatialSmoothingPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_spatial_smoothing.pkl
+      hash: md5
+      md5: c17c2cdbc48a9a9147aa091ebdbee377
+      size: 109567542
+    - path: outputs/scores/defenses/adult/rf_spatial_smoothing.json
+      hash: md5
+      md5: 827cfbc93d9ee27cd96543b5a80f1691
+      size: 509
+  defend_rf@classification-class_labels:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_class_labels.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_class_labels.json
+      model=rf.yaml +defense=class_labels.yaml 
+      experiment_name=classification_rf_defended_class_labels ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/class_labels.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_class_labels.pkl
+      hash: md5
+      md5: 446fc9009bb797a836900d15e6721d44
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_class_labels.json
+      hash: md5
+      md5: e1e909d9cef5004d2088a95aac7ca19b
+      size: 485
+  defend_rf@classification-gaussian_noise:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_gaussian_noise.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_gaussian_noise.json
+      model=rf.yaml +defense=gaussian_noise.yaml 
+      experiment_name=classification_rf_defended_gaussian_noise ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 4a36823f487666f17992f26f01ede05c
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_gaussian_noise.json
+      hash: md5
+      md5: f18dd711d8710b270c1e66301069c237
+      size: 485
+  defend_rf@classification-high_confidence:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_high_confidence.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_high_confidence.json
+      model=rf.yaml +defense=high_confidence.yaml 
+      experiment_name=classification_rf_defended_high_confidence ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_high_confidence.pkl
+      hash: md5
+      md5: a6bf850b1fd868cee3d61bbcb93072c7
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_high_confidence.json
+      hash: md5
+      md5: dab0b83426b8eef1f93c818b8c12c4aa
+      size: 485
+  defend_rf@classification-reverse_sigmoid:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_reverse_sigmoid.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_reverse_sigmoid.json
+      model=rf.yaml +defense=reverse_sigmoid.yaml 
+      experiment_name=classification_rf_defended_reverse_sigmoid ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: b6bffbaabf32bdc88f1f755efe64e9b5
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_reverse_sigmoid.json
+      hash: md5
+      md5: 08424b65a4744b083befe2d2ef9ad0ed
+      size: 485
+  defend_rf@classification-rounded:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/classification/rf_rounded.json 
+      model=rf.yaml +defense=rounded.yaml 
+      experiment_name=classification_rf_defended_rounded ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_rounded.pkl
+      hash: md5
+      md5: db507e28cf3e610e95314d4a1295ae5b
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_rounded.json
+      hash: md5
+      md5: 02babccf5e23f0c5c8c786a196713b69
+      size: 485
+  defend_rf@classification-cut_mix:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/classification/rf_cut_mix.json 
+      model=rf.yaml +defense=cut_mix.yaml 
+      experiment_name=classification_rf_defended_cut_mix ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+        defense_type: art.defences.preprocessor.CutMix
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_cut_mix.pkl
+      hash: md5
+      md5: a702dbfc7d5dbd2fc47e69139195cdb1
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_cut_mix.json
+      hash: md5
+      md5: 989371ec83c8041c93024bd4841a66ac
+      size: 483
+  defend_rf@classification-cutout:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/classification/rf_cutout.json 
+      model=rf.yaml +defense=cutout.yaml 
+      experiment_name=classification_rf_defended_cutout ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_cutout.pkl
+      hash: md5
+      md5: 76974fb338c0fb78e719652f55db8c1a
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_cutout.json
+      hash: md5
+      md5: adf3d66299c9b0aa22ad99f62d10163c
+      size: 484
+  defend_rf@classification-feature_squeezing:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_feature_squeezing.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_feature_squeezing.json
+      model=rf.yaml +defense=feature_squeezing.yaml 
+      experiment_name=classification_rf_defended_feature_squeezing ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_feature_squeezing.pkl
+      hash: md5
+      md5: f6e50bfa77df053066eae8dc02ccb8b8
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_feature_squeezing.json
+      hash: md5
+      md5: 72593f060c57b8a5fbbb590ce9303a8f
+      size: 484
+  defend_rf@classification-gaussian_augmentation:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_gaussian_augmentation.json
+      model=rf.yaml +defense=gaussian_augmentation.yaml 
+      experiment_name=classification_rf_defended_gaussian_augmentation ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: a22834fac5425115c40b2eae72ee9bdb
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_gaussian_augmentation.json
+      hash: md5
+      md5: d362f0e9eddbda0a4f9caa599eff3053
+      size: 485
+  defend_rf@classification-jpeg_compression:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_jpeg_compression.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_jpeg_compression.json
+      model=rf.yaml +defense=jpeg_compression.yaml 
+      experiment_name=classification_rf_defended_jpeg_compression ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/jpeg_compression.yaml:
+        defense_params:
+          clip_values:
+          - 0
+          - 255
+          quality: 50
+          apply_fit: true
+          apply_predict: true
+        defense_type: art.defences.preprocessor.JpegCompression
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_jpeg_compression.pkl
+      hash: md5
+      md5: 677e4ba0f544acb8108cad56246f766c
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_jpeg_compression.json
+      hash: md5
+      md5: a035d1fd4aeff29ae41664ff90fc173e
+      size: 484
+  defend_rf@classification-label_smoothing:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_label_smoothing.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_label_smoothing.json
+      model=rf.yaml +defense=label_smoothing.yaml 
+      experiment_name=classification_rf_defended_label_smoothing ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_label_smoothing.pkl
+      hash: md5
+      md5: 799d91e802e6d0b42d7efaf05ab4e486
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_label_smoothing.json
+      hash: md5
+      md5: 1d88865202bc1893e37091123b4a2812
+      size: 485
+  defend_rf@classification-mixup:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/classification/rf_mixup.json 
+      model=rf.yaml +defense=mixup.yaml 
+      experiment_name=classification_rf_defended_mixup ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_mixup.pkl
+      hash: md5
+      md5: 2c0a1218b5fbfb1071e98c55372293cb
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_mixup.json
+      hash: md5
+      md5: 6eb1bf7ac72545ccea3f393384660fe8
+      size: 483
+  defend_rf@classification-resample:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_resample.pkl 
+      +files.score_file=outputs/scores/defenses/classification/rf_resample.json 
+      model=rf.yaml +defense=resample.yaml 
+      experiment_name=classification_rf_defended_resample ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/resample.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          sr_original: 15
+          sr_new: 10
+        defense_type: art.defences.preprocessor.Resample
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_resample.pkl
+      hash: md5
+      md5: 2aa85f2575c7445c545e9e580f3b2cd8
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_resample.json
+      hash: md5
+      md5: 9d977d23b5922e62bb4dc7b76560cda3
+      size: 485
+  defend_rf@classification-spatial_smoothing:
+    cmd: deckard data=classification 
+      +files.data_file=outputs/data/classification.pkl 
+      +files.model_file=outputs/models/classification/rf_defended_spatial_smoothing.pkl
+      +files.score_file=outputs/scores/defenses/classification/rf_spatial_smoothing.json
+      model=rf.yaml +defense=spatial_smoothing.yaml 
+      experiment_name=classification_rf_defended_spatial_smoothing ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0490aaf4443f48d93151495c706d8ad1
+      size: 3393441
+    params:
+      ../config/data/classification.yaml:
+        _target_: deckard.DataConfig
+        alias: make_classification
+        classifier: true
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 15
+          n_redundant: 5
+          n_classes: 2
+          random_state: 42
+        dataset_name: make_classification
+      ../config/defense/spatial_smoothing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          window_size: 3
+          clip_values:
+          - 0
+          - 255
+          device_type: gpu
+        defense_type: art.defences.preprocessor.SpatialSmoothingPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/classification/rf_defended_spatial_smoothing.pkl
+      hash: md5
+      md5: 33256e388507e0ffaa714717cf2d929d
+      size: 10200241
+    - path: outputs/scores/defenses/classification/rf_spatial_smoothing.json
+      hash: md5
+      md5: bef1ba180b86b8852ec29409df44ae1c
+      size: 483
+  defend_rf@digits-class_labels:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_class_labels.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_class_labels.json 
+      model=rf.yaml +defense=class_labels.yaml 
+      experiment_name=digits_rf_defended_class_labels ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/class_labels.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_class_labels.pkl
+      hash: md5
+      md5: 55834614b1a7a7a33acdf6621e8097d1
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_class_labels.json
+      hash: md5
+      md5: 7e816bf132771b9d403f2e7c519d4409
+      size: 481
+  defend_rf@digits-gaussian_noise:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_gaussian_noise.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_gaussian_noise.json 
+      model=rf.yaml +defense=gaussian_noise.yaml 
+      experiment_name=digits_rf_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 696dcfa61142af74d0c1a1bdad74d1c8
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_gaussian_noise.json
+      hash: md5
+      md5: a7822b45899c97b831d141c0b6434f27
+      size: 483
+  defend_rf@digits-high_confidence:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_high_confidence.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_high_confidence.json 
+      model=rf.yaml +defense=high_confidence.yaml 
+      experiment_name=digits_rf_defended_high_confidence ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_high_confidence.pkl
+      hash: md5
+      md5: b383b8bdca7cbf7c092cb3ea96160f54
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_high_confidence.json
+      hash: md5
+      md5: 1d540c31dd2d68d5497e03681fc5c2d3
+      size: 483
+  defend_rf@digits-reverse_sigmoid:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_reverse_sigmoid.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_reverse_sigmoid.json 
+      model=rf.yaml +defense=reverse_sigmoid.yaml 
+      experiment_name=digits_rf_defended_reverse_sigmoid ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: db398dfbc8ec2b884ea615c6aae2659b
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_reverse_sigmoid.json
+      hash: md5
+      md5: 97498e7d1e63b911f5f99f39b09e51ff
+      size: 483
+  defend_rf@digits-rounded:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_rounded.json 
+      model=rf.yaml +defense=rounded.yaml 
+      experiment_name=digits_rf_defended_rounded ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_rounded.pkl
+      hash: md5
+      md5: ee57693b12bc75dae56e11b71b4e37b8
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_rounded.json
+      hash: md5
+      md5: d7e7a42cb559c1ec6586a1c05f86a4f1
+      size: 482
+  defend_rf@digits-cut_mix:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_cut_mix.json 
+      model=rf.yaml +defense=cut_mix.yaml 
+      experiment_name=digits_rf_defended_cut_mix ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+        defense_type: art.defences.preprocessor.CutMix
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_cut_mix.pkl
+      hash: md5
+      md5: d90a256064a35327e9abed91a6a6f7aa
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_cut_mix.json
+      hash: md5
+      md5: 8caece4d53dcefed418ab3bb2ed011c6
+      size: 481
+  defend_rf@digits-cutout:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_cutout.json 
+      model=rf.yaml +defense=cutout.yaml 
+      experiment_name=digits_rf_defended_cutout ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_cutout.pkl
+      hash: md5
+      md5: ff05ba46bd9e6f9023c0e668e1015b9c
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_cutout.json
+      hash: md5
+      md5: b5fe4b5c05945f28afc1bd5db63c3af8
+      size: 481
+  defend_rf@digits-feature_squeezing:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_feature_squeezing.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_feature_squeezing.json
+      model=rf.yaml +defense=feature_squeezing.yaml 
+      experiment_name=digits_rf_defended_feature_squeezing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_feature_squeezing.pkl
+      hash: md5
+      md5: ba1df164e35e89a63bcfbcf08154df6e
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_feature_squeezing.json
+      hash: md5
+      md5: df437180f4053a0dd855547f9c4e24d0
+      size: 483
+  defend_rf@digits-gaussian_augmentation:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/digits/rf_gaussian_augmentation.json
+      model=rf.yaml +defense=gaussian_augmentation.yaml 
+      experiment_name=digits_rf_defended_gaussian_augmentation ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: c10f8679247dd6323868ec68908f21ff
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_gaussian_augmentation.json
+      hash: md5
+      md5: 8d71b593a7c16cd9d453c23bc3a18da6
+      size: 482
+  defend_rf@digits-jpeg_compression:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_jpeg_compression.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_jpeg_compression.json 
+      model=rf.yaml +defense=jpeg_compression.yaml 
+      experiment_name=digits_rf_defended_jpeg_compression ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/jpeg_compression.yaml:
+        defense_params:
+          clip_values:
+          - 0
+          - 255
+          quality: 50
+          apply_fit: true
+          apply_predict: true
+        defense_type: art.defences.preprocessor.JpegCompression
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_jpeg_compression.pkl
+      hash: md5
+      md5: f0865785b9b68d1d43b2ecab7b04693c
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_jpeg_compression.json
+      hash: md5
+      md5: bf4c9d590b02d1be11b0ff8b3dff1724
+      size: 482
+  defend_rf@digits-label_smoothing:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_label_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_label_smoothing.json 
+      model=rf.yaml +defense=label_smoothing.yaml 
+      experiment_name=digits_rf_defended_label_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_label_smoothing.pkl
+      hash: md5
+      md5: dab9ba1ee5df54a6cd6ce04dc6406c61
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_label_smoothing.json
+      hash: md5
+      md5: 1a72b5b543050b0c57e1bd4bfb1f0e09
+      size: 482
+  defend_rf@digits-mixup:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_mixup.json 
+      model=rf.yaml +defense=mixup.yaml experiment_name=digits_rf_defended_mixup
+      ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_mixup.pkl
+      hash: md5
+      md5: 7f7351302e6fccd9a7ffa8290737dd1e
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_mixup.json
+      hash: md5
+      md5: ad6f3996882b39cda38cf9f79c546ca8
+      size: 481
+  defend_rf@digits-resample:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_resample.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_resample.json 
+      model=rf.yaml +defense=resample.yaml 
+      experiment_name=digits_rf_defended_resample ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 27e2dd0307d25c7a228fbf5e1445d5d2.dir
+      size: 127969
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 5be7c231bb347b60196f28bf35e475b1
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/resample.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          sr_original: 15
+          sr_new: 10
+        defense_type: art.defences.preprocessor.Resample
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_resample.pkl
+      hash: md5
+      md5: 1c9b038731ee3d837c18b974effc868e
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_resample.json
+      hash: md5
+      md5: a6a3f3fc06d3bd9d5bed40528aa07b29
+      size: 482
+  defend_rf@digits-spatial_smoothing:
+    cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
+      +files.model_file=outputs/models/digits/rf_defended_spatial_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/digits/rf_spatial_smoothing.json
+      model=rf.yaml +defense=spatial_smoothing.yaml 
+      experiment_name=digits_rf_defended_spatial_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 72f6e97d96b9bdf2553ad30a53ffb50c.dir
+      size: 128438
+      nfiles: 6
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: dd6eb9b566aabe4d849dad579d6b39a8
+      size: 1877922
+    params:
+      ../config/data/digits.yaml:
+        _target_: deckard.DataConfig
+        alias: digits
+        classifier: true
+        dataset_name: digits
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      ../config/defense/spatial_smoothing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          window_size: 3
+          clip_values:
+          - 0
+          - 255
+          device_type: gpu
+        defense_type: art.defences.preprocessor.SpatialSmoothingPyTorch
+      ../config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/digits/rf_defended_spatial_smoothing.pkl
+      hash: md5
+      md5: 31d7b17058dbe07b52bb77f08bed355e
+      size: 5059216
+    - path: outputs/scores/defenses/digits/rf_spatial_smoothing.json
+      hash: md5
+      md5: 070677e1b20e4c1904b308deae3c5320
+      size: 483

@@ -131,6 +131,53 @@ stages:
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
         # +files.score_file=scores/attacks/hsj/${item}_rf_attack.json <-- Specifies the output path for the attack score file.
         # model=rf.yaml  <-- Specifies the model configuration to be used.
+  defend_rf:
+    matrix:
+      data: 
+        - adult
+        - classification
+        - digits
+      defense:
+          # Postprocessing defenses
+          - class_labels
+          - gaussian_noise
+          - high_confidence
+          - reverse_sigmoid
+          - rounded
+          # Preprocessing defenses
+          - cut_mix
+          - cutout
+          - feature_squeezing
+          - gaussian_augmentation
+          - jpeg_compression
+          - label_smoothing
+          - mixup
+          - resample
+          - spatial_smoothing
+    cmd:
+      deckard 
+      data=${item.data} 
+      +files.data_file=outputs/data/${item.data}.pkl 
+      +files.model_file=outputs/models/${item.data}/rf_defended_${item.defense}.pkl
+      +files.score_file=outputs/scores/defenses/${item.data}/rf_${item.defense}.json
+      model=rf.yaml 
+      +defense=${item.defense}.yaml
+      experiment_name=${item.data}_rf_defended_${item.defense}
+      ~attack
+      ~directions
+      ~optimizers
+
+    outs:
+      - outputs/models/${item.data}/rf_defended_${item.defense}.pkl
+    metrics:
+      - outputs/scores/defenses/${item.data}/rf_${item.defense}.json
+    deps:
+      - outputs/data/${item.data}.pkl
+      - ../../deckard/model
+    params:
+      - ../config/model/rf.yaml:
+      - ../config/defense/${item.defense}.yaml:
+      - ../config/data/${item.data}.yaml:
   evade_rf:
     foreach:
       - adult

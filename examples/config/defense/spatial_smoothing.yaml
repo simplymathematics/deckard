@@ -3,5 +3,5 @@ defense_params:
     apply_fit : False
     apply_predict : True
     window_size: 3
-    clip_values: ${model.clip_values}
+    clip_values: [0, 255]
     device_type : 'gpu'
