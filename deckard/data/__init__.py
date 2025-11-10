@@ -29,6 +29,7 @@ from sklearn.feature_selection import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
+from scipy.sparse import csr_matrix
 
 # deckard
 from ..utils import ConfigBase, data_supported_filetypes
@@ -112,7 +113,10 @@ class DataPipelineConfig(ConfigBase):
             before_shape = X_train.shape
             train_cols = X_train.columns
             X_train = pipeline.transform(X_train)
-            # Ensure transformed data is a DataFrame with correct columns
+            # If csr_matrix, convert to dense
+            if isinstance(X_train, csr_matrix):
+                X_train = X_train.toarray()
+            train_cols = pipeline.get_feature_names_out(train_cols)
             X_train = pd.DataFrame(X_train, columns=train_cols)
             after_shape = X_train.shape
             assert (
@@ -130,6 +134,9 @@ class DataPipelineConfig(ConfigBase):
             before_shape = X_test.shape
             test_cols = X_test.columns
             X_test = pipeline.transform(X_test)
+            if isinstance(X_test, csr_matrix):
+                X_test = X_test.toarray()
+            test_cols = pipeline.get_feature_names_out(test_cols)
             # Ensure transformed data is a DataFrame with correct columns
             X_test = pd.DataFrame(X_test, columns=test_cols)
             after_shape = X_test.shape
