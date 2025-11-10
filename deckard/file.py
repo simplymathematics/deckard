@@ -25,7 +25,7 @@ attack_files = [
     "attack_predictions_file",
     "score_file",
 ]
-other_files = ["score_file"]
+other_files = ["score_file", "params_file"]
 all_files = (
     data_files + model_files + defense_files + log_files + attack_files + other_files
 )
@@ -76,6 +76,10 @@ class FileConfig(ConfigBase):
     score_file: str = field(
         default_factory=str,
         metadata={"help": "Path to the score file."},
+    )
+    params_file: str = field(
+        default_factory=str,
+        metadata={"help": "Path to the params file."},
     )
     experiment_name: str = field(
         default_factory=str,
