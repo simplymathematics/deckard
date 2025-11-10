@@ -12,8 +12,8 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.config = PytorchDataConfig(
             dataset_name="mnist",
             data_dir=self.temp_dir,
-            test_size=0.2,
-            train_size=0.7,
+            test_size=100,
+            train_size=100,
             random_state=42,
         )
 
@@ -29,8 +29,8 @@ class TestPytorchDataConfig(unittest.TestCase):
     def test_initialization(self):
         self.assertEqual(self.config.dataset_name, "mnist")
         self.assertEqual(self.config.data_dir, self.temp_dir)
-        self.assertEqual(self.config.test_size, 0.2)
-        self.assertEqual(self.config.train_size, 0.7)
+        self.assertEqual(self.config.test_size, 100)
+        self.assertEqual(self.config.train_size, 100)
         self.assertEqual(self.config.random_state, 42)
         self.assertTrue(self.config.stratify)
 
