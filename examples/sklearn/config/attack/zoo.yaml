@@ -1,0 +1,17 @@
+attack_type : "art.attacks.evasion.ZooAttack"
+attack_params : 
+  confidence: float 0.0
+  targeted: false
+  max_iter : 10
+  binary_search_steps : 1
+  initial_const : 0.001
+  abort_early: true
+  use_resize: true
+  use_importance: true
+  batch_size : 1
+  variable_h : .0001
+  verbose: true
+  nb_parallel : 16
+attack_size : 128
+_target_ : deckard.attack.AttackConfig
+alias: zoo

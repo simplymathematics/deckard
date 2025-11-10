@@ -1,15 +1,15 @@
 stages:
   set_config_paths:
       cmd: >
-        echo "export DECKARD_CONFIG_DIR=../config" > .deckard_rc &&
+        echo "export DECKARD_CONFIG_DIR=./config" > .deckard_rc &&
         echo "export DECKARD_DEFAULT_CONFIG_FILE=default.yaml" >> .deckard_rc &&
         source .deckard_rc
       outs: 
         - .deckard_rc
       deps:
-        - ../config/default.yaml
+        - ./config/default.yaml
       params:
-        - ../config/default.yaml:
+        - ./config/default.yaml:
   simple_example:
       cmd: deckard experiment_name=default && echo "Deckard ran successfully!" > deckard.log
       outs:
@@ -17,6 +17,7 @@ stages:
       deps:
         - .deckard_rc # Here to ensure config paths are set before running deckard
         - ../../deckard
+        - ./config/default.yaml
   generate_data:
       foreach:
         - adult
@@ -47,12 +48,12 @@ stages:
           - .deckard_rc
           - ../../deckard/data/
         params:
-          - ../config/data/${item}.yaml:
+          - ./config/data/${item}.yaml:
           ################################################
           #            Command Explanation:             #
           ################################################
           # deckard  <-- Calls the deckard CLI tool
-          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
           # +files.data_file=data/${item}.pkl <-- Specifies the output path for the generated data file.
           # +files.score_file=scores/${item}.json <-- Specifies the output path for the score file.
           # ~model <-- Drops default model configuration.
@@ -83,13 +84,13 @@ stages:
           - outputs/data/${item}.pkl
           - ../../deckard/model
         params:
-          - ../config/model/rf.yaml:
-          - ../config/data/${item}.yaml:
+          - ./config/model/rf.yaml:
+          - ./config/data/${item}.yaml:
           ################################################
           #            Command Explanation:             #
           ################################################
           # deckard  <-- Calls the deckard CLI tool
-          # model=${item}  <-- Specifies the model to be trained for this iteration. See ../config/model/ for available models.
+          # model=${item}  <-- Specifies the model to be trained for this iteration. See ./config/model/ for available models.
           # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
           # +files.model_file=models/${item}/model.pkl <-- Specifies the output path for the trained model file.
           # +files.score_file=scores/models/${item}/model.json <-- Specifies the output path for the model score file.
@@ -119,14 +120,14 @@ stages:
         - outputs/models/${item}/rf.pkl
         - ../../deckard/attack
       params:
-        - ../config/model/rf.yaml:
-        - ../config/attack/hsj.yaml:
-        - ../config/data/${item}.yaml:
+        - ./config/model/rf.yaml:
+        - ./config/attack/hsj.yaml:
+        - ./config/data/${item}.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
         # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
         # +files.score_file=scores/attacks/hsj/${item}_rf_attack.json <-- Specifies the output path for the attack score file.
@@ -166,7 +167,6 @@ stages:
       ~attack
       ~directions
       ~optimizers
-
     outs:
       - outputs/models/${item.data}/rf_defended_${item.defense}.pkl
     metrics:
@@ -175,9 +175,9 @@ stages:
       - outputs/data/${item.data}.pkl
       - ../../deckard/model
     params:
-      - ../config/model/rf.yaml:
-      - ../config/defense/${item.defense}.yaml:
-      - ../config/data/${item.data}.yaml:
+      - ./config/model/rf.yaml:
+      - ./config/defense/${item.defense}.yaml:
+      - ./config/data/${item.data}.yaml:
   evade_rf:
     foreach:
       - adult
@@ -199,13 +199,13 @@ stages:
         - outputs/logs/evasion_${item}:
             cache: false
       params:
-        - ../config/model/rf.yaml:
-        - ../config/data/${item}.yaml:
+        - ./config/model/rf.yaml:
+        - ./config/data/${item}.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
         # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
         # +files.score_file=scores/evade/${item}/{{hash}}.json <-- Specifies the output path for the evasion attack score file, where {{hash}} is replaced by the experiment hash.
         # experiment_name=${item}_rf_hsj  <-- Specifies the experiment name for logging and output organization.
@@ -235,14 +235,14 @@ stages:
         - outputs/data/${item}.pkl
         - ../../deckard/attack
       params:
-        - ../config/model/rf.yaml:
-        - ../config/attack/membership.yaml:
-        - ../config/data/${item}.yaml:
+        - ./config/model/rf.yaml:
+        - ./config/attack/membership.yaml:
+        - ./config/data/${item}.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
         # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
         # +files.score_file=scores/membership_inference/${item}_rf_membership_inference.json <-- Specifies the output path for the membership inference attack score file.
@@ -271,14 +271,14 @@ stages:
         - outputs/data/${item}.pkl
         - ../../deckard/attack
       params:
-        - ../config/model/rf.yaml:
-        - ../config/attack/attribute-bb.yaml:
-        - ../config/data/${item}.yaml:
+        - ./config/model/rf.yaml:
+        - ./config/attack/attribute-bb.yaml:
+        - ./config/data/${item}.yaml:
         ################################################
         #            Command Explanation:             #
         ################################################
         # deckard  <-- Calls the deckard CLI tool
-        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ../config/data/ for available datasets.
+        # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
         # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
         # +files.model_file=models/${item}/model.pkl <-- Specifies the input trained model file
         # +files.score_file=scores/attribute_inference/${item}_rf_attribute_inference.json <-- Specifies the output path for the attribute inference attack score file.
