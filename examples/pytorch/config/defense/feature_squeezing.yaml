@@ -1,0 +1,6 @@
+defense_type: art.defences.preprocessor.FeatureSqueezing
+defense_params:
+    apply_fit : False
+    apply_predict : True
+    bit_depth: 8
+    clip_values: ${model.clip_values}

@@ -1,0 +1,5 @@
+defense_type: art.defences.preprocessor.CutoutPyTorch
+defense_params:
+    apply_fit : True
+    apply_predict : False
+    length: 4

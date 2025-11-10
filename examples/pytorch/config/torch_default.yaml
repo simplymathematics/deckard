@@ -1,7 +1,17 @@
 defaults:
   - _self_
   - data: torch_mnist
-  - model: torch_resnet18
+  - model: default
   - attack: fgm
   - files: default
 experiment_name : "default"
+hydra:
+  run:
+    dir: output/logs/${experiment_name}
+  # sweep:
+  #   dir: output/logs/
+  #   subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+  # sweeper:
+  #   study_name: evasion_attack
+  #   storage: sqlite:///optuna.db
+  #   direction: ${directions}

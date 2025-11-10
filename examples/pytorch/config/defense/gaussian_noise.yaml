@@ -1,0 +1,5 @@
+defense_type: art.defences.postprocessor.GaussianNoise
+defense_params:
+    scale: .2
+    apply_fit : False
+    apply_predict : True

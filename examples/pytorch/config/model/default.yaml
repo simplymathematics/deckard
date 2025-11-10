@@ -1,3 +1,7 @@
+defaults:
+  - _self_
+  - defense: null
+
 model_type: torch_example.ResNet18
 model_params:
     num_channels: 1 # For grayscale images like MNIST
@@ -16,8 +20,3 @@ optimizer:
     momentum : 0.9
 clip_values : [0, 255]
 alias: torch_resnet18
-# defense:
-#     defense_type: art.defences.preprocessor.FeatureSqueezing
-#     defense_params:
-#         clip_values : ${model.clip_values}
-#         bit_depth : 8

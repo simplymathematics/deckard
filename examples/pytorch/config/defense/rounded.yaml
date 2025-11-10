@@ -1,0 +1,5 @@
+defense_type: art.defences.postprocessor.HighConfidence
+defense_params:
+    decimals: 3
+    apply_fit : False
+    apply_predict : True

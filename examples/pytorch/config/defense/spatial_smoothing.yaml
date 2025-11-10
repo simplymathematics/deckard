@@ -1,0 +1,7 @@
+defense_type: art.defences.preprocessor.SpatialSmoothingPyTorch
+defense_params:
+    apply_fit : False
+    apply_predict : True
+    window_size: 3
+    clip_values: ${model.clip_values}
+    device_type : 'gpu'
