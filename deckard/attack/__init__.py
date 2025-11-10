@@ -682,15 +682,22 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_test = data.X_test
-        X_test_subset_without_feature, target = self._pop_attribute(
-            pd.DataFrame(X_test, columns=data.X_test.columns),
-            targeted_attribute,
+        X_test = data.X_test.copy()
+        X_test_subset = X_test.iloc[: self.attack_size, :].copy()
+        assert targeted_attribute in X_test_subset.columns, (
+            f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
         )
+        target = X_test_subset[targeted_attribute].copy()
+        X_test_subset_without_feature = X_test_subset.drop(
+            columns=[targeted_attribute],
+        ).copy()
+        assert (
+            len(X_test_subset) == self.attack_size
+        ), f"Test set size {len(X_test_subset)} does not match attack_size {self.attack_size}"
         target = target.tolist()
         start_time = time.process_time()
         try:
-            attack.fit(x=X_test)
+            attack.fit(x=X_test_subset.values)
         except TypeError as e:
             raise e
         attack_time = time.process_time() - start_time
@@ -699,7 +706,7 @@ class AttackConfig(ConfigBase):
         )
         self.attack_time = attack_time
 
-        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test)]).reshape(
+        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test_subset.values)]).reshape(
             -1,
             1,
         )
