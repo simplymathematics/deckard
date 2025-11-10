@@ -479,7 +479,7 @@ class ModelConfig(ConfigBase):
             )
             recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
-            logloss = log_loss(y_pred=y_pred, y_true=y_true)
+            
         except ValueError as ve:
             if "mix of binary and continuous" in str(ve):
                 new_y_pred = np.argmax(y_pred, axis=1)
@@ -492,14 +492,22 @@ class ModelConfig(ConfigBase):
                 classes = np.unique(y_true)
                 y_pred_one_hot = np.zeros((len(y_pred), len(classes)))
                 for i, class_label in enumerate(classes):
-                    y_pred_one_hot[:, i] = (y_pred == class_label).astype(int)
+                    y_pred_one_hot[:, i] = np.array(y_pred == class_label).astype(int)
                     logloss = log_loss(y_true=y_true, y_pred=y_pred_one_hot)
+            elif "mix of multiclass and multilabel-indicator" in str(ve):
+                new_y_pred = np.argmax(y_pred, axis=1)
+                return self._classification_scores(y_true, new_y_pred)
             else:
                 logger.error(f"Error computing classification scores: {ve}")
                 raise ve
         except Exception as e:
             logger.error(f"Error computing classification scores: {e}")
             raise e
+        try:
+            logloss = log_loss(y_true=y_true, y_pred=y_pred)
+        except Exception as e:
+            logger.error(f"Error computing log loss: {e}")
+            logloss = np.nan
         scores = {
             "accuracy": acc,
             "precision": precision,
