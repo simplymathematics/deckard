@@ -5,11 +5,13 @@ import importlib
 import logging
 from pathlib import Path
 from tqdm import tqdm
+import time
 
 # Typing imports
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
 from typing import Union
+import pandas as pd
 
 # Torch imports
 import torch.nn as nn
@@ -18,6 +20,7 @@ import torch
 # Sklearn imports
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
+from sklearn.exceptions import NotFittedError
 
 # ART imports
 from art.estimators.classification import PyTorchClassifier
@@ -31,32 +34,12 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["PytorchModelConfig"]
 
+torch_dict = {
+    "classifier": PyTorchClassifier,
+    "regressor": PyTorchRegressor,
+}
 
-class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
-    def __init__(
-        self,
-        model: nn.Module,
-        device=None,
-        criterion: Union[dict, str] = "CrossEntropyLoss",
-        optimizer: Union[dict, str] = "SGD",
-        clip_values: Union[tuple, None] = None,
-    ):
-        self.model = model
-        if device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = torch.device(device)
-        self.criterion = self._initialize_criterion(criterion)
-        self.optimizer = self._initialize_optimizer(optimizer)
-        self.clip_values = clip_values
-        self.loss_curve = []
-
-    def _set_random_seed(self, seed):
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
-
-    def _initialize_criterion(self, criterion):
+def initialize_criterion(criterion):
         if isinstance(criterion, str):
             criterion_name = criterion
             criterion_params = {}
@@ -72,24 +55,50 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
         assert callable(criterion), f"Criterion must be callable, got {type(criterion)}"
         return criterion
 
-    def _initialize_optimizer(self, optimizer):
-        if isinstance(optimizer, str):
-            optimizer_name = optimizer
-            optimizer_params = {}
-        elif isinstance(optimizer, (dict, DictConfig)):
-            optimizer_name = optimizer.get("name")
-            optimizer_params = {k: v for k, v in optimizer.items() if k != "name"}
+def initialize_optimizer(optimizer, model):
+    if isinstance(optimizer, str):
+        optimizer_name = optimizer
+        optimizer_params = {}
+    elif isinstance(optimizer, (dict, DictConfig)):
+        optimizer_name = optimizer.get("name")
+        optimizer_params = {k: v for k, v in optimizer.items() if k != "name"}
+    else:
+        raise ValueError("Optimizer must be a string or a dictionary.")
+    # Use torch.optim to get the optimizer class
+    module = importlib.import_module("torch.optim")
+    optimizer_class = getattr(module, optimizer_name)
+    optimizer_class = optimizer_class(model.parameters(), **optimizer_params)
+    assert isinstance(
+        optimizer_class,
+        torch.optim.Optimizer,
+    ), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
+    return optimizer_class
+
+class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
+    def __init__(
+        self,
+        model: nn.Module,
+        device=None,
+        criterion: Union[dict, str] = "CrossEntropyLoss",
+        optimizer: Union[dict, str] = "SGD",
+        clip_values: Union[tuple, None] = None,
+    ):
+        self.model = model
+        if device is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
-            raise ValueError("Optimizer must be a string or a dictionary.")
-        # Use torch.optim to get the optimizer class
-        module = importlib.import_module("torch.optim")
-        optimizer_class = getattr(module, optimizer_name)
-        optimizer_class = optimizer_class(self.model.parameters(), **optimizer_params)
-        assert isinstance(
-            optimizer_class,
-            torch.optim.Optimizer,
-        ), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
-        return optimizer_class
+            self.device = torch.device(device)
+        self.criterion = initialize_criterion(criterion)
+        self.optimizer = initialize_optimizer(optimizer, model)
+        self.clip_values = clip_values
+        self.loss_curve = []
+
+    def _set_random_seed(self, seed):
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+    
 
     def to(self, device):
         self.device = device
@@ -261,7 +270,7 @@ class PytorchModelConfig(ModelConfig):
         return getattr(module, class_name)
 
     def get_art_model(self, data: DataConfig):
-        loss = self._model._initialize_criterion(self.criterion)
+        loss = initialize_criterion(self.criterion)
         assert isinstance(loss, nn.Module), "Loss must be a torch.nn.Module."
         input_shape = data.X_train.shape[1:]
         if self.classifier:
@@ -321,25 +330,31 @@ class PytorchModelConfig(ModelConfig):
         self._model._set_random_seed(self.random_seed)
 
     def get_art_class(self, data):
-        if self.classifier:
-            loss = self._model._initialize_criterion(self.criterion)
+        if isinstance(self._model, (PyTorchClassifier, PyTorchRegressor)):
+            base_model = self._model.model
             input_shape = data.X_train.shape[1:]
-            optimizer = self._model._initialize_optimizer(self.optimizer)
+            
+        else:
+            base_model = self.get_model()
+        if self.classifier:
+            loss = initialize_criterion(self.criterion)
+            input_shape = data.X_train.shape[1:]
+            optimizer = initialize_optimizer(self.optimizer, base_model)
             nb_classes = len(torch.unique(data.y_train))
             if self.clip_values is None or len(self.clip_values) == 0:
                 clip_values = (data.X_train.min().item(), data.X_train.max().item())
             else:
                 clip_values = self.clip_values
-            art_class = PyTorchClassifier
+            art_class = torch_dict["classifier"]
         else:
             input_shape = data.X_train.shape[1:]
-            loss = self._model._initialize_criterion(self.criterion)
-            optimizer = self._model._initialize_optimizer(self.optimizer)
+            loss = initialize_criterion(self.criterion)
+            optimizer = initialize_optimizer(self.optimizer, base_model)
             if self.clip_values is None or len(self.clip_values) == 0:
                 clip_values = (data.X_train.min().item(), data.X_train.max().item())
             else:
                 clip_values = self.clip_values
-            art_class = PyTorchRegressor
+            art_class = torch_dict["regressor"]
         return art_class, {
             "loss": loss,
             "input_shape": input_shape,
@@ -407,6 +422,104 @@ class PytorchModelConfig(ModelConfig):
             del scores["train_loss_curve"]
         return scores
 
+    def _load_or_train_model(self, data, model_file, times):
+            """
+            Loads a model from the specified filepath if it exists and is trained, or trains a new model using the provided data.
+            If a model file exists at `model_file`, attempts to load and validate that the model is fitted.
+            If the loaded model is not fitted, or if no model file exists, trains a new model using `data.X_train` and `data.y_train`.
+            Updates the `times` dictionary with training time and number of training samples.
+            Saves the trained model to `model_file` if provided and a new model was trained.
+            Raises:
+                ValueError: If neither a model nor a filepath is provided, or if the model is not trained after loading/training.
+                NotFittedError: If the model is not initialized.
+            Args:
+                data: An object containing training data (`X_train`, `y_train`).
+                model_file (str or Path or None): Path to the model file to load or save.
+                times (dict): Dictionary to store training time and number of training samples.
+            Returns:
+                dict: Updated `times` dictionary with training metadata.
+            """
+            match self._model, model_file:
+                case None, None:  # Neither model nor filepath provided
+                    raise ValueError(
+                        "Model not trained or loaded. Please train or load a model before prediction.",
+                    )
+                case _, _:  # Model and/or filepath provided
+                    if model_file is not None and Path(model_file).exists():
+                        logger.info(f"Model file {model_file} exists. Loading model.")
+                        self = self.load(model_file)
+                    if self.defense is not None:
+                        self._model = self._apply_defense(data)
+                    self._train(data.X_train, data.y_train)
+                    times["training_time"] = self.training_time
+                    times["training_n"] = self._training_n
+                    if model_file is not None and not Path(model_file).exists():
+                        self.save(filepath=model_file)
+            # Validate model is trained
+            if self._model is None:
+                raise NotFittedError("Model is not initialized")
+            return times
+        
+    def _predict(self, X: pd.DataFrame) -> pd.Series:
+        """
+        Generates predictions for the input data using the initialized model.
+
+        Args:
+            X (pd.DataFrame): Input features for prediction.
+
+        Returns:
+            pd.Series: Predicted values.
+
+        Raises:
+            ValueError: If the model has not been initialized.
+
+        """
+        if self._model is None:
+            raise ValueError("Model not initialized")
+        dtype_model = next(self._model.model.parameters()).dtype
+        dtype_X = X.dtype
+        if dtype_X != dtype_model:
+            model_device = next(self._model.model.parameters()).device
+            X = X.to(device=model_device, dtype=dtype_model)
+        y_pred = self._model.predict(X)
+
+        return y_pred
+
+    def _train(self, X: pd.DataFrame, y: pd.Series):
+        """
+        Trains the internal model using the provided feature matrix and target vector.
+
+        Args
+        -------
+            X (pd.DataFrame): Feature matrix for training.
+            y (pd.Series): Target vector for training.
+
+        Raises
+        -------
+            ValueError: If the internal model is not initialized.
+
+        Side Effects
+        -------
+            - Fits the internal model to the data.
+            - Records the training time in seconds.
+            - Logs the training duration.
+        """
+        if self._model is None:
+            raise ValueError("Model not initialized")
+        start_time = time.process_time()
+        assert hasattr(self._model, "fit"), "Model does not have a fit method"
+        
+        # Make sure that model, X, and y are on the same device and model/X have the same dtype
+        model_dtype = next(self._model.model.parameters()).dtype
+        model_device = next(self._model.model.parameters()).device
+        X = X.to(device=model_device, dtype=model_dtype)
+        y = y.to(device=model_device)
+        fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
+        self._model.fit(X, y, **fit_params)
+        end_time = time.process_time()
+        self.training_time = end_time - start_time
+        self._training_n = len(y)
+        logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
 def input_shape_from_data_config(data: DataConfig):
     # Assuming data.X_train is a torch.Tensor

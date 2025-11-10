@@ -4,6 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import List, Union, Literal
 from omegaconf import DictConfig, OmegaConf
+import os
 
 
 import numpy as np
@@ -11,7 +12,7 @@ from pathlib import Path
 from hydra.utils import instantiate
 
 from .data import DataConfig
-from .model import ModelConfig
+from .model import ModelConfig, DefenseConfig
 from .attack import AttackConfig
 from .score import ScorerDictConfig
 from .file import FileConfig, data_files, model_files, attack_files
@@ -26,11 +27,17 @@ warnings.filterwarnings("ignore", category=UserWarning)
 class PlotConfig(ConfigBase):
     pass
 
+DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
+DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
+    "DECKARD_DEFAULT_CONFIG_FILE",
+    "default_experiment.yaml",
+)
 
 class ExperimentConfig(ConfigBase):
     data: DataConfig
     experiment_name: str = "{hash}"
     model: ModelConfig = None
+    defense: DefenseConfig = None
     attack: AttackConfig = None
     files: FileConfig = None
     score: ScorerDictConfig = None
@@ -137,9 +144,34 @@ class ExperimentConfig(ConfigBase):
             assert (
                 self.classifier == self.data.classifier
             ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
+        if self.defense is not None:                    
+            if isinstance(self.defense, DefenseConfig):
+                defense_dict = self.defense.to_dict()
+            else:
+                if isinstance(self.defense, DictConfig):
+                    defense_dict = OmegaConf.to_container(self.defense)
+                elif isinstance(self.defense, ConfigBase):
+                    defense_dict = self.defense.to_dict()
+                elif isinstance(self.defense, str):
+                    defense_dict = DefenseConfig.from_yaml(
+                        self.defense,
+                    ).to_dict()
+                elif isinstance(self.defense, dict):
+                    defense_dict = OmegaConf.to_container(
+                        OmegaConf.create(self.defense),
+                    )
+                else:
+                    raise ValueError(
+                        f"Unsupported type for defense: {type(self.defense)}",
+                    )
+            self.defense = DefenseConfig(**defense_dict)
+            assert isinstance(
+                self.defense,
+                DefenseConfig,
+            ), "defense must be an instance of DefenseConfig"
         if self.model is not None:
             if isinstance(self.model, ModelConfig):
-                pass
+                model_dict = self.model.to_dict()
             else:
                 if isinstance(self.model, DictConfig):
                     model_dict = OmegaConf.to_container(self.model)
@@ -151,6 +183,10 @@ class ExperimentConfig(ConfigBase):
                     model_dict = OmegaConf.to_container(OmegaConf.create(self.model))
                 else:
                     raise ValueError(f"Unsupported type for model: {type(self.model)}")
+                
+                    # Merge defense config into model config
+                if self.defense is not None:
+                    model_dict.update({"defense": self.defense.to_dict()})
                 if "_target_" not in model_dict:
                     self.model = ModelConfig(**model_dict)
                 else:

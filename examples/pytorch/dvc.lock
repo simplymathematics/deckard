@@ -6,9 +6,9 @@ stages:
     deps:
     - path: ./config/
       hash: md5
-      md5: 48c884ea429ce54f746563d3abc5fa1b.dir
-      size: 3826
-      nfiles: 15
+      md5: ca265824c294d3fd6afc4ccb8d538b71.dir
+      size: 6081
+      nfiles: 29
     outs:
     - path: .deckard_rc
       hash: md5
@@ -19,8 +19,8 @@ stages:
     deps:
     - path: ../../deckard/__main__.py
       hash: md5
-      md5: 1f2dceb6ab5eb2302aed39d04e8d8ef6
-      size: 24310
+      md5: 9b0073b4bdc9f5bb5c39f02a531e6a3f
+      size: 23884
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -36,8 +36,8 @@ stages:
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -56,12 +56,12 @@ stages:
     outs:
     - path: output/data/torch_mnist.pkl
       hash: md5
-      md5: 7d1aa1ce90db8e89a0d9ffa165999348
-      size: 220888259
+      md5: 47c3e4cd13bad8d56205c35dabaa5bfc
+      size: 220887467
     - path: output/scores/torch_mnist.json
       hash: md5
-      md5: 172f4becf84a81f3773f8807999985ac
-      size: 187
+      md5: 90eb95c4b575d83f93ded902ab6d4df2
+      size: 262
   generate_data@torch_cifar:
     cmd: "deckard  data=torch_cifar  +files.data_file=data/torch_cifar.pkl  +files.score_file=scores/data/torch_cifar.json
       ~model  ~attack\n"
@@ -95,18 +95,17 @@ stages:
       md5: 96f127d0e1f159072b409d559443a307
       size: 209
   train@0:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 ~attack files.attack_file=null
-      experiment_name=torch_mnist_resnet18_training ++model.model_params.num_channels=1
-      ++model.model_params.num_classes=10\n"
+    cmd: "deckard  data=torch_mnist  ~attack files.attack_file=null experiment_name=torch_mnist_resnet18_training
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -122,7 +121,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -130,6 +129,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -146,20 +148,20 @@ stages:
     outs:
     - path: output/models/torch_mnist_resnet18_training.pkl
       hash: md5
-      md5: 69849ebe0039d273d83ebac5c642cfc8
+      md5: 5464c03b4f2a9d32e347773e8e0e2c30
       size: 89513278
     - path: output/scores/torch_mnist_resnet18_training.json
       hash: md5
-      md5: ad67a67f1f4f06c24c546026eff0ba10
-      size: 525
+      md5: c4f1a512466c7c07d5e412f33ec52025
+      size: 576
   generate_data@torch_cifar10:
     cmd: "deckard data=torch_cifar10  ~model ~attack files.model_file=null files.attack_file=null
       experiment_name=torch_cifar10\n"
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -178,25 +180,24 @@ stages:
     outs:
     - path: output/data/torch_cifar10.pkl
       hash: md5
-      md5: 841529cb3a858c8795e1f2b7a51a85e4
-      size: 740911171
+      md5: 2676ce8dfaec0b76c8786c3eed69faa0
+      size: 740910379
     - path: output/scores/torch_cifar10.json
       hash: md5
-      md5: ad4007343a08904d265e266a1202e42d
-      size: 188
+      md5: df15114efb3848aa8a75992240f165a3
+      size: 263
   train@1:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 ~attack files.attack_file=null
-      experiment_name=torch_cifar10_resnet18_training ++model.model_params.num_channels=3
-      ++model.model_params.num_classes=10\n"
+    cmd: "deckard  data=torch_cifar10  ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_training
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -212,7 +213,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -220,6 +221,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -236,29 +240,29 @@ stages:
     outs:
     - path: output/models/torch_cifar10_resnet18_training.pkl
       hash: md5
-      md5: c63fcdacb37c3f6104fe50bfa25b0cf4
+      md5: ed0052dc6f7d04dba5b84fd8c97cc721
       size: 89563463
     - path: output/scores/torch_cifar10_resnet18_training.json
       hash: md5
-      md5: 8eb17f1c1c9234b6dacd2d8be766e865
-      size: 523
+      md5: 280f5dcda47247f4453ba97aa24025c8
+      size: 577
   attack@data0-deepfool:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=deepfool files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=deepfool files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_deepfool ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -282,7 +286,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -290,6 +294,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -306,29 +313,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_deepfool.pkl
       hash: md5
-      md5: 38d174e618c483f3e233134c738a8ae4
-      size: 6875
+      md5: b2046c5ca1c953055462596b8ce411b7
+      size: 6960
     - path: output/scores/torch_mnist_torch_resnet18_deepfool.json
       hash: md5
-      md5: be72daab67c82f9ca0a0e102e4d0f075
-      size: 760
+      md5: 2a62c5f6c0238e682d6fd6e91e26916b
+      size: 896
   attack@data0-fgm:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=fgm files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=fgm files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_fgm ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -355,7 +362,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -363,6 +370,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -379,29 +389,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_fgm.pkl
       hash: md5
-      md5: 695467049951ab822688d1fcb64804f2
-      size: 7106
+      md5: f2cc29b10a9c39ae5031797f952f4e68
+      size: 7191
     - path: output/scores/torch_mnist_torch_resnet18_fgm.json
       hash: md5
-      md5: de0af41ab9ac658b1851695237f813b6
-      size: 760
+      md5: a6ccf97a87b17502de2f9aa0bd1bcca6
+      size: 899
   attack@data0-patch:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=patch files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=patch files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_patch ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -428,7 +438,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -436,6 +446,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -452,29 +465,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_patch.pkl
       hash: md5
-      md5: c420f66637e2ab221fa2ab00aacf9c0c
-      size: 7152
+      md5: f07aa14dc9a28453288660714172cbbd
+      size: 7237
     - path: output/scores/torch_mnist_torch_resnet18_patch.json
       hash: md5
-      md5: 67f16dcdc8ee758746db0eefd775eb83
-      size: 759
+      md5: df4a0943e2d729b0e9dee62bc07d1e88
+      size: 896
   attack@data0-pgd:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=pgd files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=pgd files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_pgd ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -500,7 +513,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -508,6 +521,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -524,29 +540,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_pgd.pkl
       hash: md5
-      md5: 33d815e250159f507789dbe3e6382734
-      size: 7045
+      md5: acd5e6f61d6ae02d71e69f59d90aa1a3
+      size: 7130
     - path: output/scores/torch_mnist_torch_resnet18_pgd.json
       hash: md5
-      md5: ea9efda8de438c3d4253b768ff4a8abc
-      size: 758
+      md5: 5e0b8017d9e78ffd363d5bab840b11ea
+      size: 898
   attack@data0-pixel:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=pixel files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=pixel files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_pixel ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -571,7 +587,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -579,6 +595,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -595,29 +614,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_pixel.pkl
       hash: md5
-      md5: 1eafd25a9fa10a166b4b6fb0f69d6b28
-      size: 1864
+      md5: c66c55bfb6c167171906b25cb34fa4f2
+      size: 1949
     - path: output/scores/torch_mnist_torch_resnet18_pixel.json
       hash: md5
-      md5: 006b7376263c4504b040e14a21fe523e
-      size: 749
+      md5: 885ae81f43b001a309b57c687490d60f
+      size: 888
   attack@data0-threshold:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=threshold files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=threshold files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_threshold ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -642,7 +661,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -650,6 +669,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -666,29 +688,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_threshold.pkl
       hash: md5
-      md5: f973d99b007f90559ee35683041d00be
-      size: 1876
+      md5: 30f9b83290f1961c6e73e23491e7dc40
+      size: 1961
     - path: output/scores/torch_mnist_torch_resnet18_threshold.json
       hash: md5
-      md5: 9da2208eaab28c0d6167f530f102e9b8
-      size: 749
+      md5: 18fed87ed61933f6958ec97ab07a53f8
+      size: 888
   attack@data1-deepfool:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=deepfool files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=deepfool files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_deepfool ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -712,7 +734,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -720,6 +742,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -736,29 +761,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_deepfool.pkl
       hash: md5
-      md5: d368e5c8352e3af8d5b8b7810cec12a6
-      size: 6875
+      md5: 2a1be2a2d2120e14b4a79fa9d7389179
+      size: 6960
     - path: output/scores/torch_cifar10_torch_resnet18_deepfool.json
       hash: md5
-      md5: 4eeac50a76dc8101245e7b78270d65c9
-      size: 760
+      md5: 3a71d6920434846147eeaa4551308279
+      size: 906
   attack@data1-fgm:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=fgm files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=fgm files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_fgm ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -785,7 +810,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -793,6 +818,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -809,29 +837,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_fgm.pkl
       hash: md5
-      md5: 361e36c5de67763f66b3d7b99b4c213d
-      size: 7106
+      md5: 880d2eeba444378af628b3e80ea6a1d4
+      size: 7191
     - path: output/scores/torch_cifar10_torch_resnet18_fgm.json
       hash: md5
-      md5: 3f3b61f1f800e18a429b039b1ca97979
-      size: 757
+      md5: 17ebfede1b75478d88c1cc5b1b48326d
+      size: 904
   attack@data1-patch:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=patch files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=patch files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_patch ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -858,7 +886,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -866,6 +894,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -882,29 +913,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_patch.pkl
       hash: md5
-      md5: 3c0422e1788ef4259d6dfcce828d1356
-      size: 7152
+      md5: ff0456be6dfa9d4dd25ffdc2950710ad
+      size: 7237
     - path: output/scores/torch_cifar10_torch_resnet18_patch.json
       hash: md5
-      md5: 75e6aca677061e23e81c1d640b56089f
-      size: 756
+      md5: f94edc4af58a57248ce3f4a4ba416581
+      size: 902
   attack@data1-pgd:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=pgd files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=pgd files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_pgd ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -930,7 +961,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -938,6 +969,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -954,29 +988,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_pgd.pkl
       hash: md5
-      md5: 45ef0cc808919d52a9bcf4b09c838e67
-      size: 7045
+      md5: 946e1c69d57a2df117222afafececafe
+      size: 7130
     - path: output/scores/torch_cifar10_torch_resnet18_pgd.json
       hash: md5
-      md5: 035bdbf43711bd386876cf1220b156f9
-      size: 757
+      md5: f77581a10bb49f5b6fe4c91892e98478
+      size: 905
   attack@data0-carlini_l2:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=carlini_l2 files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=carlini_l2 files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_l2 ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1005,7 +1039,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1013,6 +1047,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1029,29 +1066,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_l2.pkl
       hash: md5
-      md5: 5bdb57c56538dfb8400e5d188b381c2a
-      size: 2240
+      md5: 1f42db00f1cad9e90b93ea17bec42ddf
+      size: 2325
     - path: output/scores/torch_mnist_torch_resnet18_carlini_l2.json
       hash: md5
-      md5: 977fcdd98f229171be124650167f0b52
-      size: 749
+      md5: 4db3b75c3964ac1fa3ed796a669ecac1
+      size: 888
   attack@data0-carlini_linf:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=carlini_linf files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=carlini_linf files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_linf ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1077,7 +1114,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1085,6 +1122,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1101,29 +1141,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_linf.pkl
       hash: md5
-      md5: ca1d56e8c9e8ed1cb7c7a3f26eceb0d9
-      size: 2012
+      md5: 23f4829f091f91de8d888e1fffedda14
+      size: 2097
     - path: output/scores/torch_mnist_torch_resnet18_carlini_linf.json
       hash: md5
-      md5: b2b45adfe794c48ef158d1cc1a6466c8
-      size: 751
+      md5: e48c3394f21d10dbdf90f175b1ab7ada
+      size: 890
   attack@data0-hsj:
-    cmd: "deckard  data=torch_mnist  model=torch_resnet18 attack=hsj files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  data=torch_mnist  attack=hsj files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_hsj ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1153,7 +1193,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1161,6 +1201,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1177,29 +1220,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_hsj.pkl
       hash: md5
-      md5: da01c9bccb2fdb48df57466a793ac697
-      size: 2511
+      md5: b4f0957d0c4f0fec8e5979467208ae0e
+      size: 2596
     - path: output/scores/torch_mnist_torch_resnet18_hsj.json
       hash: md5
-      md5: ba52b75e56a864fa610980c7f1368c41
-      size: 753
+      md5: 8f57f26456b28933b4a7645d5d71eb16
+      size: 891
   attack@data1-carlini_l2:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=carlini_l2 files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=carlini_l2 files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_carlini_l2 ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1228,7 +1271,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1236,6 +1279,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1252,29 +1298,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_carlini_l2.pkl
       hash: md5
-      md5: 360babc3b9555c5765132cdf372c2ca0
-      size: 2240
+      md5: 872d624a007ded99ab29ec287864be7b
+      size: 2325
     - path: output/scores/torch_cifar10_torch_resnet18_carlini_l2.json
       hash: md5
-      md5: e432b145bfe509e5169e711346199c17
-      size: 747
+      md5: c8b6664ac2e4e913b9160508e94aeb0b
+      size: 894
   attack@data1-carlini_linf:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=carlini_linf files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=carlini_linf files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_carlini_linf ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1300,7 +1346,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1308,6 +1354,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1324,29 +1373,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_carlini_linf.pkl
       hash: md5
-      md5: 0a906d885d9ac3d204460d1003679946
-      size: 2012
+      md5: 23ccbdc0c4506f2555e2663f3a68b191
+      size: 2097
     - path: output/scores/torch_cifar10_torch_resnet18_carlini_linf.json
       hash: md5
-      md5: 0239263ce3d68251880ce1751c7785ab
-      size: 749
+      md5: 4d242a0a8b00cf15f6ee176af76459b4
+      size: 896
   attack@data1-hsj:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=hsj files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=hsj files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_hsj ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1376,7 +1425,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1384,6 +1433,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1400,29 +1452,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_hsj.pkl
       hash: md5
-      md5: 0aed1aa29502252dd09b397b686354da
-      size: 2511
+      md5: b3a4362d1fde619d5bc83b33b3c4acce
+      size: 2596
     - path: output/scores/torch_cifar10_torch_resnet18_hsj.json
       hash: md5
-      md5: c172fb07c1dd6e0459b281ad6540b1dd
-      size: 750
+      md5: 4a308d9a31a5a18ac2065c8445819700
+      size: 897
   attack@data1-pixel:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=pixel files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=pixel files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_pixel ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1447,7 +1499,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1455,6 +1507,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1471,29 +1526,29 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_pixel.pkl
       hash: md5
-      md5: 0f03a3cd8242c64c009efa53b7ddbf3e
-      size: 1864
+      md5: a4b41de7cdfba1149f67961a2f4bcc9e
+      size: 1949
     - path: output/scores/torch_cifar10_torch_resnet18_pixel.json
       hash: md5
-      md5: 263765b45714de97d5788acee7db584c
-      size: 750
+      md5: 538b269bfec9c87013efb222c3c9af15
+      size: 897
   attack@data1-threshold:
-    cmd: "deckard  data=torch_cifar10  model=torch_resnet18 attack=threshold files.model_file=output/models/torch_cifar10_resnet18_training.pkl
+    cmd: "deckard  data=torch_cifar10  attack=threshold files.model_file=output/models/torch_cifar10_resnet18_training.pkl
       experiment_name=torch_cifar10_torch_resnet18_threshold ++model.model_params.num_channels=3
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 150f347f9a4b777f6ed30b47313ba1a0
-      size: 37935
+      md5: 1285b69c9d0ad42050771aedea7427a0
+      size: 38600
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: b27d724fe46300b14f9fe89957923c93
-      size: 17335
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
     - path: ../../deckard/model/pytorch.py
       hash: md5
-      md5: 6da36d8a7cbd641731e75632cf316d4f
-      size: 15703
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1518,7 +1573,7 @@ stages:
         stratify: true
         test_size: 128
         train_size: 128
-      config/model/torch_resnet18.yaml:
+      config/model/default.yaml:
         _target_: deckard.model.pytorch.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
@@ -1526,6 +1581,9 @@ stages:
         - 0
         - 255
         criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
@@ -1542,9 +1600,1745 @@ stages:
     outs:
     - path: output/attacks/torch_cifar10_torch_resnet18_threshold.pkl
       hash: md5
-      md5: 3ccb1ec9c472a73bb453254a4c9b1f13
-      size: 1876
+      md5: c5b64e0fa66b5f2a6813677ff8e6aef2
+      size: 1961
     - path: output/scores/torch_cifar10_torch_resnet18_threshold.json
       hash: md5
-      md5: b83535da24c19046350a981b42b2fb9e
-      size: 749
+      md5: 738c3031cb8f79535f5f205f6432461b
+      size: 896
+  defend@data1-high_confidence:
+    cmd: "deckard  data=torch_cifar10  +defense=high_confidence files.model_file=output/models/torch_cifar10_resnet18_high_confidence.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_high_confidence.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_high_confidence
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_high_confidence.pkl
+      hash: md5
+      md5: 5807373c7291395d6b0435ea20b420da
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_high_confidence.json
+      hash: md5
+      md5: e653536dd485739972859acb0582c89d
+      size: 576
+  defend@data0-high_confidence:
+    cmd: "deckard  data=torch_mnist  +defense=high_confidence files.model_file=output/models/torch_mnist_resnet18_high_confidence.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_high_confidence.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_high_confidence
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_high_confidence.pkl
+      hash: md5
+      md5: 6a8c029684acdcd1bf3d28de21537709
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_high_confidence.json
+      hash: md5
+      md5: 5086573d456047180903307319785e7a
+      size: 576
+  defend@data0-gaussian_noise:
+    cmd: "deckard  data=torch_mnist  +defense=gaussian_noise files.model_file=output/models/torch_mnist_resnet18_gaussian_noise.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_gaussian_noise.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_gaussian_noise ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_gaussian_noise.pkl
+      hash: md5
+      md5: 81a8eea5649fe9006a00556b8486f519
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_gaussian_noise.json
+      hash: md5
+      md5: 681953ddf5a5ff0d166ad6f6993097a2
+      size: 577
+  defend@data1-reverse_sigmoid:
+    cmd: "deckard  data=torch_cifar10  +defense=reverse_sigmoid files.model_file=output/models/torch_cifar10_resnet18_reverse_sigmoid.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_reverse_sigmoid.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_reverse_sigmoid
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_reverse_sigmoid.pkl
+      hash: md5
+      md5: 00c1add78eda68e4260c43f6e87d5df0
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_reverse_sigmoid.json
+      hash: md5
+      md5: 7a72e40e3e37fa43663bff035385de20
+      size: 577
+  defend@data1-rounded:
+    cmd: "deckard  data=torch_cifar10  +defense=rounded files.model_file=output/models/torch_cifar10_resnet18_rounded.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_rounded.json ~attack files.attack_file=null
+      experiment_name=torch_cifar10_resnet18_rounded ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_rounded.pkl
+      hash: md5
+      md5: 83fa79108c2bf84bb8f5e4314c76110c
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_rounded.json
+      hash: md5
+      md5: 00d785d7fd0eeac8b51be074a4ced76d
+      size: 575
+  defend@data0-reverse_sigmoid:
+    cmd: "deckard  data=torch_mnist  +defense=reverse_sigmoid files.model_file=output/models/torch_mnist_resnet18_reverse_sigmoid.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_reverse_sigmoid.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_reverse_sigmoid
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_reverse_sigmoid.pkl
+      hash: md5
+      md5: 14f54cee4bcc9eea436ceaab871555a5
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_reverse_sigmoid.json
+      hash: md5
+      md5: 6a8a13f21713e35d2863478a09b099ac
+      size: 575
+  defend@data0-class_labels:
+    cmd: "deckard  data=torch_mnist  +defense=class_labels files.model_file=output/models/torch_mnist_resnet18_class_labels.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_class_labels.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_class_labels ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: e9ed74d01a8bd8369314818cd268eb55
+      size: 20766
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_class_labels.pkl
+      hash: md5
+      md5: b755fa79740cba0df0a3d27c33247ea4
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_class_labels.json
+      hash: md5
+      md5: e7bb279532dcca39d22eb8d3f906eb34
+      size: 576
+  defend@data0-rounded:
+    cmd: "deckard  data=torch_mnist  +defense=rounded files.model_file=output/models/torch_mnist_resnet18_rounded.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_rounded.json ~attack files.attack_file=null
+      experiment_name=torch_mnist_resnet18_rounded ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_rounded.pkl
+      hash: md5
+      md5: bfc524a24cfe5edc7f05d54b61446def
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_rounded.json
+      hash: md5
+      md5: e359a821934d30d30e1a2519dfbce2e8
+      size: 574
+  defend@data0-cut_mix:
+    cmd: "deckard  data=torch_mnist  +defense=cut_mix files.model_file=output/models/torch_mnist_resnet18_cut_mix.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_cut_mix.json ~attack files.attack_file=null
+      experiment_name=torch_mnist_resnet18_cut_mix ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_cut_mix.pkl
+      hash: md5
+      md5: ffd692624e7b64f8c7e81c94b53ecfe4
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_cut_mix.json
+      hash: md5
+      md5: 165de9093f06de2bbfde8653f4b80870
+      size: 577
+  defend@data0-cutout:
+    cmd: "deckard  data=torch_mnist  +defense=cutout files.model_file=output/models/torch_mnist_resnet18_cutout.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_cutout.json ~attack files.attack_file=null
+      experiment_name=torch_mnist_resnet18_cutout ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_cutout.pkl
+      hash: md5
+      md5: 8b103c9a7da66bf7d11e7a9e94f48919
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_cutout.json
+      hash: md5
+      md5: ee45f515cd80ee85ecb04adc1669c5c0
+      size: 577
+  defend@data0-feature_squeezing:
+    cmd: "deckard  data=torch_mnist  +defense=feature_squeezing files.model_file=output/models/torch_mnist_resnet18_feature_squeezing.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_feature_squeezing.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_feature_squeezing
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_feature_squeezing.pkl
+      hash: md5
+      md5: ab7bbe426bf943671a1acd8aab1438d2
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_feature_squeezing.json
+      hash: md5
+      md5: b7f96b6d75fa1b70ba59249e73b16087
+      size: 577
+  defend@data0-gaussian_augmentation:
+    cmd: "deckard  data=torch_mnist  +defense=gaussian_augmentation files.model_file=output/models/torch_mnist_resnet18_gaussian_augmentation.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_gaussian_augmentation.json
+      ~attack files.attack_file=null experiment_name=torch_mnist_resnet18_gaussian_augmentation
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_gaussian_augmentation.pkl
+      hash: md5
+      md5: cb74d10f4b7831ac72a752de6371fc7b
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_gaussian_augmentation.json
+      hash: md5
+      md5: 836f37ed4172e03279eaa28d024e0329
+      size: 577
+  defend@data0-jpeg_compression:
+    cmd: "deckard  data=torch_mnist  +defense=jpeg_compression files.model_file=output/models/torch_mnist_resnet18_jpeg_compression.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_jpeg_compression.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_jpeg_compression
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_jpeg_compression.pkl
+      hash: md5
+      md5: 0fab99b689150e9e3c565eb73384bc52
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_jpeg_compression.json
+      hash: md5
+      md5: 5be7394994f8e956df1f04e2a5e424ab
+      size: 575
+  defend@data0-label_smoothing:
+    cmd: "deckard  data=torch_mnist  +defense=label_smoothing files.model_file=output/models/torch_mnist_resnet18_label_smoothing.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_label_smoothing.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_label_smoothing
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_label_smoothing.pkl
+      hash: md5
+      md5: 70778296d2811dc4fcf10f15c462f797
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_label_smoothing.json
+      hash: md5
+      md5: 13a1536ab99608cf7023dbb9e8d66729
+      size: 577
+  defend@data0-mixup:
+    cmd: "deckard  data=torch_mnist  +defense=mixup files.model_file=output/models/torch_mnist_resnet18_mixup.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_mixup.json ~attack files.attack_file=null
+      experiment_name=torch_mnist_resnet18_mixup ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_mixup.pkl
+      hash: md5
+      md5: c2045ae9f6f7e3c564c7de72ea16171b
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_mixup.json
+      hash: md5
+      md5: ed57af80fa1022eb1713902732910e24
+      size: 574
+  defend@data0-resample:
+    cmd: "deckard  data=torch_mnist  +defense=resample files.model_file=output/models/torch_mnist_resnet18_resample.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_resample.json ~attack files.attack_file=null
+      experiment_name=torch_mnist_resnet18_resample ++model.model_params.num_channels=1
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_resample.pkl
+      hash: md5
+      md5: 39c4b081249bdb001665f4f547fee13c
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_resample.json
+      hash: md5
+      md5: a4e92b2062c8d5a34562de17d5e7b520
+      size: 577
+  defend@data0-spatial_smoothing:
+    cmd: "deckard  data=torch_mnist  +defense=spatial_smoothing files.model_file=output/models/torch_mnist_resnet18_spatial_smoothing.pkl
+      files.score_file=output/scores/torch_mnist_resnet18_spatial_smoothing.json ~attack
+      files.attack_file=null experiment_name=torch_mnist_resnet18_spatial_smoothing
+      ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_mnist.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_mnist
+        classifier: true
+        data_dir: raw_data/torch_mnist
+        dataset_name: torch_mnist
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_mnist_resnet18_spatial_smoothing.pkl
+      hash: md5
+      md5: af1de665e138bc3353fc98ac6dacf83e
+      size: 89513278
+    - path: output/scores/torch_mnist_resnet18_spatial_smoothing.json
+      hash: md5
+      md5: 114f9837547530a3d06807072c1f1a0f
+      size: 577
+  defend@data1-class_labels:
+    cmd: "deckard  data=torch_cifar10  +defense=class_labels files.model_file=output/models/torch_cifar10_resnet18_class_labels.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_class_labels.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_class_labels ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_class_labels.pkl
+      hash: md5
+      md5: 8072579e87a9d9bf37261d83c4a41acc
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_class_labels.json
+      hash: md5
+      md5: 3f9d155ab4916097016b497016bc7646
+      size: 577
+  defend@data1-gaussian_noise:
+    cmd: "deckard  data=torch_cifar10  +defense=gaussian_noise files.model_file=output/models/torch_cifar10_resnet18_gaussian_noise.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_gaussian_noise.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_gaussian_noise
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_gaussian_noise.pkl
+      hash: md5
+      md5: bacaa36ec61561bf2c57ba75648f8a8f
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_gaussian_noise.json
+      hash: md5
+      md5: 83abbabd64a447a5b05fad761b746777
+      size: 575
+  defend@data1-cut_mix:
+    cmd: "deckard  data=torch_cifar10  +defense=cut_mix files.model_file=output/models/torch_cifar10_resnet18_cut_mix.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_cut_mix.json ~attack files.attack_file=null
+      experiment_name=torch_cifar10_resnet18_cut_mix ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_cut_mix.pkl
+      hash: md5
+      md5: 5cd1e5a60ce81c3ba6744d9a04cf26c3
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_cut_mix.json
+      hash: md5
+      md5: 3f0df1cd2a845417e25f970ae385b93d
+      size: 577
+  defend@data1-cutout:
+    cmd: "deckard  data=torch_cifar10  +defense=cutout files.model_file=output/models/torch_cifar10_resnet18_cutout.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_cutout.json ~attack files.attack_file=null
+      experiment_name=torch_cifar10_resnet18_cutout ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_cutout.pkl
+      hash: md5
+      md5: 3d2692d3b7aed1b590730806b946364a
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_cutout.json
+      hash: md5
+      md5: 857c312f22af0fb0ab86e4c831e8c70c
+      size: 576
+  defend@data1-feature_squeezing:
+    cmd: "deckard  data=torch_cifar10  +defense=feature_squeezing files.model_file=output/models/torch_cifar10_resnet18_feature_squeezing.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_feature_squeezing.json
+      ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_feature_squeezing
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_feature_squeezing.pkl
+      hash: md5
+      md5: 121b0a27a40c5eaa4a1e1d9b43a65798
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_feature_squeezing.json
+      hash: md5
+      md5: 1b88f8d4f58cc8ccbed2fca59ceceb1e
+      size: 572
+  defend@data1-gaussian_augmentation:
+    cmd: "deckard  data=torch_cifar10  +defense=gaussian_augmentation files.model_file=output/models/torch_cifar10_resnet18_gaussian_augmentation.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_gaussian_augmentation.json
+      ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_gaussian_augmentation
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_gaussian_augmentation.pkl
+      hash: md5
+      md5: 3a741e2d665f45a2c0d17c8e33944b79
+      size: 89563509
+    - path: output/scores/torch_cifar10_resnet18_gaussian_augmentation.json
+      hash: md5
+      md5: 718393798cee8650fd567554d5a47e45
+      size: 576
+  defend@data1-jpeg_compression:
+    cmd: "deckard  data=torch_cifar10  +defense=jpeg_compression files.model_file=output/models/torch_cifar10_resnet18_jpeg_compression.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_jpeg_compression.json
+      ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_jpeg_compression
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_jpeg_compression.pkl
+      hash: md5
+      md5: 2f4e1645bb72fe194741068bb5a1c45b
+      size: 89563481
+    - path: output/scores/torch_cifar10_resnet18_jpeg_compression.json
+      hash: md5
+      md5: 2c4d71767eac8cfc1ecec025d9058622
+      size: 575
+  defend@data1-label_smoothing:
+    cmd: "deckard  data=torch_cifar10  +defense=label_smoothing files.model_file=output/models/torch_cifar10_resnet18_label_smoothing.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_label_smoothing.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_label_smoothing
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_label_smoothing.pkl
+      hash: md5
+      md5: aba8c13fab54248cf224913e8c33ea3c
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_label_smoothing.json
+      hash: md5
+      md5: 9f49fdb33cae22a047ee6bcac197ec15
+      size: 576
+  defend@data1-mixup:
+    cmd: "deckard  data=torch_cifar10  +defense=mixup files.model_file=output/models/torch_cifar10_resnet18_mixup.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_mixup.json ~attack files.attack_file=null
+      experiment_name=torch_cifar10_resnet18_mixup ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_mixup.pkl
+      hash: md5
+      md5: 0ba19eccf4d1e2b8b86e1c4657b4b235
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_mixup.json
+      hash: md5
+      md5: 250cc8b34bb84d5bed62e904568fc0e1
+      size: 576
+  defend@data1-resample:
+    cmd: "deckard  data=torch_cifar10  +defense=resample files.model_file=output/models/torch_cifar10_resnet18_resample.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_resample.json ~attack
+      files.attack_file=null experiment_name=torch_cifar10_resnet18_resample ++model.model_params.num_channels=3
+      ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_resample.pkl
+      hash: md5
+      md5: c44057c4a2748798c8b35cf4f2f5d55c
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_resample.json
+      hash: md5
+      md5: 38585528df58af53697c787513415bcb
+      size: 574
+  defend@data1-spatial_smoothing:
+    cmd: "deckard  data=torch_cifar10  +defense=spatial_smoothing files.model_file=output/models/torch_cifar10_resnet18_spatial_smoothing.pkl
+      files.score_file=output/scores/torch_cifar10_resnet18_spatial_smoothing.json
+      ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_spatial_smoothing
+      ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
+    deps:
+    - path: ../../deckard/data/pytorch.py
+      hash: md5
+      md5: 7fcddabdc256bf8a9471eb54a1335c24
+      size: 17495
+    - path: ../../deckard/model/pytorch.py
+      hash: md5
+      md5: 5effb34cc1c4a45278a412741bc44cde
+      size: 20767
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
+    params:
+      config/data/torch_cifar10.yaml:
+        _target_: deckard.data.pytorch.PytorchDataConfig
+        alias: torch_cifar10
+        classifier: true
+        data_dir: raw_data/torch_cifar10
+        dataset_name: torch_cifar10
+        random_state: 42
+        stratify: true
+        test_size: 128
+        train_size: 128
+      config/model/default.yaml:
+        _target_: deckard.model.pytorch.PytorchModelConfig
+        alias: torch_resnet18
+        classifier: true
+        clip_values:
+        - 0
+        - 255
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 3
+          batch_size: 1024
+          verbose: true
+        library: pytorch
+        model_params:
+          num_channels: 1
+          num_classes: 10
+        model_type: torch_example.ResNet18
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/models/torch_cifar10_resnet18_spatial_smoothing.pkl
+      hash: md5
+      md5: dacbff41d1f9504f9b005b57175b8ac4
+      size: 89563463
+    - path: output/scores/torch_cifar10_resnet18_spatial_smoothing.json
+      hash: md5
+      md5: c9b77af43249625413deb58226e8298c
+      size: 577
