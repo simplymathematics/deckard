@@ -1,18 +1,24 @@
-# @package _global_
+data_alias: adult
+model_alias: rf
+attack_alias: hsj
+defense_alias: class_labels
 defaults:
     - _self_
     - data: adult
     - model: rf
+    - defense: class_labels
     - attack: hsj
     - files: null
     - override hydra/sweeper : optuna
-experiment_name: adult_rf_hsj
+
+experiment_name: ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
 directions:
 - maximize
-- maximize
+- minimize
 optimizers:
 - accuracy
-- evasion_accuracy
+- evasion_success_rate
+params: ${merge:${file:search/${model_alias}.yaml:model_search}, ${file:search/${defense_alias}.yaml:model_search}, ${file:search/${attack_alias}.yaml:attack_search}}
 hydra:
   run:
     dir: outputs/logs/${experiment_name}
@@ -34,9 +40,8 @@ hydra:
       multivariate: true
       warn_independent_sampling: true
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    n_trials: 1000
+    n_trials: 100
     n_jobs: 1
     params:
-        ++model.model_params.n_estimators: int(range(1,1000))
-        ++model.model_params.max_depth: int(range(1,101))
-        ++model.model_params.max_leaf_nodes: int(range(2,1000))
+      ${params}
+      

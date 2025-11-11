@@ -1,0 +1,3 @@
+model_search:
+  ++model.model_params.C:  tag(log, interval(0.000001, 10000))
+  ++model.model_params.gamma: float(range(0.001, 1.0))

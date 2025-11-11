@@ -1,0 +1,4 @@
+model_search:
+  ++model.model_params.n_estimators: int(range(1,1000))
+  ++model.model_params.max_depth: int(range(1,101))
+  ++model.model_params.max_leaf_nodes: int(range(2,1000))

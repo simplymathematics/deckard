@@ -1,0 +1,6 @@
+model_search:
+  ++model.model_params.C:  tag(log, interval(0.000001, 10000))
+  ++model.model_params.penalty: choice("l1","l2")
+  ++model.model_params.max_iter: int(range(100, 1000))
+  ++model.model_params.tol:  tag(log, interval(0.000001, .001))
+  ++model.model_params.solver: choice("saga")

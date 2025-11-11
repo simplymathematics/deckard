@@ -4,3 +4,5 @@ defense_params:
     gamma: .1
     apply_fit : False
     apply_predict : True
+# @package __global__
+# Configuration for Reverse Sigmoid defense optuna hyperparameter sweep
