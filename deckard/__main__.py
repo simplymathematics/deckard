@@ -6,9 +6,12 @@ import sys
 import json
 from pathlib import Path
 
+import optuna
+
 from omegaconf import ListConfig, OmegaConf, DictConfig
 import hydra
 from hydra.utils import instantiate
+from hydra.core.hydra_config import HydraConfig
 
 
 from .file import FileConfig, data_files, model_files, attack_files, all_files
@@ -77,32 +80,67 @@ def optimize(
     - The function initializes an experiment configuration or runner based on the `cfg`
       and executes the optimization process.
     """
-    cfg = _convert_config_to_dict(cfg)
-    optimizers, directions = _extract_optimizers_and_directions(cfg, return_runner)
+    hydra_cfg = HydraConfig.get()
     files = _initialize_files(cfg, kwargs)
+    cfg = _convert_config_to_dict(cfg)
     cfg = save_params_file(cfg, files)
+    optimizers, directions = _extract_optimizers_and_directions(cfg, return_runner)
+    
     runner = initialize_config(cfg, target=target)
     scores = _run_experiment(runner, files, args)
-    scores = _filter_scores(scores, optimizers, directions)
+    scores, attributes = _filter_scores(scores, optimizers, directions)
+    if "sweeper" in hydra_cfg:
+        assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
+        assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
+        storage = hydra_cfg.sweeper.storage
+        study_name = hydra_cfg.sweeper.study_name
+        study = create_study(study_name, storage, directions, optimizers)
+        set_study_metric_names(study=study, optimizers=optimizers)
+        set_user_attrs(study=study, attrs=attributes)
     if return_runner:
         return scores, runner
     else:
         return scores
+
+def create_study(study_name, storage, directions, optimizers):
+    assert len(directions) == len(optimizers), "Length of directions must match length of optimizers."
+    if len(directions) == 0:
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage,
+            load_if_exists=True,
+        )
+    else:
+        study = optuna.create_study(
+            study_name=study_name,
+            storage=storage,
+            directions=directions,
+            load_if_exists=True,
+            
+        )
+    return study
+
+def set_study_metric_names(study, optimizers):
+    if hasattr(study, "set_metric_names") and len(optimizers) > 0:
+        study.set_metric_names(optimizers)
+
+def set_user_attrs(study, attrs):
+    for k, v in attrs.items():
+        study.set_user_attr(key=k, value=v)
+    
 
 def save_params_file(cfg, files):
     if "score_file" in files and "params_file" not in files:
         if Path(files["score_file"]).exists():
             with open(files["score_file"], "r") as f:
                 existing_scores = json.load(f)
-            existing_scores = existing_scores.get("params", {})
-            for k, v in existing_scores.items():
-                if k not in dot_dict:
-                    dot_dict[k] = v
-            cfg = OmegaConf.merge(OmegaConf.create(dot_dict), OmegaConf.create(cfg))
-        dot_dict = {"params" : cfg}
+            existing_params = existing_scores.get("params", {})
+            cfg = OmegaConf.merge(OmegaConf.create(existing_params), OmegaConf.create(cfg))
+            cfg = OmegaConf.to_container(cfg, resolve=True)
+        param_dict = {"params" : cfg}
         Path(files["score_file"]).parent.mkdir(parents=True, exist_ok=True)
         with open(files["score_file"], "w") as f:
-            json.dump(dot_dict, f, indent=4)
+            json.dump(param_dict, f, indent=4)
     elif "params_file" in files:
         if Path(files["params_file"]).exists():
             existing_cfg = OmegaConf.load(files["params_file"])
@@ -204,24 +242,34 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
     ----------
         ValueError: If the "files" key in the configuration is not a dictionary or a FileConfig instance.
     """
-    files = cfg.pop("files", {}) if "files" in cfg else {}
-    if not isinstance(files, dict):
-        files = files.to_dict()
+    if "files" in cfg:
+        if isinstance(cfg.files, FileConfig):
+            files = cfg.files()
+        elif isinstance(cfg.files, dict) or isinstance(cfg.files, DictConfig):
+            file_dict = OmegaConf.to_container(cfg.files, resolve=True)
+            files = FileConfig(**file_dict)()
+        else:
+            files = {}
+    else:
+        files = {}
+    # Update files with kwargs
+    files.update(kwargs)
     hash_ = hashlib.md5(str(cfg).encode()).hexdigest()
     if "experiment_name" not in files:
         files["experiment_name"] = "*"
     for k, path in files.items():
         if isinstance(path, str):
-            path = path.replace("*", hash_)
-            path = path.replace("{hash}", hash_)
             path = path.replace("{experiment_name}", files["experiment_name"])
+            path = path.replace("{hash}", hash_)
+            path = path.replace("*", hash_)
+          
             files[k] = path
-    if isinstance(files, dict):
-        files = FileConfig(**files)()
-    elif isinstance(files, FileConfig):
-        files = files()
-    else:
-        raise ValueError("files must be a dict or FileConfig instance.")
+    for k, path in kwargs.items():
+        if isinstance(path, str):
+            path = path.replace("{experiment_name}", files.get("experiment_name", "*"))
+            path = path.replace("{hash}", hash_)
+            path = path.replace("*", hash_)
+            files[k] = path
     return {**files, **kwargs}
 
 
@@ -258,7 +306,8 @@ def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
         and executed with the provided `args` and `files`.
     """
     if isinstance(runner, ExperimentConfig):
-        runner.files = FileConfig(**files, experiment_name=runner.experiment_name)
+        files["experiment_name"] = runner.experiment_name
+        runner.files = FileConfig(**files)
         runner.__post_init__()
         return runner()
     return runner(*args, **files)
@@ -302,7 +351,7 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     - If no valid optimization scores are found, a `ValueError` is raised.
     """
     if not optimizers:
-        return scores
+        return scores, {}
     scores = {k: v for k, v in scores.items() if k in optimizers}
     values = list(scores.values())
     if directions:
@@ -310,24 +359,24 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
             optimizers,
         ), f"Length of directions must match length of optimizers. Got {len(directions)} and {len(optimizers)}."
         optimize_scores = []
-        attributes = []
+        attributes = {}
         for i, direction in enumerate(directions):
             match direction:
                 case "minimize" | "maximize":
                     optimize_scores.append(float(values[i]))
                 case "diff":
-                    attributes.append(float(values[i]))
-        if optimize_scores:
-            return optimize_scores
-        raise ValueError("No optimization scores found for the specified directions.")
+                    attributes[optimizers[i]] = float(values[i])
+                case _:
+                    raise ValueError(f"Invalid direction: {direction}.")
+        if not optimize_scores:
+            raise ValueError("No optimization scores found for the specified directions.")
+        values = optimize_scores
     else:
-        attributes = []
-    if len(attributes) > 0:
-        raise NotImplementedError(
-            "Storing metrics not used for optimization not yet implemented.",
-        )
+        attributes = {}
     values = tuple(values)
-    return values
+    if isinstance(values, (tuple, list)) and len(values) == 1:
+        values = values[0]
+    return values, attributes
 
 
 def initialize_config(
