@@ -8,3 +8,8 @@ _target_ : "deckard.DataConfig"
 classifier: True
 stratify : False
 alias: adult_openml
+pipeline: 
+  label_encoder:
+    _target_: "sklearn.preprocessing.LabelEncoder"
+    _target_: "sklearn.feature_selection.VarianceThreshold"
+    threshold: 0.0

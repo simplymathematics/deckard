@@ -1,15 +1,15 @@
 attack_type : "art.attacks.evasion.BoundaryAttack"
 attack_params : 
-  batch_size : 16
+  batch_size : 100
   targeted: false
   delta : 0.01
   epsilon : 0.01
   max_iter : 10
   num_trial : 25
-  sample_size : 20
+  sample_size : 100
   init_size: 100
   min_epsilon : 0.000
   verbose : true
-attack_size : 128
+attack_size : 100
 _target_ : deckard.attack.AttackConfig
 alias: boundary

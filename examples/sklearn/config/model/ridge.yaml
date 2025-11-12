@@ -1,7 +1,8 @@
-model_type: sklearn.linear_model.LinearRegression
+model_type: sklearn.linear_model.Ridge
 classifier : False
 model_params:
   tol: 0.0001
   fit_intercept: true
+  alpha: 1.0
 _target_ : deckard.ModelConfig
 alias: linear
