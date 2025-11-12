@@ -81,6 +81,7 @@ class DefenseConfig(ConfigBase):
 
     defense_type: Union[str, None] = None
     defense_params: dict = field(default_factory=dict)
+    alias: Union[str, None] = None
     
     def __post_init__(self):
         self._target_ = "deckard.model.DefenseConfig"
@@ -195,6 +196,9 @@ class ModelConfig(ConfigBase):
         self.predictions = None
         if self._target_ is None:
             self._target_ = "deckard.ModelConfig"
+        if hasattr(self, "defense") and hasattr(self.defense, "defense_type"):
+            if self.defense.defense_type in ["", None, "None", "null", "Null", "NULL", "none", "N/A", "n/a"]:
+                self.defense = None
 
     def _initialize_model(self):
         module_name, class_name = self.model_type.rsplit(".", 1)
@@ -219,7 +223,7 @@ class ModelConfig(ConfigBase):
     def parse_defense_name(self):
         defense_name = self.defense.defense_type if self.defense is not None else None
         assert defense_name is not None, "defense_type must be provided in ModelConfig"
-        if defense_name is not None and len(defense_name) > 0:
+        if defense_name is not None and len(defense_name.rsplit(".", 1)) > 0:
             module_name, class_name = defense_name.rsplit(".", 1)
         else:
             module_name = None
@@ -461,6 +465,22 @@ class ModelConfig(ConfigBase):
         """
         # Ensure that y_true and y_pred have the same length
         assert len(y_true) == len(y_pred), "y_true and y_pred must have the same length"
+        # Ensure that y_true.shape and y_pred.shape are compatible
+        if y_true.ndim > 1 and y_pred.ndim == 1:
+            y_pred = pd.get_dummies(y_pred).values
+            y_prob = y_pred
+        elif y_true.ndim == 1 and y_pred.ndim > 1:
+            y_prob = y_pred.copy()
+            y_pred = np.argmax(y_prob, axis=1)
+        elif y_true.ndim > 1 and y_pred.ndim > 1:
+            assert y_true.shape == y_pred.shape, "y_true and y_pred must have the same shape"
+            y_prob = y_pred.copy()
+            y_prob = np.argmax(y_prob, axis=1)
+        else:
+            y_prob = y_pred.copy()
+        assert y_true.shape[0] == y_pred.shape[0], "y_true and y_pred must have the same number of samples"
+        if y_true.ndim > 1:
+            assert y_true.shape[1] == y_pred.shape[1], "y_true and y_pred must have the same number of classes"
         try:
             acc = accuracy_score(y_true, y_pred)
             precision = precision_score(
@@ -472,31 +492,12 @@ class ModelConfig(ConfigBase):
             recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
             
-        except ValueError as ve:
-            if "mix of binary and continuous" in str(ve):
-                new_y_pred = np.amax(y_pred, axis=1)
-                return self._classification_scores(y_true, new_y_pred)
-            elif "mix of multiclass and continuous-multioutput" in str(ve):
-                new_y_pred = np.amax(y_pred, axis=1)
-                return self._classification_scores(y_true, new_y_pred)
-            elif "y_prob contains values greater than 1" in str(ve):
-                # Convert class labels to one-hot encoding
-                classes = np.unique(y_true)
-                y_pred_one_hot = np.zeros((len(y_pred), len(classes)))
-                for i, class_label in enumerate(classes):
-                    y_pred_one_hot[:, i] = np.array(y_pred == class_label).astype(int)
-                    logloss = log_loss(y_true=y_true, y_pred=y_pred_one_hot)
-            elif "mix of multiclass and multilabel-indicator" in str(ve):
-                new_y_pred = np.amax(y_pred, axis=1)
-                return self._classification_scores(y_true, new_y_pred)
-            else:
-                logger.error(f"Error computing classification scores: {ve}")
-                raise ve
+    
         except Exception as e:
             logger.error(f"Error computing classification scores: {e}")
             raise e
         try:
-            logloss = log_loss(y_true=y_true, y_pred=y_pred)
+            logloss = log_loss(y_true=y_true, y_pred=y_prob)
         except ValueError as e:
             if "y_prob contains values greater than 1" in str(e):
                 y_true = pd.get_dummies(y_true).values
