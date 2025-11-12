@@ -33,6 +33,78 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "default_experiment.yaml",
 )
 
+
+# hydra_plugins/file_resolver.py
+import os
+from pathlib import Path
+import yaml
+from omegaconf import OmegaConf
+
+# hydra_plugins/file_resolver.py
+import os
+from pathlib import Path
+import yaml
+from omegaconf import OmegaConf
+
+def _load_yaml_file(path: Path):
+    with path.open("r") as f:
+        return yaml.safe_load(f)
+
+def _file_resolver(arg: str):
+    """
+    Usage:
+      ${file:search/rf.yaml:model_search}
+      ${file:./configs/search/rf.yaml:model_search.subkey}
+      ${file:/abs/path/to/file.yaml}       -> returns whole file
+    """
+    if not arg:
+        raise ValueError("file resolver requires an argument like 'path/to/file.yaml[:key]'")
+
+    # split into path and optional key (only first ':' splits, keys may contain '.')
+    if ":" in arg:
+        path_part, key_part = arg.split(":", 1)
+        key_part = key_part.strip()
+    else:
+        path_part, key_part = arg, None
+    path = Path(DECKARD_CONFIG_DIR, path_part)
+    if not path.exists():
+        raise FileNotFoundError(f"file resolver: file not found: {path_part}")
+    
+    data = _load_yaml_file(path)
+    # if user requested a nested key, walk the dict using dot-splitting
+    if key_part:
+        parts = key_part.split(".")
+        cur = data
+        for p in parts:
+            if isinstance(cur, dict) and p in cur:
+                cur = cur[p]
+            else:
+                raise KeyError(f"file resolver: key '{key_part}' not found in {path}")
+        data = cur
+    data = OmegaConf.create(data)
+    # Return as an OmegaConf node so structured content is preserved
+    return data
+
+# Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
+OmegaConf.register_new_resolver("file", _file_resolver, replace=True, use_cache=True)
+
+
+def _merge_resolver(*args):
+    """
+    Merge multiple OmegaConf or dict objects into a single OmegaConf dict.
+    Usage:
+      ${merge:${file:search/rf.yaml:model_search}, ${file:search/class_labels.yaml:model_search}}
+    """
+    merged = OmegaConf.create()
+    for arg in args:
+        # Resolve any interpolations
+        obj = OmegaConf.to_container(OmegaConf.create(arg), resolve=True)
+        merged = OmegaConf.merge(merged, obj)
+    return OmegaConf.create(merged)
+
+OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
+
+
 class ExperimentConfig(ConfigBase):
     data: DataConfig
     experiment_name: str = "{hash}"
@@ -449,4 +521,10 @@ class ExperimentConfig(ConfigBase):
             # TODO: override existing score functions
         if "score_file" in file_dict and not Path(file_dict["score_file"]).exists():
             self.save_scores(scores, file_dict["score_file"])
+        elif "score_file" in file_dict:
+            old_scores = self.load_scores(file_dict["score_file"])
+            new_scores = {**old_scores, **scores}
+            self.save_scores(new_scores, file_dict["score_file"])
+        else:
+            logger.info("No score_file specified, skipping score saving.")
         return scores
