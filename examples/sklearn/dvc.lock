@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 6af3f778ad47476b7e43980c59a06450
-      size: 1211
+      md5: 3171489b91605e1a34e57465cceddf6a
+      size: 1213
     params:
       config/default.yaml:
         attack_alias: hsj
@@ -23,7 +23,6 @@ stages:
         defense_alias: class_labels
         directions:
         - maximize
-        - minimize
         experiment_name: 
           ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
         hydra:
@@ -32,6 +31,8 @@ stages:
           sweep:
             dir: outputs/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          job:
+            name: ${experiment_name}
           sweeper:
             study_name: evasion_attack
             storage: sqlite:///optuna.db
@@ -54,7 +55,6 @@ stages:
         model_alias: rf
         optimizers:
         - accuracy
-        - evasion_success_rate
         params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, 
           ${file:search/defenses/${defense_alias}.yaml:model_search},}
     outs:
@@ -535,7 +535,7 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: cb887b27ad08c97e306e47177fa74807.dir
+      md5: 3d6ef2788de99c9a0444384b992250f7.dir
       size: 128638
       nfiles: 6
     - path: outputs/data/adult.pkl
@@ -577,12 +577,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_class_labels.pkl
       hash: md5
-      md5: 5320f9a5b9155a58b25645d57d965fbb
+      md5: 839a1386c77774df2a48ca7a306d3685
       size: 109567555
     - path: outputs/scores/defenses/adult/rf_class_labels.json
       hash: md5
-      md5: 081f7a3fdab4cb05908eae02f450d537
-      size: 506
+      md5: 81530b742b591f867976da5a695d1331
+      size: 509
   defend_rf@digits-logistic-class_labels:
     cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
       +files.model_file=outputs/models/digits/logistic_defended_class_labels.pkl
@@ -917,31 +917,87 @@ stages:
       nfiles: 100
   defend@adult-rf-class_labels:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/adult/rf/class_labels/*.json model=rf model_alias=rf
-      optimizers=[\"accuracy\",\"training_time\"] directions=[\"maximize\",\"minimize\"\
-      ] ~attack attack_alias=None defense=class_labels defense_alias=class_labels
+      +files.score_file=outputs/scores/defenses/adult/rf/class_labels/*.json model=rf
+      model_alias=rf ~attack attack_alias=None defense=class_labels defense_alias=class_labels
       experiment_name=\"*\" hydra.sweeper.study_name=adult_rf_class_labels --multirun\n"
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 6af3f778ad47476b7e43980c59a06450
-      size: 1211
+      md5: 3171489b91605e1a34e57465cceddf6a
+      size: 1213
     - path: outputs/data/adult.pkl
       hash: md5
       md5: 59c82fcb93208ada39f80adfd63a0da1
       size: 14515455
     - path: outputs/models/adult/rf_defended_class_labels.pkl
       hash: md5
-      md5: 5320f9a5b9155a58b25645d57d965fbb
+      md5: 839a1386c77774df2a48ca7a306d3685
       size: 109567555
     outs:
     - path: outputs/logs/adult_rf_class_labels
       hash: md5
-      md5: c95c81bfb3590cd81981b6682c148f08.dir
-      size: 936274
+      md5: 17e85ca013e431d3f472c59c2e96f9c3.dir
+      size: 948787
       nfiles: 400
-    - path: outputs/scores/adult/rf/class_labels/
+    - path: outputs/scores/defenses/adult/rf/class_labels/
       hash: md5
-      md5: 6c7c31f4da6d69006d23b0b911c5bfdd.dir
-      size: 50599
+      md5: 9ddce76dab0462f4fa2aaaa6944ce4f9.dir
+      size: 844198
       nfiles: 100
+  defend_rf@adult-rf-gaussian_noise:
+    cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
+      +files.model_file=outputs/models/adult/rf_defended_gaussian_noise.pkl 
+      +files.score_file=outputs/scores/defenses/adult/rf_gaussian_noise.json 
+      model=rf.yaml model.alias=rf_gaussian_noise defense=gaussian_noise.yaml 
+      experiment_name=adult_rf_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: 3d6ef2788de99c9a0444384b992250f7.dir
+      size: 128638
+      nfiles: 6
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 59c82fcb93208ada39f80adfd63a0da1
+      size: 14515455
+    params:
+      config/data/adult.yaml:
+        _target_: deckard.DataConfig
+        alias: adult
+        classifier: true
+        dataset_name: adult
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+      config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/adult/rf_defended_gaussian_noise.pkl
+      hash: md5
+      md5: f9b0d6ca2bf6ddb6eb5d4b3a745be56e
+      size: 109567557
+    - path: outputs/scores/defenses/adult/rf_gaussian_noise.json
+      hash: md5
+      md5: 7ab1a3948add44abf356ee4b1d0538f5
+      size: 8443
