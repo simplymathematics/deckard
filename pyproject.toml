@@ -116,4 +116,7 @@ filterwarnings = [
         "ignore::UserWarning",
         "ignore::RuntimeWarning",
         "ignore::sklearn.exceptions.ConvergenceWarning",
+        "ignore::DeprecationWarning",
+        "ignore::FutureWarning",
+        "ignore::matplotlib.MatplotlibDeprecationWarning"
 ]
