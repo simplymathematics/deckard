@@ -6,5 +6,6 @@ model_params:
   tol: 0.0001
   C: 1.0
   fit_intercept: true
+  max_iter: 10
 _target_ : deckard.ModelConfig
 alias: logistic
