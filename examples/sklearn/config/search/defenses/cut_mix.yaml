@@ -1,0 +1,10 @@
+# defense_type: art.defences.preprocessor.CutMix
+# defense_params:
+#     apply_fit : True
+#     apply_predict : False
+#     alpha: 1.0
+#     probability: .5
+model_search:
+  ++model.defense.defense_type: art.defences.preprocessor.CutMix
+  ++model.defense.defense_params.alpha: range(0.1, 5.0, 0.5)
+  ++model.defense.defense_params.probability: range(0.1, 1.0, 0.1)

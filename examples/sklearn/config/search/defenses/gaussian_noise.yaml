@@ -1,0 +1,5 @@
+model_search:
+  ++model.defense.defense_type: art.defences.postprocessor.GaussianNoise
+  ++model.defense.defense_params.scale: range(0.0, .9, 0.1)
+  ++model.defense.defense_params.apply_fit: bool(True,False)
+  ++model.defense.defense_params.apply_predict: bool(True,False)

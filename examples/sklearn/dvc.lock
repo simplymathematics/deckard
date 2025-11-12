@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 94f9e32f0cb487ad29c3683d33004d3e
-      size: 1245
+      md5: 6af3f778ad47476b7e43980c59a06450
+      size: 1211
     params:
       config/default.yaml:
         attack_alias: hsj
@@ -55,9 +55,8 @@ stages:
         optimizers:
         - accuracy
         - evasion_success_rate
-        params: ${merge:${file:search/${model_alias}.yaml:model_search}, 
-          ${file:search/${defense_alias}.yaml:model_search}, 
-          ${file:search/${attack_alias}.yaml:attack_search}}
+        params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, 
+          ${file:search/defenses/${defense_alias}.yaml:model_search},}
     outs:
     - path: .deckard_rc
       hash: md5
@@ -93,11 +92,11 @@ stages:
     outs:
     - path: outputs/data/classification.pkl
       hash: md5
-      md5: a9aaa814121dabf04d44242f20dc5daf
+      md5: 0683e74695593963e8b2a512f26ab128
       size: 3394517
     - path: outputs/scores/data/classification.json
       hash: md5
-      md5: 6c8303e4f473d6722da503f8b61aff46
+      md5: b1f6c332c44fc4d9d23beb77add1d213
       size: 1626
   defend_rf@classification-rf-class_labels:
     cmd: deckard data=classification 
@@ -110,12 +109,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 687b78a44a415227023dc98f4f2f606a.dir
-      size: 128769
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/classification.pkl
       hash: md5
-      md5: a9aaa814121dabf04d44242f20dc5daf
+      md5: 0683e74695593963e8b2a512f26ab128
       size: 3394517
     params:
       config/data/classification.yaml:
@@ -156,11 +155,11 @@ stages:
     outs:
     - path: outputs/models/classification/rf_defended_class_labels.pkl
       hash: md5
-      md5: fb8f2edac0cb7efa65a0293b1ff3cc41
+      md5: 5979e89882075c28836a905fd0a893ee
       size: 10200254
     - path: outputs/scores/defenses/classification/rf_class_labels.json
       hash: md5
-      md5: 0596077842b32b78766bb48b1c1fd47e
+      md5: 093fea0db18ad9fa1bac91ae1381a0ac
       size: 485
   defend_rf@classification-svc-class_labels:
     cmd: deckard data=classification 
@@ -173,12 +172,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: ee900ebf8700cb731acfaaef2713a3ba.dir
-      size: 128787
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/classification.pkl
       hash: md5
-      md5: a9aaa814121dabf04d44242f20dc5daf
+      md5: 0683e74695593963e8b2a512f26ab128
       size: 3394517
     params:
       config/data/classification.yaml:
@@ -219,11 +218,11 @@ stages:
     outs:
     - path: outputs/models/classification/svc_defended_class_labels.pkl
       hash: md5
-      md5: f316ea0ffff8b1101e47abe840a22833
+      md5: 90e42c3ba55fc96755a637fe9119dabb
       size: 38067
     - path: outputs/scores/defenses/classification/svc_class_labels.json
       hash: md5
-      md5: d0747dadbd5fcf76a3a3e8fc1310627f
+      md5: 25c95ab7cdb00f051a0366328c877317
       size: 496
   generate_data@digits:
     cmd: "deckard  data=digits  +files.data_file=outputs/data/digits.pkl  +files.score_file=outputs/scores/data/digits.json
@@ -250,7 +249,7 @@ stages:
     outs:
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: 788adaef40f4b01e28ff9de9defa436d
+      md5: 4be74b2f6015e5e5a9053532fd061028
       size: 1878901
     - path: outputs/scores/data/digits.json
       hash: md5
@@ -266,12 +265,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 5b9eaafcfad3455e4926dc4cf358283c.dir
-      size: 129777
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: 125f7610055e93b65fd1dde5f2ff57de
+      md5: 4be74b2f6015e5e5a9053532fd061028
       size: 1878901
     params:
       config/data/digits.yaml:
@@ -308,11 +307,11 @@ stages:
     outs:
     - path: outputs/models/digits/svc_defended_class_labels.pkl
       hash: md5
-      md5: 1f201c74df72df827e6d858ecc7dba51
+      md5: 275c6bad6109925ffa272268b896da19
       size: 385077
     - path: outputs/scores/defenses/digits/svc_class_labels.json
       hash: md5
-      md5: 678f8c9346076e2c9ff8c3b9ed3c569f
+      md5: 894f73c4492265b7346b7cb8922e5b7d
       size: 498
   generate_data@adult:
     cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.score_file=outputs/scores/data/adult.json
@@ -339,7 +338,7 @@ stages:
     outs:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 107d96202d997bbacf95a608f39e8933
+      md5: 59c82fcb93208ada39f80adfd63a0da1
       size: 14515455
     - path: outputs/scores/data/adult.json
       hash: md5
@@ -355,12 +354,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: ed3d27fba2625ce49054f1fdd98f0b15.dir
-      size: 128792
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: e78b3821131071cb1f30989f33e66e0e
+      md5: 59c82fcb93208ada39f80adfd63a0da1
       size: 14515455
     params:
       config/data/adult.yaml:
@@ -397,12 +396,12 @@ stages:
     outs:
     - path: outputs/models/adult/svc_defended_class_labels.pkl
       hash: md5
-      md5: 1ac3276b27a31901ea8acb8eddb6914e
+      md5: 51899933e3dae73d6ad10d5e68ad6188
       size: 163380
     - path: outputs/scores/defenses/adult/svc_class_labels.json
       hash: md5
-      md5: ac1d5125e8b9e8773493e35a5a1725e9
-      size: 511
+      md5: c328c636dced42374781bf0338027f78
+      size: 510
   defend_rf@classification-logistic-class_labels:
     cmd: deckard data=classification 
       +files.data_file=outputs/data/classification.pkl 
@@ -415,12 +414,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: ed3d27fba2625ce49054f1fdd98f0b15.dir
-      size: 128792
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/classification.pkl
       hash: md5
-      md5: a9aaa814121dabf04d44242f20dc5daf
+      md5: 0683e74695593963e8b2a512f26ab128
       size: 3394517
     params:
       config/data/classification.yaml:
@@ -461,12 +460,12 @@ stages:
     outs:
     - path: outputs/models/classification/logistic_defended_class_labels.pkl
       hash: md5
-      md5: 8c9baee021cb98d327d4d7bd119a65e6
+      md5: b3784c5bcf2e01c94d379d9f231a7918
       size: 1733
     - path: outputs/scores/defenses/classification/logistic_class_labels.json
       hash: md5
-      md5: ddfd4c8348162783fcb3c354b3092010
-      size: 502
+      md5: 6e95737053136ead66daf043e30cd6fb
+      size: 503
   defend_rf@adult-logistic-class_labels:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/logistic_defended_class_labels.pkl 
@@ -478,12 +477,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 7c837aef2135a4769646faa00c52cf75.dir
-      size: 129789
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 107d96202d997bbacf95a608f39e8933
+      md5: 59c82fcb93208ada39f80adfd63a0da1
       size: 14515455
     params:
       config/data/adult.yaml:
@@ -520,11 +519,11 @@ stages:
     outs:
     - path: outputs/models/adult/logistic_defended_class_labels.pkl
       hash: md5
-      md5: ff12233bcb51891588baa43c30eaf966
+      md5: 3dbd6a5033604abab21a806bf6f0c908
       size: 4456
     - path: outputs/scores/defenses/adult/logistic_class_labels.json
       hash: md5
-      md5: 46b14ee7f21e6eecc05990b7fcf78880
+      md5: ae18afaf8e39d54b315a55fc8ac57a2e
       size: 509
   defend_rf@adult-rf-class_labels:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
@@ -536,12 +535,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 2a051cdbf9da878a88059f4e17e143d6.dir
-      size: 129426
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: e78b3821131071cb1f30989f33e66e0e
+      md5: 59c82fcb93208ada39f80adfd63a0da1
       size: 14515455
     params:
       config/data/adult.yaml:
@@ -578,12 +577,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_class_labels.pkl
       hash: md5
-      md5: 3f7e448fde8969e4641bcf949ad19adf
+      md5: 5320f9a5b9155a58b25645d57d965fbb
       size: 109567555
     - path: outputs/scores/defenses/adult/rf_class_labels.json
       hash: md5
-      md5: dfe199c64a839854890d5ac16b304878
-      size: 509
+      md5: 081f7a3fdab4cb05908eae02f450d537
+      size: 506
   defend_rf@digits-logistic-class_labels:
     cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
       +files.model_file=outputs/models/digits/logistic_defended_class_labels.pkl
@@ -595,12 +594,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 5b9eaafcfad3455e4926dc4cf358283c.dir
-      size: 129777
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: 125f7610055e93b65fd1dde5f2ff57de
+      md5: 4be74b2f6015e5e5a9053532fd061028
       size: 1878901
     params:
       config/data/digits.yaml:
@@ -637,12 +636,12 @@ stages:
     outs:
     - path: outputs/models/digits/logistic_defended_class_labels.pkl
       hash: md5
-      md5: 256485bb1c5cdbdf7ff59b1836e9418a
+      md5: cf24647aaa93236ffff89106f70e1a77
       size: 6495
     - path: outputs/scores/defenses/digits/logistic_class_labels.json
       hash: md5
-      md5: 28377d23fb350c92ef28e149c3150d11
-      size: 480
+      md5: d48418780938fb04ad259c5cc1dbaf0e
+      size: 481
   defend_rf@digits-rf-class_labels:
     cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
       +files.model_file=outputs/models/digits/rf_defended_class_labels.pkl 
@@ -653,12 +652,12 @@ stages:
     deps:
     - path: ../../deckard/model
       hash: md5
-      md5: 0ff81d1fbc5fd96827a5af8129855632.dir
-      size: 128773
+      md5: cb887b27ad08c97e306e47177fa74807.dir
+      size: 128638
       nfiles: 6
     - path: outputs/data/digits.pkl
       hash: md5
-      md5: 125f7610055e93b65fd1dde5f2ff57de
+      md5: 4be74b2f6015e5e5a9053532fd061028
       size: 1878901
     params:
       config/data/digits.yaml:
@@ -695,9 +694,254 @@ stages:
     outs:
     - path: outputs/models/digits/rf_defended_class_labels.pkl
       hash: md5
-      md5: 500a987312387608a0800086ec3605c1
+      md5: ab26cf83ceb290c5410e20bcfc79c0cb
       size: 5059229
     - path: outputs/scores/defenses/digits/rf_class_labels.json
       hash: md5
-      md5: 93eb2d3281eeb22db7f27389bf423519
-      size: 483
+      md5: 738c658ef05d0e7f9e5dba610cef5d33
+      size: 481
+  simple_example:
+    cmd: deckard experiment_name=default && echo "Deckard ran successfully!" > 
+      deckard.log
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: ad3929d77d4548f1b098e6213b0f499e.dir
+      size: 533377
+      nfiles: 29
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 94f9e32f0cb487ad29c3683d33004d3e
+      size: 1245
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    outs:
+    - path: deckard.log
+      hash: md5
+      md5: ac96bb25847dd3d698d84a7b4b7ffd1c
+      size: 26
+  generate_data@diabetes:
+    cmd: "deckard  data=diabetes  +files.data_file=outputs/data/diabetes.pkl  +files.score_file=outputs/scores/data/diabetes.json
+      experiment_name=diabetes ~model  ~attack ~directions ~optimizers\n"
+    deps:
+    - path: ../../deckard/data/
+      hash: md5
+      md5: 2cf544ce27497ae5215c6887a7b950fb.dir
+      size: 100263
+      nfiles: 4
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/data/diabetes.yaml:
+        _target_: deckard.DataConfig
+        alias: diabetes
+        classifier: false
+        dataset_name: diabetes
+        random_state: 42
+        stratify: false
+        test_size: 0.2
+    outs:
+    - path: outputs/data/diabetes.pkl
+      hash: md5
+      md5: 5bb61a873d83689a3a45fee7c4fc46b4
+      size: 86199
+    - path: outputs/scores/data/diabetes.json
+      hash: md5
+      md5: 65fb9f275041f89d3f7b661b529d5527
+      size: 1440
+  generate_data@regression:
+    cmd: "deckard  data=regression  +files.data_file=outputs/data/regression.pkl \
+      \ +files.score_file=outputs/scores/data/regression.json experiment_name=regression
+      ~model  ~attack ~directions ~optimizers\n"
+    deps:
+    - path: ../../deckard/data/
+      hash: md5
+      md5: 2cf544ce27497ae5215c6887a7b950fb.dir
+      size: 100263
+      nfiles: 4
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/data/regression.yaml:
+        _target_: deckard.DataConfig
+        alias: make_regression
+        classifier: false
+        data_params:
+          n_samples: 10000
+          n_features: 20
+          n_informative: 10
+          noise: 0.1
+          random_state: 42
+        dataset_name: make_regression
+        stratify: false
+    outs:
+    - path: outputs/data/regression.pkl
+      hash: md5
+      md5: 6ea0c94a4d96997a97711c9f43f4c784
+      size: 3484597
+    - path: outputs/scores/data/regression.json
+      hash: md5
+      md5: 782c79528a101c36c28c63cf5d4eec8f
+      size: 1610
+  generate_data@kdd_nsl:
+    cmd: "deckard  data=kdd_nsl  +files.data_file=outputs/data/kdd_nsl.pkl  +files.score_file=outputs/scores/data/kdd_nsl.json
+      experiment_name=kdd_nsl ~model  ~attack ~directions ~optimizers\n"
+  defend@digits-rf-class_labels:
+    cmd: "deckard  data=digits  data_alias=digits +files.data_file=outputs/data/digits.pkl
+      +files.score_file=outputs/scores/digits/rf/class_labels/*.json model=rf model_alias=rf
+      optimizers=[\"accuracy\",\"training_time\"] directions=[\"maximize\",\"minimize\"\
+      ] ~attack attack_alias=None defense=class_labels defense_alias=class_labels
+      experiment_name=\"*\" hydra.sweeper.study_name=digits_rf_class_labels --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 6af3f778ad47476b7e43980c59a06450
+      size: 1211
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 4be74b2f6015e5e5a9053532fd061028
+      size: 1878901
+    - path: outputs/models/digits/rf_defended_class_labels.pkl
+      hash: md5
+      md5: ab26cf83ceb290c5410e20bcfc79c0cb
+      size: 5059229
+    outs:
+    - path: outputs/logs/digits_rf_class_labels
+      hash: md5
+      md5: 1935618a17de9843407d4736261d62a6.dir
+      size: 937136
+      nfiles: 400
+    - path: outputs/scores/digits/rf/class_labels/
+      hash: md5
+      md5: d2f043d1b1ed044ee8acb714ab32ec61.dir
+      size: 48885
+      nfiles: 100
+  defend@classification-svc-class_labels:
+    cmd: "deckard  data=classification  data_alias=classification +files.data_file=outputs/data/classification.pkl
+      +files.score_file=outputs/scores/classification/svc/class_labels/*.json model=svc
+      model_alias=svc optimizers=[\"accuracy\",\"training_time\"] directions=[\"maximize\"\
+      ,\"minimize\"] ~attack attack_alias=None defense=class_labels defense_alias=class_labels
+      experiment_name=\"*\" hydra.sweeper.study_name=classification_svc_class_labels_evasion
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 3634aa95b802447f971c7322ab11259b
+      size: 1195
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0683e74695593963e8b2a512f26ab128
+      size: 3394517
+    - path: outputs/models/classification/svc_defended_class_labels.pkl
+      hash: md5
+      md5: 90e42c3ba55fc96755a637fe9119dabb
+      size: 38067
+    outs:
+    - path: outputs/logs/classification_svc_class_labels_evasion
+      hash: md5
+      md5: dacbf8b4df63474307ea34c82ef43f35.dir
+      size: 949706
+      nfiles: 400
+    - path: outputs/scores/classification/svc/class_labels/
+      hash: md5
+      md5: 5dbf3a98b27b486e0fb1b3d38c567f01.dir
+      size: 50242
+      nfiles: 100
+  defend@classification-logistic-class_labels:
+    cmd: "deckard  data=classification  data_alias=classification +files.data_file=outputs/data/classification.pkl
+      +files.score_file=outputs/scores/classification/logistic/class_labels/*.json
+      model=logistic model_alias=logistic optimizers=[\"accuracy\",\"training_time\"\
+      ] directions=[\"maximize\",\"minimize\"] ~attack attack_alias=None defense=class_labels
+      defense_alias=class_labels experiment_name=\"*\" hydra.sweeper.study_name=classification_logistic_class_labels_evasion
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 3634aa95b802447f971c7322ab11259b
+      size: 1195
+    - path: outputs/data/classification.pkl
+      hash: md5
+      md5: 0683e74695593963e8b2a512f26ab128
+      size: 3394517
+    - path: outputs/models/classification/logistic_defended_class_labels.pkl
+      hash: md5
+      md5: b3784c5bcf2e01c94d379d9f231a7918
+      size: 1733
+    outs:
+    - path: outputs/logs/classification_logistic_class_labels_evasion
+      hash: md5
+      md5: 5828e79fc778a5e01b5269737faac820.dir
+      size: 988608
+      nfiles: 400
+    - path: outputs/scores/classification/logistic/class_labels/
+      hash: md5
+      md5: a350c4aca0159d4d99298b5a98342664.dir
+      size: 49954
+      nfiles: 100
+  defend@digits-svc-class_labels:
+    cmd: "deckard  data=digits  data_alias=digits +files.data_file=outputs/data/digits.pkl
+      +files.score_file=outputs/scores/digits/svc/class_labels/*.json model=svc model_alias=svc
+      optimizers=[\"accuracy\",\"training_time\"] directions=[\"maximize\",\"minimize\"\
+      ] ~attack attack_alias=None defense=class_labels defense_alias=class_labels
+      experiment_name=\"*\" hydra.sweeper.study_name=digits_svc_class_labels_evasion
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 3634aa95b802447f971c7322ab11259b
+      size: 1195
+    - path: outputs/data/digits.pkl
+      hash: md5
+      md5: 4be74b2f6015e5e5a9053532fd061028
+      size: 1878901
+    - path: outputs/models/digits/svc_defended_class_labels.pkl
+      hash: md5
+      md5: 275c6bad6109925ffa272268b896da19
+      size: 385077
+    outs:
+    - path: outputs/logs/digits_svc_class_labels_evasion
+      hash: md5
+      md5: 65b8815693e09db47d40188d623717c9.dir
+      size: 925335
+      nfiles: 400
+    - path: outputs/scores/digits/svc/class_labels/
+      hash: md5
+      md5: efd5d7ed3b71ae1b60d2328ae7743dd9.dir
+      size: 48788
+      nfiles: 100
+  defend@adult-rf-class_labels:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      +files.score_file=outputs/scores/adult/rf/class_labels/*.json model=rf model_alias=rf
+      optimizers=[\"accuracy\",\"training_time\"] directions=[\"maximize\",\"minimize\"\
+      ] ~attack attack_alias=None defense=class_labels defense_alias=class_labels
+      experiment_name=\"*\" hydra.sweeper.study_name=adult_rf_class_labels --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 6af3f778ad47476b7e43980c59a06450
+      size: 1211
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 59c82fcb93208ada39f80adfd63a0da1
+      size: 14515455
+    - path: outputs/models/adult/rf_defended_class_labels.pkl
+      hash: md5
+      md5: 5320f9a5b9155a58b25645d57d965fbb
+      size: 109567555
+    outs:
+    - path: outputs/logs/adult_rf_class_labels
+      hash: md5
+      md5: c95c81bfb3590cd81981b6682c148f08.dir
+      size: 936274
+      nfiles: 400
+    - path: outputs/scores/adult/rf/class_labels/
+      hash: md5
+      md5: 6c7c31f4da6d69006d23b0b911c5bfdd.dir
+      size: 50599
+      nfiles: 100

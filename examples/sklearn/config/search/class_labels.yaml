@@ -1,3 +1,0 @@
-model_search:
-  ++model.defense.defense_type: None,art.defences.postprocessor.ClassLabels
-  ++model.defense.defense_params: {}
