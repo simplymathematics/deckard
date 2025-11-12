@@ -81,6 +81,7 @@ def optimize(
       and executes the optimization process.
     """
     hydra_cfg = HydraConfig.get()
+    mode = hydra_cfg.mode
     files = _initialize_files(cfg, kwargs)
     cfg = _convert_config_to_dict(cfg)
     cfg = save_params_file(cfg, files)
@@ -89,7 +90,7 @@ def optimize(
     runner = initialize_config(cfg, target=target)
     scores = _run_experiment(runner, files, args)
     scores, attributes = _filter_scores(scores, optimizers, directions)
-    if "sweeper" in hydra_cfg:
+    if str(mode) != "RunMode.RUN":
         assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
         assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
         storage = hydra_cfg.sweeper.storage
