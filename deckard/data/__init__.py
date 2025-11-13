@@ -390,6 +390,7 @@ class DataConfig(ConfigBase):
             pd.DataFrame,
         ), f"Expected DataFrame got {type(self._X)}"
         assert isinstance(self._y, pd.Series), f"Expected Series got {type(self._y)}"
+        self._X = self._X.apply(pd.to_numeric, errors='coerce')
         return self
 
     def _make_classification_data(
