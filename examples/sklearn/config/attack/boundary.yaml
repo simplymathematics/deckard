@@ -10,6 +10,6 @@ attack_params :
   init_size: 100
   min_epsilon : 0.000
   verbose : true
-attack_size : 100
+attack_size : 10
 _target_ : deckard.attack.AttackConfig
 alias: boundary

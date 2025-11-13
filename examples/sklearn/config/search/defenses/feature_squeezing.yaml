@@ -1,4 +1,5 @@
 model_search:
-  ++model.defense.defense_type: None,art.defences.postprocessor.FeatureSqueezing
+  ++model.defense.defense_type: None,art.defences.preprocessor.FeatureSqueezing
   ++model.defense.defense_params.bit_depth: 1,2,4,8,16,32,64
   ++model.defense.defense_params.apply_fit: bool(True,False)
+  ++model.defense.defense_params.preprocessing: False

@@ -207,16 +207,16 @@ stages:
         # - logistic
       defense:
         # Postprocessing defenses
-        - class_labels
-        # - gaussian_noise
-        # - high_confidence
+        # - class_labels
+        - gaussian_noise
+        - high_confidence
         # - reverse_sigmoid
         # - rounded
         # # Preprocessing defenses
         # - cut_mix
         # - cutout
-        # - feature_squeezing
-        # - gaussian_augmentation
+        - feature_squeezing
+        - gaussian_augmentation
         # - jpeg_compression
         # - label_smoothing
         # - mixup
@@ -260,11 +260,11 @@ stages:
         # - logistic
       attack:
         # Evasion attacks
-        - hsj
+        # - hsj
         - boundary
       defense:
       # Postprocessing defenses
-        - class_labels
+        # - class_labels
         - gaussian_noise
         - high_confidence
       #   - reverse_sigmoid
