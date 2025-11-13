@@ -90,7 +90,7 @@ def optimize(
     runner = initialize_config(cfg, target=target)
     scores = _run_experiment(runner, files, args)
     scores, attributes = _filter_scores(scores, optimizers, directions)
-    if str(mode) != "RunMode.RUN":
+    if str(mode) == "RunMode.MULTIRUN":
         assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
         assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
         storage = hydra_cfg.sweeper.storage
@@ -131,6 +131,7 @@ def set_user_attrs(study, attrs):
     
 
 def save_params_file(cfg, files):
+    _ = cfg.pop("params", None)
     if "score_file" in files and "params_file" not in files:
         if Path(files["score_file"]).exists():
             with open(files["score_file"], "r") as f:
@@ -138,6 +139,7 @@ def save_params_file(cfg, files):
             existing_params = existing_scores.get("params", {})
             cfg = OmegaConf.merge(OmegaConf.create(existing_params), OmegaConf.create(cfg))
             cfg = OmegaConf.to_container(cfg, resolve=True)
+            
         param_dict = {"params" : cfg}
         Path(files["score_file"]).parent.mkdir(parents=True, exist_ok=True)
         with open(files["score_file"], "w") as f:
@@ -263,6 +265,7 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
             path = path.replace("{experiment_name}", files["experiment_name"])
             path = path.replace("{hash}", hash_)
             path = path.replace("*", hash_)
+            
           
             files[k] = path
     for k, path in kwargs.items():
