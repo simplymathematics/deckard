@@ -272,6 +272,8 @@ class ModelConfig(ConfigBase):
                 "input_shape": data.X_train.shape[1:],
                 "nb_classes": len(set(data.y_train)) if self.classifier else None,
             }
+        if "preprocessing" not in init_params:
+            init_params["preprocessing"] = None
         return art_class, init_params
 
     def get_model(self) -> BaseEstimator:
@@ -504,7 +506,7 @@ class ModelConfig(ConfigBase):
                 y_pred = pd.get_dummies(y_pred).values
                 logloss = log_loss(y_true=y_true, y_pred=y_pred)
             else:
-                raise e
+                logloss = np.nan
         scores = {
             "accuracy": acc,
             "precision": precision,
