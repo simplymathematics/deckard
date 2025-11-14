@@ -13,7 +13,7 @@ defaults:
 experiment_name: ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
 directions:
 - maximize
-- minmize
+- minimize
 optimizers:
 - accuracy
 - evasion_success
