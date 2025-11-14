@@ -233,7 +233,6 @@ stages:
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
       +files.score_file=outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/*.json
-      +files.model_file=outputs/models/${item.data}/${item.model}_defended_${item.defense}/*.pkl
       model=${item.model}
       model_alias=${item.model}
       attack_alias=${item.attack}
@@ -287,7 +286,6 @@ stages:
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
       +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/*.json
-      +files.model_file=outputs/models/${item.data}/${item.model}_defended_${item.defense}/*.pkl
       model=${item.model}
       model_alias=${item.model}
       attack=${item.attack}
