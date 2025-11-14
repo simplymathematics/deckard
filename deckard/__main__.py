@@ -5,10 +5,10 @@ import os
 import sys
 import json
 from pathlib import Path
-
+from typing import Union
 import optuna
 
-from omegaconf import ListConfig, OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig
 import hydra
 from hydra.utils import instantiate
 from hydra.core.hydra_config import HydraConfig
@@ -82,15 +82,19 @@ def optimize(
     """
     hydra_cfg = HydraConfig.get()
     mode = hydra_cfg.mode
-    files = _initialize_files(cfg, kwargs)
+    files = _initialize_files(cfg, kwargs, mode, num=hydra_cfg.job.num if str(mode) == "RunMode.MULTIRUN" else None)
     cfg = _convert_config_to_dict(cfg)
     cfg = save_params_file(cfg, files)
     optimizers, directions = _extract_optimizers_and_directions(cfg, return_runner)
     
     runner = initialize_config(cfg, target=target)
-    scores = _run_experiment(runner, files, args)
-    scores, attributes = _filter_scores(scores, optimizers, directions)
+    
     if str(mode) == "RunMode.MULTIRUN":
+        try:
+            scores = _run_experiment(runner, files, args)
+        except Exception as e:
+            logger.error(f"Error during experiment: {e}")
+        scores, attributes = _filter_scores(scores, optimizers, directions)
         assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
         assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
         storage = hydra_cfg.sweeper.storage
@@ -98,6 +102,9 @@ def optimize(
         study = create_study(study_name, storage, directions, optimizers)
         set_study_metric_names(study=study, optimizers=optimizers)
         set_user_attrs(study=study, attrs=attributes)
+    else:
+        scores = _run_experiment(runner, files, args)
+        scores, _ = _filter_scores(scores, optimizers, directions)
     if return_runner:
         return scores, runner
     else:
@@ -228,7 +235,7 @@ def _extract_optimizers_and_directions(
     return optimizers, directions
 
 
-def _initialize_files(cfg: dict, kwargs: dict) -> dict:
+def _initialize_files(cfg: dict, kwargs: dict, mode:str, num:Union[int,None]) -> dict:
     """
     Overview
     ---------
@@ -246,35 +253,39 @@ def _initialize_files(cfg: dict, kwargs: dict) -> dict:
         ValueError: If the "files" key in the configuration is not a dictionary or a FileConfig instance.
     """
     if "files" in cfg:
-        if isinstance(cfg.files, FileConfig):
-            files = cfg.files()
-        elif isinstance(cfg.files, dict) or isinstance(cfg.files, DictConfig):
-            file_dict = OmegaConf.to_container(cfg.files, resolve=True)
-            files = FileConfig(**file_dict)()
+        if isinstance(cfg.files, (dict, DictConfig, FileConfig)):
+            files = OmegaConf.to_container(cfg.files, resolve=True)
         else:
-            files = {}
+            raise ValueError("files must be a dict or FileConfig instance.")
     else:
         files = {}
-    # Update files with kwargs
-    files.update(kwargs)
     hash_ = hashlib.md5(str(cfg).encode()).hexdigest()
-    if "experiment_name" not in files:
-        files["experiment_name"] = "*"
-    for k, path in files.items():
-        if isinstance(path, str):
-            path = path.replace("{experiment_name}", files["experiment_name"])
-            path = path.replace("{hash}", hash_)
-            path = path.replace("*", hash_)
-            
-          
+    files = {**files, **kwargs}
+    if str(mode) == "RunMode.MULTIRUN":
+        assert num is not None, "num must be provided in multirun mode."
+        files["experiment_name"] = f"{num}"
+        cfg["experiment_name"] = f"{num}"
+        for k, path in files.items():
+            if isinstance(path, str):
+                path = path.replace("{hash}", hash_)
+                path = path.replace("*",  f"{num}")
+                path = path.replace("{num}", f"{num}")
+                path = path.replace("{experiment_name}", files["experiment_name"])
+            else:
+                raise ValueError("File paths must be strings.")
             files[k] = path
-    for k, path in kwargs.items():
-        if isinstance(path, str):
-            path = path.replace("{experiment_name}", files.get("experiment_name", "*"))
-            path = path.replace("{hash}", hash_)
-            path = path.replace("*", hash_)
+    else:
+        if "experiment_name" not in files:
+            files["experiment_name"] = cfg.get("experiment_name", "*")
+        for k, path in files.items():
+            if isinstance(path, str):
+                path = path.replace("{hash}", hash_)
+                path = path.replace("*", hash_)
+                path = path.replace("{experiment_name}", files["experiment_name"])
+            else:
+                raise ValueError("File paths must be strings.")
             files[k] = path
-    return {**files, **kwargs}
+    return files
 
 
 def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
@@ -357,6 +368,7 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     if not optimizers:
         return scores, {}
     scores = {k: v for k, v in scores.items() if k in optimizers}
+    missing_scores = set(optimizers) - set(scores.keys())
     values = list(scores.values())
     if directions:
         assert len(directions) == len(
@@ -365,13 +377,21 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
         optimize_scores = []
         attributes = {}
         for i, direction in enumerate(directions):
-            match direction:
-                case "minimize" | "maximize":
-                    optimize_scores.append(float(values[i]))
-                case "diff":
-                    attributes[optimizers[i]] = float(values[i])
-                case _:
-                    raise ValueError(f"Invalid direction: {direction}.")
+            key = optimizers[i]
+            if key in missing_scores:
+                if direction == "diff":
+                    attributes[key] = None
+                elif direction == "minimize":
+                    optimize_scores.append(float("inf"))
+                elif direction == "maximize":
+                    optimize_scores.append(float("-inf"))
+            else:
+                if direction in ["minimize", "maximize"]:
+                    optimize_scores.append(scores[key])
+                elif direction == "diff":
+                    attributes[key] = scores[key]
+                else:
+                    raise ValueError(f"Invalid direction: {direction}")
         if not optimize_scores:
             raise ValueError("No optimization scores found for the specified directions.")
         values = optimize_scores
@@ -380,6 +400,8 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     values = tuple(values)
     if isinstance(values, (tuple, list)) and len(values) == 1:
         values = values[0]
+    logger.info(f"Optimization values: {values}")
+    logger.info(f"Experiment attributes: {attributes}")
     return values, attributes
 
 
