@@ -928,12 +928,6 @@ class ModelConfig(ConfigBase):
                         )
                         logger.info(f"Training model on {len(data.y_train)} samples...")
                         self._train(data.X_train, data.y_train)
-                        try:
-                            check_is_fitted(self._model)
-                        except NotFittedError:
-                            raise ValueError(
-                                "Model is not trained. Please train the model before prediction.",
-                            )
                         assert hasattr(
                             self,
                             "_model",
