@@ -525,7 +525,7 @@ class AttackConfig(ConfigBase):
             "evasion_precision": adv_precision,
             "evasion_recall": adv_recall,
             "evasion_f1-score": adv_f1,
-            "evasion_success_rate": adv_success,
+            "evasion_success": adv_success,
         }
         sig_figs = np.floor(np.log10(len(adv_pred_labels))) + 1
         score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
