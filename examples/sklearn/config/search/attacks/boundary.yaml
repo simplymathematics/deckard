@@ -1,8 +1,5 @@
 attack_search:
   ++attack.attack_params.max_iter: int(range(10,100))
-  ++attack.attack_params.num_trial: int(range(10,200))
-  ++attack.attack_params.init_size: int(range(50,200))
-  ++attack.attack_params.batch_size: int(range(8,64,8))
+  ++attack.attack_params.num_trial: int(range(1,200))
   ++attack.attack_params.delta: range(0.001,0.1,0.001)
   ++attack.attack_params.epsilon: range(0.001,0.1,0.001)
-  ++attack.attack_params.sample_size: int(range(10,100))

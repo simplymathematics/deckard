@@ -12,14 +12,14 @@ defaults:
     - override hydra/sweeper : optuna
 experiment_name: ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
 directions:
+- minimize
 - maximize
-- maximize
-- maximize
+- minimize
 optimizers:
 - accuracy
-- evasion_success_rate
-- evasion_accuracy
-params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search}, ${file:search/attacks/${attack_alias}.yaml:attack_search}}
+- evasion_success
+- attack_generation_time
+params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},${file:search/attacks/${attack_alias}.yaml:attack_search}}
 hydra:
   run:
     dir: outputs/logs/${experiment_name}

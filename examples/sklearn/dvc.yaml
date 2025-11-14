@@ -21,14 +21,14 @@ stages:
   generate_data:
       foreach:
         - adult
-        - classification
-        - diabetes
-        - digits
-        - regression
-        - kdd_nsl
-        - ddos
-        - sms_spam
-        - truthseeker
+        # - classification
+        # - diabetes
+        # - digits
+        # - regression
+        # - kdd_nsl
+        # - ddos
+        # - sms_spam
+        # - truthseeker
       do:
         cmd: >
           deckard 
@@ -63,12 +63,12 @@ stages:
       matrix:
         data: 
           - adult
-          - classification
-          - digits
+          # - classification
+          # - digits
         model:
           - rf
-          - svc
-          - logistic
+          # - svc
+          # - logistic
       cmd: >
         deckard 
         data=${item.data} 
@@ -104,10 +104,12 @@ stages:
     matrix:
       data: 
         - adult
+        # - classification
+        # - digits
       model:
         - rf
-        - svc
-        - logistic
+        # - svc
+        # - logistic
       attack:
         # Evasion attacks
         - hsj
@@ -137,12 +139,12 @@ stages:
     matrix:
       data: 
         - adult
-        - classification
-        - digits
+        # - classification
+        # - digits
       model:
         - rf
-        - svc
-        - logistic
+        # - svc
+        # - logistic
       defense:
           # Postprocessing defenses
           - class_labels
@@ -222,32 +224,32 @@ stages:
         # - mixup
         # - resample
         # - spatial_smoothing
-      # attack:
-      #   - hsj
-      #   - boundary
+      attack:
+        # - hsj
+        - boundary
     cmd: >
       deckard 
       data=${item.data} 
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/defenses/${item.data}/${item.model}/${item.defense}/*.json
+      +files.score_file=outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/*.json
+      +files.model_file=outputs/models/${item.data}/${item.model}_defended_${item.defense}/*.pkl
       model=${item.model}
       model_alias=${item.model}
-      ~attack
-      attack_alias=None
+      attack_alias=${item.attack}
+      attack=${item.attack}
       defense=${item.defense}
       defense_alias=${item.defense}
       experiment_name="*"
-      hydra.sweeper.study_name=${item.data}_${item.model}_${item.defense}
+      hydra.sweeper.study_name=defended_${item.data}_${item.model}_${item.defense}_${item.attack}
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - outputs/models/${item.data}/${item.model}_defended_${item.defense}.pkl
       - ./config/default.yaml
     outs:
-      - outputs/logs/${item.data}_${item.model}_${item.defense}
+      - outputs/logs/defended_${item.data}_${item.model}_${item.defense}_${item.attack}
     metrics:
-      - outputs/scores/defenses/${item.data}/${item.model}/${item.defense}/
+      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
   evade:
     matrix:
       data: 
@@ -274,7 +276,7 @@ stages:
       #   - cutout
         - feature_squeezing
         - gaussian_augmentation
-      #   - jpeg_compression
+        # - jpeg_compression
       #   - label_smoothing
       #   - mixup
       #   - resample
@@ -284,7 +286,8 @@ stages:
       data=${item.data} 
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/attacks/${item.data}/${item.model}/${item.defense}/${item.attack}/*.json
+      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/*.json
+      +files.model_file=outputs/models/${item.data}/${item.model}_defended_${item.defense}/*.pkl
       model=${item.model}
       model_alias=${item.model}
       attack=${item.attack}
@@ -297,13 +300,12 @@ stages:
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - outputs/models/${item.data}/${item.model}_defended_${item.defense}.pkl
       - ./config/attack_default.yaml
-      - outputs/scores/defenses/${item.data}/${item.model}/${item.defense}/
+      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
     outs:
       - outputs/logs/${item.data}_${item.model}_${item.defense}_${item.attack}_evasion
     metrics:
-      - outputs/scores/attacks/${item.data}/${item.model}/${item.defense}/${item.attack}/
+      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/
     params:
       - ./config/attack_default.yaml:
         - defaults

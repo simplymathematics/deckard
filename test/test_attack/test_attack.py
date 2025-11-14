@@ -41,7 +41,7 @@ class TestAttackConfig(unittest.TestCase):
         y_test_numeric = [0, 1, 0]
         self.attack._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         metrics = self.attack.score_dict
-        self.assertIn("evasion_success_rate", metrics)
+        self.assertIn("evasion_success", metrics)
 
     def test_call_attack(self):
         # Mock data for testing
@@ -51,7 +51,7 @@ class TestAttackConfig(unittest.TestCase):
         model(data=data)
         result = self.attack(data, model)
         self.assertIsNotNone(result)
-        self.assertIn("evasion_success_rate", result)
+        self.assertIn("evasion_success", result)
 
 
 if __name__ == "__main__":

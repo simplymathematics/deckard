@@ -1,5 +1,5 @@
 model_search:
-  ++model.defense.defense_type: art.defences.preprocessor.GaussianAugmentation
-  ++model.defense.defense_params.sigma: range(0.1, 1.0, 0.1)
-  ++model.defense.defense_params.ratio: range(0.1, 1.0, 0.1)
-  ++model.defense.defense_params.augmentation: bool(True, False)
+  ++defense.defense_type: art.defences.preprocessor.GaussianAugmentation
+  ++defense.defense_params.sigma: range(0.1, 1.0, 0.1)
+  ++defense.defense_params.ratio: range(0.1, 1.0, 0.1)
+  ++defense.defense_params.augmentation: bool(True, False)

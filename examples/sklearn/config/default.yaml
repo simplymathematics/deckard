@@ -10,12 +10,13 @@ defaults:
     - attack: hsj
     - files: null
     - override hydra/sweeper : optuna
-
 experiment_name: ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
 directions:
 - maximize
+- minmize
 optimizers:
 - accuracy
+- evasion_success
 params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},}
 hydra:
   run:

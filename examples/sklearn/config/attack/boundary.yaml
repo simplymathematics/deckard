@@ -1,13 +1,13 @@
 attack_type : "art.attacks.evasion.BoundaryAttack"
 attack_params : 
-  batch_size : 100
+  batch_size : ${..attack_size}
   targeted: false
   delta : 0.01
   epsilon : 0.01
   max_iter : 10
   num_trial : 25
-  sample_size : 100
-  init_size: 100
+  sample_size : ${..attack_size}
+  init_size: ${..attack_size}
   min_epsilon : 0.000
   verbose : true
 attack_size : 10
