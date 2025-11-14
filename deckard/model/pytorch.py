@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch
 
 # Sklearn imports
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
@@ -74,7 +74,7 @@ def initialize_optimizer(optimizer, model):
     ), f"Optimizer must be an instance of torch.optim.Optimizer, got {type(optimizer_class)}"
     return optimizer_class
 
-class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
+class PytorchTemplateEsimator(BaseEstimator):
     def __init__(
         self,
         model: nn.Module,
@@ -147,23 +147,18 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
 
     def predict(self, X):
         with torch.no_grad():
-            model_dtype = next(self.model.parameters()).dtype
-            X_dtype = X.dtype
-            if X_dtype != model_dtype:
-                model_device = next(self.model.parameters()).device
-                X = X.to(device=model_device, dtype=model_dtype)
             probs = self.model(X)
             # predictions = torch.argmax(probs, dim=1)
             return probs
 
     def get_art_model(self, data):
-        if isinstance(self, (PyTorchClassifier, PyTorchRegressor)):
+        if isinstance(self, (PyTorchClassifier)):
             return self
         if self.clip_values is None or len(self.clip_values) == 0:
             clip_values = (0.0, 1.0)
         else:
             clip_values = self.clip_values
-        art_class = PyTorchClassifier
+        art_class = PyTorchClassifier 
         init_params = {
             "model": self.model,
             "loss": self.criterion,
@@ -188,6 +183,40 @@ class PytorchTemplateClassifier(ClassifierMixin, BaseEstimator):
             score /= len(y)
             return score
 
+class PytorchTemplateRegressor(PytorchTemplateEsimator, RegressorMixin):
+    def __init__(
+        self,
+        model: nn.Module,
+        device=None,
+        criterion: Union[dict, str] = "MSELoss",
+        optimizer: Union[dict, str] = "SGD",
+        clip_values: Union[tuple, None] = None,
+    ):
+        super().__init__(
+            model=model,
+            device=device,
+            criterion=criterion,
+            optimizer=optimizer,
+            clip_values=clip_values,
+        )
+
+class PytorchTemplateClassifier(PytorchTemplateEsimator, ClassifierMixin):
+    def __init__(
+        self,
+        model: nn.Module,
+        device=None,
+        criterion: Union[dict, str] = "CrossEntropyLoss",
+        optimizer: Union[dict, str] = "SGD",
+        clip_values: Union[tuple, None] = None,
+    ):
+        super().__init__(
+            model=model,
+            device=device,
+            criterion=criterion,
+            optimizer=optimizer,
+            clip_values=clip_values,
+        )
+    
 
 @dataclass
 class PytorchModelConfig(ModelConfig):

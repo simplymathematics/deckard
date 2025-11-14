@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 2f42287c49dd08ec2e44df48eb840da8
-      size: 1266
+      md5: 2f62103013942874b30a6a70204adf0f
+      size: 1267
     params:
       config/default.yaml:
         attack_alias: hsj
@@ -23,7 +23,7 @@ stages:
         defense_alias: class_labels
         directions:
         - maximize
-        - minmize
+        - minimize
         experiment_name: 
           ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
         hydra:
