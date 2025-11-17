@@ -62,7 +62,7 @@ regressor_dict = {
 }
 
 sklearn_dict = {**classifier_dict, **regressor_dict}
-sklearn_models = list(sklearn_dict.keys())
+sklearn_models = list(sklearn_dict.values())
 
 supported_defense_types = [
     "detector",
@@ -275,6 +275,26 @@ class ModelConfig(ConfigBase):
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None
         return art_class, init_params
+    
+    def get_art_model(self, data: DataConfig):
+        """Get the ART model estimator.
+
+        Parameters
+        ----------
+        data : DataConfig
+            The data configuration containing training data.
+
+        Returns
+        -------
+        BaseEstimator
+            The ART model estimator.
+        """
+        if self.defense is None:
+            art_class, init_params = self.get_art_class(data)
+            art_model = art_class(self._model, **init_params)
+        else:
+            art_model = self._apply_defense(data)
+        return art_model
 
     def get_model(self) -> BaseEstimator:
         """Get the model's estimator.
