@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Union
 
 # Sklearn, torch, numpy imports
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -31,6 +32,8 @@ from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 from torch import int32 as torchint32
+
+from omegaconf import DictConfig, OmegaConf
 
 from ..model import ModelConfig
 from ..model.pytorch import PytorchTemplateClassifier
@@ -195,26 +198,24 @@ class AttackConfig(ConfigBase):
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = getattr(module, self.attack_type.split(".")[-1])
-        model_alias = type(model).__name__
-        if (
-           model_alias in sklearn_dict
-        ):
+        
+        if isinstance(model, tuple(supported_models)):
+            art_model = model
+        elif isinstance(model, BaseEstimator):
+            assert isinstance(model, ClassifierMixin), f"Model must be a ClassifierMixin, got {type(model)}"
+            model_alias = type(model).__name__
+            art_cls = sklearn_dict[model_alias]
             try:
                 check_is_fitted(model)
-                art_model = sklearn_dict[model_alias](model)
-            except NotFittedError:
-                raise ValueError(f"model {model_alias} is not fitted")
-        elif isinstance(model, PytorchTemplateClassifier):
-            art_model = model.get_art_model(data=data)
-            assert isinstance(art_model, PyTorchClassifier)
-        elif isinstance(model, tuple(supported_models)):
-            art_model = model
+            except NotFittedError as e:
+                model.fit(data.X_train, data.y_train)            
+            art_model = art_cls(model)
+        elif isinstance(model, ModelConfig):
+            art_model = model.get_art_model(data)
+        elif isinstance(model, (PytorchTemplateClassifier,)):
+            art_model = model.get_art_model(data)
         else:
-            raise ValueError(f"Unsupported model type: {model_alias}")
-        assert isinstance(
-            art_model,
-            tuple(supported_models),
-        ), f"art_model must be one of {supported_models}, got {type(art_model)}"
+            raise ValueError(f"Unsupported model type: {type(model)}")
         # Convert targeted attribute to index if necessary
         if len(self.targeted_attribute) > 0 and isinstance(
             self.targeted_attribute,
@@ -230,6 +231,26 @@ class AttackConfig(ConfigBase):
             assert (
                 "attack_feature" in self.attack_params
             ), "attack_feature must be specified in attack_params for attribute inference attacks"
+        # TODO: Set labels to distinguis targeted attacks from non-targeted attacks
+        if "attack_model" in self.attack_params:
+            attack_model = self.attack_params["attack_model"]
+            if isinstance(attack_model, DictConfig):
+                dict_ = OmegaConf.to_container(attack_model)
+                cfg = ModelConfig(**dict_)
+                cfg(data)
+                attack_model = cfg.get_art_model(data)
+            elif isinstance(attack_model, ModelConfig):
+                attack_model._load_or_train_model(data)
+                attack_model = attack_model.get_art_model(data)
+            elif isinstance(attack_model, str):
+                assert Path(attack_model).exists(), f"attack_model path {attack_model} does not exist"
+                with open(attack_model, "rb") as f:
+                    attack_model = pickle.load(f)
+                    assert isinstance(attack_model, ModelConfig), "Loaded attack_model must be a ModelConfig instance"
+                    attack_model = attack_model.get_art_model(data)
+            else:
+                raise ValueError(f"attack_model must be a ModelConfig instance. Got {type(attack_model)}")
+            self.attack_params["attack_model"] = attack_model
         attack = attack_class(art_model, **self.attack_params)
         self._attack_type = attack_type
         self._attack_subtype = attack_subtype
@@ -299,9 +320,8 @@ class AttackConfig(ConfigBase):
             match attack_subtype:
                 case "membership_inference":
                     scores = self._infer_membership(
-                        data,
-                        art_model,
-                        attack,
+                        data=data,
+                        attack=attack,
                     )
                 case "attribute_inference":
                     assert (
@@ -529,10 +549,13 @@ class AttackConfig(ConfigBase):
         }
         sig_figs = np.floor(np.log10(len(adv_pred_labels))) + 1
         score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
-        self.score_dict = {**self.score_dict, **score_dict}
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
+        # Add attack size and timing info
+        score_dict["attack_size"] = self.attack_size
+        score_dict["attack_score_time"] = self.attack_score_time
+        self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
 
@@ -616,6 +639,7 @@ class AttackConfig(ConfigBase):
         start_time = time.process_time()
         adv_pred = art_model.predict(X_test_adv)
         self.predictions = adv_pred
+        self.labels = y_subset
         # adv_pred_labels = adv_pred.argmax(axis=1)
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
@@ -682,15 +706,15 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_test = data.X_test.copy()
-        X_test_subset = X_test.iloc[: self.attack_size, :].copy()
+        X_test = data.X_test.copy().values
+        X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
         assert targeted_attribute in X_test_subset.columns, (
             f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
         )
-        target = X_test_subset[targeted_attribute].copy()
+        target = X_test_subset[targeted_attribute].copy().values
         X_test_subset_without_feature = X_test_subset.drop(
             columns=[targeted_attribute],
-        ).copy()
+        ).copy().values
         assert (
             len(X_test_subset) == self.attack_size
         ), f"Test set size {len(X_test_subset)} does not match attack_size {self.attack_size}"
@@ -718,6 +742,7 @@ class AttackConfig(ConfigBase):
             f"Possible values for targeted attribute '{targeted_attribute}': {possible_values}",
         )
         self.predictions = preds
+        self.labels = target
         start_time = time.process_time()
         inferred = attack.infer(
             x=X_test_subset_without_feature,
@@ -775,13 +800,16 @@ class AttackConfig(ConfigBase):
             }
         sig_figs = np.floor(np.log10(len(target))) + 1
         score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
+        # Add attack size and timing info
+        score_dict["attack_size"] = self.attack_size
+        score_dict["attack_score_time"] = self.attack_score_time
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = inferred
         return self.score_dict
 
-    def _infer_membership(self, data, art_model, attack):
+    def _infer_membership(self, data, attack):
         """
         Perform membership inference attack on the given dataset using the specified attack and model.
 
@@ -812,10 +840,9 @@ class AttackConfig(ConfigBase):
         start_time = time.process_time()
         try:
             attack.fit(
-                x=data.X_train,
-                y=data.y_train,
-                test_x=data.X_test,
-                test_y=data.y_test,
+                x=data.X_train.copy().values,
+                y=data.y_train.copy().values,
+                test_x=data.X_test.copy().values,
             )
         except Exception as e:
             raise e
@@ -825,8 +852,8 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Membership inference attack training took {self.attack_time} seconds for {self.attack_size} samples",
         )
-        big_X = np.concatenate([data.X_train, data.X_test], axis=0)
-        big_y = np.concatenate([data.y_train, data.y_test], axis=0)
+        big_X = np.vstack((data.X_train.copy().values, data.X_test.copy().values))
+        big_y = np.hstack((data.y_train.copy().values, data.y_test.copy().values))
         labels = np.array([1] * len(data.X_train) + [0] * len(data.X_test))
         # Randomly sample self.attack_size indices from big_X, big_y, and labels
         n = self.attack_size
@@ -835,12 +862,10 @@ class AttackConfig(ConfigBase):
         big_X = big_X[indices]
         big_y = big_y[indices]
         labels = labels[indices]
-
         start_time = time.process_time()
         inferred = attack.infer(
             x=big_X,
             y=big_y,
-            pred=art_model.predict(big_X),
         )
         end_time = time.process_time()
         self.attack_time = end_time - start_time
@@ -860,17 +885,26 @@ class AttackConfig(ConfigBase):
         if isinstance(inferred, (pd.Series, pd.DataFrame, np.ndarray)):
             inferred = inferred.astype(int)
         elif isinstance(inferred, Tensor):
-            inferred = Tensor(inferred, dtype=torchint32)
+            inferred = Tensor(inferred.cpu().numpy().astype(int))
         logger.info(
             f"Membership inference prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         self.predictions = inferred
+        self.labels = labels
         end_time = time.process_time()
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Membership inference attack prediction took {self.attack_prediction_time} seconds for {self.attack_size} samples",
         )
         start_time = time.process_time()
+        if labels.ndim > inferred.ndim:
+            inferred = pd.get_dummies(inferred).values
+        elif inferred.ndim > labels.ndim:
+            inferred = np.argmax(inferred, axis=1)
+        else:
+            pass
+        self.predictions = inferred
+        self.labels
         inferred_accuracy = accuracy_score(
             labels,
             inferred,
@@ -893,6 +927,8 @@ class AttackConfig(ConfigBase):
             zero_division=0,
             average="weighted",
         )
+        end_time = time.process_time()
+        self.attack_score_time = end_time - start_time
         score_dict = {
             "membership_inference_accuracy": inferred_accuracy,
             "membership_inference_precision": inferred_precision,
@@ -902,11 +938,12 @@ class AttackConfig(ConfigBase):
         # Calculate the number of significant figures
         sig_figs = np.floor(np.log10(len(labels))) + 1
         score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
-        self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
-        end_time = time.process_time()
-        self.attack_score_time = end_time - start_time
+        # Add attack size and timing info
+        score_dict["attack_size"] = self.attack_size
+        score_dict["attack_score_time"] = self.attack_score_time
+        self.score_dict = {**self.score_dict, **score_dict}
         logger.info(
             f"Membership inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
