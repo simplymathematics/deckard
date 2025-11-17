@@ -227,6 +227,7 @@ stages:
       attack:
         # - hsj
         - boundary
+        - membership
     cmd: >
       deckard 
       data=${item.data} 
@@ -263,47 +264,45 @@ stages:
         # Evasion attacks
         # - hsj
         - boundary
-      defense:
-      # Postprocessing defenses
-        # - class_labels
-        - gaussian_noise
-        - high_confidence
-      #   - reverse_sigmoid
-      #   - rounded
-      # # Preprocessing defenses
-      #   - cut_mix
-      #   - cutout
-        - feature_squeezing
-        - gaussian_augmentation
-        # - jpeg_compression
-      #   - label_smoothing
-      #   - mixup
-      #   - resample
-      #   - spatial_smoothing
+      # defense:
+      # # Postprocessing defenses
+      #   # - class_labels
+      #   - gaussian_noise
+      #   - high_confidence
+      # #   - reverse_sigmoid
+      # #   - rounded
+      # # # Preprocessing defenses
+      # #   - cut_mix
+      # #   - cutout
+      #   - feature_squeezing
+      #   - gaussian_augmentation
+      #   # - jpeg_compression
+      # #   - label_smoothing
+      # #   - mixup
+      # #   - resample
+      # #   - spatial_smoothing
     cmd: >
       deckard 
       data=${item.data} 
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/*.json
+      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.attack}/*.json
       model=${item.model}
       model_alias=${item.model}
       attack=${item.attack}
       attack_alias=${item.attack}
-      defense=${item.defense}
-      defense_alias=${item.defense}
       experiment_name="*"
-      hydra.sweeper.study_name=${item.data}_${item.model}_${item.defense}_${item.attack}_evasion
-      --config-name attack_default
+      hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.attack}
+      --config-name inference_default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
       - ./config/attack_default.yaml
-      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
+      - outputs/scores/defenses/${item.data}/${item.model}_${item.attack}/
     outs:
-      - outputs/logs/${item.data}_${item.model}_${item.defense}_${item.attack}_evasion
+      - outputs/logs/evaded_${item.data}_${item.model}_${item.attack}
     metrics:
-      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/
+      - outputs/scores/attacks/${item.data}_${item.model}_${item.attack}/
     params:
       - ./config/attack_default.yaml:
         - defaults
@@ -324,3 +323,70 @@ stages:
     # model, defense, and attack.
     # --config-name attack_default  <-- Uses the attack_default configuration for this run.
     # --multirun  <-- Enables multiple runs for hyperparameter optimization.
+  infer_membership:
+    matrix:
+      data: 
+        - adult
+        # - classification
+        # - digits
+      model:
+        - rf
+        # - svc
+        # - logistic
+      defense:
+      # Postprocessing defenses
+        # - class_labels
+        - gaussian_noise
+        - high_confidence
+      #   - reverse_sigmoid
+      #   - rounded
+      # # Preprocessing defenses
+      #   - cut_mix
+      #   - cutout
+        - feature_squeezing
+        - gaussian_augmentation
+        # - jpeg_compression
+      #   - label_smoothing
+      #   - mixup
+      #   - resample
+      #   - spatial_smoothing
+    cmd: >
+      deckard 
+      data=${item.data}
+      data_alias=${item.data}
+      +files.data_file=outputs/data/${item.data}.pkl
+      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_membership/*.json
+      model=${item.model}
+      model_alias=${item.model}
+      attack=membership
+      attack_alias=membership
+      defense=${item.defense}
+      defense_alias=${item.defense}
+      optimizers="[accuracy, membership_inference_accuracy, attack_generation_time]"
+      directions="[maximize, maximize, minimize]"
+      experiment_name="*"
+      hydra.sweeper.study_name=membership_${item.data}_${item.model}_${item.defense}
+      --config-name inference_default
+      --multirun
+    deps:
+      - outputs/data/${item.data}.pkl
+      - ./config/attack_default.yaml
+    outs:
+      - outputs/logs/membership_${item.data}_${item.model}_${item.defense}
+    metrics:
+      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_membership/
+    params:
+      - ./config/attack_default.yaml:
+        - defaults
+        - hydra
+    ################################################
+    #            Command Explanation:             #
+    ################################################
+    # deckard  <-- Calls the deckard CLI tool
+    # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+    # +files.data_file=data/${item}.pkl <-- Specifies the input data file path.
+    # +files.score_file=scores/${item}/${item.model}/${item.defense}/${item
+    # model=${item.model}  <-- Specifies the model to be used. See ./config/model/ for available models.
+    # attack=membership <-- Specifies the attack to be used. See ./config/attack/ for available attacks.
+    # defense=${item.defense}  <-- Specifies the defense to be used. See ./config/defense/ for available defenses.
+    # experiment_name="*"  <-- Uses a wildcard

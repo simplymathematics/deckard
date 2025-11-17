@@ -1,13 +1,13 @@
 data_alias: adult
 model_alias: rf
-attack_alias: hsj
-defense_alias: class_labels
+attack_alias: membership
+defense_alias: feature_squeezing
 defaults:
     - _self_
     - data: adult
     - model: rf
-    - defense: class_labels
-    - attack: hsj
+    - defense: feature_squeezing
+    - attack: membership
     - files: null
     - override hydra/sweeper : optuna
 experiment_name: ???
@@ -17,9 +17,9 @@ directions:
 - minimize
 optimizers:
 - accuracy
-- evasion_success
+- membership_inference_accuracy
 - attack_generation_time
-params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},${file:search/attacks/${attack_alias}.yaml:attack_search}}
+params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},}
 hydra:
   run:
     dir: outputs/logs/${experiment_name}

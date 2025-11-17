@@ -1,7 +1,7 @@
 attack_type : "art.attacks.inference.membership_inference.MembershipInferenceBlackBox"
-attack_size : 1000
+attack_size : 100
 attack_params:
-  attack_model_type: "rf"
+  attack_model: ${model}
 _target_ : deckard.attack.AttackConfig
 alias: membership
   

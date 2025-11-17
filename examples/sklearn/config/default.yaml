@@ -10,7 +10,7 @@ defaults:
     - attack: hsj
     - files: null
     - override hydra/sweeper : optuna
-experiment_name: ${data.alias}_${model.alias}_${defense.alias}_${attack.alias}
+experiment_name: ???
 directions:
 - maximize
 - minimize
@@ -27,7 +27,7 @@ hydra:
   job:
     name: ${experiment_name}
   sweeper:
-    study_name: evasion_attack
+    study_name: ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
     storage: sqlite:///optuna.db
     direction: ${directions}
     max_failure_rate: 1.0
