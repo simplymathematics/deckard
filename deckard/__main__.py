@@ -90,11 +90,12 @@ def optimize(
     runner = initialize_config(cfg, target=target)
     
     if str(mode) == "RunMode.MULTIRUN":
+        assert return_runner is False, "return_runner must be False in multirun mode."
         try:
             scores = _run_experiment(runner, files, args)
         except Exception as e:
             logger.error(f"Error during experiment: {e}")
-        scores, attributes = _filter_scores(scores, optimizers, directions)
+        filtered_scores, attributes = _filter_scores(scores, optimizers, directions)
         assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
         assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
         storage = hydra_cfg.sweeper.storage
@@ -102,6 +103,12 @@ def optimize(
         study = create_study(study_name, storage, directions, optimizers)
         set_study_metric_names(study=study, optimizers=optimizers)
         set_user_attrs(study=study, attrs=attributes)
+        log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
+        multirun_score_file = log_dir / (hydra_cfg.job.num + ".json")
+        logger.info(f"Saving multirun scores to {multirun_score_file}")
+        with open(multirun_score_file, "w") as f:
+            json.dump(scores, f, indent=4)
+        return filtered_scores
     else:
         scores = _run_experiment(runner, files, args)
         scores, _ = _filter_scores(scores, optimizers, directions)
@@ -281,6 +288,7 @@ def _initialize_files(cfg: dict, kwargs: dict, mode:str, num:Union[int,None]) ->
             if isinstance(path, str):
                 path = path.replace("{hash}", hash_)
                 path = path.replace("*", hash_)
+                path = path.replace("{num}", f"{num}")
                 path = path.replace("{experiment_name}", files["experiment_name"])
             else:
                 raise ValueError("File paths must be strings.")
@@ -325,7 +333,8 @@ def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
         runner.files = FileConfig(**files)
         runner.__post_init__()
         return runner()
-    return runner(*args, **files)
+    else:
+        return runner(*args, **files)
 
 
 def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
