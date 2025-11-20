@@ -3,6 +3,7 @@ import argparse
 import inspect
 import pandas as pd
 import pickle
+import json
 from pathlib import Path
 from hashlib import md5
 from typing import Union, Any
@@ -98,7 +99,8 @@ class ConfigBase:
                 case ".csv":
                     scores.to_csv(score_path, index=False)
                 case ".json":
-                    scores.to_json(score_path, indent=4)
+                    with open(score_path, "w") as f:
+                        json.dump(scores.to_dict(), f, indent=4)
                 case ".xlsx":
                     scores.to_excel(score_path, index=False)
         else:
@@ -200,10 +202,17 @@ class ConfigBase:
                 case ".csv":
                     scores = pd.read_csv(score_path)
                 case ".json":
-                    scores = pd.read_json(
-                        score_path,
-                        typ="series",
-                    )
+                    with open(score_path, "r") as f:
+                        scores = json.load(f)
+                    
+                    if "files" in scores:
+                        files = scores.pop("files")
+                    if "params" in scores:
+                        params = scores.pop("params")
+                    if "files" in locals():
+                        scores["files"] = files
+                    if "params" in locals():
+                        scores["params"] = params
                 case "xlsx":
                     scores = pd.read_excel(score_path)
         else:
@@ -410,7 +419,14 @@ class ConfigBase:
         dict
             A dictionary representation of the instance.
         """
-        return self.__dict__.copy()
+        # iterate through all fields that have a to_dict method and call it
+        result = {}
+        for k, v in self.__dict__.items():
+            if hasattr(v, "to_dict") and callable(getattr(v, "to_dict")):
+                result[k] = v.to_dict()
+            else:
+                result[k] = v
+        return result
 
 
 def create_parser_from_function(
