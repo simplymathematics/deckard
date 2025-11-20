@@ -1,7 +1,7 @@
 attack_type : "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
 targeted_attribute: "sex"
 attack_params : 
-  attack_model: self
+  attack_model: ${model}
   scale_range : (0, 1)
 attack_size : 1000
 _target_ : deckard.attack.AttackConfig

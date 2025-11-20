@@ -10,13 +10,16 @@ defaults:
     - attack: hsj
     - files: null
     - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : random
 experiment_name: ???
 directions:
 - maximize
 - minimize
+- maximize
 optimizers:
 - accuracy
-- evasion_success
+- membership_inference_accuracy
+- attack_generation_time
 params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},}
 hydra:
   run:
@@ -32,15 +35,8 @@ hydra:
     direction: ${directions}
     max_failure_rate: 1.0
     sampler:
-      _target_: optuna.samplers.TPESampler
-      consider_prior: true
-      prior_weight: 1.0
-      consider_magic_clip: true
-      consider_endpoints: false
-      n_startup_trials: 10
-      n_ei_candidates: 24
-      multivariate: true
-      warn_independent_sampling: true
+      _target_: optuna.samplers.RandomSampler
+      seed: 42
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     n_trials: 100
     n_jobs: 1

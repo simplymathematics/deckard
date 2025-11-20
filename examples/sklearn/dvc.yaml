@@ -118,7 +118,7 @@ stages:
         # Membership inference attacks
         - membership
         # Attribute inference attacks
-        - attribute-bb
+        # - attribute-bb
     cmd: >
       deckard 
       data=${item.data} 
@@ -264,45 +264,45 @@ stages:
         # Evasion attacks
         # - hsj
         - boundary
-      # defense:
-      # # Postprocessing defenses
-      #   # - class_labels
-      #   - gaussian_noise
-      #   - high_confidence
-      # #   - reverse_sigmoid
-      # #   - rounded
-      # # # Preprocessing defenses
-      # #   - cut_mix
-      # #   - cutout
-      #   - feature_squeezing
-      #   - gaussian_augmentation
-      #   # - jpeg_compression
-      # #   - label_smoothing
-      # #   - mixup
-      # #   - resample
-      # #   - spatial_smoothing
+      defense:
+      # Postprocessing defenses
+        # - class_labels
+        - gaussian_noise
+        # - high_confidence
+      #   - reverse_sigmoid
+      #   - rounded
+      # # Preprocessing defenses
+      #   - cut_mix
+      #   - cutout
+        # - feature_squeezing
+        - gaussian_augmentation
+        # - jpeg_compression
+      #   - label_smoothing
+      #   - mixup
+      #   - resample
+      #   - spatial_smoothing
     cmd: >
       deckard 
       data=${item.data} 
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.attack}/*.json
+      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/*.json
       model=${item.model}
       model_alias=${item.model}
       attack=${item.attack}
       attack_alias=${item.attack}
       experiment_name="*"
-      hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.attack}
+      hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
       --config-name inference_default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
       - ./config/attack_default.yaml
-      - outputs/scores/defenses/${item.data}/${item.model}_${item.attack}/
+      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
     outs:
-      - outputs/logs/evaded_${item.data}_${item.model}_${item.attack}
+      - outputs/logs/evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
     metrics:
-      - outputs/scores/attacks/${item.data}_${item.model}_${item.attack}/
+      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/
     params:
       - ./config/attack_default.yaml:
         - defaults
@@ -331,8 +331,8 @@ stages:
         # - digits
       model:
         - rf
-        # - svc
-        # - logistic
+        - svc
+        - logistic
       defense:
       # Postprocessing defenses
         # - class_labels
