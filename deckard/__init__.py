@@ -8,13 +8,7 @@ from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-)
 logger = logging.getLogger(__name__)
-
 
 __all__ = [
     "DataConfig",
