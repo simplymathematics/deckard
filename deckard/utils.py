@@ -29,11 +29,13 @@ data_supported_filetypes = [
 
 @dataclass
 class ConfigBase:
-    _target_: str = "deckard.utils.ConfigBase"
+    # _target_: str = "deckard.utils.ConfigBase"
 
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
         super().__init__()
+        # Initialize args attribute
+        self.args = args if args else ()
         # Call post init
         #  Set attributes from args and kwds
         for i, arg in enumerate(args):
@@ -63,7 +65,7 @@ class ConfigBase:
         """
         # Hash all fields that do not start with an underscore
         hash_input = "".join(
-            f"{k}:{v}" for k, v in self.__dict__.items() if not k.startswith("_")
+            f"{k}:{v}" for k, v in self.__dict__.items() if not k.endswith("_")
         )
         return int(md5(hash_input.encode()).hexdigest(), 16)
 
@@ -288,8 +290,18 @@ class ConfigBase:
             The object to save.
         filepath : str
             The path to the file where the object will be saved.
+        Raises
+        ------
+        ValueError
+            If the file extension is not supported. Supported types are .pkl and .pickle.
         """
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+        suffix = Path(filepath).suffix
+        supported_suffixes = [".pkl", ".pickle"]
+        if suffix not in supported_suffixes:
+            raise ValueError(
+                f"Unsupported file type {suffix}. Supported types: {supported_suffixes}",
+            )
         with open(filepath, "wb") as f:
             pickle.dump(obj, f)
         logger.info(f"Object saved to {filepath}")
@@ -392,25 +404,30 @@ class ConfigBase:
         instance = instantiate(data)
         return instance
 
-    def to_yaml(self, filepath: str = None) -> None:
-        """
-        Saves the current instance to a YAML configuration file.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to the YAML configuration file where the instance will be saved.
-        """
-        config = OmegaConf.create(self.__dict__)
-        if filepath is None:
-            return str(OmegaConf.to_yaml(config))
+    @classmethod
+    def from_yaml(cls, filepath: str = None, yaml_string: str = None) -> "ConfigBase":
+        assert filepath is not None or yaml_string is not None, "Either filepath or yaml_string must be provided."
+        if filepath is not None:
+            return cls.from_yaml_file(filepath)
         else:
-            OmegaConf.save(config, filepath)
-            logger.info(
-                f"Instance of {self.__class__.__name__} saved to {filepath} as YAML",
-            )
+            return cls.from_yaml_string(yaml_string)
+    
+    @classmethod
+    def to_yaml(cls) -> str:
+        """
+        Converts the current instance to a YAML string.
 
-    def to_dict(self) -> dict:
+        Returns
+        -------
+        str
+            A YAML representation of the instance.
+        """
+        config = cls.to_dict()
+        config = OmegaConf.create(config)
+        return str(OmegaConf.to_yaml(config))
+
+    @classmethod 
+    def to_dict(cls) -> dict:
         """
         Converts the current instance to a dictionary.
 
@@ -419,15 +436,29 @@ class ConfigBase:
         dict
             A dictionary representation of the instance.
         """
-        # iterate through all fields that have a to_dict method and call it
-        result = {}
-        for k, v in self.__dict__.items():
-            if hasattr(v, "to_dict") and callable(getattr(v, "to_dict")):
-                result[k] = v.to_dict()
+        # Inspect to find init parameters
+        signature = inspect.signature(cls.__init__)
+        dict_ = {}
+        for name, param in signature.parameters.items():
+            if name == "self":
+                continue
+            if hasattr(cls, name):
+                value = getattr(cls, name)
+                dict_[name] = value
             else:
-                result[k] = v
-        return result
+                logger.warning(f"Attribute {name} not found in instance of {cls.__name__}. Setting to None.")
+                dict_[name] = None
+        return dict_
+    
+                
+    
+    
+    
 
+    
+    
+        
+        
 
 def create_parser_from_function(
     func,
