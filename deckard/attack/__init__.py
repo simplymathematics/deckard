@@ -154,8 +154,7 @@ class AttackConfig(ConfigBase):
         self.attack_time = None
         self.attack_prediction_time = None
         self.attack_score_time = None
-        if self._target_ is None:
-            self._target_ = "deckard.AttackConfig"
+        self._target_ = "deckard.attack.AttackConfig"
 
     def _initialize_attack(self, model, data):
         """
@@ -706,22 +705,23 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        X_test = data.X_test.copy().values
-        X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
-        assert targeted_attribute in X_test_subset.columns, (
+        assert targeted_attribute in data.X_test.columns, (
             f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
         )
-        target = X_test_subset[targeted_attribute].copy().values
-        X_test_subset_without_feature = X_test_subset.drop(
+        X_test = data.X_test.copy()
+        target = X_test[targeted_attribute].copy()
+        X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
+        target = target[: self.attack_size].values
+        
+        X_test_subset_without_feature = X_test.drop(
             columns=[targeted_attribute],
-        ).copy().values
+        ).copy().iloc[: self.attack_size, :].values
         assert (
             len(X_test_subset) == self.attack_size
         ), f"Test set size {len(X_test_subset)} does not match attack_size {self.attack_size}"
-        target = target.tolist()
         start_time = time.process_time()
         try:
-            attack.fit(x=X_test_subset.values)
+            attack.fit(x=X_test_subset)
         except TypeError as e:
             raise e
         attack_time = time.process_time() - start_time
@@ -729,27 +729,39 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack training took {attack_time} seconds for {self.attack_size} samples",
         )
         self.attack_time = attack_time
-
-        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test_subset.values)]).reshape(
+        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test_subset)]).reshape(
             -1,
             1,
         )
+        assert isinstance(
+            preds,
+            np.ndarray,
+        ), f"Predictions should be a numpy array, got {type(preds)}"
         unique, counts = np.unique(preds, return_counts=True)
         for u, c in zip(unique, counts):
             logger.info(f"Class {u}: {c} samples")
-        possible_values = list(np.unique(target))
+        possible_values = np.array(list(set(target)))
         logger.info(
             f"Possible values for targeted attribute '{targeted_attribute}': {possible_values}",
         )
         self.predictions = preds
         self.labels = target
         start_time = time.process_time()
+        
         inferred = attack.infer(
             x=X_test_subset_without_feature,
             pred=preds,
             values=possible_values,
         )
         end_time = time.process_time()
+        if isinstance(inferred, list):
+            inferred = np.array(inferred)
+        elif isinstance(inferred, pd.Series):
+            inferred = inferred.values
+        elif isinstance(inferred, np.ndarray):
+            pass
+        else:
+            raise ValueError(f"Unsupported inferred type: {type(inferred)}")
         self.attack_prediction_time = end_time - start_time
         logger.info(
             f"Attribute inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",

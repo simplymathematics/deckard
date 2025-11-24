@@ -285,6 +285,10 @@ class PytorchModelConfig(ModelConfig):
     def to(self, device):
         self.device = device
         self._model.to(device)
+        
+    def __post_init__(self):
+        super().__post_init__()
+        self._target_ = "deckard.model.pytorch.PytorchModelConfig"
 
     def load_class(self, file_path, class_name, module_name=None):
         if not Path(file_path).exists():

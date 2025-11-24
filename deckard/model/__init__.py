@@ -194,8 +194,7 @@ class ModelConfig(ConfigBase):
         self.prediction_n = None
         self.training_predictions = None
         self.predictions = None
-        if self._target_ is None:
-            self._target_ = "deckard.ModelConfig"
+        self._target_ = "deckard.model.ModelConfig"
         if hasattr(self, "defense") and hasattr(self.defense, "defense_type"):
             if self.defense.defense_type in ["", None, "None", "null", "Null", "NULL", "none", "N/A", "n/a"]:
                 self.defense = None
