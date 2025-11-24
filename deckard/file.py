@@ -184,7 +184,7 @@ class FileConfig(ConfigBase):
                 resolved_path = self._replace_placeholders(file_path)
                 setattr(self, file_attr, resolved_path)
             else:
-                logger.info(f"File attribute {file_attr} is None or empty; skipping placeholder replacement.")
+                logger.debug(f"File attribute {file_attr} is None or empty; skipping placeholder replacement.")
 
     def __call__(self) -> dict:
         """Return a dictionary of file paths."""
