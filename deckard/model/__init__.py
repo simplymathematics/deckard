@@ -35,9 +35,20 @@ from art.estimators.regression.scikitlearn import (
     ScikitlearnDecisionTreeRegressor,
     ScikitlearnRegressor,
 )
+from art.estimators.classification import PyTorchClassifier
+from art.estimators.regression import PyTorchRegressor
+from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
 from ..utils import ConfigBase
+
+art_model_types = tuple([
+    ScikitlearnClassifier,
+    ScikitlearnRegressor,
+    PyTorchClassifier,
+    PyTorchRegressor,
+])
+
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +316,10 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
-        return self._model
+        if isinstance(self._model, art_model_types):
+            return self._model.model
+        else:
+            return self._model
 
     def _apply_defense(self, data) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
@@ -435,8 +449,17 @@ class ModelConfig(ConfigBase):
         """
         if self._model is None:
             raise ValueError("Model not initialized")
-        y_pred = self._model.predict(X)
-
+        try:
+            y_pred = self._model.predict(X)
+        except TypeError as e:
+            if "loop of ufunc does not support argument" in str(e):
+                X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
+                y_pred = self._model.predict(X_array)
+            elif "can't convert" in str(e):
+                X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
+                y_pred = self._model.predict(X_array)
+            else:
+                raise e
         return y_pred
 
     def _predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -968,12 +991,12 @@ class ModelConfig(ConfigBase):
                         )
                     times["training_time"] = self.training_time
                     times["training_n"] = self._training_n
-                    if self.defense is not None:
-                        self._model = self._apply_defense(data)
+                    
                     if model_file is not None:
                         self.save(filepath=model_file)
         # Validate model is trained
         if self._model is None:
             raise NotFittedError("Model is not initialized")
-
+        if self.defense is not None:
+            self._model = self._apply_defense(data)
         return times
