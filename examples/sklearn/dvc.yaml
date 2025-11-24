@@ -217,39 +217,39 @@ stages:
         # # Preprocessing defenses
         # - cut_mix
         # - cutout
-        - feature_squeezing
+        # - feature_squeezing
         - gaussian_augmentation
         # - jpeg_compression
-        # - label_smoothing
+        - label_smoothing
         # - mixup
         # - resample
         # - spatial_smoothing
       attack:
         # - hsj
         - boundary
-        - membership
     cmd: >
       deckard 
       data=${item.data} 
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/*.json
       model=${item.model}
       model_alias=${item.model}
       attack_alias=${item.attack}
       attack=${item.attack}
       defense=${item.defense}
       defense_alias=${item.defense}
-      experiment_name="*"
+      experiment_name=*
       hydra.sweeper.study_name=defended_${item.data}_${item.model}_${item.defense}_${item.attack}
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
       - ./config/default.yaml
     outs:
-      - outputs/logs/defended_${item.data}_${item.model}_${item.defense}_${item.attack}
-    metrics:
-      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
+      - outputs/logs/defended_${item.data}_${item.model}_${item.defense}_${item.attack}/.hydra/
+    params:
+      - ./config/default.yaml:
+        - defaults
+        - hydra
   evade:
     matrix:
       data: 
@@ -287,11 +287,13 @@ stages:
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
       +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/*.json
+      experiment_name=evaded_${item.data}_${item.model}_${item.defense}_${item.attack}/*
+      defense=${item.defense}
+      defense_alias=${item.defense}
       model=${item.model}
       model_alias=${item.model}
       attack=${item.attack}
       attack_alias=${item.attack}
-      experiment_name="*"
       hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
       --config-name inference_default
       --multirun
@@ -317,7 +319,6 @@ stages:
     # model=${item.model}  <-- Specifies the model to be used. See ./config/model/ for available models.
     # attack=${item.attack}  <-- Specifies the attack to be used. See ./config/attack/ for available attacks.
     # defense=${item.defense}  <-- Specifies the defense to be used. See ./config/defense/ for available defenses.
-    # experiment_name="*"  <-- Uses a wildcard for the experiment name to allow
     # multiple runs to be logged under the same experiment name.
     # hydra.sweeper.study_name=...  <-- Sets a unique study name for each combination of data,
     # model, defense, and attack.
@@ -343,10 +344,10 @@ stages:
       # # Preprocessing defenses
       #   - cut_mix
       #   - cutout
-        - feature_squeezing
+      #   - feature_squeezing
         - gaussian_augmentation
-        # - jpeg_compression
-      #   - label_smoothing
+      #   - jpeg_compression
+        - label_smoothing
       #   - mixup
       #   - resample
       #   - spatial_smoothing
@@ -364,7 +365,6 @@ stages:
       defense_alias=${item.defense}
       optimizers="[accuracy, membership_inference_accuracy, attack_generation_time]"
       directions="[maximize, maximize, minimize]"
-      experiment_name="*"
       hydra.sweeper.study_name=membership_${item.data}_${item.model}_${item.defense}
       --config-name inference_default
       --multirun
@@ -389,4 +389,3 @@ stages:
     # model=${item.model}  <-- Specifies the model to be used. See ./config/model/ for available models.
     # attack=membership <-- Specifies the attack to be used. See ./config/attack/ for available attacks.
     # defense=${item.defense}  <-- Specifies the defense to be used. See ./config/defense/ for available defenses.
-    # experiment_name="*"  <-- Uses a wildcard

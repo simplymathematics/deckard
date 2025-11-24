@@ -3,4 +3,4 @@ defense_params:
     apply_fit : False
     apply_predict : True
     bit_depth: 8
-    clip_values: [0, 255]
+    clip_values: [0.0001, 255]

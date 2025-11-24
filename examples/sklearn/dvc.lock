@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: d4ab97dd0cd80236b3fe4d4fb4adb6e2
-      size: 1139
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
     params:
       config/default.yaml:
         attack_alias: hsj
@@ -24,7 +24,7 @@ stages:
         defense_alias: class_labels
         directions:
         - maximize
-        - minimize
+        - maximize
         - maximize
         experiment_name: ???
         hydra:
@@ -33,14 +33,11 @@ stages:
           sweep:
             dir: outputs/logs/
             subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
-          job:
-            name: ${experiment_name}
           sweeper:
             study_name: 
               ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
             storage: sqlite:///optuna.db
             direction: ${directions}
-            max_failure_rate: 1.0
             sampler:
               _target_: optuna.samplers.RandomSampler
               seed: 42
@@ -48,13 +45,13 @@ stages:
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
         model_alias: rf
         optimizers:
         - accuracy
-        - membership_inference_accuracy
+        - evasion_accuracy
         - attack_generation_time
-        params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, 
+        search: ${merge:${file:search/models/${model_alias}.yaml:model_search}, 
           ${file:search/defenses/${defense_alias}.yaml:model_search},}
     outs:
     - path: .deckard_rc
@@ -318,8 +315,8 @@ stages:
     deps:
     - path: ../../deckard/data/
       hash: md5
-      md5: 2b2e6b3739e605fa04ddceb2c36ef170.dir
-      size: 108868
+      md5: 2b46474de12cbb68f5ac97b8c3dfa73f.dir
+      size: 108790
       nfiles: 5
     - path: .deckard_rc
       hash: md5
@@ -337,12 +334,12 @@ stages:
     outs:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 74fe956fd255914fb765a11611e48c3d
-      size: 15197772
+      md5: fc7ed4149f5f4e11c48e892272f6619c
+      size: 15197209
     - path: outputs/scores/data/adult.json
       hash: md5
-      md5: f13ab95566ab0df28478174567e96752
-      size: 8857
+      md5: 81fd700725df6b356695808454b78aad
+      size: 7904
   defend_rf@adult-svc-class_labels:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/svc_defended_class_labels.pkl 
@@ -705,13 +702,13 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: 5e1bcf4f12802c6437fc7425318edf65.dir
-      size: 593784
+      md5: feb2164f2022b771efb3dec6ffcc9849.dir
+      size: 593619
       nfiles: 32
     - path: ./config/default.yaml
       hash: md5
-      md5: d4ab97dd0cd80236b3fe4d4fb4adb6e2
-      size: 1139
+      md5: 30b584276918f8ad45ba86f12c238193
+      size: 1141
     - path: .deckard_rc
       hash: md5
       md5: 19021154ecc61513bd7a0f05b88e1a95

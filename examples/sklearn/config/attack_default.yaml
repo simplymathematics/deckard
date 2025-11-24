@@ -20,7 +20,7 @@ optimizers:
 - accuracy
 - evasion_success
 - attack_generation_time
-params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},${file:search/attacks/${attack_alias}.yaml:attack_search}}
+search: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},${file:search/attacks/${attack_alias}.yaml:attack_search}}
 hydra:
   run:
     dir: outputs/logs/${experiment_name}
@@ -39,5 +39,5 @@ hydra:
     n_trials: 100
     n_jobs: 1
     params:
-      ${params}
+      ${search}
       
