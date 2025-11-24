@@ -68,7 +68,7 @@ def _file_resolver(arg: str):
         path_part, key_part = arg, None
     path = Path(DECKARD_CONFIG_DIR, path_part)
     if not path.exists():
-        raise FileNotFoundError(f"file resolver: file not found: {path_part}")
+        raise FileNotFoundError(f"file resolver: file not found: {path_part} in working dir {os.getcwd()}")
     
     data = _load_yaml_file(path)
     # if user requested a nested key, walk the dict using dot-splitting
@@ -123,6 +123,7 @@ class ExperimentConfig(ConfigBase):
         Args:
             device (Union[str, int]): Device to use ("cpu", "gpu", or GPU index).
         """
+        
         if self.library == "tensorflow":
             import tensorflow as tf
 
@@ -179,7 +180,8 @@ class ExperimentConfig(ConfigBase):
             logger.info("Device selection not supported for library: %s", self.library)
 
     def __post_init__(self):
-
+        if not hasattr(self, "_target_") or self._target_ is None:
+            self._target_ = "deckard.experiment.ExperimentConfig"
         # Set random seed
         self.set_random_seed()
         # Set device
@@ -191,20 +193,22 @@ class ExperimentConfig(ConfigBase):
         if isinstance(self.data, DataConfig):
             pass
         else:
-            if isinstance(self.data, DictConfig):
+            if hasattr(self.data, "_target_"):
+                self.data = instantiate(self.data)
+            elif isinstance(self.data, DictConfig):
                 data_dict = OmegaConf.to_container(self.data)
-            elif isinstance(self.data, ConfigBase):
-                data_dict = self.data.to_dict()
+                self.data = DataConfig(**data_dict)
             elif isinstance(self.data, str):
                 data_dict = DataConfig.from_yaml(self.data).to_dict()
+                self.data = DataConfig(**data_dict)
+            elif isinstance(self.data, ConfigBase):
+                data_dict = self.data.to_dict()
+                self.data = DataConfig(**data_dict)
             elif isinstance(self.data, dict):
-                data_dict = OmegaConf.to_container(OmegaConf.create(self.data))
-            else:
-                raise ValueError(f"Unsupported type for data: {type(self.data)}")
-            if "_target_" not in data_dict:
+                data_dict = self.data
                 self.data = DataConfig(**data_dict)
             else:
-                self.data = instantiate(self.data)
+                raise ValueError(f"Unsupported type for data: {type(self.data)}")
         assert isinstance(
             self.data,
             DataConfig,
@@ -217,56 +221,58 @@ class ExperimentConfig(ConfigBase):
                 self.classifier == self.data.classifier
             ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
         if self.defense is not None:                    
+           
             if isinstance(self.defense, DefenseConfig):
-                defense_dict = self.defense.to_dict()
+                pass
             else:
                 if isinstance(self.defense, DictConfig):
                     defense_dict = OmegaConf.to_container(self.defense)
+                elif isinstance(self.defense, str):
+                    defense_dict = DefenseConfig.from_yaml(self.defense).to_dict()
                 elif isinstance(self.defense, ConfigBase):
                     defense_dict = self.defense.to_dict()
-                elif isinstance(self.defense, str):
-                    defense_dict = DefenseConfig.from_yaml(
-                        self.defense,
-                    ).to_dict()
                 elif isinstance(self.defense, dict):
-                    defense_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.defense),
-                    )
+                    defense_dict = OmegaConf.to_container(OmegaConf.create(self.defense))
                 else:
                     raise ValueError(
                         f"Unsupported type for defense: {type(self.defense)}",
                     )
-            self.defense = DefenseConfig(**defense_dict)
+                if "_target_" not in defense_dict:
+                    self.defense = DefenseConfig(**defense_dict)
+                else:
+                    self.defense = instantiate(self.defense)
             assert isinstance(
                 self.defense,
                 DefenseConfig,
             ), "defense must be an instance of DefenseConfig"
+            self.defense.__post_init__()
         if self.model is not None:
+            if self.defense is not None:
+                self.model.defense = self.defense
             if isinstance(self.model, ModelConfig):
-                model_dict = self.model.to_dict()
+                pass
             else:
-                if isinstance(self.model, DictConfig):
+                if hasattr(self.model, "_target_"):
+                    self.model = instantiate(self.model)
+                elif isinstance(self.model, DictConfig):
                     model_dict = OmegaConf.to_container(self.model)
-                elif isinstance(self.model, ConfigBase):
-                    model_dict = self.model.to_dict()
+                    self.model = ModelConfig(**model_dict)
                 elif isinstance(self.model, str):
                     model_dict = ModelConfig.from_yaml(self.model).to_dict()
+                    self.model = ModelConfig(**model_dict)
+                elif isinstance(self.model, ConfigBase):
+                    model_dict = self.model.to_dict()
+                    self.model = ModelConfig(**model_dict)
                 elif isinstance(self.model, dict):
-                    model_dict = OmegaConf.to_container(OmegaConf.create(self.model))
-                else:
-                    raise ValueError(f"Unsupported type for model: {type(self.model)}")
-                
-                    # Merge defense config into model config
-                if self.defense is not None:
-                    model_dict.update({"defense": self.defense.to_dict()})
-                if "_target_" not in model_dict:
+                    model_dict = self.model
                     self.model = ModelConfig(**model_dict)
                 else:
-                    self.model = instantiate(self.model)
+                    raise ValueError(f"Unsupported type for model: {type(self.model)}")
             assert isinstance(
                 self.model,
                 ModelConfig,
             ), "model must be an instance of ModelConfig"
+            
             self.model.__post_init__()
             if self.classifier is None:
                 self.classifier = self.model.classifier
@@ -499,15 +505,7 @@ class ExperimentConfig(ConfigBase):
             logger.info("No attack config provided, skipping attack.")
         # Assert that all files in file_dict exist
 
-        for attr, filepath in file_dict.items():
-            if filepath is None:
-                continue
-            else:
-                filepath = self.files._replace_placeholders(filepath)
-                assert Path(
-                    filepath,
-                ).exists(), f"File {filepath} for {attr} does not exist."
-            #
+        
 
         if self.score:
             custom_scores = self.score(
@@ -527,4 +525,14 @@ class ExperimentConfig(ConfigBase):
             self.save_scores(new_scores, file_dict["score_file"])
         else:
             logger.info("No score_file specified, skipping score saving.")
+        for attr, filepath in file_dict.items():
+            if filepath is None:
+                continue
+            else:
+                filepath = self.files._replace_placeholders(filepath)
+                assert Path(
+                    filepath,
+                ).exists(), f"File {filepath} for {attr} does not exist."
+            #
         return scores
+    
