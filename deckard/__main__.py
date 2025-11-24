@@ -1,20 +1,19 @@
-import hashlib
 import warnings
 import logging
 import os
 import sys
 import json
 from pathlib import Path
-from typing import Union
+import yaml
 import optuna
 
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig, ListConfig
 import hydra
 from hydra.utils import instantiate
 from hydra.core.hydra_config import HydraConfig
 
 
-from .file import FileConfig, data_files, model_files, attack_files, all_files
+from .file import FileConfig, data_files, model_files, attack_files, all_files, default_placeholder_dict
 from .experiment import ExperimentConfig
 from .utils import ConfigBase
 
@@ -27,7 +26,11 @@ module_file_dict = {
     None: all_files,
 }
 
-
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +46,7 @@ def optimize(
     target: str,
     return_runner: bool = False,
     args: list = [],
-    **kwargs: dict,
+    **kwargs,
 ) -> dict | tuple[dict, ConfigBase]:
     """
     Parameters
@@ -58,8 +61,6 @@ def optimize(
         If False, only the scores are returned. Default is False.
     args : list, optional
         Additional positional arguments to be passed to the runner. Default is an empty list.
-    **kwargs : dict
-        Additional keyword arguments to be merged with the file configuration.
 
     Returns
     ----------
@@ -82,36 +83,85 @@ def optimize(
     """
     hydra_cfg = HydraConfig.get()
     mode = hydra_cfg.mode
-    files = _initialize_files(cfg, kwargs, mode, num=hydra_cfg.job.num if str(mode) == "RunMode.MULTIRUN" else None)
-    cfg = _convert_config_to_dict(cfg)
-    cfg = save_params_file(cfg, files)
-    optimizers, directions = _extract_optimizers_and_directions(cfg, return_runner)
-    
-    runner = initialize_config(cfg, target=target)
-    
+    dict_ = {}
+    dict_["_target_"] = target
+    cfg = OmegaConf.merge(OmegaConf.create(dict_), cfg)
+    assert hasattr(cfg, "_target_"), "cfg must have a _target_ attribute."
+    runner = instantiate(cfg)
+    assert isinstance(runner, ConfigBase), "Runner must be an instance of ConfigBase."
     if str(mode) == "RunMode.MULTIRUN":
+        # Validate that runner has necessary attributes for multirun
+        assert hasattr(runner, "files"), "Runner must have files attribute in multirun mode."
+        assert hasattr(runner, "optimizers"), "Runner must have optimizers attribute in multirun mode."
+        assert hasattr(runner, "directions"), "Runner must have directions attribute in multirun mode."
+        assert isinstance(runner, ExperimentConfig)
         assert return_runner is False, "return_runner must be False in multirun mode."
+        # Set up experiment name and replace dict        
+        runner.experiment_name = f"{hydra_cfg.job.num}"
+        runner.__post_init__()
+        replace_dict = dict(runner.files.replace)
+        replace_dict["num"] = f"{hydra_cfg.job.num}"
+        replace_dict["*"] = f"{hydra_cfg.job.num}"
+        runner.files.replace = replace_dict
+        
+        # Set up log, score, and params file paths
+        log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
+        log_file = log_dir / f"{hydra_cfg.job.name}.log"
+        score_file = log_dir / "scores.json"
+        params_file = log_dir / "params.yaml"
+        runner.files.experiment_name = f"{hydra_cfg.job.num}"
+        runner.files.log_file = log_file.as_posix()
+        runner.files.score_file = score_file.as_posix()
+        runner.files.params_file = params_file.as_posix()
+        runner.__post_init__()
+        files = runner.files()
+        
+        # Save parameters to params file
+        logger.info(f"Saving multirun parameters to {runner.files.params_file}")
+        with open(files["params_file"], "w") as f:
+            yaml.dump(OmegaConf.to_container(cfg, resolve=False), f)
+        
+        # Run the experiment and handle failures based on max_failure_rate
+        max_failure_rate = hydra_cfg.sweeper.get("max_failure_rate", 0.0)
         try:
-            scores = _run_experiment(runner, files, args)
+            scores = run(runner, files, args)
         except Exception as e:
-            logger.error(f"Error during experiment: {e}")
-        filtered_scores, attributes = _filter_scores(scores, optimizers, directions)
+            if max_failure_rate > 0.0:
+                logger.warning(
+                    f"Experiment failed with error: {e}. Continuing due to max_failure_rate={max_failure_rate}.",
+                )
+                scores = {}
+            else:
+                raise e
+            
+        # Filter scores based on optimizers and directions
+        optimizers = runner.optimizers
+        directions = runner.directions
+        filtered_scores, attributes = filter_scores(scores, optimizers, directions)
         assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
         assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
+        
+        # Set up Optuna study and save scores
         storage = hydra_cfg.sweeper.storage
         study_name = hydra_cfg.sweeper.study_name
         study = create_study(study_name, storage, directions, optimizers)
         set_study_metric_names(study=study, optimizers=optimizers)
         set_user_attrs(study=study, attrs=attributes)
-        log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
-        multirun_score_file = log_dir / (hydra_cfg.job.num + ".json")
-        logger.info(f"Saving multirun scores to {multirun_score_file}")
-        with open(multirun_score_file, "w") as f:
+        # Save scores to score file
+        logger.info(f"Saving multirun scores to {runner.files.score_file}")
+        with open(files["score_file"], "w") as f:
             json.dump(scores, f, indent=4)
+        
         return filtered_scores
     else:
-        scores = _run_experiment(runner, files, args)
-        scores, _ = _filter_scores(scores, optimizers, directions)
+        if hasattr(cfg, "files"):
+            file_dict = OmegaConf.to_container(cfg.files, resolve=True)
+        else:
+            file_dict = {}
+        file_dict = {**file_dict, **kwargs}
+        files = FileConfig(**file_dict)()
+        scores = run(runner, files, args)
+        
     if return_runner:
         return scores, runner
     else:
@@ -136,167 +186,37 @@ def create_study(study_name, storage, directions, optimizers):
     return study
 
 def set_study_metric_names(study, optimizers):
+    if isinstance(optimizers, ListConfig):
+        optimizers = list(optimizers)
+    elif isinstance(optimizers, str):
+        optimizers = [optimizers]
+    elif isinstance(optimizers, tuple):
+        optimizers = list(optimizers)
+    else:
+        raise ValueError(f"optimizers must be a ListConfig, str, or tuple. Got {type(optimizers)}")
+
     if hasattr(study, "set_metric_names") and len(optimizers) > 0:
         study.set_metric_names(optimizers)
 
 def set_user_attrs(study, attrs):
+    if isinstance(attrs, DictConfig):
+        attrs = dict(attrs)
     for k, v in attrs.items():
         study.set_user_attr(key=k, value=v)
     
 
 def save_params_file(cfg, files):
     _ = cfg.pop("params", None)
-    if "score_file" in files and "params_file" not in files:
-        if Path(files["score_file"]).exists():
-            with open(files["score_file"], "r") as f:
-                existing_scores = json.load(f)
-            existing_params = existing_scores.get("params", {})
-            cfg = OmegaConf.merge(OmegaConf.create(existing_params), OmegaConf.create(cfg))
-            cfg = OmegaConf.to_container(cfg, resolve=True)
-            
-        param_dict = {"params" : cfg}
-        Path(files["score_file"]).parent.mkdir(parents=True, exist_ok=True)
-        with open(files["score_file"], "w") as f:
-            json.dump(param_dict, f, indent=4)
-    elif "params_file" in files:
-        if Path(files["params_file"]).exists():
-            existing_cfg = OmegaConf.load(files["params_file"])
-        cfg = OmegaConf.merge(existing_cfg, OmegaConf.create(cfg))
+    if "params_file" in files:
+        cfg = OmegaConf.create(cfg)
+        Path(files["params_file"]).parent.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(cfg, files["params_file"])
     else:
-        logger.info(f"Configuration parameters: \n {json.dumps(cfg, indent=4)}")
+        raise ValueError("params_file must be specified in files to save parameters.")
     return cfg
 
 
-def _convert_config_to_dict(cfg: ConfigBase) -> dict:
-    """
-    Converts a configuration object to a dictionary.
-
-    Parameters
-    ----------
-        -  cfg (ConfigBase): The configuration object to be converted.
-    Returns
-    ----------
-        dict: A dictionary representation of the configuration object.
-    Raises
-    ----------
-        ValueError: If the input is not an OmegaConf config object and cannot be converted to a dictionary.
-    """
-    try:
-        return OmegaConf.to_container(cfg, resolve=True)
-    except ValueError as e:
-        if "not an OmegaConf config object" in str(e):
-            return cfg.to_dict()
-        raise e
-
-
-def _extract_optimizers_and_directions(
-    cfg: dict,
-    return_runner: bool,
-) -> tuple[list, list]:
-    """
-    Overview
-    --------
-    Extracts the "optimizers" and "directions" from the provided configuration dictionary
-    and validates their consistency.
-
-    Parameters
-    ---
-    cfg : dict
-        The configuration dictionary from which "optimizers" and "directions" are extracted.
-    return_runner : bool
-        A boolean flag indicating whether the runner object should be returned.
-
-    Returns
-    -------
-    tuple[list, list]
-        A tuple containing two lists:
-        - The first list contains the extracted optimizers.
-        - The second list contains the extracted directions.
-
-    Raises
-    -------
-        AssertionError
-            - If the length of "directions" does not match the length of "optimizers".
-            - If an invalid direction is provided (not one of "minimize", "maximize", or "diff").
-
-    Notes
-    -------
-    - If "optimizers" are present in the configuration and `return_runner` is True, a warning
-      is logged, and `return_runner` is effectively set to False.
-    - The "directions" list must match the length of the "optimizers" list and can only
-      contain valid values ("minimize", "maximize", or "diff").
-    """
-    optimizers = cfg.pop("optimizers", []) if "optimizers" in cfg else []
-    if optimizers and return_runner:
-        logger.warning(
-            "optimizers can only be used when return_runner is False. Setting return_runner to False.",
-        )
-    directions = cfg.pop("directions", []) if "directions" in cfg else []
-    if directions:
-        assert len(directions) == len(
-            optimizers,
-        ), "Length of directions must match length of optimizers."
-        for direction in directions:
-            assert direction in ["minimize", "maximize", "diff"], "Invalid direction."
-    return optimizers, directions
-
-
-def _initialize_files(cfg: dict, kwargs: dict, mode:str, num:Union[int,None]) -> dict:
-    """
-    Overview
-    ---------
-    Initializes file configurations from the provided configuration dictionary.
-
-    Parameters
-    ----------
-        - cfg (dict): The configuration dictionary, which may contain a "files" key.
-        - kwargs (dict): Additional keyword arguments to merge with the file configurations.
-    Returns
-    ----------
-        dict: A dictionary containing the merged file configurations and additional arguments.
-    Raises
-    ----------
-        ValueError: If the "files" key in the configuration is not a dictionary or a FileConfig instance.
-    """
-    if "files" in cfg:
-        if isinstance(cfg.files, (dict, DictConfig, FileConfig)):
-            files = OmegaConf.to_container(cfg.files, resolve=True)
-        else:
-            raise ValueError("files must be a dict or FileConfig instance.")
-    else:
-        files = {}
-    hash_ = hashlib.md5(str(cfg).encode()).hexdigest()
-    files = {**files, **kwargs}
-    if str(mode) == "RunMode.MULTIRUN":
-        assert num is not None, "num must be provided in multirun mode."
-        files["experiment_name"] = f"{num}"
-        cfg["experiment_name"] = f"{num}"
-        for k, path in files.items():
-            if isinstance(path, str):
-                path = path.replace("{hash}", hash_)
-                path = path.replace("*",  f"{num}")
-                path = path.replace("{num}", f"{num}")
-                path = path.replace("{experiment_name}", files["experiment_name"])
-            else:
-                raise ValueError("File paths must be strings.")
-            files[k] = path
-    else:
-        if "experiment_name" not in files:
-            files["experiment_name"] = cfg.get("experiment_name", "*")
-        for k, path in files.items():
-            if isinstance(path, str):
-                path = path.replace("{hash}", hash_)
-                path = path.replace("*", hash_)
-                path = path.replace("{num}", f"{num}")
-                path = path.replace("{experiment_name}", files["experiment_name"])
-            else:
-                raise ValueError("File paths must be strings.")
-            files[k] = path
-    return files
-
-
-def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
+def run(runner: ConfigBase, files: dict, args: list) -> dict:
     """
     Overview
     --------
@@ -337,7 +257,7 @@ def _run_experiment(runner: ConfigBase, files: dict, args: list) -> dict:
         return runner(*args, **files)
 
 
-def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
+def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     """
     Overview
     ---
@@ -394,6 +314,10 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
                     optimize_scores.append(float("inf"))
                 elif direction == "maximize":
                     optimize_scores.append(float("-inf"))
+                elif direction == "diff":
+                    attributes[key] = float("nan")
+                else:
+                    raise ValueError(f"Invalid direction: {direction}")
             else:
                 if direction in ["minimize", "maximize"]:
                     optimize_scores.append(scores[key])
@@ -412,35 +336,6 @@ def _filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     logger.info(f"Optimization values: {values}")
     logger.info(f"Experiment attributes: {attributes}")
     return values, attributes
-
-
-def initialize_config(
-    cfg: ConfigBase,
-    target: str = "deckard.experiment.ExperimentConfig",
-    **kwargs,
-) -> None:
-    """
-    Overview
-    ----------
-        Initializes a configuration object and instantiates a runner based on the provided configuration.
-
-    Parameters
-    ----------
-    cfg (ConfigBase): The configuration object to be initialized. It is expected to be a dictionary-like object.
-        target (str, optional): The default target class path to be used if "_target_" is not already in the configuration.
-                                Defaults to "deckard.experiment.ExperimentConfig".
-        **kwargs: Additional keyword arguments that may be passed to the instantiation process.
-
-    Returns:
-    --------
-        None: The function returns None, but it initializes and returns a runner object.
-    """
-    if "_target_" not in cfg:
-        cfg["_target_"] = target
-    for k, v in kwargs.items():
-        cfg[k] = v
-    runner = instantiate(cfg)
-    return runner
 
 
 def parse_optional_args():
