@@ -336,8 +336,7 @@ class DataConfig(ConfigBase):
             ), f"pipeline must be a DataPipelineConfig instance, got {type(self.pipeline)}"
         assert self.classifier in [True, False], "classifier must be a boolean value"
 
-        if self._target_ is None:
-            self._target_ = "DataConfig"
+        self._target_ = "deckard.data.DataConfig"
 
     def __hash__(self):
         return super().__hash__()
@@ -750,7 +749,7 @@ class DataConfig(ConfigBase):
             if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
                 return self._classification_feature_scores()
             else:
-                return self._compute_class_counts(self.y_train)
+                return {"class_counts" : self._compute_class_counts(self.y_train)}
         else:
             if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
                 return self._regression_feature_scores()
@@ -769,9 +768,7 @@ class DataConfig(ConfigBase):
         else:
             class_dict = pd.Series(y).value_counts()
         class_counts = class_dict.to_dict()
-        dict_ = {}
-        dict_["class_counts"] = class_counts
-        return dict_
+        return class_counts
 
     def _classification_feature_scores(self) -> dict:
         """
