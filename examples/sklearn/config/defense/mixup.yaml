@@ -5,3 +5,4 @@ defense_params:
     alpha: 1.0
     num_mix : 2
     device_type: 'gpu'
+    num_classes: 2 #adult dataset

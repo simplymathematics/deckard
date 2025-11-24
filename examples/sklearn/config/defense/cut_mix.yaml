@@ -4,3 +4,4 @@ defense_params:
     apply_predict : False
     alpha: 1.0
     probability: .5
+    num_classes: 2 #adult dataset

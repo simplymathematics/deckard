@@ -157,11 +157,8 @@ stages:
           - cutout
           - feature_squeezing
           - gaussian_augmentation
-          - jpeg_compression
           - label_smoothing
           - mixup
-          - resample
-          - spatial_smoothing
     cmd:
       deckard 
       data=${item.data} 
@@ -245,7 +242,7 @@ stages:
       - outputs/data/${item.data}.pkl
       - ./config/default.yaml
     outs:
-      - outputs/logs/defended_${item.data}_${item.model}_${item.defense}_${item.attack}/.hydra/
+      - outputs/logs/defended_${item.data}_${item.model}_${item.defense}_${item.attack}/
     params:
       - ./config/default.yaml:
         - defaults
