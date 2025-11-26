@@ -292,16 +292,13 @@ stages:
       attack=${item.attack}
       attack_alias=${item.attack}
       hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
-      --config-name inference_default
+      --config-name attack_default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
       - ./config/attack_default.yaml
-      - outputs/scores/defenses/${item.data}/${item.model}_${item.defense}_${item.attack}/
     outs:
       - outputs/logs/evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
-    metrics:
-      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_${item.attack}/
     params:
       - ./config/attack_default.yaml:
         - defaults
@@ -353,15 +350,13 @@ stages:
       data=${item.data}
       data_alias=${item.data}
       +files.data_file=outputs/data/${item.data}.pkl
-      +files.score_file=outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_membership/*.json
+      experiment_name=membership_${item.data}_${item.model}_${item.defense}/*
       model=${item.model}
       model_alias=${item.model}
       attack=membership
       attack_alias=membership
       defense=${item.defense}
       defense_alias=${item.defense}
-      optimizers="[accuracy, membership_inference_accuracy, attack_generation_time]"
-      directions="[maximize, maximize, minimize]"
       hydra.sweeper.study_name=membership_${item.data}_${item.model}_${item.defense}
       --config-name inference_default
       --multirun
@@ -370,8 +365,6 @@ stages:
       - ./config/attack_default.yaml
     outs:
       - outputs/logs/membership_${item.data}_${item.model}_${item.defense}
-    metrics:
-      - outputs/scores/attacks/${item.data}_${item.model}_${item.defense}_membership/
     params:
       - ./config/attack_default.yaml:
         - defaults

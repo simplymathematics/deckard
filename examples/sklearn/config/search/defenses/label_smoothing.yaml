@@ -1,0 +1,4 @@
+model_search:
+  ++defense.defense_type: art.defences.preprocessor.LabelSmoothing
+defense_params:
+  ++defense.defense_params.bit_depth: range(0.1, .9, 0.1)
