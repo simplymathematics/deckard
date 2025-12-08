@@ -819,6 +819,7 @@ class AttackConfig(ConfigBase):
         # Add attack size and timing info
         score_dict["attack_size"] = self.attack_size
         score_dict["attack_score_time"] = self.attack_score_time
+        score_dict["attack_generation_time"] = self.attack_time
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
