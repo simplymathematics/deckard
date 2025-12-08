@@ -1219,11 +1219,10 @@ stages:
       size: 8777
   infer_membership@adult-rf-gaussian_noise:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_rf_gaussian_noise_membership/*.json
-      model=rf model_alias=rf attack=membership attack_alias=membership defense=gaussian_noise
-      defense_alias=gaussian_noise optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" hydra.sweeper.study_name=membership_adult_rf_gaussian_noise
-      --config-name inference_default --multirun\n"
+      experiment_name=membership_adult_rf_gaussian_noise/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_adult_rf_gaussian_noise --config-name inference_default
+      --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
@@ -1266,26 +1265,24 @@ stages:
     outs:
     - path: outputs/logs/membership_adult_rf_gaussian_noise
       hash: md5
-      md5: defc52004223cd3731b58239fefa0f72.dir
-      size: 717050
-      nfiles: 400
+      md5: 6f681adbf9d353461975eff2da23f302.dir
+      size: 2337634
+      nfiles: 600
   infer_membership@adult-rf-high_confidence:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_rf_high_confidence_membership/*.json
-      model=rf model_alias=rf attack=membership attack_alias=membership defense=high_confidence
-      defense_alias=high_confidence optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" experiment_name=\"\
-      *\" hydra.sweeper.study_name=membership_adult_rf_high_confidence --config-name
-      inference_default --multirun\n"
+      experiment_name=membership_adult_rf_high_confidence/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_adult_rf_high_confidence --config-name inference_default
+      --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1296,6 +1293,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1308,48 +1306,34 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
     outs:
     - path: outputs/logs/membership_adult_rf_high_confidence
       hash: md5
-      md5: b754cb0b61a09956f8a61a0df85b9ed2.dir
-      size: 1171859
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_rf_high_confidence_membership/
-      hash: md5
-      md5: 467c786398e55707eab4970afcdc2b0f.dir
-      size: 50840
-      nfiles: 100
+      md5: e57dd69b4d143cab4ea5683ef9a61e87.dir
+      size: 2343476
+      nfiles: 600
   infer_membership@adult-rf-gaussian_augmentation:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_rf_gaussian_augmentation_membership/*.json
-      model=rf model_alias=rf attack=membership attack_alias=membership defense=gaussian_augmentation
-      defense_alias=gaussian_augmentation optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" experiment_name=\"\
-      *\" hydra.sweeper.study_name=membership_adult_rf_gaussian_augmentation --config-name
+      experiment_name=membership_adult_rf_gaussian_augmentation/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=membership_adult_rf_gaussian_augmentation --config-name
       inference_default --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: b8e13d2437b33e0c3b7e5b40d9b68f6b
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1360,6 +1344,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1372,31 +1357,19 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
     outs:
     - path: outputs/logs/membership_adult_rf_gaussian_augmentation
       hash: md5
-      md5: 3cf374641d81f06148e3ff3056af6d58.dir
-      size: 1445902
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_rf_gaussian_augmentation_membership/
-      hash: md5
-      md5: 11bdce1ac62173185770265cc88481ec.dir
-      size: 820156
-      nfiles: 100
+      md5: 6471ee48ca5f27dc6c473a92ff1bcd51.dir
+      size: 2394464
+      nfiles: 600
   infer_membership@adult-rf-feature_squeezing:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
       +files.score_file=outputs/scores/attacks/adult_rf_feature_squeezing_membership/*.json
@@ -1463,21 +1436,19 @@ stages:
       nfiles: 100
   infer_membership@adult-svc-high_confidence:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_svc_high_confidence_membership/*.json
-      model=svc model_alias=svc attack=membership attack_alias=membership defense=high_confidence
-      defense_alias=high_confidence optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" experiment_name=\"\
-      *\" hydra.sweeper.study_name=membership_adult_svc_high_confidence --config-name
+      experiment_name=membership_adult_svc_high_confidence/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_adult_svc_high_confidence --config-name
       inference_default --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1488,6 +1459,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1500,48 +1472,34 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
     outs:
     - path: outputs/logs/membership_adult_svc_high_confidence
       hash: md5
-      md5: 5b1cf201529ee49047800fba71bb4c29.dir
-      size: 1163607
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_svc_high_confidence_membership/
-      hash: md5
-      md5: c05003b16d9735957688231ac200f5f1.dir
-      size: 50865
-      nfiles: 100
+      md5: 7bf513e53ae3e3150849ad23b50eefae.dir
+      size: 2338502
+      nfiles: 600
   infer_membership@adult-svc-gaussian_augmentation:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_svc_gaussian_augmentation_membership/*.json
-      model=svc model_alias=svc attack=membership attack_alias=membership defense=gaussian_augmentation
-      defense_alias=gaussian_augmentation optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" experiment_name=\"\
-      *\" hydra.sweeper.study_name=membership_adult_svc_gaussian_augmentation --config-name
+      experiment_name=membership_adult_svc_gaussian_augmentation/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=membership_adult_svc_gaussian_augmentation --config-name
       inference_default --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1552,6 +1510,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1564,177 +1523,34 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
     outs:
     - path: outputs/logs/membership_adult_svc_gaussian_augmentation
       hash: md5
-      md5: 381de4f6376cc70fed7e4138903a5ae5.dir
-      size: 1206480
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_svc_gaussian_augmentation_membership/
-      hash: md5
-      md5: 26f48bf409048a82bf3940b28f7c71bc.dir
-      size: 50877
-      nfiles: 100
+      md5: 6afacf9c8c17fc87474d93ef33c9895d.dir
+      size: 2389552
+      nfiles: 600
   infer_membership@adult-logistic-high_confidence:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_logistic_high_confidence_membership/*.json
-      model=logistic model_alias=logistic attack=membership attack_alias=membership
-      defense=high_confidence defense_alias=high_confidence optimizers=\"[accuracy,
-      membership_inference_accuracy, attack_generation_time]\" directions=\"[maximize,
-      maximize, minimize]\" experiment_name=\"*\" hydra.sweeper.study_name=membership_adult_logistic_high_confidence
-      --config-name inference_default --multirun\n"
-    deps:
-    - path: ./config/attack_default.yaml
-      hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
-    - path: outputs/data/adult.pkl
-      hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
-    params:
-      config/attack_default.yaml:
-        defaults:
-        - _self_
-        - data: adult
-        - model: rf
-        - defense: class_labels
-        - attack: hsj
-        - files:
-        - override hydra/sweeper: optuna
-        hydra:
-          run:
-            dir: outputs/logs/${experiment_name}
-          sweep:
-            dir: outputs/logs/
-            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
-          sweeper:
-            study_name: evasion_attack
-            storage: sqlite:///optuna.db
-            direction: ${directions}
-            max_failure_rate: 1.0
-            sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
-            _target_: 
-              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            n_trials: 100
-            n_jobs: 1
-            params: ${params}
-    outs:
-    - path: outputs/logs/membership_adult_logistic_high_confidence
-      hash: md5
-      md5: c3acf05fadcbceabc4252d3185d89304.dir
-      size: 1198803
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_logistic_high_confidence_membership/
-      hash: md5
-      md5: d71f369671b9ce6793e7e1738f81b793.dir
-      size: 50875
-      nfiles: 100
-  infer_membership@adult-logistic-gaussian_augmentation:
-    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_logistic_gaussian_augmentation_membership/*.json
-      model=logistic model_alias=logistic attack=membership attack_alias=membership
-      defense=gaussian_augmentation defense_alias=gaussian_augmentation optimizers=\"\
-      [accuracy, membership_inference_accuracy, attack_generation_time]\" directions=\"\
-      [maximize, maximize, minimize]\" experiment_name=\"*\" hydra.sweeper.study_name=membership_adult_logistic_gaussian_augmentation
-      --config-name inference_default --multirun\n"
-    deps:
-    - path: ./config/attack_default.yaml
-      hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
-    - path: outputs/data/adult.pkl
-      hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
-    params:
-      config/attack_default.yaml:
-        defaults:
-        - _self_
-        - data: adult
-        - model: rf
-        - defense: class_labels
-        - attack: hsj
-        - files:
-        - override hydra/sweeper: optuna
-        hydra:
-          run:
-            dir: outputs/logs/${experiment_name}
-          sweep:
-            dir: outputs/logs/
-            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
-          sweeper:
-            study_name: evasion_attack
-            storage: sqlite:///optuna.db
-            direction: ${directions}
-            max_failure_rate: 1.0
-            sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
-            _target_: 
-              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-            n_trials: 100
-            n_jobs: 1
-            params: ${params}
-    outs:
-    - path: outputs/logs/membership_adult_logistic_gaussian_augmentation
-      hash: md5
-      md5: bbfc740c6948477e0d8a62fa87960048.dir
-      size: 1241525
-      nfiles: 400
-    - path: 
-        outputs/scores/attacks/adult_logistic_gaussian_augmentation_membership/
-      hash: md5
-      md5: f2eec4e45bd142cb9e1ca4ad01d73347.dir
-      size: 50890
-      nfiles: 100
-  infer_membership@adult-svc-gaussian_noise:
-    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_svc_gaussian_noise_membership/*.json
-      model=svc model_alias=svc attack=membership attack_alias=membership defense=gaussian_noise
-      defense_alias=gaussian_noise optimizers=\"[accuracy, membership_inference_accuracy,
-      attack_generation_time]\" directions=\"[maximize, maximize, minimize]\" experiment_name=\"\
-      *\" hydra.sweeper.study_name=membership_adult_svc_gaussian_noise --config-name
+      experiment_name=membership_adult_logistic_high_confidence/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_adult_logistic_high_confidence --config-name
       inference_default --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1745,6 +1561,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1757,48 +1574,34 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
     outs:
-    - path: outputs/logs/membership_adult_svc_gaussian_noise
+    - path: outputs/logs/membership_adult_logistic_high_confidence
       hash: md5
-      md5: 5ebe6ee098022c4d4c0504088f71607a.dir
-      size: 1162022
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_svc_gaussian_noise_membership/
-      hash: md5
-      md5: 1804907195ffede02e9b0ff0d7ba3c7f.dir
-      size: 50883
-      nfiles: 100
-  infer_membership@adult-logistic-gaussian_noise:
+      md5: c89d872fb2a2e6eaf90432c6d37fed12.dir
+      size: 2365970
+      nfiles: 600
+  infer_membership@adult-logistic-gaussian_augmentation:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
-      +files.score_file=outputs/scores/attacks/adult_logistic_gaussian_noise_membership/*.json
-      model=logistic model_alias=logistic attack=membership attack_alias=membership
-      defense=gaussian_noise defense_alias=gaussian_noise optimizers=\"[accuracy,
-      membership_inference_accuracy, attack_generation_time]\" directions=\"[maximize,
-      maximize, minimize]\" experiment_name=\"*\" hydra.sweeper.study_name=membership_adult_logistic_gaussian_noise
+      experiment_name=membership_adult_logistic_gaussian_augmentation/* model=logistic
+      model_alias=logistic attack=membership attack_alias=membership defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation hydra.sweeper.study_name=membership_adult_logistic_gaussian_augmentation
       --config-name inference_default --multirun\n"
     deps:
     - path: ./config/attack_default.yaml
       hash: md5
-      md5: 7b1b97e1f7ca51e1f779cbe03ff1857a
-      size: 1266
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: 96f62cf9675711a4ce45a53c54f75080
-      size: 15197781
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
     params:
       config/attack_default.yaml:
         defaults:
@@ -1809,6 +1612,7 @@ stages:
         - attack: hsj
         - files:
         - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -1821,31 +1625,121 @@ stages:
             direction: ${directions}
             max_failure_rate: 1.0
             sampler:
-              _target_: optuna.samplers.TPESampler
-              consider_prior: true
-              prior_weight: 1.0
-              consider_magic_clip: true
-              consider_endpoints: false
-              n_startup_trials: 10
-              n_ei_candidates: 24
-              multivariate: true
-              warn_independent_sampling: true
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
             _target_: 
               hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
             n_trials: 100
             n_jobs: 1
-            params: ${params}
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_adult_logistic_gaussian_augmentation
+      hash: md5
+      md5: 72bbb940ef3232e61d3e60ae0b2e35ae.dir
+      size: 2417505
+      nfiles: 600
+  infer_membership@adult-svc-gaussian_noise:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=membership_adult_svc_gaussian_noise/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_adult_svc_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_adult_svc_gaussian_noise
+      hash: md5
+      md5: 905c8489cf9cc50d3d1db6b5d1cf4011.dir
+      size: 2334793
+      nfiles: 600
+  infer_membership@adult-logistic-gaussian_noise:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=membership_adult_logistic_gaussian_noise/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_adult_logistic_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
     outs:
     - path: outputs/logs/membership_adult_logistic_gaussian_noise
       hash: md5
-      md5: 76afb24ef98463e1bf7f72d49ad3068a.dir
-      size: 1196015
-      nfiles: 400
-    - path: outputs/scores/attacks/adult_logistic_gaussian_noise_membership/
-      hash: md5
-      md5: 907ce40522766fd5a21ae186e4f112e2.dir
-      size: 50861
-      nfiles: 100
+      md5: 0a669ba929711af6af3453c5a6ba412a.dir
+      size: 1525551
+      nfiles: 600
   defend_rf@adult-rf-rounded:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_rounded.pkl 
@@ -2887,4 +2781,920 @@ stages:
       hash: md5
       md5: 5980b66c9e4f99bae565204892f7df18.dir
       size: 2543436
+      nfiles: 600
+  infer_membership@adult-rf-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=membership_adult_rf_label_smoothing/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_adult_rf_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_adult_rf_label_smoothing
+      hash: md5
+      md5: 0c955292b4184d9a9e6ff994803b2e85.dir
+      size: 2330091
+      nfiles: 600
+  defend@adult-svc-gaussian_noise-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=gaussian_noise
+      defense_alias=gaussian_noise experiment_name=* hydra.sweeper.study_name=defended_adult_svc_gaussian_noise_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_svc_gaussian_noise_boundary/
+      hash: md5
+      md5: 208e2c3d3f9045d991a1c550cf6ef81e.dir
+      size: 2366606
+      nfiles: 600
+  defend@adult-svc-high_confidence-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=high_confidence
+      defense_alias=high_confidence experiment_name=* hydra.sweeper.study_name=defended_adult_svc_high_confidence_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_svc_high_confidence_boundary/
+      hash: md5
+      md5: 1912de6f27618eb2de71f1dbd5f20677.dir
+      size: 2369650
+      nfiles: 600
+  defend@adult-svc-gaussian_augmentation-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation experiment_name=* hydra.sweeper.study_name=defended_adult_svc_gaussian_augmentation_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_svc_gaussian_augmentation_boundary/
+      hash: md5
+      md5: 01b887e671a6e1f4d50d439151c327dd.dir
+      size: 2417093
+      nfiles: 600
+  defend@adult-svc-label_smoothing-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=label_smoothing
+      defense_alias=label_smoothing experiment_name=* hydra.sweeper.study_name=defended_adult_svc_label_smoothing_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_svc_label_smoothing_boundary/
+      hash: md5
+      md5: 2a6602e7a7103b219c04a890d90d0f70.dir
+      size: 2356585
+      nfiles: 600
+  defend@adult-logistic-gaussian_noise-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=gaussian_noise
+      defense_alias=gaussian_noise experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_gaussian_noise_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_logistic_gaussian_noise_boundary/
+      hash: md5
+      md5: 337e4af6683018e61ea3ef235e10b35a.dir
+      size: 2377099
+      nfiles: 600
+  defend@adult-logistic-high_confidence-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=high_confidence
+      defense_alias=high_confidence experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_high_confidence_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_logistic_high_confidence_boundary/
+      hash: md5
+      md5: 3bcf75f786d52da11a19d2c467200ba6.dir
+      size: 2381096
+      nfiles: 600
+  defend@adult-logistic-gaussian_augmentation-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_gaussian_augmentation_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_logistic_gaussian_augmentation_boundary/
+      hash: md5
+      md5: 1aa03349a68fffcd634ed1b6dc58845f.dir
+      size: 2429155
+      nfiles: 600
+  defend@adult-logistic-label_smoothing-boundary:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=label_smoothing
+      defense_alias=label_smoothing experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_label_smoothing_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_adult_logistic_label_smoothing_boundary/
+      hash: md5
+      md5: 4bcc6f3472172cad5be828e3940718e1.dir
+      size: 2368259
+      nfiles: 600
+  evade@adult-svc-boundary-gaussian_noise:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      +files.score_file=outputs/scores/attacks/adult_svc_gaussian_noise_boundary/*.json
+      experiment_name=evaded_adult_svc_gaussian_noise_boundary/* defense=gaussian_noise
+      defense_alias=gaussian_noise model=svc model_alias=svc attack=boundary attack_alias=boundary
+      hydra.sweeper.study_name=evaded_adult_svc_gaussian_noise_boundary --config-name
+      attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_adult_svc_gaussian_noise_boundary
+      hash: md5
+      md5: 12b5adba9c49fed871e4843d7ee6b5ba.dir
+      size: 2488623
+      nfiles: 600
+  evade@adult-svc-boundary-gaussian_augmentation:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      +files.score_file=outputs/scores/attacks/adult_svc_gaussian_augmentation_boundary/*.json
+      experiment_name=evaded_adult_svc_gaussian_augmentation_boundary/* defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation model=svc model_alias=svc attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_adult_svc_gaussian_augmentation_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_adult_svc_gaussian_augmentation_boundary
+      hash: md5
+      md5: 92a0d5ca90fce75faa763ebf4a0697cf.dir
+      size: 2547280
+      nfiles: 600
+  evade@adult-logistic-boundary-gaussian_noise:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      +files.score_file=outputs/scores/attacks/adult_logistic_gaussian_noise_boundary/*.json
+      experiment_name=evaded_adult_logistic_gaussian_noise_boundary/* defense=gaussian_noise
+      defense_alias=gaussian_noise model=logistic model_alias=logistic attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_adult_logistic_gaussian_noise_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_adult_logistic_gaussian_noise_boundary
+      hash: md5
+      md5: 640d0796049c0bbd052c01a1f320bb3f.dir
+      size: 2101220
+      nfiles: 600
+  evade@adult-logistic-boundary-gaussian_augmentation:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      +files.score_file=outputs/scores/attacks/adult_logistic_gaussian_augmentation_boundary/*.json
+      experiment_name=evaded_adult_logistic_gaussian_augmentation_boundary/* defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation model=logistic model_alias=logistic attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_adult_logistic_gaussian_augmentation_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_adult_logistic_gaussian_augmentation_boundary
+      hash: md5
+      md5: 837987da19509f0245674683b3a47965.dir
+      size: 2569004
+      nfiles: 600
+  infer_membership@adult-svc-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=membership_adult_svc_label_smoothing/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_adult_svc_label_smoothing --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_adult_svc_label_smoothing
+      hash: md5
+      md5: 155068d0fdf67d4b16489ab256467c96.dir
+      size: 2325442
+      nfiles: 600
+  infer_membership@adult-logistic-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=membership_adult_logistic_label_smoothing/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_adult_logistic_label_smoothing --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_adult_logistic_label_smoothing
+      hash: md5
+      md5: a137fc36f639c9970f8ab85ebfbce450.dir
+      size: 2352873
+      nfiles: 600
+  infer_attribute@adult-svc-high_confidence:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_svc_high_confidence/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_adult_svc_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_svc_high_confidence
+      hash: md5
+      md5: 9cca25be5d7430b5201c8c764113e64c.dir
+      size: 1248629
+      nfiles: 600
+  infer_attribute@adult-logistic-gaussian_augmentation:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_logistic_gaussian_augmentation/* model=logistic
+      model_alias=logistic attack=attribute-bb attack_alias=attribute-bb optimizers=\"\
+      [accuracy, inferred_sex_accuracy, attack_generation_time]\" defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation hydra.sweeper.study_name=attribute_adult_logistic_gaussian_augmentation
+      --config-name inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_logistic_gaussian_augmentation
+      hash: md5
+      md5: b579016b829c332fbf3be67b8c57b9e9.dir
+      size: 2330273
+      nfiles: 600
+  infer_attribute@adult-rf-high_confidence:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_rf_high_confidence/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_adult_rf_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_rf_high_confidence
+      hash: md5
+      md5: 587206e7c05796b55902849e38768c66.dir
+      size: 2256706
       nfiles: 600

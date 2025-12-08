@@ -202,8 +202,8 @@ stages:
         # - digits
       model:
         - rf
-        # - svc
-        # - logistic
+        - svc
+        - logistic
       defense:
         # Postprocessing defenses
         # - class_labels
@@ -255,8 +255,8 @@ stages:
         # - digits
       model:
         - rf
-        # - svc
-        # - logistic
+        - svc
+        - logistic
       attack:
         # Evasion attacks
         # - hsj
@@ -379,3 +379,59 @@ stages:
     # model=${item.model}  <-- Specifies the model to be used. See ./config/model/ for available models.
     # attack=membership <-- Specifies the attack to be used. See ./config/attack/ for available attacks.
     # defense=${item.defense}  <-- Specifies the defense to be used. See ./config/defense/ for available defenses.
+  infer_attribute:
+    matrix:
+      data: 
+        - adult
+        # - classification
+        # - digits
+      model:
+        - rf
+        - svc
+        - logistic
+      defense:
+      # Postprocessing defenses
+        # - class_labels
+        - gaussian_noise
+        - high_confidence
+      #   - reverse_sigmoid
+      #   - rounded
+      # # Preprocessing defenses
+      #   - cut_mix
+      #   - cutout
+      #   - feature_squeezing
+        - gaussian_augmentation
+      #   - jpeg_compression
+        - label_smoothing
+      #   - mixup
+      #   - resample
+      #   - spatial_smoothing
+    cmd: >
+      deckard 
+      data=${item.data}
+      data_alias=${item.data}
+      +files.data_file=outputs/data/${item.data}.pkl
+      experiment_name=attribute_${item.data}_${item.model}_${item.defense}/*
+      model=${item.model}
+      model_alias=${item.model}
+      attack=attribute-bb
+      attack_alias=attribute-bb
+      optimizers="[accuracy, inferred_sex_accuracy, attack_generation_time]"
+      defense=${item.defense}
+      defense_alias=${item.defense}
+      hydra.sweeper.study_name=attribute_${item.data}_${item.model}_${item.defense}
+      --config-name inference_default
+      --multirun
+    deps:
+      - outputs/data/${item.data}.pkl
+      - ./config/attack_default.yaml
+    outs:
+      - outputs/logs/attribute_${item.data}_${item.model}_${item.defense}
+    params:
+      - ./config/attack_default.yaml:
+        - defaults
+        - hydra
+    ################################################
+    #            Command Explanation:             #
+    ################################################
+    # deckard  <-- Calls the deckard CLI tool  

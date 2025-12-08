@@ -747,7 +747,11 @@ class AttackConfig(ConfigBase):
         self.predictions = preds
         self.labels = target
         start_time = time.process_time()
-        
+        preds = np.array(preds, dtype=ART_NUMPY_DTYPE)
+        X_test_subset_without_feature = np.array(
+            X_test_subset_without_feature,
+            dtype=ART_NUMPY_DTYPE,
+        )
         inferred = attack.infer(
             x=X_test_subset_without_feature,
             pred=preds,
