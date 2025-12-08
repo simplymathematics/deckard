@@ -315,8 +315,8 @@ stages:
     deps:
     - path: ../../deckard/data/
       hash: md5
-      md5: 2b46474de12cbb68f5ac97b8c3dfa73f.dir
-      size: 108790
+      md5: 1cb006e76007985c4f7b927da8ccc148.dir
+      size: 108963
       nfiles: 5
     - path: .deckard_rc
       hash: md5
@@ -334,12 +334,12 @@ stages:
     outs:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     - path: outputs/scores/data/adult.json
       hash: md5
-      md5: 7504f983d94c1b99bef44dbae9641368
-      size: 7903
+      md5: 576dc0932b76d9f89a9ddaae571ac8c7
+      size: 7904
   defend_rf@adult-svc-class_labels:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/svc_defended_class_labels.pkl 
@@ -536,7 +536,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -573,12 +573,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_class_labels.pkl
       hash: md5
-      md5: 3e6fc348ca8e3bd1ba6cd6d5b45cb479
+      md5: 93c3e73ed21c04a7a71c5e85f13e2dd1
       size: 109571551
     - path: outputs/scores/defenses/adult/rf_class_labels.json
       hash: md5
-      md5: 9da4012cb18b5ef5dd56a565e6588a97
-      size: 8457
+      md5: ff24f06d337fdda057cb5017643ff53d
+      size: 8458
   defend_rf@digits-logistic-class_labels:
     cmd: deckard data=digits +files.data_file=outputs/data/digits.pkl 
       +files.model_file=outputs/models/digits/logistic_defended_class_labels.pkl
@@ -702,8 +702,8 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: 245f5161bb8f88a3159d076dd9bef971.dir
-      size: 590803
+      md5: 956476d4c729d39496a5c62841ba9df4.dir
+      size: 591152
       nfiles: 32
     - path: ./config/default.yaml
       hash: md5
@@ -992,7 +992,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -1028,12 +1028,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_gaussian_noise.pkl
       hash: md5
-      md5: 2d42f7454e9bb89255dc2bdcc024a833
+      md5: 0dfb48f8aba0dd656150f6bc51647e2f
       size: 109567758
     - path: outputs/scores/defenses/adult/rf_gaussian_noise.json
       hash: md5
-      md5: 0307ae30f720436c59371bb68a87d6a5
-      size: 8465
+      md5: a9bfc2c3de4877f58721e405115326e9
+      size: 8467
   generate_data@ddos:
     cmd: "deckard  data=ddos  +files.data_file=outputs/data/ddos.pkl  +files.score_file=outputs/scores/data/ddos.json
       experiment_name=ddos ~model  ~attack ~directions ~optimizers\n"
@@ -1163,7 +1163,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -1193,12 +1193,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf.pkl
       hash: md5
-      md5: 483543767aa56adb7bc7e2236ce4b099
+      md5: 5afc94bfd92b7ea14d96bca5403464d8
       size: 109571538
     - path: outputs/scores/models/adult/rf.json
       hash: md5
-      md5: 6bb2a600b59d618be8da54f90bca455d
-      size: 8459
+      md5: 218f700540aaf5ada632321e038dd109
+      size: 8469
   attack_rf@adult-rf-membership:
     cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.model_file=outputs/models/adult/rf.pkl
       +files.score_file=outputs/scores/attacks/adult/rf/membership.json model=rf.yaml\
@@ -1206,17 +1206,17 @@ stages:
     deps:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     - path: outputs/models/adult/rf.pkl
       hash: md5
-      md5: 483543767aa56adb7bc7e2236ce4b099
+      md5: 5afc94bfd92b7ea14d96bca5403464d8
       size: 109571538
     outs:
     - path: outputs/scores/attacks/adult/rf/membership.json
       hash: md5
-      md5: c70f16f8d5532f160f86730670b2dc93
-      size: 8777
+      md5: da96acf7609fe9b254dc64312ad07af1
+      size: 8765
   infer_membership@adult-rf-gaussian_noise:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
       experiment_name=membership_adult_rf_gaussian_noise/* model=rf model_alias=rf
@@ -1754,7 +1754,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -1790,11 +1790,11 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_rounded.pkl
       hash: md5
-      md5: ff6dcb3d30f050af9aa53a5b60c59336
+      md5: e94e31f3ef5b7ecd4031bba7b7e9b357
       size: 109567741
     - path: outputs/scores/defenses/adult/rf_rounded.json
       hash: md5
-      md5: 7d50d6a6dbb76aa42089417184c786e1
+      md5: f6e7f15c476104a89e566d81380c410d
       size: 8467
   defend_rf@adult-rf-feature_squeezing:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
@@ -1812,7 +1812,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -1851,11 +1851,11 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_feature_squeezing.pkl
       hash: md5
-      md5: 3ae27fbb089a2ec7d3cfec22b88df506
+      md5: d9a487d88ee72dc68ade2f1eb1208a13
       size: 109567788
     - path: outputs/scores/defenses/adult/rf_feature_squeezing.json
       hash: md5
-      md5: 9665d43612178c20b7f9dcb53183092b
+      md5: 27f50d285c8d351065035381cbfbd521
       size: 8477
   defend_rf@adult-rf-cutout:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
@@ -1871,7 +1871,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -1907,12 +1907,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_cutout.pkl
       hash: md5
-      md5: 33266bf2da5dc6d509a0b2f168aa513c
+      md5: efca735615acaccdeef3d7d134c41f84
       size: 109567743
     - path: outputs/scores/defenses/adult/rf_cutout.json
       hash: md5
-      md5: ff527c5b902035986eeca6b2669428cf
-      size: 8465
+      md5: a21fca488365962af7d67615c781d56d
+      size: 8477
   defend_rf@adult-rf-jpeg_compression:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_jpeg_compression.pkl 
@@ -1990,7 +1990,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2028,12 +2028,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_gaussian_augmentation.pkl
       hash: md5
-      md5: 52bd4a948390f66e41141a1e8da9e27d
+      md5: 871e1f84d36562327043b07e116605bf
       size: 109567810
     - path: outputs/scores/defenses/adult/rf_gaussian_augmentation.json
       hash: md5
-      md5: 2bf3d70cb4ec5ba192db5eda6ab3d73f
-      size: 8465
+      md5: f3e70ebe42fb6d46be3008059834664f
+      size: 8468
   defend_rf@adult-rf-high_confidence:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_high_confidence.pkl 
@@ -2049,7 +2049,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2085,12 +2085,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_high_confidence.pkl
       hash: md5
-      md5: c4a56f1b770185d7bf98615aadff9836
+      md5: 55e10a9e3b25cf0050617dc7b052867d
       size: 109567761
     - path: outputs/scores/defenses/adult/rf_high_confidence.json
       hash: md5
-      md5: b77422b5d36929bf59432b41d0db2de8
-      size: 8475
+      md5: c803290265d8b2a5cc45f4ab7ecb1c15
+      size: 8478
   defend_rf@adult-rf-resample:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_resample.pkl 
@@ -2224,7 +2224,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2263,12 +2263,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_mixup.pkl
       hash: md5
-      md5: 149aad52bb8ad153067c5bbef59ddb43
+      md5: 717446548bf44335cf284504d7140c5e
       size: 109567807
     - path: outputs/scores/defenses/adult/rf_mixup.json
       hash: md5
-      md5: 4ad8945a087c13893666a5082b36fc64
-      size: 8467
+      md5: 281659ba3972d733be30b4e365fe0adf
+      size: 8466
   defend_rf@adult-rf-label_smoothing:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_label_smoothing.pkl 
@@ -2284,7 +2284,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2320,12 +2320,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_label_smoothing.pkl
       hash: md5
-      md5: 2c10384bb60ee8939d8ef35a7ff7e12d
+      md5: 341d37d439c6d0c21bd80670690a6edf
       size: 109567763
     - path: outputs/scores/defenses/adult/rf_label_smoothing.json
       hash: md5
-      md5: cee611ebdc521fc8ee7f96aa43b6e646
-      size: 8476
+      md5: 11b44efed235487ab1cc7854256e2813
+      size: 8466
   defend_rf@adult-rf-cut_mix:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_cut_mix.pkl 
@@ -2340,7 +2340,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2378,12 +2378,12 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_cut_mix.pkl
       hash: md5
-      md5: 17c3eb07d589022d22b7d44c4bc181ab
+      md5: 6a467a17573699372a61fa51ff208d0a
       size: 109567788
     - path: outputs/scores/defenses/adult/rf_cut_mix.json
       hash: md5
-      md5: 274f6b49b61510cd17b35e1bb2f0f404
-      size: 8467
+      md5: c22f98795f0809740469010b9bb908c8
+      size: 8477
   defend_rf@adult-rf-reverse_sigmoid:
     cmd: deckard data=adult +files.data_file=outputs/data/adult.pkl 
       +files.model_file=outputs/models/adult/rf_defended_reverse_sigmoid.pkl 
@@ -2399,7 +2399,7 @@ stages:
       nfiles: 6
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/data/adult.yaml:
@@ -2436,11 +2436,11 @@ stages:
     outs:
     - path: outputs/models/adult/rf_defended_reverse_sigmoid.pkl
       hash: md5
-      md5: 67dafc09d7d272d8f340b502c7dcaeb4
+      md5: c0bb2d2f1eb122f76113967ac10da2a3
       size: 109567779
     - path: outputs/scores/defenses/adult/rf_reverse_sigmoid.json
       hash: md5
-      md5: 9c9550a22107ba0a9feeafb7dd3048f7
+      md5: fcbce901b5f208c379e364c6c37e22f5
       size: 8476
   attack_rf@adult-rf-hsj:
     cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.model_file=outputs/models/adult/rf.pkl
@@ -2449,17 +2449,17 @@ stages:
     deps:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     - path: outputs/models/adult/rf.pkl
       hash: md5
-      md5: 483543767aa56adb7bc7e2236ce4b099
+      md5: 5afc94bfd92b7ea14d96bca5403464d8
       size: 109571538
     outs:
     - path: outputs/scores/attacks/adult/rf/hsj.json
       hash: md5
-      md5: ecea414aa20e7db63f689cf813803efe
-      size: 8740
+      md5: 3637638ebe24284387713bdb34ad8152
+      size: 8742
   attack_rf@adult-rf-boundary:
     cmd: "deckard  data=adult  +files.data_file=outputs/data/adult.pkl  +files.model_file=outputs/models/adult/rf.pkl
       +files.score_file=outputs/scores/attacks/adult/rf/boundary.json model=rf.yaml\
@@ -2467,17 +2467,17 @@ stages:
     deps:
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     - path: outputs/models/adult/rf.pkl
       hash: md5
-      md5: 483543767aa56adb7bc7e2236ce4b099
+      md5: 5afc94bfd92b7ea14d96bca5403464d8
       size: 109571538
     outs:
     - path: outputs/scores/attacks/adult/rf/boundary.json
       hash: md5
-      md5: f253b05b255d8c5421ca57efe048ffee
-      size: 8729
+      md5: 72839b6f27ccfda27e8ddf2d424a7a03
+      size: 8732
   defend@adult-rf-gaussian_noise-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
       model=rf model_alias=rf attack_alias=boundary attack=boundary defense=gaussian_noise
@@ -3546,7 +3546,8 @@ stages:
   infer_attribute@adult-svc-high_confidence:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
       experiment_name=attribute_adult_svc_high_confidence/* model=svc model_alias=svc
-      attack=attribute-bb attack_alias=attribute-bb defense=high_confidence defense_alias=high_confidence
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
       hydra.sweeper.study_name=attribute_adult_svc_high_confidence --config-name inference_default
       --multirun\n"
     deps:
@@ -3591,8 +3592,8 @@ stages:
     outs:
     - path: outputs/logs/attribute_adult_svc_high_confidence
       hash: md5
-      md5: 9cca25be5d7430b5201c8c764113e64c.dir
-      size: 1248629
+      md5: 2ccb88e60da34d2a5329cc1479065252.dir
+      size: 2253945
       nfiles: 600
   infer_attribute@adult-logistic-gaussian_augmentation:
     cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -3697,4 +3698,576 @@ stages:
       hash: md5
       md5: 587206e7c05796b55902849e38768c66.dir
       size: 2256706
+      nfiles: 600
+  infer_attribute@adult-logistic-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_logistic_label_smoothing/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_adult_logistic_label_smoothing --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_logistic_label_smoothing
+      hash: md5
+      md5: 067a50c9b19b03c4c9ff0797f270adbc.dir
+      size: 2265740
+      nfiles: 600
+  infer_attribute@adult-rf-gaussian_augmentation:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_rf_gaussian_augmentation/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=attribute_adult_rf_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_rf_gaussian_augmentation
+      hash: md5
+      md5: 940bc79e1ee2f4a4cbab2e8eab150559.dir
+      size: 2307788
+      nfiles: 600
+  infer_attribute@adult-logistic-high_confidence:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_logistic_high_confidence/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_adult_logistic_high_confidence --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_logistic_high_confidence
+      hash: md5
+      md5: 1467755b4c023f887c66332f33ac56a7.dir
+      size: 2278584
+      nfiles: 600
+  infer_attribute@adult-logistic-gaussian_noise:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_logistic_gaussian_noise/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=attribute_adult_logistic_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_logistic_gaussian_noise
+      hash: md5
+      md5: 5e1fb765e5665c437b8a5f10419b41a6.dir
+      size: 2274620
+      nfiles: 600
+  infer_attribute@adult-rf-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_rf_label_smoothing/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_adult_rf_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_rf_label_smoothing
+      hash: md5
+      md5: a21e11f74b14b7b3d90e4a2de7d349b4.dir
+      size: 2243416
+      nfiles: 600
+  infer_attribute@adult-svc-gaussian_noise:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_svc_gaussian_noise/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=attribute_adult_svc_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_svc_gaussian_noise
+      hash: md5
+      md5: ee2cb75adcd8311ba805aa6bfde76a81.dir
+      size: 2240853
+      nfiles: 600
+  infer_attribute@adult-svc-label_smoothing:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_svc_label_smoothing/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_adult_svc_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_svc_label_smoothing
+      hash: md5
+      md5: a0ab1a68e3f403b0fbe3d6455281a6c1.dir
+      size: 2240800
+      nfiles: 600
+  infer_attribute@adult-svc-gaussian_augmentation:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_svc_gaussian_augmentation/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=attribute_adult_svc_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_svc_gaussian_augmentation
+      hash: md5
+      md5: 19bc26dc9a14193c2fdd3f7c4961df82.dir
+      size: 2304980
+      nfiles: 600
+  infer_attribute@adult-rf-gaussian_noise:
+    cmd: "deckard  data=adult data_alias=adult +files.data_file=outputs/data/adult.pkl
+      experiment_name=attribute_adult_rf_gaussian_noise/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=attribute_adult_rf_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_adult_rf_gaussian_noise
+      hash: md5
+      md5: cdfe2d96303a2e235b1539b61411f323.dir
+      size: 2261810
+      nfiles: 600
+  defend_attribute_inference@adult-rf-gaussian_noise:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=rf model_alias=rf attack=attribute-bb attack_alias=attribute-bb defense=gaussian_noise
+      defense_alias=gaussian_noise optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" directions=\"[maximize, minimize, maximize]\" experiment_name=defended_attribute_adult_rf_gaussian_noise/*
+      hydra.sweeper.study_name=defended_attribute_adult_rf_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/inference_default.yaml
+      hash: md5
+      md5: 4474f990d3f1814182cf60bffe32c9ed
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/inference_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature_squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_attribute_adult_rf_gaussian_noise
+      hash: md5
+      md5: 5ea08c978d53c286dbbd3be4a7f047d9.dir
+      size: 2288846
+      nfiles: 600
+  defend_attribute_inference@adult-rf-high_confidence:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=rf model_alias=rf attack=attribute-bb attack_alias=attribute-bb defense=high_confidence
+      defense_alias=high_confidence optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" directions=\"[maximize, minimize, maximize]\" experiment_name=defended_attribute_adult_rf_high_confidence/*
+      hydra.sweeper.study_name=defended_attribute_adult_rf_high_confidence --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/inference_default.yaml
+      hash: md5
+      md5: 4474f990d3f1814182cf60bffe32c9ed
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: da4fea410b5a388204cba8e98d593fd9
+      size: 15197209
+    params:
+      config/inference_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature_squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_attribute_adult_rf_high_confidence
+      hash: md5
+      md5: 0fc35295e706247002ea6eabd896afa1.dir
+      size: 2293060
       nfiles: 600
