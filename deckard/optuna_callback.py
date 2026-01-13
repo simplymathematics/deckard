@@ -7,12 +7,9 @@ from hydra.experimental.callback import Callback
 from typing import Union
 from pathlib import Path
 
-storage = "sqlite:///optuna.db"
-study_name = "gzip_knn_20-0"
-metric_names = ["accuracy"]
-directions = ["maximize"]
-output_file = "optuna.csv"
 
+
+logger = optuna.logging.get_logger(__name__)
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):
@@ -74,7 +71,7 @@ class OptunaStudyDumpCallback(Callback):
         if hasattr(study, "set_metric_names"):
             study.set_metric_names(self.metric_names)
         else:
-            print("Cannot set metric names")
+            logger.warning("Optuna version does not support set_metric_names. Please upgrade to Optuna 3.0.0 or higher.")
 
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
         study = optuna.load_study(self.study_name, storage=self.storage)

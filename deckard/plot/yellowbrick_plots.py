@@ -2,16 +2,12 @@
 
 import logging
 import warnings
-import hashlib
 from dataclasses import dataclass, field
 from typing import List, Union, Literal
-from omegaconf import DictConfig, OmegaConf
-import os
 
 
 import numpy as np
 from pathlib import Path
-from hydra.utils import instantiate
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold, TimeSeriesSplit, StratifiedKFold, ShuffleSplit
 # yellow brick imports
@@ -36,6 +32,10 @@ from yellowbrick.model_selection import ValidationCurve, LearningCurve, CVScores
 
 
 from ..experiment import ExperimentConfig
+from ..file import FileConfig
+from ..data import DataConfig
+from ..model import ModelConfig
+from ..attack import AttackConfig
 from ..utils import ConfigBase
 
 feature_viz_types = [
@@ -113,9 +113,73 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 @dataclass
-class YellowbrickPlotConfig(ConfigBase):
-    """Configuration for Yellowbrick data plots."""
 
+class YellowbrickPlotConfig(ConfigBase):
+    """
+YellowbrickPlotConfig is a configuration class for generating and saving various types of 
+Yellowbrick visualizations. It supports feature, target, regressor, classifier, cluster, 
+and model selection visualizations. The class provides methods to load data, configure 
+visualizers, and generate plots based on the specified plot type.
+Attributes
+------------
+    plot_type (Literal): The type of Yellowbrick plot to generate. Supported types include 
+        "rank1d", "rank2d", "radviz", "pcoords", "jointplot", "pca", "manifold", 
+        "class_balance", "balanced_binning_reference", "feature_correlation", 
+        "prediction_error", "residuals_plot", "alpha_selection", "classfication_report", 
+        "roc_auc", "precision_recall_curve", "class_prediction_error", 
+        "discrimination_threshold", "k_elbow", "silhouette", "intercluster_distance", 
+        "validation_curve", "learning_curve", "cv_scores", "feature_importances", 
+        "rfecv", "dropping_curve".
+    features (Union[List[str], Literal["all"]]): The features to include in the plot. 
+        Defaults to "all".
+    classes (Union[List[str], Literal["all"]]): The classes to include in the plot. 
+        Defaults to "all".
+    title (str): The title of the plot. Defaults to "Yellowbrick Plot".
+    save_path (str): The file path to save the generated plot. Defaults to "yellowbrick_plot.png".
+    plot_params (dict): Additional parameters to pass to the Yellowbrick visualizer.
+Methods
+--------
+    load_data(data, test=False, attack=None):
+        Loads the dataset based on the experiment configuration. Supports loading training, 
+        test, or attack data.
+    visualize_features(data: DataConfig, ax=None):
+        Generates and saves feature-based Yellowbrick visualizations such as "rank1d", 
+        "rank2d", "radviz", etc.
+    visualize_targets(data: DataConfig, ax=None):
+        Generates and saves target-based Yellowbrick visualizations such as "class_balance", 
+        "balanced_binning_reference", and "feature_correlation".
+    visualize_regressors(data: DataConfig, model: ModelConfig, ax=None):
+        Generates and saves regressor-based Yellowbrick visualizations such as 
+        "prediction_error", "residuals_plot", and "alpha_selection".
+    visualize_classifiers(data: DataConfig, model: ModelConfig, ax):
+        Generates and saves classifier-based Yellowbrick visualizations such as 
+        "classification_report", "roc_auc", "precision_recall_curve", etc.
+    visualize_clusters(data: DataConfig, model: ModelConfig, ax):
+        Generates and saves cluster-based Yellowbrick visualizations such as "k_elbow", 
+        "silhouette", and "intercluster_distance".
+    visualize_model_selection(data: DataConfig, model: ModelConfig, ax=None):
+        Generates and saves model selection-based Yellowbrick visualizations such as 
+        "validation_curve", "learning_curve", "cv_scores", etc.
+    parse_cv():
+        Parses the cross-validation configuration from the plot parameters.
+    parse_range():
+        Parses the parameter range for validation curves or other range-based visualizations.
+    visualize(experiment: ExperimentConfig, ax=None):
+        Main method to generate and save the Yellowbrick plot. Determines the appropriate 
+        visualization method based on the plot type.
+    show(visualizer):
+        Displays or saves the generated Yellowbrick visualizer plot.
+    __call__(experiment):
+        Invokes the visualize method to generate the plot for the given experiment.
+        
+Example
+--------
+    >>> cfg = YellowbrickPlotConfig(plot_type="pca", features=["feature1", "feature2"], classes=["class1", "class2"], 
+    ...                             title="PCA Plot", save_path="pca_plot.png", plot_params={"scale": True})
+    >>> experiment = ExperimentConfig(...)  # Assume this is properly defined
+    >>> fig, ax = plt.subplots(figsize=(10, 8))
+    >>> cfg.visualize(experiment=experiment, ax=ax, fig=fig)
+"""
     plot_type: Literal[
         f"{all_viz_types}"
     ] = "pca"
@@ -123,22 +187,17 @@ class YellowbrickPlotConfig(ConfigBase):
     classes: Union[List[str], Literal["all"]] = "all"
     title: str = "Yellowbrick Plot"
     save_path: str = "yellowbrick_plot.png"
-    experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
     plot_params: dict = field(default_factory=dict)
 
 
-    def initialize_experiment(self):
-        """Initializes the experiment configuration."""
-        if hasattr(self.experiment.data, "X_train") and self.experiment.data.X_train is not None:
-            return
-        self.experiment()
     
-    def load_data(self, test = False, attack=False):
+    
+    def load_data(self, data, test = False, attack:Union[AttackConfig, None]=None):
         """Loads the dataset based on the experiment configuration."""
         # Assert that either test or attack is False or both are False
         assert not (test and attack), "Cannot load both test and attack data simultaneously"
-        X, y = self.experiment.data.X_train, self.experiment.data.y_train
-        X_test, y_test = self.experiment.data.X_test, self.experiment.data.y_test
+        X, y = data.X_train, data.y_train
+        X_test, y_test = data.X_test, data.y_test
         if self.classes == "all":
             classes = np.unique(y)
         else:
@@ -147,22 +206,18 @@ class YellowbrickPlotConfig(ConfigBase):
             features = X.columns.tolist()
         else:
             features = self.features
-        if attack:
-            X_attack, y_attack = self.experiment.attack.attack, self.experiment.data.y_train[:self.experiment.attack.attack_size]
+        if attack is not None:
+            X_attack, y_attack = attack.attack, attack.labels
             return X_attack, y_attack, classes, features
         if not test:
             return X, y, classes, features
         else:
             return X_test, y_test, classes, features
     
-    def load_model(self):
-        """Loads the model based on the experiment configuration."""
-        model = self.experiment.model
-        return model.get_model()
     
-    def visualize_features(self, ax=None):
+    def visualize_features(self, data:DataConfig, ax=None):
         """Generates and saves the Yellowbrick data plot."""
-        X, y, classes, features = self.load_data()
+        X, y, classes, features = self.load_data(data)
         if self.plot_type == "rank1d":
             visualizer = Rank1D(features=features, classes=classes, **self.plot_params, ax=ax)
             visualizer.fit(X, y)
@@ -193,8 +248,8 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick plot saved to {self.save_path}")
     
-    def visualize_targets(self, ax=None):
-        X, y, classes, feature_indices = self.load_data()
+    def visualize_targets(self, data:DataConfig, ax=None):
+        X, y, classes, feature_indices = self.load_data(data)
         if self.plot_type == "class_balance":
             visualizer = ClassBalance(labels=classes, **self.plot_params, ax=ax)
             visualizer.fit(y)
@@ -209,10 +264,9 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick target plot saved to {self.save_path}")
     
-    def visualize_regressors(self, ax=None):
-        X, y, _, _ = self.load_data()
-        X_test, y_test, _, _ = self.load_data(test=True)
-        model = self.load_model()
+    def visualize_regressors(self, data:DataConfig, model:ModelConfig, ax=None):
+        X, y, _, _ = self.load_data(data)
+        X_test, y_test, _, _ = self.load_data(data, test=True)
         if self.plot_type == "prediction_error":
             visualizer = PredictionError(model, **self.plot_params, ax=ax)
             visualizer.fit(X, y)
@@ -229,10 +283,9 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick regressor plot saved to {self.save_path}")
     
-    def visualize_classifiers(self, ax):
-        X, y, classes, _ = self.load_data()
-        X_test, y_test, _, _ = self.load_data(test=True)
-        model = self.load_model()
+    def visualize_classifiers(self, data:DataConfig, model:ModelConfig, ax):
+        X, y, classes, _ = self.load_data(data)
+        X_test, y_test, _, _ = self.load_data(data, test=True)
         if self.plot_type == "classfication_report":
             visualizer = ClassificationReport(model, classes=classes, **self.plot_params, ax=ax)
             visualizer.fit(X, y)
@@ -258,9 +311,8 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick classifier plot saved to {self.save_path}")
     
-    def visualize_clusters(self, ax):
-        X, _, _, _ = self.load_data()
-        model = self.load_model()
+    def visualize_clusters(self, data:DataConfig, model:ModelConfig, ax):
+        X, _, _, _ = self.load_data(data)
         if self.plot_type == "k_elbow":
             visualizer = KElbowVisualizer(model, **self.plot_params, ax=ax)
             visualizer.fit(X)
@@ -275,9 +327,40 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick cluster plot saved to {self.save_path}")
     
-    def visualize_model_selection(self, ax=None):
-        X, y, _, features = self.load_data()
-        model = self.load_model()
+    
+    def visualize_model_selection(self, data:DataConfig, model:ModelConfig, ax=None):
+        """
+        Visualizes various model selection plots using Yellowbrick visualizers.
+
+        Parameters:
+            data (DataConfig): The configuration object containing the dataset to be used.
+            model (ModelConfig): The configuration object for the model to be visualized.
+            ax (matplotlib.axes.Axes, optional): The matplotlib axes on which to draw the plot. 
+                If None, a new figure and axes will be created.
+
+        Raises:
+            ValueError: If the specified `plot_type` is not supported.
+
+        Supported Plot Types:
+            - "validation_curve": Plots the validation curve for a model over a range of hyperparameter values.
+            - "learning_curve": Plots the learning curve showing training and validation scores over varying training sizes.
+            - "cv_scores": Visualizes cross-validation scores for the model.
+            - "feature_importances": Displays the feature importances as determined by the model.
+            - "rfecv": Performs recursive feature elimination with cross-validation and visualizes the results.
+            - "dropping_curve": Visualizes the effect of dropping features on model performance.
+
+        Notes:
+            - The `plot_type` attribute of the class determines which plot is generated.
+            - The `plot_params` attribute is used to pass additional parameters to the Yellowbrick visualizers.
+            - The visualizer is displayed and saved to the path specified by `self.save_path`.
+
+        Example:
+            >>> cfg = YellowbrickPlotConfig(plot_type="validation_curve", plot_params={"cv": 5, "param_range": [1, 100]})
+            >>> data_config = DataConfig(...)  # Assume this is properly defined
+            >>> model_config = ModelConfig(...)  # Assume this is properly defined
+            >>> cfg.visualize_model_selection(data_config, model_config, ax=ax)
+        """
+        X, y, _, features = self.load_data(data)
         cv = self.parse_cv()
         self.plot_params["cv"] = cv
         if self.plot_type == "validation_curve":
@@ -346,27 +429,42 @@ class YellowbrickPlotConfig(ConfigBase):
                 raise ValueError("Distribution must be either 'log' or 'linear'")
         return param_range
     
-    def visualize(self, ax=None):
+    def visualize(self, experiment:ExperimentConfig, ax=None):
         """Main method to generate and save the Yellowbrick plot."""
-        self.initialize_experiment()
+        if not hasattr(experiment, "score_dict") or len(experiment.score_dict) == 0:
+            experiment()
+        if hasattr(experiment, "data"):
+            data = experiment.data
+        else:
+            raise ValueError("Experiment must have a data attribute")
+        if hasattr(experiment, "model"):
+            model = experiment.model.get_model()
+        else:
+            model = None
+        if hasattr(experiment, "attack"):
+            attack = experiment.attack
+        else:
+            attack = None
         # Validate that either ax is provided or otherwise create a new figure
         if ax is None:
             _, ax = plt.subplots(figsize=(10, 8))
         Path(self.save_path).parent.mkdir(parents=True, exist_ok=True)
         if self.plot_type in feature_viz_types:
-            self.visualize_features(ax)
+            self.visualize_features(data=data, ax=ax)
         elif self.plot_type in target_viz_types:
-            self.visualize_targets(ax)
+            self.visualize_targets(data=data, ax=ax)
         elif self.plot_type in regressor_viz_types:
-            self.visualize_regressors(ax)
+            self.visualize_regressors(data=data, model=model, ax=ax)
         elif self.plot_type in classifier_viz_types:
-            self.visualize_classifiers(ax)
+            self.visualize_classifiers(data=data, model=model, ax=ax)
         elif self.plot_type in cluster_viz_types:
-            self.visualize_clusters(ax)
-        elif self.plot_type in ["validation_curve", "learning_curve", "cv_scores", "feature_importances", "rfecv", "dropping_curve"]:
-            self.visualize_model_selection(ax)
+            self.visualize_clusters(data=data, model=model, ax=ax)
+        elif self.plot_type in model_selection_viz_types:
+            self.visualize_model_selection(data=data, model=model, ax=ax)
         else:
             raise ValueError(f"Unsupported plot type: {self.plot_type}")
+        if attack is not None:
+            raise NotImplementedError("Attack visualization not implemented yet")
     
     def show(self, visualizer):
         assert hasattr(visualizer, "show"), "Visualizer does not have a show method"
@@ -374,60 +472,44 @@ class YellowbrickPlotConfig(ConfigBase):
 
         visualizer.show(outpath=self.save_path)
         
-    
-    
-    def __call__(self):
-        self.initialize_experiment()
-        self.visualize()
+
+
+    def __call__(self, experiment):
+        self.visualize(experiment=experiment)
 
 @dataclass
 class YellowBrickConfigList(ConfigBase):
     """Configuration for a list of Yellowbrick plots."""
 
     plots : List[Literal[f"{all_viz_types}"]] = field(default_factory=list)
-    experiment: Union[ExperimentConfig, None] = None
-    experiments: List[ExperimentConfig] = field(default_factory=list)
-    file: Union[str, None] = None
+    files: Union[FileConfig, None] = None
     
-    def __post_init__(self):
-        if len(self.experiments) == 0:
-            assert isinstance(self.experiment, ExperimentConfig), "Either a single experiment or a list of experiments must be provided"
-            self.experiments = [self.experiment for _ in self.plots]
-        else:
-            assert len(self.plots) == len(self.experiments), "Number of plots must match number of experiments"
-            assert self.experiment is None, "Either a single experiment or a list of experiments must be provided, not both"
-        assert len(self.plots) == len(self.experiments), "Number of plots must match number of experiments"    
-    
-    def __iter__(self):
-        for plot_type, experiment in zip(self.plots, self.experiments):
-            plot_cfg = YellowbrickPlotConfig(
-                plot_type=plot_type,
-                features="all",
-                classes="all",
-                title=plot_type.replace("_", " ").title(),
-                save_path=f"plots/"+plot_type+".png",
-                experiment=experiment,
-            )
-            yield plot_cfg
+
+   
     
     def __len__(self):
         return len(self.plots)
     
     
     
-    def __call__(self):
+    def __call__(self, experiment=Union[ExperimentConfig, List[ExperimentConfig]], axes = None):
         plot_length = len(self)
-        fig, axes = plt.subplots(nrows=plot_length, ncols=1, figsize=(10, 8*plot_length))
-        for plot_cfg in self:
-            ax = axes[plot_cfg.plot_type] if plot_length > 1 else axes
-            print(f"Generating plot: {plot_cfg.plot_type}")
-            print("."*80)
+        if isinstance(experiment, list):
+            assert plot_length == len(experiment), "Number of plots must match number of experiments"
+        else:
+            experiment = [experiment] * plot_length
+        
+        if axes is None:
+            fig, axes = plt.subplots(nrows=1, ncols=plot_length, figsize=(8 * plot_length, 6))
+        for plot, exp in zip(self.plots, experiment):
+            plot_cfg = YellowbrickPlotConfig(plot_type=plot, experiment=exp)
+            ax = axes if plot_length == 1 else axes[self.plots.index(plot)]
             try:
-                plot_cfg()
+                plot_cfg.visualize(experiment=exp, ax=ax)
             except Exception as e:
-                print(f"Failed to generate plot {plot_cfg.plot_type}")
-        if self.file is not None:
-            plt.savefig(self.file)
-            logger.info(f"Yellowbrick plots saved to {self.file}")
+                print(f"Failed to generate plot {plot}: {e}")
+        if self.files is not None:
+            plt.savefig(self.files.get_file_path())
+            logger.info(f"Yellowbrick plots saved to {self.files.get_file_path()}")
         plt.close(fig)
         return fig

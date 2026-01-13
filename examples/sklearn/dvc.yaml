@@ -488,7 +488,7 @@ stages:
       attack_alias=membership
       defense=${item.defense}
       defense_alias=${item.defense}
-      optimizers="[accuracy, inferred_membership_accuracy, attack_generation_time]"
+      optimizers="[accuracy, membership_inference_accuracy, attack_generation_time]"
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_membership_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_membership_${item.data}_${item.model}_${item.defense}
