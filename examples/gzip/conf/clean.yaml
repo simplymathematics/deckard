@@ -29,7 +29,6 @@ replace:
     exp_neg_gamma100 : "$e^{-D/100}$"
     exp_neg_gamma10 : "$e^{-D/10}$"
     exp_neg : "$e^{-D}$"
-    avg_with_transpose: "(D + D^T)/2"
     linear_kernel: "D * D^T"
   dataset:
     ddos : "DDoS"

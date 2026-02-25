@@ -1,3 +1,4 @@
 imblearn
 levenshtein
 brotli
+zstd

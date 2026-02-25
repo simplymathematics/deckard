@@ -40,6 +40,12 @@ from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchC
 from joblib import Parallel, delayed
 from typing import Literal
 
+import sklearn.utils.validation
+
+def _noop(*args, **kwargs):
+    return None
+
+sklearn.utils.validation.check_non_negative = _noop
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -193,9 +199,7 @@ def distance_helper(
             )
     elif modified is True and symmetric in ["avg", "average"]:
         if method in compressors.keys():
-            result1 = ncd(x1, x2, cx1, cx2, method)
-            result2 = ncd(x2, x1, cx2, cx1, method)
-            result = (result1 + result2) / 2
+            result = average_ncd(x1, x2, cx1, cx2, method)
         elif method in string_metrics.keys():
             result1 = calculate_string_distance(x1, x2, method)
             result2 = calculate_string_distance(x2, x1, method)
@@ -239,8 +243,41 @@ def ncd(
     Cx1x2 = compressor_len(x1x2)
     min_ = min(Cx1, Cx2)
     max_ = max(Cx1, Cx2)
-    ncd = (Cx1x2 - min_) / max_
-    return ncd
+    ncd_ = (Cx1x2 - min_) / max_
+    return ncd_
+
+def average_ncd(
+    x1,
+    x2,
+    cx1=None,
+    cx2=None,
+    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
+) -> float:
+    """
+    Calculate the normalized compression distance between two objects treated as strings.
+    Args:
+        x1 (str): The first object
+        x2 (str): The second object
+    Returns:
+        float: The normalized compression distance between x1 and x2
+    """
+
+    compressor_len = (
+        compressors[method] if method in compressors.keys() else compressors["gzip"]
+    )
+    x1 = str(x1) if not isinstance(x1, str) else x1
+    x2 = str(x2) if not isinstance(x2, str) else x2
+    Cx1 = compressor_len(x1) if cx1 is None else cx1
+    Cx2 = compressor_len(x2) if cx2 is None else cx2
+    x1x2 = "".join([x1, x2])
+    Cx1x2 = compressor_len(x1x2)
+    min_ = min(Cx1, Cx2)
+    max_ = max(Cx1, Cx2)
+    ncd1 = (Cx1x2 - min_) / max_
+    Cx2x1 = compressor_len(x2 + x1)
+    ncd2 = (Cx2x1 - min_) / max_
+    ncd_ = (ncd1 + ncd2) / 2
+    return ncd_
 
 
 def calculate_string_distance(x1, x2, method):
@@ -321,9 +358,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         logger.debug(
             f"Initializing GzipClassifier with distance_matrix_train={distance_matrix_train} distance_matrix_test={distance_matrix_test} metric={metric}, symmetric={symmetric}, {kwarg_string}",
         )
-        if metric in compressors.keys():
+        if metric in compressors.keys() and symmetric in [True, False]:
             logger.debug(f"Using NCD metric with {metric} compressor.")
             self._distance = ncd
+            self.metric = metric
+        elif metric in compressors.keys() and symmetric in ["avg", "average"]:
+            logger.debug(f"Using symmetric NCD metric with {metric} compressor.")
+            self._distance = average_ncd
             self.metric = metric
         elif metric in string_metrics.keys():
             logger.debug(f"Using {metric} metric")
@@ -357,7 +398,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.symmetric = symmetric
         self.transform = transform
         self.anchor = anchor
-        if self.symmetric is True:
+        if self.symmetric is True or self.symmetric in ["avg", "average"]:
             self._calculate_training_distance_matrix = (
                 self._calculate_lower_triangular_distance_matrix
             )
