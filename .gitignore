@@ -120,3 +120,4 @@ old_examples
 
 
 build/lib/deckard/*
+**/.DS_Store

@@ -23,9 +23,10 @@ module_file_dict = {
     "attack": attack_files + ["attack_config_file"],
     "experiment": all_files,
     "optimize": all_files,
+    "compile" : ["compile_config_file", "result_output_file"],
     None: all_files,
 }
-
+supported_modules = list(module_file_dict.keys())
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Suppress sklearn runtime warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn")
 
-supported_modules = ["data", "model", "attack", "experiment", "optimize", None]
+supported_modules = list(module_file_dict.keys())
 # Parse the config_dir argument first to set up config dir
 
 
@@ -503,10 +504,76 @@ def main():
     for module in modules:
         if module in [None, "experiment", "optimize"]:
             handle_default_module(config_dir)
+        elif module in ["data", "model", "attack"]:
+            handle_submodules(config_dir, optional_args, module, args)
+        elif module in ["compile",]:
+            handle_top_level_scripts(config_dir, optional_args, module, args)
         else:
-            handle_other_modules(config_dir, optional_args, module, args)
+            logger.error(f"Unsupported module: {module}")
+            sys.exit(1)
 
+def handle_top_level_scripts(config_dir, optional_args, module, args):
+    """
+    Overview
+    --------
+        Handles the execution of top-level scripts by validating the module,
+        parsing optional arguments, and running the optimization process using Hydra.
 
+    Parameters:
+    -----------
+        config_dir (str): The directory path where the configuration files are located.
+        optional_args (list): A list of optional arguments passed to the module.
+        module (str): The name of the module to be executed.
+        args (list): A list of arguments to be passed to the optimization process.
+
+    Returns
+    -------
+        Any: The scores returned by the optimization process.
+
+    Raises
+    -------
+        SystemExit: If the specified module is not supported.
+
+    Notes
+    ------
+        - The function validates the module and its associated files before execution.
+        - It uses Hydra to manage configuration and execute the optimization process.
+        - Unsupported modules will result in an error log and termination of the program.
+    """
+    logger.info(f"Optional args after module: {optional_args}")
+    files = parse_files_from_optional_args(optional_args, module)
+    working_dir = os.getcwd()
+    # If config_dir is absolute, make it relative to working dir
+    if Path(config_dir).is_absolute():
+        config_dir = os.path.relpath(config_dir, working_dir)
+    logger.info(f"Config directory: {Path(config_dir).as_posix()}")
+    config_files = []
+    for file in files:
+        if file.endswith("_config_file"):
+            config_files.append(file)
+    logger.info(f"Top-level script config files: {config_files}")
+    if module not in supported_modules:
+        logger.error(
+            f"Unsupported module: {module}. Supported modules are: {supported_modules}",
+        )
+        sys.exit(1)
+    module_config_file = validate_module_and_files(module, files, optional_args)
+    logger.info(f"Using config file: {module_config_file}")
+    # Load OmegaConf config from module_config_file
+    if not Path(module_config_file).is_absolute():
+        module_config_file = Path(config_dir) / module_config_file
+    cfg = OmegaConf.to_container(
+        OmegaConf.load(module_config_file),
+        resolve=True,
+    )
+    if "_target_" not in cfg:
+        cfg["_target_"] = f"deckard.{module}.{module.capitalize()}Config"
+    
+    cfg = instantiate(cfg)
+    logger.info(f"Running top-level script for module: {module}")
+    result = cfg()
+    return result
+        
 def handle_default_module(config_dir):
     """
     Overview
@@ -565,7 +632,7 @@ def handle_default_module(config_dir):
     return main_hydra()
 
 
-def handle_other_modules(config_dir, optional_args, module, args):
+def handle_submodules(config_dir, optional_args, module, args):
     """
     Overview
     --------
@@ -642,30 +709,22 @@ def validate_module_and_files(module, files, optional_args=None):
     ----return: The path to the module's configuration file.
     ----rtype: str
     """
-    required_file_key = {
-        "data": "data_config_file",
-        "model": "model_config_file",
-        "attack": "attack_config_file",
-    }
 
-    if module not in required_file_key:
-        raise ValueError(f"Unsupported module: {module}")
 
-    config_key = required_file_key[module]
-
-    if config_key in files:
-        return files[config_key]
-
-    assert f"{module}=" in str(
-        optional_args,
-    ), f"{config_key} argument is required for {module} module"
-
-    module_arg = [arg for arg in optional_args if arg.startswith(f"{module}=")]
-    assert (
-        len(module_arg) == 1
-    ), f"{config_key} argument is required for {module} module"
-
-    return module_arg[0].split("=")[1]
+    module_config_key = f"{module}_config_file"
+    if module not in supported_modules:
+        logger.error(
+            f"Unsupported module: {module}. Supported modules are: {supported_modules}",
+        )
+        sys.exit(1)
+    if module_config_key not in files:
+        logger.error(
+            f"Missing required configuration file for module '{module}': '{module_config_key}' not found in files. Provided files: {files}",
+        )
+        sys.exit(1)
+    module_config_file = files[module_config_key]
+    
+    return module_config_file
 
 
 def validate_files(files, supported_files, module_name):

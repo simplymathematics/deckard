@@ -1,0 +1,30 @@
+directory: outputs
+result_output_file: outputs/compiled_results.csv
+params_regex: "**/params.yaml"
+scores_regex: "**/scores.json"
+formatter:
+  sig_figs: [4, 2, 2,]
+  metrics: ["accuracy", "evasion_accuracy", "membership_inference_accuracy",]
+  replace:
+    rf: RandomForest
+    svm: SVM
+    gbm: GradientBoosting
+    class_labels: ClassLabelsDefense
+    feature_squeezing: FeatureSqueezingDefense
+    hsj: HopSkipJumpAttack
+    membership: MembershipInferenceAttack
+impute:
+  metric_columns: ${formatter.metrics}
+  sig_figs: ${formatter.sig_figs}
+  imputer_type: knn
+  imputer_params:
+    n_neighbors: 5
+    weights: uniform
+    metric: nan_euclidean
+pareto:
+    - metric: accuracy
+      direction : maximize
+    - metric: evasion_accuracy
+      direction : maximize
+    - metric: membership_inference_accuracy
+      direction : minimize

@@ -216,7 +216,18 @@ Example
     
     
     def visualize_features(self, data:DataConfig, ax=None):
-        """Generates and saves the Yellowbrick data plot."""
+        """Generates and saves the Yellowbrick data plot.
+        
+        Args
+        -----
+        data (DataConfig): The configuration object containing the dataset to be visualized.
+        ax (_type_, optional): The matplotlib axis to plot on. Defaults to None.    
+        
+        Raises
+        ------
+        ValueError: If the specified plot type is not supported for feature visualization.
+        
+        """
         X, y, classes, features = self.load_data(data)
         if self.plot_type == "rank1d":
             visualizer = Rank1D(features=features, classes=classes, **self.plot_params, ax=ax)
@@ -249,6 +260,18 @@ Example
         logger.info(f"Yellowbrick plot saved to {self.save_path}")
     
     def visualize_targets(self, data:DataConfig, ax=None):
+        """
+        Visualizes statistics involving the data's training or testing labels.
+
+        Args
+        ------
+        data (DataConfig): _description_
+        ax (_type_, optional): _description_. Defaults to None.
+
+        Raises
+        --------
+        ValueError: If the specified plot type is not supported for target visualization.
+        """
         X, y, classes, feature_indices = self.load_data(data)
         if self.plot_type == "class_balance":
             visualizer = ClassBalance(labels=classes, **self.plot_params, ax=ax)
@@ -469,10 +492,7 @@ Example
     def show(self, visualizer):
         assert hasattr(visualizer, "show"), "Visualizer does not have a show method"
         assert isinstance(visualizer, tuple(all_viz_objects)), "Visualizer is not a recognized Yellowbrick visualizer"
-
         visualizer.show(outpath=self.save_path)
-        
-
 
     def __call__(self, experiment):
         self.visualize(experiment=experiment)
@@ -484,13 +504,8 @@ class YellowBrickConfigList(ConfigBase):
     plots : List[Literal[f"{all_viz_types}"]] = field(default_factory=list)
     files: Union[FileConfig, None] = None
     
-
-   
-    
     def __len__(self):
         return len(self.plots)
-    
-    
     
     def __call__(self, experiment=Union[ExperimentConfig, List[ExperimentConfig]], axes = None):
         plot_length = len(self)

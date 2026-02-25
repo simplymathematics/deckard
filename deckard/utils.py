@@ -95,7 +95,11 @@ class ConfigBase:
         # Assume this is a dictionary of of strings: floats
         supported_filtypes = [".csv", ".json", ".xlsx"]
         if not isinstance(scores, pd.Series):
-            scores = pd.Series(scores)
+            try:
+                scores = pd.Series(scores)
+            except ValueError as e:
+                scores = pd.DataFrame(scores)
+        scores = scores.reset_index()
         if score_path.suffix in supported_filtypes:
             match score_path.suffix:
                 case ".csv":
