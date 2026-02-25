@@ -1,4 +1,5 @@
 from pathlib import Path
+from dataclasses import dataclass
 import pandas as pd
 import json
 import yaml
@@ -10,8 +11,6 @@ from typing import Literal
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-# import axis object from matplotlib
-
 
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -50,7 +49,7 @@ class SeabornPlotConfig(ConfigBase):
             # Set up fig, ax 
             _, ax = plt.subplot(0)
         else:
-            assert isinstance(ax, )
+            assert isinstance(ax, Axes)
         if self.plot_type == "line":
             plotter = sns.lineplot
         elif self.plot_type == "scatter":
