@@ -7,3 +7,5 @@ cifar100/
 /cifar.yaml
 original_data/
 /cifar100.yaml
+raw_data
+

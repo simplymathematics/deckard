@@ -168,7 +168,7 @@ def distance_helper(
                     f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
                 )
     elif (
-        modified is False
+        modified is False and symmetric is False
     ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
         if method in compressors.keys():
             result = ncd(x1, x2, cx1, cx2, method)
@@ -178,7 +178,20 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is True and symmetric is False:
+    elif modified is False and symmetric is True:
+        if method in compressors.keys():
+            result1 = ncd(x1, x2, cx1, cx2, method)
+            result2 = ncd(x2, x1, cx2, cx1, method)
+            result = (result1 + result2) / 2
+        elif method in string_metrics.keys():
+            result1 = calculate_string_distance(x1, x2, method)
+            result2 = calculate_string_distance(x2, x1, method)
+            result = (result1 + result2) / 2
+        else:
+            raise NotImplementedError(
+                f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+            )
+    elif modified is True and symmetric in ["avg", "average"]:
         if method in compressors.keys():
             result1 = ncd(x1, x2, cx1, cx2, method)
             result2 = ncd(x2, x1, cx2, cx1, method)
@@ -194,6 +207,7 @@ def distance_helper(
     else:
         print(f"Modified: {modified}, Symmetric: {symmetric}")
         print(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
+        input("Invalid combination of modified and symmetric. Please enter a valid combination.")
         raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
     return result
 
@@ -332,21 +346,20 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             transform in transform_list
         ), f"Expected {transform} in {transform_dict.keys()}"
         self.modified = False if modified is not True else True
-        assert symmetric in [
+        symmetrics = [
             True,
             False,
             None,
-        ], f"Expected {symmetric} in [True, False, None]"
+            "avg",
+            "average",
+        ]
+        assert symmetric in symmetrics, f"Expected {symmetric} in {symmetrics}"
         self.symmetric = symmetric
         self.transform = transform
         self.anchor = anchor
         if self.symmetric is True:
             self._calculate_training_distance_matrix = (
                 self._calculate_lower_triangular_distance_matrix
-            )
-        elif symmetric in ["avg", "average"]:
-            self._calculate_training_distance_matrix = (
-                self._calculate_avg_with_transpose_distance_matrix
             )
         else:
             self._calculate_training_distance_matrix = (
@@ -357,7 +370,8 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_jobs = n_jobs
         for key, value in kwargs.items():
             setattr(self, key, value)
-
+            
+    
     def _calculate_rectangular_distance_matrix(
         self,
         x1,
@@ -704,6 +718,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     x1=X,
                     transform=self.transform,
                 )
+            
         if self.distance_matrix_test is not None:
             # Save the distance matrix
             self._save_distance_matrix(self.distance_matrix_test, distance_matrix)

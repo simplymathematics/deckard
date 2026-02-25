@@ -3,7 +3,6 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Union
 from art.estimators.classification import (
-    TensorFlowClassifier,
     TensorFlowV2Classifier,
 )
 from omegaconf import DictConfig, OmegaConf
@@ -19,13 +18,8 @@ tensorflow_dict = {
     "tf2": TensorFlowV2Classifier,
     "tfv2": TensorFlowV2Classifier,
 }
-tensorflow1_dict = {
-    "tensorflowv1": TensorFlowClassifier,
-    "tf1": TensorFlowClassifier,
-    "tfv1": TensorFlowClassifier,
-}
 
-tensorflow_dict.update(**tensorflow1_dict)
+
 tensorflow_models = list(tensorflow_dict.keys())
 
 __all__ = ["TensorflowV2Initializer", "TensorflowV2Loss", "TensorflowV2Optimizer"]

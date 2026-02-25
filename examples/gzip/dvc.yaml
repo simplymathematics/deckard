@@ -31,6 +31,15 @@ stages:
   # To parse the parameters, you can use the 'hydra' API to define a schema for the parameters
   # Or run `deckard.layers.parse` to parse the parameters and save them to a file.  
   ##############################################################################
+  prerequisites:
+    desc: "This stage will install the required packages and set up the environment for the experiment. It will also check that the data files are in place and that the parameters are correctly defined."
+    cmd: pip install -r requirements.txt && echo "Dependency check passed." > ./dependency_check.log
+    outs:
+      - dependency_check.log
+    deps:
+      - requirements.txt
+  ##############################################################################
+  # These stages use the hydra sweeper API to run a grid search over the specified parameters. This is used to run the full grid search for the paper, and can be used to
   data:
     desc: "This stage will parse the conf/knn.yaml file and save it to params.yaml"
     cmd: python data_prep.py
@@ -38,6 +47,7 @@ stages:
       - raw_data/
     deps:
       - data_prep.py
+      - dependency_check.log
   parse_params:
     cmd: python -m deckard.layers.parse  --config_file knn
     deps:
@@ -83,7 +93,7 @@ stages:
         - [False, False, "Vanilla"]
         - [False, True, "Assumed"] 
         - [True, True, "Enforced"]
-        - [True, False, "Average"]
+        - [True, "average", "Average"]
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -110,6 +120,7 @@ stages:
       - conf/knn.yaml # Only needs one distance matrix per fold/metric/algorithm to tune all the models
       - params.yaml
       - raw_data/
+      - gzip_classifier.py
     outs:
         - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}${item.fold}.npz:
             cache: false
@@ -140,7 +151,7 @@ stages:
         - [False, False, "Vanilla"]
         - [False, True, "Assumed"] 
         - [True, True, "Enforced"]
-        - [True, False, "Average"]
+        - [True, "average", "Average"]
     cmd: >-
       python -m deckard.layers.optimise
       stage=train
@@ -153,18 +164,16 @@ stages:
       model.init.modified=${item.algorithm[0]}
       files=multi
       files.directory=output/${item.dataset}
-      hydra.sweeper.n_jobs=32
-      hydra.sweeper.n_trials=8192
+      hydra.sweeper.n_trials=128
       hydra.launcher.n_jobs=1
       algorithm="${item.algorithm[2]}"
       --config-name ${item.model_name}
-      
       --multirun
     deps:
       - conf/${item.model_name}.yaml
       - params.yaml
       - raw_data/
-      - output/${item.dataset}/distance_matrix/
+      - output/${item.dataset}/distance_matrix
     outs:
         - output/${item.dataset}/logs/search/${item.model_name}/${item.algorithm[2]}/${item.train_size}/:
             cache: false
@@ -410,52 +419,52 @@ stages:
     deps:
       - output/combined/
   ##############################################################################
-  metric_space_check:
-    deps:
-      - metric_space_check.py
-    cmd: >-
-      python metric_space_check.py
-      --max_alphabet_size 52
-      --max_string_size 144
-      --sig_figs 10
-      --data random
-      --samples 1000
-      --folder metric_space_check/
-      --log_file metric_space_check.log
-      --results_file results.csv
-      --plot_file synthetic_check.pdf
-    outs:
-      - metric_space_check/results.csv
-      - metric_space_check/metric_space_check.log
-      - metric_space_check/synthetic_check.pdf
-  copy_metric_space_check:
-    cmd: >-
-      cp -r metric_space_check/*pdf ~/Gzip-KNN/images/ &&
-      cp -r metric_space_check/*csv ~/Gzip-KNN/data/
-    deps:
-      - metric_space_check/
-  ##############################################################################
-  check_matrices:
-    deps:
-      - output/ddos/distance_matrix/
-      - output/kdd_nsl/distance_matrix/
-      - output/sms_spam/distance_matrix/
-      - output/truthseeker/distance_matrix/
-      - check_matrices.py
-    cmd: >-
-      python check_matrices.py
-      --working_dir output
-      --file_regex */distance_matrix/**/train-*.npz
-      --results_plot read_world_check.pdf
-      --results_file real_world_failures.csv
-    outs:
-      - check_matrices/real_world_failures.csv
-      - check_matrices/check_matrices.log
-      - check_matrices/melted.csv
-      - check_matrices/read_world_check.pdf
-  copy_check_matrices:
-    cmd: >-
-      cp -r check_matrices/*pdf ~/Gzip-KNN/images/ &&
-      cp -r check_matrices/*csv ~/Gzip-KNN/data/
-    deps:
-      - check_matrices/
+  # metric_space_check:
+  #   deps:
+  #     - metric_space_check.py
+  #   cmd: >-
+  #     python metric_space_check.py
+  #     --max_alphabet_size 52
+  #     --max_string_size 144
+  #     --sig_figs 10
+  #     --data random
+  #     --samples 1000
+  #     --folder metric_space_check/
+  #     --log_file metric_space_check.log
+  #     --results_file results.csv
+  #     --plot_file synthetic_check.pdf
+  #   outs:
+  #     - metric_space_check/results.csv
+  #     - metric_space_check/metric_space_check.log
+  #     - metric_space_check/synthetic_check.pdf
+  # copy_metric_space_check:
+  #   cmd: >-
+  #     cp -r metric_space_check/*pdf ~/Gzip-KNN/images/ &&
+  #     cp -r metric_space_check/*csv ~/Gzip-KNN/data/
+  #   deps:
+  #     - metric_space_check/
+  # ##############################################################################
+  # check_matrices:
+  #   deps:
+  #     - output/ddos/distance_matrix/
+  #     - output/kdd_nsl/distance_matrix/
+  #     - output/sms_spam/distance_matrix/
+  #     - output/truthseeker/distance_matrix/
+  #     - check_matrices.py
+  #   cmd: >-
+  #     python check_matrices.py
+  #     --working_dir output
+  #     --file_regex */distance_matrix/**/train-*.npz
+  #     --results_plot read_world_check.pdf
+  #     --results_file real_world_failures.csv
+  #   outs:
+  #     - check_matrices/real_world_failures.csv
+  #     - check_matrices/check_matrices.log
+  #     - check_matrices/melted.csv
+  #     - check_matrices/read_world_check.pdf
+  # copy_check_matrices:
+  #   cmd: >-
+  #     cp -r check_matrices/*pdf ~/Gzip-KNN/images/ &&
+  #     cp -r check_matrices/*csv ~/Gzip-KNN/data/
+  #   deps:
+  #     - check_matrices/

@@ -149,3 +149,6 @@ examples/*/.dvc/tmp/rwlock
 examples/*/.dvc/tmp/rwlock.lock
 tmp.ipynb
 examples/gzip/gzip.code-workspace
+
+old_examples/
+papers/
