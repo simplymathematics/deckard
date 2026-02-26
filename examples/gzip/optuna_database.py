@@ -4,9 +4,11 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from dataclasses import dataclass
 import optuna
 from hydra.experimental.callback import Callback
+from hydra.core.hydra_config import HydraConfig
 import argparse
 from typing import Union
 from pathlib import Path
+import sys
 
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"
@@ -49,12 +51,7 @@ class OptunaStudyDumpCallback(Callback):
         super().__init__()
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        # delete the study if it exists
-        try:
-            study = optuna.load_study(self.study_name, storage=self.storage)
-            study.delete_study(study_name=self.study_name, storage=self.storage)
-        except:  # noqa E722
-            pass
+        
         if len(self.directions) == 1:
             direction = self.directions[0]
             study = optuna.create_study(
@@ -76,7 +73,21 @@ class OptunaStudyDumpCallback(Callback):
             study.set_metric_names(self.metric_names)
         else:
             print("Cannot set metric names")
-
+        
+        # Load self.output_file and find its length
+        if Path(self.output_file).exists():
+            # Count the number of lines in the file
+            with open(self.output_file, "r") as f:
+                num_lines = sum(1 for line in f) - 1 # Subtract 1 for the header
+        else:
+            num_lines = 0
+        total_trials = config.sweeper.n_trials
+        if num_lines >= total_trials:
+            print(f"All trials completed. {num_lines}/{total_trials} trials completed.")
+            self.on_job_end(config, **kwargs)
+            self.on_multirun_end(config, **kwargs)
+            sys.exit(0)
+        
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
         study = optuna.load_study(self.study_name, storage=self.storage)
         df = study.trials_dataframe()

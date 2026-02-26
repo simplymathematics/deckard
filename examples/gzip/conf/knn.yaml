@@ -47,11 +47,11 @@ hydra:
       model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
       model.init.symmetric: True,False
       model.init.modified: True,False
-      model.init.transform: None,abs,square
+      model.init.transform: None,abs,square,dist_rbf,dist_rbf_gamma,dist_rbf_gamma_001,dist_rbf_gamma_01,dist_rbf_gamma_1,dist_rbf_gamma10,dist_rbf_gamma100,dist_rbf_gamma1000
       data.sample.fold: 0,1,2,3,4
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 1
+    n_jobs: ${..sweeper.n_jobs}
     prefer : processes
     verbose: 1
     timeout: ${oc.env:DECKARD_TIMEOUT, 1800}

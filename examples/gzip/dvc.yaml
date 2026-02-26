@@ -164,8 +164,7 @@ stages:
       model.init.modified=${item.algorithm[0]}
       files=multi
       files.directory=output/${item.dataset}
-      hydra.sweeper.n_trials=128
-      hydra.launcher.n_jobs=1
+      hydra.sweeper.n_trials=512
       algorithm="${item.algorithm[2]}"
       --config-name ${item.model_name}
       --multirun
@@ -210,7 +209,7 @@ stages:
   # ##############################################################################
   refit_best:
     matrix:
-      train_size: [10, 20, 35, 60, 100, 200, 500, 1000] 
+      train_size: [1000] 
       dataset: [ddos, kdd_nsl, sms_spam, truthseeker]
       algorithm : [Vanilla, Assumed, Enforced, Average]
       model : [knn, svc, logistic]

@@ -114,7 +114,7 @@ def remove_hydra_syntax(trial):
 
 def merge_best_with_default(best_trial, default_config):
     best_trial = best_trial.to_dict()
-    # best_trial = {f"++{k}": v for k, v in best_trial.items()}
+    best_trial.pop("value", None)
     best_trial = [f"{k}={v}" for k, v in best_trial.items()]
     # Merge the best trial with the default config
     folder = Path(default_config).parent.as_posix()

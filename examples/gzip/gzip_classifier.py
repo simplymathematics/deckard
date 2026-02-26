@@ -139,8 +139,19 @@ transform_dict = {
     "exp_neg_gamma100": lambda x: np.exp(-x / 100),
     "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
 }
+# 2 d_k(x, x′) = 2 − 2k(x, x′). 
+distance_transform_dict =  {
+    "dist_rbf_gamma_001": lambda x: 2 - 2 * np.exp(-x / 0.001),
+    "dist_rbf_gamma_01": lambda x: 2 - 2 * np.exp(-x / 0.01),
+    "dist_rbf_gamma_1": lambda x: 2 - 2 * np.exp(-x / 0.1),
+    "dist_rbf_gamma10": lambda x: 2 - 2 * np.exp(-x / 10),
+    "dist_rbf_gamma100": lambda x: 2 - 2 * np.exp(-x / 100),
+    "dist_rbf_gamma1000": lambda x: 2 - 2 * np.exp(-x / 1000),
+    "dist_rbf_gamma": lambda x: 2 - 2 * np.exp(-x),
+    "dist_rbf": lambda x: 2 - 2 * np.exp(-x),
+}
 
-
+transform_dict.update(distance_transform_dict)
 def distance_helper(
     x1,
     x2,
