@@ -16,10 +16,16 @@ direction: maximize
 optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
+  job_logging:
+      root:
+        level: ERROR
+  hydra_logging:
+    root:
+      level: ERROR
   run:
     dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
   sweep:
-    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
+    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/
     subdir : ${hydra.job.num}
   callbacks:
     study_dump:
@@ -51,8 +57,7 @@ hydra:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: ${..sweeper.n_jobs}
     prefer : processes
-    verbose: 1
-    timeout: ${oc.env:DECKARD_TIMEOUT, 1800}
+    verbose: 0
     pre_dispatch: ${hydra.sweeper.n_jobs}
     batch_size: auto
     temp_folder: /tmp/deckard
