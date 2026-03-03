@@ -1,4 +1,6 @@
 import logging
+import warnings
+
 import os
 import traceback
 from pathlib import Path
@@ -9,7 +11,7 @@ import hydra
 from ..base.utils import my_hash, unflatten_dict
 from .utils import deckard_nones
 
-logger = logging.getLogger(__name__)
+from deckard import logger
 
 OmegaConf.register_new_resolver("eval", eval)
 
@@ -174,7 +176,6 @@ def parse_stage(stage: str = None, params: dict = None, path=None) -> dict:
                 "dvc.yaml",
             ).exists(), f"{Path(path, 'dvc.yaml')} does not exist."
             with open(Path(path, "dvc.yaml"), "r") as f:
-                print()
                 keys = yaml.load(f, Loader=yaml.FullLoader)["stages"]
                 if stage in keys:
                     new_keys = keys[stage]
@@ -305,9 +306,9 @@ def optimise(cfg: DictConfig) -> None:
             fake_scores = []
             for direction in direction:
                 if direction == "minimize":
-                    fake_scores.append(1.00000000000)
+                    fake_scores.append(float("inf"))
                 elif direction == "maximize":
-                    fake_scores.append(0.00000000000)
+                    fake_scores.append(float("-inf"))
                 else:
                     fake_scores.append(None)
             scores = fake_scores
@@ -324,12 +325,18 @@ def optimise(cfg: DictConfig) -> None:
 
 @hydra.main(config_path=config_path, config_name=config_name, version_base="1.3")
 def optimise_main(cfg: DictConfig) -> float:
+    os.environ["JOBLIB_VERBOSE"] = "0"
+    logger.setLevel(logging.CRITICAL)
+    logging.getLogger("hydra").setLevel(logging.ERROR)
+    logging.getLogger("optuna").setLevel(logging.ERROR)
+    logging.getLogger("joblib").setLevel(logging.ERROR)
+    logging.getLogger("hydra-optuna-sweeper").setLevel(logging.ERROR)
+    warnings.filterwarnings("ignore", category=UserWarning)
     score = optimise(cfg)
     return score
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
     assert Path(
         config_path,
     ).exists(), f"{config_path} does not exist. Please specify a config path by running `export DECKARD_CONFIG_PATH=<your/path/here>` "
