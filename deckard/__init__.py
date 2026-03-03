@@ -29,7 +29,7 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(Path.cwd(), "deckard.log"),
             "formatter": "std",
-            "level": logging.DEBUG,
+            "level": logging.INFO,
             "maxBytes": 10 * 1024 * 1024,  # 10 MB log file size limit
             "backupCount": 5,  # Keep up to 5 backup files
             "mode": "a",
