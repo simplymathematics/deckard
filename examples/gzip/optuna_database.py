@@ -4,11 +4,11 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from dataclasses import dataclass
 import optuna
 from hydra.experimental.callback import Callback
-from hydra.core.hydra_config import HydraConfig
 import argparse
 from typing import Union
 from pathlib import Path
 import sys
+import logging
 
 storage = "sqlite:///optuna.db"
 study_name = "gzip_knn_20-0"
@@ -16,6 +16,7 @@ metric_names = ["accuracy"]
 directions = ["maximize"]
 output_file = "optuna.csv"
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):
@@ -51,7 +52,20 @@ class OptunaStudyDumpCallback(Callback):
         super().__init__()
 
     def on_multirun_start(self, config: DictConfig, **kwargs) -> None:
-        
+        study = self.get_study()
+        if hasattr(study, "set_metric_names"):
+            study.set_metric_names(self.metric_names)
+        else:
+            logger.info("Cannot set metric names")
+
+    def on_run_start(self, config: DictConfig, **kwargs: optuna.Any) -> None:
+        study = self.get_study()
+        if hasattr(study, "set_metric_names"):
+            study.set_metric_names(self.metric_names)
+        else:
+            logger.info("Cannot set metric names")
+    
+    def get_study(self):
         if len(self.directions) == 1:
             direction = self.directions[0]
             study = optuna.create_study(
@@ -68,31 +82,15 @@ class OptunaStudyDumpCallback(Callback):
                 directions=directions,
                 load_if_exists=True,
             )
+        return study
 
-        if hasattr(study, "set_metric_names"):
-            study.set_metric_names(self.metric_names)
-        else:
-            print("Cannot set metric names")
-        
-        # Load self.output_file and find its length
-        if Path(self.output_file).exists():
-            # Count the number of lines in the file
-            with open(self.output_file, "r") as f:
-                num_lines = sum(1 for line in f) - 1 # Subtract 1 for the header
-        else:
-            num_lines = 0
-        total_trials = config.sweeper.n_trials
-        if num_lines >= total_trials:
-            print(f"All trials completed. {num_lines}/{total_trials} trials completed.")
-            self.on_job_end(config, **kwargs)
-            self.on_multirun_end(config, **kwargs)
-            sys.exit(0)
+
         
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
         study = optuna.load_study(self.study_name, storage=self.storage)
         df = study.trials_dataframe()
         df.to_csv(self.output_file, index=False)
-        print(f"Saved to {self.output_file}")
+        logger.info(f"Saved to {self.output_file}")
 
 
 def multirun_call(args):
