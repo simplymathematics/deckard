@@ -39,6 +39,7 @@ from multiprocessing import cpu_count
 from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
 from joblib import Parallel, delayed
 from typing import Literal
+from zipfile import BadZipFile
 
 import sklearn.utils.validation
 
@@ -151,7 +152,53 @@ distance_transform_dict =  {
     "dist_rbf": lambda x: 2 - 2 * np.exp(-x),
 }
 
-transform_dict.update(distance_transform_dict)
+
+# hamming kernel transform dict:
+hamming_transform_dict = {
+    "hamming": lambda x: 1 - x,
+    "hamming_gamma_001": lambda x: 1 - x ** 0.001,
+    "hamming_gamma_01": lambda x: 1 - x ** 0.01,
+    "hamming_gamma_1": lambda x: 1 - x ** 0.1,
+    "hamming_gamma10": lambda x: 1 - x ** 10,
+    "hamming_gamma100": lambda x: 1 - x ** 100,
+    "hamming_gamma1000": lambda x: 1 - x ** 1000,
+    "hamming_gamma": lambda x: 1 - x,
+}
+# 2 d_k(x, x′) = 2 − 2k(x, x′).
+hamming_distance_transform_dict = {
+    "dist_hamming": lambda x: 2 - 2 * (1 - x),
+    "dist_hamming_gamma_001": lambda x: 2 - 2 * (1 - x ** 0.001),
+    "dist_hamming_gamma_01": lambda x: 2 - 2 * (1 - x ** 0.01),
+    "dist_hamming_gamma_1": lambda x: 2 - 2 * (1 - x ** 0.1),
+    "dist_hamming_gamma10": lambda x: 2 - 2 * (1 - x ** 10),
+    "dist_hamming_gamma100": lambda x: 2 - 2 * (1 - x ** 100),
+    "dist_hamming_gamma1000": lambda x: 2 - 2 * (1 - x ** 1000),
+    "dist_hamming_gamma": lambda x: 2 - 2 * (1 - x),
+}
+
+# poly_dict
+poly_transform_dict = {
+}
+for degree in [1:6]:
+    for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+        func = lambda x, degree, coef: (x + coef ) ** degree
+        coef_string = str(coef).replace(".", "_")
+        poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+
+# poly dict for distances
+poly_distance_transform_dict = {}
+for degree in [1:6]:
+    for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+        func = lambda x, degree, coef: 2 - 2* ((x + coef ) ** degree)
+        coef_string = str(coef).replace(".", "_")
+        poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+poly_transform_dict.update(poly_distance_transform_dict)
+
+transform_dict.update(poly_transform_dict)
+transform_dict.update(hamming_transform_dict)
+transform_dict.update(hamming_distance_transform_dict)
+
+
 def distance_helper(
     x1,
     x2,
@@ -165,7 +212,7 @@ def distance_helper(
     x2 = str(x2)
     if modified is True and x1 == x2:
         return 0
-    if modified is True and symmetric is True:
+    if modified is True and symmetric is True: # Enforced
         if x1 >= x2:
             if method in compressors.keys():
                 result = ncd(x1, x2, cx1, cx2, method)
@@ -186,7 +233,8 @@ def distance_helper(
                 )
     elif (
         modified is False and symmetric is False
-    ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
+    ):  # Vanilla
+        # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
         if method in compressors.keys():
             result = ncd(x1, x2, cx1, cx2, method)
         elif method in string_metrics.keys():
@@ -195,7 +243,7 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is False and symmetric is True:
+    elif modified is False and symmetric is True: # Assumed Method
         if method in compressors.keys():
             result1 = ncd(x1, x2, cx1, cx2, method)
             result2 = ncd(x2, x1, cx2, cx1, method)
@@ -208,7 +256,7 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is True and symmetric in ["avg", "average"]:
+    elif modified is True and symmetric in ["avg", "average"]: #Averaged
         if method in compressors.keys():
             result = average_ncd(x1, x2, cx1, cx2, method)
         elif method in string_metrics.keys():
@@ -220,8 +268,8 @@ def distance_helper(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
     else:
-        print(f"Modified: {modified}, Symmetric: {symmetric}")
-        print(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
+        logger.info(f"Modified: {modified}, Symmetric: {symmetric}")
+        logger.info(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
         input("Invalid combination of modified and symmetric. Please enter a valid combination.")
         raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
     return result
@@ -598,8 +646,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     def _load_distance_matrix(self, path):
         if Path(path).exists():
             path = Path(path).resolve().as_posix()
-            with open(path, "rb") as f:
-                matrix = np.load(f)["X"]
+            try:
+                with open(path, "rb") as f:
+                    matrix = np.load(f)["X"]
+            except BadZipFile:
+                # Delete the file:
+                Path(path).unlink()
+                raise BadZipFile(f"{path} is a bad file")
         else:
             raise FileNotFoundError(f"Distance matrix file {path} not found")
         return matrix
@@ -1025,9 +1078,9 @@ def test_model(
     end = time.time()
     pred_time = end - start
     score = round(scorer(y_test, predictions), 3)
-    print(f"Training time: {train_time}")
-    print(f"Prediction time: {pred_time}")
-    print(f"{alias.capitalize()}  is: {score}")
+    logger.info(f"Training time: {train_time}")
+    logger.info(f"Prediction time: {pred_time}")
+    logger.info(f"{alias.capitalize()}  is: {score}")
     score_dict = {
         f"{alias.lower()}": score,
         "train_time": train_time,
@@ -1206,12 +1259,12 @@ def cross_validate_main(args: argparse.Namespace):
         scoring=optimizer,
         n_jobs=1,
     )
-    print(f"mean of cross-validation scores: {cv_scores['test_score'].mean()}")
-    print(f"std of cross-validation scores: {cv_scores['test_score'].std()}")
+    logger.info(f"mean of cross-validation scores: {cv_scores['test_score'].mean()}")
+    logger.info(f"std of cross-validation scores: {cv_scores['test_score'].std()}")
     # Validate the model using the withheld test data
     model.fit(X_train, y_train)
     score = model.score(X_test, y_test)
-    print(f"Test score: {score}")
+    logger.info(f"Test score: {score}")
 
 
 def grid_search_main(args: argparse.Namespace):
@@ -1283,11 +1336,11 @@ def grid_search_main(args: argparse.Namespace):
     y_train = np.ravel(y_train)
     y_test = np.ravel(y_test)
     grid.fit(X_train, y_train)
-    print(f"Best score: {grid.best_score_}")
-    print(f"Best params: {grid.best_params_}")
+    logger.info(f"Best score: {grid.best_score_}")
+    logger.info(f"Best params: {grid.best_params_}")
     # Validate the model using the withheld test data
     score = grid.score(X_test, y_test)
-    print(f"Test score: {score}")
+    logger.info(f"Test score: {score}")
 
 
 parser = argparse.ArgumentParser()
