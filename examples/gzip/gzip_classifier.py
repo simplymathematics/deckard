@@ -177,24 +177,25 @@ hamming_distance_transform_dict = {
 }
 
 # poly_dict
-poly_transform_dict = {
-}
-for degree in [1:6]:
-    for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
-        func = lambda x, degree, coef: (x + coef ) ** degree
-        coef_string = str(coef).replace(".", "_")
-        poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+# poly_transform_dict = {}
 
-# poly dict for distances
-poly_distance_transform_dict = {}
-for degree in [1:6]:
-    for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
-        func = lambda x, degree, coef: 2 - 2* ((x + coef ) ** degree)
-        coef_string = str(coef).replace(".", "_")
-        poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
-poly_transform_dict.update(poly_distance_transform_dict)
+# for degree in range(6):
+#     for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+#         func = lambda x, degree, coef: (x + coef ) ** degree
+#         coef_string = str(coef).replace(".", "_")
+#         poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
 
-transform_dict.update(poly_transform_dict)
+# # poly dict for distances
+# poly_distance_transform_dict = {}
+# for degree in range(6):
+#     for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+#         func = lambda x, degree, coef: 2 - 2* ((x + coef ) ** degree)
+#         coef_string = str(coef).replace(".", "_")
+#         poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+# poly_transform_dict.update(poly_distance_transform_dict)
+# transform_dict.update(poly_transform_dict)
+
+transform_dict.update(distance_transform_dict)
 transform_dict.update(hamming_transform_dict)
 transform_dict.update(hamming_distance_transform_dict)
 
@@ -268,10 +269,7 @@ def distance_helper(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
     else:
-        logger.info(f"Modified: {modified}, Symmetric: {symmetric}")
-        logger.info(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
-        input("Invalid combination of modified and symmetric. Please enter a valid combination.")
-        raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
+        raise ValueError(f"Expected {modified} to be boolean and and {symmetric} to be in [False, True, 'avg', 'average']")
     return result
 
 
@@ -328,14 +326,12 @@ def average_ncd(
     x2 = str(x2) if not isinstance(x2, str) else x2
     Cx1 = compressor_len(x1) if cx1 is None else cx1
     Cx2 = compressor_len(x2) if cx2 is None else cx2
-    x1x2 = "".join([x1, x2])
-    Cx1x2 = compressor_len(x1x2)
+    Cx1x2 = compressor_len(x1+x2)
+    Cx2x1 = compressor_len(x2+x1)
     min_ = min(Cx1, Cx2)
-    max_ = max(Cx1, Cx2)
-    ncd1 = (Cx1x2 - min_) / max_
-    Cx2x1 = compressor_len(x2 + x1)
-    ncd2 = (Cx2x1 - min_) / max_
-    ncd_ = (ncd1 + ncd2) / 2
+    max_ = max(Cx1, Cx2)   
+    Cxx = (Cx2x1 + Cx1x2) /2
+    ncd_ = (Cxx - min_) / max_
     return ncd_
 
 

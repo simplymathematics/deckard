@@ -227,62 +227,203 @@ stages:
       - conf/${item.model_name}.yaml:
           - hydra
   # #############################################################################
-  # find_best:
-  #   matrix:
-  #     dataset : [ddos, kdd_nsl, sms_spam, truthseeker]
-  #     algorithm : [Vanilla, Assumed, Enforced, Average]
-  #     model : [knn, svc, logistic]
-  #     metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
-  #   deps:
-  #     - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
-  #     - conf/model/ncd_${item.model}.yaml
-  #     - conf/${item.model}.yaml
-  #     - find_best.py
-  #   cmd: >-
-  #     python -m find_best
-  #     -n ${item.dataset}_${item.model}_${item.algorithm}
-  #     -p sqlite:///output/optuna.db
-  #     -d conf/model/ncd_${item.model}.yaml
-  #     -c conf/${item.model}.yaml
-  #     -s model.init.metric=${item.metric}
-  #     -o best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}.yaml
-  #     -x model.init.distance_matrix_train model.init.distance_matrix_test files.directory data.sample.fold
-  #   outs:
-  #   - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}.yaml
-  # # ##############################################################################
-  # refit_best:
-  #   matrix:
-  #     train_size: [1000] 
-  #     dataset: [ddos, kdd_nsl, sms_spam, truthseeker]
-  #     algorithm : [Vanilla, Assumed, Enforced, Average]
-  #     model : [knn, svc, logistic]
-  #     metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
-  #   deps:
-  #     - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
-  #     - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}.yaml
-  #   cmd: >-
-  #     python -m deckard.layers.optimise
-  #     stage=train
-  #     algorithm="${item.algorithm}"
-  #     data.sample.test_size=200
-  #     data.sample.train_size=${item.train_size}
-  #     dataset=${item.dataset}
-  #     data.sample.fold=-1
-  #     model_name=${item.model}
-  #     files.directory=output/${item.dataset}
-  #     files.reports=reports/refit/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
-  #     hydra.run.dir=output/${item.dataset}/logs/refit/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
-  #     --config-name ${item.dataset}_${item.model}_${item.algorithm}_${item.metric}
-  #     --config-dir best
-  #   outs:
-  #   - output/${item.dataset}/reports/refit/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
-  #   - output/${item.dataset}/logs/refit/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+  find_best:
+    matrix:
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker]
+      algorithm : [Vanilla, Assumed, Enforced, Average]
+      model : [knn, svc, logistic]
+      metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+    deps:
+      - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
+      - conf/model/ncd_${item.model}.yaml
+      - conf/${item.model}.yaml
+      - find_best.py
+    cmd: >-
+      python -m find_best
+      -n ${item.dataset}_${item.model}_${item.algorithm}
+      -p sqlite:///output/optuna.db
+      -d conf/model/ncd_${item.model}.yaml
+      -c conf/${item.model}.yaml
+      -s model.init.metric=${item.metric} model.init.transform!=None
+      -o best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_kernel.yaml
+      -x model.init.distance_matrix_train model.init.distance_matrix_test files.directory data.sample.fold
+    outs:
+    - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_kernel.yaml
+  # #############################################################################
+  find_best_distance:
+    matrix:
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker]
+      algorithm : [Vanilla, Assumed, Enforced, Average]
+      model : [knn, svc, logistic]
+      metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+    deps:
+      - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
+      - conf/model/ncd_${item.model}.yaml
+      - conf/${item.model}.yaml
+      - find_best.py
+    cmd: >-
+      python -m find_best
+      -n ${item.dataset}_${item.model}_${item.algorithm}
+      -p sqlite:///output/optuna.db
+      -d conf/model/ncd_${item.model}.yaml
+      -c conf/${item.model}.yaml
+      -s model.init.metric=${item.metric} model.init.transform=None
+      -o best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_distance.yaml
+      -x model.init.distance_matrix_train model.init.distance_matrix_test files.directory data.sample.fold
+    outs:
+    - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_distance.yaml
+  # #############################################################################
+  find_best_hamming:
+    matrix:
+      dataset : [ddos, kdd_nsl, sms_spam, truthseeker]
+      algorithm : [Vanilla, Assumed, Enforced, Average]
+      model : [knn, svc, logistic]
+      metric : [ratio]
+    deps:
+      - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
+      - conf/model/ncd_${item.model}.yaml
+      - conf/${item.model}.yaml
+      - find_best.py
+    cmd: >-
+      python -m find_best
+      -n ${item.dataset}_${item.model}_${item.algorithm}_hamming
+      -p sqlite:///output/optuna.db
+      -d conf/model/ncd_${item.model}.yaml
+      -c conf/${item.model}.yaml
+      -s model.init.metric=${item.metric} model.init.transform!=None
+      -o best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_hamming.yaml
+      -x model.init.distance_matrix_train model.init.distance_matrix_test files.directory data.sample.fold
+    outs:
+    - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_hamming.yaml
   # ##############################################################################
+  refit_precompute:
+    matrix: 
+      train_size: [1000] 
+      dataset: [ddos, kdd_nsl, sms_spam, truthseeker]
+      metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+      algorithm : # modified, symmetric, name
+        - [False, False, "Vanilla"]
+        - [False, True, "Assumed"] 
+        - [True, True, "Enforced"]
+        - [True, "average", "Average"]
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      algorithm="${item.algorithm[2]}"
+      data=${item.dataset}
+      data.sample.test_size=200
+      data.sample.train_size=${item.train_size}
+      data.sample.fold=-1
+      dataset=${item.dataset}
+      files=multi
+      model_name=knn
+      model=ncd_knn
+      model.init.symmetric=${item.algorithm[1]}
+      model.init.modified=${item.algorithm[0]}
+      model.init.metric=${item.metric}
+      model.init.transform=None
+      model.init.distance_matrix_train=output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}-1.npz
+      model.init.distance_matrix_test=output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}-1.npz
+      files.directory=output/${item.dataset}
+      files.reports=reports/precomputed/knn/${item.algorithm[2]}/${item.train_size}/-1/${item.metric}/
+      hydra.sweeper.n_trials=1
+      hydra.sweeper.study_name=${item.dataset}_knn_${item.algorithm[2]}_refit
+      --config-name knn
+    deps:
+      - conf/knn.yaml # Only needs one distance matrix per fold/metric/algorithm to tune all the models
+      - params.yaml
+      - raw_data/
+      - gzip_classifier.py
+    outs:
+        - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/train-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}-1.npz:
+            cache: false
+            persist: true
+            push: true
+        - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[2]}/test-${item.train_size}-${data.sample.test_size}-${data.sample.random_state}-1.npz:
+            cache: false
+            persist: true
+            push: true
+        - output/${item.dataset}/logs/precomputed/knn/${item.algorithm[2]}/${item.train_size}/-1/${item.metric}/:
+            cache: false
+            persist: true
+            push: true
+        - output/${item.dataset}/reports/precomputed/knn/${item.algorithm[2]}/${item.train_size}/-1/${item.metric}/:
+            cache: false
+            persist: true
+            push: true
+    params:
+      - conf/knn.yaml:
+          - hydra
+  ################################################################################################
+  refit_best:
+    matrix:
+      train_size: [1000] 
+      dataset: [ddos, kdd_nsl, sms_spam, truthseeker]
+      algorithm : [Vanilla, Assumed, Enforced, Average]
+      model : [knn, svc, logistic]
+      metric : [gzip, bz2, brotli, levenshtein, ratio, hamming]
+      suffix : [distance, kernel]
+    deps:
+      - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
+      - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_${item.suffix}.yaml
+      - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm}/train-${item.train_size}-200-0-1.npz
+      - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm}/test-${item.train_size}-200-0-1.npz
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      algorithm="${item.algorithm}"
+      data.sample.test_size=200
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      data.sample.fold=-1
+      model_name=${item.model}
+      files.directory=output/${item.dataset}
+      files.reports=reports/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+      hydra.run.dir=output/${item.dataset}/logs/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+      ++hydra.sweeper.study_name=${item.dataset}_${item.model}_${item.algorithm}_refit_${item.suffix}
+      --config-name ${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_${item.suffix}
+      --config-dir best
+    outs:
+    - output/${item.dataset}/reports/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+    - output/${item.dataset}/logs/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+  ##############################################################################
+  refit_best_hamming:
+    matrix:
+      train_size: [1000] 
+      dataset: [ddos, kdd_nsl, sms_spam, truthseeker]
+      algorithm : [Vanilla, Assumed, Enforced, Average]
+      model : [knn, svc, logistic]
+      metric : [ratio]
+      suffix : [hamming]
+    deps:
+      - output/${item.dataset}/reports/search/${item.model}/${item.algorithm}/
+      - best/${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_${item.suffix}.yaml
+      - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm}/train-${item.train_size}-200-0-1.npz
+      - output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm}/test-${item.train_size}-200-0-1.npz
+    cmd: >-
+      python -m deckard.layers.optimise
+      stage=train
+      algorithm="${item.algorithm}"
+      data.sample.test_size=200
+      data.sample.train_size=${item.train_size}
+      dataset=${item.dataset}
+      data.sample.fold=-1
+      model_name=${item.model}
+      files.directory=output/${item.dataset}
+      files.reports=reports/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+      hydra.run.dir=output/${item.dataset}/logs/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+      ++hydra.sweeper.study_name=${item.dataset}_${item.model}_${item.algorithm}_refit_${item.suffix}
+      --config-name ${item.dataset}_${item.model}_${item.algorithm}_${item.metric}_${item.suffix}
+      --config-dir best
+    outs:
+    - output/${item.dataset}/reports/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+    - output/${item.dataset}/logs/refit_${item.suffix}/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
+  ##############################################################################
   compile:
     matrix:
       dataset: [ddos, kdd_nsl, sms_spam, truthseeker] 
       model : [knn, svc, logistic, ] #condense/knn, condense/svc, condense/logistic
-      stage : [search,hamming]
+      stage : [refit_kernel, refit_distance, refit_hamming]
     deps:
       - output/${item.dataset}/reports/${item.stage}/${item.model}/
     outs:
@@ -310,7 +451,7 @@ stages:
     matrix:
       dataset: [ddos, kdd_nsl, sms_spam, truthseeker] 
       model : [knn, svc, logistic,] 
-      stage : [search, hamming]
+      stage : [refit_kernel, refit_distance, refit_hamming]
     deps: 
       - output/${item.dataset}/${item.stage}/${item.model}.csv
     cmd: >-
@@ -351,7 +492,7 @@ stages:
   merge_search:
     matrix:
       dataset: [ddos, kdd_nsl, sms_spam, truthseeker] 
-      stage : [search, hamming]
+      stage : [refit_kernel, refit_distance, refit_hamming]
     deps:
       - output/${item.dataset}/plots/${item.stage}/knn.csv
       - output/${item.dataset}/plots/${item.stage}/logistic.csv
@@ -367,78 +508,36 @@ stages:
       - output/${item.dataset}/plots/${item.stage}_merged.csv
   ##############################################################################
   merge_search_datasets:
-    cmd: >-
-      python merge.py
-      --big_dir output/
-      --little_dir output/
-      --data_file ddos/plots/search_merged.csv
-      --little_dir_data_file  kdd_nsl/plots/search_merged.csv sms_spam/plots/search_merged.csv truthseeker/plots/search_merged.csv 
-      --output_file search_merged.csv
-      --output_folder output/combined/plots/
-    deps:
-      - output/sms_spam/plots/search_merged.csv
-      - output/kdd_nsl/plots/search_merged.csv
-      - output/ddos/plots/search_merged.csv
-      - output/truthseeker/plots/search_merged.csv
-    outs:
-      - output/combined/plots/search_merged.csv
-  ##############################################################################
-  merge_hamming_datasets:
-    cmd: >-
-      python merge.py
-      --big_dir output/
-      --little_dir output/
-      --data_file ddos/plots/hamming_merged.csv
-      --little_dir_data_file  kdd_nsl/plots/hamming_merged.csv sms_spam/plots/hamming_merged.csv truthseeker/plots/hamming_merged.csv 
-      --output_file hamming_merged.csv
-      --output_folder output/combined/plots/
-    deps:
-      - output/sms_spam/plots/hamming_merged.csv
-      - output/kdd_nsl/plots/hamming_merged.csv
-      - output/ddos/plots/hamming_merged.csv
-      - output/truthseeker/plots/hamming_merged.csv
-    outs:
-      - output/combined/plots/hamming_merged.csv
-  ##############################################################################
-  merge_precomputed:
-    matrix:
-      dataset: [ddos, kdd_nsl, sms_spam, truthseeker] 
-      stage : [precomputed]
-    deps:
-      - output/${item.dataset}/plots/${item.stage}/knn.csv
-    cmd: >-
-      python merge.py
-      --big_dir output/${item.dataset}/plots/
-      --data_file ${item.stage}/knn.csv
-      --output_folder output/${item.dataset}/plots
-      --output_file ${item.stage}_merged.csv
-    outs:
-      - output/${item.dataset}/plots/${item.stage}_merged.csv
-  ##############################################################################
-  merge_precomputed_datasets:
-    cmd: >-
-      python merge.py
-      --big_dir output/
-      --little_dir output/
-      --data_file ddos/plots/precomputed_merged.csv
-      --little_dir_data_file  kdd_nsl/plots/precomputed_merged.csv sms_spam/plots/precomputed_merged.csv truthseeker/plots/precomputed_merged.csv 
-      --output_file precomputed_merged.csv
-      --output_folder output/combined/plots/
-    deps:
-      - output/sms_spam/plots/precomputed_merged.csv
-      - output/kdd_nsl/plots/precomputed_merged.csv
-      - output/ddos/plots/precomputed_merged.csv
-      - output/truthseeker/plots/precomputed_merged.csv
-    outs:
-      - output/combined/plots/precomputed_merged.csv
+    foreach:
+      - refit_hamming
+      - refit_distance
+      - refit_kernel
+      - precomputed
+    do:
+      cmd: >-
+        python merge.py
+        --big_dir output/
+        --little_dir output/
+        --data_file ddos/plots/${item}_merged.csv
+        --little_dir_data_file  kdd_nsl/plots/${item}_merged.csv sms_spam/plots/${item}_merged.csv truthseeker/plots/${item}_merged.csv 
+        --output_file ${item}_merged.csv
+        --output_folder output/combined/plots/
+      deps:
+        - output/sms_spam/plots/${item}_merged.csv
+        - output/kdd_nsl/plots/${item}_merged.csv
+        - output/ddos/plots/${item}_merged.csv
+        - output/truthseeker/plots/${item}_merged.csv
+      outs:
+        - output/combined/plots/${item}_merged.csv
   ##############################################################################
   plot:
     cmd: >-
       python plots.py
     deps:
-      - output/combined/plots/search_merged.csv
+      - output/combined/plots/refit_hamming_merged.csv
+      - output/combined/plots/refit_kernel_merged.csv
+      - output/combined/plots/refit_distance_merged.csv
       - output/combined/plots/precomputed_merged.csv
-      - output/combined/plots/hamming_merged.csv
       - plots.py
     plots:
       - output/combined/plots/accuracy_vs_algorithm.pdf
