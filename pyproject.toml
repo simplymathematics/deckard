@@ -5,6 +5,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["deckard"]
 
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
 [project]
 name = "deckard"
 dependencies = [
