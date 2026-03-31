@@ -7,7 +7,6 @@ from hydra.experimental.callback import Callback
 import argparse
 from typing import Union
 from pathlib import Path
-import sys
 import logging
 
 storage = "sqlite:///optuna.db"
@@ -17,6 +16,7 @@ directions = ["maximize"]
 output_file = "optuna.csv"
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class OptunaStudyDumpCallback(Callback):
@@ -64,7 +64,7 @@ class OptunaStudyDumpCallback(Callback):
             study.set_metric_names(self.metric_names)
         else:
             logger.info("Cannot set metric names")
-    
+
     def get_study(self):
         if len(self.directions) == 1:
             direction = self.directions[0]
@@ -84,8 +84,6 @@ class OptunaStudyDumpCallback(Callback):
             )
         return study
 
-
-        
     def on_multirun_end(self, config: DictConfig, **kwargs) -> None:
         study = optuna.load_study(self.study_name, storage=self.storage)
         df = study.trials_dataframe()

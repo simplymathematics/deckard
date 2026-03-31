@@ -190,9 +190,6 @@ class TensorflowV1Loss:
         return obj
 
 
-
-
-
 @dataclass
 class TensorflowV1Optimizer:
     name: str

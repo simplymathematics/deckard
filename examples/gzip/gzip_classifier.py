@@ -43,8 +43,10 @@ from zipfile import BadZipFile
 
 import sklearn.utils.validation
 
+
 def _noop(*args, **kwargs):
     return None
+
 
 sklearn.utils.validation.check_non_negative = _noop
 
@@ -140,8 +142,8 @@ transform_dict = {
     "exp_neg_gamma100": lambda x: np.exp(-x / 100),
     "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
 }
-# 2 d_k(x, x′) = 2 − 2k(x, x′). 
-distance_transform_dict =  {
+# 2 d_k(x, x′) = 2 − 2k(x, x′).
+distance_transform_dict = {
     "dist_rbf_gamma_001": lambda x: 2 - 2 * np.exp(-x / 0.001),
     "dist_rbf_gamma_01": lambda x: 2 - 2 * np.exp(-x / 0.01),
     "dist_rbf_gamma_1": lambda x: 2 - 2 * np.exp(-x / 0.1),
@@ -156,23 +158,23 @@ distance_transform_dict =  {
 # hamming kernel transform dict:
 hamming_transform_dict = {
     "hamming": lambda x: 1 - x,
-    "hamming_gamma_001": lambda x: 1 - x ** 0.001,
-    "hamming_gamma_01": lambda x: 1 - x ** 0.01,
-    "hamming_gamma_1": lambda x: 1 - x ** 0.1,
-    "hamming_gamma10": lambda x: 1 - x ** 10,
-    "hamming_gamma100": lambda x: 1 - x ** 100,
-    "hamming_gamma1000": lambda x: 1 - x ** 1000,
+    "hamming_gamma_001": lambda x: 1 - x**0.001,
+    "hamming_gamma_01": lambda x: 1 - x**0.01,
+    "hamming_gamma_1": lambda x: 1 - x**0.1,
+    "hamming_gamma10": lambda x: 1 - x**10,
+    "hamming_gamma100": lambda x: 1 - x**100,
+    "hamming_gamma1000": lambda x: 1 - x**1000,
     "hamming_gamma": lambda x: 1 - x,
 }
 # 2 d_k(x, x′) = 2 − 2k(x, x′).
 hamming_distance_transform_dict = {
     "dist_hamming": lambda x: 2 - 2 * (1 - x),
-    "dist_hamming_gamma_001": lambda x: 2 - 2 * (1 - x ** 0.001),
-    "dist_hamming_gamma_01": lambda x: 2 - 2 * (1 - x ** 0.01),
-    "dist_hamming_gamma_1": lambda x: 2 - 2 * (1 - x ** 0.1),
-    "dist_hamming_gamma10": lambda x: 2 - 2 * (1 - x ** 10),
-    "dist_hamming_gamma100": lambda x: 2 - 2 * (1 - x ** 100),
-    "dist_hamming_gamma1000": lambda x: 2 - 2 * (1 - x ** 1000),
+    "dist_hamming_gamma_001": lambda x: 2 - 2 * (1 - x**0.001),
+    "dist_hamming_gamma_01": lambda x: 2 - 2 * (1 - x**0.01),
+    "dist_hamming_gamma_1": lambda x: 2 - 2 * (1 - x**0.1),
+    "dist_hamming_gamma10": lambda x: 2 - 2 * (1 - x**10),
+    "dist_hamming_gamma100": lambda x: 2 - 2 * (1 - x**100),
+    "dist_hamming_gamma1000": lambda x: 2 - 2 * (1 - x**1000),
     "dist_hamming_gamma": lambda x: 2 - 2 * (1 - x),
 }
 
@@ -213,7 +215,7 @@ def distance_helper(
     x2 = str(x2)
     if modified is True and x1 == x2:
         return 0
-    if modified is True and symmetric is True: # Enforced
+    if modified is True and symmetric is True:  # Enforced
         if x1 >= x2:
             if method in compressors.keys():
                 result = ncd(x1, x2, cx1, cx2, method)
@@ -232,9 +234,7 @@ def distance_helper(
                 raise NotImplementedError(
                     f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
                 )
-    elif (
-        modified is False and symmetric is False
-    ):  # Vanilla
+    elif modified is False and symmetric is False:  # Vanilla
         # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
         if method in compressors.keys():
             result = ncd(x1, x2, cx1, cx2, method)
@@ -244,7 +244,7 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is False and symmetric is True: # Assumed Method
+    elif modified is False and symmetric is True:  # Assumed Method
         if method in compressors.keys():
             result1 = ncd(x1, x2, cx1, cx2, method)
             result2 = ncd(x2, x1, cx2, cx1, method)
@@ -257,7 +257,7 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is True and symmetric in ["avg", "average"]: #Averaged
+    elif modified is True and symmetric in ["avg", "average"]:  # Averaged
         if method in compressors.keys():
             result = average_ncd(x1, x2, cx1, cx2, method)
         elif method in string_metrics.keys():
@@ -269,7 +269,9 @@ def distance_helper(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
     else:
-        raise ValueError(f"Expected {modified} to be boolean and and {symmetric} to be in [False, True, 'avg', 'average']")
+        raise ValueError(
+            f"Expected {modified} to be boolean and and {symmetric} to be in [False, True, 'avg', 'average']",
+        )
     return result
 
 
@@ -303,6 +305,7 @@ def ncd(
     ncd_ = (Cx1x2 - min_) / max_
     return ncd_
 
+
 def average_ncd(
     x1,
     x2,
@@ -326,11 +329,11 @@ def average_ncd(
     x2 = str(x2) if not isinstance(x2, str) else x2
     Cx1 = compressor_len(x1) if cx1 is None else cx1
     Cx2 = compressor_len(x2) if cx2 is None else cx2
-    Cx1x2 = compressor_len(x1+x2)
-    Cx2x1 = compressor_len(x2+x1)
+    Cx1x2 = compressor_len(x1 + x2)
+    Cx2x1 = compressor_len(x2 + x1)
     min_ = min(Cx1, Cx2)
-    max_ = max(Cx1, Cx2)   
-    Cxx = (Cx2x1 + Cx1x2) /2
+    max_ = max(Cx1, Cx2)
+    Cxx = (Cx2x1 + Cx1x2) / 2
     ncd_ = (Cxx - min_) / max_
     return ncd_
 
@@ -466,8 +469,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         self.n_jobs = n_jobs
         for key, value in kwargs.items():
             setattr(self, key, value)
-            
-    
+
     def _calculate_rectangular_distance_matrix(
         self,
         x1,
@@ -819,7 +821,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     x1=X,
                     transform=self.transform,
                 )
-            
+
         if self.distance_matrix_test is not None:
             # Save the distance matrix
             self._save_distance_matrix(self.distance_matrix_test, distance_matrix)

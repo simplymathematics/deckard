@@ -123,7 +123,9 @@ class Data:
         if len(result) == 2:
             result = self.sample(*result)
         else:
-            assert len(result) == 4, f"Data is not generated: {result}. Length: {len(result)},"
+            assert (
+                len(result) == 4
+            ), f"Data is not generated: {result}. Length: {len(result)},"
         if self.sklearn_pipeline is not None:
             result = self.sklearn_pipeline(*result)
         return result

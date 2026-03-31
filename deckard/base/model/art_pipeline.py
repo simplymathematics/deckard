@@ -69,6 +69,7 @@ class ArtSklearnInitializer:
             model = est(model, **kwargs)
         return model
 
+
 @dataclass
 class ArtKerasInitializer:
     library: str = None

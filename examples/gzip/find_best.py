@@ -45,9 +45,9 @@ def query_optuna_db(study_name, storage_path):
             new_col = col
         new_cols.append(new_col)
     trials.columns = new_cols
-    new_trials = trials.loc[:, ~trials.columns.duplicated(keep='first')]
+    new_trials = trials.loc[:, ~trials.columns.duplicated(keep="first")]
     if len(new_trials) == 0:
-        new_trials = trials.loc[:, ~trials.columns.duplicated(keep='last')]
+        new_trials = trials.loc[:, ~trials.columns.duplicated(keep="last")]
     trials = new_trials
     logger.info(f"ID variables: {id_vars}")
     logger.info(f"Value variables: {value_vars}")
@@ -138,7 +138,7 @@ def save_best_trial(best_trial, output_path):
 
 def find_subset(data, subset):
     # assume that subset is a list of strings, where var=val or var!=val
-    
+
     # split on '=' and '!=' to find the subset
     subset_dict = {}
     not_subset_dict = {}
@@ -149,7 +149,7 @@ def find_subset(data, subset):
         elif "=" in entry:
             var, val = entry.split("=")
             subset_dict[var] = val
-    for k,v in not_subset_dict.items():
+    for k, v in not_subset_dict.items():
         data = data[data[k] != v]
     for k, v in subset_dict.items():
         data = data[data[k] == v]
@@ -175,7 +175,6 @@ def main(
     trials = find_mean_std(trials, id_vars, value_vars)
     default_path = Path(default_path)
     # output_path is the default path with the stem replaced by best_${study_name}.yaml
-    file_name = default_path.name
     subconf = default_path.parent.name
     conf = default_path.parent.parent.name
     if conf == ".":
