@@ -1,18 +1,18 @@
 defaults:
     # - _target_ : deckard.base.experiment.Experiment
     - _self_
-    - data: kdd_nsl
-    - model: ncd_knn
-    - files: default
+    - data: default
+    - model: ncd_svc
+    - files: hamming
     - scorers: default
     - override hydra/sweeper : optuna
     - override hydra/sweeper/sampler : grid
     - override hydra/launcher : joblib
 dataset : ${data.alias}
-model_name : knn
 algorithm : Vanilla
+model_name : svc
 stage : train
-direction : maximize
+direction: maximize
 optimizers: accuracy
 device_id : ${oc.env:DECKARD_DEVICE_ID, "cpu"}
 hydra:
@@ -25,7 +25,8 @@ hydra:
   run:
     dir: output/${dataset}/logs/precomputed/${model_name}/${algorithm}/${data.sample.train_size}/${data.sample.fold}/${model.init.metric}/
   sweep:
-    dir: output/${dataset}/logs/search/${model_name}/${algorithm}/${data.sample.train_size}/
+    dir: output/${dataset}/logs/hamming/${model_name}/${algorithm}/${data.sample.train_size}/
+    subdir : ${hydra.job.num}
   callbacks:
     study_dump:
       _target_ : optuna_database.OptunaStudyDumpCallback
@@ -38,28 +39,26 @@ hydra:
     sampler:
       _target_: optuna.samplers.GridSampler
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
-    direction: ${direction}
+    study_name: ${dataset}_${model_name}_${algorithm}_hamming
     storage: sqlite:///output/optuna.db
-    study_name: ${dataset}_${model_name}_${algorithm}
     n_trials: 1
-    n_jobs: 1
-    max_failure_rate: 1.0
+    n_jobs: ${oc.env:DECKARD_N_JOBS, 1}
+    direction: ${direction}
     params:
-      model.init.k : 1,3,5
-      +model.init.weights : uniform,distance
-      +model.init.algorithm : brute
+      +model.init.C : .0001,.001,.01,.1,1,10,100,1000
       model_name : ${model_name}
-      model.init.metric: gzip,bz2,brotli,levenshtein,ratio,hamming
       model.init.symmetric: True,False
       model.init.modified: True,False
-      model.init.transform: None,abs,square,dist_rbf,dist_rbf_gamma,dist_rbf_gamma_001,dist_rbf_gamma_01,dist_rbf_gamma_1,dist_rbf_gamma10,dist_rbf_gamma100,dist_rbf_gamma1000
+      model.init.metric: ratio
       data.sample.fold: 0,1,2,3,4
+      model.init.transform: None,hamming,hamming_gamma_001,hamming_gamma_01,hamming_gamma_1,hamming_gamma10,hamming_gamma100,hamming_gamma1000
+    max_failure_rate: 1.0
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: ${..sweeper.n_jobs}
     prefer : processes
-    verbose: 0  
-    pre_dispatch: 2*${hydra.sweeper.n_jobs}
+    verbose: 0
+    pre_dispatch: ${hydra.sweeper.n_jobs}
     batch_size: auto
     temp_folder: /tmp/deckard
     max_nbytes: 100000

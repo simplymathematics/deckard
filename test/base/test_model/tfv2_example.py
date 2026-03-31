@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPool2D
 
-
 tf.config.run_functions_eagerly(True)
 
 __all__ = [

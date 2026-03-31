@@ -1,6 +1,5 @@
 import tensorflow.compat.v1 as tf
 
-
 __all__ = [
     "MNISTNet",
 ]

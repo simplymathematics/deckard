@@ -8,7 +8,6 @@ from hydra.utils import instantiate
 
 from deckard.base.model.sklearn_pipeline import SklearnModelPipeline
 
-
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 

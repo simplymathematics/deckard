@@ -22,10 +22,6 @@ attack_parser.add_argument("--overrides", nargs="*", default=[], type=str)
 
 def attack_main(args):
     config_dir = Path(args.workdir, args.config_dir).absolute().as_posix()
-    logging.basicConfig(
-        level=args.verbosity,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
     if args.overrides is not None and len(args.overrides) > 0:
         save_params_file(
             config_dir=config_dir,

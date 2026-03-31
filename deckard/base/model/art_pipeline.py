@@ -11,7 +11,6 @@ import numpy as np
 from random import randint
 from .keras_models import KerasInitializer, keras_dict  # noqa F401
 from .tensorflow_models import (  # noqa F401
-    TensorflowV1Initializer,
     TensorflowV2Initializer,
     tensorflow_dict,
 )
@@ -69,122 +68,6 @@ class ArtSklearnInitializer:
             est = sklearn_dict[library]
             model = est(model, **kwargs)
         return model
-
-
-# @dataclass
-# class ArtInitializer:
-#     library: str = None
-#     data: list = None
-#     model: object = None
-#     kwargs: dict = field(default_factory=dict)
-
-#     def __init__(self, model: object, library: str, data=None, **kwargs):
-#         assert (
-#             library in supported_models
-#         ), f"library must be one of {supported_models}. Got {library}"
-#         self.library = library
-#         self.data = data
-#         self.model = model
-#         self.kwargs = kwargs
-
-#     def __call__(self, model =None):
-#         library = self.library
-#         data = self.data
-#         if model is None:
-#             model = self.model
-#         kwargs = self.kwargs
-#         if "torch" in str(library) and not isinstance(
-#             model,
-#             tuple(torch_dict.values()),
-#         ):
-#             import torch
-#             device_type = "gpu" if torch.cuda.is_available() else "cpu"
-#             if device_type == "gpu":
-#                 number_of_devices = torch.cuda.device_count()
-#                 num = randint(0, number_of_devices - 1)
-#                 device = torch.device(f"cuda:{num}")
-#                 if isinstance(data[0][0], np.ndarray):
-#                     data = [torch.from_numpy(d).to(device) for d in data]
-#                 data = [d.to(device) for d in data]
-#                 model.to(device)
-#                 logger.debug(f"Model moved to GPU: {device}")
-#             else:
-#                 device = torch.device("cpu")
-#             model = TorchInitializer(
-#                 data=data,
-#                 model=model,
-#                 library=library,
-#                 device_type=device,
-#                 **kwargs,
-#             )()
-#         elif "keras" in str(library) and not isinstance(
-#             model,
-#             tuple(keras_dict.values()),
-#         ):  # pragma: no cover
-#             raise NotImplementedError("Keras not implemented yet")
-#             # try:
-#             #     model = KerasInitializer(
-#             #         data=data, model=model, library=library, **kwargs
-#             #     )()
-#             # except ValueError as e:
-#             #     if "disable eager execution" in str(e):
-#             #         import tensorflow as tf
-
-#             #         tf.compat.v1.disable_eager_execution()
-#             #         if str(type(model)).startswith("<class 'art."):
-#             #             model = model.model
-#             #         model = KerasInitializer(
-#             #             data=data, model=model, library=library, **kwargs
-#             #         )()
-#             #     else:
-#             #         raise e
-#         elif (
-#             "sklearn" in str(library)
-#             or library is None
-#             and not isinstance(model, tuple(sklearn_dict.values()))
-#         ):
-#             try:
-#                 check_is_fitted(model)
-#             except NotFittedError:
-#                 raise ValueError("Model must be fitted before being passed to ART")
-#             if library in sklearn_dict and "art." not in str(type(model)):
-#                 est = sklearn_dict[library]
-#                 model = est(model, **kwargs)
-#         elif library in [
-#             "tf2",
-#             "tensorflowv2",
-#             "tensorflow",
-#             "tf",
-#             "tfv2",
-#         ] and not isinstance(model, tuple(tensorflow_dict.values())):
-#             model = TensorflowV2Initializer(
-#                 data=data,
-#                 model=model,
-#                 library=library,
-#                 **kwargs,
-#             )()
-#         elif library in ["tf1", "tensorflowv1", "tfv1"] and not isinstance(
-#             model,
-#             tuple(tensorflow_dict.values()),
-#         ):  # pragma: no cover
-#             raise NotImplementedError("Tensorflow V1 not implemented yet")
-#             # model = TensorflowV1Initializer(
-#             #     data=data, model=model, library=library, **kwargs
-#             # )()
-#         elif library in supported_models and isinstance(
-#             model,
-#             tuple(all_models.values()),
-#         ):
-#             pass
-#         else:  # pragma: no cover
-#             raise ValueError(
-#                 f"library must be one of {supported_models}. Got {library}",
-#             )
-#         assert hasattr(
-#             model,
-#             "fit",
-#         ), f"model must have a fit method. Got type {type(model)}"
-#         return model
 
 
 @dataclass
@@ -447,12 +330,8 @@ class ArtPipeline:
         if isinstance(model, tuple(list(sklearn_dict.values()))):
             try:
                 check_is_fitted(model)
-                print("Model is fitted")
             except NotFittedError:
-                print("Model not fitted")
                 model.fit(data[0], data[2])
-            print(f"Type of model: {type(model)}")
-            input("Press Enter to continue...")
         model = ArtInitializer(model=model, data=data, **kwargs, library=library)()
         if "transformer" in self.pipeline:  # pragma: no cover
             raise NotImplementedError("Transformation defences not implemented yet")

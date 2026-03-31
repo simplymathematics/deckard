@@ -3,6 +3,7 @@
 This is a module that implments a gzip classifier. You can test it by running the following command:
 python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --distance_matrix None --dataset 20newsgroups
 """
+
 # These lines will be used  to setup a virtual environment inside the current working directory in a folder called env
 # You might need to install venv with:
 # sudo apt-get install python3-venv
@@ -39,7 +40,16 @@ from multiprocessing import cpu_count
 from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
 from joblib import Parallel, delayed
 from typing import Literal
+from zipfile import BadZipFile
 
+import sklearn.utils.validation
+
+
+def _noop(*args, **kwargs):
+    return None
+
+
+sklearn.utils.validation.check_non_negative = _noop
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -133,6 +143,64 @@ transform_dict = {
     "exp_neg_gamma100": lambda x: np.exp(-x / 100),
     "exp_neg_gamma1000": lambda x: np.exp(-x / 1000),
 }
+# 2 d_k(x, x′) = 2 − 2k(x, x′).
+distance_transform_dict = {
+    "dist_rbf_gamma_001": lambda x: 2 - 2 * np.exp(-x / 0.001),
+    "dist_rbf_gamma_01": lambda x: 2 - 2 * np.exp(-x / 0.01),
+    "dist_rbf_gamma_1": lambda x: 2 - 2 * np.exp(-x / 0.1),
+    "dist_rbf_gamma10": lambda x: 2 - 2 * np.exp(-x / 10),
+    "dist_rbf_gamma100": lambda x: 2 - 2 * np.exp(-x / 100),
+    "dist_rbf_gamma1000": lambda x: 2 - 2 * np.exp(-x / 1000),
+    "dist_rbf_gamma": lambda x: 2 - 2 * np.exp(-x),
+    "dist_rbf": lambda x: 2 - 2 * np.exp(-x),
+}
+
+
+# hamming kernel transform dict:
+hamming_transform_dict = {
+    "hamming": lambda x: 1 - x,
+    "hamming_gamma_001": lambda x: 1 - x**0.001,
+    "hamming_gamma_01": lambda x: 1 - x**0.01,
+    "hamming_gamma_1": lambda x: 1 - x**0.1,
+    "hamming_gamma10": lambda x: 1 - x**10,
+    "hamming_gamma100": lambda x: 1 - x**100,
+    "hamming_gamma1000": lambda x: 1 - x**1000,
+    "hamming_gamma": lambda x: 1 - x,
+}
+# 2 d_k(x, x′) = 2 − 2k(x, x′).
+hamming_distance_transform_dict = {
+    "dist_hamming": lambda x: 2 - 2 * (1 - x),
+    "dist_hamming_gamma_001": lambda x: 2 - 2 * (1 - x**0.001),
+    "dist_hamming_gamma_01": lambda x: 2 - 2 * (1 - x**0.01),
+    "dist_hamming_gamma_1": lambda x: 2 - 2 * (1 - x**0.1),
+    "dist_hamming_gamma10": lambda x: 2 - 2 * (1 - x**10),
+    "dist_hamming_gamma100": lambda x: 2 - 2 * (1 - x**100),
+    "dist_hamming_gamma1000": lambda x: 2 - 2 * (1 - x**1000),
+    "dist_hamming_gamma": lambda x: 2 - 2 * (1 - x),
+}
+
+# poly_dict
+# poly_transform_dict = {}
+
+# for degree in range(6):
+#     for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+#         func = lambda x, degree, coef: (x + coef ) ** degree
+#         coef_string = str(coef).replace(".", "_")
+#         poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+
+# # poly dict for distances
+# poly_distance_transform_dict = {}
+# for degree in range(6):
+#     for coef in [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]:
+#         func = lambda x, degree, coef: 2 - 2* ((x + coef ) ** degree)
+#         coef_string = str(coef).replace(".", "_")
+#         poly_transform_dict[f"poly_coef{coef_string}_{degree}"] = func
+# poly_transform_dict.update(poly_distance_transform_dict)
+# transform_dict.update(poly_transform_dict)
+
+transform_dict.update(distance_transform_dict)
+transform_dict.update(hamming_transform_dict)
+transform_dict.update(hamming_distance_transform_dict)
 
 
 def distance_helper(
@@ -148,7 +216,7 @@ def distance_helper(
     x2 = str(x2)
     if modified is True and x1 == x2:
         return 0
-    if modified is True and symmetric is True:
+    if modified is True and symmetric is True:  # Enforced
         if x1 >= x2:
             if method in compressors.keys():
                 result = ncd(x1, x2, cx1, cx2, method)
@@ -167,9 +235,8 @@ def distance_helper(
                 raise NotImplementedError(
                     f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
                 )
-    elif (
-        modified is False
-    ):  # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
+    elif modified is False and symmetric is False:  # Vanilla
+        # If not modified, then calculate the distance normally, without swapping or returning 0 when x1 == x2
         if method in compressors.keys():
             result = ncd(x1, x2, cx1, cx2, method)
         elif method in string_metrics.keys():
@@ -178,7 +245,7 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
-    elif modified is True and symmetric is False:
+    elif modified is False and symmetric is True:  # Assumed Method
         if method in compressors.keys():
             result1 = ncd(x1, x2, cx1, cx2, method)
             result2 = ncd(x2, x1, cx2, cx1, method)
@@ -191,10 +258,21 @@ def distance_helper(
             raise NotImplementedError(
                 f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
             )
+    elif modified is True and symmetric in ["avg", "average"]:  # Averaged
+        if method in compressors.keys():
+            result = average_ncd(x1, x2, cx1, cx2, method)
+        elif method in string_metrics.keys():
+            result1 = calculate_string_distance(x1, x2, method)
+            result2 = calculate_string_distance(x2, x1, method)
+            result = (result1 + result2) / 2
+        else:
+            raise NotImplementedError(
+                f"Method {method} not supported. Supported methods are: {string_metrics.keys()} and {compressors.keys()}",
+            )
     else:
-        print(f"Modified: {modified}, Symmetric: {symmetric}")
-        print(f"type modified: {type(modified)}, type symmetric: {type(symmetric)}")
-        raise ValueError(f"Expected {modified} and {symmetric} to be boolean")
+        raise ValueError(
+            f"Expected {modified} to be boolean and and {symmetric} to be in [False, True, 'avg', 'average']",
+        )
     return result
 
 
@@ -225,8 +303,40 @@ def ncd(
     Cx1x2 = compressor_len(x1x2)
     min_ = min(Cx1, Cx2)
     max_ = max(Cx1, Cx2)
-    ncd = (Cx1x2 - min_) / max_
-    return ncd
+    ncd_ = (Cx1x2 - min_) / max_
+    return ncd_
+
+
+def average_ncd(
+    x1,
+    x2,
+    cx1=None,
+    cx2=None,
+    method: Literal["gzip", "lzma", "bz2", "zstd", "pkl", "brotli", None] = "gzip",
+) -> float:
+    """
+    Calculate the normalized compression distance between two objects treated as strings.
+    Args:
+        x1 (str): The first object
+        x2 (str): The second object
+    Returns:
+        float: The normalized compression distance between x1 and x2
+    """
+
+    compressor_len = (
+        compressors[method] if method in compressors.keys() else compressors["gzip"]
+    )
+    x1 = str(x1) if not isinstance(x1, str) else x1
+    x2 = str(x2) if not isinstance(x2, str) else x2
+    Cx1 = compressor_len(x1) if cx1 is None else cx1
+    Cx2 = compressor_len(x2) if cx2 is None else cx2
+    Cx1x2 = compressor_len(x1 + x2)
+    Cx2x1 = compressor_len(x2 + x1)
+    min_ = min(Cx1, Cx2)
+    max_ = max(Cx1, Cx2)
+    Cxx = (Cx2x1 + Cx1x2) / 2
+    ncd_ = (Cxx - min_) / max_
+    return ncd_
 
 
 def calculate_string_distance(x1, x2, method):
@@ -307,9 +417,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
         logger.debug(
             f"Initializing GzipClassifier with distance_matrix_train={distance_matrix_train} distance_matrix_test={distance_matrix_test} metric={metric}, symmetric={symmetric}, {kwarg_string}",
         )
-        if metric in compressors.keys():
+        if metric in compressors.keys() and symmetric in [True, False]:
             logger.debug(f"Using NCD metric with {metric} compressor.")
             self._distance = ncd
+            self.metric = metric
+        elif metric in compressors.keys() and symmetric in ["avg", "average"]:
+            logger.debug(f"Using symmetric NCD metric with {metric} compressor.")
+            self._distance = average_ncd
             self.metric = metric
         elif metric in string_metrics.keys():
             logger.debug(f"Using {metric} metric")
@@ -332,21 +446,20 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
             transform in transform_list
         ), f"Expected {transform} in {transform_dict.keys()}"
         self.modified = False if modified is not True else True
-        assert symmetric in [
+        symmetrics = [
             True,
             False,
             None,
-        ], f"Expected {symmetric} in [True, False, None]"
+            "avg",
+            "average",
+        ]
+        assert symmetric in symmetrics, f"Expected {symmetric} in {symmetrics}"
         self.symmetric = symmetric
         self.transform = transform
         self.anchor = anchor
-        if self.symmetric is True:
+        if self.symmetric is True or self.symmetric in ["avg", "average"]:
             self._calculate_training_distance_matrix = (
                 self._calculate_lower_triangular_distance_matrix
-            )
-        elif symmetric in ["avg", "average"]:
-            self._calculate_training_distance_matrix = (
-                self._calculate_avg_with_transpose_distance_matrix
             )
         else:
             self._calculate_training_distance_matrix = (
@@ -532,8 +645,13 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
     def _load_distance_matrix(self, path):
         if Path(path).exists():
             path = Path(path).resolve().as_posix()
-            with open(path, "rb") as f:
-                matrix = np.load(f)["X"]
+            try:
+                with open(path, "rb") as f:
+                    matrix = np.load(f)["X"]
+            except BadZipFile:
+                # Delete the file:
+                Path(path).unlink()
+                raise BadZipFile(f"{path} is a bad file")
         else:
             raise FileNotFoundError(f"Distance matrix file {path} not found")
         return matrix
@@ -704,6 +822,7 @@ class GzipClassifier(ClassifierMixin, BaseEstimator):
                     x1=X,
                     transform=self.transform,
                 )
+
         if self.distance_matrix_test is not None:
             # Save the distance matrix
             self._save_distance_matrix(self.distance_matrix_test, distance_matrix)
@@ -958,9 +1077,9 @@ def test_model(
     end = time.time()
     pred_time = end - start
     score = round(scorer(y_test, predictions), 3)
-    print(f"Training time: {train_time}")
-    print(f"Prediction time: {pred_time}")
-    print(f"{alias.capitalize()}  is: {score}")
+    logger.info(f"Training time: {train_time}")
+    logger.info(f"Prediction time: {pred_time}")
+    logger.info(f"{alias.capitalize()}  is: {score}")
     score_dict = {
         f"{alias.lower()}": score,
         "train_time": train_time,
@@ -1139,12 +1258,12 @@ def cross_validate_main(args: argparse.Namespace):
         scoring=optimizer,
         n_jobs=1,
     )
-    print(f"mean of cross-validation scores: {cv_scores['test_score'].mean()}")
-    print(f"std of cross-validation scores: {cv_scores['test_score'].std()}")
+    logger.info(f"mean of cross-validation scores: {cv_scores['test_score'].mean()}")
+    logger.info(f"std of cross-validation scores: {cv_scores['test_score'].std()}")
     # Validate the model using the withheld test data
     model.fit(X_train, y_train)
     score = model.score(X_test, y_test)
-    print(f"Test score: {score}")
+    logger.info(f"Test score: {score}")
 
 
 def grid_search_main(args: argparse.Namespace):
@@ -1216,11 +1335,11 @@ def grid_search_main(args: argparse.Namespace):
     y_train = np.ravel(y_train)
     y_test = np.ravel(y_test)
     grid.fit(X_train, y_train)
-    print(f"Best score: {grid.best_score_}")
-    print(f"Best params: {grid.best_params_}")
+    logger.info(f"Best score: {grid.best_score_}")
+    logger.info(f"Best params: {grid.best_params_}")
     # Validate the model using the withheld test data
     score = grid.score(X_test, y_test)
-    print(f"Test score: {score}")
+    logger.info(f"Test score: {score}")
 
 
 parser = argparse.ArgumentParser()

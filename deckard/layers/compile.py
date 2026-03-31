@@ -6,7 +6,6 @@ from tqdm import tqdm
 import yaml
 import argparse
 
-
 logger = logging.getLogger(__name__)
 
 

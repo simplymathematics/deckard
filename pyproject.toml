@@ -2,6 +2,13 @@
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["deckard"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
 [project]
 name = "deckard"
 dependencies = [
@@ -30,7 +37,9 @@ authors = [{name = "simplymathematics", email = "gk82psk06@mozmail.com"},]
 maintainers = [{name = "simplymathematics", email = "gk82psk06@mozmail.com"},]
 description = "A tool for massive machine learning robustness evaluations."
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
+
+# 
 
 keywords = ["machine learning","artificial intelligence","adversarial machine learning"]
 
@@ -166,7 +175,7 @@ non_framework= [
 
 
 [project.urls]
-Homepage = "github.com/simplymathematics/deckard"
+Homepage = "https://github.com/simplymathematics/deckard"
 Documentation = "https://readthedocs.org"
 Repository = "https://github.com/github.com/simplymathematics/deckard.git"
 Issues = "https://github.com/github.com/simplymathematics/deckard/issues"

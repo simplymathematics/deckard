@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
-
 logger = logging.getLogger(__name__)
 
 

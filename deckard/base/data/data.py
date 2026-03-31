@@ -101,7 +101,7 @@ class Data:
         """Initialize the data object. If the data is generated, then generate the data and sample it. If the data is loaded, then load the data and sample it.
         :return: X_train, X_test, y_train, y_test
         """
-        if filename is not None and Path(filename).exists() or url(filename):
+        if filename is not None and (Path(filename).exists() or url(filename)):
             logger.info(f"Loading data from {filename}")
             result = self.load(filename)
         elif self.generate is not None:
@@ -123,16 +123,9 @@ class Data:
         if len(result) == 2:
             result = self.sample(*result)
         else:
-            if self.drop != []:
-                raise ValueError(
-                    f"Drop is not supported for non-DataFrame data. Data is type {type(result)}",
-                )
             assert (
                 len(result) == 4
-            ), f"Data is not generated: {self.name} {result}. Length: {len(result)}."
-        assert (
-            len(result) == 4
-        ), f"Data is not generated: {self.name} {result}. Length: {len(result)},"
+            ), f"Data is not generated: {result}. Length: {len(result)},"
         if self.sklearn_pipeline is not None:
             result = self.sklearn_pipeline(*result)
         return result

@@ -22,10 +22,6 @@ experiment_parser.add_argument("--overrides", nargs="*", default=[], type=str)
 
 def experiment_main(args):
     config_dir = Path(args.workdir, args.config_dir).absolute().as_posix()
-    logging.basicConfig(
-        level=args.verbosity,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
     if args.overrides is not None and len(args.overrides) > 0:
         for override in args.overrides:
             key, value = override.split("=")

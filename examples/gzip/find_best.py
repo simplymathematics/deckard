@@ -37,13 +37,18 @@ def query_optuna_db(study_name, storage_path):
         elif col.startswith("user_attrs_"):
             new_col = col[11:]
             id_vars.append(new_col)
-        elif col.startswith("value_"):  # the optimization metric(s)
-            new_col = col[6:]
-            value_vars.append(new_col)
+        elif "value" in col:  # the optimization metric(s)
+            # new_col = col[6:]
+            value_vars.append(col)
+            new_col = col
         else:
             new_col = col
         new_cols.append(new_col)
     trials.columns = new_cols
+    new_trials = trials.loc[:, ~trials.columns.duplicated(keep="first")]
+    if len(new_trials) == 0:
+        new_trials = trials.loc[:, ~trials.columns.duplicated(keep="last")]
+    trials = new_trials
     logger.info(f"ID variables: {id_vars}")
     logger.info(f"Value variables: {value_vars}")
     # drop system_attrs_grid_id,system_attrs_search_space, duration, datatime_start, datetime_complete
@@ -66,7 +71,7 @@ def find_mean_std(trials, id_vars, value_vars):
     grouped = trials.groupby(id_vars)
     for var_ in tqdm(value_vars, desc="Calculating mean and std"):
         trials[f"avg_{var_}"] = grouped[var_].transform("mean")
-        trials[f"std_{var_}"] = grouped[var_].transform(lambda X: X.std())
+        trials[f"std_{var_}"] = grouped[var_].transform("std")
     return trials
 
 
@@ -86,7 +91,6 @@ def sort_by_value_vars(trials, value_vars):
 
 def find_best_trial(trials, value_vars, subdict=None):
     # Sort the trials by the value_vars
-
     trials = sort_by_value_vars(trials, value_vars)
     # Get the best trial
     best_trial = trials.iloc[1]
@@ -94,8 +98,6 @@ def find_best_trial(trials, value_vars, subdict=None):
     for value_var in value_vars:
         avg = f"avg_{value_var}"
         std = f"std_{value_var}"
-        print(f"avg_{value_var}: {best_trial[avg]}")
-        print(f"std_{value_var}: {best_trial[std]}")
         values[f"avg_{value_var}"] = best_trial[avg]
         del best_trial[avg]
         values[f"std_{value_var}"] = best_trial[std]
@@ -114,13 +116,13 @@ def remove_hydra_syntax(trial):
 
 def merge_best_with_default(best_trial, default_config):
     best_trial = best_trial.to_dict()
-    # best_trial = {f"++{k}": v for k, v in best_trial.items()}
+    best_trial.pop("value", None)
     best_trial = [f"{k}={v}" for k, v in best_trial.items()]
     # Merge the best trial with the default config
     folder = Path(default_config).parent.as_posix()
     file = Path(default_config).name
     logger.info(f"Loading config: {file} from {folder}")
-    with initialize(config_path=folder):
+    with initialize(config_path=folder, version_base="2.0"):
         cfg = compose(config_name=file, overrides=best_trial)
     return cfg
 
@@ -135,10 +137,21 @@ def save_best_trial(best_trial, output_path):
 
 
 def find_subset(data, subset):
-    # assume that subset is a list of strings, where var=val
-    # split on '=' and find the subset
-    subset = {k: v for k, v in [s.split("=") for s in subset]}
-    for k, v in subset.items():
+    # assume that subset is a list of strings, where var=val or var!=val
+
+    # split on '=' and '!=' to find the subset
+    subset_dict = {}
+    not_subset_dict = {}
+    for entry in subset:
+        if "!=" in entry:
+            var, val = entry.split("!=")
+            not_subset_dict[var] = val
+        elif "=" in entry:
+            var, val = entry.split("=")
+            subset_dict[var] = val
+    for k, v in not_subset_dict.items():
+        data = data[data[k] != v]
+    for k, v in subset_dict.items():
         data = data[data[k] == v]
     return data
 
@@ -162,7 +175,6 @@ def main(
     trials = find_mean_std(trials, id_vars, value_vars)
     default_path = Path(default_path)
     # output_path is the default path with the stem replaced by best_${study_name}.yaml
-    file_name = default_path.name
     subconf = default_path.parent.name
     conf = default_path.parent.parent.name
     if conf == ".":
@@ -173,11 +185,6 @@ def main(
     best_trial, _ = find_best_trial(trials, value_vars, subdict=subconf)
     best_trial = remove_hydra_syntax(best_trial)
     merged = merge_best_with_default(best_trial, config_path)
-    print(f"Configuration: {conf}")
-    print(f"Subconfiguration: {subconf}")
-    print(f"File: {file_name}")
-    print(f"Output Path: {output_path}")
-    print(f"ID variables: {id_vars}")
     # Save the best trial to the output path
     save_best_trial(merged, output_path)
 
