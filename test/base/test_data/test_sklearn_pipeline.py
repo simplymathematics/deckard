@@ -11,7 +11,6 @@ from deckard.base.data.sklearn_pipeline import (
     SklearnDataPipeline,
 )
 
-
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 config_dir = Path(this_dir, "../../conf/data").resolve().as_posix()
 config_file = "classification.yaml"

@@ -9,7 +9,6 @@ from deckard.base.model.art_pipeline import sklearn_dict
 
 from deckard.base.attack import Attack, AttackInitializer
 
-
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 

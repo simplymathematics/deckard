@@ -4,7 +4,6 @@ import pandas as pd
 import yaml
 from deckard.layers.aft import fit_aft, clean_data_for_aft, calculate_raw_failures
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", type=str, required=True)
 parser.add_argument("--config_file", type=str, required=True)

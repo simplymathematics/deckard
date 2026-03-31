@@ -16,7 +16,6 @@ from sklearn.svm import SVC
 from tqdm import tqdm
 from hydra.utils import instantiate
 
-
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)

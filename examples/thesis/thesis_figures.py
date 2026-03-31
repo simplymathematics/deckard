@@ -28,7 +28,6 @@ from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.decomposition import PCA
 
-
 binarizer = lambda y: 0 if y <= 0.5 else 1  # noqa E731
 binary_func = np.vectorize(binarizer)
 

@@ -5,7 +5,6 @@ import os
 from sklearn.base import BaseEstimator
 from deckard.base.utils import make_grid, flatten_dict, unflatten_dict, factory
 
-
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 

@@ -3,6 +3,7 @@
 This is a module that implments a gzip classifier. You can test it by running the following command:
 python -m gzip_classifier --compressor gzip --k 3 --m 100 --method random --distance_matrix None --dataset 20newsgroups
 """
+
 # These lines will be used  to setup a virtual environment inside the current working directory in a folder called env
 # You might need to install venv with:
 # sudo apt-get install python3-venv

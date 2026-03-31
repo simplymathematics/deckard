@@ -22,7 +22,6 @@ from .art_pipeline import (
 )
 from .sklearn_pipeline import SklearnModelPipeline
 
-
 __all__ = ["Model"]
 logger = logging.getLogger(__name__)
 

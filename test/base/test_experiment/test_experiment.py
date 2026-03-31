@@ -9,7 +9,6 @@ from hydra.utils import instantiate
 
 from deckard.base.experiment import Experiment
 
-
 this_dir = Path(os.path.realpath(__file__)).parent.resolve().as_posix()
 
 
