@@ -702,9 +702,9 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: 956476d4c729d39496a5c62841ba9df4.dir
-      size: 591152
-      nfiles: 32
+      md5: b6a14184cb0f3eb45cbe25281cb52917.dir
+      size: 761555
+      nfiles: 64
     - path: ./config/default.yaml
       hash: md5
       md5: 78485e9915e61194b46015aeaa6f953c
@@ -4271,3 +4271,41 @@ stages:
       md5: 0fc35295e706247002ea6eabd896afa1.dir
       size: 2293060
       nfiles: 600
+  generate_data@mpox:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.score_file=outputs/scores/data/mpox.json
+      experiment_name=mpox ~model  ~attack ~directions ~optimizers\n"
+    deps:
+    - path: ../../deckard/data/
+      hash: md5
+      md5: dc76ab051f94b6bce07093088c2adbac.dir
+      size: 105517
+      nfiles: 4
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: ignore
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 100
+        train_size: 100
+    outs:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    - path: outputs/scores/data/mpox.json
+      hash: md5
+      md5: 8f685364fb2c4830938554e300c82f06
+      size: 20475

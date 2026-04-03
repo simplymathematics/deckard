@@ -68,28 +68,38 @@ class DataPipelineConfig(ConfigBase):
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):
             raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
-        pipeline_steps = []
+        X_pipeline_steps = []
+        y_pipeline_steps = []
         for step_name, step_config in self.pipeline.items():
             step_class = step_config.get(
                 "name",
                 ValueError(f"Step {step_name} missing 'name' key"),
             )
+            fit_y = step_config.pop("fit_y", False)
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
             module_name, class_name = step_class.rsplit(".", 1)
             module = importlib.import_module(module_name)
             cls = module.__dict__[class_name]
             step_instance = cls(**step_config_without_name)
-            pipeline_steps.append((step_name, step_instance))
-        pipeline = Pipeline(pipeline_steps)
-        return pipeline
+            if fit_y is not True:
+                X_pipeline_steps.append((step_name, step_instance))
+            else:
+                y_pipeline_steps.append((step_name, step_instance))
+        X_pipeline = Pipeline(X_pipeline_steps)
+        if len(y_pipeline_steps) > 0:
+            y_pipeline = y_pipeline_steps
+        else:
+            y_pipeline = None
+        return X_pipeline, y_pipeline
 
-    def __call__(
+    def _fit_transform_X(
         self,
         X_train,
         X_test,
         y_train,
         y_test,
+        pipeline,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Fits the data pipeline to the data and returns the transformed data.
 
@@ -103,7 +113,6 @@ class DataPipelineConfig(ConfigBase):
         pd.DataFrame
             The transformed training and testing data.
         """
-        pipeline = self._init_pipeline()
         if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
             logger.info("Fitting data pipeline to training data")
             # Fit and transform the training data
@@ -157,6 +166,93 @@ class DataPipelineConfig(ConfigBase):
             self.pipeline_transform_time = end - start
             self.pipeline_transform_n = X_test.shape[0]
         return X_train, X_test, y_train, y_test
+
+    def _fit_transform_y(
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        pipeline,
+        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """Fits the data pipeline to y_train and transforms y_train/y_test."""
+
+        # Normalize y to 2D for sklearn transformers
+        y_train_2d = (
+            y_train.to_frame()
+            if isinstance(y_train, pd.Series)
+            else pd.DataFrame(y_train)
+        )
+        y_test_2d = (
+            y_test.to_frame()
+            if isinstance(y_test, pd.Series)
+            else pd.DataFrame(y_test)
+        )
+        
+        if not hasattr(self, "pipeline_y_fit_time") or self.pipeline_y_fit_time is None:
+            logger.info("Fitting data pipeline to training target")
+            start = time.process_time()
+            for name, stage in pipeline:
+                logger.debug(f"Running data pipeline stage: {name}")
+                stage.fit(y_train_2d)
+                y_train_t = stage.transform(y_train_2d)
+            end = time.process_time()
+
+            before_shape = y_train_2d.shape
+            y_train_t = stage.transform(y_train_2d)
+            if isinstance(y_train_t, csr_matrix):
+                y_train_t = y_train_t.toarray()
+                y_train_t = pd.DataFrame(y_train_t)
+                after_shape = y_train_t.shape
+
+                assert (
+                before_shape[0] == after_shape[0]
+                ), f"Number of samples changed during y fit_transform from {before_shape[0]} to {after_shape[0]}"
+
+            self.pipeline_y_fit_time = end - start
+            self.pipeline_y_fit_n = y_train_t.shape[0]
+            y_train = pd.Series(y_train_t)
+
+        if (
+            not hasattr(self, "pipeline_y_transform_time")
+            or self.pipeline_y_transform_time is None
+        ):
+            start = time.process_time()
+
+            before_shape = y_test_2d.shape
+            y_test_t = stage.transform(y_test_2d)
+            if isinstance(y_test_t, csr_matrix):
+                y_test_t = y_test_t.toarray()
+                y_test_t = pd.DataFrame(y_test_t)
+                after_shape = y_test_t.shape
+
+                assert (
+                before_shape[0] == after_shape[0]
+                ), f"Number of samples changed during y transform from {before_shape[0]} to {after_shape[0]}"
+
+            end = time.process_time()
+            self.pipeline_y_transform_time = end - start
+            self.pipeline_y_transform_n = y_test_t.shape[0]
+            y_test = pd.Series(y_test_t)
+
+        return X_train, X_test, y_train, y_test
+
+
+    def __call__(
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        X_pipeline, y_pipeline = self._init_pipeline()
+        X_train, X_test, y_train, y_test = self._fit_transform_X(X_train, X_test, y_train, y_test, X_pipeline)
+        if y_pipeline is not None:
+            X_train, X_test, y_train, y_test = self._fit_transform_y(X_train, X_test, y_train, y_test, y_pipeline)
+        return X_train, X_test, y_train, y_test       
+        
+
+        
 
 
 @dataclass
