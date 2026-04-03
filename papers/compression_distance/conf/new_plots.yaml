@@ -1,0 +1,46 @@
+cat_plot:
+  - file: metric_vs_accuracy.pdf
+    col : Metric
+    y : accuracy
+    hue : algorithm
+    errorbar: se
+    kind : boxen
+    titles : "{col_name}"
+    xlabels : " "
+    ylabels : Accuracy
+    legend_title: " "
+    col_order:
+    - GZIP
+    - BZ2
+    - Brotli
+    - Levenshtein
+    - Ratio
+    - Hamming
+    hue_order :
+    - Vanilla
+    - Assumed
+    - Enforced
+    - Average
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    sharex: False
+    x: model.init.transform
+  - file: model_vs_accuracy.pdf
+    col : Model
+    y : accuracy
+    hue : algorithm
+    errorbar: se
+    kind : boxen
+    titles : "{col_name}"
+    xlabels : " "
+    ylabels : Accuracy
+    legend_title: " "
+    x: model.init.transform
+    col_order:
+    - NCD-KNN
+    - NCD-Logistic
+    - NCD-SVC
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+    sharex: False
+  

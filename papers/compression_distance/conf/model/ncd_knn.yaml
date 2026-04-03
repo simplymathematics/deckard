@@ -1,0 +1,12 @@
+data: ${data}
+library : sklearn
+init:
+    name : gzip_classifier.GzipKNN
+    k : 1
+    metric : gzip
+    symmetric : false
+    modified : false
+
+    distance_matrix_train :  ${files.directory}/distance_matrix/${model.init.metric}/${algorithm}/train-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}${data.sample.fold}.npz
+    distance_matrix_test : ${files.directory}/distance_matrix/${model.init.metric}/${algorithm}/test-${data.sample.train_size}-${data.sample.test_size}-${data.sample.random_state}${data.sample.fold}.npz
+    transform : None

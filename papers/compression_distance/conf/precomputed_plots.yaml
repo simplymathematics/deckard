@@ -1,0 +1,49 @@
+cat_plot:
+  - file: metric_vs_predict_time.pdf
+    x : Metric
+    y : predict_time
+    hue : algorithm
+    errorbar: se
+    kind : boxen
+    titles : " "
+    xlabels : "Compressors"
+    ylabels : Predict Time
+    legend_title: " "
+    order:
+    - GZIP
+    - BZ2
+    - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    hue_order :
+    - Vanilla
+    - Assumed
+    - Enforced
+    - Average
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
+  - file: metric_vs_train_time.pdf
+    x : Metric
+    y : train_time
+    hue : algorithm
+    errorbar: se
+    kind : boxen
+    titles : " "
+    xlabels : "Compressors"
+    ylabels : Train Time
+    legend_title: " "
+    order:
+    - GZIP
+    - BZ2
+    - LZMA
+    - Levenshtein
+    - Ratio
+    - Hamming
+    hue_order :
+    - Vanilla
+    - Assumed
+    - Enforced
+    - Average
+    rotation: 90
+    legend: {"bbox_to_anchor": [1.05, .5], "loc" : "center left", "prop" : {"size" : 14}}
