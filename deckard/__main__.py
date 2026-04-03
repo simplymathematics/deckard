@@ -297,6 +297,7 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     if not optimizers:
         return scores, {}
     scores = {k: v for k, v in scores.items() if k in optimizers}
+    other_scores = {k: v for k, v in scores.items() if k not in optimizers}
     missing_scores = set(optimizers) - set(scores.keys())
     values = list(scores.values())
     if directions:
@@ -330,6 +331,7 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
         values = optimize_scores
     else:
         attributes = {}
+    attributes.update(other_scores)
     values = tuple(values)
     if isinstance(values, (tuple, list)) and len(values) == 1:
         values = values[0]
