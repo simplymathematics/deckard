@@ -503,10 +503,6 @@ class ExperimentConfig(ConfigBase):
             scores.update(**self.attack.score_dict)
         else:
             logger.info("No attack config provided, skipping attack.")
-        # Assert that all files in file_dict exist
-
-        
-
         if self.score:
             custom_scores = self.score(
                 data=self.data,
