@@ -5,3 +5,10 @@ train_size : 100
 test_size : 100
 stratify: True
 alias: mpox
+pipeline:
+    encoder:
+        name : sklearn.preprocessing.OneHotEncoder
+        handle_unknown: ignore
+    label_encoder:
+      name: "sklearn.preprocessing.LabelEncoder"
+      fit_y : True

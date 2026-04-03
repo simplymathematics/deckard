@@ -11,5 +11,6 @@ alias: adult_openml
 pipeline: 
   label_encoder:
     _target_: "sklearn.preprocessing.LabelEncoder"
+  feature_selection:
     _target_: "sklearn.feature_selection.VarianceThreshold"
     threshold: 0.0

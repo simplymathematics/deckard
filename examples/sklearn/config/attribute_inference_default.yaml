@@ -1,0 +1,43 @@
+data_alias: adult
+model_alias: rf
+attack_alias: membership
+defense_alias: feature_squeezing
+defaults:
+    - _self_
+    - data: adult
+    - model: rf
+    - defense: feature_squeezing
+    - attack: membership
+    - files: null
+    - override hydra/sweeper : optuna
+    - override hydra/sweeper/sampler : random
+experiment_name: ???
+directions:
+- maximize
+- maximize
+- minimize
+optimizers:
+- accuracy
+- attribute_${attack.targeted_attribute}_accuracy
+- attack_generation_time
+params: ${merge:${file:search/models/${model_alias}.yaml:model_search}, ${file:search/defenses/${defense_alias}.yaml:model_search},}
+hydra:
+  run:
+    dir: outputs/logs/${experiment_name}
+  sweep:
+    dir: outputs/logs/
+    subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    study_name: evasion_attack
+    storage: sqlite:///optuna.db
+    direction: ${directions}
+    max_failure_rate: 1.0
+    sampler:
+      _target_: optuna.samplers.RandomSampler
+      seed: 42
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    n_trials: 100
+    n_jobs: 1
+    params:
+      ${params}
+      

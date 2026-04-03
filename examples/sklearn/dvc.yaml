@@ -20,7 +20,8 @@ stages:
         - ./config/default.yaml
   generate_data:
       foreach:
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - diabetes
         # - digits
@@ -62,13 +63,14 @@ stages:
   train:
       matrix:
         data: 
-          - adult
+          # - adult
+          - mpox
           # - classification
           # - digits
         model:
           - rf
           # - svc
-          # - logistic
+          - logistic
       cmd: >
         deckard 
         data=${item.data} 
@@ -103,13 +105,14 @@ stages:
   attack_rf:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - digits
       model:
         - rf
         # - svc
-        # - logistic
+        - logistic
       attack:
         # Evasion attacks
         - hsj
@@ -118,7 +121,7 @@ stages:
         # Membership inference attacks
         - membership
         # Attribute inference attacks
-        # - attribute-bb
+        - attribute-bb
     cmd: >
       deckard 
       data=${item.data} 
@@ -138,13 +141,14 @@ stages:
   defend_rf:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - digits
       model:
         - rf
         # - svc
-        # - logistic
+        - logistic
       defense:
           # Postprocessing defenses
           - class_labels
@@ -197,7 +201,8 @@ stages:
   defend:
     matrix:
       data: 
-        - adult
+        # - adultf
+        - mpox
         # - classification
         # - digits
       model:
@@ -250,7 +255,8 @@ stages:
   evade:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - digits
       model:
@@ -321,7 +327,8 @@ stages:
   infer_membership:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - digits
       model:
@@ -382,7 +389,8 @@ stages:
   infer_attribute:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
         # - classification
         # - digits
       model:
@@ -416,11 +424,10 @@ stages:
       model_alias=${item.model}
       attack=attribute-bb
       attack_alias=attribute-bb
-      optimizers="[accuracy, inferred_sex_accuracy, attack_generation_time]"
       defense=${item.defense}
       defense_alias=${item.defense}
       hydra.sweeper.study_name=attribute_${item.data}_${item.model}_${item.defense}
-      --config-name inference_default
+      --config-name attribute_inference_default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
@@ -434,7 +441,8 @@ stages:
   defend_attribute_inference:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
       model:
         - rf
       defense:
@@ -451,11 +459,10 @@ stages:
       attack_alias=attribute-bb
       defense=${item.defense}
       defense_alias=${item.defense}
-      optimizers="[accuracy, inferred_sex_accuracy, attack_generation_time]"
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_attribute_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_attribute_${item.data}_${item.model}_${item.defense}
-      --config-name inference_default
+      --config-name attribute_inference_default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
@@ -469,7 +476,8 @@ stages:
   defend_membership_inference:
     matrix:
       data: 
-        - adult
+        # - adult
+        - mpox
       model:
         - rf
         - logistic
