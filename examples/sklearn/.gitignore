@@ -1,3 +1,4 @@
 outputs/
 /.config_paths_set
 /.deckard_rc
+.dvc/cache/
