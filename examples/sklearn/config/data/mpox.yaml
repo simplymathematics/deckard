@@ -1,0 +1,7 @@
+dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+target: Case_status
+random_state : 0
+train_size : 100
+test_size : 100
+stratify: True
+alias: mpox
