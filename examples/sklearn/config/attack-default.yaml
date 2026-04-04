@@ -1,12 +1,12 @@
 data_alias: adult
 model_alias: rf
 attack_alias: hsj
-defense_alias: class_labels
+defense_alias: class-labels
 defaults:
     - _self_
     - data: adult
     - model: rf
-    - defense: class_labels
+    - defense: class-labels
     - attack: hsj
     - files: null
     - override hydra/sweeper : optuna

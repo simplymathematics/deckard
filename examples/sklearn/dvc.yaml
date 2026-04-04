@@ -151,17 +151,17 @@ stages:
         - logistic
       defense:
           # Postprocessing defenses
-          - class_labels
-          - gaussian_noise
-          - high_confidence
-          - reverse_sigmoid
+          - class-labels
+          - gaussian-noise
+          - high-confidence
+          - reverse-sigmoid
           - rounded
           # Preprocessing defenses
-          - cut_mix
+          - cut-mix
           - cutout
-          - feature_squeezing
-          - gaussian_augmentation
-          - label_smoothing
+          - feature-squeezing
+          - gaussian-augmentation
+          - label-smoothing
           - mixup
     cmd:
       deckard 
@@ -211,21 +211,21 @@ stages:
         - logistic
       defense:
         # Postprocessing defenses
-        # - class_labels
-        - gaussian_noise
-        - high_confidence
-        # - reverse_sigmoid
+        # - class-labels
+        - gaussian-noise
+        - high-confidence
+        # - reverse-sigmoid
         # - rounded
         # # Preprocessing defenses
-        # - cut_mix
+        # - cut-mix
         # - cutout
-        # - feature_squeezing
-        - gaussian_augmentation
-        # - jpeg_compression
-        - label_smoothing
+        # - feature-squeezing
+        - gaussian-augmentation
+        # - jpeg-compression
+        - label-smoothing
         # - mixup
         # - resample
-        # - spatial_smoothing
+        # - spatial-smoothing
       attack:
         # - hsj
         - boundary
@@ -269,21 +269,21 @@ stages:
         - boundary
       defense:
       # Postprocessing defenses
-        # - class_labels
-        - gaussian_noise
-        # - high_confidence
-      #   - reverse_sigmoid
+        # - class-labels
+        - gaussian-noise
+        # - high-confidence
+      #   - reverse-sigmoid
       #   - rounded
       # # Preprocessing defenses
-      #   - cut_mix
+      #   - cut-mix
       #   - cutout
-        # - feature_squeezing
-        - gaussian_augmentation
-        # - jpeg_compression
-      #   - label_smoothing
+        # - feature-squeezing
+        - gaussian-augmentation
+        # - jpeg-compression
+      #   - label-smoothing
       #   - mixup
       #   - resample
-      #   - spatial_smoothing
+      #   - spatial-smoothing
     cmd: >
       deckard 
       data=${item.data} 
@@ -298,15 +298,15 @@ stages:
       attack=${item.attack}
       attack_alias=${item.attack}
       hydra.sweeper.study_name=evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
-      --config-name attack_default
+      --config-name attack-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/attack_default.yaml
+      - ./config/attack-default.yaml
     outs:
       - outputs/logs/evaded_${item.data}_${item.model}_${item.defense}_${item.attack}
     params:
-      - ./config/attack_default.yaml:
+      - ./config/attack-default.yaml:
         - defaults
         - hydra
     ################################################
@@ -322,7 +322,7 @@ stages:
     # multiple runs to be logged under the same experiment name.
     # hydra.sweeper.study_name=...  <-- Sets a unique study name for each combination of data,
     # model, defense, and attack.
-    # --config-name attack_default  <-- Uses the attack_default configuration for this run.
+    # --config-name attack-default  <-- Uses the attack-default configuration for this run.
     # --multirun  <-- Enables multiple runs for hyperparameter optimization.
   infer_membership:
     matrix:
@@ -337,21 +337,21 @@ stages:
         - logistic
       defense:
       # Postprocessing defenses
-        # - class_labels
-        - gaussian_noise
-        - high_confidence
-      #   - reverse_sigmoid
+        # - class-labels
+        - gaussian-noise
+        - high-confidence
+      #   - reverse-sigmoid
       #   - rounded
       # # Preprocessing defenses
-      #   - cut_mix
+      #   - cut-mix
       #   - cutout
-      #   - feature_squeezing
-        - gaussian_augmentation
-      #   - jpeg_compression
-        - label_smoothing
+      #   - feature-squeezing
+        - gaussian-augmentation
+      #   - jpeg-compression
+        - label-smoothing
       #   - mixup
       #   - resample
-      #   - spatial_smoothing
+      #   - spatial-smoothing
     cmd: >
       deckard 
       data=${item.data}
@@ -365,15 +365,15 @@ stages:
       defense=${item.defense}
       defense_alias=${item.defense}
       hydra.sweeper.study_name=membership_${item.data}_${item.model}_${item.defense}
-      --config-name inference_default
+      --config-name inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/attack_default.yaml
+      - ./config/attack-default.yaml
     outs:
       - outputs/logs/membership_${item.data}_${item.model}_${item.defense}
     params:
-      - ./config/attack_default.yaml:
+      - ./config/attack-default.yaml:
         - defaults
         - hydra
     ################################################
@@ -399,21 +399,21 @@ stages:
         - logistic
       defense:
       # Postprocessing defenses
-        # - class_labels
-        - gaussian_noise
-        - high_confidence
-      #   - reverse_sigmoid
+        # - class-labels
+        - gaussian-noise
+        - high-confidence
+      #   - reverse-sigmoid
       #   - rounded
       # # Preprocessing defenses
-      #   - cut_mix
+      #   - cut-mix
       #   - cutout
-      #   - feature_squeezing
-        - gaussian_augmentation
-      #   - jpeg_compression
-        - label_smoothing
+      #   - feature-squeezing
+        - gaussian-augmentation
+      #   - jpeg-compression
+        - label-smoothing
       #   - mixup
       #   - resample
-      #   - spatial_smoothing
+      #   - spatial-smoothing
     cmd: >
       deckard 
       data=${item.data}
@@ -427,15 +427,15 @@ stages:
       defense=${item.defense}
       defense_alias=${item.defense}
       hydra.sweeper.study_name=attribute_${item.data}_${item.model}_${item.defense}
-      --config-name attribute_inference_default
+      --config-name attribute_inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/attack_default.yaml
+      - ./config/attack-default.yaml
     outs:
       - outputs/logs/attribute_${item.data}_${item.model}_${item.defense}
     params:
-      - ./config/attack_default.yaml:
+      - ./config/attack-default.yaml:
         - defaults
         - hydra
   defend_attribute_inference:
@@ -447,8 +447,8 @@ stages:
         - rf
         - logistic
       defense:
-        - gaussian_noise
-        - high_confidence
+        - gaussian-noise
+        - high-confidence
     cmd: >
       deckard 
       data=${item.data} 
@@ -463,15 +463,15 @@ stages:
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_attribute_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_attribute_${item.data}_${item.model}_${item.defense}
-      --config-name attribute_inference_default
+      --config-name attribute_inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/inference_default.yaml
+      - ./config/inference-default.yaml
     outs:
       - outputs/logs/defended_attribute_${item.data}_${item.model}_${item.defense}
     params:
-      - ./config/inference_default.yaml:
+      - ./config/inference-default.yaml:
         - defaults
         - hydra
   defend_membership_inference:
@@ -483,8 +483,8 @@ stages:
         - rf
         - logistic
       defense:
-        - gaussian_noise
-        - high_confidence
+        - gaussian-noise
+        - high-confidence
     cmd: >
       deckard 
       data=${item.data} 
@@ -500,15 +500,15 @@ stages:
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_membership_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_membership_${item.data}_${item.model}_${item.defense}
-      --config-name inference_default
+      --config-name membership-inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/inference_default.yaml
+      - ./config/membership-inference-default.yaml
     outs:
       - outputs/logs/defended_membership_${item.data}_${item.model}_${item.defense}
     params:
-      - ./config/inference_default.yaml:
+      - ./config/inference-default.yaml:
         - defaults
         - hydra
         
