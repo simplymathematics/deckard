@@ -1,14 +1,14 @@
 dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
 target: Case_status
 random_state : 0
-train_size : 100
-test_size : 100
+train_size : 1000
+test_size : 1000
 stratify: True
 alias: mpox
 pipeline:
     encoder:
         name : sklearn.preprocessing.OneHotEncoder
-        handle_unknown: ignore
+        handle_unknown: infrequent_if_exist
     label_encoder:
       name: "sklearn.preprocessing.LabelEncoder"
       fit_y : True

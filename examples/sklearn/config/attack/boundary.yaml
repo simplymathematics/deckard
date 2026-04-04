@@ -9,7 +9,7 @@ attack_params :
   sample_size : ${..attack_size}
   init_size: ${..attack_size}
   min_epsilon : 0.000
-  verbose : true
+  verbose : false
 attack_size : 10
 _target_ : deckard.attack.AttackConfig
 alias: boundary

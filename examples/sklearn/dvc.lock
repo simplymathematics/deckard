@@ -702,9 +702,9 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: b6a14184cb0f3eb45cbe25281cb52917.dir
-      size: 761555
-      nfiles: 64
+      md5: a398bf67724484738484b87033165140.dir
+      size: 796009
+      nfiles: 67
     - path: ./config/default.yaml
       hash: md5
       md5: 78485e9915e61194b46015aeaa6f953c
@@ -2490,7 +2490,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2525,8 +2525,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_rf_gaussian_noise_boundary/
       hash: md5
-      md5: f85d708ec3753b5f796b6f4616b3a244.dir
-      size: 3914554
+      md5: 697992cec36a3d297e14986fedf40823.dir
+      size: 2356170
       nfiles: 600
   defend@adult-rf-high_confidence-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2540,7 +2540,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2575,8 +2575,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_rf_high_confidence_boundary/
       hash: md5
-      md5: 9e0eb957afa12af6bac846bc0e3f0ee2.dir
-      size: 2368196
+      md5: 0379c83d9bef9bb5b79fe9af37579aac.dir
+      size: 2368361
       nfiles: 600
   defend@adult-rf-gaussian_augmentation-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2590,7 +2590,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2625,8 +2625,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_rf_gaussian_augmentation_boundary/
       hash: md5
-      md5: 0ce2a82229a69e2f8cddb15016d10898.dir
-      size: 2412587
+      md5: e38f94c470ef9328efcc7338684f89d6.dir
+      size: 2412829
       nfiles: 600
   defend@adult-rf-label_smoothing-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2640,7 +2640,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2675,8 +2675,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_rf_label_smoothing_boundary/
       hash: md5
-      md5: 8e342a438aa82b529cd8784e544a24ce.dir
-      size: 2351697
+      md5: 6189e89f49fc1b37fd1a936f4d3a6ffe.dir
+      size: 2351962
       nfiles: 600
   evade@adult-rf-boundary-gaussian_noise:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2845,7 +2845,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2880,8 +2880,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_svc_gaussian_noise_boundary/
       hash: md5
-      md5: 208e2c3d3f9045d991a1c550cf6ef81e.dir
-      size: 2366606
+      md5: 65dc0200d0404fccba8045d5e46eda68.dir
+      size: 2366726
       nfiles: 600
   defend@adult-svc-high_confidence-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2895,7 +2895,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2930,8 +2930,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_svc_high_confidence_boundary/
       hash: md5
-      md5: 1912de6f27618eb2de71f1dbd5f20677.dir
-      size: 2369650
+      md5: 550c3c683df702a9b9db97a0980dca2d.dir
+      size: 2369777
       nfiles: 600
   defend@adult-svc-gaussian_augmentation-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2945,7 +2945,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -2980,8 +2980,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_svc_gaussian_augmentation_boundary/
       hash: md5
-      md5: 01b887e671a6e1f4d50d439151c327dd.dir
-      size: 2417093
+      md5: bdae5dd8f326d12a95b55d031560b575.dir
+      size: 2417293
       nfiles: 600
   defend@adult-svc-label_smoothing-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -2995,7 +2995,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -3030,8 +3030,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_svc_label_smoothing_boundary/
       hash: md5
-      md5: 2a6602e7a7103b219c04a890d90d0f70.dir
-      size: 2356585
+      md5: 65b5a6426c7e5736749a3cbf1c1b878f.dir
+      size: 2356733
       nfiles: 600
   defend@adult-logistic-gaussian_noise-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -3045,7 +3045,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -3080,8 +3080,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_logistic_gaussian_noise_boundary/
       hash: md5
-      md5: 337e4af6683018e61ea3ef235e10b35a.dir
-      size: 2377099
+      md5: 881322f83353b5b60abb0a30ad2d3965.dir
+      size: 2377130
       nfiles: 600
   defend@adult-logistic-high_confidence-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -3095,7 +3095,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -3130,8 +3130,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_logistic_high_confidence_boundary/
       hash: md5
-      md5: 3bcf75f786d52da11a19d2c467200ba6.dir
-      size: 2381096
+      md5: 883dc9c079c95bf4edf168c883d2c556.dir
+      size: 2381213
       nfiles: 600
   defend@adult-logistic-gaussian_augmentation-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -3145,7 +3145,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -3180,8 +3180,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_logistic_gaussian_augmentation_boundary/
       hash: md5
-      md5: 1aa03349a68fffcd634ed1b6dc58845f.dir
-      size: 2429155
+      md5: 58a848118eefa5ec2a17a0cfc6838977.dir
+      size: 2429220
       nfiles: 600
   defend@adult-logistic-label_smoothing-boundary:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -3195,7 +3195,7 @@ stages:
       size: 1092
     - path: outputs/data/adult.pkl
       hash: md5
-      md5: da4fea410b5a388204cba8e98d593fd9
+      md5: 76c85088fae21a541d904c31066956e3
       size: 15197209
     params:
       config/default.yaml:
@@ -3230,8 +3230,8 @@ stages:
     outs:
     - path: outputs/logs/defended_adult_logistic_label_smoothing_boundary/
       hash: md5
-      md5: 4bcc6f3472172cad5be828e3940718e1.dir
-      size: 2368259
+      md5: ef046e77b4b50ef018b8803301e0f67a.dir
+      size: 2368346
       nfiles: 600
   evade@adult-svc-boundary-gaussian_noise:
     cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
@@ -4277,8 +4277,8 @@ stages:
     deps:
     - path: ../../deckard/data/
       hash: md5
-      md5: dc76ab051f94b6bce07093088c2adbac.dir
-      size: 105517
+      md5: 6e5bd7bd804e5bb83758a222a0ce0371.dir
+      size: 105968
       nfiles: 4
     - path: .deckard_rc
       hash: md5
@@ -4291,21 +4291,4627 @@ stages:
         pipeline:
           encoder:
             name: sklearn.preprocessing.OneHotEncoder
-            handle_unknown: ignore
+            handle_unknown: infrequent_if_exist
           label_encoder:
             name: sklearn.preprocessing.LabelEncoder
             fit_y: true
         random_state: 0
         stratify: true
         target: Case_status
-        test_size: 100
-        train_size: 100
+        test_size: 1000
+        train_size: 1000
     outs:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/scores/data/mpox.json
+      hash: md5
+      md5: 3e7db865df8da0e51ca3a1dfef73100b
+      size: 148104
+  train@mpox-rf:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/rf.pkl
+      +files.score_file=outputs/scores/models/mpox/rf.json experiment_name=mpox_rf
+      model=rf.yaml  ~attack ~directions ~optimizers\n"
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf.pkl
+      hash: md5
+      md5: bcf14a326a7e7d543df791d404852a6d
+      size: 1968767
+    - path: outputs/scores/models/mpox/rf.json
+      hash: md5
+      md5: 5ecb1adcb77ef2785ea62bd1fc71cf10
+      size: 148668
+  attack_rf@mpox-rf-hsj:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/rf.pkl
+      +files.score_file=outputs/scores/attacks/mpox/rf/hsj.json model=rf.yaml  attack=hsj.yaml
+      experiment_name=mpox_rf_hsj ~directions ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/rf.pkl
+      hash: md5
+      md5: bcf14a326a7e7d543df791d404852a6d
+      size: 1968767
+    outs:
+    - path: outputs/scores/attacks/mpox/rf/hsj.json
+      hash: md5
+      md5: 75d2ccee30cb65ecd498f74bed63f85b
+      size: 148944
+  attack_rf@mpox-rf-boundary:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/rf.pkl
+      +files.score_file=outputs/scores/attacks/mpox/rf/boundary.json model=rf.yaml\
+      \  attack=boundary.yaml experiment_name=mpox_rf_boundary ~directions ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/rf.pkl
+      hash: md5
+      md5: bcf14a326a7e7d543df791d404852a6d
+      size: 1968767
+    outs:
+    - path: outputs/scores/attacks/mpox/rf/boundary.json
+      hash: md5
+      md5: 1fc6bb53430a3029b386c938f4948ce1
+      size: 148948
+  attack_rf@mpox-rf-membership:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/rf.pkl
+      +files.score_file=outputs/scores/attacks/mpox/rf/membership.json model=rf.yaml\
+      \  attack=membership.yaml experiment_name=mpox_rf_membership ~directions ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/rf.pkl
+      hash: md5
+      md5: bcf14a326a7e7d543df791d404852a6d
+      size: 1968767
+    outs:
+    - path: outputs/scores/attacks/mpox/rf/membership.json
+      hash: md5
+      md5: 785b85d4a82abe40d3a45b98355fdfdb
+      size: 148974
+  defend_rf@mpox-rf-class_labels:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_class_labels.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_class_labels.json 
+      model=rf.yaml model.alias=rf_class_labels defense=class_labels.yaml 
+      experiment_name=mpox_rf_defended_class_labels ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/class_labels.yaml:
+        _target_: deckard.model.DefenseConfig
+        alias: class_labels
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_class_labels.pkl
+      hash: md5
+      md5: f75138bcfd9db1a8038f5b74f6024b0d
+      size: 1968780
+    - path: outputs/scores/defenses/mpox/rf_class_labels.json
+      hash: md5
+      md5: 75e4382fee9dbcb4fed478186eb16ed6
+      size: 148668
+  defend_rf@mpox-rf-gaussian_noise:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_gaussian_noise.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_gaussian_noise.json 
+      model=rf.yaml model.alias=rf_gaussian_noise defense=gaussian_noise.yaml 
+      experiment_name=mpox_rf_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 77f95e311b817e46500f4657a3887e5a
+      size: 1968290
+    - path: outputs/scores/defenses/mpox/rf_gaussian_noise.json
+      hash: md5
+      md5: 29900962563148ecf71665603271b6ce
+      size: 148651
+  defend_rf@mpox-rf-high_confidence:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_high_confidence.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_high_confidence.json 
+      model=rf.yaml model.alias=rf_high_confidence defense=high_confidence.yaml 
+      experiment_name=mpox_rf_defended_high_confidence ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_high_confidence.pkl
+      hash: md5
+      md5: cf9db21352e7942bf3cd961805a6d7ce
+      size: 1968293
+    - path: outputs/scores/defenses/mpox/rf_high_confidence.json
+      hash: md5
+      md5: 9fb885132e89d21deeb6df7145a554f0
+      size: 148659
+  defend_rf@mpox-rf-reverse_sigmoid:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_reverse_sigmoid.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_reverse_sigmoid.json 
+      model=rf.yaml model.alias=rf_reverse_sigmoid defense=reverse_sigmoid.yaml 
+      experiment_name=mpox_rf_defended_reverse_sigmoid ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: 9b76704ad206626b8d95963dab6861fd
+      size: 1968308
+    - path: outputs/scores/defenses/mpox/rf_reverse_sigmoid.json
+      hash: md5
+      md5: 39f74a83f0f683406f9699943292c595
+      size: 148658
+  defend_rf@mpox-rf-rounded:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_rounded.json 
+      model=rf.yaml model.alias=rf_rounded defense=rounded.yaml 
+      experiment_name=mpox_rf_defended_rounded ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.Rounded
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_rounded.pkl
+      hash: md5
+      md5: 2aa233232bfe6a463375601b9aa227c3
+      size: 1968273
+    - path: outputs/scores/defenses/mpox/rf_rounded.json
+      hash: md5
+      md5: 1b661a2d0dfcad2f0e623b099015e4f9
+      size: 148660
+  defend_rf@mpox-rf-cut_mix:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_cut_mix.json 
+      model=rf.yaml model.alias=rf_cut_mix defense=cut_mix.yaml 
+      experiment_name=mpox_rf_defended_cut_mix ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+          num_classes: 2
+        defense_type: art.defences.preprocessor.CutMix
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_cut_mix.pkl
+      hash: md5
+      md5: 641fd42dde4a1ff28cff127bf6758265
+      size: 1968314
+    - path: outputs/scores/defenses/mpox/rf_cut_mix.json
+      hash: md5
+      md5: a6e284576f79faea76b26401ca2de9c8
+      size: 148660
+  defend_rf@mpox-rf-cutout:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_cutout.json 
+      model=rf.yaml model.alias=rf_cutout defense=cutout.yaml 
+      experiment_name=mpox_rf_defended_cutout ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_cutout.pkl
+      hash: md5
+      md5: 9cca12165da19f3eff6125f0705f2ae7
+      size: 1968275
+    - path: outputs/scores/defenses/mpox/rf_cutout.json
+      hash: md5
+      md5: 7e3668995c00e8b5f9aaf818d2675e1b
+      size: 148649
+  defend_rf@mpox-rf-feature_squeezing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_feature_squeezing.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_feature_squeezing.json 
+      model=rf.yaml model.alias=rf_feature_squeezing 
+      defense=feature_squeezing.yaml 
+      experiment_name=mpox_rf_defended_feature_squeezing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_feature_squeezing.pkl
+      hash: md5
+      md5: 49fdad37047e3f2b3dfa32a725065139
+      size: 1968314
+    - path: outputs/scores/defenses/mpox/rf_feature_squeezing.json
+      hash: md5
+      md5: 06b3bab57622fed43cd58035afe34376
+      size: 148659
+  defend_rf@mpox-rf-gaussian_augmentation:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/mpox/rf_gaussian_augmentation.json
+      model=rf.yaml model.alias=rf_gaussian_augmentation 
+      defense=gaussian_augmentation.yaml 
+      experiment_name=mpox_rf_defended_gaussian_augmentation ~attack ~directions
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: 8fe155ff7af7f04fb602866f066a6aa3
+      size: 1968336
+    - path: outputs/scores/defenses/mpox/rf_gaussian_augmentation.json
+      hash: md5
+      md5: 6a4ab584d346d1d50ee517d6936286b9
+      size: 148649
+  defend_rf@mpox-rf-label_smoothing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_label_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_label_smoothing.json 
+      model=rf.yaml model.alias=rf_label_smoothing defense=label_smoothing.yaml 
+      experiment_name=mpox_rf_defended_label_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_label_smoothing.pkl
+      hash: md5
+      md5: b4034261097c71ca4219b11f47303a45
+      size: 1968295
+    - path: outputs/scores/defenses/mpox/rf_label_smoothing.json
+      hash: md5
+      md5: ec9e461c57300fc49cfb8df7da2c96eb
+      size: 148660
+  defend_rf@mpox-rf-mixup:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/rf_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/rf_mixup.json model=rf.yaml
+      model.alias=rf_mixup defense=mixup.yaml 
+      experiment_name=mpox_rf_defended_mixup ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+          num_classes: 2
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/rf_defended_mixup.pkl
+      hash: md5
+      md5: 7bf40b50ddb4d8278e831d6e93375f1f
+      size: 1968327
+    - path: outputs/scores/defenses/mpox/rf_mixup.json
+      hash: md5
+      md5: 76491d5b487bad7dc5620e66c3b667b2
+      size: 148660
+  defend@mpox-rf-gaussian_noise-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=rf model_alias=rf attack_alias=boundary attack=boundary defense=gaussian_noise
+      defense_alias=gaussian_noise experiment_name=* hydra.sweeper.study_name=defended_mpox_rf_gaussian_noise_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_rf_gaussian_noise_boundary/
+      hash: md5
+      md5: 05027c52bc1a45c917ca0bd573271891.dir
+      size: 16419594
+      nfiles: 600
+  defend@mpox-rf-high_confidence-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=rf model_alias=rf attack_alias=boundary attack=boundary defense=high_confidence
+      defense_alias=high_confidence experiment_name=* hydra.sweeper.study_name=defended_mpox_rf_high_confidence_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_rf_high_confidence_boundary/
+      hash: md5
+      md5: 304b22aed9b5354b52e32ffc9e4517e1.dir
+      size: 16422890
+      nfiles: 600
+  defend@mpox-rf-gaussian_augmentation-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=rf model_alias=rf attack_alias=boundary attack=boundary defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation experiment_name=* hydra.sweeper.study_name=defended_mpox_rf_gaussian_augmentation_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_rf_gaussian_augmentation_boundary/
+      hash: md5
+      md5: eb4d382295ab4b2fe3a8d715c6b27544.dir
+      size: 16468954
+      nfiles: 600
+  defend@mpox-rf-label_smoothing-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=rf model_alias=rf attack_alias=boundary attack=boundary defense=label_smoothing
+      defense_alias=label_smoothing experiment_name=* hydra.sweeper.study_name=defended_mpox_rf_label_smoothing_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_rf_label_smoothing_boundary/
+      hash: md5
+      md5: e5bf78b4c67fc3b1ca93f53108179b10.dir
+      size: 16408461
+      nfiles: 600
+  defend@mpox-svc-gaussian_noise-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=gaussian_noise
+      defense_alias=gaussian_noise experiment_name=* hydra.sweeper.study_name=defended_mpox_svc_gaussian_noise_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
     - path: outputs/data/mpox.pkl
       hash: md5
       md5: beb1b44ff27530a66bb4fca88ed2bffc
       size: 24018910
-    - path: outputs/scores/data/mpox.json
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_svc_gaussian_noise_boundary/
       hash: md5
-      md5: 8f685364fb2c4830938554e300c82f06
-      size: 20475
+      md5: d710df4d293e266d0c44a70b198a9e76.dir
+      size: 3646539
+      nfiles: 600
+  defend@mpox-svc-high_confidence-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=high_confidence
+      defense_alias=high_confidence experiment_name=* hydra.sweeper.study_name=defended_mpox_svc_high_confidence_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_svc_high_confidence_boundary/
+      hash: md5
+      md5: 035e471a467c53ee04a62eb22026d7a1.dir
+      size: 3649759
+      nfiles: 600
+  defend@mpox-svc-gaussian_augmentation-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation experiment_name=* hydra.sweeper.study_name=defended_mpox_svc_gaussian_augmentation_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_svc_gaussian_augmentation_boundary/
+      hash: md5
+      md5: 710515adf1b24aafa08e40a8971c1262.dir
+      size: 3697172
+      nfiles: 600
+  defend@mpox-svc-label_smoothing-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=svc model_alias=svc attack_alias=boundary attack=boundary defense=label_smoothing
+      defense_alias=label_smoothing experiment_name=* hydra.sweeper.study_name=defended_mpox_svc_label_smoothing_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_svc_label_smoothing_boundary/
+      hash: md5
+      md5: 9a720b55056defd69c81a8ee0ac9a3b0.dir
+      size: 3636631
+      nfiles: 600
+  defend@mpox-logistic-gaussian_noise-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=gaussian_noise
+      defense_alias=gaussian_noise experiment_name=* hydra.sweeper.study_name=defended_mpox_logistic_gaussian_noise_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_logistic_gaussian_noise_boundary/
+      hash: md5
+      md5: d0050cb4fb4df604585758bcd77935ef.dir
+      size: 16441219
+      nfiles: 600
+  defend@mpox-logistic-high_confidence-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=high_confidence
+      defense_alias=high_confidence experiment_name=* hydra.sweeper.study_name=defended_mpox_logistic_high_confidence_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_logistic_high_confidence_boundary/
+      hash: md5
+      md5: b3cb35e52ecd6c77a5687e2c41a51298.dir
+      size: 16446973
+      nfiles: 600
+  defend@mpox-logistic-gaussian_augmentation-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation experiment_name=* hydra.sweeper.study_name=defended_mpox_logistic_gaussian_augmentation_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_logistic_gaussian_augmentation_boundary/
+      hash: md5
+      md5: 39dfd1c6e90044f9b232bfdbd2e40ce9.dir
+      size: 16495926
+      nfiles: 600
+  defend@mpox-logistic-label_smoothing-boundary:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=logistic model_alias=logistic attack_alias=boundary attack=boundary defense=label_smoothing
+      defense_alias=label_smoothing experiment_name=* hydra.sweeper.study_name=defended_mpox_logistic_label_smoothing_boundary
+      --multirun\n"
+    deps:
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 78485e9915e61194b46015aeaa6f953c
+      size: 1092
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/defended_mpox_logistic_label_smoothing_boundary/
+      hash: md5
+      md5: 1a71aeb10f2944d10796fbe7ab6d8668.dir
+      size: 16434256
+      nfiles: 600
+  evade@mpox-rf-boundary-gaussian_noise:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_rf_gaussian_noise_boundary/*.json
+      experiment_name=evaded_mpox_rf_gaussian_noise_boundary/* defense=gaussian_noise
+      defense_alias=gaussian_noise model=rf model_alias=rf attack=boundary attack_alias=boundary
+      hydra.sweeper.study_name=evaded_mpox_rf_gaussian_noise_boundary --config-name
+      attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_rf_gaussian_noise_boundary
+      hash: md5
+      md5: f3b964de84958f9ead201a809f6ee0f8.dir
+      size: 16548631
+      nfiles: 600
+  evade@mpox-rf-boundary-gaussian_augmentation:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_rf_gaussian_augmentation_boundary/*.json
+      experiment_name=evaded_mpox_rf_gaussian_augmentation_boundary/* defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation model=rf model_alias=rf attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_mpox_rf_gaussian_augmentation_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_rf_gaussian_augmentation_boundary
+      hash: md5
+      md5: ebbe55d74018d27b8cf8f04eb72bc252.dir
+      size: 16600008
+      nfiles: 600
+  evade@mpox-svc-boundary-gaussian_noise:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_svc_gaussian_noise_boundary/*.json
+      experiment_name=evaded_mpox_svc_gaussian_noise_boundary/* defense=gaussian_noise
+      defense_alias=gaussian_noise model=svc model_alias=svc attack=boundary attack_alias=boundary
+      hydra.sweeper.study_name=evaded_mpox_svc_gaussian_noise_boundary --config-name
+      attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_svc_gaussian_noise_boundary
+      hash: md5
+      md5: a34cac3cbacbd2410ca3e8781fce073a.dir
+      size: 16545116
+      nfiles: 600
+  evade@mpox-svc-boundary-gaussian_augmentation:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_svc_gaussian_augmentation_boundary/*.json
+      experiment_name=evaded_mpox_svc_gaussian_augmentation_boundary/* defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation model=svc model_alias=svc attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_mpox_svc_gaussian_augmentation_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_svc_gaussian_augmentation_boundary
+      hash: md5
+      md5: d078172dcdc9e25ca62770896dce9b47.dir
+      size: 16604903
+      nfiles: 600
+  evade@mpox-logistic-boundary-gaussian_noise:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_logistic_gaussian_noise_boundary/*.json
+      experiment_name=evaded_mpox_logistic_gaussian_noise_boundary/* defense=gaussian_noise
+      defense_alias=gaussian_noise model=logistic model_alias=logistic attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_mpox_logistic_gaussian_noise_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_logistic_gaussian_noise_boundary
+      hash: md5
+      md5: e15ac8f646141790752a9e262c5186d6.dir
+      size: 3365456
+      nfiles: 600
+  evade@mpox-logistic-boundary-gaussian_augmentation:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      +files.score_file=outputs/scores/attacks/mpox_logistic_gaussian_augmentation_boundary/*.json
+      experiment_name=evaded_mpox_logistic_gaussian_augmentation_boundary/* defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation model=logistic model_alias=logistic attack=boundary
+      attack_alias=boundary hydra.sweeper.study_name=evaded_mpox_logistic_gaussian_augmentation_boundary
+      --config-name attack_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/evaded_mpox_logistic_gaussian_augmentation_boundary
+      hash: md5
+      md5: b919ab30df44215e419155b1e47ef932.dir
+      size: 16630685
+      nfiles: 600
+  infer_membership@mpox-rf-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_rf_gaussian_noise/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_mpox_rf_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_rf_gaussian_noise
+      hash: md5
+      md5: fbb2b757668f4256de503eefcc187bb4.dir
+      size: 3605079
+      nfiles: 600
+  infer_membership@mpox-rf-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_rf_high_confidence/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_mpox_rf_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_rf_high_confidence
+      hash: md5
+      md5: 278d1baeffc78eb567c06d2505bbcdd7.dir
+      size: 3609068
+      nfiles: 600
+  infer_membership@mpox-rf-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_rf_gaussian_augmentation/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=membership_mpox_rf_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_rf_gaussian_augmentation
+      hash: md5
+      md5: a88adfb1547dd9325840bcdfceeef677.dir
+      size: 3611803
+      nfiles: 600
+  infer_membership@mpox-rf-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_rf_label_smoothing/* model=rf model_alias=rf
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_mpox_rf_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_rf_label_smoothing
+      hash: md5
+      md5: 643e8411a08ad8f8e75669444710ef07.dir
+      size: 3546860
+      nfiles: 600
+  infer_membership@mpox-svc-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_svc_gaussian_noise/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_mpox_svc_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_svc_gaussian_noise
+      hash: md5
+      md5: 5549223e03e97dd478279369a9c8eabe.dir
+      size: 1876692
+      nfiles: 600
+  infer_membership@mpox-svc-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_svc_high_confidence/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_mpox_svc_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_svc_high_confidence
+      hash: md5
+      md5: 3e12590c48da5f60c027e15f1e9e14a8.dir
+      size: 1880226
+      nfiles: 600
+  infer_membership@mpox-svc-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_svc_gaussian_augmentation/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=membership_mpox_svc_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_svc_gaussian_augmentation
+      hash: md5
+      md5: a2c71a05092df6a2b42a929f06bc5c25.dir
+      size: 1954548
+      nfiles: 600
+  infer_membership@mpox-svc-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_svc_label_smoothing/* model=svc model_alias=svc
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_mpox_svc_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_svc_label_smoothing
+      hash: md5
+      md5: 304f7e67f067a62f7fd34764cd520971.dir
+      size: 1817823
+      nfiles: 600
+  infer_membership@mpox-logistic-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_logistic_gaussian_noise/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=membership_mpox_logistic_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_logistic_gaussian_noise
+      hash: md5
+      md5: fe80db295086a55957fe4265989651f6.dir
+      size: 1732307
+      nfiles: 600
+  infer_membership@mpox-logistic-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_logistic_high_confidence/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=membership_mpox_logistic_high_confidence --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_logistic_high_confidence
+      hash: md5
+      md5: 1fd98731dc4534cf858c46f6a4f7ab0b.dir
+      size: 2448348
+      nfiles: 600
+  infer_membership@mpox-logistic-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_logistic_gaussian_augmentation/* model=logistic
+      model_alias=logistic attack=membership attack_alias=membership defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation hydra.sweeper.study_name=membership_mpox_logistic_gaussian_augmentation
+      --config-name inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_logistic_gaussian_augmentation
+      hash: md5
+      md5: 62d7dcb70aa887ee1a3632611e83f41a.dir
+      size: 2400506
+      nfiles: 600
+  infer_membership@mpox-logistic-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=membership_mpox_logistic_label_smoothing/* model=logistic model_alias=logistic
+      attack=membership attack_alias=membership defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=membership_mpox_logistic_label_smoothing --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/membership_mpox_logistic_label_smoothing
+      hash: md5
+      md5: 10486ef85702b0f56539306c31d02f11.dir
+      size: 2386206
+      nfiles: 600
+  infer_attribute@mpox-rf-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_rf_gaussian_noise/* model=rf model_alias=rf attack=attribute-bb
+      attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy, attack_generation_time]\"\
+      \ defense=gaussian_noise defense_alias=gaussian_noise hydra.sweeper.study_name=attribute_mpox_rf_gaussian_noise
+      --config-name inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_rf_gaussian_noise
+      hash: md5
+      md5: 8508516cb5155667a835dbb22464859d.dir
+      size: 1161968
+      nfiles: 600
+  infer_attribute@mpox-rf-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_rf_high_confidence/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_mpox_rf_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_rf_high_confidence
+      hash: md5
+      md5: 2d2f2a4e91cc23eaafa30de1c45fef8e.dir
+      size: 1165752
+      nfiles: 600
+  infer_attribute@mpox-rf-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_rf_gaussian_augmentation/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=attribute_mpox_rf_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_rf_gaussian_augmentation
+      hash: md5
+      md5: f2f35480ee27dafb8ee01cafb82f114d.dir
+      size: 1215109
+      nfiles: 600
+  infer_attribute@mpox-rf-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_rf_label_smoothing/* model=rf model_alias=rf
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_mpox_rf_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_rf_label_smoothing
+      hash: md5
+      md5: 9f6f34ca513cd7694903da42960394b5.dir
+      size: 1152373
+      nfiles: 600
+  infer_attribute@mpox-svc-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_svc_gaussian_noise/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=attribute_mpox_svc_gaussian_noise --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_svc_gaussian_noise
+      hash: md5
+      md5: def56cf7f64b8c711ee73fa7b05e7d59.dir
+      size: 1156790
+      nfiles: 600
+  infer_attribute@mpox-svc-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_svc_high_confidence/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_mpox_svc_high_confidence --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_svc_high_confidence
+      hash: md5
+      md5: ffb584e863c8074ddce5d462bac10334.dir
+      size: 1160225
+      nfiles: 600
+  infer_attribute@mpox-svc-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_svc_gaussian_augmentation/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_augmentation defense_alias=gaussian_augmentation
+      hydra.sweeper.study_name=attribute_mpox_svc_gaussian_augmentation --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_svc_gaussian_augmentation
+      hash: md5
+      md5: 07d79ef2ad686173ce17e92afbf04f04.dir
+      size: 1209397
+      nfiles: 600
+  infer_attribute@mpox-svc-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_svc_label_smoothing/* model=svc model_alias=svc
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_mpox_svc_label_smoothing --config-name inference_default
+      --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_svc_label_smoothing
+      hash: md5
+      md5: 982b4d42eccb38761d10201e65a88ced.dir
+      size: 1147112
+      nfiles: 600
+  infer_attribute@mpox-logistic-gaussian_noise:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_logistic_gaussian_noise/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=gaussian_noise defense_alias=gaussian_noise
+      hydra.sweeper.study_name=attribute_mpox_logistic_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_logistic_gaussian_noise
+      hash: md5
+      md5: 46ff6b1aede394758aff769225bea705.dir
+      size: 1181975
+      nfiles: 600
+  infer_attribute@mpox-logistic-high_confidence:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_logistic_high_confidence/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=high_confidence defense_alias=high_confidence
+      hydra.sweeper.study_name=attribute_mpox_logistic_high_confidence --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_logistic_high_confidence
+      hash: md5
+      md5: 117435e7464f6e4564af2f2a77d76ceb.dir
+      size: 1185322
+      nfiles: 600
+  infer_attribute@mpox-logistic-gaussian_augmentation:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_logistic_gaussian_augmentation/* model=logistic
+      model_alias=logistic attack=attribute-bb attack_alias=attribute-bb optimizers=\"\
+      [accuracy, inferred_sex_accuracy, attack_generation_time]\" defense=gaussian_augmentation
+      defense_alias=gaussian_augmentation hydra.sweeper.study_name=attribute_mpox_logistic_gaussian_augmentation
+      --config-name inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_logistic_gaussian_augmentation
+      hash: md5
+      md5: 036db40b2f950cf3ff324f5d64dde341.dir
+      size: 1235267
+      nfiles: 600
+  infer_attribute@mpox-logistic-label_smoothing:
+    cmd: "deckard  data=mpox data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      experiment_name=attribute_mpox_logistic_label_smoothing/* model=logistic model_alias=logistic
+      attack=attribute-bb attack_alias=attribute-bb optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" defense=label_smoothing defense_alias=label_smoothing
+      hydra.sweeper.study_name=attribute_mpox_logistic_label_smoothing --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/attack_default.yaml
+      hash: md5
+      md5: 22283d951b471c722a23399a20d10d04
+      size: 1099
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/attack_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: class_labels
+        - attack: hsj
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${search}
+    outs:
+    - path: outputs/logs/attribute_mpox_logistic_label_smoothing
+      hash: md5
+      md5: 7d19aad637f4a4b84fbadc719b1d045a.dir
+      size: 1172536
+      nfiles: 600
+  defend_attribute_inference@mpox-rf-gaussian_noise:
+    cmd: "deckard  data=mpox  data_alias=mpox +files.data_file=outputs/data/mpox.pkl
+      model=rf model_alias=rf attack=attribute-bb attack_alias=attribute-bb defense=gaussian_noise
+      defense_alias=gaussian_noise optimizers=\"[accuracy, inferred_sex_accuracy,
+      attack_generation_time]\" directions=\"[maximize, minimize, maximize]\" experiment_name=defended_attribute_mpox_rf_gaussian_noise/*
+      hydra.sweeper.study_name=defended_attribute_mpox_rf_gaussian_noise --config-name
+      inference_default --multirun\n"
+    deps:
+    - path: ./config/inference_default.yaml
+      hash: md5
+      md5: 4474f990d3f1814182cf60bffe32c9ed
+      size: 1080
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: beb1b44ff27530a66bb4fca88ed2bffc
+      size: 24018910
+    params:
+      config/inference_default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature_squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_attribute_mpox_rf_gaussian_noise
+      hash: md5
+      md5: 4828735e254eaf117cbefa46889cb978.dir
+      size: 1186468
+      nfiles: 600
+  train@mpox-logistic:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/logistic.pkl
+      +files.score_file=outputs/scores/models/mpox/logistic.json experiment_name=mpox_logistic
+      model=logistic.yaml  ~attack ~directions ~optimizers\n"
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/model/logistic.yaml:
+        _target_: deckard.ModelConfig
+        alias: logistic
+        classifier: true
+        model_params:
+          penalty: l2
+          dual: false
+          tol: 0.0001
+          C: 1.0
+          fit_intercept: true
+          max_iter: 10
+        model_type: sklearn.linear_model.LogisticRegression
+    outs:
+    - path: outputs/models/mpox/logistic.pkl
+      hash: md5
+      md5: f7eeaa91a68a89a7b5fb56f0950b3396
+      size: 69541
+    - path: outputs/scores/models/mpox/logistic.json
+      hash: md5
+      md5: 6d8439b768e67c398aa945ab868ee9fe
+      size: 148670
+  attack_rf@mpox-logistic-hsj:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/logistic.pkl
+      +files.score_file=outputs/scores/attacks/mpox/logistic/hsj.json model=logistic.yaml\
+      \  attack=hsj.yaml experiment_name=mpox_logistic_hsj ~directions ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/logistic.pkl
+      hash: md5
+      md5: f7eeaa91a68a89a7b5fb56f0950b3396
+      size: 69541
+    outs:
+    - path: outputs/scores/attacks/mpox/logistic/hsj.json
+      hash: md5
+      md5: 8130d93bb285167862b2ba7c86e272d0
+      size: 148950
+  attack_rf@mpox-logistic-boundary:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/logistic.pkl
+      +files.score_file=outputs/scores/attacks/mpox/logistic/boundary.json model=logistic.yaml\
+      \  attack=boundary.yaml experiment_name=mpox_logistic_boundary ~directions ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/logistic.pkl
+      hash: md5
+      md5: f7eeaa91a68a89a7b5fb56f0950b3396
+      size: 69541
+    outs:
+    - path: outputs/scores/attacks/mpox/logistic/boundary.json
+      hash: md5
+      md5: 91bc0fb7ebb9d0c110b0fab63ed048ab
+      size: 148950
+  attack_rf@mpox-logistic-membership:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/logistic.pkl
+      +files.score_file=outputs/scores/attacks/mpox/logistic/membership.json model=logistic.yaml\
+      \  attack=membership.yaml experiment_name=mpox_logistic_membership ~directions
+      ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/logistic.pkl
+      hash: md5
+      md5: f7eeaa91a68a89a7b5fb56f0950b3396
+      size: 69541
+    outs:
+    - path: outputs/scores/attacks/mpox/logistic/membership.json
+      hash: md5
+      md5: f2f1b8827a1608240f0db16b609d0c3c
+      size: 148977
+  defend_rf@mpox-logistic-class_labels:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_class_labels.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/logistic_class_labels.json 
+      model=logistic.yaml model.alias=logistic_class_labels 
+      defense=class_labels.yaml 
+      experiment_name=mpox_logistic_defended_class_labels ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/class_labels.yaml:
+        _target_: deckard.model.DefenseConfig
+        alias: class_labels
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_class_labels.pkl
+      hash: md5
+      md5: 81a3396c20a11114ff86fb484430b543
+      size: 69554
+    - path: outputs/scores/defenses/mpox/logistic_class_labels.json
+      hash: md5
+      md5: 006997a7a5de5bc5ea90e04d8fdaca3f
+      size: 148671
+  defend_rf@mpox-logistic-gaussian_noise:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_gaussian_noise.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_gaussian_noise.json
+      model=logistic.yaml model.alias=logistic_gaussian_noise 
+      defense=gaussian_noise.yaml 
+      experiment_name=mpox_logistic_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 59d94eba942c445eea2807527ca54ca5
+      size: 69064
+    - path: outputs/scores/defenses/mpox/logistic_gaussian_noise.json
+      hash: md5
+      md5: 70ea4814f103bcb2b61dba77f9a299a5
+      size: 148671
+  defend_rf@mpox-logistic-high_confidence:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_high_confidence.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_high_confidence.json
+      model=logistic.yaml model.alias=logistic_high_confidence 
+      defense=high_confidence.yaml 
+      experiment_name=mpox_logistic_defended_high_confidence ~attack ~directions
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_high_confidence.pkl
+      hash: md5
+      md5: 2ca2698583eaf14828b10dae0a97bbd8
+      size: 69067
+    - path: outputs/scores/defenses/mpox/logistic_high_confidence.json
+      hash: md5
+      md5: 1bb5c3e38cd7afc45fd4d7c3f5076442
+      size: 148674
+  defend_rf@mpox-logistic-reverse_sigmoid:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_reverse_sigmoid.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_reverse_sigmoid.json
+      model=logistic.yaml model.alias=logistic_reverse_sigmoid 
+      defense=reverse_sigmoid.yaml 
+      experiment_name=mpox_logistic_defended_reverse_sigmoid ~attack ~directions
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: 619f09e326f622600736faba19983270
+      size: 69082
+    - path: outputs/scores/defenses/mpox/logistic_reverse_sigmoid.json
+      hash: md5
+      md5: 9213240286004a344ae51d169c8ee537
+      size: 148660
+  defend_rf@mpox-logistic-rounded:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/logistic_rounded.json 
+      model=logistic.yaml model.alias=logistic_rounded defense=rounded.yaml 
+      experiment_name=mpox_logistic_defended_rounded ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.Rounded
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_rounded.pkl
+      hash: md5
+      md5: 9e0570d1a3c94d6870b45158d8091335
+      size: 69047
+    - path: outputs/scores/defenses/mpox/logistic_rounded.json
+      hash: md5
+      md5: 50fb06ffc16f87b318d4fd1f9b4bb28f
+      size: 148672
+  defend_rf@mpox-logistic-cut_mix:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/logistic_cut_mix.json 
+      model=logistic.yaml model.alias=logistic_cut_mix defense=cut_mix.yaml 
+      experiment_name=mpox_logistic_defended_cut_mix ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+          num_classes: 2
+        defense_type: art.defences.preprocessor.CutMix
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_cut_mix.pkl
+      hash: md5
+      md5: 8ee2b1cba82fe85b3d2f476bc040b7d4
+      size: 69088
+    - path: outputs/scores/defenses/mpox/logistic_cut_mix.json
+      hash: md5
+      md5: bb77db4358a6b8f7ce4ecdfe6e8ee58b
+      size: 148673
+  defend_rf@mpox-logistic-cutout:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/logistic_cutout.json 
+      model=logistic.yaml model.alias=logistic_cutout defense=cutout.yaml 
+      experiment_name=mpox_logistic_defended_cutout ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_cutout.pkl
+      hash: md5
+      md5: fab1a616f381859b686c5f2cb3a9626d
+      size: 69049
+    - path: outputs/scores/defenses/mpox/logistic_cutout.json
+      hash: md5
+      md5: 84c87f5a072b32f5ec53cadc1b1a0ed2
+      size: 148675
+  defend_rf@mpox-logistic-feature_squeezing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_feature_squeezing.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_feature_squeezing.json
+      model=logistic.yaml model.alias=logistic_feature_squeezing 
+      defense=feature_squeezing.yaml 
+      experiment_name=mpox_logistic_defended_feature_squeezing ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_feature_squeezing.pkl
+      hash: md5
+      md5: 85629624f9e4708eef50d87950341616
+      size: 69088
+    - path: outputs/scores/defenses/mpox/logistic_feature_squeezing.json
+      hash: md5
+      md5: 8c60ca2c0abfed82fd44398b8ebfb45b
+      size: 148672
+  defend_rf@mpox-logistic-gaussian_augmentation:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_gaussian_augmentation.json
+      model=logistic.yaml model.alias=logistic_gaussian_augmentation 
+      defense=gaussian_augmentation.yaml 
+      experiment_name=mpox_logistic_defended_gaussian_augmentation ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: 7ed83dc6db55f4010c5e429cb3ae8e97
+      size: 69110
+    - path: outputs/scores/defenses/mpox/logistic_gaussian_augmentation.json
+      hash: md5
+      md5: 7f332ba66fa55a1abeefd05442c59796
+      size: 148673
+  defend_rf@mpox-logistic-label_smoothing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_label_smoothing.pkl
+      +files.score_file=outputs/scores/defenses/mpox/logistic_label_smoothing.json
+      model=logistic.yaml model.alias=logistic_label_smoothing 
+      defense=label_smoothing.yaml 
+      experiment_name=mpox_logistic_defended_label_smoothing ~attack ~directions
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_label_smoothing.pkl
+      hash: md5
+      md5: f04e2c7aa2087fc46e9ee2da5d5c3b16
+      size: 69069
+    - path: outputs/scores/defenses/mpox/logistic_label_smoothing.json
+      hash: md5
+      md5: 725119e310b8f041cc289cd9fb0c6a6a
+      size: 148672
+  defend_rf@mpox-logistic-mixup:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/logistic_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/logistic_mixup.json 
+      model=logistic.yaml model.alias=logistic_mixup defense=mixup.yaml 
+      experiment_name=mpox_logistic_defended_mixup ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+          num_classes: 2
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/logistic_defended_mixup.pkl
+      hash: md5
+      md5: 4aeaa3762e0e67d7328037caee911cea
+      size: 69101
+    - path: outputs/scores/defenses/mpox/logistic_mixup.json
+      hash: md5
+      md5: c0bd6c586993bedfc98ab109e3c43623
+      size: 148673
+  attack_rf@mpox-logistic-attribute-bb:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/logistic.pkl
+      +files.score_file=outputs/scores/attacks/mpox/logistic/attribute-bb.json model=logistic.yaml\
+      \  attack=attribute-bb.yaml experiment_name=mpox_logistic_attribute-bb ~directions
+      ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/logistic.pkl
+      hash: md5
+      md5: f7eeaa91a68a89a7b5fb56f0950b3396
+      size: 69541
+    outs:
+    - path: outputs/scores/attacks/mpox/logistic/attribute-bb.json
+      hash: md5
+      md5: 626914c8c9c4cd86b9add383d6b1b967
+      size: 148930
+  attack_rf@mpox-rf-attribute-bb:
+    cmd: "deckard  data=mpox  +files.data_file=outputs/data/mpox.pkl  +files.model_file=outputs/models/mpox/rf.pkl
+      +files.score_file=outputs/scores/attacks/mpox/rf/attribute-bb.json model=rf.yaml\
+      \  attack=attribute-bb.yaml experiment_name=mpox_rf_attribute-bb ~directions
+      ~optimizers\n"
+    deps:
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    - path: outputs/models/mpox/rf.pkl
+      hash: md5
+      md5: bcf14a326a7e7d543df791d404852a6d
+      size: 1968767
+    outs:
+    - path: outputs/scores/attacks/mpox/rf/attribute-bb.json
+      hash: md5
+      md5: ec3c509128773b7f096a1d8fd86f58fe
+      size: 148931
+  defend_rf@mpox-svc-class_labels:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_class_labels.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_class_labels.json 
+      model=svc.yaml model.alias=svc_class_labels defense=class_labels.yaml 
+      experiment_name=mpox_svc_defended_class_labels ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/class_labels.yaml:
+        _target_: deckard.model.DefenseConfig
+        alias: class_labels
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ClassLabels
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_class_labels.pkl
+      hash: md5
+      md5: a16a0d67fbf5770e2a432b7e7f050d79
+      size: 3404574
+    - path: outputs/scores/defenses/mpox/svc_class_labels.json
+      hash: md5
+      md5: 9f7958f4375955dc18ce3d9fb4fee335
+      size: 148656
+  defend_rf@mpox-svc-gaussian_noise:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_gaussian_noise.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_gaussian_noise.json 
+      model=svc.yaml model.alias=svc_gaussian_noise defense=gaussian_noise.yaml 
+      experiment_name=mpox_svc_defended_gaussian_noise ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_noise.yaml:
+        defense_params:
+          scale: 0.2
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.GaussianNoise
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_gaussian_noise.pkl
+      hash: md5
+      md5: 9b77e35d4321ff12d5b9274ed0862838
+      size: 3404084
+    - path: outputs/scores/defenses/mpox/svc_gaussian_noise.json
+      hash: md5
+      md5: 3c5f475c1ff6b5e4db33921a150217ae
+      size: 148667
+  defend_rf@mpox-svc-high_confidence:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_high_confidence.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_high_confidence.json 
+      model=svc.yaml model.alias=svc_high_confidence 
+      defense=high_confidence.yaml 
+      experiment_name=mpox_svc_defended_high_confidence ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/high_confidence.yaml:
+        defense_params:
+          cutoff: 0.25
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.HighConfidence
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_high_confidence.pkl
+      hash: md5
+      md5: e23d49e6a1cc8c94fde762a51e3ef82d
+      size: 3404087
+    - path: outputs/scores/defenses/mpox/svc_high_confidence.json
+      hash: md5
+      md5: a23c923c6b385dda6882bd60d51dae5e
+      size: 148656
+  defend_rf@mpox-svc-reverse_sigmoid:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_reverse_sigmoid.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_reverse_sigmoid.json 
+      model=svc.yaml model.alias=svc_reverse_sigmoid 
+      defense=reverse_sigmoid.yaml 
+      experiment_name=mpox_svc_defended_reverse_sigmoid ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/reverse_sigmoid.yaml:
+        defense_params:
+          beta: 1.0
+          gamma: 0.1
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.ReverseSigmoid
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_reverse_sigmoid.pkl
+      hash: md5
+      md5: d03c9670192810da9f732cb8b6224d74
+      size: 3404102
+    - path: outputs/scores/defenses/mpox/svc_reverse_sigmoid.json
+      hash: md5
+      md5: 19c79f72e3ab6fb226aaa6b81258ace3
+      size: 148669
+  defend_rf@mpox-svc-rounded:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_rounded.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_rounded.json 
+      model=svc.yaml model.alias=svc_rounded defense=rounded.yaml 
+      experiment_name=mpox_svc_defended_rounded ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/rounded.yaml:
+        defense_params:
+          decimals: 3
+          apply_fit: false
+          apply_predict: true
+        defense_type: art.defences.postprocessor.Rounded
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_rounded.pkl
+      hash: md5
+      md5: cc854a4fa77b32f1444cbc0864ebc87a
+      size: 3404067
+    - path: outputs/scores/defenses/mpox/svc_rounded.json
+      hash: md5
+      md5: 88a7e07734b9739f6692d148f5b26329
+      size: 148666
+  defend_rf@mpox-svc-cut_mix:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_cut_mix.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_cut_mix.json 
+      model=svc.yaml model.alias=svc_cut_mix defense=cut_mix.yaml 
+      experiment_name=mpox_svc_defended_cut_mix ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cut_mix.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          probability: 0.5
+          num_classes: 2
+        defense_type: art.defences.preprocessor.CutMix
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_cut_mix.pkl
+      hash: md5
+      md5: 0a868d181a5f9accf4486db1a3cbfe9b
+      size: 3404108
+    - path: outputs/scores/defenses/mpox/svc_cut_mix.json
+      hash: md5
+      md5: 5e4415f6475a07b8956bf9c379dfb050
+      size: 148667
+  defend_rf@mpox-svc-cutout:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_cutout.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_cutout.json 
+      model=svc.yaml model.alias=svc_cutout defense=cutout.yaml 
+      experiment_name=mpox_svc_defended_cutout ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/cutout.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          length: 4
+        defense_type: art.defences.preprocessor.CutoutPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_cutout.pkl
+      hash: md5
+      md5: 1c244cea0b90e45694c275b0ee32e923
+      size: 3404069
+    - path: outputs/scores/defenses/mpox/svc_cutout.json
+      hash: md5
+      md5: 54015c009715fd8f87a4469c4e3a45f8
+      size: 148644
+  defend_rf@mpox-svc-feature_squeezing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_feature_squeezing.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_feature_squeezing.json 
+      model=svc.yaml model.alias=svc_feature_squeezing 
+      defense=feature_squeezing.yaml 
+      experiment_name=mpox_svc_defended_feature_squeezing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/feature_squeezing.yaml:
+        defense_params:
+          apply_fit: false
+          apply_predict: true
+          bit_depth: 8
+          clip_values:
+          - 0
+          - 255
+        defense_type: art.defences.preprocessor.FeatureSqueezing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_feature_squeezing.pkl
+      hash: md5
+      md5: b53579eb62185bd68825ec54e734ab7d
+      size: 3404108
+    - path: outputs/scores/defenses/mpox/svc_feature_squeezing.json
+      hash: md5
+      md5: e76af3cbf7d910e36f6b5b4f0483c5fb
+      size: 148668
+  defend_rf@mpox-svc-gaussian_augmentation:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_gaussian_augmentation.pkl
+      +files.score_file=outputs/scores/defenses/mpox/svc_gaussian_augmentation.json
+      model=svc.yaml model.alias=svc_gaussian_augmentation 
+      defense=gaussian_augmentation.yaml 
+      experiment_name=mpox_svc_defended_gaussian_augmentation ~attack 
+      ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/gaussian_augmentation.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          sigma: 1.0
+          ratio: 1.0
+          augmentation: true
+        defense_type: art.defences.preprocessor.GaussianAugmentation
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_gaussian_augmentation.pkl
+      hash: md5
+      md5: 58497fd3072b626d0be2dd562e8b823b
+      size: 3404130
+    - path: outputs/scores/defenses/mpox/svc_gaussian_augmentation.json
+      hash: md5
+      md5: baf54d2e4d1ced3f598f26988033e657
+      size: 148669
+  defend_rf@mpox-svc-label_smoothing:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_label_smoothing.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_label_smoothing.json 
+      model=svc.yaml model.alias=svc_label_smoothing 
+      defense=label_smoothing.yaml 
+      experiment_name=mpox_svc_defended_label_smoothing ~attack ~directions 
+      ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/label_smoothing.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          max_value: 0.9
+        defense_type: art.defences.preprocessor.LabelSmoothing
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_label_smoothing.pkl
+      hash: md5
+      md5: 57c99c517af76e72c852c6465a09a79c
+      size: 3404089
+    - path: outputs/scores/defenses/mpox/svc_label_smoothing.json
+      hash: md5
+      md5: e0f273dae2d76a88f5175647c5f67208
+      size: 148668
+  defend_rf@mpox-svc-mixup:
+    cmd: deckard data=mpox +files.data_file=outputs/data/mpox.pkl 
+      +files.model_file=outputs/models/mpox/svc_defended_mixup.pkl 
+      +files.score_file=outputs/scores/defenses/mpox/svc_mixup.json 
+      model=svc.yaml model.alias=svc_mixup defense=mixup.yaml 
+      experiment_name=mpox_svc_defended_mixup ~attack ~directions ~optimizers
+    deps:
+    - path: ../../deckard/model
+      hash: md5
+      md5: ab75391e84acdd82182537990d9ba1ac.dir
+      size: 132513
+      nfiles: 6
+    - path: outputs/data/mpox.pkl
+      hash: md5
+      md5: f6f7716128a8166b879fd9f03e629d6a
+      size: 44505520
+    params:
+      config/data/mpox.yaml:
+        alias: mpox
+        dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+        pipeline:
+          encoder:
+            name: sklearn.preprocessing.OneHotEncoder
+            handle_unknown: infrequent_if_exist
+          label_encoder:
+            name: sklearn.preprocessing.LabelEncoder
+            fit_y: true
+        random_state: 0
+        stratify: true
+        target: Case_status
+        test_size: 1000
+        train_size: 1000
+      config/defense/mixup.yaml:
+        defense_params:
+          apply_fit: true
+          apply_predict: false
+          alpha: 1.0
+          num_mix: 2
+          device_type: gpu
+          num_classes: 2
+        defense_type: art.defences.preprocessor.MixupPyTorch
+      config/model/rf.yaml:
+        _target_: deckard.model.ModelConfig
+        alias: rf
+        classifier: true
+        model_params:
+          n_estimators: 100
+          criterion: gini
+          max_depth:
+          min_samples_split: 2
+          min_samples_leaf: 1
+          min_weight_fraction_leaf: 0.0
+          max_features: sqrt
+          max_leaf_nodes:
+          min_impurity_decrease: 0.0
+          bootstrap: true
+        model_type: sklearn.ensemble.RandomForestClassifier
+    outs:
+    - path: outputs/models/mpox/svc_defended_mixup.pkl
+      hash: md5
+      md5: c7525f2618090e6b96b25720c1c69861
+      size: 3404121
+    - path: outputs/scores/defenses/mpox/svc_mixup.json
+      hash: md5
+      md5: 873ae8ad1754daf4fc48b8f561306c22
+      size: 148666

@@ -147,7 +147,7 @@ stages:
         # - digits
       model:
         - rf
-        # - svc
+        - svc
         - logistic
       defense:
           # Postprocessing defenses
@@ -207,7 +207,7 @@ stages:
         # - digits
       model:
         - rf
-        - svc
+        # - svc
         - logistic
       defense:
         # Postprocessing defenses
@@ -445,6 +445,7 @@ stages:
         - mpox
       model:
         - rf
+        - logistic
       defense:
         - gaussian_noise
         - high_confidence
@@ -481,7 +482,6 @@ stages:
       model:
         - rf
         - logistic
-        - svc
       defense:
         - gaussian_noise
         - high_confidence
