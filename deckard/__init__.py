@@ -12,7 +12,8 @@ from .experiment import ExperimentConfig
 from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
-
+import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -62,3 +63,4 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
