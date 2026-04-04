@@ -315,8 +315,7 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
                     optimize_scores.append(float("inf"))
                 elif direction == "maximize":
                     optimize_scores.append(float("-inf"))
-                elif direction == "diff":
-                    attributes[key] = float("nan")
+
                 else:
                     raise ValueError(f"Invalid direction: {direction}")
             else:
