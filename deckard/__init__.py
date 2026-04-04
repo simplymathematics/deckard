@@ -2,7 +2,9 @@ import logging
 import os
 from pathlib import Path
 import warnings
-from sklearn.exceptions import UndefinedMetricWarning
+import numpy as np\
+from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
+from optuna.exceptions import ExperimentalWarning
 
 from .data import DataConfig
 from .model import ModelConfig
@@ -12,8 +14,9 @@ from .experiment import ExperimentConfig
 from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
-import numpy as np
-np.seterr(divide='ignore', invalid='ignore')
+
+
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -64,3 +67,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+warnings.filterwarnings("ignore", category=ExperimentalWarning)
+np.seterr(divide='ignore', invalid='ignore')
