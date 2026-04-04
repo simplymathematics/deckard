@@ -328,6 +328,8 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
                     raise ValueError(f"Invalid direction: {direction}")
         if not optimize_scores:
             raise ValueError("No optimization scores found for the specified directions.")
+        if len(missing_scores) > 0:
+            raise RuntimeError(f"Experiment failed. Missing scores:{missing_scores}")
         values = optimize_scores
     else:
         attributes = {}
