@@ -33,7 +33,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 from torch import int32 as torchint32
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.pytorch import PytorchTemplateClassifier
@@ -225,12 +225,16 @@ class AttackConfig(ConfigBase):
                 data.X_train,
                 pd.DataFrame,
             ), f"Expected Dataframe got {type(data.X_train)}"
-            index = data.X_train.columns.get_loc(feature_name)
-            self.attack_params["attack_feature"] = index
-            assert (
-                "attack_feature" in self.attack_params
-            ), "attack_feature must be specified in attack_params for attribute inference attacks"
-        # TODO: Set labels to distinguis targeted attacks from non-targeted attacks
+            if not hasattr(self, "target_index"):
+                if feature_name not in data.X_train.columns:
+                    cols = [col for col in data.X_train.columns if feature_name.split("_")[0] in col]
+                    raise ValueError(f"{feature_name} not found. Did you mean one of these: {cols}?")
+                self.target_index = data.X_train.columns.get_loc(feature_name)
+                self.attack_params["attack_feature"] = self.target_index
+                assert (
+                    "attack_feature" in self.attack_params
+                ), "attack_feature must be specified in attack_params for attribute inference attacks"
+        # TODO: Set labels to distinguish targeted attacks from non-targeted attacks
         if "attack_model" in self.attack_params:
             attack_model = self.attack_params["attack_model"]
             if isinstance(attack_model, DictConfig):
@@ -705,16 +709,26 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
-        assert targeted_attribute in data.X_test.columns, (
-            f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
-        )
+        if isinstance(targeted_attribute, str):
+            assert targeted_attribute in data.X_test.columns, (
+                f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
+            )
+        else:
+            assert isinstance(targeted_attribute, (list, ListConfig)), "targeted attribute must be a string or a list of strings"
+            if isinstance(targeted_attribute, ListConfig):
+                targeted_attribute = OmegaConf.to_container(targeted_attribute)
+            for attr in targeted_attribute:
+                assert attr in data.X_test.columns, (
+                f"Targeted attribute '{attr}' not found in test data columns.",
+            )
         X_test = data.X_test.copy()
         target = X_test[targeted_attribute].copy()
         X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
         target = target[: self.attack_size].values
-        
+        if not isinstance(targeted_attribute, list):
+            targeted_attribute = [targeted_attribute]
         X_test_subset_without_feature = X_test.drop(
-            columns=[targeted_attribute],
+            columns=targeted_attribute,
         ).copy().iloc[: self.attack_size, :].values
         assert (
             len(X_test_subset) == self.attack_size
@@ -740,7 +754,7 @@ class AttackConfig(ConfigBase):
         unique, counts = np.unique(preds, return_counts=True)
         for u, c in zip(unique, counts):
             logger.info(f"Class {u}: {c} samples")
-        possible_values = np.array(list(set(target)))
+        possible_values = np.unique(target, axis =0)
         logger.info(
             f"Possible values for targeted attribute '{targeted_attribute}': {possible_values}",
         )
