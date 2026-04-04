@@ -75,9 +75,11 @@ class DataPipelineConfig(ConfigBase):
                 "name",
                 ValueError(f"Step {step_name} missing 'name' key"),
             )
-            fit_y = step_config.pop("fit_y", False)
+            fit_y = step_config.get("fit_y", False)
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
+            if "fit_y" in step_config_without_name:
+                del step_config_without_name["fit_y"]
             module_name, class_name = step_class.rsplit(".", 1)
             module = importlib.import_module(module_name)
             cls = module.__dict__[class_name]
@@ -843,19 +845,23 @@ class DataConfig(ConfigBase):
         """
         if self.classifier:
             if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-                return self._classification_feature_scores()
+                result_dict =  self._classification_feature_scores()
             else:
-                return {"class_counts" : self._compute_class_counts(self.y_train)}
+                result_dict =  {"class_counts" : self._compute_class_counts(self.y_train)}
         else:
             if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
-                return self._regression_feature_scores()
+                result_dict =   self._regression_feature_scores()
             else:
                 y_train_cdf = self._empirical_cdf(self.y_train).tolist()
                 y_test_cdf = self._empirical_cdf(self.y_test).tolist()
-                return {
+                result_dict =   {
                     "y_train_cdf": y_train_cdf,
                     "y_test_cdf": y_test_cdf,
                 }
+        if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
+            columns = self.X_train.columns
+            result_dict["column_names"] = columns.to_list()
+        return result_dict
 
     def _compute_class_counts(self, y: pd.Series) -> dict:
         if isinstance(y, pd.Series):
