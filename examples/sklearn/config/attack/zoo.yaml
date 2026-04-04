@@ -10,7 +10,7 @@ attack_params :
   use_importance: true
   batch_size : 1
   variable_h : .0001
-  verbose: true
+  verbose: false
   nb_parallel : 16
 attack_size : 128
 _target_ : deckard.attack.AttackConfig

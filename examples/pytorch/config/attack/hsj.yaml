@@ -6,7 +6,7 @@ attack_params :
   init_size: 10
   norm: 2
   targeted: false
-  verbose : true
+  verbose: false
   batch_size : ${model.fit_params.batch_size}
 attack_size : 10
 _target_ : deckard.attack.AttackConfig

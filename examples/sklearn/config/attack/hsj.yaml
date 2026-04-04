@@ -6,7 +6,7 @@ attack_params :
   init_size: 100
   norm: 2
   targeted: false
-  verbose : true
+  verbose: false
 attack_size : 10
 _target_ : deckard.attack.AttackConfig
 alias: hsj

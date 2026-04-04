@@ -4,7 +4,7 @@ attack_params :
   batch_size: 2
   max_iter: 1
   confidence: .99
-  verbose : true
+  verbose: false
   binary_search_steps : 1
   max_halving: 1
   max_doubling: 1 

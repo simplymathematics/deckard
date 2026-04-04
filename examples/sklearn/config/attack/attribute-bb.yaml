@@ -1,9 +1,8 @@
 attack_type : "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
 targeted_attribute: 
-- "Gender_male"
-# - "Gender_nan" #sex for adult dataset, Gender for mpox
+- "age"
 attack_params : 
-  attack_model_type: logistic
+  attack_model_type: lr
   scale_range : (0, 1)
   is_continuous : false
 

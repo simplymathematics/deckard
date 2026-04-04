@@ -4,7 +4,7 @@ attack_params :
   max_iter: 1
   confidence: .99
   batch_size: 2
-  verbose : true
+  verbose: false
 attack_size : 4
 _target_ : deckard.attack.AttackConfig
 alias: carlini_linf
