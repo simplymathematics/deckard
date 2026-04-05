@@ -717,16 +717,22 @@ class AttackConfig(ConfigBase):
             assert isinstance(targeted_attribute, (list, ListConfig)), "targeted attribute must be a string or a list of strings"
             if isinstance(targeted_attribute, ListConfig):
                 targeted_attribute = OmegaConf.to_container(targeted_attribute)
+            if not isinstance(targeted_attribute, (list, ListConfig)):
+                targeted_attribute = [targeted_attribute]
             for attr in targeted_attribute:
-                assert attr in data.X_test.columns, (
-                f"Targeted attribute '{attr}' not found in test data columns.",
-            )
+                try:
+                    assert attr in data.X_test.columns
+                except AssertionError:
+                    possible_cols = []
+                    for col in data.X_test.columns:
+                        if str(attr).split("_")[0] in col:
+                            possible_cols.append(col)
+                    raise ValueError(f"Targeted attribute '{attr}' not found in test data columns.")
         X_test = data.X_test.copy()
         target = X_test[targeted_attribute].copy()
         X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
         target = target[: self.attack_size].values
-        if not isinstance(targeted_attribute, list):
-            targeted_attribute = [targeted_attribute]
+        
         X_test_subset_without_feature = X_test.drop(
             columns=targeted_attribute,
         ).copy().iloc[: self.attack_size, :].values
