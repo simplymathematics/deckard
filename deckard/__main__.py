@@ -16,6 +16,7 @@ from hydra.core.hydra_config import HydraConfig
 from .file import FileConfig, data_files, model_files, attack_files, all_files, default_placeholder_dict
 from .experiment import ExperimentConfig
 from .utils import ConfigBase
+from . import LOGGING
 
 module_file_dict = {
     "data": data_files + ["data_config_file"],
@@ -27,12 +28,9 @@ module_file_dict = {
 }
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-)
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
+logging.config.dictConfig(LOGGING)
 
 # Suppress sklearn runtime warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn")
