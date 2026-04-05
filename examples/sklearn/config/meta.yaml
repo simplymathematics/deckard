@@ -1,0 +1,7 @@
+schema:
+  optimization: 0
+  dataset: 1
+  model type: 2
+  defense_type: 3
+  attack name: 4
+  sep: _

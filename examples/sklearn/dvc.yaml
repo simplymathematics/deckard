@@ -11,17 +11,15 @@ stages:
       params:
         - ./config/default.yaml:
   simple_example:
-      cmd: deckard experiment_name=default && echo "Deckard ran successfully!" > deckard.log
-      outs:
-        - deckard.log
+      cmd: deckard experiment_name=default
       deps:
         - .deckard_rc # Here to ensure config paths are set before running deckard
         - ../../deckard
         - ./config/default.yaml
   generate_data:
       foreach:
-        # - adult
-        - mpox
+        - adult
+      # - mpox
         # - classification
         # - diabetes
         # - digits
@@ -63,8 +61,8 @@ stages:
   train:
       matrix:
         data: 
-          # - adult
-          - mpox
+          - adult
+          # - mpox
           # - classification
           # - digits
         model:
@@ -105,8 +103,8 @@ stages:
   attack_rf:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -141,8 +139,8 @@ stages:
   defend_rf:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -201,8 +199,8 @@ stages:
   defend:
     matrix:
       data: 
-        # - adultf
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -255,8 +253,8 @@ stages:
   evade:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -327,8 +325,8 @@ stages:
   infer_membership:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -389,8 +387,8 @@ stages:
   infer_attribute:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+        # - mpox
         # - classification
         # - digits
       model:
@@ -441,8 +439,8 @@ stages:
   defend_attribute_inference:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+      # - mpox
       model:
         - rf
         - logistic
@@ -477,8 +475,8 @@ stages:
   defend_membership_inference:
     matrix:
       data: 
-        # - adult
-        - mpox
+        - adult
+      # - mpox
       model:
         - rf
         - logistic
