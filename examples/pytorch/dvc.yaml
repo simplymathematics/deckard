@@ -135,7 +135,7 @@ stages:
         - {name: torch_cifar10, num_channels: 3, num_classes: 10}
       defense:
           # Postprocessing defenses
-          - class_labels
+          - class-labels
           - gaussian_noise
           - high_confidence
           - reverse_sigmoid

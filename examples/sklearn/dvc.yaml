@@ -425,7 +425,7 @@ stages:
       defense=${item.defense}
       defense_alias=${item.defense}
       hydra.sweeper.study_name=attribute_${item.data}_${item.model}_${item.defense}
-      --config-name attribute_inference-default
+      --config-name attribute-inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
@@ -436,7 +436,7 @@ stages:
       - ./config/attack-default.yaml:
         - defaults
         - hydra
-  defend_attribute_inference:
+  defend_attribute-inference:
     matrix:
       data: 
         - adult
@@ -461,7 +461,7 @@ stages:
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_attribute_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_attribute_${item.data}_${item.model}_${item.defense}
-      --config-name attribute_inference-default
+      --config-name attribute-inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
@@ -498,7 +498,7 @@ stages:
       directions="[maximize, minimize, maximize]"
       experiment_name=defended_membership_${item.data}_${item.model}_${item.defense}/*
       hydra.sweeper.study_name=defended_membership_${item.data}_${item.model}_${item.defense}
-      --config-name membership-inference-default
+      --config-name inference-default
       --multirun
     deps:
       - outputs/data/${item.data}.pkl

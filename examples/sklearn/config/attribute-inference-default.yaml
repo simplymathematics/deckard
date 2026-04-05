@@ -1,12 +1,12 @@
 data_alias: adult
 model_alias: rf
 attack_alias: membership
-defense_alias: feature_squeezing
+defense_alias: feature-squeezing
 defaults:
     - _self_
     - data: adult
     - model: rf
-    - defense: feature_squeezing
+    - defense: feature-squeezing
     - attack: membership
     - files: null
     - override hydra/sweeper : optuna
