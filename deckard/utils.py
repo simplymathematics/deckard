@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
 
 data_supported_filetypes = [
     ".csv",
