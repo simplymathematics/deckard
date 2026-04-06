@@ -701,9 +701,9 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: c6338fa7f8d588870615c88ad2c33ea9.dir
-      size: 799488
-      nfiles: 67
+      md5: b27ead22f35a635523bd3ead2f1e868b.dir
+      size: 815315
+      nfiles: 69
     - path: ./config/default.yaml
       hash: md5
       md5: d7911c724a6747e79a1526882a925aa5
@@ -9481,4 +9481,214 @@ stages:
       hash: md5
       md5: 8a79eddd7eeda1e19a9e4fe694237a60.dir
       size: 2074018
+      nfiles: 600
+  defend_membership_inference@adult-rf-gaussian-noise:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=rf model_alias=rf attack=membership attack_alias=membership defense=gaussian-noise
+      defense_alias=gaussian-noise optimizers=\"[accuracy, inferred_membership_accuracy,
+      attack_generation_time]\" directions=\"[maximize, minimize, maximize]\" experiment_name=defended_membership_adult_rf_gaussian-noise/*
+      hydra.sweeper.study_name=defended_membership_adult_rf_gaussian-noise --config-name
+      inference-default --multirun\n"
+    deps:
+    - path: ./config/inference-default.yaml
+      hash: md5
+      md5: 0efbaae8d82e16864ff10c88884c8aff
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 9cd239c184376ac28ea2ad3800c38829
+      size: 15197422
+    params:
+      config/inference-default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature-squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_membership_adult_rf_gaussian-noise
+      hash: md5
+      md5: 9d0884281b5e9c483106425e49f1582c.dir
+      size: 2056110
+      nfiles: 600
+  defend_membership_inference@adult-rf-high-confidence:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=rf model_alias=rf attack=membership attack_alias=membership defense=high-confidence
+      defense_alias=high-confidence optimizers=\"[accuracy, inferred_membership_accuracy,
+      attack_generation_time]\" directions=\"[maximize, minimize, maximize]\" experiment_name=defended_membership_adult_rf_high-confidence/*
+      hydra.sweeper.study_name=defended_membership_adult_rf_high-confidence --config-name
+      inference-default --multirun\n"
+    deps:
+    - path: ./config/inference-default.yaml
+      hash: md5
+      md5: 0efbaae8d82e16864ff10c88884c8aff
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 9cd239c184376ac28ea2ad3800c38829
+      size: 15197422
+    params:
+      config/inference-default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature-squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_membership_adult_rf_high-confidence
+      hash: md5
+      md5: 676c2c41ffe67603be1a25b8c7ddfdfe.dir
+      size: 2060038
+      nfiles: 600
+  defend_membership_inference@adult-logistic-gaussian-noise:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack=membership attack_alias=membership
+      defense=gaussian-noise defense_alias=gaussian-noise optimizers=\"[accuracy,
+      inferred_membership_accuracy, attack_generation_time]\" directions=\"[maximize,
+      minimize, maximize]\" experiment_name=defended_membership_adult_logistic_gaussian-noise/*
+      hydra.sweeper.study_name=defended_membership_adult_logistic_gaussian-noise --config-name
+      inference-default --multirun\n"
+    deps:
+    - path: ./config/inference-default.yaml
+      hash: md5
+      md5: 0efbaae8d82e16864ff10c88884c8aff
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 9cd239c184376ac28ea2ad3800c38829
+      size: 15197422
+    params:
+      config/inference-default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature-squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_membership_adult_logistic_gaussian-noise
+      hash: md5
+      md5: c4b41fcc307e917157e5729d99df79d1.dir
+      size: 1153283
+      nfiles: 600
+  defend_membership_inference@adult-logistic-high-confidence:
+    cmd: "deckard  data=adult  data_alias=adult +files.data_file=outputs/data/adult.pkl
+      model=logistic model_alias=logistic attack=membership attack_alias=membership
+      defense=high-confidence defense_alias=high-confidence optimizers=\"[accuracy,
+      inferred_membership_accuracy, attack_generation_time]\" directions=\"[maximize,
+      minimize, maximize]\" experiment_name=defended_membership_adult_logistic_high-confidence/*
+      hydra.sweeper.study_name=defended_membership_adult_logistic_high-confidence
+      --config-name inference-default --multirun\n"
+    deps:
+    - path: ./config/inference-default.yaml
+      hash: md5
+      md5: 0efbaae8d82e16864ff10c88884c8aff
+      size: 1080
+    - path: outputs/data/adult.pkl
+      hash: md5
+      md5: 9cd239c184376ac28ea2ad3800c38829
+      size: 15197422
+    params:
+      config/inference-default.yaml:
+        defaults:
+        - _self_
+        - data: adult
+        - model: rf
+        - defense: feature-squeezing
+        - attack: membership
+        - files:
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: random
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: evasion_attack
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.RandomSampler
+              seed: 42
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: 100
+            n_jobs: 1
+            params: ${params}
+    outs:
+    - path: outputs/logs/defended_membership_adult_logistic_high-confidence
+      hash: md5
+      md5: 3edfdfa4d51232c4ad5f0a07f6eb9365.dir
+      size: 2076931
       nfiles: 600

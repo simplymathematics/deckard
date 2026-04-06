@@ -75,12 +75,6 @@ def parse_studies(optuna_db:str, schema:Union[str, dict]) -> pd.DataFrame:
     df = clean_column_names(df)
     return df
 
-compile_results_parser = argparse.ArgumentParser(description="Parse Optuna studies and compile results")
-compile_results_parser.add_argument("--optuna-db", type=str, required=True, help="Path to Optuna database")
-compile_results_parser.add_argument("--output-file", type=str, required=True, help="Output CSV file path")
-compile_results_parser.add_argument("--schema", type=str, required=True, help="Path to schema YAML file")
-
-
 def compile_results_main( schema:str, output_file:str, optuna_db:Union[str,type(None)]=None):
     # Check if schema is string or dict
     if optuna_db is None:
@@ -101,8 +95,9 @@ def compile_results_main( schema:str, output_file:str, optuna_db:Union[str,type(
     
     df = parse_studies(optuna_db=optuna_db, schema = schema)
     save_data(data=df, filepath=output_file)
-
+    
 compile_results_parser = create_parser_from_function(compile_results_main)
+
 if __name__ == "__main__":
     args = compile_results_parser.parse_args()
     compile_results_main(**args)
