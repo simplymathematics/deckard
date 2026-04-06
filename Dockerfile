@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.0.0-runtime-ubuntu20.04
+FROM nvidia/cuda:12.0.0-runtime-ubuntu22.04
 RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt-get update && apt-get install -y sudo
@@ -9,4 +9,4 @@ RUN apt-get upgrade -y
 RUN git clone https://github.com/simplymathematics/deckard.git
 WORKDIR deckard
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install . --verbose
+RUN python3 -m pip install . 
