@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-import inspect
 import time
 import hashlib
 import logging
 from pathlib import Path
+from typing import Dict
 
 
 from .utils import ConfigBase
@@ -36,7 +36,7 @@ all_files = (
 # make this an immutable default dict
 
 default_placeholder_dict = {
-    "timestamp": time.strftime("%Y%m%d-%H%M%S"),
+    "timestamp": f"{time.strftime("%Y%m%d-%H%M%S")}",
     "experiment_name": "experiment_{timestamp}",
     "hash": None,  # Placeholder for hash; to be filled in as needed
 }
@@ -94,8 +94,7 @@ class FileConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Path to the log file."},
     )
-    replace: dict = field(
-        # default_factory=dict,
+    replace: Dict[str,str] = field(
         metadata={"help": "Dictionary for placeholder replacements."},
         default=immutable_placeholder_default,
     )
