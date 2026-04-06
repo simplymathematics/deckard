@@ -37,7 +37,6 @@ from ..utils import ConfigBase, data_supported_filetypes
 # Setup logger
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class DataPipelineConfig(ConfigBase):
     """Initializes a data pipeline configuration and fits it to the data in the call() method."""
