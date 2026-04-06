@@ -2,4 +2,4 @@ output/
 torch_mnist/
 torch_cifar10/
 /.deckard_rc
-
+raw_data/
