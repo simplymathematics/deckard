@@ -225,60 +225,7 @@ class ConfigBase:
         return scores
 
     def load_data(self, filepath: str, **kwargs) -> pd.DataFrame:
-        """
-        Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
-
-        Parameters
-        ----------
-        filepath : str
-            Path to the data file.
-        **kwargs
-            Additional keyword arguments to pass to the pandas read function.
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame containing the loaded data.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the specified file does not exist.
-        ValueError
-            If the file extension is not supported. Supported types are .csv, .json, .
-        """
-
-        if filepath is None:
-            raise FileNotFoundError("Filepath is None.")
-        supported_filetypes = [
-            ".csv",
-            ".json",
-            ".xlsx",
-            ".parquet",
-            ".pkl",
-            ".npz",
-            ".html",
-        ]
-
-        match Path(filepath).suffix:
-            case ".pkl":
-                data = pd.read_pickle(filepath, **kwargs)
-            case ".csv":
-                data = pd.read_csv(filepath, **kwargs)
-            case ".json":
-                data = pd.read_json(filepath, orient="records", **kwargs)
-            case ".xlsx":
-                data = pd.read_excel(filepath, **kwargs)
-            case ".parquet":
-                data = pd.read_parquet(filepath, **kwargs)
-            case "html":
-                data = pd.read_html(filepath, **kwargs)[0]
-            case _:
-                raise ValueError(
-                    f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
-                )
-        logger.info(f"Data loaded from {Path(filepath)}")
-        return data
+        return load_data(filepath, **kwargs)
 
     def save_object(self, obj: Any, filepath: str) -> None:
         """
@@ -450,6 +397,112 @@ class ConfigBase:
                 dict_[name] = None
         return dict_
     
+    def save_data(
+            self,
+            data: pd.DataFrame,
+            filepath: Union[str, None] = None,
+            **kwargs,
+        ) -> None:
+        save_data(data, filepath, **kwargs)
+        
+        
+def save_data(
+    data: pd.DataFrame,
+    filepath: Union[str, None] = None,
+    **kwargs,
+) -> None:
+    supported_filetypes = [
+        ".csv",
+        ".parquet",
+        ".pkl",
+        ".html",
+        ".json",
+        ".xlsx",
+        ".pkl",
+    ]
+    assert filepath is not None, "Filepath must be provided to save data."
+    data_path = Path(filepath)
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    filetype = data_path.suffix
+    if not isinstance(data, pd.DataFrame):
+        data = pd.DataFrame(data)
+    match filetype:
+        case ".pkl":
+            data.to_pickle(data_path, **kwargs)
+        case ".csv":
+            data.to_csv(data_path, index=False, **kwargs)
+        case ".parquet":
+            data.to_parquet(data_path, index=False, **kwargs)
+        case ".pkl":
+            data.to_pickle(data_path, **kwargs)
+        case ".html":
+            data.to_html(data_path, index=False, **kwargs)
+        case ".json":
+            data.to_json(data_path, orient="records", lines=True, **kwargs)
+        case ".xlsx":
+            data.to_excel(data_path, index=False, **kwargs)
+        case _:
+            raise ValueError(
+                f"Unsupported file type {data_path.suffix}. Supported types: {supported_filetypes}",
+            )
+    assert Path(data_path).exists(), f"Failed to save data to {data_path}"
+    logger.info(f"Data saved to {data_path}")
+
+def load_data(filepath: str, **kwargs) -> pd.DataFrame:
+        """
+        Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the data file.
+        **kwargs
+            Additional keyword arguments to pass to the pandas read function.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the loaded data.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        ValueError
+            If the file extension is not supported. Supported types are .csv, .json, .
+        """
+
+        if filepath is None:
+            raise FileNotFoundError("Filepath is None.")
+        supported_filetypes = [
+            ".csv",
+            ".json",
+            ".xlsx",
+            ".parquet",
+            ".pkl",
+            ".npz",
+            ".html",
+        ]
+
+        match Path(filepath).suffix:
+            case ".pkl":
+                data = pd.read_pickle(filepath, **kwargs)
+            case ".csv":
+                data = pd.read_csv(filepath, **kwargs)
+            case ".json":
+                data = pd.read_json(filepath, orient="records", **kwargs)
+            case ".xlsx":
+                data = pd.read_excel(filepath, **kwargs)
+            case ".parquet":
+                data = pd.read_parquet(filepath, **kwargs)
+            case "html":
+                data = pd.read_html(filepath, **kwargs)[0]
+            case _:
+                raise ValueError(
+                    f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
+                )
+        logger.info(f"Data loaded from {Path(filepath)}")
+        return data
                 
     
     
