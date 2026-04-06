@@ -22,31 +22,29 @@ class ResNet18(nn.Module):
     num_classes: int = 1000
 
     def __init__(self, num_channels: int = 3, num_classes: int = 1000):
+        super(ResNet18, self).__init__()
         self.num_channels = num_channels
         self.num_classes = num_classes
-        super(ResNet18, self).__init__()
-        self.model = models.resnet18(pretrained=True)
-        self.model.conv1 = nn.Conv2d(
-            self.num_channels,
+
+        self.backbone = models.resnet18(pretrained=True)
+        self.backbone.conv1 = nn.Conv2d(
+            num_channels,
             64,
             kernel_size=7,
             stride=2,
             padding=3,
             bias=False,
         )
-        self.model.fc = nn.Linear(512, self.num_classes)
-        self.loss_curve = []
+        self.backbone.fc = nn.Linear(self.backbone.fc.in_features, num_classes)
 
     def forward(self, x):
-        return self.model(x)
+        return self.backbone(x)
 
     def __hash__(self):
-        arch = str(self.model)
-        params = f"num_channels={self.num_channels}, num_classes={self.num_classes}"
         model_params = b"".join(
-            p.detach().cpu().numpy().tobytes() for p in self.model.parameters()
+            p.detach().cpu().numpy().tobytes() for p in self.backbone.parameters()
         )
-        return hash((arch, params, model_params))
+        return hash(f"{model_params}{self.num_channels}{self.num_classes}")
 
 
 if __name__ == "__main__":
@@ -69,7 +67,7 @@ if __name__ == "__main__":
     classifier.fit(
         data_conf.X_train,
         data_conf.y_train,
-        epochs=1,
+        nb_epochs=1,
         batch_size=32,
         verbose=True,
     )
@@ -95,7 +93,7 @@ if __name__ == "__main__":
         optimizer="SGD",
         classifier=True,
         fit_params={
-            "epochs": 100,
+            "nb_epochs": 100,
             "verbose": True,
             "log_interval": 10,
         },
