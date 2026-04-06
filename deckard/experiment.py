@@ -23,9 +23,7 @@ logging.basicConfig(level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-@dataclass
-class PlotConfig(ConfigBase):
-    pass
+
 
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
 DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
