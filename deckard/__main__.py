@@ -16,6 +16,7 @@ from hydra.core.hydra_config import HydraConfig
 from .file import FileConfig, data_files, model_files, attack_files, all_files, default_placeholder_dict
 from .experiment import ExperimentConfig
 from .utils import ConfigBase
+from .layers.compile_results import compile_results_main, compile_results_parser
 from . import LOGGING
 
 module_file_dict = {
@@ -27,6 +28,11 @@ module_file_dict = {
     None: all_files,
 }
 
+layer_dict = {
+    "compile_results" : [compile_results_parser, compile_results_main]
+}
+
+
 # Set up logging
 
 logger = logging.getLogger(__name__)
@@ -36,7 +42,89 @@ logging.config.dictConfig(LOGGING)
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn")
 
 supported_modules = ["data", "model", "attack", "experiment", "optimize", None]
+supported_modules += list(layer_dict.keys())
 # Parse the config_dir argument first to set up config dir
+
+
+def optimize_multirun(cfg: ConfigBase, hydra_cfg, runner: ExperimentConfig) -> dict:
+    """
+    Handles optimization in multirun mode.
+    
+    Parameters
+    ----------
+    cfg : ConfigBase
+        The validated configuration object.
+    hydra_cfg : HydraConfig
+        The Hydra configuration object.
+    runner : ExperimentConfig
+        The experiment runner instance.
+    
+    Returns
+    -------
+    dict
+        The filtered optimization scores.
+    """
+    assert hasattr(runner, "files"), "Runner must have files attribute in multirun mode."
+    assert hasattr(runner, "optimizers"), "Runner must have optimizers attribute in multirun mode."
+    assert hasattr(runner, "directions"), "Runner must have directions attribute in multirun mode."
+    
+    files = prepare_multirun_file_paths(hydra_cfg, runner)
+    
+    logger.info(f"Saving multirun parameters to {runner.files.params_file}")
+    with open(files["params_file"], "w") as f:
+        yaml.dump(OmegaConf.to_container(cfg, resolve=False), f)
+    
+    max_failure_rate = hydra_cfg.sweeper.get("max_failure_rate", 0.0)
+    scores = execute_experiment([], runner, files, max_failure_rate)
+    
+    optimizers = runner.optimizers
+    directions = runner.directions
+    filtered_scores, attributes = filter_scores(scores, optimizers, directions)
+    
+    assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
+    assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
+    
+    storage = hydra_cfg.sweeper.storage
+    study_name = hydra_cfg.sweeper.study_name
+    study = create_study(study_name, storage, directions, optimizers)
+    set_study_metric_names(study=study, optimizers=optimizers)
+    set_user_attrs(study=study, attrs=attributes)
+    
+    logger.info(f"Saving multirun scores to {runner.files.score_file}")
+    with open(files["score_file"], "w") as f:
+        json.dump(scores, f, indent=4)
+    
+    return filtered_scores
+
+
+def optimize_run(runner: ConfigBase, cfg: ConfigBase, kwargs: dict, args: list = []) -> dict:
+    """
+    Handles optimization in standard run mode.
+    
+    Parameters
+    ----------
+    runner : ConfigBase
+        The runner instance.
+    cfg : ConfigBase
+        The validated configuration object.
+    kwargs : dict
+        Additional keyword arguments for file configuration.
+    args : list, optional
+        Additional positional arguments. Default is an empty list.
+    
+    Returns
+    -------
+    dict
+        The scores from the experiment run.
+    """
+    if hasattr(cfg, "files"):
+        file_dict = OmegaConf.to_container(cfg.files, resolve=True)
+    else:
+        file_dict = {}
+    file_dict = {**file_dict, **kwargs}
+    files = FileConfig(**file_dict)()
+    scores = run(runner, files, args)
+    return scores
 
 
 def optimize(
@@ -81,89 +169,62 @@ def optimize(
     """
     hydra_cfg = HydraConfig.get()
     mode = hydra_cfg.mode
-    dict_ = {}
-    dict_["_target_"] = target
-    cfg = OmegaConf.merge(OmegaConf.create(dict_), cfg)
-    assert hasattr(cfg, "_target_"), "cfg must have a _target_ attribute."
+    cfg = validate_cfg(cfg, target)
     runner = instantiate(cfg)
     assert isinstance(runner, ConfigBase), "Runner must be an instance of ConfigBase."
+    
     if str(mode) == "RunMode.MULTIRUN":
-        # Validate that runner has necessary attributes for multirun
-        assert hasattr(runner, "files"), "Runner must have files attribute in multirun mode."
-        assert hasattr(runner, "optimizers"), "Runner must have optimizers attribute in multirun mode."
-        assert hasattr(runner, "directions"), "Runner must have directions attribute in multirun mode."
         assert isinstance(runner, ExperimentConfig)
         assert return_runner is False, "return_runner must be False in multirun mode."
-        # Set up experiment name and replace dict        
-        runner.experiment_name = f"{hydra_cfg.job.num}"
-        runner.__post_init__()
-        replace_dict = dict(runner.files.replace)
-        replace_dict["num"] = f"{hydra_cfg.job.num}"
-        replace_dict["*"] = f"{hydra_cfg.job.num}"
-        runner.files.replace = replace_dict
-        
-        # Set up log, score, and params file paths
-        log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
-        log_file = log_dir / f"{hydra_cfg.job.name}.log"
-        score_file = log_dir / "scores.json"
-        params_file = log_dir / "params.yaml"
-        runner.files.experiment_name = f"{hydra_cfg.job.num}"
-        runner.files.log_file = log_file.as_posix()
-        runner.files.score_file = score_file.as_posix()
-        runner.files.params_file = params_file.as_posix()
-        runner.__post_init__()
-        files = runner.files()
-        
-        # Save parameters to params file
-        logger.info(f"Saving multirun parameters to {runner.files.params_file}")
-        with open(files["params_file"], "w") as f:
-            yaml.dump(OmegaConf.to_container(cfg, resolve=False), f)
-        
-        # Run the experiment and handle failures based on max_failure_rate
-        max_failure_rate = hydra_cfg.sweeper.get("max_failure_rate", 0.0)
-        try:
-            scores = run(runner, files, args)
-        except Exception as e:
-            if max_failure_rate > 0.0:
-                logger.warning(
-                    f"Experiment failed with error: {e}. Continuing due to max_failure_rate={max_failure_rate}.",
-                )
-                scores = {}
-            else:
-                raise e
-            
-        # Filter scores based on optimizers and directions
-        optimizers = runner.optimizers
-        directions = runner.directions
-        filtered_scores, attributes = filter_scores(scores, optimizers, directions)
-        assert "storage" in hydra_cfg.sweeper, "Storage must be specified in the sweeper config."
-        assert "study_name" in hydra_cfg.sweeper, "Study name must be specified in the sweeper config."
-        
-        # Set up Optuna study and save scores
-        storage = hydra_cfg.sweeper.storage
-        study_name = hydra_cfg.sweeper.study_name
-        study = create_study(study_name, storage, directions, optimizers)
-        set_study_metric_names(study=study, optimizers=optimizers)
-        set_user_attrs(study=study, attrs=attributes)
-        # Save scores to score file
-        logger.info(f"Saving multirun scores to {runner.files.score_file}")
-        with open(files["score_file"], "w") as f:
-            json.dump(scores, f, indent=4)
-        
-        return filtered_scores
+        scores = optimize_multirun(cfg, hydra_cfg, runner)
     else:
-        if hasattr(cfg, "files"):
-            file_dict = OmegaConf.to_container(cfg.files, resolve=True)
-        else:
-            file_dict = {}
-        file_dict = {**file_dict, **kwargs}
-        files = FileConfig(**file_dict)()
-        scores = run(runner, files, args)
-        
+        scores = optimize_run(runner, cfg, kwargs, args)
+    
     if return_runner:
         return scores, runner
     else:
         return scores
+
+def validate_cfg(cfg, target):
+    dict_ = {}
+    dict_["_target_"] = target
+    cfg = OmegaConf.merge(OmegaConf.create(dict_), cfg)
+    assert hasattr(cfg, "_target_"), "cfg must have a _target_ attribute."
+    return cfg
+
+def execute_experiment(args, runner, files, max_failure_rate):
+    try:
+        scores = run(runner, files, args)
+    except Exception as e:
+        if max_failure_rate > 0.0:
+            logger.warning(
+                    f"Experiment failed with error: {e}. Continuing due to max_failure_rate={max_failure_rate}.",
+                )
+            scores = {}
+        else:
+            raise e
+    return scores
+
+def prepare_multirun_file_paths(hydra_cfg, runner):
+    runner.experiment_name = f"{hydra_cfg.job.num}"
+    runner.__post_init__()
+    replace_dict = dict(runner.files.replace)
+    replace_dict["num"] = f"{hydra_cfg.job.num}"
+    replace_dict["*"] = f"{hydra_cfg.job.num}"
+    runner.files.replace = replace_dict
+        
+        # Set up log, score, and params file paths
+    log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
+    log_file = log_dir / f"{hydra_cfg.job.name}.log"
+    score_file = log_dir / "scores.json"
+    params_file = log_dir / "params.yaml"
+    runner.files.experiment_name = f"{hydra_cfg.job.num}"
+    runner.files.log_file = log_file.as_posix()
+    runner.files.score_file = score_file.as_posix()
+    runner.files.params_file = params_file.as_posix()
+    runner.__post_init__()
+    files = runner.files()
+    return files
 
 def create_study(study_name, storage, directions, optimizers):
     assert len(directions) == len(optimizers), "Length of directions must match length of optimizers."
@@ -502,7 +563,9 @@ def main():
         modules = [None]
     args = []
     for module in modules:
-        if module in [None, "experiment", "optimize"]:
+        if module in layer_dict:
+            handle_layers(module)
+        elif module in [None, "experiment", "optimize"]:
             handle_default_module(config_dir)
         else:
             handle_other_modules(config_dir, optional_args, module, args)
@@ -696,6 +759,43 @@ def validate_files(files, supported_files, module_name):
             )
             sys.exit(1)
 
+def handle_layers(layer):
+    """Run the parser and main entrypoint for the specified layer via Hydra."""
+    if layer not in layer_dict:
+        logger.error(f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}")
+        sys.exit(1)
+
+    parser, main_fn = layer_dict[layer]
+    if not hasattr(parser, "parse_known_args"):
+        raise ValueError("Parser object does not have .parse_known_args")
+
+    # Parse layer-specific args first, then leave remaining args for Hydra.
+    parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
+    sys.argv = [sys.argv[0], *hydra_args]
+
+    @hydra.main(
+        config_path=None,
+        config_name=None,
+        version_base="1.3",
+    )
+    def main_hydra(cfg: DictConfig) -> None:
+        args = vars(parsed_args).copy()
+
+        # Allow Hydra overrides for parser keys when present.
+        if cfg is not None:
+            for key in list(args.keys()):
+                if key in cfg and cfg[key] is not None:
+                    args[key] = cfg[key]
+
+        if not args.get("optuna_db"):
+            hydra_cfg = HydraConfig.get()
+            sweeper = hydra_cfg.sweeper if hasattr(hydra_cfg, "sweeper") else None
+            storage = getattr(sweeper, "storage", None) if sweeper is not None else None
+            args["optuna_db"] = storage or "sqlite:///optuna.db"
+
+        return main_fn(**args)
+
+    return main_hydra()
 
 if __name__ == "__main__":
 
