@@ -1,5 +1,6 @@
 import warnings
 import optuna
+import logging
 import pandas as pd
 from typing import Union
 from pathlib import Path
@@ -12,7 +13,7 @@ from ..utils import save_data, create_parser_from_function
 # suppress future warning
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-
+logger = logging.getLogger(__name__)
 
 def parse_study_name(study_name:str, schema:Union[dict, str]) -> pd.DataFrame:
     """Parses a study name using a dictionary, returning a pd.DataFrame with columns dictated by the schema keys and values given by the schema variables"""
