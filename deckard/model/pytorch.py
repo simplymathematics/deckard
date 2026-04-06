@@ -28,6 +28,10 @@ from art.estimators.regression import PyTorchRegressor
 
 from . import ModelConfig
 from ..data import DataConfig
+from dataclasses import dataclass, field
+from omegaconf import DictConfig
+from typing import Any, Union
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -553,6 +557,22 @@ class PytorchModelConfig(ModelConfig):
         self.training_time = end_time - start_time
         self._training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
+    
+    def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
+        # Cast y_true, y_pred to numpy arrays if they are tensors
+        if isinstance(y_true, torch.Tensor):
+            y_true = y_true.detach().cpu().numpy()
+        if isinstance(y_pred, torch.Tensor):
+            y_pred = y_pred.detach().cpu().numpy()
+        return super()._classification_scores(y_true, y_pred)
+    
+    def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
+        # Cast y_true, y_pred to numpy arrays if they are tensors
+        if isinstance(y_true, torch.Tensor):
+            y_true = y_true.detach().cpu().numpy()
+        if isinstance(y_pred, torch.Tensor):
+            y_pred = y_pred.detach().cpu().numpy()
+        return super()._regression_scores(y_true, y_pred)
 
 def input_shape_from_data_config(data: DataConfig):
     # Assuming data.X_train is a torch.Tensor
