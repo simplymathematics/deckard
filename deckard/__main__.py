@@ -122,7 +122,10 @@ def optimize_run(runner: ConfigBase, cfg: ConfigBase, kwargs: dict, args: list =
     else:
         file_dict = {}
     file_dict = {**file_dict, **kwargs}
-    files = FileConfig(**file_dict)()
+    if "_target_" not in file_dict:
+        files = FileConfig(**file_dict)()
+    else:
+        files = instantiate(file_dict)()
     scores = run(runner, files, args)
     return scores
 
