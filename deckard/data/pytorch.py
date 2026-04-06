@@ -3,18 +3,20 @@
 import time
 import logging
 import tempfile
+import importlib
 from pathlib import Path
 
 
 from dataclasses import dataclass, field
-from typing import Union, Dict
+from typing import Union, Dict, Callable, List
 
 # PyTorch
 import torch
 from torch import Tensor
+from torch.utils.data import DataLoader, Dataset
 
-# from torch.utils.data import random_split, TensorDataset
 from torchvision import datasets, transforms
+
 
 
 # deckard
@@ -284,22 +286,7 @@ class PytorchDataConfig(DataConfig):
         y_train_np = self._y.cpu().numpy()
 
         score_dict = {}
-        # Compute metrics
-        try:
-            mutual_info_scores = mutual_info_classif(X_train_np, y_train_np)
-            score_dict["mutual_info_classif"] = mutual_info_scores.tolist()
-        except Exception as e:
-            logger.warning(f"mutual_info_classif failed with error: {e}")
-        try:
-            chi2_scores, _ = chi2(X_train_np, y_train_np)
-            score_dict["chi2"] = chi2_scores.tolist()
-        except Exception as e:
-            logger.warning(f"chi2 failed with error: {e}")
-        try:
-            f_classif_scores, _ = f_classif(X_train_np, y_train_np)
-            score_dict["f_classif"] = f_classif_scores.tolist()
-        except Exception as e:
-            logger.warning(f"f_classif failed with error: {e}")
+        
 
         # Class counts
         score_dict["class_counts"] = self._compute_class_counts(self.y_train)
@@ -325,33 +312,11 @@ class PytorchDataConfig(DataConfig):
             return self.score_dict
 
         # Ensure data is on CPU for compatibility with sklearn
-        X_train_np = self.X_train.cpu().numpy()
         y_train_np = self.y_train.cpu().numpy()
         y_test_np = self.y_test.cpu().numpy()
 
         score_dict = {}
         # Compute metrics
-        # Mutual Information Regression
-        try:
-            mutual_info_scores = mutual_info_regression(X_train_np, y_train_np)
-            score_dict["mutual_info_regression"] = mutual_info_scores.tolist()
-        except Exception as e:
-            logger.warning(f"mutual_info_regression failed with error: {e}")
-        # F-regression
-        try:
-            f_regression_scores, _ = f_regression(X_train_np, y_train_np)
-            score_dict["f_regression"] = f_regression_scores.tolist()
-        except Exception as e:
-            logger.warning(f"f_regression failed with error: {e}")
-        # Pearson Correlation
-        try:
-            pearson_scores = [
-                pearsonr(X_train_np[:, i], y_train_np)[0]
-                for i in range(X_train_np.shape[1])
-            ]
-            score_dict["r_regression"] = pearson_scores
-        except Exception as e:
-            logger.warning(f"pearsonr failed with error: {e}")
         # Empirical CDFs
         y_train_sorted = np.sort(y_train_np)
         y_test_sorted = np.sort(y_test_np)
@@ -465,3 +430,187 @@ class PytorchDataConfig(DataConfig):
             "score_dict",
         ), "score_dict attribute not found after scoring data."
         return all_scores
+
+
+@dataclass
+class PytorchCustomConfig(PytorchDataConfig):
+    """Configuration for HuggingFace datasets loaded via DataLoader.
+
+    Extends PytorchDataConfig to support HuggingFace datasets with custom
+    transforms and DataLoader-based loading.
+    """
+
+    val: bool = False
+    batch_size: int = 32
+    num_workers: int = 0
+    datasets: List[Union[str, Dataset]] = field(default_factory=list)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def _load_data(self):
+        start = time.process_time()
+        self.dataloaders = self._get_data_loaders()
+        self._X = torch.empty(0)
+        self._y = torch.empty(0, dtype=torch.long)
+        end = time.process_time()
+        self.data_load_time = end - start
+
+    def _get_dataset_from_string(self, file: str) -> Dataset:
+        if not isinstance(file, str):
+            raise TypeError(f"Dataset reference must be a string, got {type(file)}")
+        # Load the custom dataset from submodule.file.dataset
+        if "." not in file:
+            raise ValueError(
+                f"Dataset string must be in 'module.object' format, got '{file}'.",
+            )
+        module_name, object_name = file.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        dataset_obj = getattr(module, object_name)
+        if isinstance(dataset_obj, Dataset):
+            return dataset_obj
+        if isinstance(dataset_obj, type) and issubclass(dataset_obj, Dataset):
+            return dataset_obj()
+        raise TypeError(f"Resolved object '{file}' is not a torch Dataset.")
+
+    def __post_init__(self):
+        super().__post_init__()
+        # Iterate over self.datasets. Ensure that each object is a string or a pytorch Dataset. If it is a string, load it and ensure it is a pytorch Dataset. Assume it has the form file.dataset
+        if not isinstance(self.datasets, list):
+            raise TypeError("datasets must be a list of Dataset objects or strings.")
+        normalized_datasets = []
+        for ds in self.datasets:
+            if isinstance(ds, str):
+                ds = self._get_dataset_from_string(ds)
+            if not isinstance(ds, Dataset):
+                raise TypeError(f"Invalid dataset entry type: {type(ds)}")
+            normalized_datasets.append(ds)
+        if len(normalized_datasets) < 2:
+            raise ValueError("Provide at least [train_dataset, test_dataset].")
+        self.datasets = normalized_datasets
+
+    def _get_data_loaders(self):
+        train_dataset = self.datasets[0]
+        test_dataset = self.datasets[1]
+        val_dataset = self.datasets[2] if len(self.datasets) > 2 else None
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+        val_loader = (
+            DataLoader(
+                val_dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=self.num_workers,
+                pin_memory=True,
+            )
+            if val_dataset is not None
+            else None
+        )
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+        return train_loader, test_loader, val_loader
+
+    @staticmethod
+    def _extract_targets(dataset):
+        if hasattr(dataset, "targets"):
+            targets = dataset.targets
+            return targets if isinstance(targets, torch.Tensor) else torch.tensor(targets)
+        if hasattr(dataset, "labels"):
+            labels = dataset.labels
+            return labels if isinstance(labels, torch.Tensor) else torch.tensor(labels)
+        return torch.empty(0, dtype=torch.long)
+    
+    def _resolve_size(size, total, name):
+        if size is None:
+            return total
+        if isinstance(size, float):
+            if not (0 < size <= 1):
+                raise ValueError(f"{name} as float must be in (0, 1], got {size}.")
+            return max(1, int(total * size))
+        if isinstance(size, int):
+            if size <= 0:
+                raise ValueError(f"{name} as int must be > 0, got {size}.")
+            return min(size, total)
+        raise TypeError(f"{name} must be None, float, or int, got {type(size)}.")
+
+    def _truncate_loader(loader, n, shuffle):
+        if n >= len(loader.dataset):
+            return loader
+        subset = torch.utils.data.Subset(loader.dataset, range(n))
+        return DataLoader(
+        subset,
+        batch_size=self.batch_size,
+        shuffle=shuffle,
+        num_workers=self.num_workers,
+        pin_memory=True,
+        )
+
+    def _sample(self):
+        """Use pre-split train/test (or val) loaders and optionally truncate them."""
+        start_time = time.process_time()
+        train_loader, test_loader, val_loader = self.dataloaders
+
+        # Resolve eval split
+        eval_loader = val_loader if self.val and val_loader is not None else test_loader
+
+        # Base targets
+        y_train_full = self._extract_targets(train_loader.dataset)
+        y_test_full = self._extract_targets(eval_loader.dataset)
+
+        # Resolve sizes
+        train_total = len(train_loader.dataset)
+        test_total = len(eval_loader.dataset)
+        train_n = PytorchCustomConfig._resolve_size(self.train_size, train_total, "train_size")
+        test_n = PytorchCustomConfig._resolve_size(self.test_size, test_total, "test_size")
+
+        # Truncate loaders lazily if needed
+        self.X_train = self._truncate_loader(train_loader, train_n, shuffle=True)
+        self.X_test = self._truncate_loader(eval_loader, test_n, shuffle=False)
+
+        # Truncate targets eagerly
+        self.y_train = y_train_full[:train_n]
+        self.y_test = y_test_full[:test_n]
+
+        # Track counts and timing
+        self.train_n = len(self.y_train)
+        self.test_n = len(self.y_test)
+        self.data_sample_time = time.process_time() - start_time
+        self.time_dict = {
+            **getattr(self, "time_dict", {}),
+            "data_sample_time": self.data_sample_time,
+        }
+
+        logger.info(
+            "Custom data sampled in %.2f seconds (train=%d, test=%d)",
+            self.data_sample_time,
+            self.train_n,
+            self.test_n,
+        )
+
+    def __call__(self, data_file=None, score_file=None):
+        self._load_data()
+        self._sample()
+        time_dict = {
+            "data_load_time": self.data_load_time,
+            "data_sample_time": self.data_sample_time,
+        }
+        scores = self._score()
+        all_scores = {**time_dict, **scores}
+        self.score_dict = all_scores
+        if score_file is not None:
+            self.save_scores(scores, score_file)
+        if data_file is not None:
+            if not Path(data_file).exists():
+                self.save(data_file)
+        return all_scores
+    
