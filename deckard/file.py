@@ -34,9 +34,9 @@ all_files = (
 )
 
 # make this an immutable default dict
-
+time_now = time.strftime("%Y%m%d-%H%M%S")
 default_placeholder_dict = {
-    "timestamp": f"{time.strftime("%Y%m%d-%H%M%S")}",
+    "timestamp": f"{time_now}",
     "experiment_name": "experiment_{timestamp}",
     "hash": None,  # Placeholder for hash; to be filled in as needed
 }
