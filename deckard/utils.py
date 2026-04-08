@@ -4,6 +4,10 @@ import inspect
 import pandas as pd
 import pickle
 import json
+import importlib
+import sys
+import os
+
 from pathlib import Path
 from hashlib import md5
 from typing import Union, Any
@@ -503,15 +507,40 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
                 )
         logger.info(f"Data loaded from {Path(filepath)}")
         return data
-                
-    
-    
-    
 
-    
-    
-        
-        
+
+def import_class_from_file(file_path: str, class_name: str):
+    file_path = Path(file_path).resolve()
+
+    if not file_path.exists():
+        raise FileNotFoundError(f"No such file: {file_path}")
+
+    spec = importlib.util.spec_from_file_location(file_path.stem, file_path)
+
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load spec from {file_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[file_path.stem] = module
+    spec.loader.exec_module(module)
+
+    return getattr(module, class_name)
+
+
+def load_class(path, **kwargs):
+    if ":" in path:
+        file_path, class_name = path.split(":", 1)
+        file_path = Path(file_path).resolve()
+
+        if not file_path.exists():
+            raise FileNotFoundError(file_path)
+
+        cls = import_class_from_file(file_path, class_name)
+        if kwargs:
+            cls = cls.__init__(**kwargs)
+    else:
+        cls = instantiate({"_target_": path, **kwargs})
+    return cls
 
 def create_parser_from_function(
     func,
