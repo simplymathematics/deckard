@@ -19,7 +19,6 @@ from .file import FileConfig, data_files, model_files, attack_files
 from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
@@ -444,7 +443,7 @@ class ExperimentConfig(ConfigBase):
         assert hasattr(
             self.data,
             "X_train",
-        ), "data must return an object with X_train attribute"
+        ), f"data must return an object with X_train attribute"
         assert hasattr(
             self.data,
             "y_train",
