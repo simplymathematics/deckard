@@ -2,16 +2,12 @@
 
 import logging
 import warnings
-import hashlib
 from dataclasses import dataclass, field
 from typing import List, Union, Literal
-from omegaconf import DictConfig, OmegaConf
-import os
-
+from hydra.core.hydra_config import HydraConfig
 
 import numpy as np
 from pathlib import Path
-from hydra.utils import instantiate
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold, TimeSeriesSplit, StratifiedKFold, ShuffleSplit
 # yellow brick imports
@@ -123,9 +119,9 @@ class YellowbrickPlotConfig(ConfigBase):
     classes: Union[List[str], Literal["all"]] = "all"
     title: str = "Yellowbrick Plot"
     save_path: str = "yellowbrick_plot.png"
-    experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
+    experiment: ExperimentConfig | None = field(default_factory=ExperimentConfig)
     plot_params: dict = field(default_factory=dict)
-
+            
 
     def initialize_experiment(self):
         """Initializes the experiment configuration."""
@@ -374,7 +370,8 @@ class YellowbrickPlotConfig(ConfigBase):
 
         visualizer.show(outpath=self.save_path)
         
-    
+    def __len__(self):
+        return 1
     
     def __call__(self):
         self.initialize_experiment()
@@ -420,8 +417,6 @@ class YellowBrickConfigList(ConfigBase):
         fig, axes = plt.subplots(nrows=plot_length, ncols=1, figsize=(10, 8*plot_length))
         for plot_cfg in self:
             ax = axes[plot_cfg.plot_type] if plot_length > 1 else axes
-            print(f"Generating plot: {plot_cfg.plot_type}")
-            print("."*80)
             try:
                 plot_cfg()
             except Exception as e:
