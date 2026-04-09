@@ -24,20 +24,20 @@ from sklearn.metrics import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-from torch import Tensor
+from torch import Tensor, tensor
+from torch.utils.data import DataLoader, Subset
 import numpy as np
 
 # ART imports
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
-from torch import int32 as torchint32
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.pytorch import PytorchTemplateClassifier
-from ..model.defend import sklearn_dict, sklearn_models
+from ..model.defend import sklearn_dict,
 from ..utils import ConfigBase
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -52,7 +52,7 @@ supported_attacks = [
 ]
 
 sklearn_supported_models = list(sklearn_dict.values())
-pytorch_supported_models = [PyTorchRegressor, PyTorchClassifier]
+pytorch_supported_models = [PyTorchRegressor, PyTorchClassifier, PytorchTemplateClassifier]
 
 supported_models = sklearn_supported_models + pytorch_supported_models
 
@@ -197,10 +197,11 @@ class AttackConfig(ConfigBase):
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:
             raise ValueError(f"Unsupported attack type: {attack_type}")
         attack_class = getattr(module, self.attack_type.split(".")[-1])
-        
-        if isinstance(model, tuple(supported_models)):
+        if isinstance(model, (PytorchTemplateClassifier,)):
+            art_model = model.get_art_model(data)
+        elif isinstance(model, tuple(supported_models)):
             art_model = model
-        elif isinstance(model, BaseEstimator):
+        elif isinstance(model, BaseEstimator) and type(model).__name__ in sklearn_dict:
             assert isinstance(model, ClassifierMixin), f"Model must be a ClassifierMixin, got {type(model)}"
             model_alias = type(model).__name__
             art_cls = sklearn_dict[model_alias]
@@ -210,8 +211,6 @@ class AttackConfig(ConfigBase):
                 model.fit(data.X_train, data.y_train)            
             art_model = art_cls(model)
         elif isinstance(model, ModelConfig):
-            art_model = model.get_art_model(data)
-        elif isinstance(model, (PytorchTemplateClassifier,)):
             art_model = model.get_art_model(data)
         else:
             raise ValueError(f"Unsupported model type: {type(model)}")
@@ -308,6 +307,7 @@ class AttackConfig(ConfigBase):
             self.attack_predictions = self.load_object(attack_predictions_file)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
+        
         attack, art_model, attack_type, attack_subtype = self._initialize_attack(
             model,
             data,
@@ -400,25 +400,15 @@ class AttackConfig(ConfigBase):
         """
         n = self.attack_size
         if train is True:
-            X_train = data.X_train
-            y_train = data.y_train
-            X_test = data.X_test
-            y_test = data.y_test
-            ben_preds = art_model.predict(X_test)
+            ben_preds = art_model.predict(data.X_test)
             ben_pred_labels = ben_preds.argmax(axis=1)
-            X_subset = X_test[:n]
-            y_subset = y_test[:n]
+            n, X_subset, y_subset = self.get_attack_subset(data, test =True)
         else:
-            X_train = data.X_train
-            y_train = data.y_train
-            X_test = data.X_test
-            y_test = data.y_test
-            ben_preds = art_model.predict(X_train)
+            ben_preds = art_model.predict(data.X_train)
             if isinstance(ben_preds, Tensor):
                 ben_preds = ben_preds.cpu().numpy().astype(ART_NUMPY_DTYPE)
             ben_pred_labels = ben_preds.argmax(axis=1)
-            X_subset = X_train[:n]
-            y_subset = y_train[:n]
+            n, X_subset, y_subset = self.get_attack_subset(data, test=False)
         if isinstance(y_subset, Tensor):
             y_subset = y_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
         assert isinstance(
@@ -588,9 +578,7 @@ class AttackConfig(ConfigBase):
             A dictionary containing the scores and metrics of the attack evaluation.
         """
         start_time = time.process_time()
-        n = self.attack_size
-        x_subset = data.X_test[:n]
-        y_subset = data.y_test[:n]
+        n, x_subset, y_subset = self.get_attack_subset(data)
         if isinstance(x_subset, Tensor):
             x_subset = x_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
             if hasattr(art_model, "_model") and hasattr(art_model._model, "to"):
@@ -602,7 +590,8 @@ class AttackConfig(ConfigBase):
         elif isinstance(x_subset, pd.DataFrame):
             x_subset = x_subset.values
         else:
-            x_subset = x_subset.astype(ART_NUMPY_DTYPE)
+            # x_subset = x_subset.astype(ART_NUMPY_DTYPE)
+            pass
         if isinstance(y_subset, Tensor):
             y_subset = y_subset.cpu().numpy().astype(ART_NUMPY_DTYPE)
         elif isinstance(y_subset, pd.Series):
@@ -612,7 +601,6 @@ class AttackConfig(ConfigBase):
                 y_subset,
                 (list, np.ndarray),
             ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
-        # Move model to appropriate device
         ben_preds = art_model.predict(x_subset)
         ben_pred_labels = ben_preds.argmax(axis=1)
         if isinstance(ben_pred_labels, Tensor):
@@ -665,6 +653,30 @@ class AttackConfig(ConfigBase):
         self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
         self.attack = adv_pred
         return self.score_dict
+
+    def get_attack_subset(self, data, test =True):
+        n = self.attack_size
+        if test is True:
+            x_ = data.X_test
+            y_ = data.y_test
+        else:
+            x_ = data.X_train
+            y_ = data.X_train
+        if isinstance(x_, (pd.Series, np.ndarray)):
+            x_subset = x_[:n]
+            y_subset = y_[:n]
+        elif isinstance(x_, DataLoader):
+            subset = Subset(x_.dataset, indices=range(n))
+            x_subset = []
+            y_subset = []
+            for x,y in subset:
+                x_subset.extend(x)
+                y_subset.extend(y)
+            x_subset = tensor(x_subset)
+            y_subset = tensor(y_subset)
+        else:
+            raise ValueError(f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch DataLoader")
+        return n,x_subset,y_subset
 
     def _infer_attribute(
         self,
