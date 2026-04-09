@@ -1,34 +1,27 @@
 # Imports
-# import pandas as pd
+import pandas as pd
 import time
 import logging
 import tempfile
-import importlib
+from tqdm.auto import tqdm
 from pathlib import Path
+from hashlib import md5
 
 
 from dataclasses import dataclass, field
-from typing import Union, Dict, Callable, List
+from typing import Union, Dict, List, Optional, cast, Callable
+from omegaconf import ListConfig, DictConfig
+from hydra.utils import instantiate
 
 # PyTorch
 import torch
 from torch import Tensor
-from torch.utils.data import DataLoader, Dataset
-
+from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import datasets, transforms
 
-
-
 # deckard
-from deckard.data import DataConfig
-from sklearn.feature_selection import (
-    mutual_info_classif,
-    chi2,
-    f_classif,
-    mutual_info_regression,
-    f_regression,
-)
-from scipy.stats import pearsonr
+from ..utils import load_class
+from .data import DataConfig, DataPipelineConfig
 import numpy as np
 
 # Setup logger
@@ -43,12 +36,13 @@ pytorch_dataset_dict = {
     "torch_cifar10": datasets.CIFAR10,
     "torch_cifar": datasets.CIFAR10,
     "torch_fashionmnist": datasets.FashionMNIST,
+    "celebA" : datasets.CelebA
     # Add more datasets as needed
 }
 
 
 @dataclass
-class PytorchDataPipelineConfig:
+class PytorchDataPipelineConfig(DataPipelineConfig):
     pass
 
 
@@ -74,11 +68,12 @@ class PytorchDataConfig(DataConfig):
     train_size: Union[float, int, None] = 0.7
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    pipeline: Dict[str, PytorchDataPipelineConfig] = field(default_factory=dict)
+    pipeline: Union[PytorchDataPipelineConfig, None] = None
     classifier: bool = True
-    target: None = None
-    drop: None = None
-    keep: None = None
+    target: Optional[str] = None
+    data_params: dict = field(default=dict)
+    drop: List[str] = field(default_factory=list)
+    keep: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         super().__post_init__()
@@ -93,19 +88,27 @@ class PytorchDataConfig(DataConfig):
         assert (
             len(self.keep) == 0
         ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
-        assert (
-            len(self.data_params) == 0
-        ), f"data_params should not be set for PyTorch datasets. Got {self.data_params}."
 
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
-        assert self.train_size > 0, "train_size must be specified for PyTorch datasets."
-        assert self.test_size > 0, "test_size must be specified for PyTorch datasets."
+        assert (
+            self.train_size is not None and self.train_size > 0
+        ), "train_size must be specified for PyTorch datasets."
+        assert (
+            self.test_size is not None and self.test_size > 0
+        ), "test_size must be specified for PyTorch datasets."
+        self.data_load_time = None
+        self.data_sample_time = None
+        self.data_score_time = None
+        
 
     def __hash__(self):
         return super().__hash__()
 
-    def _load_data(self) -> datasets.VisionDataset:
+    
+            
+    
+    def _load_data(self) -> None:
         """Load a PyTorch dataset.
 
         Args:
@@ -116,8 +119,9 @@ class PytorchDataConfig(DataConfig):
         """
         dataset_name = self.dataset_name.lower()
         if dataset_name not in pytorch_dataset_dict:
-            raise NotImplementedError(f"Dataset {dataset_name} is not supported.")
-        dataset_class = pytorch_dataset_dict[dataset_name]
+            dataset_class = instantiate({"_target_" : dataset_name, **self.data_params})
+        else:
+            dataset_class = pytorch_dataset_dict[dataset_name]
 
         # Check if data directory exists, is a directory, and is non-empty
         if (
@@ -149,8 +153,11 @@ class PytorchDataConfig(DataConfig):
         # Combine train and test datasets
         full_data = torch.utils.data.ConcatDataset([train_loader, test_loader])
         # Extract data and targets
-        self._X = torch.stack([full_data[i][0] for i in range(len(full_data))])
-        self._y = torch.tensor([full_data[i][1] for i in range(len(full_data))])
+        samples = [
+            cast(tuple[Tensor, int], full_data[i]) for i in range(len(full_data))
+        ]
+        self._X = torch.stack([sample[0] for sample in samples])
+        self._y = torch.tensor([int(sample[1]) for sample in samples], dtype=torch.long)
         end = time.process_time()
         self.data_load_time = end - start
         logger.info(f"Loaded {dataset_name} dataset in {self.data_load_time} seconds.")
@@ -201,30 +208,38 @@ class PytorchDataConfig(DataConfig):
                 )
 
         # Calculate train and test sizes
-        if isinstance(self.train_size, float):
-            train_size = int(self.train_size * num_samples)
-        elif isinstance(self.train_size, int):
-            train_size = self.train_size
-        else:
-            assert isinstance(
-                self.test_size,
-                (float, int),
-            ), "test_size must be float or int if train_size is None"
+        train_size: int
+        test_size: int
 
-        if isinstance(self.test_size, float):
-            test_size = int(self.test_size * num_samples)
-        else:
-            test_size = self.test_size
+        if self.train_size is None and self.test_size is None:
+            raise ValueError("Either train_size or test_size must be specified.")
 
         if self.train_size is None:
             if isinstance(self.test_size, float):
-                self.train_size = 1.0 - self.test_size
-                train_size = int(self.train_size * num_samples)
+                test_size = int(self.test_size * num_samples)
             elif isinstance(self.test_size, int):
-                self.train_size = num_samples - self.test_size
+                test_size = self.test_size
+            else:
+                raise ValueError("test_size must be float or int when train_size is None.")
+            train_size = num_samples - test_size
+        elif self.test_size is None:
+            if isinstance(self.train_size, float):
+                train_size = int(self.train_size * num_samples)
+            elif isinstance(self.train_size, int):
                 train_size = self.train_size
             else:
-                raise ValueError("Either train_size or test_size must be specified.")
+                raise ValueError("train_size must be float or int when test_size is None.")
+            test_size = num_samples - train_size
+        else:
+            if isinstance(self.train_size, float):
+                train_size = int(self.train_size * num_samples)
+            else:
+                train_size = self.train_size
+
+            if isinstance(self.test_size, float):
+                test_size = int(self.test_size * num_samples)
+            else:
+                test_size = self.test_size
 
         if train_size + test_size > num_samples:
             raise ValueError(
@@ -281,15 +296,11 @@ class PytorchDataConfig(DataConfig):
         if "class_counts" in getattr(self, "score_dict", {}):
             return self.score_dict
 
-        # Ensure data is on CPU for compatibility with sklearn
-        X_train_np = self._X.cpu().numpy()
-        y_train_np = self._y.cpu().numpy()
-
         score_dict = {}
-        
 
         # Class counts
-        score_dict["class_counts"] = self._compute_class_counts(self.y_train)
+        y_train_series = pd.Series(self.y_train.cpu().numpy())
+        score_dict["class_counts"] = self._compute_class_counts(y_train_series)
         return score_dict
 
     def _regression_feature_scores(self):
@@ -381,6 +392,12 @@ class PytorchDataConfig(DataConfig):
                     if hasattr(self, "score_dict")
                     else scores
                 )
+                if "data_load_time" in scores:
+                    self.data_load_time = scores["data_load_time"]
+                elif "data_sample_time" in scores:
+                    self.data_load_time = scores["data_sample_time"]
+                elif "data_score_time" in scores:
+                    self.data_score_time = scores["data_score_time"]
             else:
                 scores = {}
         else:
@@ -433,7 +450,7 @@ class PytorchDataConfig(DataConfig):
 
 
 @dataclass
-class PytorchCustomConfig(PytorchDataConfig):
+class PytorchCustomDataConfig(PytorchDataConfig):
     """Configuration for HuggingFace datasets loaded via DataLoader.
 
     Extends PytorchDataConfig to support HuggingFace datasets with custom
@@ -441,176 +458,213 @@ class PytorchCustomConfig(PytorchDataConfig):
     """
 
     val: bool = False
-    batch_size: int = 32
-    num_workers: int = 0
-    datasets: List[Union[str, Dataset]] = field(default_factory=list)
+    dataset_params: dict = field(default_factory =dict)
+    dataset: str = field(default_factory=str)
+    test_transform : str | None = field(default_factory = str)
+    train_transform : str | None = field(default_factory = str)
+    loaders : list = field(init=False, repr=False)
+    data_load_time : float = field(init=False, repr=True)
+    data_sample_time: float = field(init=False, repr=True)
+    transform_params: dict = field(default_factory =dict)
+    score_dict : dict = field(init=False, repr=False)
 
     def __hash__(self):
-        return super().__hash__()
+        """
+        Computes a hash value for the instance.
 
-    def _load_data(self):
-        start = time.process_time()
-        self.dataloaders = self._get_data_loaders()
-        self._X = torch.empty(0)
-        self._y = torch.empty(0, dtype=torch.long)
-        end = time.process_time()
-        self.data_load_time = end - start
+        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
+        The hash excludes attributes whose names start with an underscore.
 
-    def _get_dataset_from_string(self, file: str) -> Dataset:
-        if not isinstance(file, str):
-            raise TypeError(f"Dataset reference must be a string, got {type(file)}")
-        # Load the custom dataset from submodule.file.dataset
-        if "." not in file:
-            raise ValueError(
-                f"Dataset string must be in 'module.object' format, got '{file}'.",
-            )
-        module_name, object_name = file.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        dataset_obj = getattr(module, object_name)
-        if isinstance(dataset_obj, Dataset):
-            return dataset_obj
-        if isinstance(dataset_obj, type) and issubclass(dataset_obj, Dataset):
-            return dataset_obj()
-        raise TypeError(f"Resolved object '{file}' is not a torch Dataset.")
+        Returns
+        -------
+        int
+            The integer representation of the MD5 hash of the concatenated attribute string.
+        """
+        # Hash all fields that do not start with an underscore
+        hash_input = "".join(
+            f"{k}:{v}" for k, v in self.__dict__.items() if not k.endswith("_")
+        )
+        return int(md5(hash_input.encode()).hexdigest(), 16)
+        
 
     def __post_init__(self):
-        super().__post_init__()
-        # Iterate over self.datasets. Ensure that each object is a string or a pytorch Dataset. If it is a string, load it and ensure it is a pytorch Dataset. Assume it has the form file.dataset
-        if not isinstance(self.datasets, list):
-            raise TypeError("datasets must be a list of Dataset objects or strings.")
-        normalized_datasets = []
-        for ds in self.datasets:
-            if isinstance(ds, str):
-                ds = self._get_dataset_from_string(ds)
-            if not isinstance(ds, Dataset):
-                raise TypeError(f"Invalid dataset entry type: {type(ds)}")
-            normalized_datasets.append(ds)
-        if len(normalized_datasets) < 2:
-            raise ValueError("Provide at least [train_dataset, test_dataset].")
-        self.datasets = normalized_datasets
-
-    def _get_data_loaders(self):
-        train_dataset = self.datasets[0]
-        test_dataset = self.datasets[1]
-        val_dataset = self.datasets[2] if len(self.datasets) > 2 else None
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
-        val_loader = (
-            DataLoader(
-                val_dataset,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=self.num_workers,
-                pin_memory=True,
-            )
-            if val_dataset is not None
-            else None
-        )
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
-        return train_loader, test_loader, val_loader
-
-    @staticmethod
-    def _extract_targets(dataset):
-        if hasattr(dataset, "targets"):
-            targets = dataset.targets
-            return targets if isinstance(targets, torch.Tensor) else torch.tensor(targets)
-        if hasattr(dataset, "labels"):
-            labels = dataset.labels
-            return labels if isinstance(labels, torch.Tensor) else torch.tensor(labels)
-        return torch.empty(0, dtype=torch.long)
+        
+        self.data_load_time = None 
+        self.data_sample_time = None
+        self.data_score_time = None
+        if not self.data_params:
+            self.data_params = {}
+        if not hasattr(self, "shuffle"):
+            self.shuffle = True
     
-    def _resolve_size(size, total, name):
-        if size is None:
-            return total
-        if isinstance(size, float):
-            if not (0 < size <= 1):
-                raise ValueError(f"{name} as float must be in (0, 1], got {size}.")
-            return max(1, int(total * size))
-        if isinstance(size, int):
-            if size <= 0:
-                raise ValueError(f"{name} as int must be > 0, got {size}.")
-            return min(size, total)
-        raise TypeError(f"{name} must be None, float, or int, got {type(size)}.")
+    def _as_dataset(self, obj, split: str, transform):
+        if isinstance(obj, str):
+            obj = load_class(obj, split=split, transform=transform)
+            return obj
+        elif isinstance(obj, Dataset):
+            return obj(**self.dataset_params, split=split, transform=transform)
+        raise TypeError(f"Invalid dataset object for split '{split}': {type(obj)}")
 
-    def _truncate_loader(loader, n, shuffle):
-        if n >= len(loader.dataset):
-            return loader
-        subset = torch.utils.data.Subset(loader.dataset, range(n))
-        return DataLoader(
-        subset,
-        batch_size=self.batch_size,
-        shuffle=shuffle,
-        num_workers=self.num_workers,
-        pin_memory=True,
-        )
+    def _truncate_dataset(self, dataset:Dataset, size:int):
+        assert isinstance(size, int), ValueError(f"Size must be an integer. Got: {size}.")
+        dataset = Subset(dataset, range(size))
+        return dataset
 
-    def _sample(self):
-        """Use pre-split train/test (or val) loaders and optionally truncate them."""
-        start_time = time.process_time()
-        train_loader, test_loader, val_loader = self.dataloaders
+    
+    
+    def _load_data(self):
+        """
+        Loads train/test datasets as DataLoaders without materializing all samples in memory.
 
-        # Resolve eval split
-        eval_loader = val_loader if self.val and val_loader is not None else test_loader
+        Updates ``self._X``, ``self._y``, ``s.elf.X_train``, ``self.X_test``,
+        ``self.y_train``, ``self.y_test``, ``self.train_n``, ``self.test_n``,
+        ``self.data_load_time``, and ``self.data_sample_time``.
+        """
+        logger.info("Loading custom torch dataset")
+        start = time.process_time()
+        if self.train_transform and isinstance(self.train_transform, str):
+            train_transform = load_class(self.train_transform)
+        elif isinstance(self.train_transform, Callable):
+            train_transform = self.train_transform
+        else:
+            train_transform = torch.Tensor
+        if self.test_transform and isinstance(self.test_transform, str):
+            test_transform = load_class(self.test_transform)
+        elif isinstance(self.test_transform, Callable):
+            test_transform = self.test_transform
+        else:
+            test_transform = torch.Tensor
+        self.train_transform = train_transform
+        self.test_transform = test_transform
+        valid_split = "test" if self.val else "valid"
+        train_ds = self._as_dataset(self.dataset, split="train", transform=train_transform)
+        if self.train_size:
+            train_ds = self._truncate_dataset(train_ds, self.train_size)
+            self.train_n = self.train_size
+        else:
+            self.test_n = len(test_ds)
+            logger.warning("Training size not specified")
+        test_ds = self._as_dataset(self.dataset, split=valid_split, transform=test_transform)
+        if self.test_size:
+            test_ds = self._truncate_dataset(test_ds, size=self.test_size)
+            self.test_n = self.test_size
+        else:
+            self.test_n = len(test_ds)
 
-        # Base targets
-        y_train_full = self._extract_targets(train_loader.dataset)
-        y_test_full = self._extract_targets(eval_loader.dataset)
+        # Minimal placeholders to satisfy parent __call__ checks
+        self._X = (train_ds, test_ds)
+        self._y = (train_ds, test_ds)
 
-        # Resolve sizes
-        train_total = len(train_loader.dataset)
-        test_total = len(eval_loader.dataset)
-        train_n = PytorchCustomConfig._resolve_size(self.train_size, train_total, "train_size")
-        test_n = PytorchCustomConfig._resolve_size(self.test_size, test_total, "test_size")
-
-        # Truncate loaders lazily if needed
-        self.X_train = self._truncate_loader(train_loader, train_n, shuffle=True)
-        self.X_test = self._truncate_loader(eval_loader, test_n, shuffle=False)
-
-        # Truncate targets eagerly
-        self.y_train = y_train_full[:train_n]
-        self.y_test = y_test_full[:test_n]
-
-        # Track counts and timing
-        self.train_n = len(self.y_train)
-        self.test_n = len(self.y_test)
-        self.data_sample_time = time.process_time() - start_time
-        self.time_dict = {
-            **getattr(self, "time_dict", {}),
-            "data_sample_time": self.data_sample_time,
-        }
+        end = time.process_time()
+        self.data_load_time = end - start
+        # Sampling is already defined by provided train/test splits
 
         logger.info(
-            "Custom data sampled in %.2f seconds (train=%d, test=%d)",
-            self.data_sample_time,
-            self.train_n,
-            self.test_n,
+            f"Loaded custom dataset lazily in {self.data_load_time:.2f}s "
+            f"(train={self.train_n}, test={self.test_n}).",
         )
-
-    def __call__(self, data_file=None, score_file=None):
-        self._load_data()
-        self._sample()
-        time_dict = {
-            "data_load_time": self.data_load_time,
-            "data_sample_time": self.data_sample_time,
-        }
-        scores = self._score()
-        all_scores = {**time_dict, **scores}
-        self.score_dict = all_scores
-        if score_file is not None:
-            self.save_scores(scores, score_file)
-        if data_file is not None:
-            if not Path(data_file).exists():
-                self.save(data_file)
-        return all_scores
     
+    def _sample(self):
+        # DataLoader params (lazy loading, no full dataset materialization)
+        logger.info("Creating torch data loaders.")
+        start = time.process_time()
+        batch_size = int(self.data_params.get("batch_size", 32))
+        num_workers = int(self.data_params.get("num_workers", 0))
+        pin_memory = bool(self.data_params.get("pin_memory", self.device != "cpu"))
+        train_ds = self._X[0]
+        test_ds = self._X[1]
+        torch.manual_seed(self.random_state)
+        train_loader = DataLoader(
+            train_ds,
+            batch_size=batch_size,
+            shuffle=self.shuffle,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
+        test_loader = DataLoader(
+            test_ds,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
+        
+        self.loaders = [train_loader, test_loader]
+        # Materialize batches from loaders into tensors
+        train_y_batches = []
+        for _, yb in tqdm(
+            train_loader,
+            desc="Materializing train batches",
+            total=len(train_loader),
+            leave=False,
+        ):
+            train_y_batches.append(yb)
+
+        test_y_batches = []
+        for _, yb in tqdm(
+            test_loader,
+            desc="Materializing test batches",
+            total=len(test_loader),
+            leave=False,
+        ):
+            test_y_batches.append(yb)
+
+        self.X_train = train_loader
+        self.y_train = torch.cat(train_y_batches, dim=0) if train_y_batches else torch.empty(0, dtype=torch.long)
+        self.X_test = test_loader
+        self.y_test = torch.cat(test_y_batches, dim=0) if test_y_batches else torch.empty(0, dtype=torch.long)
+        
+        end = time.process_time()
+        self.data_sample_time = end - start
+    
+    
+    def __call__(self, data_file=None, score_file=None):
+        if data_file is not None and Path(data_file).exists():
+            self = self.load_object(data_file)
+        if score_file is not None and Path(score_file).exists():
+            scores = self.load_scores(score_file)
+        else:
+            scores = {}
+        if not hasattr(self, "X_"):
+            self._load_data()
+        if not hasattr(self, "X_train"):
+            self._sample()
+        if not hasattr(self, "score_dict"):
+            new_scores = self._classification_feature_scores()
+            time_dict = {
+                "data_load_time" : self.data_load_time,
+                "data_sample_time" : self.data_sample_time,
+                "data_score_time" : self.data_score_time,
+            }
+            scores.update(**new_scores, **time_dict)
+            self.score_dict = scores
+        if score_file is not None:
+            self.save_scores(scores, filepath=score_file)
+        if data_file is not None:
+            self.save_object(self, data_file)
+        return scores
+    
+    def _classification_feature_scores(self):
+        """
+        Computes feature importance scores for classification tasks using various statistical methods.
+
+        Returns
+        -------
+        dict
+        A dictionary containing feature importance scores from different methods:
+        - 'mutual_info_classif': Mutual information scores.
+        - 'chi2': Chi-squared scores.
+        - 'f_classif': ANOVA F-value scores.
+        - 'class_counts': Counts of each class in the training target.
+        """
+
+        # Exit early if data already scores:
+        if "train_n" in getattr(self, "score_dict", {}):
+            return self.score_dict
+        score_dict = {}
+        score_dict["train_n"] = len(self.X_train)
+        score_dict["test_n"] = len(self.X_test)
+        return score_dict
+        
+        
+        

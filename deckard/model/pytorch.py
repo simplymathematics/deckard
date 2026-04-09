@@ -28,9 +28,10 @@ from art.estimators.regression import PyTorchRegressor
 
 from . import ModelConfig
 from ..data import DataConfig
+from ..utils import load_class
 from dataclasses import dataclass, field
 from omegaconf import DictConfig
-from typing import Any, Union
+from typing import Union
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -109,8 +110,8 @@ class PytorchTemplateEsimator(BaseEstimator):
         self.model.to(device)
 
     def fit(self, X, y, nb_epochs=1, batch_size=32, verbose=False, log_interval=1):
-        # Store the classes seen during fit
-        self.classes_ = torch.unique(y)
+        if isinstance(X, torch.utils.data.DataLoader):
+            return self.fit_loader(X, y, nb_epochs=nb_epochs, verbose=verbose, log_interval=log_interval)
         batch_index = 0
         # Move data and model to device
         self.model.to(self.device)
@@ -140,11 +141,53 @@ class PytorchTemplateEsimator(BaseEstimator):
                 self.loss_curve.append(train_loss)
         # Return the classifier
         return self
+    
+    def fit_loader(self, X, y, nb_epochs=1, verbose=False, log_interval=1):
+        # Store the classes seen during fit
+        _ = y # Ignore y since it's just a copy of the dataloader
+        classes_ = []
+        batch_index = 0
+        last_loss: Union[torch.Tensor, None] = None
+        # Move data and model to device
+        self.model.to(self.device)
+        # Training loop
+        self.model.train()
+        epoch_pbar = tqdm(range(nb_epochs), desc="Training epochs")
+        for epoch in epoch_pbar:
+            batch_pbar = tqdm(
+                X,
+                total=len(X) if hasattr(X, "__len__") else None,
+                desc=f"Epoch {epoch+1}/{nb_epochs}",
+                leave=False,
+            )
+            for batch_X, batch_y in batch_pbar:
+                batch_X = batch_X.to(self.device)
+                batch_y = batch_y.to(self.device, dtype=torch.long)
+                if len(batch_y.shape) < len(batch_X.shape):
+                    batch_y = batch_y.float().unsqueeze(1)
+                self.optimizer.zero_grad()
+                outputs = self.model(batch_X)
+                loss = self.criterion(outputs, batch_y)
+                loss.backward()
+                self.optimizer.step()
+                batch_index += 1
+                batch_pbar.set_postfix(loss=loss.item())
+                if verbose:
+                    logger.info(
+                        f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}",
+                    )
+                unique_ys_in_batch = torch.unique(batch_y).detach().cpu().reshape(-1).tolist()
+                classes_.extend(unique_ys_in_batch)
+            if last_loss is not None and log_interval > 0 and (epoch) % log_interval == 0:
+                train_loss = last_loss.item()
+                self.loss_curve.append(train_loss)
+                epoch_pbar.set_postfix(loss=train_loss)
+        self.classes_ = list(torch.as_tensor(classes_).unique().tolist()) if classes_ else []
+        # Return the classifier
+        return self
 
     def predict_proba(self, X):
         # Check if fit has been called
-        check_is_fitted(self)
-        # Move data to device
         with torch.no_grad():
             probs = self.model.forward(X)
             return probs
@@ -154,6 +197,16 @@ class PytorchTemplateEsimator(BaseEstimator):
             probs = self.model(X)
             # predictions = torch.argmax(probs, dim=1)
             return probs
+    
+    def predict_loader(self, X): 
+        preds = []
+        with torch.no_grad():
+            for batch_X, y in tqdm(X, desc="Predicting probabilities", total=len(X)):
+                batch_X = batch_X.to(self.device)
+                batch_preds =  self.model(batch_X)
+                preds.extend(batch_preds)
+        return torch.tensor(preds, dtype=y.dtype)
+               
 
     def get_art_model(self, data):
         if isinstance(self, (PyTorchClassifier)):
@@ -163,11 +216,16 @@ class PytorchTemplateEsimator(BaseEstimator):
         else:
             clip_values = self.clip_values
         art_class = PyTorchClassifier 
+        if isinstance(data.X_train, torch.utils.data.DataLoader):
+            x0, _ = next(iter(data.X_train))
+            input_shape = x0[0].shape
+        else:
+            input_shape = data.X_train.shape[1:]
         init_params = {
-            "model": self.model,
+            "model": self.model if not hasattr(self.model, "_model") else self.model._model,
             "loss": self.criterion,
             "optimizer": self.optimizer,
-            "input_shape": data.X_train.shape[1:],
+            "input_shape":  input_shape,
             "nb_classes": len(torch.unique(data.y_train)),
             "clip_values": clip_values,
             "device_type": "gpu" if "cuda" in str(self.device) else "cpu",
@@ -294,24 +352,11 @@ class PytorchModelConfig(ModelConfig):
         super().__post_init__()
         self._target_ = "deckard.model.pytorch.PytorchModelConfig"
 
-    def load_class(self, file_path, class_name, module_name=None):
-        if not Path(file_path).exists():
-            raise FileNotFoundError(f"Module file {file_path} does not exist.")
-        if module_name is None:
-            module_name = os.path.splitext(os.path.basename(file_path))[0]
-
-        spec = importlib.util.spec_from_file_location(module_name, file_path)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module  # <-- this is the key line
-        spec.loader.exec_module(module)
-        return getattr(module, class_name)
-
     def get_art_model(self, data: DataConfig):
         loss = initialize_criterion(self.criterion)
         assert isinstance(loss, nn.Module), "Loss must be a torch.nn.Module."
         input_shape = data.X_train.shape[1:]
         if self.classifier:
-
             nb_classes = len(torch.unique(data.y_train))
             if self.clip_values is None or len(self.clip_values) == 0:
                 clip_values = (data.X_train.min().item(), data.X_train.max().item())
@@ -341,20 +386,88 @@ class PytorchModelConfig(ModelConfig):
             }
         return art_class, init_params
 
+    def fit(self, X, y, nb_epochs=1, batch_size=32, verbose=False, log_interval=1):
+        if isinstance(X, torch.utils.data.DataLoader):
+            return self.fit_loader(X, y, nb_epochs=nb_epochs, verbose=verbose, log_interval=log_interval)
+        # Store the classes seen during fit
+        self.classes_ = torch.unique(y)
+        batch_index = 0
+        # Move data and model to device
+        self.model.to(self.device)
+        # Training loop
+        self.model.train()
+        for epoch in range(nb_epochs):
+            pbar = tqdm(
+                zip(X.split(batch_size), y.split(batch_size)),
+                total=len(X) // batch_size,
+                desc=f"Epoch {epoch+1}/{nb_epochs}",
+            )
+            for batch_X, batch_y in pbar:
+                batch_X = batch_X.to(self.device)
+                batch_y = batch_y.to(self.device)
+                self.optimizer.zero_grad()
+                outputs = self.model(batch_X)
+                loss = self.criterion(outputs, batch_y)
+                loss.backward()
+                self.optimizer.step()
+                batch_index += 1
+                if verbose:
+                    logger.info(
+                        f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}",
+                    )
+            if log_interval > 0 and (epoch) % log_interval == 0:
+                train_loss = loss.item()
+                self.loss_curve.append(train_loss)
+        # Return the classifier
+        return self
+    
+    def fit_loader(self, X, y, nb_epochs=1, verbose=False, log_interval=1):
+        # Store the classes seen during fit
+        _ = y # Ignore y since it's just a copy of the dataloader
+        classes_ = []
+        batch_index = 0
+        last_loss: Union[torch.Tensor, None] = None
+        # Move data and model to device
+        self.model.to(self.device)
+        # Training loop
+        self.model.train()
+        epoch_pbar = tqdm(range(nb_epochs), desc="Training epochs")
+        for epoch in epoch_pbar:
+            batch_pbar = tqdm(
+                X,
+                total=len(X) if hasattr(X, "__len__") else None,
+                desc=f"Epoch {epoch+1}/{nb_epochs}",
+                leave=False,
+            )
+            for batch_X, batch_y in batch_pbar:
+                batch_X = batch_X.to(self.device)
+                batch_y = batch_y.to(self.device, dtype=torch.long)
+                if len(batch_y.shape) < len(batch_X.shape):
+                    batch_y = batch_y.float().unsqueeze(1)
+                self.optimizer.zero_grad()
+                outputs = self.model(batch_X)
+                loss = self.criterion(outputs, batch_y)
+                loss.backward()
+                self.optimizer.step()
+                batch_index += 1
+                batch_pbar.set_postfix(loss=loss.item())
+                if verbose:
+                    logger.info(
+                        f"Epoch {epoch+1}/{nb_epochs}, Batch {batch_index}, Loss: {loss.item()}",
+                    )
+                unique_ys_in_batch = torch.unique(batch_y).detach().cpu().reshape(-1).tolist()
+                classes_.extend(unique_ys_in_batch)
+            if last_loss is not None and log_interval > 0 and (epoch) % log_interval == 0:
+                train_loss = last_loss.item()
+                self.loss_curve.append(train_loss)
+                epoch_pbar.set_postfix(loss=train_loss)
+        self.classes_ = list(torch.as_tensor(classes_).unique().tolist()) if classes_ else []
+        # Return the classifier
+        return self
+    
+    
     def _initialize_model(self):
-        # Add the directory containing the model file to sys.path
-        model_dir = os.path.dirname(os.path.abspath(self.model_type))
-        sys.path.append(model_dir)
-        module_name, class_name = self.model_type.rsplit(".", 1)
-        model_class = self.load_class(
-            file_path=Path(model_dir, f"{module_name}.py"),
-            class_name=class_name,
-            module_name=module_name,
-        )
-        if self.model_params is not None:
-            model = model_class(**self.model_params)
-        else:
-            model = model_class()
+        model = load_class(self.model_type, **self.model_params)
         if self.classifier:
             self._model = PytorchTemplateClassifier(
                 model=model,
@@ -412,7 +525,8 @@ class PytorchModelConfig(ModelConfig):
             nn.Module,
         ), "'model' attribute is not a torch.nn.Module."
         return self._model.model
-
+    
+        
     def __call__(self, data: DataConfig, **kwargs):
         self._initialize_model()
         return super().__call__(data, **kwargs)
@@ -452,6 +566,10 @@ class PytorchModelConfig(ModelConfig):
             loss_curve = self._model.model.loss_curve
         else:
             loss_curve = None
+        if not isinstance(y_true, torch.Tensor):
+            y_true = torch.tensor(y_true)
+        if not isinstance(y_pred, torch.Tensor):
+            y_pred = torch.tesnor(y_pred)
         scores = super()._score(y_true, y_pred)
         if loss_curve is not None:
             scores["loss_curve"] = loss_curve
@@ -487,17 +605,18 @@ class PytorchModelConfig(ModelConfig):
                         self = self.load(model_file)
                     if self.defense is not None:
                         self._model = self._apply_defense(data)
-                    self._train(data.X_train, data.y_train)
+                    if not hasattr(self, "training_time"):
+                        self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
-                    times["training_n"] = self._training_n
-                    if model_file is not None and not Path(model_file).exists():
+                    times["training_n"] = self.training_n
+                    if model_file is not None:
                         self.save(filepath=model_file)
             # Validate model is trained
             if self._model is None:
                 raise NotFittedError("Model is not initialized")
             return times
-        
-    def _predict(self, X: pd.DataFrame) -> pd.Series:
+    
+    def _predict(self, X: Union[pd.DataFrame, torch.utils.data.DataLoader]) -> pd.Series:
         """
         Generates predictions for the input data using the initialized model.
 
@@ -511,16 +630,113 @@ class PytorchModelConfig(ModelConfig):
             ValueError: If the model has not been initialized.
 
         """
-        if self._model is None:
-            raise ValueError("Model not initialized")
-        dtype_model = next(self._model.model.parameters()).dtype
-        dtype_X = X.dtype
-        if dtype_X != dtype_model:
-            model_device = next(self._model.model.parameters()).device
-            X = X.to(device=model_device, dtype=dtype_model)
-        y_pred = self._model.predict(X)
+        if isinstance(X, pd.DataFrame):
+            return super()._predict(X)
+        else:
+            return self._model.predict_loader(X)
+    
+    def _evaluate_and_score(self, data: DataConfig, times: dict = None):
+        """
+        Evaluates the model by making predictions and scoring them on both training and test data.
 
-        return y_pred
+        This method performs the following steps:
+        1. Makes predictions on the training data if not already available, and records the prediction time.
+        2. Scores the training predictions if true labels are available and scores have not already been computed.
+        3. Makes predictions on the test data if not already available, and records the prediction time.
+        4. Scores the test predictions if true labels are available and scores have not already been computed.
+        5. Updates the internal score dictionary with timing and scoring information.
+
+        Parameters
+        ----------
+        data : DataConfig
+            The data configuration object containing training and test data (X_train, y_train, X_test, y_test).
+        times : dict, optional
+            A dictionary to store timing information for predictions and scoring.
+
+        Raises
+        ------
+        ValueError
+            If training predictions are not available when attempting to score them.
+
+        Notes
+        -----
+        - Timing information for predictions and scoring is logged and stored in the `times` dictionary.
+        - Score metrics are prefixed with 'train_' for training scores.
+        - The method updates `self.score_dict` with all computed scores and timing information.
+        """
+        # Make predictions on training data if not already done
+        if self.training_predictions is None or self.training_prediction_time is None:
+            start_time = time.process_time()
+            self.training_predictions = self._predict(data.X_train)
+            end_time = time.process_time()
+            self.training_prediction_time = end_time - start_time
+            times["training_prediction_time"] = self.training_prediction_time
+            logger.info(
+                f"Training predictions made in {self.training_prediction_time:.2f} seconds",
+            )
+            times["training_n"] = len(self.training_predictions)
+            times["training_prediction_time"] = self.training_prediction_time
+        else:
+            logger.info(
+                "Training predictions already available, skipping prediction step.",
+            )
+
+        # Score training predictions if true labels are available and scoring not already done
+        if self.training_score_time is None or self.score_dict is None:
+            if self.training_predictions is not None:
+                start = time.process_time()
+                train_scores = self._score(data.y_train, self.training_predictions)
+                self.training_score_time = time.process_time() - start
+                # Prefix training scores with 'train_'
+                train_scores = {
+                    f"training_{key}": value for key, value in train_scores.items()
+                }
+                if "training_loss_curve" in train_scores:
+                    del train_scores["training_loss_curve"]
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict.update(train_scores)
+                times["training_score_time"] = self.training_score_time
+                logger.info(
+                    f"Training scores computed in {self.training_score_time:.2f} seconds",
+                )
+            else:
+                raise ValueError("Training predictions not available for scoring.")
+        else:
+            pass
+        # Make predictions on test data if not already done
+        if self.predictions is None or self.prediction_time is None:
+            if data.X_test is not None:
+                start_time = time.process_time()
+                self.predictions = self._predict(data.X_test)
+                end_time = time.process_time()
+                self.prediction_time = end_time - start_time
+                times["prediction_time"] = self.prediction_time
+                logger.info(f"Predictions made in {self.prediction_time:.2f} seconds")
+                times["prediction_n"] = len(self.predictions)
+            else:
+                raise ValueError("No test data available for prediction.")
+        # Score test predictions if true labels are available and scoring not already done
+        if (
+            self.training_score_time is None
+            or self.prediction_score_time is None
+            or self.score_dict is None
+        ):
+            if data.y_test is not None and self.predictions is not None:
+                test_scores = self._score(data.y_test, self.predictions)
+                if self.score_dict is None:
+                    self.score_dict = {}
+                self.score_dict = {**self.score_dict, **test_scores}
+                self.prediction_score_time = time.process_time() - start
+                times["prediction_score_time"] = self.prediction_score_time
+                logger.info(
+                    f"Prediction scores computed in {self.prediction_score_time:.2f} seconds",
+                )
+            else:
+                raise ValueError("No test labels available for scoring.")
+        else:
+            pass
+        self.score_dict.update(times)
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
         """
@@ -545,26 +761,67 @@ class PytorchModelConfig(ModelConfig):
             raise ValueError("Model not initialized")
         start_time = time.process_time()
         assert hasattr(self._model, "fit"), "Model does not have a fit method"
-        
         # Make sure that model, X, and y are on the same device and model/X have the same dtype
         model_dtype = next(self._model.model.parameters()).dtype
         model_device = next(self._model.model.parameters()).device
-        X = X.to(device=model_device, dtype=model_dtype)
-        y = y.to(device=model_device)
+        if isinstance(X, torch.Tensor):
+            X = X.to(device=model_device, dtype=model_dtype)
+            if isinstance(y, torch.Tensor):
+                y = y.to(device=model_device, dtype=torch.float32)
         fit_params = {} if not hasattr(self, "fit_params") else self.fit_params
-        self._model.fit(X, y, **fit_params)
+        if isinstance(X, torch.utils.data.DataLoader):
+            self._model.fit_loader(X, y, **fit_params)
+        else:
+            self._model.fit(X,y, **fit_params)
         end_time = time.process_time()
         self.training_time = end_time - start_time
         self._training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
     
     def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
-        # Cast y_true, y_pred to numpy arrays if they are tensors
-        if isinstance(y_true, torch.Tensor):
-            y_true = y_true.detach().cpu().numpy()
-        if isinstance(y_pred, torch.Tensor):
-            y_pred = y_pred.detach().cpu().numpy()
-        return super()._classification_scores(y_true, y_pred)
+        start = time.process_time()
+        scores = {}
+
+        # Cast to tensors if needed
+        if not isinstance(y_true, torch.Tensor):
+            y_true = torch.tensor(y_true)
+        if not isinstance(y_pred, torch.Tensor):
+            y_pred = torch.tensor(y_pred)
+
+        # Get predicted class labels if y_pred contains probabilities/logits
+        if y_pred.ndim > 1 and y_pred.shape[1] > 1:
+            y_pred_labels = torch.argmax(y_pred, dim=1)
+        else:
+            y_pred_labels = y_pred.reshape(-1)
+
+        y_true_labels = y_true.reshape(-1).long()
+
+        # Calculate Accuracy
+        correct = (y_pred_labels == y_true_labels).sum().item()
+        scores["accuracy"] = correct / len(y_true_labels)
+
+        # Calculate F1, Precision, Recall per class then average (macro)
+        classes = torch.unique(y_true_labels)
+        precisions, recalls, f1s = [], [], []
+        for cls in classes:
+            tp = ((y_pred_labels == cls) & (y_true_labels == cls)).sum().item()
+            fp = ((y_pred_labels == cls) & (y_true_labels != cls)).sum().item()
+            fn = ((y_pred_labels != cls) & (y_true_labels == cls)).sum().item()
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+            precisions.append(precision)
+            recalls.append(recall)
+            f1s.append(f1)
+        scores["precision"] = sum(precisions) / len(precisions) if precisions else 0.0
+        scores["recall"] = sum(recalls) / len(recalls) if recalls else 0.0
+        scores["f1"] = sum(f1s) / len(f1s) if f1s else 0.0
+
+        end = time.process_time()
+        scores["scoring_time"] = end - start
+        scores["score_n"] = len(y_pred)
+        return scores
+        
     
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         # Cast y_true, y_pred to numpy arrays if they are tensors
