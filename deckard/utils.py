@@ -538,7 +538,7 @@ def load_class(path, **kwargs):
         cls = import_class_from_file(file_path, class_name)
         if kwargs:
             cls = cls.__init__(**kwargs)
-    else:
+    else:        
         cls = instantiate({"_target_": path, **kwargs})
     return cls
 
