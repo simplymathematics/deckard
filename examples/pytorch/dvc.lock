@@ -6,8 +6,8 @@ stages:
     deps:
     - path: ./config/
       hash: md5
-      md5: ca265824c294d3fd6afc4ccb8d538b71.dir
-      size: 6081
+      md5: 34302d2b00b1aaa98916852317908e6c.dir
+      size: 6082
       nfiles: 29
     outs:
     - path: .deckard_rc
@@ -36,8 +36,8 @@ stages:
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
+      md5: f00a44ac18924c5b5537d1d87d8057d3
+      size: 22759
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -56,12 +56,12 @@ stages:
     outs:
     - path: output/data/torch_mnist.pkl
       hash: md5
-      md5: 47c3e4cd13bad8d56205c35dabaa5bfc
-      size: 220887467
+      md5: 3eadc203dae8cb38f89981b8a3ee923a
+      size: 220887457
     - path: output/scores/torch_mnist.json
       hash: md5
-      md5: 90eb95c4b575d83f93ded902ab6d4df2
-      size: 262
+      md5: 3fbf1a764099682bed874d0e423a6915
+      size: 287
   generate_data@torch_cifar:
     cmd: "deckard  data=torch_cifar  +files.data_file=data/torch_cifar.pkl  +files.score_file=scores/data/torch_cifar.json
       ~model  ~attack\n"
@@ -160,8 +160,8 @@ stages:
     deps:
     - path: ../../deckard/data/pytorch.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
+      md5: f00a44ac18924c5b5537d1d87d8057d3
+      size: 22759
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -180,12 +180,12 @@ stages:
     outs:
     - path: output/data/torch_cifar10.pkl
       hash: md5
-      md5: 2676ce8dfaec0b76c8786c3eed69faa0
-      size: 740910379
+      md5: cc0b83ea19aa3ba6b0a451d1741572a9
+      size: 740910369
     - path: output/scores/torch_cifar10.json
       hash: md5
-      md5: df15114efb3848aa8a75992240f165a3
-      size: 263
+      md5: 4768e58cdee0f34c4612285a23d9c30b
+      size: 278
   train@1:
     cmd: "deckard  data=torch_cifar10  ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_training
       ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
@@ -350,7 +350,7 @@ stages:
           targeted: false
           eps: 1
           minimal: false
-          batch_size: ${model.fit_params.batch_size}
+          batch_size: ${data.data_params.batch_size}
         attack_type: art.attacks.evasion.FastGradientMethod
       config/data/torch_mnist.yaml:
         _target_: deckard.data.pytorch.PytorchDataConfig
@@ -798,7 +798,7 @@ stages:
           targeted: false
           eps: 1
           minimal: false
-          batch_size: ${model.fit_params.batch_size}
+          batch_size: ${data.data_params.batch_size}
         attack_type: art.attacks.evasion.FastGradientMethod
       config/data/torch_cifar10.yaml:
         _target_: deckard.data.pytorch.PytorchDataConfig
@@ -1180,7 +1180,7 @@ stages:
           norm: 2
           targeted: false
           verbose: true
-          batch_size: ${model.fit_params.batch_size}
+          batch_size: ${data.data_params.batch_size}
         attack_size: 10
         attack_type: art.attacks.evasion.HopSkipJump
       config/data/torch_mnist.yaml:
@@ -1412,7 +1412,7 @@ stages:
           norm: 2
           targeted: false
           verbose: true
-          batch_size: ${model.fit_params.batch_size}
+          batch_size: ${data.data_params.batch_size}
         attack_size: 10
         attack_type: art.attacks.evasion.HopSkipJump
       config/data/torch_cifar10.yaml:

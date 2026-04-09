@@ -502,7 +502,7 @@ stages:
       --multirun
     deps:
       - outputs/data/${item.data}.pkl
-      - ./config/membership-inference-default.yaml
+      - ./config/inference-default.yaml
     outs:
       - outputs/logs/defended_membership_${item.data}_${item.model}_${item.defense}
     params:
