@@ -132,7 +132,7 @@ LOGGING = {
         "stream": {
             "class": "logging.StreamHandler",
             "formatter": "std",
-            "level": logging.WARNING
+            "level": logging.INFO
         },
     },
     "loggers": {
