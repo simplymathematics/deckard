@@ -36,7 +36,10 @@ class FairnessDataConfig(DataConfig):
         assert hasattr(self, "_X"), RuntimeError("self.X_ not found while loading FairnessDataConfig")
         assert hasattr(self, "_y"), RuntimeError("self.y_ not found whilte loading FairnessDataConfig")
         assert isinstance(self._X, pd.DataFrame), ValueError("Expected a dataframe for self.X_")
+        for col in self.groupby_columns:
+            assert col in self._X.columns
         self.groups_ = self._X.groupby(by=self.groupby_columns)
+        return self
         
     def _sample(self):
         """Override _sample to handle groupby objects for fairness analysis.
@@ -58,8 +61,8 @@ class FairnessDataConfig(DataConfig):
             group_indices = group_data.index
             self.X_test_groups[group_name] = group_data
             self.y_test_groups[group_name] = self.y_test.loc[group_indices]
-
-    
+        
+        
     def _score(self) -> dict:
         """Compute fairness scores for each group."""
         scores = {}

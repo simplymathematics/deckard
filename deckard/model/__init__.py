@@ -982,7 +982,7 @@ class ModelConfig(ConfigBase):
                 else:
                     # train the model if no model exists at the filepath
                     logger.info(f"Training model on {len(data.y_train)} samples...")
-                    if not hasattr(self, "training_time"):
+                    if self.training_time is None or not isinstance(self.training_time, float):
                         self._train(data.X_train, data.y_train)
                     try:
                         check_is_fitted(self._model)

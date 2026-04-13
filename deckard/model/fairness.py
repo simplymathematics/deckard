@@ -11,8 +11,7 @@ from sklearn.feature_selection import (
     r_regression,
 )
 
-from ..data import FairnessDataConfig
-from ..utils import ConfigBase
+from ..data.fairness import FairnessDataConfig
 from . import ModelConfig
 
 @dataclass

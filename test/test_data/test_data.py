@@ -37,7 +37,7 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        pipeline = config._init_pipeline()
+        pipeline, _ = config._init_pipeline()
         self.assertIsInstance(pipeline, Pipeline)
         self.assertEqual(len(pipeline.steps), 2)
         self.assertEqual(pipeline.steps[0][0], "imputer")

@@ -434,7 +434,10 @@ class DataConfig(ConfigBase):
         assert self.classifier in [True, False], "classifier must be a boolean value"
 
         self._target_ = "deckard.data.DataConfig"
-
+        if len(self.data_params) >=1:
+            pass
+        else:
+            self.data_params = {}
     def __hash__(self):
         return super().__hash__()
 
@@ -607,8 +610,6 @@ class DataConfig(ConfigBase):
         Sets ``self._train_indices``, ``self._test_indices``, and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
-        if not hasattr(self, "_X") or self._X is None:
-            raise ValueError("Data not loaded. Cannot sample.")
         stratify_col = None
         if self._X is None or self._y is None:
             raise ValueError("Data not loaded. Cannot sample.")
