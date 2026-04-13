@@ -7,7 +7,7 @@ attack_params :
   norm: 2
   targeted: false
   verbose: false
-  batch_size : ${data.data_params.batch_size}
+  batch_size : ${model.fit_params.batch_size}
 attack_size : 10
 _target_ : deckard.attack.AttackConfig
 alias: hsj

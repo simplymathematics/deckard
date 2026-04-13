@@ -31,7 +31,7 @@ hydra:
     study_name: evasion_attack
     storage: sqlite:///optuna.db
     direction: ${directions}
-    max_failure_rate: 1.0
+    # max_failure_rate: 1.0
     sampler:
       _target_: optuna.samplers.RandomSampler
       seed: 42

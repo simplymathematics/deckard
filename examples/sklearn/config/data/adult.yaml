@@ -5,5 +5,9 @@ _target_ : "deckard.DataConfig"
 classifier: True
 stratify : False
 alias: adult
+pipeline:
+  imputer: 
+    name: sklearn.impute.SimpleImputer
+    strategy: "mean"
 
 

@@ -2,7 +2,7 @@ defaults:
   - _self_
   - defense: null
 
-model_type: torch_example.ResNet18
+model_type: torch_example.py:ResNet18
 model_params:
     num_channels: 1 # For grayscale images like MNIST
     num_classes: 10 # Number of classes in the dataset

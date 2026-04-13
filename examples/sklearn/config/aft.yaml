@@ -2,17 +2,8 @@ covariates:
   - accuracy
   - train_time
   - predict_proba_time
-  - model.trainer.np_epochs
-  - model.trainer.batch_size
-  - data.sample.random_state
-  - adv_fit_time
-  - attack.init.eps
   - adv_failures
   - device_id
-fillna:
-  model.trainer.np_epochs: 20
-  model.trainer.batch_size: 1024
-  model.art.preprocessor.bit_depth: 32
 weibull:
   plot:
     file : weibull_aft.pdf
