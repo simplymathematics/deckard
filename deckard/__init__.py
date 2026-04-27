@@ -15,6 +15,26 @@ from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
 
+# Setting up some default dictionaries, lists for the CLI
+from .file import data_files, model_files, attack_files, all_files
+from .layers.compile_results import compile_results_main, compile_results_parser
+from .layers.survival import survival_main, survival_parser
+module_file_dict = {
+    "data": data_files + ["data_config_file"],
+    "model": model_files + ["model_config_file"],
+    "attack": attack_files + ["attack_config_file"],
+    "experiment": all_files,
+    "optimize": all_files,
+    None: all_files,
+}
+SUPPORTED_MODULES = list(module_file_dict.keys())
+
+layer_dict = {
+    "compile_results" : [compile_results_parser, compile_results_main], 
+    "survival" : [survival_parser, survival_main],
+}
+SUPPORTED_LAYERS = list(layer_dict.keys())
+
 """
 deckard
 =======
@@ -140,6 +160,9 @@ LOGGING = {
         "tests": {"handlers": ["stream"], "level": "DEBUG", "propagate": True},
     },
 }
+
+
+
 
 logging.getLogger("art").setLevel(logging.WARNING)
 logging.config.dictConfig(LOGGING)

@@ -13,24 +13,13 @@ from hydra.utils import instantiate
 from hydra.core.hydra_config import HydraConfig
 
 
-from .file import FileConfig, data_files, model_files, attack_files, all_files, default_placeholder_dict
+
 from .experiment import ExperimentConfig
 from .utils import ConfigBase
-from .layers.compile_results import compile_results_main, compile_results_parser
-from . import LOGGING
 
-module_file_dict = {
-    "data": data_files + ["data_config_file"],
-    "model": model_files + ["model_config_file"],
-    "attack": attack_files + ["attack_config_file"],
-    "experiment": all_files,
-    "optimize": all_files,
-    None: all_files,
-}
+from . import LOGGING, SUPPORTED_LAYERS, SUPPORTED_MODULES
 
-layer_dict = {
-    "compile_results" : [compile_results_parser, compile_results_main]
-}
+
 
 
 # Set up logging
@@ -41,8 +30,7 @@ logging.config.dictConfig(LOGGING)
 # Suppress sklearn runtime warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn")
 
-supported_modules = ["data", "model", "attack", "experiment", "optimize", None]
-supported_modules += list(layer_dict.keys())
+assert len(set(SUPPORTED_MODULES + SUPPORTED_LAYERS)) == (len(set(SUPPORTED_MODULES)) + len(set(SUPPORTED_LAYERS)))
 # Parse the config_dir argument first to set up config dir
 
 
