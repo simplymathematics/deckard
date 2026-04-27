@@ -3,6 +3,7 @@ import tempfile
 import pandas as pd
 from pathlib import Path
 from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 
 import numpy as np
 from deckard.data import DataConfig, DataPipelineConfig
@@ -28,6 +29,10 @@ class TestDataPipelineConfig(unittest.TestCase):
             },
         )
         self.y_test = pd.Series([1, 0])
+        self.pipeline_selector_dict = {
+            "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean", "dtype" : "num"},
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler", "dtype" : "num"},
+        }
 
     def test_pipelineconfig_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
@@ -66,7 +71,14 @@ class TestDataPipelineConfig(unittest.TestCase):
         self.assertIsNotNone(config.pipeline_transform_time)
         self.assertGreater(config.pipeline_transform_time, 0)
 
-
+    def test_pipeline_selector_initialization(self):
+        config = DataPipelineConfig(pipeline=self.pipeline_selector_dict)
+        pipeline, _, _ = config._init_pipeline()
+        self.assertIsInstance(pipeline, Pipeline)
+        self.assertIsInstance(pipeline.steps[0][1], ColumnTransformer)
+        pipeline.fit(self.X_train, self.y_train)
+        self.assertEqual(pipeline.steps[0][0], "preprocess")
+    
 class TestDataConfig(unittest.TestCase):
 
     def basic_config(self):

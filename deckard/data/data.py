@@ -7,7 +7,9 @@ from pathlib import Path
 
 from dataclasses import dataclass, field
 from typing import Tuple, Union
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
+
+import numpy as np
 
 # Scikit-learn
 from sklearn.datasets import (
@@ -28,7 +30,7 @@ from sklearn.feature_selection import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.compose import make_column_transformer
+from sklearn.compose import make_column_selector, ColumnTransformer
 
 from scipy.sparse import csr_matrix
 
@@ -691,12 +693,6 @@ class DataConfig(ConfigBase):
                     f"Mutual information could not be computed: {e}. Skipping mutual_info_classif scoring.",
                 )
             try:
-                scores["chi2"] = chi2(self.X_train, self.y_train)[0].tolist()
-            except ValueError as e:
-                logger.warning(
-                    f"Chi-squared test could not be computed: {e}. Skipping chi2 scoring.",
-                )
-            try:
                 scores["f_classif"] = f_classif(self.X_train, self.y_train)[0].tolist()
             except ValueError as e:
                 logger.warning(
@@ -867,6 +863,7 @@ class DataPipelineConfig(DataConfig):
         X_pipeline_steps = []
         y_pipeline_steps = []
         Xy_pipeline_steps = []
+        dtypes = []
         for step_name, step_config in self.pipeline.items():
             step_class = step_config.get(
                 "name",
@@ -874,23 +871,58 @@ class DataPipelineConfig(DataConfig):
             )
             fit_y = step_config.get("fit_y", False)
             fit_Xy = step_config.get("fit_xy", False)
+            dtype = step_config.get("dtype", None)
             step_config_without_name = {**step_config}
             del step_config_without_name["name"]
             if "fit_y" in step_config_without_name:
                 del step_config_without_name["fit_y"]
             if "fix_Xy" in step_config_without_name:
                 del step_config_without_name["fit_Xy"]
+            if "dtype" in step_config:
+                del step_config_without_name["dtype"]
             module_name, class_name = step_class.rsplit(".", 1)
             module = importlib.import_module(module_name)
             cls = module.__dict__[class_name]
             step_instance = cls(**step_config_without_name)
-            if fit_y is not True:
+            dtypes.append(dtype)
+            if fit_y is not True and fit_Xy is not True:
                 X_pipeline_steps.append((step_name, step_instance))
             elif fit_Xy is True:
                 Xy_pipeline_steps.append((step_name, step_instance))
             else:
                 y_pipeline_steps.append((step_name, step_instance))
-        X_pipeline = Pipeline(X_pipeline_steps)
+        
+
+        if dtypes is not None and any(x is not None for x in dtypes):
+
+            string_dtypes = {"object", "string", "category"}
+            num_dtypes = {"num", "numeric", "float", "int"}
+
+            transformers = []
+
+            for (name, transformer), dtype in zip(X_pipeline_steps, dtypes):
+
+                if dtype in num_dtypes:
+                    selector = make_column_selector(dtype_include=np.number)
+
+                elif dtype in string_dtypes:
+                    selector = make_column_selector(dtype_include=object)  # or "string" depending on your data
+
+                else:
+                    continue  # skip unknown dtype
+
+                transformers.append((name, transformer, selector))
+
+            X_pipeline = Pipeline(steps=[
+                ("preprocess", ColumnTransformer(
+                    transformers=transformers,
+                    remainder="passthrough",
+                    verbose_feature_names_out=False,
+                ))
+            ])
+
+        else:
+            X_pipeline = Pipeline(steps=X_pipeline_steps)
         if len(y_pipeline_steps) > 0:
             y_pipeline = y_pipeline_steps
         else:

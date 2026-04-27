@@ -11,8 +11,9 @@ import numpy as np
 from pathlib import Path
 from hydra.utils import instantiate
 
-from .data import DataConfig
-from .model import ModelConfig, DefenseConfig
+from .data import DataConfig, DataPipelineConfig
+from .model import ModelConfig
+from .model.defend import DefenseConfig
 from .attack import AttackConfig
 from .score import ScorerDictConfig
 from .file import FileConfig, data_files, model_files, attack_files
@@ -194,18 +195,19 @@ class ExperimentConfig(ConfigBase):
                 self.data = instantiate(self.data)
             elif isinstance(self.data, DictConfig):
                 data_dict = OmegaConf.to_container(self.data)
-                self.data = DataConfig(**data_dict)
             elif isinstance(self.data, str):
                 data_dict = DataConfig.from_yaml(self.data).to_dict()
-                self.data = DataConfig(**data_dict)
             elif isinstance(self.data, ConfigBase):
                 data_dict = self.data.to_dict()
-                self.data = DataConfig(**data_dict)
             elif isinstance(self.data, dict):
                 data_dict = self.data
-                self.data = DataConfig(**data_dict)
             else:
                 raise ValueError(f"Unsupported type for data: {type(self.data)}")
+            if "pipeline" not in data_dict:
+                self.data = DataConfig(**data_dict)
+            else:
+                self.data = DataPipelineConfig(**data_dict)
+
         assert isinstance(
             self.data,
             DataConfig,
