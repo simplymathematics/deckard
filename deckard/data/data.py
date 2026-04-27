@@ -28,6 +28,7 @@ from sklearn.feature_selection import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.compose import make_column_transformer
 
 from scipy.sparse import csr_matrix
 
@@ -37,223 +38,7 @@ from ..utils import ConfigBase, data_supported_filetypes
 # Setup logger
 logger = logging.getLogger(__name__)
 
-@dataclass
-class DataPipelineConfig(ConfigBase):
-    """Initializes a data pipeline configuration and fits it to the data in the call() method."""
-
-    pipeline: dict = field(default_factory=dict)
-
-    def __post_init__(self):
-        assert isinstance(
-            self.pipeline,
-            dict,
-        ), f"pipeline must be a dictionary, got {type(self.pipeline)}"
-        self.pipeline_fit_n = None
-        self.pipeline_transform_n = None
-        self.pipeline_fit_time = None
-        self.pipeline_transform_time = None
-        # Validate the pipeline configuration
-        for k, v in self.pipeline.items():
-            assert isinstance(
-                v,
-                dict,
-            ), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
-            assert (
-                "name" in v
-            ), f"Each step in pipeline must have a 'name' key, missing in step {k}"
-
-        return super().__post_init__()
-
-    def _init_pipeline(self):
-        if not isinstance(self.pipeline, (dict, DictConfig)):
-            raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
-        X_pipeline_steps = []
-        y_pipeline_steps = []
-        for step_name, step_config in self.pipeline.items():
-            step_class = step_config.get(
-                "name",
-                ValueError(f"Step {step_name} missing 'name' key"),
-            )
-            fit_y = step_config.get("fit_y", False)
-            step_config_without_name = {**step_config}
-            del step_config_without_name["name"]
-            if "fit_y" in step_config_without_name:
-                del step_config_without_name["fit_y"]
-            module_name, class_name = step_class.rsplit(".", 1)
-            module = importlib.import_module(module_name)
-            cls = module.__dict__[class_name]
-            step_instance = cls(**step_config_without_name)
-            if fit_y is not True:
-                X_pipeline_steps.append((step_name, step_instance))
-            else:
-                y_pipeline_steps.append((step_name, step_instance))
-        X_pipeline = Pipeline(X_pipeline_steps)
-        if len(y_pipeline_steps) > 0:
-            y_pipeline = y_pipeline_steps
-        else:
-            y_pipeline = None
-        return X_pipeline, y_pipeline
-
-    def _fit_transform_X(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        pipeline,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """Fits the data pipeline to the data and returns the transformed data.
-
-        Parameters
-        ----------
-        data : DataConfig
-            The data configuration object containing the training and testing data.
-
-        Returns
-        -------
-        pd.DataFrame
-            The transformed training and testing data.
-        """
-        if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
-            logger.info("Fitting data pipeline to training data")
-            # Fit and transform the training data
-            start = time.process_time()
-            pipeline.fit(X_train, y_train)
-            end = time.process_time()
-            before_shape = X_train.shape
-            if isinstance(X_train, pd.DataFrame):
-                train_cols = X_train.columns
-            elif isinstance(X_train, pd.Series):
-                train_cols = [X_train.name]
-            else:
-                train_cols = [f"feature_{i}" for i in range(X_train.shape[1])]
-            X_train = pipeline.transform(X_train)
-            # If csr_matrix, convert to dense
-            if isinstance(X_train, csr_matrix):
-                X_train = X_train.toarray()
-            train_cols = pipeline.get_feature_names_out(train_cols)
-            X_train = pd.DataFrame(X_train, columns=train_cols)
-            after_shape = X_train.shape
-            assert (
-                before_shape[0] == after_shape[0]
-            ), f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
-            self.pipeline_fit_time = end - start
-            self.pipeline_fit_n = X_train.shape[0]
-        if (
-            not hasattr(self, "pipeline_transform_time")
-            or self.pipeline_transform_time is None
-        ):
-            # Record transform time
-            start = time.process_time()
-            # Transform the testing data
-            before_shape = X_test.shape
-            if isinstance(X_test, pd.DataFrame):
-                test_cols = X_test.columns
-            elif isinstance(X_test, pd.Series):
-                test_cols = [X_test.name]
-            else:
-                test_cols = [f"feature_{i}" for i in range(X_test.shape[1])]
-            X_test = pipeline.transform(X_test)
-            if isinstance(X_test, csr_matrix):
-                X_test = X_test.toarray()
-            test_cols = pipeline.get_feature_names_out(test_cols)
-            # Ensure transformed data is a DataFrame with correct columns
-            X_test = pd.DataFrame(X_test, columns=test_cols)
-            after_shape = X_test.shape
-            assert (
-                before_shape[0] == after_shape[0]
-            ), f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
-            end = time.process_time()
-            self.pipeline_transform_time = end - start
-            self.pipeline_transform_n = X_test.shape[0]
-        return X_train, X_test, y_train, y_test
-
-    def _fit_transform_y(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        pipeline,
-        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """Fits the data pipeline to y_train and transforms y_train/y_test."""
-
-        # Normalize y to 2D for sklearn transformers
-        y_train_2d = (
-            y_train.to_frame()
-            if isinstance(y_train, pd.Series)
-            else pd.DataFrame(y_train)
-        )
-        y_test_2d = (
-            y_test.to_frame()
-            if isinstance(y_test, pd.Series)
-            else pd.DataFrame(y_test)
-        )
-        
-        if not hasattr(self, "pipeline_y_fit_time") or self.pipeline_y_fit_time is None:
-            logger.info("Fitting data pipeline to training target")
-            start = time.process_time()
-            for name, stage in pipeline:
-                logger.debug(f"Running data pipeline stage: {name}")
-                stage.fit(y_train_2d)
-                y_train_t = stage.transform(y_train_2d)
-            end = time.process_time()
-
-            before_shape = y_train_2d.shape
-            y_train_t = stage.transform(y_train_2d)
-            if isinstance(y_train_t, csr_matrix):
-                y_train_t = y_train_t.toarray()
-                y_train_t = pd.DataFrame(y_train_t)
-                after_shape = y_train_t.shape
-
-                assert (
-                before_shape[0] == after_shape[0]
-                ), f"Number of samples changed during y fit_transform from {before_shape[0]} to {after_shape[0]}"
-
-            self.pipeline_y_fit_time = end - start
-            self.pipeline_y_fit_n = y_train_t.shape[0]
-            y_train = pd.Series(y_train_t)
-
-        if (
-            not hasattr(self, "pipeline_y_transform_time")
-            or self.pipeline_y_transform_time is None
-        ):
-            start = time.process_time()
-
-            before_shape = y_test_2d.shape
-            y_test_t = stage.transform(y_test_2d)
-            if isinstance(y_test_t, csr_matrix):
-                y_test_t = y_test_t.toarray()
-                y_test_t = pd.DataFrame(y_test_t)
-                after_shape = y_test_t.shape
-
-                assert (
-                before_shape[0] == after_shape[0]
-                ), f"Number of samples changed during y transform from {before_shape[0]} to {after_shape[0]}"
-
-            end = time.process_time()
-            self.pipeline_y_transform_time = end - start
-            self.pipeline_y_transform_n = y_test_t.shape[0]
-            y_test = pd.Series(y_test_t)
-
-        return X_train, X_test, y_train, y_test
-
-
-    def __call__(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        X_pipeline, y_pipeline = self._init_pipeline()
-        X_train, X_test, y_train, y_test = self._fit_transform_X(X_train, X_test, y_train, y_test, X_pipeline)
-        if y_pipeline is not None:
-            X_train, X_test, y_train, y_test = self._fit_transform_y(X_train, X_test, y_train, y_test, y_pipeline)
-        return X_train, X_test, y_train, y_test       
-        
-
-        
+    
 
 
 @dataclass
@@ -275,8 +60,6 @@ class DataConfig(ConfigBase):
         Specifies stratification for sampling; can be None, True (use target), or a column name.
     classifier: bool
         Whether the task is classification (True) or regression (False).
-    pipeline: DataPipelineConfig
-        Optional data pipeline configuration for preprocessing steps.
     drop: list
         List of columns to drop from the dataset.
     target: Union[str, None]
@@ -297,9 +80,9 @@ class DataConfig(ConfigBase):
         Number of testing samples.
     alias: str
         Optional alias for the dataset configuration.
-    _train_indices : list
+    train_indices : list
         Indices for training samples.
-    _test_indices : list
+    test_indices : list
         Indices for testing samples.
     X_train : pd.DataFrame
         Training feature matrix.
@@ -365,13 +148,13 @@ class DataConfig(ConfigBase):
     random_state: int = 42
     stratify: Union[None, str, bool] = True
     classifier: bool = True
-    pipeline: Union[DataPipelineConfig, None] = None
     target: Union[str, None] = None
     drop: list = None
     keep: list = None
     alias: Union[str, None] = None
+    score_dict: dict = field(init=False, repr=True)
 
-    def __post_init__(self):
+    def _validate_init(self):
         """
         Post-initialization method for setting up data-related attributes.
 
@@ -402,8 +185,8 @@ class DataConfig(ConfigBase):
         self.keep = [] if not hasattr(self, "keep") or self.keep is None else self.keep
         self._X = None
         self._y = None
-        self._train_indices = None
-        self._test_indices = None
+        self.train_indices = None
+        self.test_indices = None
         self.X_train = None
         self.y_train = None
         self.X_test = None
@@ -412,32 +195,18 @@ class DataConfig(ConfigBase):
         self.test_n = None
         self.data_load_time = None
         self.data_sample_time = None
-        self._train_indices = None
-        self._test_indices = None
-        if self.pipeline is not None:
-            if isinstance(self.pipeline, dict):
-                self.pipeline = DataPipelineConfig(pipeline=self.pipeline)
-            elif isinstance(self.pipeline, DictConfig):
-                self.pipeline = DataPipelineConfig(
-                    pipeline=OmegaConf.to_container(self.pipeline),
-                )
-            elif isinstance(self.pipeline, DataPipelineConfig):
-                pass
-            else:
-                raise ValueError(
-                    f"pipeline must be a dict, DictConfig, or Pipeline instance, got {type(self.pipeline)}",
-                )
-            assert isinstance(
-                self.pipeline,
-                (DataPipelineConfig),
-            ), f"pipeline must be a DataPipelineConfig instance, got {type(self.pipeline)}"
+        self.train_indices = None
+        self.test_indices = None
+        self.score_dict = {}
         assert self.classifier in [True, False], "classifier must be a boolean value"
 
         self._target_ = "deckard.data.DataConfig"
-        if len(self.data_params) >=1:
-            pass
-        else:
+        if not self.data_params:
             self.data_params = {}
+    
+    def __post_init__(self):
+        self._validate_init()
+        
     def __hash__(self):
         return super().__hash__()
 
@@ -607,7 +376,7 @@ class DataConfig(ConfigBase):
 
         Side Effects
         ------------
-        Sets ``self._train_indices``, ``self._test_indices``, and ``self.data_sample_time``.
+        Sets ``self.train_indices``, ``self.test_indices``, and ``self.data_sample_time``.
         Logs the time taken for sampling.
         """
         stratify_col = None
@@ -644,12 +413,12 @@ class DataConfig(ConfigBase):
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time
         logger.info(f"Data sampled in {self.data_sample_time:.2f} seconds")
-        self._train_indices = train_idx
-        self._test_indices = test_idx
-        self.X_train = self._X.iloc[self._train_indices].reset_index(drop=True)
-        self.y_train = self._y.iloc[self._train_indices].reset_index(drop=True)
-        self.X_test = self._X.iloc[self._test_indices].reset_index(drop=True)
-        self.y_test = self._y.iloc[self._test_indices].reset_index(drop=True)
+        self.train_indices = train_idx
+        self.test_indices = test_idx
+        self.X_train = self._X.iloc[self.train_indices].reset_index(drop=True)
+        self.y_train = self._y.iloc[self.train_indices].reset_index(drop=True)
+        self.X_test = self._X.iloc[self.test_indices].reset_index(drop=True)
+        self.y_test = self._y.iloc[self.test_indices].reset_index(drop=True)
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
         assert isinstance(
@@ -662,6 +431,28 @@ class DataConfig(ConfigBase):
             (pd.DataFrame, pd.Series),
         ), "X_test must be a DataFrame"
         assert isinstance(self.y_test, pd.Series), "y_test must be a Series"
+        assert (
+                hasattr(self, "train_indices") and self.train_indices is not None
+            ), "Train indices must be set after sampling"
+        assert (
+            hasattr(self, "test_indices") and self.test_indices is not None
+        ), "Test indices must be set after sampling"
+        assert isinstance(
+            self.X_train,
+            (pd.DataFrame, pd.Series),
+        ), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
+        assert isinstance(
+            self.y_train,
+            pd.Series,
+        ), f"y_train must be a Series, got {type(self.y_train)}"
+        assert isinstance(
+            self.X_test,
+            (pd.DataFrame, pd.Series),
+        ), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
+        assert isinstance(
+            self.y_test,
+            pd.Series,
+        ), f"y_test must be a Series, got {type(self.y_test)}"
 
     def _load_generic_sklearn(self, loader_func, **loader_params):
         """
@@ -759,6 +550,8 @@ class DataConfig(ConfigBase):
         ValueError
             If a CSV file does not contain a 'target' column.
         """
+        if hasattr(self, "data_load_time") and self.data_load_time is not None:
+            return
         supported_datasets = {
             "adult": self._load_adult_income_data,
             "make_classification": self._make_classification_data,
@@ -964,6 +757,28 @@ class DataConfig(ConfigBase):
         scores["y_test_cdf"] = self._empirical_cdf(self.y_test).tolist()
         return scores
 
+    def _prepare_data_file(self, data_file: Union[str, None]) -> bool:
+        """
+        Handles loading/saving behavior for data_file.
+
+        Returns
+        -------
+        Tuple[DataConfig, bool]
+            (possibly loaded config instance, save_flag)
+        """
+        if data_file is not None:
+            data_path = Path(data_file)
+            if data_path.exists():
+                logger.info(f"Loading existing DataConfig from {data_file}")
+                return self.load(data_file), False
+            logger.debug(f"Creating directory for DataConfig at {data_file}")
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            return True
+
+        logger.debug("No data_file provided, data will not be saved")
+        return False
+    
+    
     def __call__(
         self,
         data_file: Union[str, None] = None,
@@ -990,114 +805,343 @@ class DataConfig(ConfigBase):
         AssertionError
             If train or test indices are not set after sampling.
         """
-
-        # Load existing data if filepath is provided and file exists, else create directory
-        if data_file is not None and Path(data_file).exists():
-            # Load existing data
-            logger.info(f"Loading existing DataConfig from {data_file}")
-            self = self.load(data_file)
-            save_flag = False
-        elif data_file is not None and not Path(data_file).exists():
-            # Ensure directory exists
-            logger.debug(f"Creating directory for DataConfig at {data_file}")
-            Path(data_file).parent.mkdir(parents=True, exist_ok=True)
-            save_flag = True
-        else:
-            logger.debug("No data_file provided, data will not be saved")
-            save_flag = False
-
-        # Load scores if filepath is provided and file exists, else create directory
-        if score_file is not None and Path(score_file).exists():
-            # Load existing scores
-            logger.info(f"Loading existing scores from {score_file}")
-            scores = self.load_scores(score_file)
-        elif score_file is not None:
-            # Ensure directory exists
-            logger.debug(f"Creating directory for scores at {score_file}")
-            Path(score_file).parent.mkdir(parents=True, exist_ok=True)
-            scores = {}
-        else:
-            logger.debug("No score_file provided, scores will not be saved")
-            scores = {}
+        save_flag = self._prepare_data_file(data_file=data_file)
+        scores = self.read_scores_from_disk(score_file)
         # Load data if not already loaded
-        if not hasattr(self, "_data_load_time") or self.data_load_time is None:
-            start_time = time.process_time()
+        if not hasattr(self, "data_load_time") or self.data_load_time is None:
             self._load_data()
-            end_time = time.process_time()
-            self.data_load_time = end_time - start_time
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
+        time_dict = {"data_load_time" : self.data_load_time}
         # Sample data if not already sampled
-        if not hasattr(self, "_data_sample_time") or self.data_sample_time is None:
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
             # Sample data
             self._sample()
-            assert (
-                hasattr(self, "_train_indices") and self._train_indices is not None
-            ), "Train indices must be set after sampling"
-            assert (
-                hasattr(self, "_test_indices") and self._test_indices is not None
-            ), "Test indices must be set after sampling"
-        assert isinstance(
-            self.X_train,
-            (pd.DataFrame, pd.Series),
-        ), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
-        assert isinstance(
-            self.y_train,
-            pd.Series,
-        ), f"y_train must be a Series, got {type(self.y_train)}"
-        assert isinstance(
-            self.X_test,
-            (pd.DataFrame, pd.Series),
-        ), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
-        assert isinstance(
-            self.y_test,
-            pd.Series,
-        ), f"y_test must be a Series, got {type(self.y_test)}"
-        if self.pipeline is not None:
-            self.X_train, self.X_test, self.y_train, self.y_test = self.pipeline(
-                self.X_train,
-                self.X_test,
-                self.y_train,
-                self.y_test,
-            )
-            time_dict = {
-                "data_load_time": self.data_load_time,
-                "data_sample_time": self.data_sample_time,
-                "pipeline_fit_time": self.pipeline.pipeline_fit_time,
-                "pipeline_fit_n": self.pipeline.pipeline_fit_n,
-                "pipeline_transform_time": self.pipeline.pipeline_transform_time,
-                "pipeline_transform_n": self.pipeline.pipeline_transform_n,
-            }
-        else:
-            # Prepare return dictionary
-            time_dict = {
-                "data_load_time": self.data_load_time,
-                "data_sample_time": self.data_sample_time,
-            }
-            logger.info(
-                f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
-            )
+        time_dict["data_sample_time"] = self.data_sample_time,
+        logger.info(
+            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+        )
         data_scores = self._score()
         all_scores = {**scores, **data_scores, **time_dict}
         self.score_dict = all_scores
         assert hasattr(self, "score_dict"), "score_dict must be set"
-        assert isinstance(
-            self.X_train,
-            (pd.DataFrame, pd.Series),
-        ), f"X_train must be a DataFrame or Series, got {type(self.X_train)}"
-        assert isinstance(
-            self.y_train,
-            pd.Series,
-        ), f"y_train must be a Series, got {type(self.y_train)}"
-        assert isinstance(
-            self.X_test,
-            (pd.DataFrame, pd.Series),
-        ), f"X_test must be a DataFrame or Series, got {type(self.X_test)}"
-        assert isinstance(
-            self.y_test,
-            pd.Series,
-        ), f"y_test must be a Series, got {type(self.y_test)}"
+    
         if score_file is not None and not Path(score_file).exists():
             self.save_scores(all_scores, score_file)
         if save_flag:
             self.save(data_file)
         return self.score_dict
+
+    
+
+
+@dataclass
+class DataPipelineConfig(DataConfig):
+    """Initializes a data pipeline configuration and fits it to the data in the call() method."""
+
+    pipeline: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self._validate_init()
+        assert isinstance(
+            self.pipeline,
+            dict,
+        ), f"pipeline must be a dictionary, got {type(self.pipeline)}"
+        self.pipeline_fit_n = None
+        self.pipeline_transform_n = None
+        self.pipeline_fit_time = None
+        self.pipeline_transform_time = None
+        # Validate the pipeline configuration
+        for k, v in self.pipeline.items():
+            assert isinstance(
+                v,
+                dict,
+            ), f"Each step in pipeline must be a dictionary, got {type(v)} for step {k}"
+            assert (
+                "name" in v
+            ), f"Each step in pipeline must have a 'name' key, missing in step {k}"
+
+
+    def _init_pipeline(self):
+        if not isinstance(self.pipeline, (dict, DictConfig)):
+            raise ValueError(f"Invalid pipeline configuration: {self.pipeline}")
+        X_pipeline_steps = []
+        y_pipeline_steps = []
+        Xy_pipeline_steps = []
+        for step_name, step_config in self.pipeline.items():
+            step_class = step_config.get(
+                "name",
+                ValueError(f"Step {step_name} missing 'name' key"),
+            )
+            fit_y = step_config.get("fit_y", False)
+            fit_Xy = step_config.get("fit_xy", False)
+            step_config_without_name = {**step_config}
+            del step_config_without_name["name"]
+            if "fit_y" in step_config_without_name:
+                del step_config_without_name["fit_y"]
+            if "fix_Xy" in step_config_without_name:
+                del step_config_without_name["fit_Xy"]
+            module_name, class_name = step_class.rsplit(".", 1)
+            module = importlib.import_module(module_name)
+            cls = module.__dict__[class_name]
+            step_instance = cls(**step_config_without_name)
+            if fit_y is not True:
+                X_pipeline_steps.append((step_name, step_instance))
+            elif fit_Xy is True:
+                Xy_pipeline_steps.append((step_name, step_instance))
+            else:
+                y_pipeline_steps.append((step_name, step_instance))
+        X_pipeline = Pipeline(X_pipeline_steps)
+        if len(y_pipeline_steps) > 0:
+            y_pipeline = y_pipeline_steps
+        else:
+            y_pipeline = None
+        if len(Xy_pipeline_steps) > 0:
+            Xy_pipeline = Xy_pipeline_steps
+        else:
+            Xy_pipeline = None
+        return X_pipeline, y_pipeline, Xy_pipeline
+
+    def _fit_transform_X(
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        pipeline,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """Fits the data pipeline to the data and returns the transformed data.
+
+        Parameters
+        ----------
+        data : DataConfig
+            The data configuration object containing the training and testing data.
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed training and testing data.
+        """
+        if not hasattr(self, "pipeline_fit_time") or self.pipeline_fit_time is None:
+            logger.info("Fitting data pipeline to training data")
+            # Fit and transform the training data
+            start = time.process_time()
+            pipeline.fit(X_train, y_train)
+            end = time.process_time()
+            before_shape = X_train.shape
+            if isinstance(X_train, pd.DataFrame):
+                train_cols = X_train.columns
+            elif isinstance(X_train, pd.Series):
+                train_cols = [X_train.name]
+            else:
+                train_cols = [f"feature_{i}" for i in range(X_train.shape[1])]
+            X_train = pipeline.transform(X_train)
+            # If csr_matrix, convert to dense
+            if isinstance(X_train, csr_matrix):
+                X_train = X_train.toarray()
+            train_cols = pipeline.get_feature_names_out(train_cols)
+            X_train = pd.DataFrame(X_train, columns=train_cols)
+            after_shape = X_train.shape
+            assert (
+                before_shape[0] == after_shape[0]
+            ), f"Number of samples changed during fit_transform from {before_shape[0]} to {after_shape[0]}"
+            self.pipeline_fit_time = end - start
+            self.pipeline_fit_n = X_train.shape[0]
+        if (
+            not hasattr(self, "pipeline_transform_time")
+            or self.pipeline_transform_time is None
+        ):
+            # Record transform time
+            start = time.process_time()
+            # Transform the testing data
+            before_shape = X_test.shape
+            if isinstance(X_test, pd.DataFrame):
+                test_cols = X_test.columns
+            elif isinstance(X_test, pd.Series):
+                test_cols = [X_test.name]
+            else:
+                test_cols = [f"feature_{i}" for i in range(X_test.shape[1])]
+            X_test = pipeline.transform(X_test)
+            if isinstance(X_test, csr_matrix):
+                X_test = X_test.toarray()
+            test_cols = pipeline.get_feature_names_out(test_cols)
+            # Ensure transformed data is a DataFrame with correct columns
+            X_test = pd.DataFrame(X_test, columns=test_cols)
+            after_shape = X_test.shape
+            assert (
+                before_shape[0] == after_shape[0]
+            ), f"Number of samples changed during transform from {before_shape[0]} to {after_shape[0]}"
+            end = time.process_time()
+            self.pipeline_transform_time = end - start
+            self.pipeline_transform_n = X_test.shape[0]
+        return X_train, X_test, y_train, y_test
+
+
+    
+    def _fit_transform_y(
+        self,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        pipeline,
+        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """Fits the data pipeline to y_train and transforms y_train/y_test."""
+
+        # Normalize y to 2D for sklearn transformers
+        y_train_2d = (
+            y_train.to_frame()
+            if isinstance(y_train, pd.Series)
+            else pd.DataFrame(y_train)
+        )
+        y_test_2d = (
+            y_test.to_frame()
+            if isinstance(y_test, pd.Series)
+            else pd.DataFrame(y_test)
+        )
+        
+        if not hasattr(self, "pipeline_y_fit_time") or self.pipeline_y_fit_time is None:
+            logger.info("Fitting data pipeline to training target")
+            start = time.process_time()
+            for name, stage in pipeline:
+                logger.debug(f"Running data pipeline stage: {name}")
+                stage.fit(y_train_2d)
+                y_train_t = stage.transform(y_train_2d)
+            end = time.process_time()
+
+            before_shape = y_train_2d.shape
+            y_train_t = stage.transform(y_train_2d)
+            if isinstance(y_train_t, csr_matrix):
+                y_train_t = y_train_t.toarray()
+                y_train_t = pd.DataFrame(y_train_t)
+                after_shape = y_train_t.shape
+
+                assert (
+                before_shape[0] == after_shape[0]
+                ), f"Number of samples changed during y fit_transform from {before_shape[0]} to {after_shape[0]}"
+
+            self.pipeline_y_fit_time = end - start
+            self.pipeline_y_fit_n = y_train_t.shape[0]
+            y_train = pd.Series(y_train_t)
+
+        if (
+            not hasattr(self, "pipeline_y_transform_time")
+            or self.pipeline_y_transform_time is None
+        ):
+            start = time.process_time()
+
+            before_shape = y_test_2d.shape
+            y_test_t = stage.transform(y_test_2d)
+            if isinstance(y_test_t, csr_matrix):
+                y_test_t = y_test_t.toarray()
+                y_test_t = pd.DataFrame(y_test_t)
+                after_shape = y_test_t.shape
+
+                assert (
+                before_shape[0] == after_shape[0]
+                ), f"Number of samples changed during y transform from {before_shape[0]} to {after_shape[0]}"
+
+            end = time.process_time()
+            self.pipeline_y_transform_time = end - start
+            self.pipeline_y_transform_n = y_test_t.shape[0]
+            y_test = pd.Series(y_test_t)
+
+        return X_train, X_test, y_train, y_test
+    
+    
+    def _fit_transform_Xy(
+        self,
+        X,
+        y,
+        pipeline,
+        ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        if not hasattr(self, "pipeline_Xy_fit_time") or self.pipeline_y_fit_time is None:
+            start = time.process_time()
+            
+            new_X = X.copy()
+            new_y = y.copy()
+            for name, stage in pipeline:
+                logger.debug(f"Running data pipeline stage: {name}")
+                stage.fit(new_X, new_y)
+                new_X, new_y = stage.transform()
+            end = time.process_time()
+            self.pipeline_Xy_fit_time = start - end
+        else:
+            assert hasattr(self, "_X") 
+            assert hasattr(self, "_y")
+            return self._X, self._y
+        
+
+    def __call__(
+        self,
+        data_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
+    ) -> dict:
+        """
+        Loads and samples the dataset, splits it into training and testing sets, and returns timing and scoring information.
+        Parameters
+        ----------
+        data_file : Union[str, None]
+            Path to save loaded data as CSV. If None, data is not saved.
+        score_file : Union[str, None]
+            Path to save scores as CSV. If None, scores are not saved.
+        Returns
+        -------
+        dict:
+            A dictionary containing:
+            - 'data_load_time': Time taken to load the data.
+            - 'data_sample_time': Time taken to sample/split the data.
+            - Additional times/scores can be added in the future.
+
+        Raises
+        ------
+        AssertionError
+            If train or test indices are not set after sampling.
+        """
+        save_flag = self._prepare_data_file(data_file=data_file)
+        scores = self.read_scores_from_disk(score_file)
+        # Load data if not already loaded
+        if not hasattr(self, "data_load_time") or self.data_load_time is None:
+            self._load_data()
+            logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
+        time_dict = {"data_load_time" : self.data_load_time}
+        X_pipeline, y_pipeline, Xy_pipeline = self._init_pipeline()
+        
+        # Fit Xy (pre-sample) pipeline
+        if not hasattr(self, "data_sample_time") or self.data_sample_time is None:
+            if Xy_pipeline is not None:
+                assert self._X is not None
+                assert self._y is not None
+                self._X, self._y = self._fit_transform_Xy(self._X,self._y)
+                self._sample()
+            else:
+                self._sample()
+        time_dict["data_sample_time"] = self.data_sample_time,
+        logger.info(
+            f"Train set size: {len(self.X_train)}, Test set size: {len(self.X_test)}",
+        )
+        # Fit X pipeline
+        self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(self.X_train, self.X_test, self.y_train, self.y_test, X_pipeline)
+        # Fit y pipeline
+        if y_pipeline is not None:
+            self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_y(self.X_train, self.X_test, self.y_train, self.y_test, y_pipeline)
+        time_dict = {
+            "data_load_time": self.data_load_time,
+            "data_sample_time": self.data_sample_time,
+            "pipeline_fit_time": self.pipeline_fit_time,
+            "pipeline_fit_n": self.pipeline_fit_n,
+            "pipeline_transform_time": self.pipeline_transform_time,
+            "pipeline_transform_n": self.pipeline_transform_n,
+        }
+        self.score_dict.update(**time_dict)
+        data_scores = self._score()
+        all_scores = {**scores, **data_scores, **time_dict}
+        self.score_dict = all_scores
+        assert hasattr(self, "score_dict"), "score_dict must be set"
+    
+        if score_file is not None and not Path(score_file).exists():
+            self.save_scores(all_scores, score_file)
+        if save_flag:
+            self.save(data_file)
+        return self.score_dict
+   
+        

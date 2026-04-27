@@ -9,8 +9,8 @@ from hashlib import md5
 
 
 from dataclasses import dataclass, field
-from typing import Union, Dict, List, Optional, cast, Callable
-from omegaconf import ListConfig, DictConfig
+from typing import Union, List, Optional, cast, Callable
+
 from hydra.utils import instantiate
 
 # PyTorch
@@ -100,6 +100,7 @@ class PytorchDataConfig(DataConfig):
         self.data_load_time = None
         self.data_sample_time = None
         self.data_score_time = None
+        self.data_params = {}
         
 
     def __hash__(self):
@@ -119,7 +120,7 @@ class PytorchDataConfig(DataConfig):
         """
         dataset_name = self.dataset_name.lower()
         if dataset_name not in pytorch_dataset_dict:
-            dataset_class = instantiate({"_target_" : dataset_name, **self.data_params})
+            dataset_class = load_class(dataset_name, **self.data_params)
         else:
             dataset_class = pytorch_dataset_dict[dataset_name]
 
@@ -538,18 +539,18 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         self.test_transform = test_transform
         valid_split = "test" if self.val else "valid"
         train_ds = self._as_dataset(self.dataset, split="train", transform=train_transform)
+        test_ds = self._as_dataset(self.dataset, split=valid_split, transform=test_transform)
         if self.train_size:
             train_ds = self._truncate_dataset(train_ds, self.train_size)
             self.train_n = self.train_size
         else:
-            self.test_n = len(test_ds)
-            logger.warning("Training size not specified")
-        test_ds = self._as_dataset(self.dataset, split=valid_split, transform=test_transform)
+            self.train_n = len(train_ds)
         if self.test_size:
             test_ds = self._truncate_dataset(test_ds, size=self.test_size)
             self.test_n = self.test_size
         else:
             self.test_n = len(test_ds)
+        
 
         # Minimal placeholders to satisfy parent __call__ checks
         self._X = (train_ds, test_ds)
@@ -665,6 +666,3 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         score_dict["train_n"] = len(self.X_train)
         score_dict["test_n"] = len(self.X_test)
         return score_dict
-        
-        
-        

@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from hashlib import md5
 from typing import Union, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -34,6 +34,7 @@ data_supported_filetypes = [
 @dataclass
 class ConfigBase:
     # _target_: str = "deckard.utils.ConfigBase"
+    score_dict :dict = field(default_factory=dict)
 
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
@@ -159,6 +160,25 @@ class ConfigBase:
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
         logger.info(f"Data saved to {data_path}")
 
+    def read_scores_from_disk(self, score_file):
+        if score_file is not None and Path(score_file).exists():
+            # Load existing scores
+            logger.info(f"Loading existing scores from {score_file}")
+            disk_scores = self.load_scores(score_file)
+            scores = {**self.score_dict, **disk_scores}
+        elif score_file is not None:
+            # Ensure directory exists
+            logger.debug(f"Creating directory for scores at {score_file}")
+            Path(score_file).parent.mkdir(parents=True, exist_ok=True)
+            scores = self.score_dict
+        else:
+            logger.debug("No score_file provided, scores will not be saved")
+            if hasattr(self, "score_dict"):
+                scores = self.score_dict
+            else:
+                scores = {}
+        return scores
+    
     def get_call_params(self) -> dict:
         """
         Retrieves the parameters required to call the __call__ method of the instance.
@@ -509,7 +529,7 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
         return data
 
 
-def import_class_from_file(file_path: str, class_name: str):
+def import_class_from_file(file_path: str, class_name: str, *args, **kwargs):
     file_path = Path(file_path).resolve()
 
     if not file_path.exists():
@@ -524,21 +544,25 @@ def import_class_from_file(file_path: str, class_name: str):
     sys.modules[file_path.stem] = module
     spec.loader.exec_module(module)
 
-    return getattr(module, class_name)
+    cls = getattr(module, class_name)
+    return cls(*args, **kwargs)
 
 
-def load_class(path, **kwargs):
-    if ":" in path:
-        file_path, class_name = path.split(":", 1)
+def load_class(cls, *args, **kwargs):
+    if ":" in cls:
+        file_path, class_name = cls.split(":", 1)
         file_path = Path(file_path).resolve()
 
         if not file_path.exists():
             raise FileNotFoundError(file_path)
 
-        cls = import_class_from_file(file_path, class_name)
-        if kwargs:
-            cls = cls.__init__(**kwargs)
-    else:        
+        cls = import_class_from_file(file_path, class_name, *args, **kwargs)
+    else: 
+        if not Path(cls).exists():
+            try:
+               _ = importlib.import_module(cls.split(".")[0]) 
+            except ImportError as e:
+                raise ImportError(e)         
         cls = instantiate({"_target_": path, **kwargs})
     return cls
 

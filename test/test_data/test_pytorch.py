@@ -49,7 +49,7 @@ class TestPytorchDataConfig(unittest.TestCase):
         self.assertIsInstance(self.config.y_test, Tensor)
 
     def test_call(self):
-        scores = self.config(data_file=str(Path(self.temp_dir) / "data.pt"))
+        scores = self.config(data_file=str(Path(self.temp_dir) / "data.pkl"))
         self.assertIn("data_load_time", scores)
         self.assertIn("data_sample_time", scores)
         self.assertGreater(scores["data_load_time"], 0)
@@ -57,7 +57,7 @@ class TestPytorchDataConfig(unittest.TestCase):
 
     def test_invalid_dataset_name(self):
         self.config.dataset_name = "invalid_dataset"
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(ImportError):
             self.config._load_data()
 
     def test_hash_method(self):

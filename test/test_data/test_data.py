@@ -16,11 +16,11 @@ class TestDataPipelineConfig(unittest.TestCase):
         }
         self.X_train = pd.DataFrame(
             {
-                "feature1": [1.0, 2.0, np.nan, 4.0],
-                "feature2": [np.nan, 1.0, 2.0, 3.0],
+                "feature1": [1.0, 2.0, np.nan, 4.0, 5.0, 1.0, 2.0, np.nan, 4.0, 5.0, ],
+                "feature2": [np.nan, 1.0, 2.0, 3.0, 4.0, np.nan, 1.0, 2.0, 3.0, 4.0, ],
             },
         )
-        self.y_train = pd.Series([0, 1, 0, 1])
+        self.y_train = pd.Series([0, 1, 0, 1, 0, 0, 1, 0, 1, 0])
         self.X_test = pd.DataFrame(
             {
                 "feature1": [5.0, 6.0],
@@ -37,7 +37,7 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        pipeline, _ = config._init_pipeline()
+        pipeline, _, _ = config._init_pipeline()
         self.assertIsInstance(pipeline, Pipeline)
         self.assertEqual(len(pipeline.steps), 2)
         self.assertEqual(pipeline.steps[0][0], "imputer")
@@ -45,26 +45,24 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_fit_and_transform(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        X_train_transformed, X_test_transformed, _, _ = config(
-            self.X_train,
-            self.X_test,
-            self.y_train,
-            self.y_test,
-        )
-        self.assertEqual(X_train_transformed.shape, (4, 2))
-        self.assertEqual(X_test_transformed.shape, (2, 2))
-        self.assertFalse(self.X_train.equals(X_train_transformed))
-        self.assertFalse(self.X_test.equals(X_test_transformed))
+        config._X = self.X_train
+        config._y = self.y_train
+        config.data_load_time = 3
+        config()
+        self.assertEqual(config.X_train.shape, (8, 2))
+        self.assertEqual(config.X_test.shape, (2, 2))
+        self.assertFalse(self.X_train.equals(config.X_train))
+        self.assertFalse(self.X_test.equals(config.X_test))
 
     def test_pipeline_fit_time(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        config(self.X_train, self.X_test, self.y_train, self.y_test)
+        config()
         self.assertIsNotNone(config.pipeline_fit_time)
         self.assertGreater(config.pipeline_fit_time, 0)
 
     def test_pipeline_transform_time(self):
         config = DataPipelineConfig(pipeline=self.pipeline_config_dict)
-        config(self.X_train, self.X_test, self.y_train, self.y_test)
+        config()
         self.assertIsNotNone(config.pipeline_transform_time)
         self.assertGreater(config.pipeline_transform_time, 0)
 
