@@ -1,4 +1,4 @@
 model_search:
-  ++defense.defense_type: art.defences.preprocessor.FeatureSqueezing
+  ++defense.defense_name: art.defences.preprocessor.FeatureSqueezing
   ++defense.defense_params.bit_depth: int(1,2,4,8,16,32,64)
   # ++defense.defense_params.preprocessing: False

@@ -1,4 +1,4 @@
-defense_type: art.defences.postprocessor.GaussianNoise
+defense_name: art.defences.postprocessor.GaussianNoise
 defense_params:
     scale: .2
     apply_fit : False

@@ -1,4 +1,4 @@
-defense_type: art.defences.postprocessor.Rounded
+defense_name: art.defences.postprocessor.Rounded
 defense_params:
     decimals: 3
     apply_fit : False

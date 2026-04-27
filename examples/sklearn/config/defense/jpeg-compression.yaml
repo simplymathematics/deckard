@@ -1,4 +1,4 @@
-defense_type: art.defences.preprocessor.JpegCompression
+defense_name: art.defences.preprocessor.JpegCompression
 defense_params:
     clip_values: [0, 255]
     quality: 50

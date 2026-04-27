@@ -1,4 +1,4 @@
-defense_type: art.defences.preprocessor.MixupPyTorch
+defense_name: art.defences.preprocessor.MixupPyTorch
 defense_params:
     apply_fit : True
     apply_predict : False

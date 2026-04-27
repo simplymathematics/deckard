@@ -1,4 +1,4 @@
 model_search:
-  ++defense.defense_type: art.defences.postprocessor.ClassLabels
+  ++defense.defense_name: art.defences.postprocessor.ClassLabels
   ++defense.defense_params.apply_fit: bool(False)
   ++defense.defense_params.apply_predict: bool(True,False)

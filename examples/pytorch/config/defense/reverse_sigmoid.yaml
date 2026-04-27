@@ -1,4 +1,4 @@
-defense_type: art.defences.postprocessor.ReverseSigmoid
+defense_name: art.defences.postprocessor.ReverseSigmoid
 defense_params:
     beta: 1.0
     gamma: .1

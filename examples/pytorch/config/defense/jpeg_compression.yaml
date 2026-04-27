@@ -1,4 +1,4 @@
-defense_type: art.defences.preprocessor.JpegCompression
+defense_name: art.defences.preprocessor.JpegCompression
 defense_params:
     clip_values: ${model.clip_values}
     quality: 50
