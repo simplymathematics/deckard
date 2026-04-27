@@ -37,10 +37,11 @@ from omegaconf import DictConfig, OmegaConf, ListConfig
 
 from ..model import ModelConfig
 from ..model.pytorch import PytorchTemplateClassifier
-from ..model.defend import sklearn_dict,
+from ..model.defend import sklearn_dict
 from ..utils import ConfigBase
 
-warnings.filterwarnings("ignore", category=UserWarning)
+
+
 logger = logging.getLogger(__name__)
 
 supported_attacks = [
@@ -662,7 +663,7 @@ class AttackConfig(ConfigBase):
         else:
             x_ = data.X_train
             y_ = data.X_train
-        if isinstance(x_, (pd.Series, np.ndarray)):
+        if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame, Tensor)):
             x_subset = x_[:n]
             y_subset = y_[:n]
         elif isinstance(x_, DataLoader):
@@ -675,7 +676,7 @@ class AttackConfig(ConfigBase):
             x_subset = tensor(x_subset)
             y_subset = tensor(y_subset)
         else:
-            raise ValueError(f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch DataLoader")
+            raise ValueError(f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}")
         return n,x_subset,y_subset
 
     def _infer_attribute(
@@ -729,11 +730,16 @@ class AttackConfig(ConfigBase):
             assert isinstance(targeted_attribute, (list, ListConfig)), "targeted attribute must be a string or a list of strings"
             if isinstance(targeted_attribute, ListConfig):
                 targeted_attribute = OmegaConf.to_container(targeted_attribute)
-            if not isinstance(targeted_attribute, (list, ListConfig)):
+            if not isinstance(targeted_attribute, list):
                 targeted_attribute = [targeted_attribute]
+            targeted_attribute_string = ""
             for attr in targeted_attribute:
                 try:
                     assert attr in data.X_test.columns
+                    if len(targeted_attribute_string) > 0:
+                        targeted_attribute_string += f"-{attr}"
+                    else:
+                        targeted_attribute_string = f"{attr}"
                 except AssertionError:
                     possible_cols = []
                     for col in data.X_test.columns:
@@ -829,10 +835,10 @@ class AttackConfig(ConfigBase):
             end_time = time.process_time()
             self.attack_score_time = end_time - start_time
             score_dict = {
-                f"inferred_{targeted_attribute}_accuracy": inferred_accuracy,
-                f"inferred_{targeted_attribute}_precision": inferred_precision,
-                f"inferred_{targeted_attribute}_recall": inferred_recall,
-                f"inferred_{targeted_attribute}_f1": inferred_f1,
+                f"inferred_{targeted_attribute_string}_accuracy": inferred_accuracy,
+                f"inferred_{targeted_attribute_string}_precision": inferred_precision,
+                f"inferred_{targeted_attribute_string}_recall": inferred_recall,
+                f"inferred_{targeted_attribute_string}_f1": inferred_f1,
             }
         else:
 
@@ -842,9 +848,9 @@ class AttackConfig(ConfigBase):
             end_time = time.process_time()
             self.attack_score_time = end_time - start_time
             score_dict = {
-                f"inferred_{targeted_attribute}_mse": inferred_mse,
-                f"inferred_{targeted_attribute}_mae": inferred_mae,
-                f"inferred_{targeted_attribute}_r2": inferred_r2,
+                f"inferred_{targeted_attribute_string}_mse": inferred_mse,
+                f"inferred_{targeted_attribute_string}_mae": inferred_mae,
+                f"inferred_{targeted_attribute_string}_r2": inferred_r2,
             }
         sig_figs = np.floor(np.log10(len(target))) + 1
         score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
@@ -887,14 +893,16 @@ class AttackConfig(ConfigBase):
             If the inferred membership type is unsupported or its length does not match the number of samples.
         """
         start_time = time.process_time()
-        try:
-            attack.fit(
-                x=data.X_train.copy().values,
-                y=data.y_train.copy().values,
-                test_x=data.X_test.copy().values,
-            )
-        except Exception as e:
-            raise e
+        if len(data.y_train.shape) == 1:
+            # Transform it into (n_classes=2, n_samples)
+            y_data = pd.get_dummies(data.y_train).values
+        else:
+            y_data = data.y_train.copy().values
+        attack.fit(
+            x=data.X_train.copy().values,
+            y=y_data,
+            test_x=data.X_test.copy().values,
+        )
         end_time = time.process_time()
         self.attack_time = time.process_time() - start_time
 
