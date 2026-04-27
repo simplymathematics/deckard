@@ -62,7 +62,10 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, runner: ExperimentConfig) -> d
     with open(files["params_file"], "w") as f:
         yaml.dump(OmegaConf.to_container(cfg, resolve=False), f)
     
-    max_failure_rate = hydra_cfg.sweeper.get("max_failure_rate", 0.0)
+    if hasattr(hydra_cfg, "sweeper") and hasattr(hydra_cfg.sweeper, "max_failure_rate"):
+        max_failure_rate = hydra_cfg.sweeper.get("max_failure_rate")
+    else:
+        max_failure_rate = None
     scores = execute_experiment([], runner, files, max_failure_rate)
     
     optimizers = runner.optimizers
@@ -78,7 +81,7 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, runner: ExperimentConfig) -> d
     set_study_metric_names(study=study, optimizers=optimizers)
     set_user_attrs(study=study, attrs=attributes)
     
-    logger.info(f"Saving multirun scores to {runner.files.score_file}")
+    logger.info(f"Saving multirun scores to {runner.files.score_file}") 
     with open(files["score_file"], "w") as f:
         json.dump(scores, f, indent=4)
     
@@ -187,13 +190,13 @@ def execute_experiment(args, runner, files, max_failure_rate):
     try:
         scores = run(runner, files, args)
     except Exception as e:
-        if max_failure_rate > 0.0:
-            logger.warning(
-                    f"Experiment failed with error: {e}. Continuing due to max_failure_rate={max_failure_rate}.",
-                )
-            scores = {}
+        logger.warning(
+                f"Experiment failed with error: {e}. Continuing due to max_failure_rate={max_failure_rate}.",
+            )
+        if hasattr(runner, "score_dict"):
+            scores = runner.score_dict
         else:
-            raise e
+            scores = {}
     return scores
 
 def prepare_multirun_file_paths(hydra_cfg, runner):
@@ -346,8 +349,8 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
     """
     if not optimizers:
         return scores, {}
-    scores = {k: v for k, v in scores.items() if k in optimizers}
     other_scores = {k: v for k, v in scores.items() if k not in optimizers}
+    scores = {k: v for k, v in scores.items() if k in optimizers}
     missing_scores = set(optimizers) - set(scores.keys())
     values = list(scores.values())
     if directions:
@@ -378,7 +381,7 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
         if not optimize_scores:
             raise ValueError("No optimization scores found for the specified directions.")
         if len(missing_scores) > 0:
-            raise RuntimeError(f"Experiment failed. Missing scores:{missing_scores}")
+            logger.error(f"Missing scores: {missing_scores}")
         values = optimize_scores
     else:
         attributes = {}
@@ -426,7 +429,7 @@ def parse_optional_args():
         logger.info(f"Command-line arguments: {args}")
     optional_args = [arg for arg in args if not arg.startswith("--")]
     modules = []
-    for m in supported_modules:
+    for m in SUPPORTED_MODULES:
         if m in optional_args:
             for opt_arg in optional_args:
                 if opt_arg == m:
@@ -592,14 +595,14 @@ def handle_default_module(config_dir):
     """
     logger.debug("No optional arguments provided.")
     config_file = os.environ.get("DECKARD_DEFAULT_CONFIG_FILE", "default.yaml")
-    working_dir = os.getcwd
-    logger.info(f"Current working directory: {working_dir()}")
+    working_dir = os.getcwd()
+    logger.info(f"Current working directory: {working_dir}")
     logger.info("Starting Deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
     config_file = Path(config_dir) / config_file
-    # Make config_dir is relatve to working dir
+    # Make sure config_dir is relatve to working dir
     if not Path(config_dir).is_absolute():
-        config_dir = os.path.relpath(config_dir, working_dir())
+        config_dir = os.path.relpath(config_dir, working_dir)
     config_file = Path(config_dir) / config_file.name
     logger.info(f"Resolved config file path: {config_file}")
     if not Path(config_file).exists():
@@ -650,9 +653,9 @@ def handle_other_modules(config_dir, optional_args, module, args):
     """
     logger.info(f"Optional args after module: {optional_args}")
     files = parse_files_from_optional_args(optional_args, module)
-    if module not in supported_modules:
+    if module not in SUPPORTED_MODULES:
         logger.error(
-            f"Unsupported module: {module}. Supported modules are: {supported_modules}",
+            f"Unsupported module: {module}. Supported modules are: {SUPPORTED_MODULES}",
         )
         sys.exit(1)
     module_config_file = validate_module_and_files(module, files, optional_args)
@@ -763,7 +766,6 @@ def handle_layers(layer):
     # Parse layer-specific args first, then leave remaining args for Hydra.
     parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
     sys.argv = [sys.argv[0], *hydra_args]
-
     @hydra.main(
         config_path=None,
         config_name=None,
@@ -777,14 +779,7 @@ def handle_layers(layer):
             for key in list(args.keys()):
                 if key in cfg and cfg[key] is not None:
                     args[key] = cfg[key]
-
-        if not args.get("optuna_db"):
-            hydra_cfg = HydraConfig.get()
-            sweeper = hydra_cfg.sweeper if hasattr(hydra_cfg, "sweeper") else None
-            storage = getattr(sweeper, "storage", None) if sweeper is not None else None
-            args["optuna_db"] = storage or "sqlite:///optuna.db"
-
-        return main_fn(**args)
+                return main_fn(**args)
 
     return main_hydra()
 
