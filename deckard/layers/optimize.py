@@ -153,6 +153,8 @@ def set_study_metric_names(study, optimizers):
         optimizers = [optimizers]
     elif isinstance(optimizers, tuple):
         optimizers = list(optimizers)
+    elif isinstance(optimizers, list):
+        pass
     else:
         raise ValueError(f"optimizers must be a ListConfig, str, or tuple. Got {type(optimizers)}")
 
