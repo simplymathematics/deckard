@@ -19,6 +19,7 @@ from .experiment import ExperimentConfig
 from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
+from .plot import YellowbrickConfigList, YellowbrickPlotConfig
 
 
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")

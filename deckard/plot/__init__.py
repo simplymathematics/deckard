@@ -4,7 +4,7 @@ from typing import Union
 
 from ..utils import ConfigBase
 from .seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
-from .yellowbrick_plots import YellowBrickConfigList, YellowbrickPlotConfig
+from .yellowbrick_plots import YellowbrickConfigList, YellowbrickPlotConfig
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PlotConfig(ConfigBase):
     kwargs: dict = field(default_factory=dict)
-    config: Union[SeabornPlotConfig, SeabornPlotConfigList, YellowbrickPlotConfig, YellowBrickConfigList] = field(init=False, repr=False)
+    config: Union[SeabornPlotConfig, SeabornPlotConfigList, YellowbrickPlotConfig, YellowbrickConfigList] = field(init=False, repr=False)
 
     def __post_init__(self):
         # Merge any extra attributes set by ConfigBase into kwargs
@@ -31,7 +31,7 @@ class PlotConfig(ConfigBase):
             raise ValueError("Missing required source key: provide 'experiment' or 'data_file'.")
 
         if has_experiment:
-            config_cls = YellowBrickConfigList if "plots" in self.kwargs else YellowbrickPlotConfig
+            config_cls = YellowbrickConfigList if "plots" in self.kwargs else YellowbrickPlotConfig
         else:
             config_cls = SeabornPlotConfigList if "plots" in self.kwargs else SeabornPlotConfig
 

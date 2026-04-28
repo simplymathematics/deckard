@@ -104,7 +104,7 @@ def optimize_main(
         assert isinstance(conf_obj, ExperimentConfig)
         scores = optimize_multirun(cfg, hydra_cfg, conf_obj)
     else:
-        scores = conf_obj.execute()
+        scores = conf_obj()
     
     return scores
 
@@ -120,7 +120,7 @@ def prepare_multirun_file_paths(hydra_cfg, conf_obj):
     score_file = log_dir / "scores.json"
     params_file = log_dir / "params.yaml"
     error_file = log_dir/ "error.log"
-    conf_obj.files.experiment_name = f"{hydra_cfg.job.num}"
+    conf_obj.experiment_name = f"{hydra_cfg.job.num}"
     conf_obj.files.log_file = log_file.as_posix()
     conf_obj.files.score_file = score_file.as_posix()
     conf_obj.files.params_file = params_file.as_posix()
