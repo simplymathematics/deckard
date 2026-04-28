@@ -74,7 +74,7 @@ class DefenseConfig(ModelConfig):
         metadata={"help": "Parameters for the model."},
     )
     probability: bool = False
-    clip_values: tuple = field(
+    clip_values: tuple | None = field(
         default=None,
         metadata={"help": "Tuple of the form (min, max) to clip input features."},
     )
