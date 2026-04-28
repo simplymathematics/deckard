@@ -149,7 +149,7 @@ class DataConfig(ConfigBase):
     train_size: Union[float, int, None] = None
     random_state: int = 42
     stratify: Union[None, str, bool] = True
-    classifier: bool = True
+    classifier: Union[bool, None, str] = True
     target: Union[str, None] = None
     drop: list = None
     keep: list = None
@@ -200,7 +200,6 @@ class DataConfig(ConfigBase):
         self.train_indices = None
         self.test_indices = None
         self.score_dict = {}
-        assert self.classifier in [True, False], "classifier must be a boolean value"
 
         self._target_ = "deckard.data.DataConfig"
         if not self.data_params:
@@ -855,7 +854,12 @@ class DataPipelineConfig(DataConfig):
             assert (
                 "name" in v
             ), f"Each step in pipeline must have a 'name' key, missing in step {k}"
-
+        if self.classifier in ["classifier", True]:
+            self.classifier = True
+        elif self.classifier in ["regressor", False]:
+            self.classifier = False
+        else:
+            self.classifier = None
 
     def _init_pipeline(self):
         if not isinstance(self.pipeline, (dict, DictConfig)):

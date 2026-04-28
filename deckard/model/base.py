@@ -163,7 +163,7 @@ class ModelConfig(ConfigBase):
     """
 
     model_type: str = "sklearn.ensemble.RandomForestClassifier"
-    classifier: bool = True
+    classifier: Union[bool, None, str] = True
     model_params: dict = None
     probability: bool = False
     alias: Union[str, None] = None
@@ -199,6 +199,12 @@ class ModelConfig(ConfigBase):
         if hasattr(self, "defense") and hasattr(self.defense, "defense_name"):
             if self.defense.defense_name in ["", None, "None", "null", "Null", "NULL", "none", "N/A", "n/a"]:
                 self.defense = None
+        if self.classifier in ["classifier", True]:
+            self.classifier = True
+        elif self.classifier in ["regressor", False]:
+            self.classifier = False
+        else:
+            self.classifier = None
 
     def _initialize_model(self):
         module_name, class_name = self.model_type.rsplit(".", 1)

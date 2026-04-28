@@ -39,9 +39,9 @@ class ConfigBase:
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
         super().__init__()
+        
         # Initialize args attribute
         self.args = args if args else ()
-        # Call post init
         #  Set attributes from args and kwds
         for i, arg in enumerate(args):
             setattr(self, list(self.__dataclass_fields__.keys())[i], arg)
@@ -49,6 +49,7 @@ class ConfigBase:
             setattr(self, k, v)
         # Call post init
         self.__post_init__()
+        
 
     def __post_init__(self):
         pass
@@ -407,15 +408,35 @@ class ConfigBase:
         dict
             A dictionary representation of the instance.
         """
-        # Inspect to find init parameters
-        signature = inspect.signature(cls.__init__)
+        # Build a dict from inherited dataclass fields + runtime attributes
         dict_ = {}
-        for name, param in signature.parameters.items():
-            if name == "self":
+
+        # Include dataclass fields from full MRO (base -> child)
+        for base in reversed(cls.mro()):
+            fields = getattr(base, "__dataclass_fields__", {})
+            for name in fields:
+                if name.startswith("_"):
+                    continue
+                if hasattr(cls, name):
+                    value = getattr(cls, name)
+                    if isinstance(value, ConfigBase):
+                        dict_[name] = value.to_dict()
+                    elif OmegaConf.is_config(value):
+                        dict_[name] = OmegaConf.to_container(value, resolve=True)
+                    else:
+                        dict_[name] = value
+
+        # Include any additional runtime attrs not declared as dataclass fields
+        for name, value in cls.__dict__.items():
+            if name.startswith("_") or name in dict_:
                 continue
-            if hasattr(cls, name):
-                value = getattr(cls, name)
+            if isinstance(value, ConfigBase):
+                dict_[name] = value.to_dict()
+            elif OmegaConf.is_config(value):
+                dict_[name] = OmegaConf.to_container(value, resolve=True)
+            else:
                 dict_[name] = value
+
         return dict_
     
     def save_data(

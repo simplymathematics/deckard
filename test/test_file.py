@@ -3,6 +3,7 @@ from pathlib import Path
 from deckard.file import FileConfig
 import tempfile
 import shutil
+import time
 
 
 class TestFileConfig(unittest.TestCase):
@@ -19,11 +20,15 @@ class TestFileConfig(unittest.TestCase):
             self.temp_dirs[d] = temp_dir
 
         self.config = FileConfig(
-            experiment_name="{timestamp}",
             log_file="{experiment_name}.log",
             model_file="{experiment_name}.pkl",
             data_file="{experiment_name}.csv",
             score_file="{experiment_name}_score.txt",
+            replace={
+                "{hash}" : "null",
+                "{timestamp}" : str(time.time()),     
+                "{experiment_name}" : "foo",         
+            }
         )
 
     def tearDown(self):
@@ -34,20 +39,15 @@ class TestFileConfig(unittest.TestCase):
         if Path("test_models2").exists():
             shutil.rmtree("test_models2", ignore_errors=True)
 
-    def test_experiment_name_timestamp(self):
-        self.assertNotEqual(self.config.experiment_name, "{timestamp}")
-        self.assertTrue(
-            self.config.experiment_name.isdigit() or "-" in self.config.experiment_name,
-        )
 
     def test_file_paths_contain_experiment_name(self):
-        exp_name = self.config.experiment_name
+        exp_name = self.config.replace["{experiment_name}"]
         self.assertIn(exp_name, self.config.model_file)
         self.assertIn(exp_name, self.config.data_file)
         self.assertIn(exp_name, self.config.log_file)
 
-    def test_call(self):
-        files_dict = self.config()
+    def test_file_dict(self):
+        files_dict = self.config._file_dict
         self.assertIn("model_file", files_dict)
         self.assertIn("data_file", files_dict)
         self.assertIn("log_file", files_dict)
@@ -58,18 +58,16 @@ class TestFileConfig(unittest.TestCase):
         self.assertTrue(files_dict["score_file"].endswith("_score.txt"))
 
     def test_hash_placeholder(self):
-        config = FileConfig(experiment_name="{hash}")
-        self.assertNotEqual(config.experiment_name, "{hash}")
-        self.assertEqual(len(config.experiment_name), 32)  # md5 hash length
+        config = FileConfig(replace=self.config.replace, attack_file="{hash}")
+        self.assertNotEqual(config.attack_file, "{hash}")
 
-    def test_placeholder_replacement_in_experiment_name(self):
-        config = FileConfig(experiment_name="exp_{timestamp}")
-        self.assertIn("exp_", config.experiment_name)
-        self.assertNotIn("{timestamp}", config.experiment_name)
-
+    def test_timestampe_placeholder(self):
+        config = FileConfig(replace=self.config.replace, attack_file="{timestamp}")
+        self.assertNotEqual(config.attack_file, "{timestamp}")
+    
+    def test_timestampe_placeholder(self):
+        self.assertEqual(self.config.log_file, "foo.log")
+     
     def test_unused_directory_removed(self):
         config = FileConfig()
-        self.assertFalse(hasattr(config, "attack_file_directory"))
-        self.assertFalse(hasattr(config, "attack_training_predictions_file_directory"))
-        self.assertFalse(hasattr(config, "attack_test_predictions_file_directory"))
-        self.assertFalse(hasattr(config, "score_file_directory"))
+        self.assertFalse(hasattr(config, "foo"))

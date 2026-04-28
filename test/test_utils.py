@@ -1,188 +1,187 @@
-import unittest
 import argparse
-from dataclasses import dataclass
-import pandas as pd
-import numpy as np
+import json
+import logging
 import tempfile
+import unittest
 from pathlib import Path
-from deckard.utils import ConfigBase, create_parser_from_function
+
+import pandas as pd
+
+from deckard import utils
+from deckard.utils import (
+    ConfigBase,
+    create_parser_from_function,
+    import_class_from_file,
+    load_class,
+    load_data,
+    save_data,
+)
 
 
-class DummyConfig(ConfigBase):
-    a: int = 1
-    b: str = "test"
-    _private: str = "hidden"
-
-    def __post_init__(self):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        return self.a + len(self.b)
-
-    def save_scores(self, scores, filepath):
-        import json
-
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        with open(filepath, "w") as f:
-            json.dump(scores, f)
+class BaseConfig(ConfigBase):
+    def __call__(self):
+        return 1
 
 
-class TestConfigBase(unittest.TestCase):
+class ParamsConfig(ConfigBase):
+    x: int = 10
+    y: str = "abc"
 
-    def test_initialization(self):
-        cfg = DummyConfig(a=5, b="hello")
-        self.assertEqual(cfg.a, 5)
-        self.assertEqual(cfg.b, "hello")
-        self.assertEqual(cfg._private, "hidden")
-        self.assertEqual(cfg(), 5 + len("hello"))
+    def __call__(self, x, y):
+        return x, y
+
+
+class MissingParamConfig(ConfigBase):
+    def __call__(self, required_param):
+        return required_param
+
+
+class FailingConfig(ConfigBase):
+    def __call__(self):
+        raise RuntimeError("boom")
+
+
+class TypeAConfig(ConfigBase):
+    def __call__(self):
+        return "A"
+
+
+class TypeBConfig(ConfigBase):
+    def __call__(self):
+        return "B"
+
+
+class TestUtilsAdditional(unittest.TestCase):
+    def test_get_call_params_success(self):
+        cfg = ParamsConfig()
+        params = cfg.get_call_params()
+        self.assertEqual(params, {"x": 10, "y": "abc"})
+
+    def test_get_call_params_missing_attribute_raises(self):
+        cfg = MissingParamConfig()
         with self.assertRaises(AttributeError):
-            _ = cfg.non_existent
+            cfg.get_call_params()
 
-    def test_partial_initialization(self):
-        cfg = DummyConfig(a=10)
-        self.assertEqual(cfg.a, 10)
-        self.assertEqual(cfg.b, "test")
-        self.assertEqual(cfg(), 10 + len("test"))
+    def test_save_scores_and_load_scores_json(self):
+        cfg = BaseConfig(score_dict={"baseline": 1})
+        scores = {"acc": 0.9, "files": {"f": "x.csv"}, "params": {"k": 1}}
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "scores.json"
+            cfg.save_scores(scores, p)
+            loaded = cfg.load_scores(str(p))
+            self.assertIn("acc", loaded)
+            self.assertIn("files", loaded)
+            self.assertIn("params", loaded)
 
-    def test_no_arguments(self):
-        cfg = DummyConfig()
-        self.assertEqual(cfg.a, 1)
-        self.assertEqual(cfg.b, "test")
-        self.assertEqual(cfg(), 1 + len("test"))
+    def test_save_scores_unsupported_extension_raises(self):
+        cfg = BaseConfig()
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "scores.txt"
+            with self.assertRaises(ValueError):
+                cfg.save_scores({"acc": 1.0}, p)
 
-    def test_hash(self):
-        cfg1 = DummyConfig(a=2, b="hash")
-        cfg2 = DummyConfig(a=2, b="hash")
-        cfg3 = DummyConfig(a=3, b="hash")
-        self.assertEqual(hash(cfg1), hash(cfg2))
-        self.assertNotEqual(hash(cfg1), hash(cfg3))
+    def test_read_scores_from_disk_existing_file_merges(self):
+        cfg = BaseConfig(score_dict={"base": 1})
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "scores.json"
+            with open(p, "w") as f:
+                json.dump({"new": 2}, f)
+            merged = cfg.read_scores_from_disk(str(p))
+            self.assertEqual(merged["base"], 1)
+            self.assertEqual(merged["new"], 2)
 
-    def test_save_scores(self):
-        cfg = DummyConfig(a=4, b="save")
-        scores = {"accuracy": 0.95, "loss": 0.1}
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            score_path = Path(tmpdirname) / "scores.json"
-            # Use the inherited method from ConfigBase
-            cfg.save_scores(scores, score_path)
-            self.assertTrue(score_path.parent.exists())
-            self.assertTrue(score_path.exists())
+    def test_read_scores_from_disk_missing_file_creates_directory(self):
+        cfg = BaseConfig(score_dict={"base": 1})
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "nested" / "scores.json"
+            out = cfg.read_scores_from_disk(str(p))
+            self.assertTrue(p.parent.exists())
+            self.assertEqual(out, {"base": 1})
 
-    def test_save_data(self):
-        cfg = DummyConfig(a=2, b="data")
-        data = pd.DataFrame(np.array([[1, 2], [3, 4]]))
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            data_path = Path(tmpdirname) / "data.pkl"
-            cfg.save_data(data, data_path)
-            self.assertTrue(data_path.exists())
+    def test_save_data_top_level_and_load_data_roundtrip_pickle(self):
+        payload = {"a": [1, 2], "b": [3, 4]}
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "data.pkl"
+            save_data(payload, p)
+            loaded = load_data(str(p))
+            self.assertIsInstance(loaded, pd.DataFrame)
+            self.assertEqual(list(loaded.columns), ["a", "b"])
 
-    def test_load_data_raises_error(self):
-        cfg = DummyConfig()
+    def test_load_data_none_raises(self):
         with self.assertRaises(FileNotFoundError):
-            cfg.load_data("non_existent_file.pkl")
+            load_data(None)
 
-    def test_load_data_success(self):
-        cfg = DummyConfig()
-        data = {"X": np.array([[5, 6], [7, 8]]), "y": np.array([1, 0])}
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            data_path = Path(tmpdirname) / "data.pkl"
-            pd.to_pickle(data, data_path)
-            loaded_data = cfg.load_data(data_path)
-            self.assertTrue(np.array_equal(loaded_data["X"], data["X"]))
-            self.assertTrue(np.array_equal(loaded_data["y"], data["y"]))
+    def test_save_overwrite_raises(self):
+        cfg = BaseConfig()
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "obj.pkl"
+            cfg.save(str(p))
+            with self.assertRaises(ValueError):
+                cfg.save(str(p))
 
-    def test_save_object(self):
-        cfg = DummyConfig(a=7, b="object")
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            obj_path = Path(tmpdirname) / "obj.pkl"
-            cfg.save_object(cfg, obj_path)
-            self.assertTrue(obj_path.exists())
-            loaded_obj = pd.read_pickle(obj_path)
-            self.assertIsInstance(loaded_obj, DummyConfig)
-            self.assertEqual(loaded_obj.a, 7)
-            self.assertEqual(loaded_obj.b, "object")
-            self.assertEqual(loaded_obj(), 7 + len("object"))
+    def test_load_type_mismatch_raises(self):
+        a = TypeAConfig()
+        b = TypeBConfig()
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "obj.pkl"
+            b.save(str(p))
+            with self.assertRaises(TypeError):
+                a.load(str(p))
 
-    def test_save_self(self):
-        cfg = DummyConfig(a=8, b="self")
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            cfg()
-            cfg.save(filepath=Path(tmpdirname) / "data.pkl")
-            self.assertTrue(Path(tmpdirname, "data.pkl").exists())
+    def test_execute_returns_fallback_score_dict_on_exception(self):
+        cfg = FailingConfig(score_dict={"fallback": 123})
+        with tempfile.TemporaryDirectory() as td:
+            log_path = Path(td) / "deckard.log"
+            handler = logging.FileHandler(log_path)
+            utils.logger.addHandler(handler)
+            try:
+                out = cfg.execute()
+                self.assertEqual(out, {"fallback": 123})
+                self.assertTrue(log_path.exists())
+                self.assertIn("Exception:", log_path.read_text())
+            finally:
+                utils.logger.removeHandler(handler)
+                handler.close()
 
-    def test_load_self(self):
-        cfg = DummyConfig(a=9, b="load")
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            obj_path = Path(tmpdirname) / "obj.pkl"
-            cfg.save(filepath=obj_path)
-            loaded_cfg = cfg.load(obj_path)
-            self.assertIsInstance(loaded_cfg, DummyConfig)
-            self.assertEqual(loaded_cfg.a, 9)
-            self.assertEqual(loaded_cfg.b, "load")
-            self.assertEqual(loaded_cfg(), 9 + len("load"))
+    def test_import_class_from_file_success(self):
+        with tempfile.TemporaryDirectory() as td:
+            module_path = Path(td) / "tmp_mod.py"
+            module_path.write_text(
+                "class MyClass:\n"
+                "    def __init__(self, x=0):\n"
+                "        self.x = x\n"
+            )
+            obj = import_class_from_file(str(module_path), "MyClass", 7)
+            self.assertEqual(obj.x, 7)
 
+    def test_import_class_from_file_missing_file_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            import_class_from_file("does_not_exist.py", "Anything")
 
-class TestCreateParserFromCallableDataclass(unittest.TestCase):
+    def test_load_class_colon_path_success(self):
+        with tempfile.TemporaryDirectory() as td:
+            module_path = Path(td) / "tmp_mod2.py"
+            module_path.write_text(
+                "class MyClass:\n"
+                "    def __init__(self, name='n'):\n"
+                "        self.name = name\n"
+            )
+            obj = load_class(f"{module_path}:MyClass", "deckard")
+            self.assertEqual(obj.name, "deckard")
 
-    def test_parser_with_required_and_default_args(self):
-        @dataclass
-        class MyConfig:
-            x: int = 1
-            y: str = "foo"
-            z: float = 2.5
-
-            def __call__(self, a: int, b: str = "bar"):
-                return a, b
-
+    def test_create_parser_existing_parser_with_kwargs_raises(self):
         parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(MyConfig.__call__, parser)
-        args = parser.parse_args(["--a", "10"])
-        self.assertEqual(args.a, 10)
-        self.assertEqual(args.b, "bar")
+        with self.assertRaises(ValueError):
+            create_parser_from_function(lambda a: a, parser=parser, prog="x")
 
-    def test_parser_with_type_annotations(self):
-        @dataclass
-        class AnotherConfig:
-            def __call__(self, alpha: float, beta: int = 42):
-                return alpha, beta
+    def test_create_parser_unannotated_defaults_to_string(self):
+        def fn(name, count: int = 1):
+            return name, count
 
-        parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(AnotherConfig.__call__, parser)
-        args = parser.parse_args(["--alpha", "3.14"])
-        self.assertAlmostEqual(args.alpha, 3.14)
-        self.assertEqual(args.beta, 42)
-
-    def test_parser_with_no_arguments(self):
-        @dataclass
-        class EmptyConfig:
-            def __call__(self):
-                return 0
-
-        parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(EmptyConfig.__call__, parser)
-        args = parser.parse_args([])
-        self.assertEqual(vars(args), {})
-
-    def test_non_class_raises(self):
-        parser = argparse.ArgumentParser()
-        with self.assertRaises(TypeError):
-            create_parser_from_function(parser=parser, func=42)
-
-    def test_exclude_parameters(self):
-        @dataclass
-        class ExcludeConfig:
-            def __call__(self, p1: int, p2: str = "default", p3: float = 1.0):
-                return p1, p2, p3
-
-        parser = argparse.ArgumentParser()
-        parser = create_parser_from_function(
-            ExcludeConfig.__call__,
-            parser,
-            exclude=["p2"],
-        )
-        args = parser.parse_args(["--p1", "5", "--p3", "2.5"])
-        self.assertEqual(args.p1, 5)
-        self.assertAlmostEqual(args.p3, 2.5)
-        self.assertFalse(hasattr(args, "p2"))
+        parser = create_parser_from_function(fn)
+        args = parser.parse_args(["--name", "alice"])
+        self.assertEqual(args.name, "alice")
+        self.assertEqual(args.count, 1)
 
 
 if __name__ == "__main__":

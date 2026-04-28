@@ -81,30 +81,23 @@ class FileConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Path to the params file."},
     )
-    experiment_name: str = field(
-        default_factory=str,
-        metadata={"help": "Name of the experiment."},
-    )
     replace: Dict[str,str] = field(
         metadata={"help": "Dictionary for placeholder replacements."},
         default_factory=dict,
     )
-    experiment_name:str = field(
-        metadata={"help": "a parseable experiment name that can be used to replace the '{experiment_name}' placeholder."}, 
-        default_factory=str,
-        )
-    
     def __post_init__(self):
         super().__post_init__()
-        self.experiment_name = self._replace_placeholders(
-            path=self.experiment_name,
-        )
+        self._file_dict = self._get_file_dict()
         self._resolve_paths()
-        file_dict = self._get_file_dict()
-        for k,v in file_dict.items():
-            setattr(self, k, v)
         
-
+        for file in self._file_dict:
+            setattr(self, file, self._file_dict[file])
+        for k,v in self._file_dict.items():
+            setattr(self, k, v)
+        for k in self.to_dict():
+            if k not in self._file_dict:
+                setattr(self, k, None)
+        
     def generate_file_hash(self, file_path: str) -> str:
         """
         Generate a hash for the object in the given file path.
@@ -139,20 +132,17 @@ class FileConfig(ConfigBase):
         assert isinstance(path, str), f"Path must be a string. Got {type(path)}"
         placeholder_dict = dict(self.replace)
         assert isinstance(placeholder_dict, dict), f"Placeholder dictionary must be a dict. Got {type(placeholder_dict)}"
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        if self.experiment_name:
-            path = str(path).replace("{experiment_name}", self.experiment_name)
         for placeholder, value in placeholder_dict.items():
+            replacement = value
             if placeholder == "{num}":
-                value = self.get_hydra_job_num()
-            elif placeholder == "experiment_name":
-                value = self.experiment_name
+                replacement = self.get_hydra_job_num()
             elif placeholder == "#" or placeholder == "*":
-                value = self.get_hydra_job_num()
-            elif placeholder == "timestamp":
-                value = timestamp
-            else:
-                path = str(path).replace(placeholder, str(value))
+                replacement = self.get_hydra_job_num()
+            elif placeholder == "{timestamp}":
+                replacement = time.strftime("%Y%m%d-%H%M%S")
+            elif placeholder == "{hash}":
+                replacement = str(hash(self))
+            path = str(path).replace(placeholder, str(replacement))
         return path
 
 
@@ -179,6 +169,12 @@ class FileConfig(ConfigBase):
                 file_dict[file_attr] = file_path
         return file_dict
 
+    
+    def __iter__(self):
+        for path in self._file_dict:
+            yield path
+        
+        
     # Define the len method to count non-None file attributes
     def __len__(self) -> int:
         count = 0
@@ -186,3 +182,8 @@ class FileConfig(ConfigBase):
             if getattr(self, file_attr) is not None:
                 count += 1
         return count
+
+
+    
+    def __hash__(self):
+        return super().__hash__()

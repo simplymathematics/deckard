@@ -104,7 +104,7 @@ OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
 class ExperimentConfig(ConfigBase):
-    data: DataConfig
+    data: Union[DataConfig, DataPipelineConfig]
     experiment_name: str = "{hash}"
     model: ModelConfig = None
     defense: DefenseConfig = None
@@ -113,6 +113,7 @@ class ExperimentConfig(ConfigBase):
     score: ScorerDictConfig = None
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
+    classifier: Union[str, bool] = True
 
     def set_device(self, device: Union[str, int] = "cpu"):
         """
@@ -314,28 +315,22 @@ class ExperimentConfig(ConfigBase):
             if self.score:
                 config_list.append(self.score)
             self.experiment_name = self._hash_from_list(config_list)
-            logger.info(f"Generated experiment name: {self.experiment_name}")
         # Initialize FileConfig, ensuring experiment_name is set
         if self.files is None:
             self.files = FileConfig(experiment_name=self.experiment_name)
         elif isinstance(self.files, FileConfig):
-            self.files.experiment_name = self.experiment_name
             self.files.__post_init__()
         elif isinstance(self.files, ConfigBase):
             file_dict = self.files.to_dict()
-            file_dict["experiment_name"] = self.experiment_name
             self.files = FileConfig(**file_dict)
         elif isinstance(self.files, DictConfig):
             file_dict = OmegaConf.to_container(self.files)
-            file_dict["experiment_name"] = self.experiment_name
             self.files = FileConfig(**file_dict)
         elif isinstance(self.files, str):
             file_dict = FileConfig.from_yaml(self.files).to_dict()
-            file_dict["experiment_name"] = self.experiment_name
             self.files = FileConfig(**file_dict)
         elif isinstance(self.files, dict):
             file_dict = self.files
-            file_dict["experiment_name"] = self.experiment_name
             self.files = FileConfig(**file_dict)
         else:
             raise ValueError(f"Unsupported type for files: {type(self.files)}")
@@ -344,9 +339,6 @@ class ExperimentConfig(ConfigBase):
             FileConfig,
         ), "file must be an instance of FileConfig"
         self.files.__post_init__()
-        assert self.files.experiment_name == self.experiment_name, (
-            f"files.experiment_name must match experiment_name. Got {self.files.experiment_name} vs {self.experiment_name}",
-        )
 
         # Set scorers
         if isinstance(self.score, DictConfig):
@@ -415,19 +407,21 @@ class ExperimentConfig(ConfigBase):
         if self.library not in ["sklearn"]:
             self.set_device()
         # Get file paths
-        file_dict = self.files._get_file_dict()
+        file_dict = self.files
         data_file_outputs = {
-            file: self.files._replace_placeholders(file_dict[file])
+            file: self.files[file]
             for file in data_files
             if file in file_dict
         }
         model_file_outputs = {
-            file: self.files._replace_placeholders(file_dict[file])
+            file: self.files[file]
             for file in model_files
             if file in file_dict
         }
         attack_file_outputs = {
-            file: file_dict[file] for file in attack_files if file in file_dict
+            file: self.files[file]
+            for file in attack_files
+            if file in file_dict
         }
         if (
             "data_file" in data_file_outputs
@@ -518,14 +512,5 @@ class ExperimentConfig(ConfigBase):
             self.save_scores(new_scores, file_dict["score_file"])
         else:
             logger.info("No score_file specified, skipping score saving.")
-        for attr, filepath in file_dict.items():
-            if filepath is None:
-                continue
-            else:
-                filepath = self.files._replace_placeholders(filepath)
-                assert Path(
-                    filepath,
-                ).exists(), f"File {filepath} for {attr} does not exist."
-            #
         return scores
     
