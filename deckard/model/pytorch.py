@@ -1,11 +1,10 @@
 # OS imports
-import sys
-import os
 import importlib
 import logging
 from pathlib import Path
 from tqdm import tqdm
 import time
+import numpy as np
 
 # Typing imports
 from dataclasses import dataclass, field
@@ -25,6 +24,7 @@ from sklearn.exceptions import NotFittedError
 # ART imports
 from art.estimators.classification import PyTorchClassifier
 from art.estimators.regression import PyTorchRegressor
+from art.utils import to_categorical
 
 from . import ModelConfig
 from ..data import DataConfig
@@ -33,6 +33,7 @@ from dataclasses import dataclass, field
 from omegaconf import DictConfig
 from typing import Union
 import pandas as pd
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 logger = logging.getLogger(__name__)
 
@@ -566,6 +567,7 @@ class PytorchModelConfig(ModelConfig):
             loss_curve = self._model.model.loss_curve
         else:
             loss_curve = None
+        
         if not isinstance(y_true, torch.Tensor):
             y_true = torch.tensor(y_true)
         if not isinstance(y_pred, torch.Tensor):
@@ -576,6 +578,21 @@ class PytorchModelConfig(ModelConfig):
         if "train_loss_curve" in scores:
             del scores["train_loss_curve"]
         return scores
+    
+    def _score_groups(self, y_true: pd.api.typing.DataFrameGroupBy, y_pred:pd.api.typing.DataFrameGroupBy):
+        assert len(y_true) == len(y_pred), RuntimeError("y_pred and y_true are not the same length.")
+        scores = {}
+        assert isinstance(y_true, pd.api.typing.DataFrameGroupBy), ValueError(f"y_true must be a DataFrameGroupby Object. Got: {type(y_true)}")
+        assert isinstance(y_pred, pd.api.typing.DataFrameGroupBy),ValueError(f"y_pred must be a DataFrameGroupby Object. Got: {type(y_pred)}")
+        names = list(y_pred.groups.keys())
+        for name in names:
+            #
+            true = y_true.get_group(name)
+            pred = y_pred.get_group(name)
+            scores[name] = self._score(y_true=true, y_pred=pred)
+        
+            
+            
 
     def _load_or_train_model(self, data, model_file, times):
             """
@@ -609,7 +626,7 @@ class PytorchModelConfig(ModelConfig):
                         self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
                     times["training_n"] = self.training_n
-                    if model_file is not None:
+                    if model_file is not None and not Path(model_file).exists():
                         self.save(filepath=model_file)
             # Validate model is trained
             if self._model is None:
@@ -630,10 +647,22 @@ class PytorchModelConfig(ModelConfig):
             ValueError: If the model has not been initialized.
 
         """
-        if isinstance(X, pd.DataFrame):
+        if hasattr(self._model.model, "predict"):
+            return self._model.model.predict()
+        if isinstance(X, torch.Tensor):
             return super()._predict(X)
-        else:
+        elif isinstance(X, torch.utils.data.DataLoader):
             return self._model.predict_loader(X)
+        elif isinstance(X, pd.api.typing.DataFrameGroupBy):
+            return self._predict_groups(X)
+    
+    
+    def _predict_groups(X):
+        preds = []
+        for group in X:
+            preds.append(super()._predict(group))
+        return preds
+            
     
     def _evaluate_and_score(self, data: DataConfig, times: dict = None):
         """
@@ -685,7 +714,10 @@ class PytorchModelConfig(ModelConfig):
         if self.training_score_time is None or self.score_dict is None:
             if self.training_predictions is not None:
                 start = time.process_time()
-                train_scores = self._score(data.y_train, self.training_predictions)
+                if isinstance(self.training_predictions, pd.api.typing.DataFrameGroupBy):
+                    train_scores = self._score_groups(data.y_train, self.training_predictions)
+                else:
+                    train_scores = self._score(data.y_train, self.training_predictions)
                 self.training_score_time = time.process_time() - start
                 # Prefix training scores with 'train_'
                 train_scores = {
@@ -718,12 +750,15 @@ class PytorchModelConfig(ModelConfig):
                 raise ValueError("No test data available for prediction.")
         # Score test predictions if true labels are available and scoring not already done
         if (
-            self.training_score_time is None
+            self.score_time is None
             or self.prediction_score_time is None
             or self.score_dict is None
         ):
             if data.y_test is not None and self.predictions is not None:
-                test_scores = self._score(data.y_test, self.predictions)
+                if isinstance(self.training_predictions, pd.api.typing.DataFrameGroupBy):
+                    test_scores = self._score_groups(data.y_test, self.predictions)
+                else:
+                    test_scores = self._score(data.y_test, self.predictions)
                 if self.score_dict is None:
                     self.score_dict = {}
                 self.score_dict = {**self.score_dict, **test_scores}
@@ -737,6 +772,7 @@ class PytorchModelConfig(ModelConfig):
         else:
             pass
         self.score_dict.update(times)
+        
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
         """
@@ -781,47 +817,52 @@ class PytorchModelConfig(ModelConfig):
     def _classification_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         start = time.process_time()
         scores = {}
+        
+        # Convert pandas Series to torch tensors if needed
+        if isinstance(y_pred, pd.Series):
+            y_pred = torch.tensor(y_pred.values, dtype=torch.float32)
+        if isinstance(y_true, pd.Series):
+            y_true = torch.tensor(y_true.values, dtype=torch.long)
+        
+        nb_classes = len(np.unique(y_true.detach().cpu().numpy() if isinstance(y_true, torch.Tensor) else y_true))
 
-        # Cast to tensors if needed
-        if not isinstance(y_true, torch.Tensor):
-            y_true = torch.tensor(y_true)
-        if not isinstance(y_pred, torch.Tensor):
-            y_pred = torch.tensor(y_pred)
-
-        # Get predicted class labels if y_pred contains probabilities/logits
-        if y_pred.ndim > 1 and y_pred.shape[1] > 1:
-            y_pred_labels = torch.argmax(y_pred, dim=1)
+        # Generate y_pred_labels  and y_true_labels, for binary categorical, binary logit, binary probabilities, and multi-class output
+        if nb_classes == 2:
+            # Binary classification
+            if y_pred.dim() > 1 and y_pred.shape[1] == 2:
+                # Binary probabilities or logits
+                y_pred_labels = torch.argmax(y_pred, dim=1)
+            elif y_pred.dim() == 1:
+                # Binary logit or single probability
+                y_pred_labels = (y_pred > 0.5).long()
+            else:
+                y_pred_labels = y_pred
+            y_true_labels = y_true
         else:
-            y_pred_labels = y_pred.reshape(-1)
+            # Multi-class classification
+            if y_pred.dim() > 1:
+                y_pred_labels = torch.argmax(y_pred, dim=1)
+            else:
+                y_pred_labels = y_pred
+            y_true_labels = y_true
+        # Compute metrics
+        y_true_np = y_true_labels.detach().cpu().numpy() if isinstance(y_true_labels, torch.Tensor) else y_true_labels
+        y_pred_labels_np = y_pred_labels.detach().cpu().numpy() if isinstance(y_pred_labels, torch.Tensor) else y_pred_labels
 
-        y_true_labels = y_true.reshape(-1).long()
-
-        # Calculate Accuracy
-        correct = (y_pred_labels == y_true_labels).sum().item()
-        scores["accuracy"] = correct / len(y_true_labels)
-
-        # Calculate F1, Precision, Recall per class then average (macro)
-        classes = torch.unique(y_true_labels)
-        precisions, recalls, f1s = [], [], []
-        for cls in classes:
-            tp = ((y_pred_labels == cls) & (y_true_labels == cls)).sum().item()
-            fp = ((y_pred_labels == cls) & (y_true_labels != cls)).sum().item()
-            fn = ((y_pred_labels != cls) & (y_true_labels == cls)).sum().item()
-            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-            f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
-            precisions.append(precision)
-            recalls.append(recall)
-            f1s.append(f1)
-        scores["precision"] = sum(precisions) / len(precisions) if precisions else 0.0
-        scores["recall"] = sum(recalls) / len(recalls) if recalls else 0.0
-        scores["f1"] = sum(f1s) / len(f1s) if f1s else 0.0
+        scores["accuracy"] = accuracy_score(y_true_np, y_pred_labels_np)
+        scores["precision"] = precision_score(y_true_np, y_pred_labels_np, average="weighted", zero_division=0)
+        scores["recall"] = recall_score(y_true_np, y_pred_labels_np, average="weighted", zero_division=0)
+        scores["f1"] = f1_score(y_true_np, y_pred_labels_np, average="weighted", zero_division=0)
+        
+        
 
         end = time.process_time()
         scores["scoring_time"] = end - start
         scores["score_n"] = len(y_pred)
         return scores
-        
+    
+    
+    
     
     def _regression_scores(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
         # Cast y_true, y_pred to numpy arrays if they are tensors
@@ -830,7 +871,55 @@ class PytorchModelConfig(ModelConfig):
         if isinstance(y_pred, torch.Tensor):
             y_pred = y_pred.detach().cpu().numpy()
         return super()._regression_scores(y_true, y_pred)
-
+    
+\
 def input_shape_from_data_config(data: DataConfig):
     # Assuming data.X_train is a torch.Tensor
     return data.X_train.shape[1:]
+
+
+@dataclass
+class PytorchCustomPretrainedModelConfig(PytorchModelConfig):
+    
+    
+    def _load_or_train_model(self, data, model_file, times):
+        """
+        Overloads the parent _load_or_train_model to support loading a '.pt' file from disk.
+        If a '.pth' file exists at `model_file`, loads the model state dict directly.
+        Otherwise, falls back to the parent implementation.
+        """
+        if hasattr(self, "_model") and hasattr(self._model, "model"):
+            return times
+        if model_file is not None and Path(model_file).exists():
+            if Path(model_file).suffix not in [".pt", ".pth"]:
+                raise NotImplementedError(f"PytorchCustomPretrainedModelConfig can only load .pt or .pth files. Got: {Path(model_file).suffix}")
+            logger.info(f"Loading PyTorch model state dict from {model_file}")
+            self._initialize_model()
+            checkpoint = torch.load(model_file, map_location=self.device)
+            # Extract model_state_dict if checkpoint is a dict with multiple keys
+            if model_file and Path(model_file).exists():
+                checkpoint = torch.load(model_file, map_location=self.device)
+            if "model_state_dict" in checkpoint:
+                self._model.model.load_state_dict(checkpoint["model_state_dict"])
+            else:
+                self._model.model.load_state_dict(checkpoint)
+            self._model.model.eval()
+            self.training_time = np.nan
+            self.training_n = np.nan
+            self.training_score_time = np.nan
+            times["training_time"] = self.training_time
+            times["training_n"] = self.training_n
+            times["training_score_time"] = self.training_score_time
+            self.score_dict = {**times}
+            self.training_predictions = np.nan
+            self.training_prediction_time = np.nan
+            if self._model is None:
+                raise NotFittedError("Model is not initialized after loading .pt file.")
+            if model_file is not None and not Path(model_file).exists():
+                # Save to model_file
+                self.save(filepath=model_file)
+            return times
+        else:
+            raise FileNotFoundError(f"File: {model_file} not found.")
+        
+    
