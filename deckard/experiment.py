@@ -315,8 +315,6 @@ class ExperimentConfig(ConfigBase):
                 config_list.append(self.score)
             self.experiment_name = self._hash_from_list(config_list)
             logger.info(f"Generated experiment name: {self.experiment_name}")
-        else:
-            logger.info(f"Using provided experiment name: {self.experiment_name}")
         # Initialize FileConfig, ensuring experiment_name is set
         if self.files is None:
             self.files = FileConfig(experiment_name=self.experiment_name)
@@ -417,7 +415,7 @@ class ExperimentConfig(ConfigBase):
         if self.library not in ["sklearn"]:
             self.set_device()
         # Get file paths
-        file_dict = self.files()
+        file_dict = self.files._get_file_dict()
         data_file_outputs = {
             file: self.files._replace_placeholders(file_dict[file])
             for file in data_files
