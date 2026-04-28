@@ -6,7 +6,7 @@ import pickle
 import json
 import importlib
 import sys
-import os
+import traceback
 
 from pathlib import Path
 from hashlib import md5
@@ -425,7 +425,31 @@ class ConfigBase:
             **kwargs,
         ) -> None:
         save_data(data, filepath, **kwargs)
-        
+    
+    def execute(self):
+        # Get log_file from logger
+        log_file = next(
+            (
+                handler.baseFilename
+                for handler in logger.handlers
+                if isinstance(handler, logging.FileHandler)
+            ),
+            "deckard.log",
+        )
+        try:
+            scores = self()
+        except Exception as e:
+            with open(log_file, "+a") as log_f:
+                tb = traceback.format_exc()
+                log_f.write(f"\nException: {e}\n")
+                log_f.write(tb)
+                log_f.write("\n")
+            logger.error(e)
+            if hasattr(self, "score_dict"):
+                scores = self.score_dict
+            else:
+                scores = {}
+        return scores
         
 def save_data(
     data: pd.DataFrame,
@@ -468,6 +492,9 @@ def save_data(
             )
     assert Path(data_path).exists(), f"Failed to save data to {data_path}"
     logger.info(f"Data saved to {data_path}")
+    
+
+
 
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
         """
