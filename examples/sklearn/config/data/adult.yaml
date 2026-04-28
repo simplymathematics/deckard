@@ -1,7 +1,7 @@
 dataset_name: adult
 test_size: 0.2
 random_state: 42
-_target_ : "deckard.DataConfig"
+
 classifier: True
 stratify : False
 alias: adult
@@ -9,5 +9,4 @@ pipeline:
   imputer: 
     name: sklearn.impute.SimpleImputer
     strategy: "mean"
-
 

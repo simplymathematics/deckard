@@ -1,0 +1,3 @@
+data_file: data/${hash:${data}}.pkl
+model_file: model/${hash:${data},${model}}.pkl
+attack_file: attack/${hash:${data},${model},${attack}}.pkl

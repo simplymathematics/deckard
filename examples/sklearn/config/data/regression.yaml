@@ -6,7 +6,7 @@ data_params:
   n_informative: 10
   noise: 0.1
   random_state: 42
-_target_ : "deckard.DataConfig"
+
 stratify: False
 classifier: False
 alias: make_regression

@@ -416,9 +416,6 @@ class ConfigBase:
             if hasattr(cls, name):
                 value = getattr(cls, name)
                 dict_[name] = value
-            else:
-                logger.warning(f"Attribute {name} not found in instance of {cls.__name__}. Setting to None.")
-                dict_[name] = None
         return dict_
     
     def save_data(

@@ -6,6 +6,6 @@ data_params:
   n_redundant: 5
   n_classes: 2
   random_state: 42
-_target_ : "deckard.DataConfig"
+
 classifier: True
 alias: make_classification

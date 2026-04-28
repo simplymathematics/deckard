@@ -4,7 +4,7 @@ train_size: 100
 data_params: 
 
 random_state: 42
-_target_ : "deckard.DataConfig"
+
 classifier: True
 stratify : False
 alias: adult_openml

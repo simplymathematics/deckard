@@ -2,5 +2,5 @@ defense_name: art.defences.postprocessor.ClassLabels
 defense_params:
     apply_fit : False
     apply_predict : True
-_target_ : deckard.model.DefenseConfig
+_target_ : deckard.DefenseConfig
 alias: class-labels

@@ -1,7 +1,7 @@
 dataset_name: diabetes
 test_size: 0.2
 random_state: 42
-_target_ : "deckard.DataConfig"
+
 classifier: False
 stratify:  False
 alias: diabetes
