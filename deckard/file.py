@@ -2,8 +2,7 @@ from dataclasses import dataclass, field
 import time
 import hashlib
 import logging
-from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 
 from .utils import ConfigBase
@@ -22,7 +21,7 @@ defense_files = [
     "test_predictions_file",
     "score_file",
 ]
-log_files = ["log_file"]
+log_files = ["log_file", "error_file"]
 attack_files = [
     "attack_file",
     "attack_predictions_file",
@@ -33,14 +32,6 @@ all_files = (
     data_files + model_files + defense_files + log_files + attack_files + other_files
 )
 
-# make this an immutable default dict
-time_now = time.strftime("%Y%m%d-%H%M%S")
-default_placeholder_dict = {
-    "timestamp": f"{time_now}",
-    "experiment_name": "experiment_{timestamp}",
-    "hash": None,  # Placeholder for hash; to be filled in as needed
-}
-immutable_placeholder_default = frozenset(default_placeholder_dict.items())
 
 
 @dataclass
@@ -63,6 +54,10 @@ class FileConfig(ConfigBase):
         metadata={"help": "Path to the attack file."},
     )
     log_file: str = field(
+        default_factory=str,
+        metadata={"help": "Path to the log file."},
+    )
+    error_file: str = field(
         default_factory=str,
         metadata={"help": "Path to the log file."},
     )
@@ -90,29 +85,24 @@ class FileConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Name of the experiment."},
     )
-    log_file: str = field(
-        default_factory=str,
-        metadata={"help": "Path to the log file."},
-    )
     replace: Dict[str,str] = field(
         metadata={"help": "Dictionary for placeholder replacements."},
-        default=immutable_placeholder_default,
+        default_factory=dict,
     )
+    experiment_name:str = field(
+        metadata={"help": "a parseable experiment name that can be used to replace the '{experiment_name}' placeholder."}, 
+        default_factory=str,
+        )
     
-
     def __post_init__(self):
-        # Assert that all files in all_files are attributes of the class
-        # for file_attr in all_files:
-        #     assert hasattr(
-        #         self,
-        #         file_attr,
-        #     ), f"FileConfig is missing attribute: {file_attr}"
         super().__post_init__()
         self.experiment_name = self._replace_placeholders(
             path=self.experiment_name,
         )
-        
         self._resolve_paths()
+        file_dict = self._get_file_dict()
+        for k,v in file_dict.items():
+            setattr(self, k, v)
         
 
     def generate_file_hash(self, file_path: str) -> str:
@@ -132,7 +122,7 @@ class FileConfig(ConfigBase):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     
-    def get_hydra_job_num(self) -> int:
+    def get_hydra_job_num(self) -> str:
         """Get the Hydra job number from the environment variable."""
         import os
 
@@ -142,33 +132,25 @@ class FileConfig(ConfigBase):
         else:
             return "0"
 
-    def _replace_placeholders(self, path: str) -> str:
+    def _replace_placeholders(self, path: Optional[str]) -> Optional[str]:
         """Replace placeholders in the file path with actual values."""
+        if path is None or len(path) == 0:
+            return None
         assert isinstance(path, str), f"Path must be a string. Got {type(path)}"
         placeholder_dict = dict(self.replace)
-        assert isinstance(placeholder_dict, (dict, frozenset)), f"Placeholder dictionary must be a dict or frozenset. Got {type(placeholder_dict)}"
-        # If frozenset, convert to dict
+        assert isinstance(placeholder_dict, dict), f"Placeholder dictionary must be a dict. Got {type(placeholder_dict)}"
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         if self.experiment_name:
             path = str(path).replace("{experiment_name}", self.experiment_name)
-        if path is None or len(path) == 0:
-            return None
         for placeholder, value in placeholder_dict.items():
-            if placeholder == "{timestamp}":
-                value = timestamp
-            elif placeholder == "{hash}" and (value is None or len(value) == 0):
-                if Path(path).exists():
-                    value = self.generate_file_hash(path)
-                else:
-                  value = self.experiment_name
-            elif placeholder == "{num}":
+            if placeholder == "{num}":
                 value = self.get_hydra_job_num()
             elif placeholder == "experiment_name":
                 value = self.experiment_name
-            elif placeholder == "*":
+            elif placeholder == "#" or placeholder == "*":
                 value = self.get_hydra_job_num()
-            if "{" + placeholder + "}" in path:
-                path = str(path).replace("{" + placeholder + "}", str(value))
+            elif placeholder == "timestamp":
+                value = timestamp
             else:
                 path = str(path).replace(placeholder, str(value))
         return path
@@ -185,7 +167,9 @@ class FileConfig(ConfigBase):
             else:
                 logger.debug(f"File attribute {file_attr} is None or empty; skipping placeholder replacement.")
 
-    def __call__(self) -> dict:
+
+    
+    def _get_file_dict(self) -> dict:
         """Return a dictionary of file paths."""
         file_dict = {}
         for file_attr in all_files:
