@@ -5,8 +5,6 @@ import pandas as pd
 from typing import Union
 from pathlib import Path
 import yaml
-import argparse
-from hydra.core.hydra_config import HydraConfig
 
 from ..utils import save_data, create_parser_from_function
 
@@ -15,7 +13,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 logger = logging.getLogger(__name__)
 
-def parse_study_name(study_name:str, schema:Union[dict, str]) -> pd.DataFrame:
+def parse_study_name(study_name:str, schema:Union[dict, str]={}) -> pd.DataFrame:
     """Parses a study name using a dictionary, returning a pd.DataFrame with columns dictated by the schema keys and values given by the schema variables"""
     if isinstance(schema, str):
         assert Path(schema).exists(), f"Schema must be a dictionary or a file path."
@@ -63,10 +61,12 @@ def clean_column_names(df):
     return df
 
 def parse_studies(optuna_db:str, schema:Union[str, dict]) -> pd.DataFrame:
-    study_names = optuna.study.get_all_study_names(storage=optuna_db)
-
+    studies = optuna.study.get_all_study_summaries(storage=optuna_db)
+    assert len(studies) > 0, f"No studies found in {optuna_db}"
     df = pd.DataFrame()
-    for name in study_names:
+    for summary in studies:
+        assert hasattr(summary, "name")
+        name = summary.name
         study = optuna.study.load_study(storage=optuna_db, study_name=name)
         tmp_df = study.trials_dataframe()
         meta_df = parse_study_name(study_name=name, schema = schema)
@@ -75,18 +75,17 @@ def parse_studies(optuna_db:str, schema:Union[str, dict]) -> pd.DataFrame:
     df = clean_column_names(df)
     return df
 
-def compile_results_main( schema:str, output_file:str, optuna_db:Union[str,type(None)]=None):
+def compile_results_main(  output_file:str, optuna_db:str, schema:str= None):
     # Check if schema is string or dict
-    if optuna_db is None:
-        hydra_cfg = HydraConfig.get()
-        sweeper = hydra_cfg.get("sweeper", {})
-        optuna_db = sweeper.get("storage", ValueError(f"optuna_db must be specified or available as a hydra config. Got: {optuna_db}."))
-    schema_yaml = yaml.safe_dump(schema)
-    if isinstance(schema_yaml, dict):
-        pass
+    if schema is not None:
+        schema_yaml = yaml.safe_dump(schema)
+        if isinstance(schema_yaml, dict):
+            pass
+        else:
+            schema = str(Path(schema).absolute())
+            assert Path(schema).is_file(), f"Schema must be a dictionary or a valid file. Got {schema.absolute()}."
     else:
-        schema = str(Path(schema).absolute())
-        assert Path(schema).is_file(), f"Schema must be a dictionary or a valid file. Got {schema.absolute()}."
+        schema = {}
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -100,7 +99,7 @@ compile_results_parser = create_parser_from_function(compile_results_main)
 
 if __name__ == "__main__":
     args = compile_results_parser.parse_args()
-    compile_results_main(**args)
+    compile_results_main(**vars(args))
     
     
     
