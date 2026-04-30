@@ -7,15 +7,98 @@ import json
 import importlib
 import sys
 import traceback
+import hashlib
 
 from pathlib import Path
-from hashlib import md5
 from typing import Union, Any
 from dataclasses import dataclass, field
 from hydra.utils import instantiate, get_class
 from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
+
+
+def _canonicalize_for_hash(value):
+    """Convert arbitrary values into a stable, JSON-serializable structure."""
+    if OmegaConf.is_config(value):
+        value = OmegaConf.to_container(value, resolve=True)
+
+    if isinstance(value, dict):
+        return {
+            str(k): _canonicalize_for_hash(v)
+            for k, v in sorted(value.items(), key=lambda kv: str(kv[0]))
+        }
+
+    if isinstance(value, (list, tuple)):
+        return [_canonicalize_for_hash(v) for v in value]
+
+    if isinstance(value, (set, frozenset)):
+        items = [_canonicalize_for_hash(v) for v in value]
+        return sorted(items, key=lambda x: json.dumps(x, sort_keys=True, separators=(",", ":")))
+
+    if isinstance(value, Path):
+        return value.as_posix()
+
+    if isinstance(value, (bytes, bytearray)):
+        return {"__bytes__": bytes(value).hex()}
+
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+
+    if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
+        try:
+            return _canonicalize_for_hash(value.to_dict())
+        except Exception:
+            pass
+
+    if hasattr(value, "__dict__"):
+        public_attrs = {
+            k: v
+            for k, v in value.__dict__.items()
+            if not k.startswith("_") and not callable(v)
+        }
+        return _canonicalize_for_hash(public_attrs)
+
+    if isinstance(value, type):
+        return f"{value.__module__}.{value.__qualname__}"
+
+    return str(value)
+
+
+def normalize_for_hash(value, root=None):
+    """Normalize values for stable hashing.
+
+    Mirrors resolver behavior:
+    - Optional key-path lookup when `value` is a string and `root` is provided.
+    - OmegaConf nodes resolved to plain Python containers.
+    """
+    target = value
+
+    if isinstance(value, str) and root is not None:
+        selected = OmegaConf.select(root, value, default=None)
+        if selected is not None:
+            target = selected
+
+    return _canonicalize_for_hash(target)
+
+
+def hash_conf_values(*values, _root_=None) -> str:
+    """Return stable MD5 hash for one or more config-like values.
+
+    Supports the same patterns as the `${hash:...}` resolver:
+    - no values: hash `_root_`
+    - one value: hash normalized value
+    - many values: hash normalized list of values in order
+    """
+    if not values:
+        target = _root_
+    elif len(values) == 1:
+        target = normalize_for_hash(values[0], root=_root_)
+    else:
+        target = [normalize_for_hash(v, root=_root_) for v in values]
+
+    s = json.dumps(target, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 
 data_supported_filetypes = [
@@ -33,6 +116,28 @@ data_supported_filetypes = [
 class ConfigBase:
     # _target_: str = "deckard.utils.ConfigBase"
     score_dict: dict = field(default_factory=dict)
+    HASH_EXCLUDE_FIELDS = {
+        "args",
+        "score_dict",
+        "predictions",
+        "probabilities",
+        "labels",
+        "attack_predictions",
+        "attack_probabilities",
+        "adv_predictions",
+        "adv_probabilities",
+        "X",
+        "y",
+        "X_train",
+        "X_test",
+        "y_train",
+        "y_test",
+    }
+    HASH_EXCLUDE_SUFFIXES = (
+        "_time",
+        "_predictions",
+        "_probabilities",
+    )
 
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
@@ -47,6 +152,10 @@ class ConfigBase:
             setattr(self, k, v)
         # Call post init
         self.__post_init__()
+        # Freeze hash at configuration time so runtime attributes added during
+        # execution cannot alter experiment identity.
+        self._hash_payload = self.to_dict(for_hash=True)
+        self._hash_value = hash_conf_values(self._hash_payload)
 
     def __post_init__(self):
         pass
@@ -55,22 +164,22 @@ class ConfigBase:
         raise NotImplementedError("This is an abstract base class.")
 
     def __hash__(self):
-        """
-        Computes a hash value for the instance.
+        """Return the initialization-time configuration hash as int."""
+        if "_hash_value" not in self.__dict__:
+            self._hash_payload = self.to_dict(for_hash=True)
+            self._hash_value = hash_conf_values(self._hash_payload)
+        return int(self._hash_value, 16)
 
-        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
-        The hash excludes attributes whose names start with an underscore.
-
-        Returns
-        -------
-        int
-            The integer representation of the MD5 hash of the concatenated attribute string.
-        """
-        # Hash all fields that do not start with an underscore
-        hash_input = "".join(
-            f"{k}:{v}" for k, v in self.__dict__.items() if not k.endswith("_")
-        )
-        return int(md5(hash_input.encode()).hexdigest(), 16)
+    def _is_hash_field(self, name: str) -> bool:
+        if name == "_target_":
+            return True
+        if name.startswith("_"):
+            return False
+        if name in self.HASH_EXCLUDE_FIELDS:
+            return False
+        if any(name.endswith(suffix) for suffix in self.HASH_EXCLUDE_SUFFIXES):
+            return False
+        return True
 
     def save_scores(
         self,
@@ -389,7 +498,7 @@ class ConfigBase:
         config = OmegaConf.create(config)
         return str(OmegaConf.to_yaml(config))
 
-    def to_dict(self) -> dict:
+    def to_dict(self, for_hash: bool = False) -> dict:
         """
         Converts the current instance to a dictionary.
 
@@ -405,12 +514,14 @@ class ConfigBase:
         for base in reversed(self.__class__.mro()):
             fields = getattr(base, "__dataclass_fields__", {})
             for name in fields:
-                if name.startswith("_"):
+                if name.startswith("_") and not (for_hash and name == "_target_"):
+                    continue
+                if for_hash and not self._is_hash_field(name):
                     continue
                 if hasattr(self, name):
                     value = getattr(self, name)
                     if isinstance(value, ConfigBase):
-                        dict_[name] = value.to_dict()
+                        dict_[name] = value.to_dict(for_hash=for_hash)
                     elif OmegaConf.is_config(value):
                         dict_[name] = OmegaConf.to_container(value, resolve=True)
                     else:
@@ -418,10 +529,12 @@ class ConfigBase:
 
         # Include any additional runtime attrs not declared as dataclass fields
         for name, value in self.__dict__.items():
-            if name.startswith("_") or name in dict_:
+            if (name.startswith("_") and not (for_hash and name == "_target_")) or name in dict_:
+                continue
+            if for_hash and not self._is_hash_field(name):
                 continue
             if isinstance(value, ConfigBase):
-                dict_[name] = value.to_dict()
+                dict_[name] = value.to_dict(for_hash=for_hash)
             elif OmegaConf.is_config(value):
                 dict_[name] = OmegaConf.to_container(value, resolve=True)
             else:

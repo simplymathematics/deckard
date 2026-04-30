@@ -5,9 +5,7 @@ import warnings
 import numpy as np
 from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
 from optuna.exceptions import ExperimentalWarning
-import hashlib
 from omegaconf import OmegaConf
-import json
 import yaml
 
 
@@ -178,38 +176,8 @@ def _merge_resolver(*args):
 OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
-def _normalize(value, root):
-    target = value
-
-    # Allow key-path lookup form: ${hash:data}
-    if isinstance(value, str) and root is not None:
-        selected = OmegaConf.select(root, value, default=None)
-        if selected is not None:
-            target = selected
-
-    # Resolve OmegaConf nodes to plain Python containers
-    if OmegaConf.is_config(target):
-        return OmegaConf.to_container(target, resolve=True)
-    return target
-
-
 def _hash_conf(*values, _root_=None):
-    """
-    Supports:
-      - ${hash:${data}}
-      - ${hash:data_string}
-      - ${hash:${data},${model}}
-      - ${hash:data_string,model_string}
-    """
-    if not values:
-        target = _root_
-    elif len(values) == 1:
-        target = _normalize(values[0], root=_root_)
-    else:
-        target = [_normalize(v, root=_root_) for v in values]
-
-    s = json.dumps(target, sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.md5(s.encode("utf-8")).hexdigest()
+    return hash_conf_values(*values, _root_=_root_)
 
 
 OmegaConf.register_new_resolver("hash", _hash_conf, replace=True, use_cache=False)
