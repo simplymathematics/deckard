@@ -4,8 +4,7 @@ import hashlib
 from typing import List, Union, Literal
 from omegaconf import DictConfig, OmegaConf
 import os
-
-
+import yaml
 import numpy as np
 from pathlib import Path
 from hydra.utils import instantiate
@@ -27,19 +26,6 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
     "default_experiment.yaml",
 )
-
-
-# hydra_plugins/file_resolver.py
-import os
-from pathlib import Path
-import yaml
-from omegaconf import OmegaConf
-
-# hydra_plugins/file_resolver.py
-import os
-from pathlib import Path
-import yaml
-from omegaconf import OmegaConf
 
 
 def _load_yaml_file(path: Path):
@@ -509,7 +495,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         assert hasattr(
             self.data,
             "X_train",
-        ), f"data must return an object with X_train attribute"
+        ), "data must return an object with X_train attribute"
         assert hasattr(
             self.data,
             "y_train",
@@ -566,6 +552,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 ), "attack must have score_dict attribute after training"
                 scores.update(**self.attack.score_dict)
             except ValueError as e:
+                logger.debug(e)
                 raise
         else:
             logger.info("No attack config provided, skipping attack.")

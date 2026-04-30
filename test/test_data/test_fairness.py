@@ -1,11 +1,10 @@
 import pytest
 import pandas as pd
-import numpy as np
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 pytest.importorskip("fairlearn")
 
-from deckard.data.fairness import FairnessDataConfig
+from deckard.data.fairness import FairnessDataConfig  # NOQA E402
 
 
 class TestFairnessDataConfigInit:
@@ -41,7 +40,7 @@ class TestLoadData:
                 "feature1": [1, 2, 3, 4],
                 "feature2": [5, 6, 7, 8],
                 "gender": ["M", "F", "M", "F"],
-            }
+            },
         )
         config = FairnessDataConfig(
             groupby_columns="gender",
@@ -65,7 +64,7 @@ class TestLoadData:
                 "feature1": [1, 2, 3, 4],
                 "feature2": [5, 6, 7, 8],
                 "gender": ["M", "F", "M", "F"],
-            }
+            },
         )
         config._y = pd.Series([0, 1, 0, 1])
         config.data_params = {}
@@ -95,7 +94,7 @@ class TestScore:
             {
                 "feature1": [1, 2, 3, 4],
                 "gender": ["M", "F", "M", "F"],
-            }
+            },
         )
 
         config = FairnessDataConfig(

@@ -7,13 +7,13 @@ import yaml
 
 pytest.importorskip("lifelines")
 
-from deckard.attack import AttackConfig
-from deckard.layers.survival import (
+from deckard.attack import AttackConfig  # NOQA E402
+from deckard.layers.survival import (  # NOQA E402
     calculate_failures_under_attack,
     fit_aft,
     survival_main,
     survival_probability_calibration,
-)
+)  # NOQA E402
 
 matplotlib.use("Agg")
 

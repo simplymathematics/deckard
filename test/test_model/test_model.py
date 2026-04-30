@@ -121,7 +121,9 @@ class TestModelConfig(unittest.TestCase):
         )
         test_pred_file = os.path.join(self.tmpdir, "test_predictions.pkl")
         model(
-            data=data, model_file=self.model_file, test_predictions_file=test_pred_file
+            data=data,
+            model_file=self.model_file,
+            test_predictions_file=test_pred_file,
         )
         self.assertTrue(os.path.exists(test_pred_file))
 

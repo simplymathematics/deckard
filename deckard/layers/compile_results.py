@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 def parse_study_name(study_name: str, schema: Union[dict, str] = {}) -> pd.DataFrame:
     """Parses a study name using a dictionary, returning a pd.DataFrame with columns dictated by the schema keys and values given by the schema variables"""
     if isinstance(schema, str):
-        assert Path(schema).exists(), f"Schema must be a dictionary or a file path."
+        assert Path(
+            schema,
+        ).exists(), f"Schema must be a dictionary or a file path. Got type {type(schema)} and the filepath does not exist."
         with open(schema, "r") as f:
             conf = yaml.safe_load(f)
             schema = conf.pop("schema", conf)
@@ -33,6 +35,7 @@ def parse_study_name(study_name: str, schema: Union[dict, str] = {}) -> pd.DataF
             try:
                 meta_df[k] = [name_list[v]]
             except IndexError as e:
+                logger.debug(e)
                 meta_df[k] = None
         elif isinstance(v, str):
             assert (
@@ -40,7 +43,7 @@ def parse_study_name(study_name: str, schema: Union[dict, str] = {}) -> pd.DataF
             ), f"Schema value should either be a an integer or a an inclusive range in the form first:last. Got {v}"
             start, end = map(int, v.split(":"))
             end = min(end, len(name_list) - 1)
-            meta_df[k] = sep.join(name_list[start : end + 1])
+            meta_df[k] = sep.join(name_list[start : end + 1])  # NOQA E203
         else:
             raise ValueError("Unknown value type for schema entry:", type(v))
     return meta_df

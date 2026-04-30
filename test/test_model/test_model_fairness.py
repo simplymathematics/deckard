@@ -1,6 +1,5 @@
 import unittest
 import pandas as pd
-import numpy as np
 import tempfile
 import shutil
 from unittest.mock import Mock
@@ -8,9 +7,9 @@ import pytest
 
 pytest.importorskip("fairlearn")
 
-from deckard.model.fairness import FairnessModelConfig
-from deckard.data.fairness import FairnessDataConfig
-from deckard.model.fairness import FairnessDefenseConfig
+from deckard.model.fairness import FairnessModelConfig  # NOQA E402
+from deckard.data.fairness import FairnessDataConfig  # NOQA E402
+from deckard.model.fairness import FairnessDefenseConfig  # NOQA E402
 
 
 class TestFairnessModelConfig(unittest.TestCase):
@@ -21,7 +20,7 @@ class TestFairnessModelConfig(unittest.TestCase):
                 "feature1": [0, 1, 2, 3, 4, 5],
                 "feature2": [1, 2, 3, 4, 5, 6],
                 "group": ["A", "B", "A", "B", "A", "B"],
-            }
+            },
         )
         self.y_train = pd.Series([0, 1, 0, 1, 0, 1])
 
@@ -30,7 +29,7 @@ class TestFairnessModelConfig(unittest.TestCase):
                 "feature1": [6, 7, 8, 9],
                 "feature2": [7, 8, 9, 10],
                 "group": ["A", "B", "A", "B"],
-            }
+            },
         )
         self.y_test = pd.Series([1, 0, 1, 0])
 
@@ -223,7 +222,7 @@ class TestFairnessModelConfig(unittest.TestCase):
                 any(
                     f"A_{metric}" in key or f"B_{metric}" in key
                     for key in scores.keys()
-                )
+                ),
             )
 
     def test_compute_group_fairness_scores_regression(self):
@@ -249,7 +248,7 @@ class TestFairnessModelConfig(unittest.TestCase):
                 any(
                     f"A_{metric}" in key or f"B_{metric}" in key
                     for key in scores.keys()
-                )
+                ),
             )
 
     def test_group_fairness_scores_naming_convention(self):
@@ -271,7 +270,9 @@ class TestFairnessModelConfig(unittest.TestCase):
             self.assertTrue("_" in key, f"Key {key} should contain group_metric format")
             parts = key.split("_")
             self.assertGreaterEqual(
-                len(parts), 2, f"Key {key} should have group and metric"
+                len(parts),
+                2,
+                f"Key {key} should have group and metric",
             )
 
     def test_train_passes_sensitive_features_when_supported(self):
@@ -341,7 +342,7 @@ class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):
         self.model_type = "sklearn.linear_model.LogisticRegression"
 
         self.X_train = pd.DataFrame(
-            {"f1": [0, 1, 2, 3, 4, 5], "f2": [1, 2, 3, 4, 5, 6]}
+            {"f1": [0, 1, 2, 3, 4, 5], "f2": [1, 2, 3, 4, 5, 6]},
         )
         self.y_train = pd.Series([0, 1, 0, 1, 0, 1])
         self.sensitive_train = pd.Series(["A", "B", "A", "B", "A", "B"])
@@ -393,7 +394,8 @@ class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):
         """ExponentiatedGradient without a constraints key must raise ValueError."""
         cfg = self._make_fitted_defense("fairlearn.reductions.ExponentiatedGradient")
         with self.assertRaises(
-            ValueError, msg="constraints are required for reductions"
+            ValueError,
+            msg="constraints are required for reductions",
         ):
             cfg.apply_defense(None)
 

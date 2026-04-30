@@ -110,7 +110,9 @@ class FairnessDataConfig(DataPipelineConfig):
             col for col in self.sensitive_columns if col in self._X.columns
         ]
         if not sensitive_columns:
-            raise RuntimeError(f"Sensitive features not found.")
+            raise RuntimeError(
+                f"Sensitive features not found for {self.sensitive_columns}.",
+            )
 
         sensitive_feature_ids = list(sensitive_columns)
         step_config: Dict[str, Any] = {

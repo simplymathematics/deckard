@@ -291,6 +291,7 @@ class AttackConfig(ConfigBase):
                 try:
                     check_is_fitted(model)
                 except NotFittedError as e:
+                    logger.debug(e)
                     model.fit(data.X_train, data.y_train)
                 art_model = art_cls(model)
             elif isinstance(model, BaseEstimator):

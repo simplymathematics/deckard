@@ -1,13 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 pytest.importorskip("seaborn")
 pytest.importorskip("yellowbrick")
 
-from deckard.plot import PlotConfig
-from deckard.plot.seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
-from deckard.plot.yellowbrick_plots import YellowbrickPlotConfig, YellowbrickConfigList
+from deckard.plot import PlotConfig  # noqa 402
 
 
 class TestPlotConfig(unittest.TestCase):
@@ -102,7 +100,7 @@ class TestPlotConfig(unittest.TestCase):
                 },
             )
             plot_cfg.config = mock_config_instance
-            result = plot_cfg()
+            plot_cfg()
             mock_config_instance.assert_called_once()
 
     def test_plot_config_getattr(self):

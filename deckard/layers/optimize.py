@@ -4,14 +4,12 @@ import json
 from pathlib import Path
 import yaml
 import optuna
-from numpy import nan
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from hydra.utils import instantiate
 from hydra.core.hydra_config import HydraConfig
 from hydra._internal.utils import get_args_parser
 
-import json
 
 from ..experiment import ExperimentConfig
 from ..utils import ConfigBase

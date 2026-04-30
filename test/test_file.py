@@ -69,9 +69,6 @@ class TestFileConfig(unittest.TestCase):
         attack_file = file_dict.get("attack_file", KeyError)
         self.assertNotEqual(attack_file, "{timestamp}")
 
-    def test_timestamp_placeholder(self):
-        self.assertEqual(self.config.log_file, "foo.log")
-
     def test_unused_directory_removed(self):
         config = FileConfig()
         with self.assertRaises(KeyError):

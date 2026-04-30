@@ -6,10 +6,6 @@ import pandas as pd
 from dataclasses import dataclass
 from fairlearn.metrics import (
     MetricFrame,
-    false_negative_rate,
-    false_positive_rate,
-    true_negative_rate,
-    true_positive_rate,
 )
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from art.config import ART_NUMPY_DTYPE
@@ -336,7 +332,6 @@ class _FairnessBehaviorMixin:
 
         y_pred_series = _normalize_pred_labels(y_pred, y_true_series)
         # Determine positive label BEFORE alignment so it stays consistent
-        positive_label = sorted(y_true_series.dropna().unique())[-1]
 
         if self.classifier:
             metric_frame = MetricFrame(

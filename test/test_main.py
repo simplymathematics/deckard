@@ -4,8 +4,6 @@ from argparse import Namespace
 from pathlib import Path
 import pytest
 
-import logging.config
-
 
 @pytest.fixture
 def main_module():
@@ -15,7 +13,9 @@ def main_module():
 
 
 def test_get_configuration_paths_returns_expected_values(
-    main_module, monkeypatch, tmp_path
+    main_module,
+    monkeypatch,
+    tmp_path,
 ):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -32,7 +32,9 @@ def test_get_configuration_paths_returns_expected_values(
 
 
 def test_get_configuration_paths_prompts_for_valid_directory(
-    main_module, monkeypatch, tmp_path
+    main_module,
+    monkeypatch,
+    tmp_path,
 ):
     config_dir = tmp_path / "real_config"
     config_dir.mkdir()
@@ -48,7 +50,9 @@ def test_get_configuration_paths_prompts_for_valid_directory(
 
 
 def test_get_configuration_paths_raises_for_missing_config_file(
-    main_module, monkeypatch, tmp_path
+    main_module,
+    monkeypatch,
+    tmp_path,
 ):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -103,7 +107,9 @@ def test_main_dispatches_to_supported_layer(main_module, monkeypatch, tmp_path):
 
 
 def test_main_prompts_for_config_directory_when_default_path_missing(
-    main_module, monkeypatch, tmp_path
+    main_module,
+    monkeypatch,
+    tmp_path,
 ):
     provided_dir = tmp_path / "provided"
     provided_dir.mkdir()
@@ -136,7 +142,9 @@ def test_main_raises_for_unsupported_module(main_module, monkeypatch, tmp_path):
 
 
 def test_handle_default_module_builds_hydra_entrypoint(
-    main_module, monkeypatch, tmp_path
+    main_module,
+    monkeypatch,
+    tmp_path,
 ):
     cfg_dir = tmp_path / "config"
     cfg_dir.mkdir()
@@ -159,11 +167,15 @@ def test_handle_default_module_builds_hydra_entrypoint(
         return {"score": 42}
 
     monkeypatch.setattr(
-        main_module, "get_configuration_paths", lambda: (str(cfg_dir), "default.yaml")
+        main_module,
+        "get_configuration_paths",
+        lambda: (str(cfg_dir), "default.yaml"),
     )
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setitem(
-        main_module.layer_dict, "optimize", (object(), fake_optimize_main)
+        main_module.layer_dict,
+        "optimize",
+        (object(), fake_optimize_main),
     )
 
     result = main_module.handle_default_module()
@@ -183,10 +195,13 @@ def test_handle_other_layers_rejects_unknown_layer(main_module):
 
 
 def test_handle_other_layers_rejects_parser_without_parse_known_args(
-    main_module, monkeypatch
+    main_module,
+    monkeypatch,
 ):
     monkeypatch.setitem(
-        main_module.layer_dict, "bad", (object(), lambda **kwargs: None)
+        main_module.layer_dict,
+        "bad",
+        (object(), lambda **kwargs: None),
     )
 
     with pytest.raises(ValueError, match="parse_known_args"):
@@ -194,7 +209,8 @@ def test_handle_other_layers_rejects_parser_without_parse_known_args(
 
 
 def test_handle_other_layers_passes_parser_args_and_hydra_overrides(
-    main_module, monkeypatch
+    main_module,
+    monkeypatch,
 ):
     seen = {}
 

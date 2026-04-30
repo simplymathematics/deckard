@@ -139,8 +139,8 @@ class PytorchModelConfig(ModelConfig):
         self._model.train()
         for epoch in range(nb_epochs):
             for i in range(0, len(X), batch_size):
-                batch_X = X[i : i + batch_size].to(self.device)
-                batch_y = y[i : i + batch_size].to(self.device)
+                batch_X = X[i : i + batch_size].to(self.device)  # noqa E203
+                batch_y = y[i : i + batch_size].to(self.device)  # noqa E203
 
                 optimizer.zero_grad()
                 outputs = self._model(batch_X)

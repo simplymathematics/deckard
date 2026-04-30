@@ -7,12 +7,17 @@ import matplotlib
 from matplotlib.axes import Axes
 import pandas as pd
 
+import matplotlib.pyplot as plt
+
 pytest.importorskip("seaborn")
 
-from deckard.plot.seaborn_plots import SeabornPlotConfig, SeabornPlotConfigList
+from deckard.plot.seaborn_plots import (  # NOQA E402
+    SeabornPlotConfig,
+    SeabornPlotConfigList,
+)  # NOQA E402
+
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 class TestSeabornPlots(unittest.TestCase):

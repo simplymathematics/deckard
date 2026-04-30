@@ -18,7 +18,7 @@ class TestExperimentConfig(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.data_config = DataConfig(dataset_name="adult")
         self.model_config = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression"
+            model_type="sklearn.linear_model.LogisticRegression",
         )
         self.attack_config = AttackConfig(attack_size=1)
         self.file_config = FileConfig()

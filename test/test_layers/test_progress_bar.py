@@ -34,7 +34,7 @@ class DummyPbar:
 def test_count_studies_for_stage_conf_variants():
     assert (
         progress_bar_module._count_studies_for_stage_conf(
-            {"matrix": {"a": [1, 2], "b": ["x", "y", "z"]}}
+            {"matrix": {"a": [1, 2], "b": ["x", "y", "z"]}},
         )
         == 6
     )
@@ -44,7 +44,7 @@ def test_count_studies_for_stage_conf_variants():
     )
     assert (
         progress_bar_module._count_studies_for_stage_conf(
-            {"cmd": "deckard optimize --multirun"}
+            {"cmd": "deckard optimize --multirun"},
         )
         == 1
     )
@@ -88,7 +88,8 @@ def test_extract_and_resolve_stage_config_name(tmp_path):
         == "inference-default"
     )
     resolved = progress_bar_module._resolve_hydra_config_for_stage(
-        stage_conf, str(default_cfg)
+        stage_conf,
+        str(default_cfg),
     )
     assert Path(resolved) == stage_cfg
 
@@ -119,12 +120,15 @@ def test_collect_storage_finished_counts_reads_trials_and_earliest(tmp_path):
 
     for study_name, n_trials in (("s1", 2), ("s2", 1)):
         study = optuna.create_study(
-            study_name=study_name, storage=db_url, load_if_exists=True
+            study_name=study_name,
+            storage=db_url,
+            load_if_exists=True,
         )
         study.optimize(lambda trial: 1.0, n_trials=n_trials)
 
     counts, earliest = progress_bar_module._collect_storage_finished_counts(
-        db_url, {"COMPLETE", "FAILED", "PRUNED"}
+        db_url,
+        {"COMPLETE", "FAILED", "PRUNED"},
     )
 
     assert sorted(counts) == [1, 2]
@@ -155,7 +159,9 @@ def test_progress_bar_main_integration_reads_dvc_and_optuna_db(tmp_path, monkeyp
 
     for study_name in ("study_left", "study_right"):
         study = optuna.create_study(
-            study_name=study_name, storage=db_url, load_if_exists=True
+            study_name=study_name,
+            storage=db_url,
+            load_if_exists=True,
         )
         study.optimize(lambda trial: 0.1, n_trials=2)
 

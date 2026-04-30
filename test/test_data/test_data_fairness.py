@@ -8,8 +8,8 @@ import pytest
 
 pytest.importorskip("fairlearn")
 
-import numpy as np
-from deckard.data import DataConfig, DataPipelineConfig
+import numpy as np  # NOQA E402
+from deckard.data import DataConfig, DataPipelineConfig  # NOQA E402
 
 
 class HookRecorderPlugin:

@@ -91,7 +91,9 @@ class TestAttackConfig(unittest.TestCase):
                 return_value=(object(), object(), "inference", "membership_inference"),
             ),
             patch.object(
-                AttackConfig, "_infer_membership", side_effect=_fake_membership
+                AttackConfig,
+                "_infer_membership",
+                side_effect=_fake_membership,
             ),
         ):
             result = attack(object(), object())
@@ -232,11 +234,13 @@ class TestAttackConfig(unittest.TestCase):
 
         rng = np.random.default_rng(7)
         X_train = pd.DataFrame(
-            rng.normal(size=(30, 4)), columns=["f1", "f2", "f3", "f4"]
+            rng.normal(size=(30, 4)),
+            columns=["f1", "f2", "f3", "f4"],
         )
         y_train = pd.Series(rng.integers(0, 2, size=(30,)), name="target")
         X_test = pd.DataFrame(
-            rng.normal(size=(20, 4)), columns=["f1", "f2", "f3", "f4"]
+            rng.normal(size=(20, 4)),
+            columns=["f1", "f2", "f3", "f4"],
         )
         y_test = pd.Series(rng.integers(0, 2, size=(20,)), name="target")
 
@@ -270,7 +274,8 @@ class TestAttackConfig(unittest.TestCase):
             },
         )
         y_train = pd.Series(
-            (X_train["feature"] + X_train["other"] > 0).astype(int), name="target"
+            (X_train["feature"] + X_train["other"] > 0).astype(int),
+            name="target",
         )
         X_test = pd.DataFrame(
             {
@@ -280,7 +285,8 @@ class TestAttackConfig(unittest.TestCase):
             },
         )
         y_test = pd.Series(
-            (X_test["feature"] + X_test["other"] > 0).astype(int), name="target"
+            (X_test["feature"] + X_test["other"] > 0).astype(int),
+            name="target",
         )
 
         data = TinyData()

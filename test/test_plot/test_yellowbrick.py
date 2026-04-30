@@ -7,19 +7,17 @@ from omegaconf import OmegaConf
 import pytest
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
-from sklearn.datasets import make_classification, make_regression, make_blobs
+from sklearn.datasets import make_classification
 
 pytest.importorskip("yellowbrick")
-from deckard.plot.yellowbrick_plots import (
+from deckard.plot.yellowbrick_plots import (  # NOQA E402
     YellowbrickConfigList,
     YellowbrickPlotConfig,
-    all_viz_types,
     model_selection_viz_types,
     cluster_viz_types,
-    regressor_viz_types,
 )
-from deckard.data.data import DataConfig
-from deckard.model import ModelConfig
+from deckard.data.data import DataConfig  # noqa 402
+from deckard.model import ModelConfig  # noqa 402
 
 expensive_viz_types = [
     "manifold",
@@ -119,7 +117,8 @@ class TestYellowbrickPlots(unittest.TestCase):
         cluster_data_file = f"{self.temp_dir}/data/cluster_data.pkl"
         cluster_model_file = f"{self.temp_dir}/models/kmeans_model.pkl"
         cluster_files = FileConfig(
-            data_file=cluster_data_file, model_file=cluster_model_file
+            data_file=cluster_data_file,
+            model_file=cluster_model_file,
         )
         cluster_data = OmegaConf.load(self.cluster_data_config)
         cluster_model = OmegaConf.load(self.cluster_model_config)
@@ -170,7 +169,10 @@ class TestYellowbrickPlots(unittest.TestCase):
                 return_value={"accuracy": 0.9},
             ) as mock_experiment_call,
             patch.object(
-                YellowbrickPlotConfig, "visualize", autospec=True, return_value=None
+                YellowbrickPlotConfig,
+                "visualize",
+                autospec=True,
+                return_value=None,
             ),
             patch.object(
                 plot_cfg,
@@ -192,7 +194,7 @@ class TestYellowbrickPlots(unittest.TestCase):
             data_file=f"{self.temp_dir}/data/list_prepare.pkl",
             model_file=f"{self.temp_dir}/models/list_prepare.pkl",
         )
-        plot_cfg = YellowbrickConfigList(
+        _ = YellowbrickConfigList(
             experiment=ExperimentConfig(
                 data=classification_data,
                 model=classification_model,
@@ -205,7 +207,10 @@ class TestYellowbrickPlots(unittest.TestCase):
     def test_single_plot_applies_rc_config(self):
         # Setup minimal classification data and model
         Xc, yc = make_classification(
-            n_samples=100, n_features=5, n_classes=2, random_state=42
+            n_samples=100,
+            n_features=5,
+            n_classes=2,
+            random_state=42,
         )
         data = OmegaConf.create(
             {
@@ -213,7 +218,7 @@ class TestYellowbrickPlots(unittest.TestCase):
                 "y_train": yc.tolist(),
                 "X_test": Xc.tolist(),
                 "y_test": yc.tolist(),
-            }
+            },
         )
         from deckard.model import ModelConfig
 
@@ -235,10 +240,12 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         with (
             patch(
-                "deckard.plot.yellowbrick_plots.plt.rcParams.update"
+                "deckard.plot.yellowbrick_plots.plt.rcParams.update",
             ) as mock_rc_update,
             patch.object(
-                YellowbrickPlotConfig, "_ensure_experiment_prepared", return_value={}
+                YellowbrickPlotConfig,
+                "_ensure_experiment_prepared",
+                return_value={},
             ),
             patch.object(YellowbrickPlotConfig, "visualize", return_value=None),
         ):
@@ -266,10 +273,12 @@ class TestYellowbrickPlots(unittest.TestCase):
 
         with (
             patch(
-                "deckard.plot.yellowbrick_plots.plt.rcParams.update"
+                "deckard.plot.yellowbrick_plots.plt.rcParams.update",
             ) as mock_rc_update,
             patch.object(
-                YellowbrickConfigList, "_ensure_experiment_prepared", return_value={}
+                YellowbrickConfigList,
+                "_ensure_experiment_prepared",
+                return_value={},
             ),
             patch.object(YellowbrickConfigList, "_set_plot_dict", return_value=None),
         ):

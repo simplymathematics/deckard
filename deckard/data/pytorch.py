@@ -258,7 +258,7 @@ class PytorchDataConfig(DataConfig):
         # The first train_size indices are for training
         train_idx = indices[:train_size]
         # The next test_size indices are for testing
-        test_idx = indices[train_size : train_size + test_size]
+        test_idx = indices[train_size : train_size + test_size]  # noqa E203
 
         end_time = time.process_time()
         self.data_sample_time = end_time - start_time

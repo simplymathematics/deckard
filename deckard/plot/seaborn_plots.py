@@ -158,8 +158,8 @@ class SeabornPlotConfigList(ConfigBase):
             try:
                 ax = cfg(ax)
             except Exception as e:
-                print(
-                    f"Failed to generate plot numbner {i} of type {cfg.plot_type} with file: {cfg.plot_file}",
+                logger.debug(
+                    f"Failed to render plot_type: {cfg.plot_type} with error: {e}",
                 )
         if self.file is not None:
             Path(self.file).parent.mkdir(parents=True, exist_ok=True)
