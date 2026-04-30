@@ -46,8 +46,8 @@ class TestDataPipelineConfig(unittest.TestCase):
         }
         self.X_train = pd.DataFrame(
             {
-                "feature1": [1.0, 2.0, np.nan, 4.0, 5.0, 1.0, 2.0, np.nan, 4.0, 5.0, ],
-                "feature2": [np.nan, 1.0, 2.0, 3.0, 4.0, np.nan, 1.0, 2.0, 3.0, 4.0, ],
+                "feature1": [1.0, 2.0, np.nan, 4.0, 5.0, 1.0, 2.0, np.nan, 4.0, 5.0],
+                "feature2": [np.nan, 1.0, 2.0, 3.0, 4.0, np.nan, 1.0, 2.0, 3.0, 4.0],
             },
         )
         self.y_train = pd.Series([0, 1, 0, 1, 0, 0, 1, 0, 1, 0])
@@ -59,8 +59,12 @@ class TestDataPipelineConfig(unittest.TestCase):
         )
         self.y_test = pd.Series([1, 0])
         self.pipeline_selector_dict = {
-            "imputer": {"name": "sklearn.impute.SimpleImputer", "strategy": "mean", "dtype" : "num"},
-            "scaler": {"name": "sklearn.preprocessing.StandardScaler", "dtype" : "num"},
+            "imputer": {
+                "name": "sklearn.impute.SimpleImputer",
+                "strategy": "mean",
+                "dtype": "num",
+            },
+            "scaler": {"name": "sklearn.preprocessing.StandardScaler", "dtype": "num"},
         }
 
     def test_pipelineconfig_initialization(self):
@@ -102,12 +106,16 @@ class TestDataPipelineConfig(unittest.TestCase):
 
     def test_pipeline_selector_initialization(self):
         config = DataPipelineConfig(pipeline=self.pipeline_selector_dict)
-        pipeline, _,  = config._init_pipeline()
+        (
+            pipeline,
+            _,
+        ) = config._init_pipeline()
         self.assertIsInstance(pipeline, Pipeline)
         self.assertIsInstance(pipeline.steps[0][1], ColumnTransformer)
         pipeline.fit(self.X_train, self.y_train)
         self.assertEqual(pipeline.steps[0][0], "preprocess")
-    
+
+
 class TestDataConfig(unittest.TestCase):
 
     def basic_config(self):

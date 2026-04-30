@@ -39,13 +39,16 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) ->
         The filtered optimization scores.
     """
     assert hasattr(
-        conf_obj, "files"
+        conf_obj,
+        "files",
     ), "conf_obj must have files attribute in multirun mode."
     assert hasattr(
-        conf_obj, "optimizers"
+        conf_obj,
+        "optimizers",
     ), "conf_obj must have optimizers attribute in multirun mode."
     assert hasattr(
-        conf_obj, "directions"
+        conf_obj,
+        "directions",
     ), "conf_obj must have directions attribute in multirun mode."
     conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
     files = conf_obj.files._get_file_dict()
@@ -116,7 +119,8 @@ def optimize_main(
 
     conf_obj = instantiate(cfg)
     assert isinstance(
-        conf_obj, ConfigBase
+        conf_obj,
+        ConfigBase,
     ), f"conf_obj must be an instance of ConfigBase. Got {type(conf_obj)}"
     if str(mode) == "RunMode.MULTIRUN":
         assert isinstance(conf_obj, ExperimentConfig)
@@ -146,7 +150,7 @@ def prepare_multirun_file_paths(hydra_cfg, conf_obj):
 
 def create_study(study_name, storage, directions, optimizers):
     assert len(directions) == len(
-        optimizers
+        optimizers,
     ), "Length of directions must match length of optimizers."
     if len(directions) == 0:
         study = optuna.create_study(
@@ -175,7 +179,7 @@ def set_study_metric_names(study, optimizers):
         pass
     else:
         raise ValueError(
-            f"optimizers must be a ListConfig, str, or tuple. Got {type(optimizers)}"
+            f"optimizers must be a ListConfig, str, or tuple. Got {type(optimizers)}",
         )
 
     if hasattr(study, "set_metric_names") and len(optimizers) > 0:
@@ -196,7 +200,7 @@ def set_trial_attributes(study, attrs, trial_number):
     )
     if trial is None:
         raise ValueError(
-            f"Trial {trial_number} not found in study '{study.study_name}'."
+            f"Trial {trial_number} not found in study '{study.study_name}'.",
         )
 
     # `study.get_trials()` returns FrozenTrial objects; write attrs through storage.
@@ -215,7 +219,7 @@ def set_trial_attributes(study, attrs, trial_number):
         else:
             raise RuntimeError(
                 f"Unable to set trial attribute '{k}' for trial {trial_number}; "
-                "no Optuna storage handle found."
+                "no Optuna storage handle found.",
             )
 
 
@@ -297,12 +301,12 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
                     raise ValueError(f"Invalid direction: {direction}")
         if not optimize_scores:
             raise RuntimeError(
-                "No optimization scores found for the specified directions."
+                "No optimization scores found for the specified directions.",
             )
         if len(missing_scores) > 0:
             logger.error(f"Missing scores: {missing_scores}")
             raise RuntimeError(
-                "No optimization scores found for the specified directions."
+                "No optimization scores found for the specified directions.",
             )
         values = optimize_scores
     else:

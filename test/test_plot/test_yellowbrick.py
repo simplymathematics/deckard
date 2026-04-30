@@ -8,12 +8,32 @@ import pytest
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from sklearn.datasets import make_classification, make_regression, make_blobs
+
 pytest.importorskip("yellowbrick")
-from deckard.plot.yellowbrick_plots import YellowbrickConfigList, YellowbrickPlotConfig, all_viz_types, model_selection_viz_types, cluster_viz_types, regressor_viz_types
+from deckard.plot.yellowbrick_plots import (
+    YellowbrickConfigList,
+    YellowbrickPlotConfig,
+    all_viz_types,
+    model_selection_viz_types,
+    cluster_viz_types,
+    regressor_viz_types,
+)
 from deckard.data.data import DataConfig
 from deckard.model import ModelConfig
 
-expensive_viz_types = ["manifold", "rfecv", "validation_curve", "learning_curve", "dropping_curve", "intercluster_distance", "feature_importances", "cv_scores", "silhouette"] + model_selection_viz_types
+expensive_viz_types = [
+    "manifold",
+    "rfecv",
+    "validation_curve",
+    "learning_curve",
+    "dropping_curve",
+    "intercluster_distance",
+    "feature_importances",
+    "cv_scores",
+    "silhouette",
+] + model_selection_viz_types
+
+
 class TestYellowbrickPlots(unittest.TestCase):
     def test_one_classification_plot(self):
         files = FileConfig(data_file="", model_file="")
@@ -34,7 +54,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         plot_cfg()
         self.assertTrue(Path(f"{self.temp_dir}/{plot_type}_dataconfig.png").exists())
-    
+
     @classmethod
     def setUpClass(cls):
         this_file = Path(__file__)
@@ -47,12 +67,10 @@ class TestYellowbrickPlots(unittest.TestCase):
         cls.cluster_data_config = config_dir + "data/cluster.yaml"
         cls.cluster_model_config = config_dir + "model/kmeans.yaml"
         cls.temp_dir = mkdtemp()
-        
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.temp_dir)
-        
-        
 
     def test_one_regression_plot(self):
         regression_files = FileConfig(data_file="", model_file="")
@@ -100,7 +118,9 @@ class TestYellowbrickPlots(unittest.TestCase):
     def test_clustering_plots(self):
         cluster_data_file = f"{self.temp_dir}/data/cluster_data.pkl"
         cluster_model_file = f"{self.temp_dir}/models/kmeans_model.pkl"
-        cluster_files = FileConfig(data_file=cluster_data_file, model_file=cluster_model_file)
+        cluster_files = FileConfig(
+            data_file=cluster_data_file, model_file=cluster_model_file
+        )
         cluster_data = OmegaConf.load(self.cluster_data_config)
         cluster_model = OmegaConf.load(self.cluster_model_config)
         experiment = ExperimentConfig(
@@ -110,7 +130,7 @@ class TestYellowbrickPlots(unittest.TestCase):
         )
         for plot_type in cluster_viz_types:
             if plot_type in ["intercluster_distance"]:
-                    continue
+                continue
             else:
                 filepath = f"{self.temp_dir}/{plot_type}_clustering.png"
                 with self.subTest(plot_type=plot_type):
@@ -142,13 +162,22 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/single_prepare.png",
         )
 
-        with patch.object(ExperimentConfig, "__call__", autospec=True, return_value={"accuracy": 0.9}) as mock_experiment_call, \
-             patch.object(YellowbrickPlotConfig, "visualize", autospec=True, return_value=None), \
-             patch.object(
-                 plot_cfg,
-                 "_experiment_outputs_ready",
-                 side_effect=[False, False, True, True, True],
-             ):
+        with (
+            patch.object(
+                ExperimentConfig,
+                "__call__",
+                autospec=True,
+                return_value={"accuracy": 0.9},
+            ) as mock_experiment_call,
+            patch.object(
+                YellowbrickPlotConfig, "visualize", autospec=True, return_value=None
+            ),
+            patch.object(
+                plot_cfg,
+                "_experiment_outputs_ready",
+                side_effect=[False, False, True, True, True],
+            ),
+        ):
             first_scores = plot_cfg()
             second_scores = plot_cfg()
 
@@ -173,17 +202,21 @@ class TestYellowbrickPlots(unittest.TestCase):
             plot_folder=self.temp_dir,
         )
 
-
     def test_single_plot_applies_rc_config(self):
         # Setup minimal classification data and model
-        Xc, yc = make_classification(n_samples=100, n_features=5, n_classes=2, random_state=42)
-        data = OmegaConf.create({
-            'X_train': Xc.tolist(),
-            'y_train': yc.tolist(),
-            'X_test': Xc.tolist(),
-            'y_test': yc.tolist()
-        })
+        Xc, yc = make_classification(
+            n_samples=100, n_features=5, n_classes=2, random_state=42
+        )
+        data = OmegaConf.create(
+            {
+                "X_train": Xc.tolist(),
+                "y_train": yc.tolist(),
+                "X_test": Xc.tolist(),
+                "y_test": yc.tolist(),
+            }
+        )
         from deckard.model import ModelConfig
+
         model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
         files = FileConfig(
             data_file=f"{self.temp_dir}/data/rc_single.pkl",
@@ -200,9 +233,15 @@ class TestYellowbrickPlots(unittest.TestCase):
             save_path=f"{self.temp_dir}/rc_single.png",
         )
 
-        with patch("deckard.plot.yellowbrick_plots.plt.rcParams.update") as mock_rc_update, \
-             patch.object(YellowbrickPlotConfig, "_ensure_experiment_prepared", return_value={}), \
-             patch.object(YellowbrickPlotConfig, "visualize", return_value=None):
+        with (
+            patch(
+                "deckard.plot.yellowbrick_plots.plt.rcParams.update"
+            ) as mock_rc_update,
+            patch.object(
+                YellowbrickPlotConfig, "_ensure_experiment_prepared", return_value={}
+            ),
+            patch.object(YellowbrickPlotConfig, "visualize", return_value=None),
+        ):
             plot_cfg()
 
         mock_rc_update.assert_called_once_with({"figure.figsize": (7, 5)})
@@ -225,12 +264,19 @@ class TestYellowbrickPlots(unittest.TestCase):
             plot_folder=self.temp_dir,
         )
 
-        with patch("deckard.plot.yellowbrick_plots.plt.rcParams.update") as mock_rc_update, \
-             patch.object(YellowbrickConfigList, "_ensure_experiment_prepared", return_value={}), \
-             patch.object(YellowbrickConfigList, "_set_plot_dict", return_value=None):
+        with (
+            patch(
+                "deckard.plot.yellowbrick_plots.plt.rcParams.update"
+            ) as mock_rc_update,
+            patch.object(
+                YellowbrickConfigList, "_ensure_experiment_prepared", return_value={}
+            ),
+            patch.object(YellowbrickConfigList, "_set_plot_dict", return_value=None),
+        ):
             plot_cfg()
 
         mock_rc_update.assert_called_once_with({"figure.figsize": (8, 6)})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -160,7 +160,10 @@ def _resolve_data_file(cfg: Any) -> str:
 
 
 def _extract_backend(
-    cfg: Any, data_file: str, experiment_cfg: Dict[str, Any], experiment_config: str
+    cfg: Any,
+    data_file: str,
+    experiment_cfg: Dict[str, Any],
+    experiment_config: str,
 ) -> str:
     cfg_dict = _cfg_to_dict(cfg)
     plot_block = (
@@ -175,7 +178,7 @@ def _extract_backend(
         if experiment_config or experiment_cfg:
             return "yellowbrick"
         raise ValueError(
-            "Could not infer backend: provide plot.data_file or plot.experiment_config/experiment cfg"
+            "Could not infer backend: provide plot.data_file or plot.experiment_config/experiment cfg",
         )
     return backend
 
@@ -254,7 +257,7 @@ def plot_main(cfg: Any) -> dict:
     if backend == "yellowbrick" and not experiment_config:
         if not extracted_experiment_cfg:
             raise ValueError(
-                "yellowbrick backend requires plot.experiment_config or a Hydra experiment cfg"
+                "yellowbrick backend requires plot.experiment_config or a Hydra experiment cfg",
             )
     if backend == "seaborn" and not data_file:
         raise ValueError("seaborn backend requires plot.data_file")
@@ -264,11 +267,11 @@ def plot_main(cfg: Any) -> dict:
             plots = "all"
         else:
             raise ValueError(
-                "Provide one of plot.plot_type, plot.plots, or plot.plots_file."
+                "Provide one of plot.plot_type, plot.plots, or plot.plots_file.",
             )
     if sum(bool(x) for x in [plot_type, plots, plots_file]) > 1:
         raise ValueError(
-            "Provide only one of plot.plot_type, plot.plots, or plot.plots_file."
+            "Provide only one of plot.plot_type, plot.plots, or plot.plots_file.",
         )
 
     if backend == "yellowbrick" and plots_file:
@@ -324,7 +327,7 @@ def plot_main(cfg: Any) -> dict:
         plot_list = _normalize_yellowbrick_plots(plots)
         if isinstance(plot_list, list) and len(plot_list) == 0:
             raise ValueError(
-                "--plots must contain at least one plot type for yellowbrick backend."
+                "--plots must contain at least one plot type for yellowbrick backend.",
             )
 
         output_dir = Path(plot_folder) if plot_folder else Path.cwd()
@@ -435,5 +438,5 @@ plot_parser = hydra_parser
 
 if __name__ == "__main__":
     raise SystemExit(
-        "Run this layer via deckard entrypoint with Hydra, e.g. `deckard plot ...`"
+        "Run this layer via deckard entrypoint with Hydra, e.g. `deckard plot ...`",
     )

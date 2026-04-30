@@ -196,7 +196,9 @@ class YellowbrickPlotConfig(ConfigBase):
         if self._experiment_outputs_ready():
             self._experiment_prepared = True
             self._experiment_scores = self._experiment_scores or getattr(
-                self, "score_dict", {}
+                self,
+                "score_dict",
+                {},
             )
             return self._experiment_scores
         self._experiment_scores = self.experiment()
@@ -211,7 +213,7 @@ class YellowbrickPlotConfig(ConfigBase):
         # Fallback: generate synthetic data if still not ready
         if not self._experiment_outputs_ready():
             raise RuntimeError(
-                "Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting."
+                "Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting.",
             )
         self._experiment_prepared = True
         return self._experiment_scores
@@ -353,13 +355,19 @@ class YellowbrickPlotConfig(ConfigBase):
         X, y, classes, features = self._get_plot_data()
         if self.plot_type == "rank1d":
             visualizer = Rank1D(
-                features=features, classes=classes, **self.plot_params, ax=ax
+                features=features,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.transform(X)
         elif self.plot_type == "rank2d":
             visualizer = Rank2D(
-                features=features, classes=classes, **self.plot_params, ax=ax
+                features=features,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.transform(X)
@@ -369,7 +377,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.transform(X)
         elif self.plot_type == "pcoords":
             visualizer = ParallelCoordinates(
-                classes=classes, **self.plot_params, features=features
+                classes=classes,
+                **self.plot_params,
+                features=features,
             )
             visualizer.fit_transform(X, y)
             if hasattr(visualizer, "ax") and visualizer.ax is not None:
@@ -410,7 +420,9 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.fit(y)
         elif self.plot_type == "feature_correlation":
             visualizer = FeatureCorrelation(
-                features=feature_indices, **self.plot_params, ax=ax
+                features=feature_indices,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
         else:
@@ -444,7 +456,10 @@ class YellowbrickPlotConfig(ConfigBase):
         model = self._get_plot_model()
         if self.plot_type == "classification_report":
             visualizer = ClassificationReport(
-                model, classes=classes, **self.plot_params, ax=ax
+                model,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
@@ -454,13 +469,19 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.score(X_test, y_test)
         elif self.plot_type == "precision_recall_curve":
             visualizer = PrecisionRecallCurve(
-                model, classes=classes, **self.plot_params, ax=ax
+                model,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
         elif self.plot_type == "class_prediction_error":
             visualizer = ClassPredictionError(
-                model, classes=classes, **self.plot_params, ax=ax
+                model,
+                classes=classes,
+                **self.plot_params,
+                ax=ax,
             )
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
@@ -510,7 +531,10 @@ class YellowbrickPlotConfig(ConfigBase):
             visualizer.fit(X, y)
         elif self.plot_type == "feature_importances":
             visualizer = FeatureImportances(
-                model, **self.plot_params, labels=features, ax=ax
+                model,
+                **self.plot_params,
+                labels=features,
+                ax=ax,
             )
             visualizer.fit(X, y)
         elif self.plot_type == "rfecv":
@@ -563,7 +587,9 @@ class YellowbrickPlotConfig(ConfigBase):
         elif len(param_range) == 3:
             if param_range[2] == "log":
                 param_range = np.logspace(
-                    np.log10(param_range[0]), np.log10(param_range[1]), num=num
+                    np.log10(param_range[0]),
+                    np.log10(param_range[1]),
+                    num=num,
                 )
             elif param_range[2] == "linear":
                 param_range = np.linspace(param_range[0], param_range[1], num=num)
@@ -615,7 +641,8 @@ class YellowbrickPlotConfig(ConfigBase):
     def show(self, visualizer):
         assert hasattr(visualizer, "show"), "Visualizer does not have a show method"
         assert isinstance(
-            visualizer, tuple(all_viz_objects)
+            visualizer,
+            tuple(all_viz_objects),
         ), "Visualizer is not a recognized Yellowbrick visualizer"
 
         visualizer.show(outpath=self.save_path)
@@ -703,7 +730,9 @@ class YellowbrickConfigList(ConfigBase):
         if self._experiment_outputs_ready():
             self._experiment_prepared = True
             self._experiment_scores = self._experiment_scores or getattr(
-                self, "score_dict", {}
+                self,
+                "score_dict",
+                {},
             )
             return self._experiment_scores
         self._experiment_scores = self.experiment()
@@ -715,7 +744,7 @@ class YellowbrickConfigList(ConfigBase):
             self.experiment.data(data_file=None, score_file=None)
         if not self._experiment_outputs_ready():
             raise RuntimeError(
-                "Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting."
+                "Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting.",
             )
         self._experiment_prepared = True
         return self._experiment_scores
@@ -740,7 +769,7 @@ class YellowbrickConfigList(ConfigBase):
                     model_plots += cluster_viz_types
                 if self.experiment.attack is not None:
                     logger.debug(
-                        "Plotting attacks with yellowbick isn't supported (yet)."
+                        "Plotting attacks with yellowbick isn't supported (yet).",
                     )
             plot_list = data_plots + model_plots
         elif isinstance(self.plots, list):
@@ -769,7 +798,7 @@ class YellowbrickConfigList(ConfigBase):
         for plot_cfg in plot_dict.values():
             try:
                 logger.info(
-                    f"Rendering {plot_cfg.plot_type} plot with params: {plot_cfg.plot_params}. "
+                    f"Rendering {plot_cfg.plot_type} plot with params: {plot_cfg.plot_params}. ",
                 )
                 plot_cfg()
             except Exception:

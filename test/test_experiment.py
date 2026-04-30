@@ -17,7 +17,9 @@ class TestExperimentConfig(unittest.TestCase):
         # Set up temporary directories and mock data for testing
         self.temp_dir = tempfile.mkdtemp()
         self.data_config = DataConfig(dataset_name="adult")
-        self.model_config = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+        self.model_config = ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression"
+        )
         self.attack_config = AttackConfig(attack_size=1)
         self.file_config = FileConfig()
         self.experiment_config = ExperimentConfig(

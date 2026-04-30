@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import matplotlib
 import numpy as np
 import optuna
@@ -33,7 +31,7 @@ def _make_survival_dataframe(n=80, seed=7):
             "group": group,
             "duration": duration,
             "event": event,
-        }
+        },
     )
 
 
@@ -162,7 +160,7 @@ def test_calculate_failures_under_attack_evasion():
         {
             "accuracy": [0.9, 0.8],
             "evasion_accuracy": [0.6, 0.5],
-        }
+        },
     )
     attack = AttackConfig(attack_type="art.attacks.evasion.HopSkipJump")
     output = calculate_failures_under_attack(df, attack)
@@ -180,7 +178,7 @@ def test_calculate_failures_under_attack_mixed_attack_rows():
             "membership_inference_accuracy": [np.nan, 1.0, np.nan],
             "sex_inference_accuracy": [np.nan, np.nan, 0.0],
             "attack name": ["hsj", "membership", "attribute-bb"],
-        }
+        },
     )
 
     output = calculate_failures_under_attack(df)

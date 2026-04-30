@@ -90,7 +90,7 @@ def compile_results_main(output_file: str, optuna_db: str, schema: str = None):
         else:
             schema = str(Path(schema).absolute())
             assert Path(
-                schema
+                schema,
             ).is_file(), (
                 f"Schema must be a dictionary or a valid file. Got {schema.absolute()}."
             )

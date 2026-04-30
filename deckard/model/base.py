@@ -2,7 +2,7 @@ import time
 import logging
 from typing import Union
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from omegaconf import DictConfig
 
 import numpy as np
@@ -48,7 +48,7 @@ art_model_types = tuple(
         ScikitlearnRegressor,
         PyTorchClassifier,
         PyTorchRegressor,
-    ]
+    ],
 )
 
 
@@ -579,7 +579,8 @@ class ModelConfig(ConfigBase):
                     threshold = 0.0
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
                 if len(classes) == 2 and np.issubdtype(
-                    np.asarray(classes).dtype, np.number
+                    np.asarray(classes).dtype,
+                    np.number,
                 ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
@@ -733,7 +734,8 @@ class ModelConfig(ConfigBase):
                 y_true_arr = np.asarray(y_true)
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
                 if len(classes) == 2 and np.issubdtype(
-                    np.asarray(classes).dtype, np.number
+                    np.asarray(classes).dtype,
+                    np.number,
                 ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
@@ -1012,15 +1014,15 @@ class ModelConfig(ConfigBase):
                     if hasattr(self._model, "predict_proba"):
                         try:
                             self.training_probabilities = self._model.predict_proba(
-                                data.X_train
+                                data.X_train,
                             )
                         except TypeError as e:
                             if "loop of ufunc does not support argument" in str(
-                                e
+                                e,
                             ) or "can't convert" in str(e):
                                 X_array = np.array(data.X_train, dtype=ART_NUMPY_DTYPE)
                                 self.training_probabilities = self._model.predict_proba(
-                                    X_array
+                                    X_array,
                                 )
                             else:
                                 raise e
@@ -1074,17 +1076,18 @@ class ModelConfig(ConfigBase):
                         if hasattr(self._model, "predict_proba"):
                             try:
                                 self.probabilities = self._model.predict_proba(
-                                    data.X_test
+                                    data.X_test,
                                 )
                             except TypeError as e:
                                 if "loop of ufunc does not support argument" in str(
-                                    e
+                                    e,
                                 ) or "can't convert" in str(e):
                                     X_array = np.array(
-                                        data.X_test, dtype=ART_NUMPY_DTYPE
+                                        data.X_test,
+                                        dtype=ART_NUMPY_DTYPE,
                                     )
                                     self.probabilities = self._model.predict_proba(
-                                        X_array
+                                        X_array,
                                     )
                                 else:
                                     raise e
@@ -1203,7 +1206,8 @@ class ModelConfig(ConfigBase):
                     # train the model if no model exists at the filepath
                     logger.info(f"Training model on {len(data.y_train)} samples...")
                     model_is_fitted = _is_model_fitted(
-                        self._model, X_sample=data.X_train
+                        self._model,
+                        X_sample=data.X_train,
                     )
 
                     # Do not trust timing metadata from loaded score files as proof of fitted state.

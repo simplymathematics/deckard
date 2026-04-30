@@ -283,7 +283,8 @@ class AttackConfig(ConfigBase):
                 and type(model).__name__ in sklearn_dict
             ):
                 assert isinstance(
-                    model, ClassifierMixin
+                    model,
+                    ClassifierMixin,
                 ), f"Model must be a ClassifierMixin, got {type(model)}"
                 model_alias = type(model).__name__
                 art_cls = sklearn_dict[model_alias]
@@ -308,7 +309,8 @@ class AttackConfig(ConfigBase):
                     if sensitive is not None:
                         model = SensitiveFeaturesWrapper(model, sensitive)
                 if isinstance(model, RegressorMixin) and not isinstance(
-                    model, ClassifierMixin
+                    model,
+                    ClassifierMixin,
                 ):
                     art_model = sklearn_dict["sklearn-regressor"](model)
                 else:
@@ -318,7 +320,7 @@ class AttackConfig(ConfigBase):
                 nb = getattr(art_model, "nb_classes", None)
                 if nb is None or nb <= 0:
                     art_model.nb_classes = len(
-                        np.unique(np.asarray(data.y_train).flatten())
+                        np.unique(np.asarray(data.y_train).flatten()),
                     )
             else:
                 raise ValueError(f"Unsupported model type: {type(model)}")
@@ -340,7 +342,7 @@ class AttackConfig(ConfigBase):
                         if feature_name.split("_")[0] in col
                     ]
                     raise ValueError(
-                        f"{feature_name} not found. Did you mean one of these: {cols}?"
+                        f"{feature_name} not found. Did you mean one of these: {cols}?",
                     )
                 self.target_index = data.X_train.columns.get_loc(feature_name)
                 self.attack_params["attack_feature"] = self.target_index
@@ -360,17 +362,18 @@ class AttackConfig(ConfigBase):
                 attack_model = attack_model.get_art_model(data)
             elif isinstance(attack_model, str):
                 assert Path(
-                    attack_model
+                    attack_model,
                 ).exists(), f"attack_model path {attack_model} does not exist"
                 with open(attack_model, "rb") as f:
                     attack_model = pickle.load(f)
                     assert isinstance(
-                        attack_model, ModelConfig
+                        attack_model,
+                        ModelConfig,
                     ), "Loaded attack_model must be a ModelConfig instance"
                     attack_model = attack_model.get_art_model(data)
             else:
                 raise ValueError(
-                    f"attack_model must be a ModelConfig instance. Got {type(attack_model)}"
+                    f"attack_model must be a ModelConfig instance. Got {type(attack_model)}",
                 )
             self.attack_params["attack_model"] = attack_model
         attack = attack_class(art_model, **self.attack_params)
@@ -787,7 +790,7 @@ class AttackConfig(ConfigBase):
             x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
         else:
             raise ValueError(
-                f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}"
+                f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}",
             )
         return n, x_subset, y_subset
 
@@ -840,7 +843,8 @@ class AttackConfig(ConfigBase):
             )
         else:
             assert isinstance(
-                targeted_attribute, (list, ListConfig)
+                targeted_attribute,
+                (list, ListConfig),
             ), "targeted attribute must be a string or a list of strings"
             if isinstance(targeted_attribute, ListConfig):
                 targeted_attribute = OmegaConf.to_container(targeted_attribute)
@@ -860,7 +864,7 @@ class AttackConfig(ConfigBase):
                         if str(attr).split("_")[0] in col:
                             possible_cols.append(col)
                     raise ValueError(
-                        f"Targeted attribute '{attr}' not found in test data columns."
+                        f"Targeted attribute '{attr}' not found in test data columns.",
                     )
         X_test = data.X_test.copy()
         target = X_test[targeted_attribute].copy()
@@ -889,7 +893,7 @@ class AttackConfig(ConfigBase):
         )
         self.attack_time = attack_time
         preds = np.array(
-            [np.argmax(arr) for arr in art_model.predict(X_test_subset)]
+            [np.argmax(arr) for arr in art_model.predict(X_test_subset)],
         ).reshape(
             -1,
             1,

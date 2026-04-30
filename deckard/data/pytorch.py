@@ -9,7 +9,7 @@ from hashlib import md5
 
 
 from dataclasses import dataclass, field
-from typing import Union, List, Optional, cast, Callable
+from typing import Union, List, Optional, Callable
 
 # PyTorch
 import torch
@@ -127,7 +127,7 @@ class PytorchDataConfig(DataConfig):
                 }
                 if dataset_name.lower() not in dataset_aliases:
                     raise ImportError(
-                        f"Unknown dataset alias '{dataset_name}'. Use a fully qualified class path."
+                        f"Unknown dataset alias '{dataset_name}'. Use a fully qualified class path.",
                     )
                 dataset_name = dataset_aliases[dataset_name.lower()]
 
@@ -155,21 +155,23 @@ class PytorchDataConfig(DataConfig):
                 )
             else:
                 raise ValueError(
-                    f"Dataset samples must be (X, y) tuples, got {type(samples[0])}"
+                    f"Dataset samples must be (X, y) tuples, got {type(samples[0])}",
                 )
 
             end = time.process_time()
             self.data_load_time = end - start
             logger.info(
                 f"Loaded dataset {self.dataset_name} in {self.data_load_time:.2f} seconds. "
-                f"Shape: {self._X.shape}, Labels: {self._y.shape}"
+                f"Shape: {self._X.shape}, Labels: {self._y.shape}",
             )
 
             assert isinstance(
-                self._X, Tensor
+                self._X,
+                Tensor,
             ), f"Expected _X to be Tensor, got {type(self._X)}"
             assert isinstance(
-                self._y, Tensor
+                self._y,
+                Tensor,
             ), f"Expected _y to be Tensor, got {type(self._y)}"
 
         except Exception as e:
@@ -205,7 +207,7 @@ class PytorchDataConfig(DataConfig):
         if self.stratify is not None:
             if self.stratify is not True:
                 raise ValueError(
-                    f"stratify must be None or True for PyTorch datasets; got {self.stratify}."
+                    f"stratify must be None or True for PyTorch datasets; got {self.stratify}.",
                 )
 
         # Calculate train and test sizes
@@ -272,7 +274,7 @@ class PytorchDataConfig(DataConfig):
 
         logger.info(
             f"Data sampled in {self.data_sample_time:.2f} seconds. "
-            f"Train: {self.train_n}, Test: {self.test_n}"
+            f"Train: {self.train_n}, Test: {self.test_n}",
         )
 
         assert isinstance(self.X_train, Tensor), "X_train must be a Tensor"
@@ -486,7 +488,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
     def _truncate_dataset(self, dataset: Dataset, size: int):
         assert isinstance(size, int), ValueError(
-            f"Size must be an integer. Got: {size}."
+            f"Size must be an integer. Got: {size}.",
         )
         dataset = Subset(dataset, range(size))
         return dataset
@@ -517,10 +519,14 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         self.test_transform = test_transform
         valid_split = "test" if self.val else "valid"
         train_ds = self._as_dataset(
-            self.dataset, split="train", transform=train_transform
+            self.dataset,
+            split="train",
+            transform=train_transform,
         )
         test_ds = self._as_dataset(
-            self.dataset, split=valid_split, transform=test_transform
+            self.dataset,
+            split=valid_split,
+            transform=test_transform,
         )
         if self.train_size:
             train_ds = self._truncate_dataset(train_ds, self.train_size)

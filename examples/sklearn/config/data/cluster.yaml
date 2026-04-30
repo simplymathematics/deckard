@@ -9,4 +9,3 @@ data_params:
   n_clusters_per_class: 3
 classifier: True
 alias: make_cluster
-

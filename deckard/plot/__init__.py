@@ -56,7 +56,7 @@ class PlotConfig(ConfigBase):
             raise ValueError("Provide either 'experiment' or 'data_file', not both.")
         if not has_experiment and not has_data_file:
             raise ValueError(
-                "Missing required source key: provide 'experiment' or 'data_file'."
+                "Missing required source key: provide 'experiment' or 'data_file'.",
             )
 
         if has_experiment:

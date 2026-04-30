@@ -86,7 +86,7 @@ class PytorchModelConfig(ModelConfig):
     fit_params: dict = field(default_factory=dict)
     library: str = "pytorch"
     device: Union[str, torch.device] = field(
-        default_factory=lambda: ("cuda" if torch.cuda.is_available() else "cpu")
+        default_factory=lambda: ("cuda" if torch.cuda.is_available() else "cpu"),
     )
     criterion: Union[dict, str] = field(default="torch.nn.CrossEntropyLoss")
     optimizer: Union[dict, str] = field(default="torch.optim.SGD")
@@ -194,14 +194,17 @@ class PytorchModelConfig(ModelConfig):
             "accuracy": float(accuracy_score(y_true_np, y_pred_np)),
             "precision": float(
                 precision_score(
-                    y_true_np, y_pred_np, average="weighted", zero_division=0
-                )
+                    y_true_np,
+                    y_pred_np,
+                    average="weighted",
+                    zero_division=0,
+                ),
             ),
             "recall": float(
-                recall_score(y_true_np, y_pred_np, average="weighted", zero_division=0)
+                recall_score(y_true_np, y_pred_np, average="weighted", zero_division=0),
             ),
             "f1": float(
-                f1_score(y_true_np, y_pred_np, average="weighted", zero_division=0)
+                f1_score(y_true_np, y_pred_np, average="weighted", zero_division=0),
             ),
         }
         return scores
@@ -244,7 +247,8 @@ class PytorchModelConfig(ModelConfig):
                 model=self._model,
                 loss=initialize_criterion(self.criterion),
                 optimizer=initialize_optimizer(
-                    self.optimizer, self._model.parameters()
+                    self.optimizer,
+                    self._model.parameters(),
                 ),
                 input_shape=input_shape,
                 nb_classes=nb_classes,
@@ -256,7 +260,8 @@ class PytorchModelConfig(ModelConfig):
                 model=self._model,
                 loss=initialize_criterion(self.criterion),
                 optimizer=initialize_optimizer(
-                    self.optimizer, self._model.parameters()
+                    self.optimizer,
+                    self._model.parameters(),
                 ),
                 input_shape=input_shape,
                 nb_classes=nb_classes,

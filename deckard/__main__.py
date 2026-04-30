@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 from pathlib import Path
 
 
-from . import LOGGING, DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
+from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
 
 from .layers import SUPPORTED_LAYERS, layer_dict
 from .experiment import ExperimentConfig
@@ -104,7 +104,7 @@ def main():
         handle_other_layers(module)
     else:
         raise ValueError(
-            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}"
+            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}",
         )
 
 
@@ -151,7 +151,7 @@ def handle_other_layers(layer):
     """Run the parser and main entrypoint for the specified layer via Hydra."""
     if layer not in layer_dict:
         logger.error(
-            f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}"
+            f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}",
         )
         raise ValueError
 
@@ -163,7 +163,9 @@ def handle_other_layers(layer):
     parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
 
     cli_config_path = getattr(parsed_args, "config_path", None) or getattr(
-        parsed_args, "config_dir", None
+        parsed_args,
+        "config_dir",
+        None,
     )
     cli_config_name = getattr(parsed_args, "config_name", None)
     default_config_dir = None

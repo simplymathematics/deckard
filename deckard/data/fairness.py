@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 import pandas as pd
 from dataclasses import dataclass
 from omegaconf import DictConfig, ListConfig
@@ -73,7 +73,9 @@ class FairnessDataConfig(DataPipelineConfig):
         return frame[self.groupby_columns]
 
     def _validate_sensitive_runtime(
-        self, sensitive: pd.Series, context: str
+        self,
+        sensitive: pd.Series,
+        context: str,
     ) -> pd.Series:
         sensitive_series = pd.Series(sensitive)
         if len(sensitive_series) == 0:
@@ -129,13 +131,13 @@ class FairnessDataConfig(DataPipelineConfig):
     def _load_data(self):
         super()._load_data()
         assert hasattr(self, "_X"), RuntimeError(
-            "self.X_ not found while loading FairnessDataConfig"
+            "self.X_ not found while loading FairnessDataConfig",
         )
         assert hasattr(self, "_y"), RuntimeError(
-            "self.y_ not found whilte loading FairnessDataConfig"
+            "self.y_ not found whilte loading FairnessDataConfig",
         )
         assert isinstance(self._X, pd.DataFrame), ValueError(
-            "Expected a dataframe for self.X_"
+            "Expected a dataframe for self.X_",
         )
         for col in self.groupby_columns:
             assert col in self._X.columns
@@ -159,13 +161,16 @@ class FairnessDataConfig(DataPipelineConfig):
         self.sensitive_test_ = self._group_labels_from_frame(self.X_test)
         self.sensitive_all_ = self._group_labels_from_frame(self._X)
         self.sensitive_train_ = self._validate_sensitive_runtime(
-            self.sensitive_train_, "train sampling"
+            self.sensitive_train_,
+            "train sampling",
         )
         self.sensitive_test_ = self._validate_sensitive_runtime(
-            self.sensitive_test_, "test sampling"
+            self.sensitive_test_,
+            "test sampling",
         )
         self.sensitive_all_ = self._validate_sensitive_runtime(
-            self.sensitive_all_, "full-data sampling"
+            self.sensitive_all_,
+            "full-data sampling",
         )
 
         # Store the original X_test and y_test
@@ -191,7 +196,7 @@ class FairnessDataConfig(DataPipelineConfig):
             X_eval = self.X_test
             y_eval = self.y_test
             if hasattr(self, "sensitive_test_") and len(self.sensitive_test_) == len(
-                y_eval
+                y_eval,
             ):
                 sensitive = self.sensitive_test_
             else:
@@ -200,7 +205,7 @@ class FairnessDataConfig(DataPipelineConfig):
             X_eval = self._X
             y_eval = self._y
             if hasattr(self, "sensitive_all_") and len(self.sensitive_all_) == len(
-                y_eval
+                y_eval,
             ):
                 sensitive = self.sensitive_all_
             else:
@@ -220,7 +225,9 @@ class FairnessDataConfig(DataPipelineConfig):
             sensitive_labels = pd.Series(sensitive).astype(str)
             target_labels = pd.Series(y_eval).astype(str)
             target_distribution_by_group = pd.crosstab(
-                sensitive_labels, target_labels, normalize="index"
+                sensitive_labels,
+                target_labels,
+                normalize="index",
             ).to_dict(orient="index")
             fairness_payload = {
                 "fairness_scores": {
@@ -235,7 +242,7 @@ class FairnessDataConfig(DataPipelineConfig):
                             "selection_rate": float(values["selection_rate"]),
                         }
                         for group, values in metric_frame.by_group.to_dict(
-                            orient="index"
+                            orient="index",
                         ).items()
                     },
                     "target_distribution_by_group": {
@@ -245,7 +252,7 @@ class FairnessDataConfig(DataPipelineConfig):
                         for group, values in target_distribution_by_group.items()
                     },
                     "selection_rate_difference": float(
-                        selection_diff["selection_rate"]
+                        selection_diff["selection_rate"],
                     ),
                     "selection_rate_ratio": float(selection_ratio["selection_rate"]),
                     "demographic_parity_difference": float(

@@ -1,9 +1,9 @@
 import json
-import math
 from types import SimpleNamespace
 import pytest
 from omegaconf import OmegaConf
 from deckard.layers import optimize as optimize_module
+
 
 class DummyStudy:
     def __init__(self):
@@ -160,7 +160,9 @@ def test_create_study_with_directions(monkeypatch):
 
 
 def test_create_study_requires_matching_directions_and_optimizers():
-    with pytest.raises(AssertionError, match="Length of directions must match length of optimizers"):
+    with pytest.raises(
+        AssertionError, match="Length of directions must match length of optimizers"
+    ):
         optimize_module.create_study("study", "sqlite:///db.sqlite3", ["minimize"], [])
 
 
@@ -178,7 +180,6 @@ def test_set_study_metric_names_accepts_supported_types(optimizers, expected):
     optimize_module.set_study_metric_names(study, optimizers)
 
     assert study.metric_names == expected
-
 
 
 def test_set_user_attrs_accepts_dictconfig():
@@ -247,7 +248,7 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
                 "study_name": "demo-study",
             },
             "job": {"id": 0},
-        }
+        },
     )
     captured = {}
 
@@ -286,7 +287,10 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
     }
     assert study.metric_names == ["loss"]
     assert study.user_attrs == {"accuracy": 0.9}
-    assert json.loads((tmp_path / "scores.json").read_text()) == {"loss": 0.25, "accuracy": 0.9}
+    assert json.loads((tmp_path / "scores.json").read_text()) == {
+        "loss": 0.25,
+        "accuracy": 0.9,
+    }
     assert "foo: bar" in (tmp_path / "params.yaml").read_text()
 
 
@@ -299,7 +303,9 @@ def test_set_trial_attributes_persists_all_attrs_via_storage():
         get_trials=lambda deepcopy=False: [trial],
     )
 
-    attrs = OmegaConf.create({"accuracy": 0.91, "latency_ms": 12.5, "meta": {"fold": 1}})
+    attrs = OmegaConf.create(
+        {"accuracy": 0.91, "latency_ms": 12.5, "meta": {"fold": 1}}
+    )
 
     optimize_module.set_trial_attributes(study, attrs, trial_number=7)
 

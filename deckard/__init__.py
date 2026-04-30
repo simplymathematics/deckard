@@ -126,7 +126,7 @@ def _file_resolver(arg: str):
     """
     if not arg:
         raise ValueError(
-            "file resolver requires an argument like 'path/to/file.yaml[:key]'"
+            "file resolver requires an argument like 'path/to/file.yaml[:key]'",
         )
 
     # split into path and optional key (only first ':' splits, keys may contain '.')
@@ -138,7 +138,7 @@ def _file_resolver(arg: str):
     path = Path(DECKARD_CONFIG_DIR, path_part)
     if not path.exists():
         raise FileNotFoundError(
-            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}"
+            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}",
         )
 
     data = _load_yaml_file(path)

@@ -100,7 +100,7 @@ def survival_probability_calibration(
             predictor_col: _ccl(predictions_at_t0),
             duration_col: calibration_df[duration_col],
             event_col: calibration_df[event_col],
-        }
+        },
     )
 
     regressors = {
@@ -146,7 +146,7 @@ def survival_probability_calibration(
             logger.error("Could not fit CRC model for calibration: %s", error)
             if return_curve:
                 curve = pd.DataFrame(
-                    {"predicted": predictions_at_t0, "observed": np.nan}
+                    {"predicted": predictions_at_t0, "observed": np.nan},
                 ).sort_values("predicted")
                 return ax, np.nan, np.nan, curve
             return ax, np.nan, np.nan
@@ -192,7 +192,7 @@ def survival_probability_calibration(
 def _initialize_aft_fitter(mtype: str, kwargs: dict) -> RegressionFitter:
     if mtype not in AFT_MODEL_TYPES:
         raise ValueError(
-            f"Model type {mtype} not recognized. Supported: {list(AFT_MODEL_TYPES.keys())}"
+            f"Model type {mtype} not recognized. Supported: {list(AFT_MODEL_TYPES.keys())}",
         )
 
     params = dict(kwargs)
@@ -503,7 +503,9 @@ def make_survival_model_table(
     for mtype, model in aft_dict.items():
         t0 = t0s[mtype]
         _, train_ici, train_e50 = survival_probability_calibration(
-            model, X_train, t0=t0
+            model,
+            X_train,
+            t0=t0,
         )
         _, test_ici, test_e50 = survival_probability_calibration(model, X_test, t0=t0)
         train_icis.append(train_ici)
@@ -659,7 +661,8 @@ def run_survival_model_experiment(
         X_test=X_test,
         aft=aft,
         title=plot_dict.get(
-            "qq_title", f"{mtype.replace('_', ' ').title()} Calibration"
+            "qq_title",
+            f"{mtype.replace('_', ' ').title()} Calibration",
         ),
         t0=t0,
         file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
@@ -673,7 +676,8 @@ def run_survival_model_experiment(
         summary_plot = plot_summary(
             aft=aft,
             title=plot_dict.get(
-                "summary_title", f"{mtype.replace('_', ' ').title()} P-values"
+                "summary_title",
+                f"{mtype.replace('_', ' ').title()} P-values",
             ),
             file=plot_dict["summary_plot"],
             xlabel=label_dict.get("summary_xlabel", "Covariate"),
@@ -762,7 +766,7 @@ def _resolve_survival_model_name(model: Union[str, dict, ModelConfig]) -> str:
         return (model.model_type).lower()
     if isinstance(model, dict):
         return str(
-            model.get("survival_model") or model.get("alias") or model.get("model")
+            model.get("survival_model") or model.get("alias") or model.get("model"),
         ).lower()
     raise TypeError(f"Unsupported model specification: {type(model)}")
 
@@ -816,7 +820,7 @@ def _resolve_survival_runtime_models(model, model_config, attack):
             )
         else:
             survival_model = _normalize_survival_model_name(
-                _resolve_survival_model_name(model)
+                _resolve_survival_model_name(model),
             )
     else:
         attack_model_spec = model
@@ -937,7 +941,7 @@ def _load_optuna_survival_frame(
         frame = frame.query(query)
     if frame.empty:
         raise ValueError(
-            f"No attack results found in {optuna_db} after applying filters"
+            f"No attack results found in {optuna_db} after applying filters",
         )
     return frame
 
@@ -961,7 +965,7 @@ def calculate_failures_under_attack(
             row_kind = _infer_attack_kind_from_label(attack_label) or attack_kind
             for metric in _candidate_attack_metrics_for_kind(row_kind):
                 if metric not in output.columns or pd.isna(
-                    output.at[row_index, metric]
+                    output.at[row_index, metric],
                 ):
                     continue
                 value = output.at[row_index, metric]

@@ -1,7 +1,6 @@
 import logging
 import warnings
 import hashlib
-from dataclasses import dataclass
 from typing import List, Union, Literal
 from omegaconf import DictConfig, OmegaConf
 import os
@@ -57,7 +56,7 @@ def _file_resolver(arg: str):
     """
     if not arg:
         raise ValueError(
-            "file resolver requires an argument like 'path/to/file.yaml[:key]'"
+            "file resolver requires an argument like 'path/to/file.yaml[:key]'",
         )
 
     # split into path and optional key (only first ':' splits, keys may contain '.')
@@ -69,7 +68,7 @@ def _file_resolver(arg: str):
     path = Path(DECKARD_CONFIG_DIR, path_part)
     if not path.exists():
         raise FileNotFoundError(
-            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}"
+            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}",
         )
 
     data = _load_yaml_file(path)
@@ -162,7 +161,7 @@ class DataConfigResolutionMixin:
         logger.info("Resolved data config class: %s", data_cls.__name__)
         data_obj = data_cls(**data_dict)
         assert isinstance(data_obj, DataConfig), ValueError(
-            f"Object of type: {type(data_obj)} is not a DataConfig object."
+            f"Object of type: {type(data_obj)} is not a DataConfig object.",
         )
         return data_obj
 
@@ -277,7 +276,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     defense_dict = self.defense.to_dict()
                 elif isinstance(self.defense, dict):
                     defense_dict = OmegaConf.to_container(
-                        OmegaConf.create(self.defense)
+                        OmegaConf.create(self.defense),
                     )
                 else:
                     raise ValueError(
@@ -290,7 +289,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                         inferred_model_type = self.model.model_type
                     elif isinstance(self.model, DictConfig):
                         inferred_model_type = OmegaConf.to_container(self.model).get(
-                            "model_type"
+                            "model_type",
                         )
                     elif isinstance(self.model, dict):
                         inferred_model_type = self.model.get("model_type")

@@ -104,7 +104,15 @@ class TestModelConfig(unittest.TestCase):
             self.assertIn(key, score_dict)
 
     def test_call_saves_test_predictions_when_file_requested(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,
@@ -112,11 +120,21 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         test_pred_file = os.path.join(self.tmpdir, "test_predictions.pkl")
-        model(data=data, model_file=self.model_file, test_predictions_file=test_pred_file)
+        model(
+            data=data, model_file=self.model_file, test_predictions_file=test_pred_file
+        )
         self.assertTrue(os.path.exists(test_pred_file))
 
     def test_call_saves_train_predictions_when_file_requested(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,
@@ -124,11 +142,23 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         train_pred_file = os.path.join(self.tmpdir, "train_predictions.pkl")
-        model(data=data, model_file=self.model_file, train_predictions_file=train_pred_file)
+        model(
+            data=data,
+            model_file=self.model_file,
+            train_predictions_file=train_pred_file,
+        )
         self.assertTrue(os.path.exists(train_pred_file))
 
     def test_call_saves_train_and_test_predictions_when_requested(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,
@@ -147,7 +177,15 @@ class TestModelConfig(unittest.TestCase):
         self.assertTrue(os.path.exists(test_pred_file))
 
     def test_call_saves_test_probabilities_when_file_requested(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,
@@ -155,11 +193,23 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         test_prob_file = os.path.join(self.tmpdir, "test_probabilities.pkl")
-        model(data=data, model_file=self.model_file, test_probabilities_file=test_prob_file)
+        model(
+            data=data,
+            model_file=self.model_file,
+            test_probabilities_file=test_prob_file,
+        )
         self.assertTrue(os.path.exists(test_prob_file))
 
     def test_call_saves_train_probabilities_when_file_requested(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,
@@ -167,7 +217,11 @@ class TestModelConfig(unittest.TestCase):
             model_params={"n_estimators": 10},
         )
         train_prob_file = os.path.join(self.tmpdir, "train_probabilities.pkl")
-        model(data=data, model_file=self.model_file, training_probabilities_file=train_prob_file)
+        model(
+            data=data,
+            model_file=self.model_file,
+            training_probabilities_file=train_prob_file,
+        )
         self.assertTrue(os.path.exists(train_prob_file))
 
     def test_load_predictions(self):
@@ -182,7 +236,15 @@ class TestModelConfig(unittest.TestCase):
         self.model.load_data = orig_load_data
 
     def test_load_or_train_model_trains_when_not_fitted_even_if_training_time_set(self):
-        data = DataConfig(dataset_name="make_classification", data_params={"n_samples": 40, "n_features": 4, "n_informative": 2, "n_redundant": 0})
+        data = DataConfig(
+            dataset_name="make_classification",
+            data_params={
+                "n_samples": 40,
+                "n_features": 4,
+                "n_informative": 2,
+                "n_redundant": 0,
+            },
+        )
         data()
         model = ModelConfig(
             model_type=self.model_type,

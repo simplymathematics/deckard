@@ -25,10 +25,10 @@ class TestFileConfig(unittest.TestCase):
             data_file="{experiment_name}.csv",
             score_file="{experiment_name}_score.txt",
             replace={
-                "{hash}" : "null",
-                "{timestamp}" : str(time.time()),     
-                "{experiment_name}" : "foo",         
-            }
+                "{hash}": "null",
+                "{timestamp}": str(time.time()),
+                "{experiment_name}": "foo",
+            },
         )
 
     def tearDown(self):
@@ -38,7 +38,6 @@ class TestFileConfig(unittest.TestCase):
         # Remove any additional test_models2 directory if created
         if Path("test_models2").exists():
             shutil.rmtree("test_models2", ignore_errors=True)
-
 
     def test_file_paths_contain_experiment_name(self):
         exp_name = self.config.replace["{experiment_name}"]
@@ -69,10 +68,10 @@ class TestFileConfig(unittest.TestCase):
         file_dict = config._file_dict
         attack_file = file_dict.get("attack_file", KeyError)
         self.assertNotEqual(attack_file, "{timestamp}")
-    
+
     def test_timestamp_placeholder(self):
         self.assertEqual(self.config.log_file, "foo.log")
-     
+
     def test_unused_directory_removed(self):
         config = FileConfig()
         with self.assertRaises(KeyError):

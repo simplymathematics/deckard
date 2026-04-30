@@ -1,7 +1,6 @@
 import logging
 import shlex
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -63,7 +62,7 @@ def _infer_stages_from_dvc(dvc_file: str) -> list:
 
     if len(inferred) == 0:
         raise ValueError(
-            f"No multirun stages found in {dvc_file}. Pass stages explicitly via --stages."
+            f"No multirun stages found in {dvc_file}. Pass stages explicitly via --stages.",
         )
 
     return inferred
@@ -112,7 +111,7 @@ def _resolve_hydra_config_for_stage(stage_conf: dict, hydra_cfg_file: str) -> st
                 cfg_path = yml_cfg
             else:
                 raise FileNotFoundError(
-                    f"Could not resolve config '{config_name}' to .yaml/.yml near {default_cfg_dir}."
+                    f"Could not resolve config '{config_name}' to .yaml/.yml near {default_cfg_dir}.",
                 )
 
     if not cfg_path.exists():
@@ -129,7 +128,9 @@ def _collect_storage_finished_counts(optuna_db: str, end_states: set) -> tuple:
     summaries = optuna.study.get_all_study_summaries(storage=optuna_db)
     for summary in summaries:
         study_name = getattr(summary, "study_name", None) or getattr(
-            summary, "name", None
+            summary,
+            "name",
+            None,
         )
         if not study_name:
             continue
@@ -151,7 +152,8 @@ def _collect_storage_finished_counts(optuna_db: str, end_states: set) -> tuple:
 
 
 def _count_completed_studies(
-    observed_finished_counts: list, required_trials: list
+    observed_finished_counts: list,
+    required_trials: list,
 ) -> int:
     """Greedy max matching between observed finished-trial counts and required-trial thresholds."""
     obs = sorted(observed_finished_counts, reverse=True)
@@ -226,7 +228,7 @@ def progress_bar_main(
                 "config": stage_cfg,
                 "storage": storage,
                 "n_trials": n_trials,
-            }
+            },
         )
 
         if storage not in storage_requirements:
@@ -239,7 +241,7 @@ def progress_bar_main(
         storage_requirements[storage]["expected_studies"] += studies_count
         storage_requirements[storage]["expected_trials"] += studies_count * n_trials
         storage_requirements[storage]["required_trials"].extend(
-            [n_trials] * studies_count
+            [n_trials] * studies_count,
         )
 
     expected_studies = sum(
@@ -267,7 +269,8 @@ def progress_bar_main(
 
         for storage, req in storage_requirements.items():
             finished_counts, storage_earliest = _collect_storage_finished_counts(
-                storage, end_states
+                storage,
+                end_states,
             )
             storage_completed_studies = _count_completed_studies(
                 observed_finished_counts=finished_counts,
@@ -276,7 +279,8 @@ def progress_bar_main(
             storage_completed_trials = min(sum(finished_counts), req["expected_trials"])
 
             total_completed_studies += min(
-                storage_completed_studies, req["expected_studies"]
+                storage_completed_studies,
+                req["expected_studies"],
             )
             total_completed_trials += storage_completed_trials
 

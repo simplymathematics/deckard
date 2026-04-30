@@ -1059,7 +1059,7 @@ class DataPipelineConfig(DataConfig):
 
                 elif dtype in string_dtypes:
                     selector = make_column_selector(
-                        dtype_include=object
+                        dtype_include=object,
                     )  # or "string" depending on your data
 
                 else:
@@ -1076,8 +1076,8 @@ class DataPipelineConfig(DataConfig):
                             remainder="passthrough",
                             verbose_feature_names_out=False,
                         ),
-                    )
-                ]
+                    ),
+                ],
             )
 
         else:
@@ -1283,13 +1283,21 @@ class DataPipelineConfig(DataConfig):
         )
         # Fit X pipeline
         self.X_train, self.X_test, self.y_train, self.y_test = self._fit_transform_X(
-            self.X_train, self.X_test, self.y_train, self.y_test, X_pipeline
+            self.X_train,
+            self.X_test,
+            self.y_train,
+            self.y_test,
+            X_pipeline,
         )
         # Fit y pipeline
         if y_pipeline is not None:
             self.X_train, self.X_test, self.y_train, self.y_test = (
                 self._fit_transform_y(
-                    self.X_train, self.X_test, self.y_train, self.y_test, y_pipeline
+                    self.X_train,
+                    self.X_test,
+                    self.y_train,
+                    self.y_test,
+                    y_pipeline,
                 )
             )
         time_dict = {

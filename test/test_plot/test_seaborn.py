@@ -15,7 +15,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-
 class TestSeabornPlots(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -27,7 +26,7 @@ class TestSeabornPlots(unittest.TestCase):
                 "y": [2, 4, 6, 8],
                 "group": ["a", "a", "b", "b"],
                 "style_col": ["s1", "s2", "s1", "s2"],
-            }
+            },
         )
         cls.df.to_pickle(cls.data_file)
 

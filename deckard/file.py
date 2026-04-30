@@ -171,7 +171,7 @@ class FileConfig(ConfigBase):
                 setattr(self, file_attr, resolved_path)
             else:
                 logger.debug(
-                    f"File attribute {file_attr} is None or empty; skipping placeholder replacement."
+                    f"File attribute {file_attr} is None or empty; skipping placeholder replacement.",
                 )
 
     def _get_file_dict(self) -> dict:

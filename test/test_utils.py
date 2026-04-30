@@ -149,7 +149,7 @@ class TestUtilsAdditional(unittest.TestCase):
             module_path.write_text(
                 "class MyClass:\n"
                 "    def __init__(self, x=0):\n"
-                "        self.x = x\n"
+                "        self.x = x\n",
             )
             obj = import_class_from_file(str(module_path), "MyClass", 7)
             self.assertEqual(obj.x, 7)
@@ -164,7 +164,7 @@ class TestUtilsAdditional(unittest.TestCase):
             module_path.write_text(
                 "class MyClass:\n"
                 "    def __init__(self, name='n'):\n"
-                "        self.name = name\n"
+                "        self.name = name\n",
             )
             obj = load_class(f"{module_path}:MyClass", "deckard")
             self.assertEqual(obj.name, "deckard")

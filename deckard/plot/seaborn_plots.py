@@ -77,7 +77,8 @@ class SeabornPlotConfig(ConfigBase):
 
     def __call__(self, ax: Optional[Axes] = None):
         plotter_map = globals().get(
-            "seaborn_plotter_dict", globals().get("searborn_plotter_dict")
+            "seaborn_plotter_dict",
+            globals().get("searborn_plotter_dict"),
         )
         plotter = plotter_map[self.plot_type]
 
@@ -147,7 +148,9 @@ class SeabornPlotConfigList(ConfigBase):
         fig = None
         if axes is None:
             fig, axes = plt.subplots(
-                nrows=plot_length, ncols=1, figsize=(10, 8 * plot_length)
+                nrows=plot_length,
+                ncols=1,
+                figsize=(10, 8 * plot_length),
             )
         for i in range(plot_length):
             ax = axes[i] if plot_length > 1 else axes
@@ -156,7 +159,7 @@ class SeabornPlotConfigList(ConfigBase):
                 ax = cfg(ax)
             except Exception as e:
                 print(
-                    f"Failed to generate plot numbner {i} of type {cfg.plot_type} with file: {cfg.plot_file}"
+                    f"Failed to generate plot numbner {i} of type {cfg.plot_type} with file: {cfg.plot_file}",
                 )
         if self.file is not None:
             Path(self.file).parent.mkdir(parents=True, exist_ok=True)

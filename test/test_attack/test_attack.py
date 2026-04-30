@@ -58,11 +58,14 @@ class TestAttackConfig(unittest.TestCase):
             self.attack.attack_score_time = 0.02
             return {"evasion_success": 0.3}
 
-        with patch.object(
-            AttackConfig,
-            "_initialize_attack",
-            return_value=(object(), object(), "evasion", ""),
-        ), patch.object(AttackConfig, "_evade", side_effect=_fake_evade):
+        with (
+            patch.object(
+                AttackConfig,
+                "_initialize_attack",
+                return_value=(object(), object(), "evasion", ""),
+            ),
+            patch.object(AttackConfig, "_evade", side_effect=_fake_evade),
+        ):
             result = self.attack(data, model)
 
         self.assertIsNotNone(result)
@@ -81,11 +84,16 @@ class TestAttackConfig(unittest.TestCase):
             attack.attack_score_time = 0.05
             return {"membership_inference_accuracy": 0.9}
 
-        with patch.object(
-            AttackConfig,
-            "_initialize_attack",
-            return_value=(object(), object(), "inference", "membership_inference"),
-        ), patch.object(AttackConfig, "_infer_membership", side_effect=_fake_membership):
+        with (
+            patch.object(
+                AttackConfig,
+                "_initialize_attack",
+                return_value=(object(), object(), "inference", "membership_inference"),
+            ),
+            patch.object(
+                AttackConfig, "_infer_membership", side_effect=_fake_membership
+            ),
+        ):
             result = attack(object(), object())
 
         self.assertIn("membership_inference_accuracy", result)
@@ -104,11 +112,14 @@ class TestAttackConfig(unittest.TestCase):
             attack.attack_score_time = 0.07
             return {"inferred_age_accuracy": 0.8}
 
-        with patch.object(
-            AttackConfig,
-            "_initialize_attack",
-            return_value=(object(), object(), "inference", "attribute_inference"),
-        ), patch.object(AttackConfig, "_infer_attribute", side_effect=_fake_attribute):
+        with (
+            patch.object(
+                AttackConfig,
+                "_initialize_attack",
+                return_value=(object(), object(), "inference", "attribute_inference"),
+            ),
+            patch.object(AttackConfig, "_infer_attribute", side_effect=_fake_attribute),
+        ):
             result = attack(object(), object())
 
         self.assertIn("inferred_age_accuracy", result)
@@ -220,9 +231,13 @@ class TestAttackConfig(unittest.TestCase):
             pass
 
         rng = np.random.default_rng(7)
-        X_train = pd.DataFrame(rng.normal(size=(30, 4)), columns=["f1", "f2", "f3", "f4"])
+        X_train = pd.DataFrame(
+            rng.normal(size=(30, 4)), columns=["f1", "f2", "f3", "f4"]
+        )
         y_train = pd.Series(rng.integers(0, 2, size=(30,)), name="target")
-        X_test = pd.DataFrame(rng.normal(size=(20, 4)), columns=["f1", "f2", "f3", "f4"])
+        X_test = pd.DataFrame(
+            rng.normal(size=(20, 4)), columns=["f1", "f2", "f3", "f4"]
+        )
         y_test = pd.Series(rng.integers(0, 2, size=(20,)), name="target")
 
         data = TinyData()
@@ -252,17 +267,21 @@ class TestAttackConfig(unittest.TestCase):
                 "feature": rng.normal(size=40),
                 "sensitive": rng.integers(0, 2, size=40),
                 "other": rng.normal(size=40),
-            }
+            },
         )
-        y_train = pd.Series((X_train["feature"] + X_train["other"] > 0).astype(int), name="target")
+        y_train = pd.Series(
+            (X_train["feature"] + X_train["other"] > 0).astype(int), name="target"
+        )
         X_test = pd.DataFrame(
             {
                 "feature": rng.normal(size=24),
                 "sensitive": rng.integers(0, 2, size=24),
                 "other": rng.normal(size=24),
-            }
+            },
         )
-        y_test = pd.Series((X_test["feature"] + X_test["other"] > 0).astype(int), name="target")
+        y_test = pd.Series(
+            (X_test["feature"] + X_test["other"] > 0).astype(int), name="target"
+        )
 
         data = TinyData()
         data.X_train = X_train
@@ -274,7 +293,11 @@ class TestAttackConfig(unittest.TestCase):
         attack = AttackConfig(
             attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=["sensitive"],
-            attack_params={"attack_model_type": "lr", "is_continuous": True, "scale_range": (0, 1)},
+            attack_params={
+                "attack_model_type": "lr",
+                "is_continuous": True,
+                "scale_range": (0, 1),
+            },
             attack_size=20,
         )
 
