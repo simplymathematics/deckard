@@ -12,10 +12,17 @@ from hydra._internal.utils import get_args_parser
 
 
 from ..experiment import ExperimentConfig
-from ..utils import ConfigBase
+from ..utils import ConfigBase, hash_conf_values
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+def _ensure_experiment_hash(value) -> str:
+    raw = "" if value is None else str(value).strip()
+    if len(raw) == 32 and all(c in "0123456789abcdefABCDEF" for c in raw):
+        return raw.lower()
+    return hash_conf_values(value)
 
 
 def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) -> dict:
@@ -68,8 +75,12 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) ->
     storage = hydra_cfg.sweeper.storage
     study_name = hydra_cfg.sweeper.study_name
     study = create_study(study_name, storage, directions, optimizers)
-    trial_number = hydra_cfg.job.id
-    set_trial_attributes(study=study, attrs=attributes, trial_number=trial_number)
+    attributes["experiment_name"] = conf_obj.experiment_name
+    set_trial_attributes(
+        study=study,
+        attrs=attributes,
+        experiment_name=conf_obj.experiment_name,
+    )
     set_study_metric_names(study=study, optimizers=optimizers)
     cfg_params = yaml.safe_load(cfg) if isinstance(cfg, str) else cfg
     with open(files["params_file"], "w") as f:
@@ -112,8 +123,16 @@ def optimize_main(
     hydra_cfg = HydraConfig.get()
     mode = hydra_cfg.mode
     cfg = OmegaConf.to_container(cfg)
-    cfg_yaml = OmegaConf.to_yaml(cfg)
+
+    if str(mode) == "RunMode.MULTIRUN":
+        explicit_name = cfg.get("experiment_name", None)
+        if explicit_name is None or str(explicit_name).strip() == "":
+            cfg["experiment_name"] = hash_conf_values(_root_=cfg)
+        else:
+            cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
+
     cfg["_target_"] = cfg.get("_target_", "deckard.ExperimentConfig")
+    cfg_yaml = OmegaConf.to_yaml(cfg)
 
     conf_obj = instantiate(cfg)
     assert isinstance(
@@ -129,7 +148,14 @@ def optimize_main(
 
 
 def prepare_multirun_file_paths(hydra_cfg, conf_obj):
-    conf_obj.experiment_name = f"{hydra_cfg.job.num}"
+    current_name = getattr(conf_obj, "experiment_name", None)
+    if current_name is None or str(current_name).strip() == "":
+        if hasattr(conf_obj, "to_dict"):
+            conf_obj.experiment_name = hash_conf_values(conf_obj.to_dict())
+        else:
+            conf_obj.experiment_name = hash_conf_values(str(conf_obj))
+    else:
+        conf_obj.experiment_name = _ensure_experiment_hash(current_name)
     conf_obj.__post_init__()
     # Set up log, score, and params file paths
     log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
@@ -137,7 +163,7 @@ def prepare_multirun_file_paths(hydra_cfg, conf_obj):
     score_file = log_dir / "scores.json"
     params_file = log_dir / "params.yaml"
     error_file = log_dir / "error.log"
-    conf_obj.experiment_name = f"{hydra_cfg.job.num}"
+    conf_obj.experiment_name = _ensure_experiment_hash(conf_obj.experiment_name)
     conf_obj.files.log_file = log_file.as_posix()
     conf_obj.files.score_file = score_file.as_posix()
     conf_obj.files.params_file = params_file.as_posix()
@@ -184,27 +210,35 @@ def set_study_metric_names(study, optimizers):
         study.set_metric_names(optimizers)
 
 
-def set_trial_attributes(study, attrs, trial_number):
+def set_trial_attributes(study, attrs, experiment_name):
     if isinstance(attrs, DictConfig):
         attrs = OmegaConf.to_container(attrs, resolve=True)
 
     if not attrs:
         return
 
-    trial_number = int(trial_number)
+    if not isinstance(attrs, dict):
+        raise TypeError(f"attrs must be a dict-like object. Got {type(attrs)}")
+
+    exp_uuid = _ensure_experiment_hash(experiment_name)
+    trials = study.get_trials(deepcopy=False)
     trial = next(
-        (t for t in study.get_trials(deepcopy=False) if t.number == trial_number),
+        (t for t in trials if getattr(t, "user_attrs", {}).get("experiment_name") == exp_uuid),
         None,
     )
+
     if trial is None:
         raise ValueError(
-            f"Trial {trial_number} not found in study '{study.study_name}'.",
+            f"Trial with experiment_name={exp_uuid} not found in study '{study.study_name}'.",
         )
 
     # `study.get_trials()` returns FrozenTrial objects; write attrs through storage.
     trial_id = getattr(trial, "_trial_id", None)
     if trial_id is None:
         trial_id = getattr(trial, "trial_id", None)
+
+    if exp_uuid is not None:
+        attrs = {**attrs, "experiment_name": exp_uuid}
 
     for k, v in attrs.items():
         if isinstance(v, (DictConfig, ListConfig)):
@@ -216,7 +250,7 @@ def set_trial_attributes(study, attrs, trial_number):
             trial.set_user_attr(k, v)
         else:
             raise RuntimeError(
-                f"Unable to set trial attribute '{k}' for trial {trial_number}; "
+                f"Unable to set trial attribute '{k}' for experiment_name={exp_uuid}; "
                 "no Optuna storage handle found.",
             )
 

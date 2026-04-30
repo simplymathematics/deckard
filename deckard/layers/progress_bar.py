@@ -1,4 +1,5 @@
 import logging
+import math
 import shlex
 import time
 from pathlib import Path
@@ -175,6 +176,143 @@ def _parse_csv_values(value: str) -> list:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _split_top_level_commas(expr: str) -> list:
+    parts = []
+    current = []
+    depth = 0
+    quote = None
+
+    for ch in expr:
+        if quote is not None:
+            current.append(ch)
+            if ch == quote:
+                quote = None
+            continue
+
+        if ch in ('"', "'"):
+            quote = ch
+            current.append(ch)
+            continue
+
+        if ch == "(":
+            depth += 1
+            current.append(ch)
+            continue
+
+        if ch == ")":
+            depth = max(0, depth - 1)
+            current.append(ch)
+            continue
+
+        if ch == "," and depth == 0:
+            part = "".join(current).strip()
+            if part:
+                parts.append(part)
+            current = []
+            continue
+
+        current.append(ch)
+
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+
+    return parts
+
+
+def _unwrap_outer_call(expr: str, func_name: str) -> Optional[str]:
+    prefix = f"{func_name}("
+    if not (expr.startswith(prefix) and expr.endswith(")")):
+        return None
+    return expr[len(prefix) : -1].strip()
+
+
+def _safe_float(value: str) -> Optional[float]:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _count_values_for_param_space(value) -> Optional[int]:
+    if isinstance(value, (list, tuple, set)):
+        return len(value)
+
+    if isinstance(value, (int, float, bool)):
+        return 1
+
+    if value is None:
+        return None
+
+    expr = str(value).strip()
+    if expr == "":
+        return None
+
+    # Handle wrappers such as int(range(...)), float(range(...)), str(choice(...)).
+    while True:
+        unwrapped = None
+        for wrapper in ("int", "float", "str", "bool"):
+            inner = _unwrap_outer_call(expr, wrapper)
+            if inner is not None:
+                unwrapped = inner
+                break
+        if unwrapped is None:
+            break
+        expr = unwrapped
+
+    choice_inner = _unwrap_outer_call(expr, "choice")
+    if choice_inner is not None:
+        return len(_split_top_level_commas(choice_inner))
+
+    range_inner = _unwrap_outer_call(expr, "range")
+    if range_inner is not None:
+        tokens = _split_top_level_commas(range_inner)
+        if len(tokens) == 1:
+            start, stop, step = 0.0, _safe_float(tokens[0]), 1.0
+        elif len(tokens) == 2:
+            start, stop = _safe_float(tokens[0]), _safe_float(tokens[1])
+            step = 1.0
+        elif len(tokens) == 3:
+            start, stop, step = (
+                _safe_float(tokens[0]),
+                _safe_float(tokens[1]),
+                _safe_float(tokens[2]),
+            )
+        else:
+            return None
+
+        if start is None or stop is None or step is None or step == 0:
+            return None
+
+        span = stop - start
+        if (span > 0 and step < 0) or (span < 0 and step > 0):
+            return 0
+
+        # Hydra's range syntax for sweeps is end-exclusive; round up for non-integer steps.
+        count = int(max(0, math.ceil(span / step)))
+        return count
+
+    # Support direct CSV enumerations, e.g. "0.1,1,10".
+    if "," in expr:
+        return len(_split_top_level_commas(expr))
+
+    return 1
+
+
+def _calculate_grid_search_n_trials(params) -> Optional[int]:
+    if not isinstance(params, dict):
+        return None
+
+    total = 1
+    for _, value in params.items():
+        count = _count_values_for_param_space(value)
+        if count is None:
+            return None
+        total *= count
+
+    return total
+
+
 def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
     cfg_path = Path(hydra_cfg_file)
     assert cfg_path.exists(), f"Missing Hydra config: {cfg_path}"
@@ -186,6 +324,19 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
     sweeper = hydra_section.get("sweeper", {})
     storage = sweeper.get("storage")
     n_trials = int(sweeper.get("n_trials", 100))
+    sampler_target = str(sweeper.get("sampler", {}).get("_target_", ""))
+    is_grid_sampler = "GridSampler" in sampler_target
+
+    if is_grid_sampler:
+        grid_n_trials = _calculate_grid_search_n_trials(sweeper.get("params", {}))
+        if grid_n_trials is not None:
+            n_trials = grid_n_trials
+        else:
+            logger.warning(
+                "GridSampler detected in %s but grid size could not be inferred from hydra.sweeper.params; falling back to n_trials=%d",
+                cfg_path,
+                n_trials,
+            )
 
     if storage is None:
         raise ValueError(f"No hydra.sweeper.storage found in {cfg_path}.")
