@@ -10,8 +10,8 @@ try:
     HAS_TORCH = True
 except ImportError:  # pragma: no cover
     torch = None
-    Tensor = tuple()
-    DataLoader = tuple()
+    Tensor = ()
+    DataLoader = ()
     Subset = None
     HAS_TORCH = False
 
