@@ -66,7 +66,7 @@ supported_defense_types = [
 
 @dataclass
 class DefenseConfig(ModelConfig):
-    model_type: str
+    model_type: Union[str, None] = None
     classifier: bool = True
     model_params: dict = field(
         default_factory=dict,
@@ -147,7 +147,18 @@ class DefenseConfig(ModelConfig):
     """
 
     def __post_init__(self):
-        super().__post_init__()
+        # Some Hydra configs instantiate `defense` as a standalone config object
+        # and do not provide model_type. In that case, defer base model init
+        # until a concrete model is attached by Experiment/Model orchestration.
+        if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
+            if not hasattr(self, "_model"):
+                self._model = None
+            if not hasattr(self, "score_dict") or self.score_dict is None:
+                self.score_dict = {}
+            if not hasattr(self, "_target_") or self._target_ is None:
+                self._target_ = "deckard.DefenseConfig"
+        else:
+            super().__post_init__()
         # Initialize times, scores, and defended model
         self.defense_training_time = None
         self.defense_application_time = None
@@ -304,6 +315,8 @@ class DefenseConfig(ModelConfig):
         return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
+        if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
+            raise ValueError("model_type must be set before creating an ART defense estimator")
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
             if self.classifier
