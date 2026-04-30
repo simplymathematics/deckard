@@ -1,0 +1,47 @@
+data_alias: ${data.alias}
+model_alias: ${model.alias}
+attack_alias: ${attack.alias}
+defense_alias: ${defense.alias}
+
+defaults:
+  - _self_
+  - data: classification
+  - model: rbf
+  - defense: baseline
+  - attack: hsj
+  - search/data: ${data}
+  - search/models: ${model}
+  - search/defenses: ${defense}
+  - search/attacks: ${attack}
+  - files: default
+  - plot: default
+  - override hydra/sweeper: optuna
+  - override hydra/sweeper/sampler: random
+
+experiment_name: ${hash:${data},${model},${defense},${attack}}
+directions:
+  - maximize
+  - maximize
+  - minimize
+optimizers:
+  - accuracy
+  - evasion_success
+  - attack_generation_time
+
+hydra:
+  run:
+    dir: outputs/logs/${experiment_name}
+  sweep:
+    dir: outputs/logs/
+    subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    study_name: security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+    storage: sqlite:///optuna.db
+    direction: ${directions}
+    max_failure_rate: 1.0
+    sampler:
+      _target_: optuna.samplers.RandomSampler
+      seed: 42
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    n_trials: ???
+    n_jobs: 1

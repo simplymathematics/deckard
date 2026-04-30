@@ -1,0 +1,7 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++attack.attack_params.nb_grads: choice(1, 3, 5, 10)
+      ++attack.attack_params.batch_size: choice(100)
+attack_alias: deepfool

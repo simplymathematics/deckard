@@ -1,0 +1,15 @@
+backend: yellowbrick
+plot_type: roc_auc
+plot_folder: plots
+features: all
+classes: all
+title: ""
+plot_params: {}
+experiment:
+  data: ${data}
+  model: ${model}
+  defense: ${defense}
+  attack: ${attack}
+  files: ${files}
+  score: ${score}
+  experiment_name: ${experiment_name}

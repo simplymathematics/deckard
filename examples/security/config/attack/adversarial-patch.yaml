@@ -1,0 +1,8 @@
+attack_type: art.attacks.evasion.AdversarialPatch
+attack_params:
+  scale_max: 0.1
+  batch_size: 100
+  max_iter: 10
+attack_size: 100
+_target_: deckard.attack.AttackConfig
+alias: adversarial-patch

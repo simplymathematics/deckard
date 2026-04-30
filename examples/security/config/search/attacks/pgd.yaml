@@ -1,0 +1,10 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++attack.attack_params.norm: choice(1, 2, inf)
+      ++attack.attack_params.eps_step: choice(0.001, 0.01, 0.1, 0.3, 0.5, 1)
+      ++attack.attack_params.batch_size: choice(1, 10, 50, 100)
+      ++attack.attack_params.eps: choice(0.001, 0.01, 0.1, 0.3, 0.5, 1)
+      ++attack.attack_params.max_iter: choice(1, 10, 100, 1000)
+attack_alias: pgd

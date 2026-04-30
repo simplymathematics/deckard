@@ -1,0 +1,8 @@
+attack_type: art.attacks.evasion.CarliniL2Method
+attack_params:
+  confidence: 1
+  max_iter: 10
+  batch_size: 100
+attack_size: 100
+_target_: deckard.attack.AttackConfig
+alias: carlini-l2

@@ -1,0 +1,9 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++data.data_params.n_samples: choice(1010000)
+      ++data.data_params.n_features: choice(10, 100, 1000, 10000)
+      ++data.train_size: choice(10, 100, 1000, 10000, 100000, 1000000)
+
+data_alias: classification_scale

@@ -1,0 +1,6 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++attack.attack_params.confidence: choice(1, 4, 16, 64, 256)
+attack_alias: carlini-linf

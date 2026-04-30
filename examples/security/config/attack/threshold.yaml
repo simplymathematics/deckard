@@ -1,0 +1,7 @@
+attack_type: art.attacks.evasion.ThresholdAttack
+attack_params:
+  th: 1
+  batch_size: 100
+attack_size: 100
+_target_: deckard.attack.AttackConfig
+alias: threshold

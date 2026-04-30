@@ -1,0 +1,20 @@
+dataset_name: make_classification
+data_params:
+  n_samples: 1010000
+  n_features: 100
+  n_classes: 2
+  random_state: 0
+
+random_state: 0
+stratify: true
+train_size: 10
+test_size: 1000
+classifier: true
+
+pipeline:
+  preprocessor:
+    name: sklearn.preprocessing.StandardScaler
+    with_mean: true
+    with_std: true
+
+alias: classification

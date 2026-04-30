@@ -1,0 +1,7 @@
+attack_type: art.attacks.evasion.CarliniLInfMethod
+attack_params:
+  confidence: 1
+  max_iter: 10
+attack_size: 100
+_target_: deckard.attack.AttackConfig
+alias: carlini-linf

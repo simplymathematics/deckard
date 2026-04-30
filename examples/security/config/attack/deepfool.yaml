@@ -1,0 +1,8 @@
+attack_type: art.attacks.evasion.DeepFool
+attack_params:
+  max_iter: 10
+  nb_grads: 10
+  batch_size: 100
+attack_size: 100
+_target_: deckard.attack.AttackConfig
+alias: deepfool
