@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  - data: lung
+  - model: weibull
+
+plots_folder: plots/survival
+target: E
+duration_col: T
+dataset: ${data.alias}
+calculate_attack_failures: false
+
+covariates:
+  - T
+  - E
+
+plot:
+  summary_plot: ${model.alias}_summary_plot.pdf
+  summary_file: ${model.alias}_summary.csv
+  plot: ${model.alias}_aft.pdf
+  qq_file: ${model.alias}_qq.pdf
+
+labels:
+  xlabel: log(theta)
+  ylabel: ''
+
+survival_model_params:
+  penalizer: 0.01
+
+t0: 10.0

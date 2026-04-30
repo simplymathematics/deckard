@@ -1,0 +1,14 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_name: fairlearn.adversarial.AdversarialFairnessClassifier
+      ++defense.defense_params.backend: choice("auto")
+      ++defense.defense_params.predictor_model: choice([64, 32])
+      ++defense.defense_params.adversary_model: choice([32, 16])
+      ++defense.defense_params.constraints: choice("demographic_parity", "equalized_odds")
+      ++defense.defense_params.alpha: range(0.1, 5.1, 0.1)
+      ++defense.defense_params.learning_rate: tag(log, interval(0.0001, 0.01))
+      ++defense.defense_params.epochs: int(range(5, 51))
+      ++defense.defense_params.batch_size: choice(16, 32, 64)
+defense_alias: fairlearn-adversarial-classifier

@@ -1,0 +1,9 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_name: fairlearn.reductions.ExponentiatedGradient
+      ++defense.defense_params.constraints: choice("fairlearn.reductions.DemographicParity", "fairlearn.reductions.EqualizedOdds")
+      ++defense.defense_params.eps: range(0.01, 0.21, 0.01)
+      ++defense.defense_params.max_iter: int(range(20, 121))
+defense_alias: fairlearn-exponentiated-gradient

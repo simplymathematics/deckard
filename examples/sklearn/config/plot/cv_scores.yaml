@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+plot_type: cv_scores
+plot_params:
+  cv: 3

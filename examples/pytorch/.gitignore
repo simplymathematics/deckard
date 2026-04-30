@@ -1,10 +1,5 @@
-.dvc/cache/
-old/
-mnist/
-cifar/
-cifar100/
-/mnist.yaml
-/cifar.yaml
-original_data/
-/cifar100.yaml
-raw_data
+output/
+torch_mnist/
+torch_cifar10/
+/.deckard_rc
+raw_data/

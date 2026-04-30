@@ -1,0 +1,91 @@
+name: Optional Dependency Test Reusable
+
+on:
+  workflow_call:
+    inputs:
+      workflow_name:
+        required: true
+        type: string
+      extra:
+        required: true
+        type: string
+      tests:
+        required: true
+        type: string
+      package_source:
+        required: false
+        default: source
+        type: string
+      release_tag:
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build package from source
+        if: inputs.package_source == 'source'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
+      - name: Download package from GitHub Release
+        if: inputs.package_source == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -z "${{ inputs.release_tag }}" ]]; then
+            echo "release_tag is required when package_source=release" >&2
+            exit 1
+          fi
+          rm -rf dist
+          mkdir -p dist
+          gh release download "${{ inputs.release_tag }}" --pattern "*.whl" --dir dist
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deckard-dist-${{ inputs.workflow_name }}
+          path: dist/
+
+  optional-tests:
+    needs: prepare-wheel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deckard-dist-${{ inputs.workflow_name }}
+          path: dist/
+
+      - name: Install wheel with test and optional extras
+        run: |
+          python -m pip install --upgrade pip
+          WHEEL=$(ls dist/*.whl | head -n1)
+          python -m pip install "${WHEEL}[test,${{ inputs.extra }}]"
+
+      - name: Run optional dependency tests
+        run: |
+          python -m pytest ${{ inputs.tests }}

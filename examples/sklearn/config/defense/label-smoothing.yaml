@@ -1,0 +1,6 @@
+defense_name: art.defences.preprocessor.LabelSmoothing
+defense_params:
+    apply_fit : True
+    apply_predict : False
+    max_value: .9
+alias: label-smoothing

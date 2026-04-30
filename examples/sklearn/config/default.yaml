@@ -1,0 +1,44 @@
+data_alias: ${data.alias}
+model_alias: ${model.alias}
+attack_alias: ${attack.alias}
+defense_alias: ${defense.alias}
+defaults:
+  - _self_
+  - data: adult
+  - model: rf
+  - defense: class-labels
+  - attack: hsj
+  - search/models: ${model}
+  - search/defenses: ${defense}
+  - search/attacks: ${attack}
+  - files: null
+  - override hydra/sweeper : optuna
+  - override hydra/sweeper/sampler : random
+experiment_name: ${hash:${data},${model},${attack}}
+directions:
+- maximize
+- maximize
+- maximize
+optimizers:
+- accuracy
+- evasion_accuracy
+- attack_generation_time
+hydra:
+  run:
+    dir: outputs/logs/${experiment_name}
+  sweep:
+    dir: outputs/logs/
+    subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+  sweeper:
+    study_name: ${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+    storage: sqlite:///optuna.db
+    direction: ${directions}
+    max_failure_rate: 1.0
+    sampler:
+      _target_: optuna.samplers.RandomSampler
+      seed: 42
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+    n_trials: 100
+    n_jobs: 1
+
+      

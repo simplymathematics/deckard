@@ -1,0 +1,9 @@
+defense_name: art.defences.preprocessor.MixupPyTorch
+defense_params:
+    apply_fit : True
+    apply_predict : False
+    alpha: 1.0
+    num_mix : 2
+    device_type: 'gpu'
+    num_classes: 2 #adult dataset
+alias: mixup

@@ -1,0 +1,12 @@
+
+dataset_name: make_regression
+data_params:
+  n_samples: 10000
+  n_features: 20
+  n_informative: 10
+  noise: 0.1
+  random_state: 42
+
+stratify: False
+classifier: False
+alias: make_regression

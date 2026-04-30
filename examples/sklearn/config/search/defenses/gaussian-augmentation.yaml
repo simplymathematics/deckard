@@ -1,0 +1,9 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_name: art.defences.preprocessor.GaussianAugmentation
+      ++defense.defense_params.sigma: range(0.1, 1.0, 0.1)
+      ++defense.defense_params.ratio: range(0.1, 1.0, 0.1)
+      ++defense.defense_params.augmentation: bool(True, False)
+defense_alias: gaussian-augmentation

@@ -1,0 +1,5 @@
+_target_: deckard.model.ModelConfig
+model_type: weibull
+classifier: false
+model_params: {}
+alias: weibull

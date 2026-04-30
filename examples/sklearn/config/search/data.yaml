@@ -1,0 +1,32 @@
+# @package _global_
+hydra:
+	sweeper:
+		params: ${data_search}
+data_alias: data
+
+data_search:
+	adult: {}
+	adult-openml: {}
+	classification: {}
+	cluster: {}
+	ddos: {}
+	diabetes: {}
+	digits: {}
+	kdd-nsl: {}
+	mpox: {}
+	regression: {}
+	sms-spam: {}
+	truthseeker: {}
+
+adult: {}
+adult-openml: {}
+classification: {}
+cluster: {}
+ddos: {}
+diabetes: {}
+digits: {}
+kdd-nsl: {}
+mpox: {}
+regression: {}
+sms-spam: {}
+truthseeker: {}

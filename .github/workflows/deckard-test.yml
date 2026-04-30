@@ -8,18 +8,26 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  base-tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.9
+    - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
-        python-version: "3.9"
+        python-version: "3.10"
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install .[tensorflow_image,pytorch_image,non_framework,test]
-    - name: Test base folder with pytest
+        python3 -m pip install .[test]
+    - name: Test base dependencies only
       run: |
-        python3 -m pytest test
+        python3 -m pytest test \
+          --ignore test/test_data/test_pytorch.py \
+          --ignore test/test_layers/test_survival.py \
+          --ignore test/test_data/test_data_fairness.py \
+          --ignore test/test_data/test_fairness.py \
+          --ignore test/test_model/test_model_fairness.py \
+          --ignore test/test_plot/test_seaborn.py \
+          --ignore test/test_plot/test_yellowbrick.py \
+          --ignore test/test_plot/test_init.py

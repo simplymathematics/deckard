@@ -1,7 +1,0 @@
-defaults:
-  - initialize : default
-  # - preprocessor: fsq
-  # - postprocessor: confidence
-data : ${..data}
-library : ${..library}
-_target_ : deckard.base.model.art_pipeline.ArtPipeline

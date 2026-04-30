@@ -1,0 +1,182 @@
+stages:
+  set_config_paths:
+      cmd: >
+        echo "export DECKARD_CONFIG_DIR=./config" > .deckard_rc &&
+        echo "export DECKARD_DEFAULT_CONFIG_FILE=torch_default.yaml" >> .deckard_rc &&
+        source .deckard_rc
+      outs: 
+        - .deckard_rc
+      deps:
+        - ./config/
+  simple_example:
+      cmd: deckard && echo "Deckard ran successfully!" > deckard.log
+      outs:
+        - deckard.log
+      deps:
+        - .deckard_rc # Here to ensure config paths are set before running deckard
+        - ../../deckard/__main__.py
+  generate_data:
+      foreach:
+        - celebA
+      do:
+        cmd: >
+          deckard
+          data=${item} 
+          ~model
+          ~attack
+          files.model_file=null
+          files.attack_file=null
+          experiment_name=${item}
+        outs:
+          - output/data/${item}.pkl
+        metrics:
+          - output/scores/${item}.json
+        deps:
+          - .deckard_rc
+          - ../../deckard/data/pytorch.py
+        params:
+          - ./config/data/${item}.yaml:
+          ################################################
+          #            Command Explanation:             #
+          ################################################
+          # deckard  data <-- Calls the deckard CLI tool for the DataConfig object.
+          # data=${item}  <-- Specifies the dataset to be used in this iteration. See ./config/data/ for available datasets.
+          # ~model  <-- Skips the model configuration for this run.
+          # ~attack  <-- Skips the attack configuration for this run.
+          # ~files.model_file  <-- Skips the model file specification.
+          # ~files.attack_file  <-- Skips the attack file specification.
+          ################################################
+  train:
+    foreach:
+      - {data: celebA, num_channels: 3, num_classes: 2}
+    do:
+      cmd: >
+        deckard 
+        data=${item.data} 
+        ~attack
+        files.attack_file=null
+        experiment_name=${item.data}_resnet18_training
+        ++model.model_params.num_channels=${item.num_channels}
+        ++model.model_params.num_classes=${item.num_classes}
+      outs:
+        - output/models/${item.data}_resnet18_training.pkl
+      deps:
+        - .deckard_rc
+        - ../../deckard/data/pytorch.py
+        - ../../deckard/model/pytorch.py
+      metrics:
+        - output/scores/${item.data}_resnet18_training.json
+      params:
+        - ./config/data/${item.data}.yaml:
+        - ./config/model/default.yaml:
+        ################################################
+        #            Command Explanation:             #
+        ################################################
+        # deckard  <-- Calls the deckard CLI tool
+        # data=${item.data}  <-- Specifies the dataset to be used in this iteration.
+        # ++model.num_channels=${item.num_channels}  <-- Sets the number of input channels
+        # ++model.num_classes=${item.num_classes}  <-- Sets the number of output classes
+        # +files.data_file=data/${item.data}.pkl <-- Specifies the input data file
+        # +files.model_file=models/${item.data}_resnet18.pkl <-- Specifies the output model file
+        ################################################
+  attack:
+    matrix:
+      data:
+        - {name: torch_mnist, num_channels: 1, num_classes: 10}
+        - {name: torch_cifar10, num_channels: 3, num_classes: 10}
+      attack:
+          # - carlini_l0
+          - carlini_l2
+          - carlini_linf
+          - deepfool
+          - fgm
+          - hsj #This one has an upstream bug in ART that causes it to error out on some datasets
+          - patch
+          - pgd
+          - pixel
+          - threshold
+    cmd: >
+      deckard 
+      data=${item.data.name} 
+      attack=${item.attack}
+      files.model_file=output/models/${item.data.name}_resnet18_training.pkl
+      experiment_name=${item.data.name}_torch_resnet18_${item.attack}
+      ++model.model_params.num_channels=${item.data.num_channels}
+      ++model.model_params.num_classes=${item.data.num_classes}
+    outs:
+      - output/attacks/${item.data.name}_torch_resnet18_${item.attack}.pkl
+    deps:
+      - .deckard_rc
+      - ../../deckard/data/pytorch.py
+      - ../../deckard/model/pytorch.py
+      - ../../deckard/attack/__init__.py
+    metrics:
+      - output/scores/${item.data.name}_torch_resnet18_${item.attack}.json
+    params:
+      - ./config/data/${item.data.name}.yaml:
+      - ./config/model/default.yaml:
+      - ./config/attack/${item.attack}.yaml:
+      ################################################
+      #            Command Explanation:             #
+      ################################################
+      # deckard  <-- Calls the deckard CLI tool
+      # data=${item.data.name}  <-- Specifies the dataset to be used in this iteration.
+      # attack=${item.attack}  <-- Specifies the attack method to be used in this iteration.
+      # files.model_file=models/${item.data.name}_resnet18_training.pkl <-- Specifies the input trained model file
+      # ++model.num_channels=${item.data.num_channels}  <-- Sets the number of input channels
+      # ++model.num_classes=${item.data.num_classes}  <-- Sets the number of output classes
+      ################################################
+  defend:
+    matrix:
+      data:
+        - {name: torch_mnist, num_channels: 1, num_classes: 10}
+        - {name: torch_cifar10, num_channels: 3, num_classes: 10}
+      defense:
+          # Postprocessing defenses
+          - class-labels
+          - gaussian_noise
+          - high_confidence
+          - reverse_sigmoid
+          - rounded
+          # Preprocessing defenses
+          - cut_mix
+          - cutout
+          - feature_squeezing
+          - gaussian_augmentation
+          - jpeg_compression
+          - label_smoothing
+          - mixup
+          - resample
+          - spatial_smoothing
+    cmd: >
+      deckard 
+      data=${item.data.name} 
+      +defense=${item.defense}
+      files.model_file=output/models/${item.data.name}_resnet18_${item.defense}.pkl
+      files.score_file=output/scores/${item.data.name}_resnet18_${item.defense}.json
+      ~attack
+      files.attack_file=null
+      experiment_name=${item.data.name}_resnet18_${item.defense}
+      ++model.model_params.num_channels=${item.data.num_channels}
+      ++model.model_params.num_classes=${item.data.num_classes}
+    outs:
+      - output/models/${item.data.name}_resnet18_${item.defense}.pkl
+    deps:
+      - .deckard_rc
+      - ../../deckard/data/pytorch.py
+      - ../../deckard/model/pytorch.py
+    metrics:
+      - output/scores/${item.data.name}_resnet18_${item.defense}.json
+    params:
+      - ./config/data/${item.data.name}.yaml:
+      - ./config/model/default.yaml:
+      ################################################
+      #            Command Explanation:             #
+      ################################################
+      # deckard  <-- Calls the deckard CLI tool
+      # data=${item.data}  <-- Specifies the dataset to be used in this iteration.
+      # ++model.num_channels=${item.num_channels}  <-- Sets the number of input channels
+      # ++model.num_classes=${item.num_classes}  <-- Sets the number of output classes
+      # +files.data_file=data/${item.data}.pkl <-- Specifies the input data file
+      # +files.model_file=models/${item.data}_resnet18_defense.pkl <-- Specifies the output model file
+      ################################################

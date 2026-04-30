@@ -1,0 +1,4 @@
+defaults:
+  - default
+
+plot_type: roc_auc

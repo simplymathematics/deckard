@@ -1,0 +1,7 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_name: art.defences.preprocessor.LabelSmoothing
+      ++defense.defense_params.bit_depth: range(0.1, .9, 0.1)
+defense_alias: label-smoothing

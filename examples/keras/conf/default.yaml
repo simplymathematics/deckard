@@ -1,7 +1,0 @@
-defaults:
-    # - _target_ : deckard.base.experiment.Experiment
-    - data: keras_mnist
-    - model: keras_mnist
-    - attack: hsj
-    - files: default
-    - scorers: default

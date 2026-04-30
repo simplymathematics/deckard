@@ -1,0 +1,4 @@
+defense_name: null
+defense_params: {}
+_target_: deckard.DefenseConfig
+alias: basline

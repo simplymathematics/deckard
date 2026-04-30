@@ -1,80 +1,198 @@
-#!/usr/bin/env python3
-import sys
+
 import logging
-from omegaconf import OmegaConf
-from .layers.afr import aft_parser, aft_main
-from .layers.attack import attack_parser, attack_main
-from .layers.clean_data import clean_data_parser, clean_data_main
-from .layers.compile import compile_parser, compile_main
-from .layers.data import data_parser, data_main
-from .layers.experiment import experiment_parser, experiment_main
-from .layers.find_best import find_best_parser, find_best_main
-from .layers.generate_grid import generate_grid_parser, generate_grid_main
-from .layers.hydra_test import hydra_test_main
-from .layers.merge import merge_parser, merge_main
-from .layers.optimise import optimise_main
-from .layers.parse import hydra_parser, parse_hydra_config
-from .layers.plots import plots_parser, plots_main
-from .layers.prepare_queue import prepare_queue_main
-from .layers.query_kepler import kepler_parser, kepler_main
+import logging.config
+import os
+import sys
+import inspect
+import hydra
+from omegaconf import DictConfig
+from pathlib import Path
 
-OmegaConf.register_new_resolver("eval", eval)
 
+from . import LOGGING, DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
+
+from .layers import SUPPORTED_LAYERS, layer_dict
+from .experiment import ExperimentConfig
+
+
+
+# Set up logging
 logger = logging.getLogger(__name__)
-layer_list = [
-    "afr",
-    "attack",
-    "clean_data" "compile",
-    "data",
-    "experiment",
-    "find_best",
-    "generate_grid",
-    "hydra_test",
-    "merge",
-    "optimise",
-    "parse",
-    "plots",
-    "prepare_queue",
-    "query_kepler",
-]
 
 
-deckard_layer_dict = {
-    "afr": (aft_parser, aft_main),
-    "attack": (attack_parser, attack_main),
-    "clean_data": (clean_data_parser, clean_data_main),
-    "compile": (compile_parser, compile_main),
-    "data": (data_parser, data_main),
-    "experiment": (experiment_parser, experiment_main),
-    "find_best": (find_best_parser, find_best_main),
-    "generate_grid": (generate_grid_parser, generate_grid_main),
-    "hydra_test": (None, hydra_test_main),
-    "merge": (merge_parser, merge_main),
-    "optimise": (None, optimise_main),
-    "parse": (hydra_parser, parse_hydra_config),
-    "plots": (plots_parser, plots_main),
-    "prepare_queue": (None, prepare_queue_main),
-    "query_kepler": (kepler_parser, kepler_main),
-}
-assert len(deckard_layer_dict) == len(
-    layer_list,
-), "Some layers are missing from the deckard_layer_dict"
+
+def get_configuration_paths():
+    """
+    """
+    # Get config dir from environment variable if set
+    config_dir = os.environ.get(
+        "DECKARD_CONFIG_DIR",
+        DECKARD_CONFIG_DIR,
+    )
+    if config_dir is None:
+        logger.error("DECKARD_CONFIG_DIR must be specified as an environment variable.")
+        sys.exit(1)
+    while not Path(config_dir).exists():
+        # Deckard_config dir does not exist, have the user set it using input()
+        config_dir = input(
+            f"The provided config directory path '{config_dir}' does not exist. Please enter a valid config directory path: ",
+        )
+        # Prompt user to confirm the path exists
+        if not Path(config_dir).exists():
+            config_dir = None
+    logger.debug("No optional arguments provided.")
+    config_file = Path(
+        os.environ.get("DECKARD_DEFAULT_CONFIG_FILE", DECKARD_DEFAULT_CONFIG_FILE),
+    ).as_posix()
+    working_dir = os.getcwd()
+    logger.info(f"Current working directory: {working_dir}")
+    logger.info("Starting Deckard with Hydra configuration.")
+    logger.info(f"Config directory: {Path(config_dir).resolve()}")
+    if not Path(config_dir).is_absolute():
+        config_dir = os.path.relpath(config_dir, working_dir)
+    logger.info(f"Resolved config file path: {config_file}")
+    if not Path(config_dir, config_file).exists():
+        logger.error(
+            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
+        )
+        raise FileNotFoundError(config_file)
+    return config_dir, config_file
+
+def main():
+    """
+    Main entry point for the application.
+    Overview
+    ---------
+    This function retrieves the configuration directory from the environment variable
+    `DECKARD_CONFIG_DIR`, resolves its absolute path, and processes optional arguments
+    and modules. Depending on the specified modules, it delegates handling to appropriate
+    functions.
+
+    ----
+    Raises
+    ------
+    ValueError
+        If the `DECKARD_CONFIG_DIR` environment variable is not set.
+
+    ----
+    Notes
+    -----
+    - If no modules are specified, a default module is used.
+    - Handles specific modules ("experiment", "optimize") differently from other modules.
+
+    ----
+    """
+    # Get config dir from environment variable if set
+    config_dir = os.environ.get(
+        "DECKARD_CONFIG_DIR",
+        "config",
+    )
+    if config_dir is None:
+        config_dir = input("Please enter the config directory path: ")
+    while not Path(config_dir).exists():
+        # Deckard_config dir does not exist, have the user set it using input()
+        config_dir = input(
+            f"The provided config directory path '{config_dir}' does not exist. Please enter a valid config directory path: ",
+        )
+        # Prompt user to confirm the path exists
+        if not Path(config_dir).exists():
+            config_dir = None
+    # Set the environment variable for future use
+    os.environ["DECKARD_CONFIG_DIR"] = Path(config_dir).resolve().as_posix()
+    # strip the username from the path for logging
+    module = sys.argv[1]
+    sys.argv.pop(1)
+    if module in [None, "experiment", "optimize"]:
+        handle_default_module()
+    elif module in SUPPORTED_LAYERS:
+        handle_other_layers(module)
+    else:
+        raise ValueError(f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}")
 
 
-def main(layer, args):
-    # Get the layer and the main function for the layer.
-    if layer not in deckard_layer_dict:
-        raise ValueError(f"Layer {layer} not found.")
-    parser, sub_main = deckard_layer_dict[layer]
-    # Parse the arguments.
-    args = parser.parse_args(args.args)
-    # Print the arguments and values
-    # Run the main function.
-    sub_main(args)
+def handle_default_module():
+    """
+    Overview
+    ----
+    Handles the default module execution for Deckard by resolving the configuration file
+    and initializing the Hydra main function.
 
+    Returns
+    -------
+    None
+        Executes the Hydra main function and exits the program if the configuration file
+        does not exist.
+
+    Raises
+    --------
+    SystemExit
+        If the resolved configuration file does not exist.
+
+    Environment Variables
+    ---------------------
+    DECKARD_DEFAULT_CONFIG_FILE : str mandatory
+        Specifies the default configuration file name (default is "default.yaml").
+    DECKARD_CONFIG_DIR : str, mandatory
+    """
+    config_dir, config_file = get_configuration_paths()
+    @hydra.main(
+        config_path=str(Path(config_dir).resolve()),
+        config_name=config_file,
+        version_base="1.3",
+    )
+    def main_hydra(cfg: ExperimentConfig) -> None:
+        optimize_main = layer_dict["optimize"][1]
+        scores = optimize_main(cfg=cfg)
+        return scores
+
+    return main_hydra()
+
+def handle_other_layers(layer):
+    """Run the parser and main entrypoint for the specified layer via Hydra."""
+    if layer not in layer_dict:
+        logger.error(f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}")
+        raise ValueError
+
+    parser, main_fn = layer_dict[layer]
+    if not hasattr(parser, "parse_known_args"):
+        raise ValueError("Parser object does not have .parse_known_args")
+
+    # Parse layer-specific args first, then leave remaining args for Hydra.
+    parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
+
+    default_config_dir, default_config_file = get_configuration_paths()
+    cli_config_path = getattr(parsed_args, "config_path", None) or getattr(parsed_args, "config_dir", None)
+    cli_config_name = getattr(parsed_args, "config_name", None)
+    config_dir = cli_config_path if cli_config_path else default_config_dir
+    config_file = cli_config_name if cli_config_name else default_config_file
+
+    forwarded_overrides = []
+    if hasattr(parsed_args, "overrides") and isinstance(parsed_args.overrides, list):
+        # get_args_parser may parse Hydra key=value arguments into `overrides`.
+        forwarded_overrides = parsed_args.overrides
+    sys.argv = [sys.argv[0], *hydra_args, *forwarded_overrides]
+    @hydra.main(
+        config_path=str(Path(config_dir).resolve()),
+        config_name=config_file,
+        version_base="1.3",
+    )
+    def main_hydra(cfg: DictConfig) -> None:
+        raw_args = vars(parsed_args).copy()
+        sig = inspect.signature(main_fn)
+        valid_keys = set(sig.parameters.keys())
+        args = {k: v for k, v in raw_args.items() if k in valid_keys}
+
+        if "cfg" in valid_keys:
+            args["cfg"] = cfg
+
+        # Allow Hydra overrides for parser keys when present.
+        if cfg is not None:
+            for key in list(args.keys()):
+                if key in cfg and cfg[key] is not None:
+                    args[key] = cfg[key]
+        return main_fn(**args)
+
+    return main_hydra()
 
 if __name__ == "__main__":
-    # pop the first argument which is the script name
-    layer = sys.argv.pop(1)
-    # pass the rest of the arguments to the main function
-    main(layer, sys.argv)
+    main()

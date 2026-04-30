@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+plot_type: rfecv
+plot_params:
+  cv: 3

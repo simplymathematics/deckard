@@ -1,0 +1,12 @@
+defense_name: fairlearn.adversarial.AdversarialFairnessClassifier
+defense_params:
+  backend: auto
+  predictor_model: [64, 32]
+  adversary_model: [32, 16]
+  constraints: demographic_parity
+  alpha: 1.0
+  learning_rate: 0.001
+  epochs: 10
+  batch_size: 32
+  random_state: 42
+alias: fairlearn-adversarial-classifier

@@ -1,0 +1,8 @@
+model_type: sklearn.cluster.KMeans
+classifier : True
+model_params:
+  tol: 0.0001
+  n_clusters : 2 # Assuming ${data.data_params.n_classes} = 2
+  random_state: 42
+_target_ : deckard.ModelConfig
+alias: kmeans

@@ -1,0 +1,7 @@
+model_type: sklearn.linear_model.LinearRegression
+classifier : False
+model_params:
+  tol: 0.0001
+  fit_intercept: true
+_target_ : deckard.ModelConfig
+alias: linear

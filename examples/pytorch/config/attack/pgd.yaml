@@ -1,0 +1,9 @@
+attack_type : "art.attacks.evasion.ProjectedGradientDescent"
+attack_params : 
+  eps_step: .01
+  norm: inf
+  targeted: False
+  eps: 1
+  max_iter: 10
+_target_ : deckard.attack.AttackConfig
+alias: pgd

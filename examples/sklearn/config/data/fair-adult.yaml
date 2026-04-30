@@ -1,0 +1,18 @@
+dataset_name: adult
+test_size: 0.2
+random_state: 42
+_target_: deckard.data.FairnessDataConfig
+classifier: True
+stratify: False
+alias: fair-adult-fairlearn
+groupby_columns:
+  - sex
+sensitive_columns:
+  - sex
+fairness_defense:
+  step_name: fairness_correlation_remover
+  name: fairlearn.preprocessing.CorrelationRemover
+pipeline:
+  imputer:
+    name: sklearn.impute.SimpleImputer
+    strategy: mean

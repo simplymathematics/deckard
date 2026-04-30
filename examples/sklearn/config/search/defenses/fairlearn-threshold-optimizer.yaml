@@ -1,0 +1,9 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++defense.defense_name: fairlearn.postprocessing.ThresholdOptimizer
+      ++defense.defense_params.constraints: choice("demographic_parity", "equalized_odds")
+      ++defense.defense_params.prefit: choice(true)
+      ++defense.defense_params.predict_method: choice("auto", "predict_proba", "decision_function")
+defense_alias: fairlearn-threshold-optimizer

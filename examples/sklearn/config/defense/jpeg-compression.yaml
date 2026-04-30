@@ -1,0 +1,7 @@
+defense_name: art.defences.preprocessor.JpegCompression
+defense_params:
+    clip_values: [0, 255]
+    quality: 50
+    apply_fit: True
+    apply_predict: True
+alias: jpeg-compression

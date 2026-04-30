@@ -1,0 +1,11 @@
+dataset_name: adult
+test_size: 0.2
+random_state: 42
+
+classifier: True
+stratify : False
+alias: ${.dataset_name}
+pipeline:
+  imputer: 
+    name: sklearn.impute.SimpleImputer
+    strategy: "mean"

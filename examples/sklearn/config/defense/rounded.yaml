@@ -1,0 +1,6 @@
+defense_name: art.defences.postprocessor.Rounded
+defense_params:
+    decimals: 3
+    apply_fit : False
+    apply_predict : True
+alias: rounded

@@ -1,6 +1,4 @@
-/model.db
-/attack.db
-/model_grid.db
-/attack_grid.db
-/outputs
-/multirun
+outputs/
+/.config_paths_set
+/.deckard_rc
+.dvc/cache/

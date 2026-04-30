@@ -1,0 +1,16 @@
+dataset_name: adult.openml
+test_size: 100
+train_size: 100
+data_params: 
+
+random_state: 42
+
+classifier: True
+stratify : False
+alias: adult_openml
+pipeline: 
+  label_encoder:
+    _target_: "sklearn.preprocessing.LabelEncoder"
+  feature_selection:
+    _target_: "sklearn.feature_selection.VarianceThreshold"
+    threshold: 0.0

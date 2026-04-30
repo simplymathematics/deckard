@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attack &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8f098830"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Main Components" href="utils.html" />
+    <link rel="prev" title="Model" href="model.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Attack</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#supported-attacks">Supported Attacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom-configuration">Custom Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#timing-and-logging">Timing and logging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Main Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#features">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
+      <li class="breadcrumb-item active">Attack</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/attack.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="attack">
+<h1>Attack<a class="headerlink" href="#attack" title="Link to this heading"></a></h1>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code> module contains the <code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> dataclass and helper
+functions for running evasion and inference attacks against scikit-learn
+estimators using the Adversarial Robustness Toolbox (ART).</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> provides a configurable interface for setting up and executing
+adversarial attacks. It supports:</p>
+<ul class="simple">
+<li><p>Black-box and white-box attacks</p></li>
+<li><p>Membership inference and attribute inference attacks</p></li>
+<li><p>Customizable attack parameters</p></li>
+<li><p>Integration with <a class="reference internal" href="data.html#module-deckard.data" title="deckard.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data</span></code></a> for loading datasets</p></li>
+<li><p>Integration with <a class="reference internal" href="model.html#module-deckard.model" title="deckard.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model</span></code></a> for training and evaluating models</p></li>
+<li><p>Timing instrumentation for attack execution</p></li>
+<li><p>CLI support for one-line attack execution</p></li>
+</ul>
+</section>
+<section id="supported-attacks">
+<h2>Supported Attacks<a class="headerlink" href="#supported-attacks" title="Link to this heading"></a></h2>
+<p>Currently supports a selection of attacks from ART, including:
+Evasion Attacks:
+- HopSkipJump
+- BoundaryAttack
+- AutoProjectedGradientDescent
+Membership Inference Attacks:
+- MembershipInferenceBlackBox
+- MembershipInferenceBaseline
+Attribute Inference Attacks:
+- AttributeInferenceBaseline
+- AttributeInferenceBlackBox</p>
+<p>(Extendable to other attacks in future versions.)</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="command-line-example">
+<h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
+<p>You can run attacks directly from the terminal:
+.. code-block:: bash</p>
+<blockquote>
+<div><p># from the project root
+python -m deckard.attack –attack_config_file blackbox_evasion –attack_size 50</p>
+</div></blockquote>
+</section>
+<section id="programmatic-example">
+<h3>Programmatic example:<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<p>You can also use the API programmatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.attack</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_attack_config</span><span class="p">,</span> <span class="n">AttackConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_data_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deckard.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_and_evaluate</span>
+
+<span class="c1"># initialize/load data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">initialize_data_config</span><span class="p">()</span>
+<span class="n">data</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/to/data.csv&quot;</span><span class="p">)</span>
+
+<span class="c1"># train a model (example)</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">train_and_evaluate</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># create an attack config (uses defaults or overrides)</span>
+<span class="n">attack_cfg</span> <span class="o">=</span> <span class="n">initialize_attack_config</span><span class="p">()</span>  <span class="c1"># or AttackConfig(attack_name=&quot;art.attacks.evasion.HopSkipJump&quot;, attack_size=50)</span>
+
+<span class="c1"># run the attack against the trained model</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">attack_cfg</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-configuration">
+<h3>Custom Configuration<a class="headerlink" href="#custom-configuration" title="Link to this heading"></a></h3>
+<p>You can define a YAML file or override config parameters inline.
+Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack.AttackConfig</span>
+<span class="nt">attack_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">art.attacks.evasion.HopSkipJump</span>
+<span class="nt">attack_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">attack_params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">max_iter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">max_eval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">init_eval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+</div>
+<p>Example inline overrides:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard.attack<span class="w"> </span>--attack_name<span class="w"> </span>art.attacks.evasion.HopSkipJump<span class="w"> </span>--attack_size<span class="w"> </span><span class="m">100</span><span class="w"> </span>--attack_params.max_iter<span class="w"> </span><span class="m">10</span><span class="w"> </span>--attack_params.max_eval<span class="w"> </span><span class="m">100</span><span class="w"> </span>--attack_params.init_eval<span class="w"> </span><span class="m">10</span><span class="w"> </span>--attack_params.verbose<span class="w"> </span>True
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<section id="timing-and-logging">
+<h3>Timing and logging<a class="headerlink" href="#timing-and-logging" title="Link to this heading"></a></h3>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code> uses the <cite>time</cite> module to measure execution time for key steps:
+- Attack setup time
+- Attack execution time
+- Attack prediction time
+- Attack scoring time
+These timings are stored as attributes (e.g. <cite>self._attack_time</cite>) and logged
+using Python’s built-in <cite>logging</cite> module.</p>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>If you encounter issues running attacks, ensure that:
+- The specified attack name is valid and corresponds to an ART attack class.
+- The model provided is compatible with the chosen attack.
+- The data is properly loaded and preprocessed.
+- The loaded model is trained before running attacks.</p>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Main Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

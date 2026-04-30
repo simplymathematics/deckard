@@ -1,0 +1,13 @@
+name: Optional Yellowbrick Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  yellowbrick-tests:
+    uses: ./.github/workflows/optional-dependency-test-reusable.yml
+    with:
+      workflow_name: yellowbrick
+      extra: seaborn,yellowbrick
+      tests: test/test_plot/test_yellowbrick.py test/test_plot/test_init.py

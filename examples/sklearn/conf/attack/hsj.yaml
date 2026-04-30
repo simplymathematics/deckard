@@ -1,8 +1,0 @@
-data: ${data}
-model: ${model}
-_target_ : deckard.base.attack.Attack
-init:
-    name: art.attacks.evasion.HopSkipJump
-    model: ${model}
-attack_size : 10
-method : evasion

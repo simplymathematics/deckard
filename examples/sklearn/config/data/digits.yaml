@@ -1,0 +1,7 @@
+dataset_name: digits
+test_size: 0.2
+random_state: 42
+
+classifier: True
+stratify : False
+alias: digits

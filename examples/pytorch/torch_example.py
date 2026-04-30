@@ -1,80 +1,85 @@
+import logging
 import torch.nn as nn
 from torchvision import models
 
+from dataclasses import dataclass
+
+from deckard.data.pytorch import PytorchDataConfig
+from deckard.model.pytorch import PytorchModelConfig
+
 __all__ = [
     "ResNet18",
-    "ResNet50",
-    "ResNet34",
-    "ResNet101",
-    "ResNet152",
 ]
+logger = logging.getLogger(__name__)
+
+# You can edit your model architecture here
+# For example, a simple ResNet18 model for image classification
 
 
-def ResNet18(num_channels=1, num_classes=10):
-    model = models.resnet18(pretrained=True)
-    model.conv1 = nn.Conv2d(
-        num_channels,
-        64,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        bias=False,
+@dataclass
+class ResNet18(nn.Module):
+    num_channels: int = 3
+    num_classes: int = 1000
+
+    def __init__(self, num_channels: int = 3, num_classes: int = 1000):
+        super(ResNet18, self).__init__()
+        self.num_channels = num_channels
+        self.num_classes = num_classes
+
+        self.backbone = models.resnet18(pretrained=True)
+        self.backbone.conv1 = nn.Conv2d(
+            num_channels,
+            64,
+            kernel_size=7,
+            stride=2,
+            padding=3,
+            bias=False,
+        )
+        self.backbone.fc = nn.Linear(self.backbone.fc.in_features, num_classes)
+
+    def forward(self, x):
+        return self.backbone(x)
+
+    def __hash__(self):
+        model_params = b"".join(
+            p.detach().cpu().numpy().tobytes() for p in self.backbone.parameters()
+        )
+        return hash(f"{model_params}{self.num_channels}{self.num_classes}")
+
+
+if __name__ == "__main__":
+    # Example usage
+    model = ResNet18(num_channels=1, num_classes=10)
+    data_conf = PytorchDataConfig(
+        dataset_name="torch_mnist",
+        train_size=128,
+        test_size=128,
+        random_state=128,
+        classifier=True,
+        stratify=True,
     )
-    model.fc = nn.Linear(512, num_classes)
-    return model
-
-
-def ResNet34(num_channels=1, num_classes=10):
-    model = models.resnet34(pretrained=True)
-    model.conv1 = nn.Conv2d(
-        num_channels,
-        64,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        bias=False,
+    data_conf()  # Initialize data
+    assert (
+        len(data_conf.X_train) == 128
+    ), f"Expected 128 training samples, got {len(data_conf.X_train)}"
+    assert (
+        len(data_conf.X_test) == 128
+    ), f"Expected 128 test samples, got {len(data_conf.X_test)}"
+    model_conf = PytorchModelConfig(
+        model_type="torch_example.ResNet18",  # file.ClassName
+        model_params={
+            "num_channels": 1,
+            "num_classes": 10,
+        },
+        criterion="CrossEntropyLoss",
+        optimizer="SGD",
+        classifier=True,
+        fit_params={
+            "nb_epochs": 100,
+            "verbose": True,
+            "log_interval": 10,
+        },
     )
-    model.fc = nn.Linear(512, num_classes)
-    return model
 
-
-def ResNet50(num_channels=1, num_classes=10):
-    model = models.resnet50(pretrained=True)
-    model.conv1 = nn.Conv2d(
-        num_channels,
-        64,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        bias=False,
-    )
-    model.fc = nn.Linear(2048, num_classes)
-    return model
-
-
-def ResNet101(num_channels=1, num_classes=10):
-    model = models.resnet101(pretrained=True)
-    model.conv1 = nn.Conv2d(
-        num_channels,
-        64,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        bias=False,
-    )
-    model.fc = nn.Linear(2048, num_classes)
-    return model
-
-
-def ResNet152(num_channels=1, num_classes=10):
-    model = models.resnet152(pretrained=True)
-    model.conv1 = nn.Conv2d(
-        num_channels,
-        64,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        bias=False,
-    )
-    model.fc = nn.Linear(2048, num_classes)
-    return model
+    acc = model_conf(data_conf)["accuracy"]
+    assert acc >= 0.0, "Score should be between 0 and 1"

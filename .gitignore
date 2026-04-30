@@ -6,26 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -68,8 +48,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -119,13 +97,7 @@ env/
 # Python egg metadata
 **/*.egg-info/*
 **/*.egg-info
-deckard/deckard.egg-info/*
 
-# Compressed Data Files
-*.tar.gz
-
-*log.txt
-*.hydra
 
 
 # envs
@@ -143,12 +115,8 @@ screenlog.*
 # env310
 env310/*
 # dvc read-write protect files in  the examples folder
-examples/*/.dvc/tmp/lock
-examples/*/.dvc/tmp/lock
-examples/*/.dvc/tmp/rwlock
-examples/*/.dvc/tmp/rwlock.lock
-tmp.ipynb
-examples/gzip/gzip.code-workspace
+old_examples
 
-old_examples/
-papers/
+
+
+build/lib/deckard/*

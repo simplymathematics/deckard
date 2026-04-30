@@ -1,0 +1,9 @@
+attack_type : "art.attacks.evasion.FastGradientMethod"
+attack_params : 
+  eps_step: .01
+  norm: inf
+  targeted: False
+  eps: 1
+  minimal : False
+_target_ : deckard.attack.AttackConfig
+alias: fgm

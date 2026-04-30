@@ -1,4 +1,0 @@
-init.name : art.attacks.evasion.FastGradientMethod
-init.eps: [0.01, 0.03, 0.3, 0.1]
-init.norm: [inf, 1, 2]
-init.eps_step: [0.001, 0.003, 0.01]

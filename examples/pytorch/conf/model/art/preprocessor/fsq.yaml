@@ -1,3 +1,0 @@
-name : art.defences.preprocessor.FeatureSqueezing
-clip_values : ${model.art.initialize.clip_values}
-bit_depth : 64

@@ -1,0 +1,7 @@
+dataset_name: diabetes
+test_size: 0.2
+random_state: 42
+
+classifier: False
+stratify:  False
+alias: diabetes

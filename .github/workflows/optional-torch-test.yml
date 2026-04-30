@@ -1,0 +1,13 @@
+name: Optional Torch Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  torch-tests:
+    uses: ./.github/workflows/optional-dependency-test-reusable.yml
+    with:
+      workflow_name: torch
+      extra: torch
+      tests: test/test_data/test_pytorch.py test/test_attack/test_attack.py

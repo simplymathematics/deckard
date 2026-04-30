@@ -1,0 +1,7 @@
+dataset_name: lifelines_diabetes
+test_size: 0.25
+random_state: 42
+classifier: false
+stratify: false
+target: E
+alias: diabetes

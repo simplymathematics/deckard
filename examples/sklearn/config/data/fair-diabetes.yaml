@@ -1,0 +1,15 @@
+dataset_name: diabetes
+test_size: 0.2
+random_state: 42
+_target_: deckard.data.FairnessDataConfig
+classifier: False
+stratify: False
+alias: fair-diabetes
+groupby_columns:
+  - sex
+sensitive_columns:
+  - sex
+pipeline:
+  imputer:
+    name: sklearn.impute.SimpleImputer
+    strategy: mean

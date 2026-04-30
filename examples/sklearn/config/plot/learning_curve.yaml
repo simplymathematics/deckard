@@ -1,0 +1,7 @@
+defaults:
+  - default
+
+plot_type: learning_curve
+plot_params:
+  param_range: [0.1, 1.0, linear]
+  cv: 3
