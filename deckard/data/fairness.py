@@ -15,7 +15,6 @@ from sklearn.metrics import mutual_info_score, normalized_mutual_info_score
 
 from .data import DataPipelineConfig
 
-
 fairness_scores = {
     "classification": [
         "count",
@@ -35,18 +34,19 @@ fairness_scores = {
     ],
 }
 
+
 @dataclass
 class FairnessDataConfig(DataPipelineConfig):
     """
     Extended DataConfig class that overloads key methods to operate on pandas groupby objects.
-    
+
     This allows stratified analysis of fairness metrics across different demographic groups.
     """
-    
-    groupby_columns: Union[str,list] = None
-    sensitive_columns:  Optional[Union[str,list]] = None
+
+    groupby_columns: Union[str, list] = None
+    sensitive_columns: Optional[Union[str, list]] = None
     fairness_defense: Union[None, bool, Dict[str, Any]] = None
-    
+
     def __post_init__(self):
         """Initialize with groupby_column support."""
         super().__post_init__()
@@ -72,7 +72,9 @@ class FairnessDataConfig(DataPipelineConfig):
             return frame[self.groupby_columns[0]].astype(str)
         return frame[self.groupby_columns]
 
-    def _validate_sensitive_runtime(self, sensitive: pd.Series, context: str) -> pd.Series:
+    def _validate_sensitive_runtime(
+        self, sensitive: pd.Series, context: str
+    ) -> pd.Series:
         sensitive_series = pd.Series(sensitive)
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
@@ -81,10 +83,6 @@ class FairnessDataConfig(DataPipelineConfig):
         if sensitive_series.astype(str).str.strip().eq("").all():
             raise ValueError(f"Sensitive features are blank during {context}")
         return sensitive_series
-
-   
-
-
 
     def _inject_fairness_defense_step(self) -> None:
         """Inject a fairlearn preprocessing defense into the DataPipelineConfig pipeline."""
@@ -99,10 +97,16 @@ class FairnessDataConfig(DataPipelineConfig):
             raise TypeError(
                 f"fairness_defense must be a dict/DictConfig, False, or None. Got {type(self.fairness_defense)}",
             )
-        if not hasattr(self, "_X") or self._X is None or not isinstance(self._X, pd.DataFrame):
+        if (
+            not hasattr(self, "_X")
+            or self._X is None
+            or not isinstance(self._X, pd.DataFrame)
+        ):
             return
 
-        sensitive_columns = [col for col in self.sensitive_columns if col in self._X.columns]
+        sensitive_columns = [
+            col for col in self.sensitive_columns if col in self._X.columns
+        ]
         if not sensitive_columns:
             raise RuntimeError(f"Sensitive features not found.")
 
@@ -121,13 +125,18 @@ class FairnessDataConfig(DataPipelineConfig):
             return
 
         self.pipeline = {step_name: step_config, **self.pipeline}
-    
-    
+
     def _load_data(self):
         super()._load_data()
-        assert hasattr(self, "_X"), RuntimeError("self.X_ not found while loading FairnessDataConfig")
-        assert hasattr(self, "_y"), RuntimeError("self.y_ not found whilte loading FairnessDataConfig")
-        assert isinstance(self._X, pd.DataFrame), ValueError("Expected a dataframe for self.X_")
+        assert hasattr(self, "_X"), RuntimeError(
+            "self.X_ not found while loading FairnessDataConfig"
+        )
+        assert hasattr(self, "_y"), RuntimeError(
+            "self.y_ not found whilte loading FairnessDataConfig"
+        )
+        assert isinstance(self._X, pd.DataFrame), ValueError(
+            "Expected a dataframe for self.X_"
+        )
         for col in self.groupby_columns:
             assert col in self._X.columns
         return self
@@ -135,10 +144,10 @@ class FairnessDataConfig(DataPipelineConfig):
     def _init_pipeline(self):
         self._inject_fairness_defense_step()
         return super()._init_pipeline()
-        
+
     def _sample(self):
         """Override _sample to handle groupby objects for fairness analysis.
-        
+
         Keeps X_train, y_train the same for all groups, but creates separate
         X_test, y_test groups based on the groupby columns.
         """
@@ -149,36 +158,50 @@ class FairnessDataConfig(DataPipelineConfig):
         self.sensitive_train_ = self._group_labels_from_frame(self.X_train)
         self.sensitive_test_ = self._group_labels_from_frame(self.X_test)
         self.sensitive_all_ = self._group_labels_from_frame(self._X)
-        self.sensitive_train_ = self._validate_sensitive_runtime(self.sensitive_train_, "train sampling")
-        self.sensitive_test_ = self._validate_sensitive_runtime(self.sensitive_test_, "test sampling")
-        self.sensitive_all_ = self._validate_sensitive_runtime(self.sensitive_all_, "full-data sampling")
-        
+        self.sensitive_train_ = self._validate_sensitive_runtime(
+            self.sensitive_train_, "train sampling"
+        )
+        self.sensitive_test_ = self._validate_sensitive_runtime(
+            self.sensitive_test_, "test sampling"
+        )
+        self.sensitive_all_ = self._validate_sensitive_runtime(
+            self.sensitive_all_, "full-data sampling"
+        )
+
         # Store the original X_test and y_test
         self.X_test_groups = {}
         self.y_test_groups = {}
-        
+
         # Create grouped versions of test data
         X_test_grouped = self.X_test.groupby(by=self.groupby_columns)
-        
+
         for group_name, group_data in X_test_grouped:
             group_indices = group_data.index
             self.X_test_groups[group_name] = group_data
             self.y_test_groups[group_name] = self.y_test.loc[group_indices]
-        
-        
+
     def _score(self) -> dict:
         """Compute dataset-only fairness metrics using fairlearn."""
-        if hasattr(self, "X_test") and hasattr(self, "y_test") and self.X_test is not None and self.y_test is not None:
+        if (
+            hasattr(self, "X_test")
+            and hasattr(self, "y_test")
+            and self.X_test is not None
+            and self.y_test is not None
+        ):
             X_eval = self.X_test
             y_eval = self.y_test
-            if hasattr(self, "sensitive_test_") and len(self.sensitive_test_) == len(y_eval):
+            if hasattr(self, "sensitive_test_") and len(self.sensitive_test_) == len(
+                y_eval
+            ):
                 sensitive = self.sensitive_test_
             else:
                 sensitive = self._group_labels_from_frame(X_eval)
         else:
             X_eval = self._X
             y_eval = self._y
-            if hasattr(self, "sensitive_all_") and len(self.sensitive_all_) == len(y_eval):
+            if hasattr(self, "sensitive_all_") and len(self.sensitive_all_) == len(
+                y_eval
+            ):
                 sensitive = self.sensitive_all_
             else:
                 sensitive = self._group_labels_from_frame(X_eval)
@@ -196,10 +219,9 @@ class FairnessDataConfig(DataPipelineConfig):
             # Examine association between sensitive group membership and target labels.
             sensitive_labels = pd.Series(sensitive).astype(str)
             target_labels = pd.Series(y_eval).astype(str)
-            target_distribution_by_group = (
-                pd.crosstab(sensitive_labels, target_labels, normalize="index")
-                .to_dict(orient="index")
-            )
+            target_distribution_by_group = pd.crosstab(
+                sensitive_labels, target_labels, normalize="index"
+            ).to_dict(orient="index")
             fairness_payload = {
                 "fairness_scores": {
                     "metrics": fairness_scores["classification"],
@@ -212,16 +234,19 @@ class FairnessDataConfig(DataPipelineConfig):
                             "count": int(values["count"]),
                             "selection_rate": float(values["selection_rate"]),
                         }
-                        for group, values in metric_frame.by_group.to_dict(orient="index").items()
+                        for group, values in metric_frame.by_group.to_dict(
+                            orient="index"
+                        ).items()
                     },
                     "target_distribution_by_group": {
                         str(group): {
-                            str(label): float(prob)
-                            for label, prob in values.items()
+                            str(label): float(prob) for label, prob in values.items()
                         }
                         for group, values in target_distribution_by_group.items()
                     },
-                    "selection_rate_difference": float(selection_diff["selection_rate"]),
+                    "selection_rate_difference": float(
+                        selection_diff["selection_rate"]
+                    ),
                     "selection_rate_ratio": float(selection_ratio["selection_rate"]),
                     "demographic_parity_difference": float(
                         demographic_parity_difference(
@@ -274,11 +299,3 @@ class FairnessDataConfig(DataPipelineConfig):
                 "mean_target_ratio": float(mean_ratio),
             },
         }
-
-
-       
-       
-            
-        
-    
-    

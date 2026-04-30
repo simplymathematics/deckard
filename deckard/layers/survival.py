@@ -196,7 +196,14 @@ def _initialize_aft_fitter(mtype: str, kwargs: dict) -> RegressionFitter:
         )
 
     params = dict(kwargs)
-    if mtype in ["weibull", "log_normal", "log_logistic", "cox", "gamma", "exponential"]:
+    if mtype in [
+        "weibull",
+        "log_normal",
+        "log_logistic",
+        "cox",
+        "gamma",
+        "exponential",
+    ]:
         params.setdefault("penalizer", 0.1)
     if mtype == "aalen":
         params.setdefault("alpha", 0.1)
@@ -488,12 +495,16 @@ def make_survival_model_table(
     data["AIC"] = [_safe_attr(model, "AIC_") for model in aft_dict.values()]
     data["BIC"] = [_safe_attr(model, "BIC_") for model in aft_dict.values()]
     data["Concordance"] = [_safe_score(model, X_train) for model in aft_dict.values()]
-    data["Test Concordance"] = [_safe_score(model, X_test) for model in aft_dict.values()]
+    data["Test Concordance"] = [
+        _safe_score(model, X_test) for model in aft_dict.values()
+    ]
 
     train_icis, train_e50s, test_icis, test_e50s = [], [], [], []
     for mtype, model in aft_dict.items():
         t0 = t0s[mtype]
-        _, train_ici, train_e50 = survival_probability_calibration(model, X_train, t0=t0)
+        _, train_ici, train_e50 = survival_probability_calibration(
+            model, X_train, t0=t0
+        )
         _, test_ici, test_e50 = survival_probability_calibration(model, X_test, t0=t0)
         train_icis.append(train_ici)
         train_e50s.append(train_e50)
@@ -509,7 +520,9 @@ def make_survival_model_table(
     folder_path.mkdir(parents=True, exist_ok=True)
     data.to_csv(folder_path / "aft_comparison.csv")
     latex = data.fillna("--")
-    pretty_dataset = dataset.upper() if dataset and dataset.lower() != "combined" else dataset
+    pretty_dataset = (
+        dataset.upper() if dataset and dataset.lower() != "combined" else dataset
+    )
     latex.to_latex(
         folder_path / "aft_comparison.tex",
         float_format="%.3g",
@@ -645,7 +658,9 @@ def run_survival_model_experiment(
         X_train=X_train,
         X_test=X_test,
         aft=aft,
-        title=plot_dict.get("qq_title", f"{mtype.replace('_', ' ').title()} Calibration"),
+        title=plot_dict.get(
+            "qq_title", f"{mtype.replace('_', ' ').title()} Calibration"
+        ),
         t0=t0,
         file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
         xlabel="Predicted Probability",
@@ -657,7 +672,9 @@ def run_survival_model_experiment(
     if plot_dict.get("summary_plot") is not None:
         summary_plot = plot_summary(
             aft=aft,
-            title=plot_dict.get("summary_title", f"{mtype.replace('_', ' ').title()} P-values"),
+            title=plot_dict.get(
+                "summary_title", f"{mtype.replace('_', ' ').title()} P-values"
+            ),
             file=plot_dict["summary_plot"],
             xlabel=label_dict.get("summary_xlabel", "Covariate"),
             ylabel=label_dict.get("summary_ylabel", "p-value"),
@@ -745,9 +762,7 @@ def _resolve_survival_model_name(model: Union[str, dict, ModelConfig]) -> str:
         return (model.model_type).lower()
     if isinstance(model, dict):
         return str(
-            model.get("survival_model")
-            or model.get("alias")
-            or model.get("model")
+            model.get("survival_model") or model.get("alias") or model.get("model")
         ).lower()
     raise TypeError(f"Unsupported model specification: {type(model)}")
 
@@ -800,12 +815,16 @@ def _resolve_survival_runtime_models(model, model_config, attack):
                 or "weibull",
             )
         else:
-            survival_model = _normalize_survival_model_name(_resolve_survival_model_name(model))
+            survival_model = _normalize_survival_model_name(
+                _resolve_survival_model_name(model)
+            )
     else:
         attack_model_spec = model
         if isinstance(model, ModelConfig):
             survival_model = _normalize_survival_model_name(
-                getattr(model, "survival_model", None) or model.alias or model.model_type,
+                getattr(model, "survival_model", None)
+                or model.alias
+                or model.model_type,
             )
         elif isinstance(model, dict):
             survival_model = _normalize_survival_model_name(
@@ -865,7 +884,10 @@ def _infer_attack_kind_from_label(label: Optional[str]) -> Optional[str]:
         return "membership"
     if any(token in value for token in ["attribute", "attr"]):
         return "attribute"
-    if any(token in value for token in ["evasion", "fgm", "hsj", "hopskipjump", "boundary", "zoo"]):
+    if any(
+        token in value
+        for token in ["evasion", "fgm", "hsj", "hopskipjump", "boundary", "zoo"]
+    ):
         return "evasion"
     return None
 
@@ -914,7 +936,9 @@ def _load_optuna_survival_frame(
     if query is not None:
         frame = frame.query(query)
     if frame.empty:
-        raise ValueError(f"No attack results found in {optuna_db} after applying filters")
+        raise ValueError(
+            f"No attack results found in {optuna_db} after applying filters"
+        )
     return frame
 
 
@@ -936,10 +960,14 @@ def calculate_failures_under_attack(
         for row_index, attack_label in output[attack_label_col].items():
             row_kind = _infer_attack_kind_from_label(attack_label) or attack_kind
             for metric in _candidate_attack_metrics_for_kind(row_kind):
-                if metric not in output.columns or pd.isna(output.at[row_index, metric]):
+                if metric not in output.columns or pd.isna(
+                    output.at[row_index, metric]
+                ):
                     continue
                 value = output.at[row_index, metric]
-                adv_failures.at[row_index] = value if metric.endswith("_success") else 1 - value
+                adv_failures.at[row_index] = (
+                    value if metric.endswith("_success") else 1 - value
+                )
                 break
         if adv_failures.notna().any():
             output["adv_failures"] = adv_failures
@@ -1147,16 +1175,22 @@ def survival_main(
         raise ValueError(f"{duration_col} not in cleaned columns")
 
     if dataset is None:
-        dataset = Path(attack_optuna_db).stem if attack_optuna_db is not None else data_name
+        dataset = (
+            Path(attack_optuna_db).stem if attack_optuna_db is not None else data_name
+        )
 
-    survival_config = config if resolved_survival_model in config else {
-        resolved_survival_model: {
-            "t0": config.get("t0", 0.35),
-            "model": config.get("survival_model_params", {}),
-            "plot": config.get("plot", {}),
-            "labels": config.get("labels", {}),
-        },
-    }
+    survival_config = (
+        config
+        if resolved_survival_model in config
+        else {
+            resolved_survival_model: {
+                "t0": config.get("t0", 0.35),
+                "model": config.get("survival_model_params", {}),
+                "plot": config.get("plot", {}),
+                "labels": config.get("labels", {}),
+            },
+        }
+    )
 
     run_results = render_all_survival_model_plots(
         config=survival_config,

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import warnings
 import numpy as np
-from sklearn.exceptions import UndefinedMetricWarning,ConvergenceWarning
+from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
 from optuna.exceptions import ExperimentalWarning
 import hashlib
 from omegaconf import OmegaConf
@@ -19,6 +19,7 @@ from .experiment import ExperimentConfig, SurvivalExperimentConfig
 from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
+
 # from .plot import YellowbrickConfigList, YellowbrickPlotConfig
 
 
@@ -27,7 +28,7 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
     "default.yaml",
 )
- 
+
 """
 deckard
 =======
@@ -108,9 +109,9 @@ Public API
     DefenseConfig
     FileConfig
     ScorerDictConfig
-""" 
- 
-   
+"""
+
+
 def _load_yaml_file(path: Path):
     with path.open("r") as f:
         return yaml.safe_load(f)
@@ -124,7 +125,9 @@ def _file_resolver(arg: str):
       ${file:/abs/path/to/file.yaml}       -> returns whole file
     """
     if not arg:
-        raise ValueError("file resolver requires an argument like 'path/to/file.yaml[:key]'")
+        raise ValueError(
+            "file resolver requires an argument like 'path/to/file.yaml[:key]'"
+        )
 
     # split into path and optional key (only first ':' splits, keys may contain '.')
     if ":" in arg:
@@ -134,8 +137,10 @@ def _file_resolver(arg: str):
         path_part, key_part = arg, None
     path = Path(DECKARD_CONFIG_DIR, path_part)
     if not path.exists():
-        raise FileNotFoundError(f"file resolver: file not found: {path_part} in working dir {os.getcwd()}")
-    
+        raise FileNotFoundError(
+            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}"
+        )
+
     data = _load_yaml_file(path)
     # if user requested a nested key, walk the dict using dot-splitting
     if key_part:
@@ -150,6 +155,7 @@ def _file_resolver(arg: str):
     data = OmegaConf.create(data)
     # Return as an OmegaConf node so structured content is preserved
     return data
+
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
 OmegaConf.register_new_resolver("file", _file_resolver, replace=True, use_cache=True)
@@ -168,21 +174,25 @@ def _merge_resolver(*args):
         merged = OmegaConf.merge(merged, obj)
     return OmegaConf.create(merged)
 
+
 OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
+
+
 def _normalize(value, root):
-        target = value
+    target = value
 
-        # Allow key-path lookup form: ${hash:data}
-        if isinstance(value, str) and root is not None:
-            selected = OmegaConf.select(root, value, default=None)
-            if selected is not None:
-                target = selected
+    # Allow key-path lookup form: ${hash:data}
+    if isinstance(value, str) and root is not None:
+        selected = OmegaConf.select(root, value, default=None)
+        if selected is not None:
+            target = selected
 
-        # Resolve OmegaConf nodes to plain Python containers
-        if OmegaConf.is_config(target):
-            return OmegaConf.to_container(target, resolve=True)
-        return target
-    
+    # Resolve OmegaConf nodes to plain Python containers
+    if OmegaConf.is_config(target):
+        return OmegaConf.to_container(target, resolve=True)
+    return target
+
+
 def _hash_conf(*values, _root_=None):
     """
     Supports:
@@ -201,10 +211,8 @@ def _hash_conf(*values, _root_=None):
     s = json.dumps(target, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.md5(s.encode("utf-8")).hexdigest()
 
+
 OmegaConf.register_new_resolver("hash", _hash_conf, replace=True, use_cache=False)
-
-
-
 
 
 logger = logging.getLogger(__name__)
@@ -253,16 +261,14 @@ LOGGING = {
         "stream": {
             "class": "logging.StreamHandler",
             "formatter": "std",
-            "level": logging.INFO
+            "level": logging.INFO,
         },
     },
     "loggers": {
-        "deckard": {"handlers": ["default"],  "propagate": True},
+        "deckard": {"handlers": ["default"], "propagate": True},
         "tests": {"handlers": ["stream"], "level": "DEBUG", "propagate": True},
     },
 }
-
-
 
 
 logging.getLogger("art").setLevel(logging.WARNING)
@@ -275,6 +281,4 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
-np.seterr(divide='ignore', invalid='ignore')
-
-
+np.seterr(divide="ignore", invalid="ignore")

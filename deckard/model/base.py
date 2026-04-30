@@ -42,12 +42,14 @@ from art.config import ART_NUMPY_DTYPE
 from ..data import DataConfig
 from ..utils import ConfigBase, load_class, resolve_class
 
-art_model_types = tuple([
-    ScikitlearnClassifier,
-    ScikitlearnRegressor,
-    PyTorchClassifier,
-    PyTorchRegressor,
-])
+art_model_types = tuple(
+    [
+        ScikitlearnClassifier,
+        ScikitlearnRegressor,
+        PyTorchClassifier,
+        PyTorchRegressor,
+    ]
+)
 
 
 logger = logging.getLogger(__name__)
@@ -84,8 +86,6 @@ supported_defense_types = [
     "transformer",
     None,
 ]
-
-
 
 
 @dataclass
@@ -186,7 +186,9 @@ class ModelConfig(ConfigBase):
     prediction_n: Union[int, None] = None
     training_predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
     predictions: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
-    training_probabilities: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
+    training_probabilities: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = (
+        None
+    )
     probabilities: Union[pd.Series, pd.DataFrame, np.ndarray, list, None] = None
     _target_: Union[str, None] = None
 
@@ -228,7 +230,17 @@ class ModelConfig(ConfigBase):
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.model.ModelConfig"
         if hasattr(self, "defense") and hasattr(self.defense, "defense_name"):
-            if self.defense.defense_name in ["", None, "None", "null", "Null", "NULL", "none", "N/A", "n/a"]:
+            if self.defense.defense_name in [
+                "",
+                None,
+                "None",
+                "null",
+                "Null",
+                "NULL",
+                "none",
+                "N/A",
+                "n/a",
+            ]:
                 self.defense = None
         if self.classifier in ["classifier", True]:
             self.classifier = True
@@ -291,7 +303,7 @@ class ModelConfig(ConfigBase):
         return defense_type, defense_subtype, defense_class
 
     def get_art_class(self, data):
-        
+
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
             if self.classifier
@@ -307,7 +319,7 @@ class ModelConfig(ConfigBase):
         if "preprocessing" not in init_params:
             init_params["preprocessing"] = None
         return art_class, init_params
-    
+
     def get_art_model(self, data: DataConfig):
         """Get the ART model estimator.
 
@@ -491,12 +503,8 @@ class ModelConfig(ConfigBase):
             if y_pred_array.ndim == 2 and y_pred_array.shape[1] > 1:
                 row_sums = np.sum(y_pred_array, axis=1)
                 invalid_matrix = (
-                    np.isfinite(y_pred_array).all()
-                    and np.allclose(y_pred_array, 1.0)
-                ) or (
-                    np.isfinite(row_sums).all()
-                    and np.all(row_sums > 1.0 + 1e-8)
-                )
+                    np.isfinite(y_pred_array).all() and np.allclose(y_pred_array, 1.0)
+                ) or (np.isfinite(row_sums).all() and np.all(row_sums > 1.0 + 1e-8))
                 if invalid_matrix:
                     base_model = getattr(self._model, "model", None)
                     if base_model is not None and hasattr(base_model, "predict"):
@@ -570,7 +578,9 @@ class ModelConfig(ConfigBase):
                 if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                     threshold = 0.0
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
-                if len(classes) == 2 and np.issubdtype(np.asarray(classes).dtype, np.number):
+                if len(classes) == 2 and np.issubdtype(
+                    np.asarray(classes).dtype, np.number
+                ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
@@ -580,14 +590,20 @@ class ModelConfig(ConfigBase):
             else:
                 y_pred = np.argmax(y_prob, axis=1)
         elif y_true.ndim > 1 and y_pred.ndim > 1:
-            assert y_true.shape == y_pred.shape, "y_true and y_pred must have the same shape"
+            assert (
+                y_true.shape == y_pred.shape
+            ), "y_true and y_pred must have the same shape"
             y_prob = y_pred.copy()
             y_prob = np.argmax(y_prob, axis=1)
         else:
             y_prob = y_pred.copy()
-        assert y_true.shape[0] == y_pred.shape[0], "y_true and y_pred must have the same number of samples"
+        assert (
+            y_true.shape[0] == y_pred.shape[0]
+        ), "y_true and y_pred must have the same number of samples"
         if y_true.ndim > 1:
-            assert y_true.shape[1] == y_pred.shape[1], "y_true and y_pred must have the same number of classes"
+            assert (
+                y_true.shape[1] == y_pred.shape[1]
+            ), "y_true and y_pred must have the same number of classes"
         try:
             acc = accuracy_score(y_true, y_pred)
             precision = precision_score(
@@ -598,8 +614,7 @@ class ModelConfig(ConfigBase):
             )
             recall = recall_score(y_true, y_pred, average="weighted", zero_division=0)
             f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
-            
-    
+
         except Exception as e:
             logger.error(f"Error computing classification scores: {e}")
             raise e
@@ -717,7 +732,9 @@ class ModelConfig(ConfigBase):
             if y_true is not None:
                 y_true_arr = np.asarray(y_true)
                 classes = np.unique(y_true_arr[~pd.isna(y_true_arr)])
-                if len(classes) == 2 and np.issubdtype(np.asarray(classes).dtype, np.number):
+                if len(classes) == 2 and np.issubdtype(
+                    np.asarray(classes).dtype, np.number
+                ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label = sorted_classes[0]
                     high_label = sorted_classes[1]
@@ -994,11 +1011,17 @@ class ModelConfig(ConfigBase):
                 try:
                     if hasattr(self._model, "predict_proba"):
                         try:
-                            self.training_probabilities = self._model.predict_proba(data.X_train)
+                            self.training_probabilities = self._model.predict_proba(
+                                data.X_train
+                            )
                         except TypeError as e:
-                            if "loop of ufunc does not support argument" in str(e) or "can't convert" in str(e):
+                            if "loop of ufunc does not support argument" in str(
+                                e
+                            ) or "can't convert" in str(e):
                                 X_array = np.array(data.X_train, dtype=ART_NUMPY_DTYPE)
-                                self.training_probabilities = self._model.predict_proba(X_array)
+                                self.training_probabilities = self._model.predict_proba(
+                                    X_array
+                                )
                             else:
                                 raise e
                     else:
@@ -1050,11 +1073,19 @@ class ModelConfig(ConfigBase):
                     try:
                         if hasattr(self._model, "predict_proba"):
                             try:
-                                self.probabilities = self._model.predict_proba(data.X_test)
+                                self.probabilities = self._model.predict_proba(
+                                    data.X_test
+                                )
                             except TypeError as e:
-                                if "loop of ufunc does not support argument" in str(e) or "can't convert" in str(e):
-                                    X_array = np.array(data.X_test, dtype=ART_NUMPY_DTYPE)
-                                    self.probabilities = self._model.predict_proba(X_array)
+                                if "loop of ufunc does not support argument" in str(
+                                    e
+                                ) or "can't convert" in str(e):
+                                    X_array = np.array(
+                                        data.X_test, dtype=ART_NUMPY_DTYPE
+                                    )
+                                    self.probabilities = self._model.predict_proba(
+                                        X_array
+                                    )
                                 else:
                                     raise e
                         else:
@@ -1171,14 +1202,16 @@ class ModelConfig(ConfigBase):
                 else:
                     # train the model if no model exists at the filepath
                     logger.info(f"Training model on {len(data.y_train)} samples...")
-                    model_is_fitted = _is_model_fitted(self._model, X_sample=data.X_train)
+                    model_is_fitted = _is_model_fitted(
+                        self._model, X_sample=data.X_train
+                    )
 
                     # Do not trust timing metadata from loaded score files as proof of fitted state.
                     if not model_is_fitted:
                         self._train(data.X_train, data.y_train)
                     times["training_time"] = self.training_time
                     times["training_n"] = self.training_n
-                    
+
                     if model_file is not None:
                         self.save(filepath=model_file)
         # Validate model is trained

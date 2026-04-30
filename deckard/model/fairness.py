@@ -20,19 +20,20 @@ from .defend import DefenseConfig
 from ..data.fairness import FairnessDataConfig
 from ..utils import load_class, resolve_class
 
+
 class _FairnessBehaviorMixin:
     """
     A model configuration that extends ModelConfig to support fairness-aware evaluation.
-    
+
     Trains normally on X_train, y_train, but uses group information from X_test, y_test
     for fairness-aware scoring across demographic groups.
-    
+
     Attributes:
     -----------
     fairness_data : FairnessDataConfig or None
         Configuration containing group information and fairness metrics.
     """
-    
+
     def _validate_sensitive_series(self, sensitive, context: str):
         if sensitive is None:
             return None
@@ -101,7 +102,9 @@ class _FairnessBehaviorMixin:
 
         sensitive = self._resolve_sensitive_features_for_batch(data.y_train)
         fit_method = defended_estimator.fit
-        if sensitive is not None and self._method_accepts_sensitive_features(fit_method):
+        if sensitive is not None and self._method_accepts_sensitive_features(
+            fit_method
+        ):
             fit_method(data.X_train, data.y_train, sensitive_features=sensitive)
         else:
             fit_method(data.X_train, data.y_train)
@@ -110,10 +113,14 @@ class _FairnessBehaviorMixin:
     def _resolve_fairness_defense_spec(self):
         """Resolve defense_name/defense_params from either model or defense config shapes."""
         if hasattr(self, "defense_name"):
-            return getattr(self, "defense_name", None), dict(getattr(self, "defense_params", {}) or {})
+            return getattr(self, "defense_name", None), dict(
+                getattr(self, "defense_params", {}) or {}
+            )
         defense_obj = getattr(self, "defense", None)
         if defense_obj is not None:
-            return getattr(defense_obj, "defense_name", None), dict(getattr(defense_obj, "defense_params", {}) or {})
+            return getattr(defense_obj, "defense_name", None), dict(
+                getattr(defense_obj, "defense_params", {}) or {}
+            )
         return None, {}
 
     def _apply_defense(self, data):
@@ -158,7 +165,9 @@ class _FairnessBehaviorMixin:
                 raise ValueError(
                     "fairlearn.reductions defenses require a 'constraints' key in defense parameters",
                 )
-            defended_estimator = defense_class(base_estimator, constraints, **defense_params)
+            defended_estimator = defense_class(
+                base_estimator, constraints, **defense_params
+            )
         elif fairlearn_submodule == "postprocessing":
             if constraints is not None:
                 defended_estimator = defense_class(
@@ -167,7 +176,9 @@ class _FairnessBehaviorMixin:
                     **defense_params,
                 )
             else:
-                defended_estimator = defense_class(estimator=base_estimator, **defense_params)
+                defended_estimator = defense_class(
+                    estimator=base_estimator, **defense_params
+                )
         elif fairlearn_submodule == "adversarial":
             defended_estimator = defense_class(**defense_params)
         else:
@@ -197,7 +208,7 @@ class _FairnessBehaviorMixin:
         ):
             fit_params = {**fit_params, "sensitive_features": sensitive}
         self._model.fit(X, y, **fit_params)
-        end_time= time.process_time()
+        end_time = time.process_time()
         self.training_time = end_time - start_time
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
@@ -207,11 +218,17 @@ class _FairnessBehaviorMixin:
             raise ValueError("Model not initialized")
         sensitive = self._resolve_sensitive_features_for_batch(X)
         try:
-            y_pred = self._call_with_optional_sensitive(self._model.predict, X, sensitive)
+            y_pred = self._call_with_optional_sensitive(
+                self._model.predict, X, sensitive
+            )
         except TypeError as e:
-            if "loop of ufunc does not support argument" in str(e) or "can't convert" in str(e):
+            if "loop of ufunc does not support argument" in str(
+                e
+            ) or "can't convert" in str(e):
                 X_array = np.array(X, dtype=ART_NUMPY_DTYPE)
-                y_pred = self._call_with_optional_sensitive(self._model.predict, X_array, sensitive)
+                y_pred = self._call_with_optional_sensitive(
+                    self._model.predict, X_array, sensitive
+                )
             else:
                 raise e
         return y_pred
@@ -222,9 +239,9 @@ class _FairnessBehaviorMixin:
         if not self.probability:
             raise ValueError("Model does not support probability predictions")
         sensitive = self._resolve_sensitive_features_for_batch(X)
-        return self._call_with_optional_sensitive(self._model.predict_proba, X, sensitive)
-
-
+        return self._call_with_optional_sensitive(
+            self._model.predict_proba, X, sensitive
+        )
 
     def _resolve_sensitive_features(self, y_true: pd.Series):
         if self.data is None:
@@ -242,7 +259,9 @@ class _FairnessBehaviorMixin:
         for sensitive in candidates:
             if sensitive is None:
                 continue
-            sensitive_series = self._validate_sensitive_series(sensitive, "fairness scoring")
+            sensitive_series = self._validate_sensitive_series(
+                sensitive, "fairness scoring"
+            )
             if sensitive_series is None:
                 continue
             if len(sensitive_series) == y_true_n:
@@ -262,7 +281,9 @@ class _FairnessBehaviorMixin:
         sensitive = self._resolve_sensitive_features(y_true)
         if sensitive is None:
             if self.data is not None:
-                raise ValueError("Sensitive features are required for fairness scoring and cannot be empty at runtime")
+                raise ValueError(
+                    "Sensitive features are required for fairness scoring and cannot be empty at runtime"
+                )
             return {}
 
         y_true_series = pd.Series(y_true).reset_index(drop=True)
@@ -272,16 +293,22 @@ class _FairnessBehaviorMixin:
             if y_pred_arr.ndim <= 1:
                 return pd.Series(y_pred_arr).reset_index(drop=True)
             if y_pred_arr.ndim != 2:
-                raise ValueError(f"Unsupported prediction shape for fairness scoring: {y_pred_arr.shape}")
+                raise ValueError(
+                    f"Unsupported prediction shape for fairness scoring: {y_pred_arr.shape}"
+                )
 
-            classes = np.unique(np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))])
-            
+            classes = np.unique(
+                np.asarray(y_true_ref)[~pd.isna(np.asarray(y_true_ref))]
+            )
+
             if y_pred_arr.shape[1] == 1:
                 binary_scores = y_pred_arr.reshape(-1)
                 threshold = 0.5
                 if np.nanmin(binary_scores) < 0.0 or np.nanmax(binary_scores) > 1.0:
                     threshold = 0.0
-                if len(classes) == 2 and np.issubdtype(np.asarray(classes).dtype, np.number):
+                if len(classes) == 2 and np.issubdtype(
+                    np.asarray(classes).dtype, np.number
+                ):
                     sorted_classes = np.sort(np.asarray(classes, dtype=float))
                     low_label, high_label = sorted_classes[0], sorted_classes[1]
                     labels = np.where(binary_scores >= threshold, high_label, low_label)
@@ -300,15 +327,19 @@ class _FairnessBehaviorMixin:
         # Determine positive label BEFORE alignment so it stays consistent
         positive_label = sorted(y_true_series.dropna().unique())[-1]
 
-        
-
         if self.classifier:
             metric_frame = MetricFrame(
                 metrics={
                     "accuracy": accuracy_score,
-                    "precision": lambda yt, yp: precision_score(yt, yp, average="weighted", zero_division=0),
-                    "recall": lambda yt, yp: recall_score(yt, yp, average="weighted", zero_division=0),
-                    "f1-score": lambda yt, yp: f1_score(yt, yp, average="weighted", zero_division=0),
+                    "precision": lambda yt, yp: precision_score(
+                        yt, yp, average="weighted", zero_division=0
+                    ),
+                    "recall": lambda yt, yp: recall_score(
+                        yt, yp, average="weighted", zero_division=0
+                    ),
+                    "f1-score": lambda yt, yp: f1_score(
+                        yt, yp, average="weighted", zero_division=0
+                    ),
                 },
                 y_true=y_true_series,
                 y_pred=y_pred_series,
@@ -341,7 +372,11 @@ class _FairnessBehaviorMixin:
                 acc_max = float(np.max(acc_arr))
                 acc_diff = acc_max - acc_min
                 acc_std = float(np.std(acc_arr))
-                acc_ratio = acc_min / acc_max if not np.isclose(acc_max, 0.0) else (1.0 if np.isclose(acc_min, 0.0) else 0.0)
+                acc_ratio = (
+                    acc_min / acc_max
+                    if not np.isclose(acc_max, 0.0)
+                    else (1.0 if np.isclose(acc_min, 0.0) else 0.0)
+                )
                 group_scores["sensitive_feature_accuracy_difference"] = acc_diff
                 group_scores["sensitive_feature_accuracy_std"] = acc_std
                 group_scores["sensitive_feature_accuracy_ratio"] = acc_ratio
@@ -350,9 +385,15 @@ class _FairnessBehaviorMixin:
         # if not classifier
         metric_frame = MetricFrame(
             metrics={
-                "mse": lambda yt, yp: float(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)),
-                "rmse": lambda yt, yp: float(np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2))),
-                "mae": lambda yt, yp: float(np.mean(np.abs(np.asarray(yt) - np.asarray(yp)))),
+                "mse": lambda yt, yp: float(
+                    np.mean((np.asarray(yt) - np.asarray(yp)) ** 2)
+                ),
+                "rmse": lambda yt, yp: float(
+                    np.sqrt(np.mean((np.asarray(yt) - np.asarray(yp)) ** 2))
+                ),
+                "mae": lambda yt, yp: float(
+                    np.mean(np.abs(np.asarray(yt) - np.asarray(yp)))
+                ),
             },
             y_true=y_true_series,
             y_pred=y_pred_series,
@@ -395,6 +436,3 @@ class FairnessDefenseConfig(_FairnessBehaviorMixin, DefenseConfig):
         if not defense_name or not defense_name.startswith("fairlearn."):
             return super().apply_defense(data)
         return self._apply_defense(data)
-
-
-

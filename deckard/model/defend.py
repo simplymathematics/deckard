@@ -30,7 +30,6 @@ from ..data import DataConfig
 from . import ModelConfig
 from ..utils import resolve_class
 
-
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ supported_defense_types = [
 
 @dataclass
 class DefenseConfig(ModelConfig):
-    model_type: str 
+    model_type: str
     classifier: bool = True
     model_params: dict = field(
         default_factory=dict,
@@ -86,7 +85,7 @@ class DefenseConfig(ModelConfig):
         default_factory=dict,
         metadata={"help": "Parameters for the defense."},
     )
-    alias: str  = field(default_factory=str)
+    alias: str = field(default_factory=str)
     """
     Overview
     --------

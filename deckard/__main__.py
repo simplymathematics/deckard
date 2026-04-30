@@ -1,4 +1,3 @@
-
 import logging
 import logging.config
 import os
@@ -14,16 +13,12 @@ from . import LOGGING, DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
 from .layers import SUPPORTED_LAYERS, layer_dict
 from .experiment import ExperimentConfig
 
-
-
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
-
 def get_configuration_paths():
-    """
-    """
+    """ """
     # Get config dir from environment variable if set
     config_dir = os.environ.get(
         "DECKARD_CONFIG_DIR",
@@ -57,6 +52,7 @@ def get_configuration_paths():
         )
         raise FileNotFoundError(config_file)
     return config_dir, config_file
+
 
 def main():
     """
@@ -107,7 +103,9 @@ def main():
     elif module in SUPPORTED_LAYERS:
         handle_other_layers(module)
     else:
-        raise ValueError(f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}")
+        raise ValueError(
+            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}"
+        )
 
 
 def handle_default_module():
@@ -135,6 +133,7 @@ def handle_default_module():
     DECKARD_CONFIG_DIR : str, mandatory
     """
     config_dir, config_file = get_configuration_paths()
+
     @hydra.main(
         config_path=str(Path(config_dir).resolve()),
         config_name=config_file,
@@ -147,10 +146,13 @@ def handle_default_module():
 
     return main_hydra()
 
+
 def handle_other_layers(layer):
     """Run the parser and main entrypoint for the specified layer via Hydra."""
     if layer not in layer_dict:
-        logger.error(f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}")
+        logger.error(
+            f"Unsupported layer: {layer}. Supported layers are: {list(layer_dict)}"
+        )
         raise ValueError
 
     parser, main_fn = layer_dict[layer]
@@ -160,7 +162,9 @@ def handle_other_layers(layer):
     # Parse layer-specific args first, then leave remaining args for Hydra.
     parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
 
-    cli_config_path = getattr(parsed_args, "config_path", None) or getattr(parsed_args, "config_dir", None)
+    cli_config_path = getattr(parsed_args, "config_path", None) or getattr(
+        parsed_args, "config_dir", None
+    )
     cli_config_name = getattr(parsed_args, "config_name", None)
     default_config_dir = None
     default_config_file = None
@@ -174,8 +178,11 @@ def handle_other_layers(layer):
         # get_args_parser may parse Hydra key=value arguments into `overrides`.
         forwarded_overrides = parsed_args.overrides
     sys.argv = [sys.argv[0], *hydra_args, *forwarded_overrides]
+
     @hydra.main(
-        config_path=(str(Path(config_dir).resolve()) if config_dir is not None else None),
+        config_path=(
+            str(Path(config_dir).resolve()) if config_dir is not None else None
+        ),
         config_name=config_file,
         version_base="1.3",
     )
@@ -187,7 +194,11 @@ def handle_other_layers(layer):
             param.kind == inspect.Parameter.VAR_KEYWORD
             for param in sig.parameters.values()
         )
-        args = raw_args.copy() if accepts_var_kwargs else {k: v for k, v in raw_args.items() if k in valid_keys}
+        args = (
+            raw_args.copy()
+            if accepts_var_kwargs
+            else {k: v for k, v in raw_args.items() if k in valid_keys}
+        )
 
         if "cfg" in valid_keys:
             args["cfg"] = cfg
@@ -200,6 +211,7 @@ def handle_other_layers(layer):
         return main_fn(**args)
 
     return main_hydra()
+
 
 if __name__ == "__main__":
     main()

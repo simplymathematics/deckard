@@ -10,7 +10,6 @@ import pandas as pd
 from dataclasses import dataclass, field
 from typing import Union
 
-
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics import (
@@ -43,8 +42,6 @@ from .pytorch import (
     is_torch_model,
     tensor_to_numpy,
 )
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -281,8 +278,13 @@ class AttackConfig(ConfigBase):
         if art_model is None:
             if isinstance(model, tuple(supported_models)):
                 art_model = model
-            elif isinstance(model, BaseEstimator) and type(model).__name__ in sklearn_dict:
-                assert isinstance(model, ClassifierMixin), f"Model must be a ClassifierMixin, got {type(model)}"
+            elif (
+                isinstance(model, BaseEstimator)
+                and type(model).__name__ in sklearn_dict
+            ):
+                assert isinstance(
+                    model, ClassifierMixin
+                ), f"Model must be a ClassifierMixin, got {type(model)}"
                 model_alias = type(model).__name__
                 art_cls = sklearn_dict[model_alias]
                 try:
@@ -297,6 +299,7 @@ class AttackConfig(ConfigBase):
                     model.fit(data.X_train, data.y_train)
                 # Wrap models that require sensitive_features in predict (e.g. ThresholdOptimizer)
                 import inspect
+
                 predict_sig = inspect.signature(model.predict)
                 if "sensitive_features" in predict_sig.parameters:
                     sensitive = getattr(data, "sensitive_test_", None)
@@ -304,7 +307,9 @@ class AttackConfig(ConfigBase):
                         sensitive = getattr(data, "sensitive_train_", None)
                     if sensitive is not None:
                         model = SensitiveFeaturesWrapper(model, sensitive)
-                if isinstance(model, RegressorMixin) and not isinstance(model, ClassifierMixin):
+                if isinstance(model, RegressorMixin) and not isinstance(
+                    model, ClassifierMixin
+                ):
                     art_model = sklearn_dict["sklearn-regressor"](model)
                 else:
                     art_model = sklearn_dict["sklearn-classifier"](model)
@@ -312,7 +317,9 @@ class AttackConfig(ConfigBase):
                     art_model._input_shape = (data.X_train.shape[1],)
                 nb = getattr(art_model, "nb_classes", None)
                 if nb is None or nb <= 0:
-                    art_model.nb_classes = len(np.unique(np.asarray(data.y_train).flatten()))
+                    art_model.nb_classes = len(
+                        np.unique(np.asarray(data.y_train).flatten())
+                    )
             else:
                 raise ValueError(f"Unsupported model type: {type(model)}")
         # Convert targeted attribute to index if necessary
@@ -327,8 +334,14 @@ class AttackConfig(ConfigBase):
             ), f"Expected Dataframe got {type(data.X_train)}"
             if not hasattr(self, "target_index"):
                 if feature_name not in data.X_train.columns:
-                    cols = [col for col in data.X_train.columns if feature_name.split("_")[0] in col]
-                    raise ValueError(f"{feature_name} not found. Did you mean one of these: {cols}?")
+                    cols = [
+                        col
+                        for col in data.X_train.columns
+                        if feature_name.split("_")[0] in col
+                    ]
+                    raise ValueError(
+                        f"{feature_name} not found. Did you mean one of these: {cols}?"
+                    )
                 self.target_index = data.X_train.columns.get_loc(feature_name)
                 self.attack_params["attack_feature"] = self.target_index
                 assert (
@@ -346,13 +359,19 @@ class AttackConfig(ConfigBase):
                 attack_model._load_or_train_model(data)
                 attack_model = attack_model.get_art_model(data)
             elif isinstance(attack_model, str):
-                assert Path(attack_model).exists(), f"attack_model path {attack_model} does not exist"
+                assert Path(
+                    attack_model
+                ).exists(), f"attack_model path {attack_model} does not exist"
                 with open(attack_model, "rb") as f:
                     attack_model = pickle.load(f)
-                    assert isinstance(attack_model, ModelConfig), "Loaded attack_model must be a ModelConfig instance"
+                    assert isinstance(
+                        attack_model, ModelConfig
+                    ), "Loaded attack_model must be a ModelConfig instance"
                     attack_model = attack_model.get_art_model(data)
             else:
-                raise ValueError(f"attack_model must be a ModelConfig instance. Got {type(attack_model)}")
+                raise ValueError(
+                    f"attack_model must be a ModelConfig instance. Got {type(attack_model)}"
+                )
             self.attack_params["attack_model"] = attack_model
         attack = attack_class(art_model, **self.attack_params)
         self._attack_type = attack_type
@@ -408,7 +427,7 @@ class AttackConfig(ConfigBase):
             self.attack_predictions = self.load_object(attack_predictions_file)
         if score_file is not None and Path(score_file).exists():
             self.score_dict = self.load_scores(score_file)
-        
+
         attack, art_model, attack_type, attack_subtype = self._initialize_attack(
             model,
             data,
@@ -503,7 +522,7 @@ class AttackConfig(ConfigBase):
         if train is True:
             ben_preds = art_model.predict(data.X_test)
             ben_pred_labels = ben_preds.argmax(axis=1)
-            n, X_subset, y_subset = self.get_attack_subset(data, test =True)
+            n, X_subset, y_subset = self.get_attack_subset(data, test=True)
         else:
             ben_preds = art_model.predict(data.X_train)
             ben_preds = tensor_to_numpy(ben_preds, dtype=ART_NUMPY_DTYPE)
@@ -753,7 +772,7 @@ class AttackConfig(ConfigBase):
         self.attack = adv_pred
         return self.score_dict
 
-    def get_attack_subset(self, data, test =True):
+    def get_attack_subset(self, data, test=True):
         n = self.attack_size
         if test is True:
             x_ = data.X_test
@@ -767,8 +786,10 @@ class AttackConfig(ConfigBase):
         elif is_dataloader(x_):
             x_subset, y_subset = collect_subset_from_dataloader(x_, n=n)
         else:
-            raise ValueError(f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}")
-        return n,x_subset,y_subset
+            raise ValueError(
+                f"Expected data.X_test to be a pd.Series, np.ndarray, or a torch Tensor or torch DataLoader. Got: {type(data.X_test)}"
+            )
+        return n, x_subset, y_subset
 
     def _infer_attribute(
         self,
@@ -818,7 +839,9 @@ class AttackConfig(ConfigBase):
                 f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
             )
         else:
-            assert isinstance(targeted_attribute, (list, ListConfig)), "targeted attribute must be a string or a list of strings"
+            assert isinstance(
+                targeted_attribute, (list, ListConfig)
+            ), "targeted attribute must be a string or a list of strings"
             if isinstance(targeted_attribute, ListConfig):
                 targeted_attribute = OmegaConf.to_container(targeted_attribute)
             if not isinstance(targeted_attribute, list):
@@ -836,15 +859,22 @@ class AttackConfig(ConfigBase):
                     for col in data.X_test.columns:
                         if str(attr).split("_")[0] in col:
                             possible_cols.append(col)
-                    raise ValueError(f"Targeted attribute '{attr}' not found in test data columns.")
+                    raise ValueError(
+                        f"Targeted attribute '{attr}' not found in test data columns."
+                    )
         X_test = data.X_test.copy()
         target = X_test[targeted_attribute].copy()
         X_test_subset = X_test.iloc[: self.attack_size, :].copy().values
         target = target[: self.attack_size].values
-        
-        X_test_subset_without_feature = X_test.drop(
-            columns=targeted_attribute,
-        ).copy().iloc[: self.attack_size, :].values
+
+        X_test_subset_without_feature = (
+            X_test.drop(
+                columns=targeted_attribute,
+            )
+            .copy()
+            .iloc[: self.attack_size, :]
+            .values
+        )
         assert (
             len(X_test_subset) == self.attack_size
         ), f"Test set size {len(X_test_subset)} does not match attack_size {self.attack_size}"
@@ -858,7 +888,9 @@ class AttackConfig(ConfigBase):
             f"Attribute inference attack training took {attack_time} seconds for {self.attack_size} samples",
         )
         self.attack_time = attack_time
-        preds = np.array([np.argmax(arr) for arr in art_model.predict(X_test_subset)]).reshape(
+        preds = np.array(
+            [np.argmax(arr) for arr in art_model.predict(X_test_subset)]
+        ).reshape(
             -1,
             1,
         )
@@ -869,7 +901,7 @@ class AttackConfig(ConfigBase):
         unique, counts = np.unique(preds, return_counts=True)
         for u, c in zip(unique, counts):
             logger.info(f"Class {u}: {c} samples")
-        possible_values = np.unique(target, axis =0)
+        possible_values = np.unique(target, axis=0)
         if isinstance(possible_values, np.ndarray):
             possible_values = possible_values.tolist()
         if (
@@ -994,7 +1026,9 @@ class AttackConfig(ConfigBase):
         """
         start_time = time.process_time()
         y_train_values = (
-            data.y_train.copy().values if hasattr(data.y_train, "values") else np.asarray(data.y_train)
+            data.y_train.copy().values
+            if hasattr(data.y_train, "values")
+            else np.asarray(data.y_train)
         )
         if y_train_values.ndim == 1:
             # Transform labels into one-hot encoding for attacks expecting 2D y

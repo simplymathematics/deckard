@@ -23,8 +23,6 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-
-
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
 DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "DECKARD_DEFAULT_CONFIG_FILE",
@@ -44,9 +42,11 @@ from pathlib import Path
 import yaml
 from omegaconf import OmegaConf
 
+
 def _load_yaml_file(path: Path):
     with path.open("r") as f:
         return yaml.safe_load(f)
+
 
 def _file_resolver(arg: str):
     """
@@ -56,7 +56,9 @@ def _file_resolver(arg: str):
       ${file:/abs/path/to/file.yaml}       -> returns whole file
     """
     if not arg:
-        raise ValueError("file resolver requires an argument like 'path/to/file.yaml[:key]'")
+        raise ValueError(
+            "file resolver requires an argument like 'path/to/file.yaml[:key]'"
+        )
 
     # split into path and optional key (only first ':' splits, keys may contain '.')
     if ":" in arg:
@@ -66,8 +68,10 @@ def _file_resolver(arg: str):
         path_part, key_part = arg, None
     path = Path(DECKARD_CONFIG_DIR, path_part)
     if not path.exists():
-        raise FileNotFoundError(f"file resolver: file not found: {path_part} in working dir {os.getcwd()}")
-    
+        raise FileNotFoundError(
+            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}"
+        )
+
     data = _load_yaml_file(path)
     # if user requested a nested key, walk the dict using dot-splitting
     if key_part:
@@ -82,6 +86,7 @@ def _file_resolver(arg: str):
     data = OmegaConf.create(data)
     # Return as an OmegaConf node so structured content is preserved
     return data
+
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
 OmegaConf.register_new_resolver("file", _file_resolver, replace=True, use_cache=True)
@@ -99,6 +104,7 @@ def _merge_resolver(*args):
         obj = OmegaConf.to_container(OmegaConf.create(arg), resolve=True)
         merged = OmegaConf.merge(merged, obj)
     return OmegaConf.create(merged)
+
 
 OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
@@ -155,7 +161,9 @@ class DataConfigResolutionMixin:
         data_cls = self._select_data_cls(data_dict)
         logger.info("Resolved data config class: %s", data_cls.__name__)
         data_obj = data_cls(**data_dict)
-        assert isinstance(data_obj, DataConfig), ValueError(f"Object of type: {type(data_obj)} is not a DataConfig object.")
+        assert isinstance(data_obj, DataConfig), ValueError(
+            f"Object of type: {type(data_obj)} is not a DataConfig object."
+        )
         return data_obj
 
 
@@ -178,7 +186,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         Args:
             device (Union[str, int]): Device to use ("cpu", "gpu", or GPU index).
         """
-        
+
         if self.library == "tensorflow":
             import tensorflow as tf
 
@@ -256,8 +264,8 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
             assert (
                 self.classifier == self.data.classifier
             ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
-        if self.defense is not None:                    
-           
+        if self.defense is not None:
+
             if isinstance(self.defense, DefenseConfig):
                 pass
             else:
@@ -268,7 +276,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 elif isinstance(self.defense, ConfigBase):
                     defense_dict = self.defense.to_dict()
                 elif isinstance(self.defense, dict):
-                    defense_dict = OmegaConf.to_container(OmegaConf.create(self.defense))
+                    defense_dict = OmegaConf.to_container(
+                        OmegaConf.create(self.defense)
+                    )
                 else:
                     raise ValueError(
                         f"Unsupported type for defense: {type(self.defense)}",
@@ -279,7 +289,9 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     if isinstance(self.model, ModelConfig):
                         inferred_model_type = self.model.model_type
                     elif isinstance(self.model, DictConfig):
-                        inferred_model_type = OmegaConf.to_container(self.model).get("model_type")
+                        inferred_model_type = OmegaConf.to_container(self.model).get(
+                            "model_type"
+                        )
                     elif isinstance(self.model, dict):
                         inferred_model_type = self.model.get("model_type")
                     elif isinstance(self.model, ConfigBase):
@@ -323,7 +335,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                 self.model,
                 ModelConfig,
             ), "model must be an instance of ModelConfig"
-            
+
             self.model.__post_init__()
             if self.classifier is None:
                 self.classifier = self.model.classifier
@@ -474,14 +486,10 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         # Get file paths
         file_dict = self.files._get_file_dict()
         data_file_outputs = {
-            file: getattr(self.files, file)
-            for file in data_files
-            if file in file_dict
+            file: getattr(self.files, file) for file in data_files if file in file_dict
         }
         model_file_outputs = {
-            file: getattr(self.files, file)
-            for file in model_files
-            if file in file_dict
+            file: getattr(self.files, file) for file in model_files if file in file_dict
         }
         attack_file_outputs = {
             file: getattr(self.files, file)
@@ -613,4 +621,3 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
         if self.duration_col in [None, ""]:
             raise ValueError("duration_col must be provided for survival experiments")
-    

@@ -15,7 +15,6 @@ from dataclasses import dataclass, field
 from hydra.utils import instantiate, get_class
 from omegaconf import OmegaConf
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,12 +32,12 @@ data_supported_filetypes = [
 @dataclass
 class ConfigBase:
     # _target_: str = "deckard.utils.ConfigBase"
-    score_dict :dict = field(default_factory=dict)
+    score_dict: dict = field(default_factory=dict)
 
     def __init__(self, *args, **kwds):
         # Initialize dataclass super
         super().__init__()
-        
+
         # Initialize args attribute
         self.args = args if args else ()
         #  Set attributes from args and kwds
@@ -48,7 +47,6 @@ class ConfigBase:
             setattr(self, k, v)
         # Call post init
         self.__post_init__()
-        
 
     def __post_init__(self):
         pass
@@ -233,7 +231,7 @@ class ConfigBase:
                 case ".json":
                     with open(score_path, "r") as f:
                         scores = json.load(f)
-                    
+
                     if "files" in scores:
                         files = scores.pop("files")
                     if "params" in scores:
@@ -430,7 +428,7 @@ class ConfigBase:
                 dict_[name] = value
 
         return dict_
-    
+
     def execute_without_mercy(self):
         # Get log_file from logger
         log_file = next(
@@ -455,7 +453,8 @@ class ConfigBase:
             else:
                 scores = {}
         return scores
-        
+
+
 def save_data(
     data: pd.DataFrame,
     filepath: Union[str, None] = None,
@@ -494,65 +493,63 @@ def save_data(
             )
     assert Path(data_path).exists(), f"Failed to save data to {data_path}"
     logger.info(f"Data saved to {data_path}")
-    
-
 
 
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
-        """
-        Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
+    """
+    Loads data from a CSV, JSON, Excel, Parquet, Pickle, NPZ, or HTML file into a pandas DataFrame.
 
-        Parameters
-        ----------
-        filepath : str
-            Path to the data file.
-        **kwargs
-            Additional keyword arguments to pass to the pandas read function.
+    Parameters
+    ----------
+    filepath : str
+        Path to the data file.
+    **kwargs
+        Additional keyword arguments to pass to the pandas read function.
 
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame containing the loaded data.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the loaded data.
 
-        Raises
-        ------
-        FileNotFoundError
-            If the specified file does not exist.
-        ValueError
-            If the file extension is not supported. Supported types are .csv, .json, .
-        """
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file does not exist.
+    ValueError
+        If the file extension is not supported. Supported types are .csv, .json, .
+    """
 
-        if filepath is None:
-            raise FileNotFoundError("Filepath is None.")
-        supported_filetypes = [
-            ".csv",
-            ".json",
-            ".xlsx",
-            ".parquet",
-            ".pkl",
-            ".npz",
-            ".html",
-        ]
+    if filepath is None:
+        raise FileNotFoundError("Filepath is None.")
+    supported_filetypes = [
+        ".csv",
+        ".json",
+        ".xlsx",
+        ".parquet",
+        ".pkl",
+        ".npz",
+        ".html",
+    ]
 
-        match Path(filepath).suffix:
-            case ".pkl":
-                data = pd.read_pickle(filepath, **kwargs)
-            case ".csv":
-                data = pd.read_csv(filepath, **kwargs)
-            case ".json":
-                data = pd.read_json(filepath, orient="records", **kwargs)
-            case ".xlsx":
-                data = pd.read_excel(filepath, **kwargs)
-            case ".parquet":
-                data = pd.read_parquet(filepath, **kwargs)
-            case ".html":
-                data = pd.read_html(filepath, **kwargs)[0]
-            case _:
-                raise ValueError(
-                    f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
-                )
-        logger.info(f"Data loaded from {Path(filepath)}")
-        return data
+    match Path(filepath).suffix:
+        case ".pkl":
+            data = pd.read_pickle(filepath, **kwargs)
+        case ".csv":
+            data = pd.read_csv(filepath, **kwargs)
+        case ".json":
+            data = pd.read_json(filepath, orient="records", **kwargs)
+        case ".xlsx":
+            data = pd.read_excel(filepath, **kwargs)
+        case ".parquet":
+            data = pd.read_parquet(filepath, **kwargs)
+        case ".html":
+            data = pd.read_html(filepath, **kwargs)[0]
+        case _:
+            raise ValueError(
+                f"Unsupported file type {Path(filepath).suffix}. Supported types: {supported_filetypes}",
+            )
+    logger.info(f"Data loaded from {Path(filepath)}")
+    return data
 
 
 def import_class_from_file(
@@ -624,6 +621,7 @@ def load_class(cls, *args, **kwargs):
     if args:
         instantiate_kwargs["_args_"] = list(args)
     return instantiate({"_target_": cls, **instantiate_kwargs})
+
 
 def create_parser_from_function(
     func,

@@ -10,10 +10,10 @@ except ImportError:  # pragma: no cover
     survival_parser = None
 
 layer_dict = {
-    "compile_results" : [compile_results_parser, compile_results_main], 
+    "compile_results": [compile_results_parser, compile_results_main],
     "progress_bar": [progress_bar_parser, progress_bar_main],
     "plot": [plot_parser, plot_main],
-    "optimize" : [hydra_parser, optimize_main],
+    "optimize": [hydra_parser, optimize_main],
 }
 
 if survival_parser is not None and survival_main is not None:

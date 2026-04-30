@@ -37,10 +37,10 @@ all_files = (
 )
 
 
-
 @dataclass
 class FileConfig(ConfigBase):
     """Configuration for file paths used in the experiment."""
+
     data_file: str = field(
         default_factory=str,
         metadata={"help": "Path to the data file."},
@@ -93,10 +93,11 @@ class FileConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Path to the params file."},
     )
-    replace: Dict[str,str] = field(
+    replace: Dict[str, str] = field(
         metadata={"help": "Dictionary for placeholder replacements."},
         default_factory=dict,
     )
+
     def __post_init__(self):
         super().__post_init__()
         if self.replace is None:
@@ -105,12 +106,12 @@ class FileConfig(ConfigBase):
             self.replace = dict(self.replace)
         self._file_dict = self._get_file_dict()
         self._resolve_paths()
-        
+
         for file in self._file_dict:
             setattr(self, file, self._file_dict[file])
-        for k,v in self._file_dict.items():
+        for k, v in self._file_dict.items():
             setattr(self, k, v)
-        
+
     def generate_file_hash(self, file_path: str) -> str:
         """
         Generate a hash for the object in the given file path.
@@ -127,7 +128,7 @@ class FileConfig(ConfigBase):
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
-    
+
     def get_hydra_job_num(self) -> str:
         """Get the Hydra job number from the environment variable."""
         import os
@@ -161,8 +162,6 @@ class FileConfig(ConfigBase):
 
         return path
 
-
-    
     def _resolve_paths(self) -> None:
         """Resolve file paths by replacing placeholders with actual values."""
         for file_attr in all_files:
@@ -171,10 +170,10 @@ class FileConfig(ConfigBase):
                 resolved_path = self._replace_placeholders(file_path)
                 setattr(self, file_attr, resolved_path)
             else:
-                logger.debug(f"File attribute {file_attr} is None or empty; skipping placeholder replacement.")
+                logger.debug(
+                    f"File attribute {file_attr} is None or empty; skipping placeholder replacement."
+                )
 
-
-    
     def _get_file_dict(self) -> dict:
         """Return a dictionary of file paths."""
         file_dict = {}
@@ -185,12 +184,10 @@ class FileConfig(ConfigBase):
                 file_dict[file_attr] = file_path
         return file_dict
 
-    
     def __iter__(self):
         for path in self._file_dict:
             yield path
-        
-        
+
     # Define the len method to count non-None file attributes
     def __len__(self) -> int:
         count = 0
@@ -205,8 +202,6 @@ class FileConfig(ConfigBase):
         if not hasattr(self._file_dict, name):
             raise KeyError(f"FileConfig does not have a {name} attribute")
         return self._file_dict[name]
-        
+
     def __hash__(self):
         return super().__hash__()
-    
-    
