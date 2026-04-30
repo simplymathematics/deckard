@@ -16,8 +16,8 @@ class TestExperimentConfig(unittest.TestCase):
     def setUp(self):
         # Set up temporary directories and mock data for testing
         self.temp_dir = tempfile.mkdtemp()
-        self.data_config = DataConfig()
-        self.model_config = ModelConfig()
+        self.data_config = DataConfig(dataset_name="adult")
+        self.model_config = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
         self.attack_config = AttackConfig(attack_size=1)
         self.file_config = FileConfig()
         self.experiment_config = ExperimentConfig(
@@ -27,6 +27,7 @@ class TestExperimentConfig(unittest.TestCase):
             files=self.file_config,
             experiment_name="test_experiment",
         )
+        self.experiment_config()
 
     def tearDown(self):
         # Clean up temporary directories

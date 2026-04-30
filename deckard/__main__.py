@@ -160,9 +160,12 @@ def handle_other_layers(layer):
     # Parse layer-specific args first, then leave remaining args for Hydra.
     parsed_args, hydra_args = parser.parse_known_args(sys.argv[1:])
 
-    default_config_dir, default_config_file = get_configuration_paths()
     cli_config_path = getattr(parsed_args, "config_path", None) or getattr(parsed_args, "config_dir", None)
     cli_config_name = getattr(parsed_args, "config_name", None)
+    default_config_dir = None
+    default_config_file = None
+    if cli_config_path or cli_config_name:
+        default_config_dir, default_config_file = get_configuration_paths()
     config_dir = cli_config_path if cli_config_path else default_config_dir
     config_file = cli_config_name if cli_config_name else default_config_file
 
@@ -172,7 +175,7 @@ def handle_other_layers(layer):
         forwarded_overrides = parsed_args.overrides
     sys.argv = [sys.argv[0], *hydra_args, *forwarded_overrides]
     @hydra.main(
-        config_path=str(Path(config_dir).resolve()),
+        config_path=(str(Path(config_dir).resolve()) if config_dir is not None else None),
         config_name=config_file,
         version_base="1.3",
     )
@@ -180,7 +183,11 @@ def handle_other_layers(layer):
         raw_args = vars(parsed_args).copy()
         sig = inspect.signature(main_fn)
         valid_keys = set(sig.parameters.keys())
-        args = {k: v for k, v in raw_args.items() if k in valid_keys}
+        accepts_var_kwargs = any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in sig.parameters.values()
+        )
+        args = raw_args.copy() if accepts_var_kwargs else {k: v for k, v in raw_args.items() if k in valid_keys}
 
         if "cfg" in valid_keys:
             args["cfg"] = cfg

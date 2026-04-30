@@ -1,8 +1,8 @@
 import time
 import logging
-from typing import Union, TYPE_CHECKING
+from typing import Union
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from omegaconf import DictConfig
 
 import numpy as np
@@ -166,7 +166,7 @@ class ModelConfig(ConfigBase):
     """
 
     # Configuration fields
-    model_type: str = "sklearn.ensemble.RandomForestClassifier"
+    model_type: Union[str, None] = None
     classifier: Union[bool, None, str] = True
     model_params: dict = None
     probability: bool = False

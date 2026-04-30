@@ -50,6 +50,7 @@ class FairnessDataConfig(DataPipelineConfig):
     def __post_init__(self):
         """Initialize with groupby_column support."""
         super().__post_init__()
+        self._validate_init()
         if self.groupby_columns is None:
             raise ValueError("groupby_column must be specified for FairnessDataConfig")
 
@@ -69,7 +70,7 @@ class FairnessDataConfig(DataPipelineConfig):
         """Build a single sensitive-feature label series for fairlearn APIs."""
         if len(self.groupby_columns) == 1:
             return frame[self.groupby_columns[0]].astype(str)
-        return frame[self.groupby_columns].astype(str).agg("|".join, axis=1)
+        return frame[self.groupby_columns]
 
     def _validate_sensitive_runtime(self, sensitive: pd.Series, context: str) -> pd.Series:
         sensitive_series = pd.Series(sensitive)

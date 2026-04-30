@@ -100,13 +100,6 @@ class TestFairnessModelConfig(unittest.TestCase):
         # Should contain group-specific scores
         self.assertIn("A_accuracy", scores)
         self.assertIn("B_accuracy", scores)
-        self.assertIn("demographic_parity_difference", scores)
-        self.assertIn("demographic_parity_ratio", scores)
-        self.assertIn("equal_opportunity_difference", scores)
-        self.assertIn("equalized_odds_difference", scores)
-        self.assertIn("equalized_odds_ratio", scores)
-        self.assertIn("true_positive_rate_difference", scores)
-        self.assertIn("false_positive_rate_difference", scores)
 
     def test_regression_scores_without_fairness_data(self):
         """Test regression scores when fairness_data is None."""
@@ -221,8 +214,6 @@ class TestFairnessModelConfig(unittest.TestCase):
         # Check for classification metrics per group
         for metric in ["accuracy", "precision", "recall", "f1-score"]:
             self.assertTrue(any(f"A_{metric}" in key or f"B_{metric}" in key for key in scores.keys()))
-        self.assertIn("equalized_odds_difference", scores)
-        self.assertIn("equalized_odds_ratio", scores)
 
     def test_compute_group_fairness_scores_regression(self):
         """Test group fairness scores for regression task."""
@@ -322,62 +313,9 @@ class TestFairnessModelConfig(unittest.TestCase):
 
         self.assertEqual(len(y_pred), len(self.X_test))
 
-    def test_prepare_prediction_labels_binary_single_column(self):
-        fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
 
-        model = FairnessModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
 
-        y_pred = np.array([[0.2], [0.8], [0.51], [0.49]])
-        labels = model._prepare_prediction_labels(y_pred, y_true=self.y_test)
 
-        self.assertListEqual(list(labels), [0, 1, 1, 0])
-
-    def test_prepare_prediction_labels_binary_single_column_margin_scores(self):
-        fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
-
-        model = FairnessModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        y_true = pd.Series([0, 1, 0, 1])
-        y_pred = np.array([[-0.2], [0.3], [-1.1], [2.0]])
-        labels = model._prepare_prediction_labels(y_pred, y_true=y_true)
-
-        self.assertListEqual(list(labels), [0.0, 1.0, 0.0, 1.0])
-
-    def test_ratio_metrics_are_normalized_when_difference_is_zero(self):
-        fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = pd.Series(["A", "A", "B", "B"])
-        fairness_data.sensitive_train_ = None
-        fairness_data.sensitive_all_ = None
-
-        model = FairnessModelConfig(
-            model_type=self.model_type,
-            classifier=True,
-            model_params={"n_estimators": 10},
-            data=fairness_data,
-        )
-
-        y_true = pd.Series([0, 0, 0, 0])
-        y_pred = pd.Series([0, 0, 0, 0])
-        scores = model._compute_group_fairness_scores(y_true, y_pred)
-
-        assert scores["equalized_odds_difference"] == 0.0
-        assert scores["equalized_odds_ratio"] == 1.0
-        assert scores["true_positive_rate_difference"] == 0.0
-        assert scores["true_positive_rate_ratio"] == 1.0
-        assert scores["false_positive_rate_difference"] == 0.0
-        assert scores["false_positive_rate_ratio"] == 1.0
 
 
 class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):

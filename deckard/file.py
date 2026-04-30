@@ -110,9 +110,6 @@ class FileConfig(ConfigBase):
             setattr(self, file, self._file_dict[file])
         for k,v in self._file_dict.items():
             setattr(self, k, v)
-        for k in self.to_dict():
-            if k not in self._file_dict:
-                setattr(self, k, None)
         
     def generate_file_hash(self, file_path: str) -> str:
         """
@@ -142,28 +139,26 @@ class FileConfig(ConfigBase):
             return "0"
 
     def _replace_placeholders(self, path: Optional[str]) -> Optional[str]:
-        """Replace placeholders in the file path with actual values."""
         if path is None or len(path) == 0:
             return None
-        assert isinstance(path, str), f"Path must be a string. Got {type(path)}"
-        if self.replace is None:
-            placeholder_dict = {}
-        elif isinstance(self.replace, dict):
-            placeholder_dict = self.replace
-        else:
-            placeholder_dict = dict(self.replace)
-        assert isinstance(placeholder_dict, dict), f"Placeholder dictionary must be a dict. Got {type(placeholder_dict)}"
+
+        assert isinstance(path, str)
+
+        # Built-in placeholders (always applied)
+        path = path.replace("{num}", self.get_hydra_job_num())
+        path = path.replace("{timestamp}", time.strftime("%Y%m%d-%H%M%S"))
+        path = path.replace("{hash}", str(hash(self)))
+        path = path.replace("#", self.get_hydra_job_num())
+        path = path.replace("*", self.get_hydra_job_num())
+
+        # User-defined placeholders
+        placeholder_dict = self.replace or {}
+        if not isinstance(placeholder_dict, dict):
+            placeholder_dict = dict(placeholder_dict)
+
         for placeholder, value in placeholder_dict.items():
-            replacement = value
-            if placeholder == "{num}":
-                replacement = self.get_hydra_job_num()
-            elif placeholder == "#" or placeholder == "*":
-                replacement = self.get_hydra_job_num()
-            elif placeholder == "{timestamp}":
-                replacement = time.strftime("%Y%m%d-%H%M%S")
-            elif placeholder == "{hash}":
-                replacement = str(hash(self))
-            path = str(path).replace(placeholder, str(replacement))
+            path = path.replace(placeholder, str(value))
+
         return path
 
 
@@ -204,7 +199,14 @@ class FileConfig(ConfigBase):
                 count += 1
         return count
 
-
-    
+    def __getattr__(self, name):
+        if not hasattr(self, "_file_dict"):
+            self.__post_init__()
+        if not hasattr(self._file_dict, name):
+            raise KeyError(f"FileConfig does not have a {name} attribute")
+        return self._file_dict[name]
+        
     def __hash__(self):
         return super().__hash__()
+    
+    

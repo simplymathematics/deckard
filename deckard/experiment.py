@@ -273,6 +273,21 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
                     raise ValueError(
                         f"Unsupported type for defense: {type(self.defense)}",
                     )
+                # DefenseConfig now requires model_type; inherit it from model when omitted.
+                if not defense_dict.get("model_type"):
+                    inferred_model_type = None
+                    if isinstance(self.model, ModelConfig):
+                        inferred_model_type = self.model.model_type
+                    elif isinstance(self.model, DictConfig):
+                        inferred_model_type = OmegaConf.to_container(self.model).get("model_type")
+                    elif isinstance(self.model, dict):
+                        inferred_model_type = self.model.get("model_type")
+                    elif isinstance(self.model, ConfigBase):
+                        inferred_model_type = getattr(self.model, "model_type", None)
+                    if inferred_model_type is not None:
+                        defense_dict["model_type"] = inferred_model_type
+                if "classifier" not in defense_dict and hasattr(self, "classifier"):
+                    defense_dict["classifier"] = self.classifier
                 if "_target_" not in defense_dict:
                     self.defense = DefenseConfig(**defense_dict)
                 else:

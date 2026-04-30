@@ -43,6 +43,7 @@ class TestDefenseConfig(unittest.TestCase):
         # Default DefenseConfig
         self.defense_config = DefenseConfig(
             defense_name="art.defences.postprocessor.HighConfidence",
+            model_type="sklearn.ensemble.RandomForestClassifier",
         )
 
     def tearDown(self):
@@ -53,7 +54,7 @@ class TestDefenseConfig(unittest.TestCase):
         # Test default initialization
         self.assertEqual(
             self.defense_config.model_type,
-            "sklearn.linear_model.LogisticRegression",
+            "sklearn.ensemble.RandomForestClassifier",
         )
         self.assertTrue(self.defense_config.classifier)
         self.assertFalse(self.defense_config.probability)

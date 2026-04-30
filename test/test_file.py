@@ -59,15 +59,21 @@ class TestFileConfig(unittest.TestCase):
 
     def test_hash_placeholder(self):
         config = FileConfig(replace=self.config.replace, attack_file="{hash}")
-        self.assertNotEqual(config.attack_file, "{hash}")
+        file_dict = config._file_dict
+        attack_file = file_dict.get("attack_file", KeyError)
+        self.assertNotEqual(attack_file, "{hash}")
+        self.assertIsInstance(int(attack_file), int)
 
-    def test_timestampe_placeholder(self):
+    def test_timestamp_placeholder(self):
         config = FileConfig(replace=self.config.replace, attack_file="{timestamp}")
-        self.assertNotEqual(config.attack_file, "{timestamp}")
+        file_dict = config._file_dict
+        attack_file = file_dict.get("attack_file", KeyError)
+        self.assertNotEqual(attack_file, "{timestamp}")
     
-    def test_timestampe_placeholder(self):
+    def test_timestamp_placeholder(self):
         self.assertEqual(self.config.log_file, "foo.log")
      
     def test_unused_directory_removed(self):
         config = FileConfig()
-        self.assertFalse(hasattr(config, "foo"))
+        with self.assertRaises(KeyError):
+            getattr(config, "foo")

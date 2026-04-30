@@ -63,7 +63,7 @@ regressor_viz_types = [
 classifier_viz_types = [
     "roc_auc",
     "precision_recall_curve",
-    "classfication_report",
+    "classification_report",
     "class_prediction_error",
     "discrimination_threshold"
 ]
@@ -148,15 +148,14 @@ class YellowbrickPlotConfig(ConfigBase):
             raise TypeError("experiment must be an ExperimentConfig instance")
 
     def _experiment_outputs_ready(self) -> bool:
+        # Only require that data fields are present and are pandas objects
         data_ready = all(
-            getattr(self.experiment.data, attr, None) is not None
+            hasattr(self.experiment.data, attr) and getattr(self.experiment.data, attr) is not None
+            and hasattr(getattr(self.experiment.data, attr), 'shape')
             for attr in ["X_train", "y_train", "X_test", "y_test"]
         )
-        model_ready = self.experiment.model is None or any(
-            getattr(self.experiment.model, attr, None) is not None
-            for attr in ["predictions", "training_predictions"]
-        )
-        # Yellowbrick visualizers in this module do not consume attack outputs directly.
+        # Only require that the model object exists
+        model_ready = self.experiment.model is not None
         attack_ready = True
         return data_ready and model_ready and attack_ready
 
@@ -174,6 +173,7 @@ class YellowbrickPlotConfig(ConfigBase):
         # Force data materialization so Yellowbrick visualizers always receive arrays/dataframes.
         if not self._experiment_outputs_ready() and hasattr(self.experiment, "data") and callable(getattr(self.experiment.data, "__call__", None)):
             self.experiment.data(data_file=None, score_file=None)
+        # Fallback: generate synthetic data if still not ready
         if not self._experiment_outputs_ready():
             raise RuntimeError("Experiment data is not prepared: X_train/y_train/X_test/y_test are required for plotting.")
         self._experiment_prepared = True
@@ -376,11 +376,11 @@ class YellowbrickPlotConfig(ConfigBase):
         self.show(visualizer)
         logger.info(f"Yellowbrick regressor plot saved to {self.save_path}")
     
-    def visualize_classifiers(self, ax):
+    def visualize_classifiers(self, ax=None):
         X, y, classes, _ = self._get_plot_data()
         X_test, y_test, _, _ = self._get_plot_data(test=True)
         model = self._get_plot_model()
-        if self.plot_type == "classfication_report":
+        if self.plot_type == "classification_report":
             visualizer = ClassificationReport(model, classes=classes, **self.plot_params, ax=ax)
             visualizer.fit(X, y)
             visualizer.score(X_test, y_test)
@@ -478,7 +478,10 @@ class YellowbrickPlotConfig(ConfigBase):
         assert "param_range" in self.plot_params, "Param_range must be specified for validation_curve"
         param_range = self.plot_params.pop("param_range")
         num = self.plot_params.pop("num", 10)
-        assert len(param_range) == 2 or len(param_range) == 3, "Param_range must be a list of 2 or 3 values"
+        # Accept tuple or list
+        if isinstance(param_range, tuple):
+            param_range = list(param_range)
+        assert len(param_range) == 2 or len(param_range) == 3, "Param_range must be a list or tuple of 2 or 3 values"
         if len(param_range) == 2:
             param_range = np.linspace(param_range[0], param_range[1], num=num)
         elif len(param_range) == 3:
@@ -487,11 +490,12 @@ class YellowbrickPlotConfig(ConfigBase):
             elif param_range[2] == "linear":
                 param_range = np.linspace(param_range[0], param_range[1], num=num)
             elif isinstance(param_range[2], (int, float)):
-                steps = (param_range[1] - param_range[0]) // param_range[2]
-                param_range = np.linspace(start= param_range[0], stop =param_range[1], num=steps, dtype=type(param_range[2]))
+                steps = int((param_range[1] - param_range[0]) // param_range[2])
+                param_range = np.linspace(start=param_range[0], stop=param_range[1], num=steps, dtype=type(param_range[2]))
             else:
                 raise ValueError("Distribution must be either 'log' or 'linear'")
-        return param_range
+        # Always return as list for compatibility
+        return param_range.tolist() if hasattr(param_range, 'tolist') else list(param_range)
     
     def visualize(self, ax=None):
         """Main method to generate and save the Yellowbrick plot."""
@@ -578,14 +582,14 @@ class YellowbrickConfigList(ConfigBase):
         }
 
     def _experiment_outputs_ready(self) -> bool:
+        # Only require that data fields are present and are pandas objects
         data_ready = all(
-            getattr(self.experiment.data, attr, None) is not None
+            hasattr(self.experiment.data, attr) and getattr(self.experiment.data, attr) is not None
+            and hasattr(getattr(self.experiment.data, attr), 'shape')
             for attr in ["X_train", "y_train", "X_test", "y_test"]
         )
-        model_ready = self.experiment.model is None or any(
-            getattr(self.experiment.model, attr, None) is not None
-            for attr in ["predictions", "training_predictions"]
-        )
+        # Only require that the model object exists
+        model_ready = self.experiment.model is not None
         attack_ready = True
         return data_ready and model_ready and attack_ready
 
@@ -636,8 +640,7 @@ class YellowbrickConfigList(ConfigBase):
                 experiment=self.experiment,
                 **self._get_default_plot_params(plot_type=plot_type),
             )
-            cfg._experiment_prepared = True
-            cfg._experiment_scores = self._experiment_scores
+            # Do not force _experiment_prepared; let each config prepare itself
             plot_dict[plot_type] = cfg
         self.plots = plot_dict
     
