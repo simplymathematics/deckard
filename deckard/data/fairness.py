@@ -175,17 +175,7 @@ class FairnessDataConfig(DataPipelineConfig):
             "full-data sampling",
         )
 
-        # Store the original X_test and y_test
-        self._X_test_groups = {}
-        self._y_test_groups = {}
 
-        # Create grouped versions of test data
-        X_test_grouped = self.X_test.groupby(by=self.groupby_columns)
-
-        for group_name, group_data in X_test_grouped:
-            group_indices = group_data.index
-            self._X_test_groups[group_name] = group_data
-            self._y_test_groups[group_name] = self.y_test.loc[group_indices]
 
     def _score(self) -> dict:
         """Compute dataset-only fairness metrics using fairlearn."""
