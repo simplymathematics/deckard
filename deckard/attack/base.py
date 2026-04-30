@@ -304,9 +304,9 @@ class AttackConfig(ConfigBase):
 
                 predict_sig = inspect.signature(model.predict)
                 if "sensitive_features" in predict_sig.parameters:
-                    sensitive = getattr(data, "sensitive_test_", None)
+                    sensitive = getattr(data, "_sensitive_test", None)
                     if sensitive is None:
-                        sensitive = getattr(data, "sensitive_train_", None)
+                        sensitive = getattr(data, "_sensitive_train", None)
                     if sensitive is not None:
                         model = SensitiveFeaturesWrapper(model, sensitive)
                 if isinstance(model, RegressorMixin) and not isinstance(

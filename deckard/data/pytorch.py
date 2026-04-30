@@ -5,7 +5,6 @@ import logging
 import tempfile
 from tqdm.auto import tqdm
 from pathlib import Path
-from hashlib import md5
 
 
 from dataclasses import dataclass, field
@@ -451,22 +450,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
     score_dict: dict = field(init=False, repr=False)
 
     def __hash__(self):
-        """
-        Computes a hash value for the instance.
-
-        Concatenates all non-private attribute names and values, then hashes the resulting string using MD5.
-        The hash excludes attributes whose names start with an underscore.
-
-        Returns
-        -------
-        int
-            The integer representation of the MD5 hash of the concatenated attribute string.
-        """
-        # Hash all fields that do not start with an underscore
-        hash_input = "".join(
-            f"{k}:{v}" for k, v in self.__dict__.items() if not k.endswith("_")
-        )
-        return int(md5(hash_input.encode()).hexdigest(), 16)
+        return super().__hash__()
 
     def __post_init__(self):
 

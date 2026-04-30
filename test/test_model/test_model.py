@@ -295,6 +295,38 @@ class TestModelConfig(unittest.TestCase):
         self.assertEqual(decoded.ndim, 1)
         self.assertEqual(len(decoded), len(y_true))
 
+    def test_hash_stable_after_call_for_model_config(self):
+        model = ModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+        )
+        original_hash = hash(model)
+        cls = model.__class__
+        original_call = cls.__call__
+
+        def fake_call(self):
+            self.training_time = 1.23
+            self.prediction_time = 2.34
+            self.probabilities = [0.1, 0.9]
+            self.predictions = [1, 0]
+            self._random_runtime_field = {"seen": True}
+            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                self.score_dict["runtime"] = 1
+            return {"ok": 1}
+
+        setattr(cls, "__call__", fake_call)
+        try:
+            model.execute_without_mercy()
+        finally:
+            setattr(cls, "__call__", original_call)
+
+        self.assertEqual(
+            original_hash,
+            hash(model),
+            msg="Hash changed after call for ModelConfig",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

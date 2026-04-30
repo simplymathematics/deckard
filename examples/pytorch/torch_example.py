@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from deckard.data.pytorch import PytorchDataConfig
 from deckard.model.pytorch import PytorchModelConfig
+from deckard.utils import hash_conf_values
 
 __all__ = [
     "ResNet18",
@@ -44,7 +45,14 @@ class ResNet18(nn.Module):
         model_params = b"".join(
             p.detach().cpu().numpy().tobytes() for p in self.backbone.parameters()
         )
-        return hash(f"{model_params}{self.num_channels}{self.num_classes}")
+        return int(
+            hash_conf_values(
+                model_params.hex(),
+                self.num_channels,
+                self.num_classes,
+            ),
+            16,
+        )
 
 
 if __name__ == "__main__":

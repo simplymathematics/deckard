@@ -58,6 +58,38 @@ class TestExperimentConfig(unittest.TestCase):
         self.assertIn("evasion_accuracy", scores)
         self.assertIn("data_load_time", scores)
 
+    def test_hash_stable_after_call_for_experiment_config(self):
+        """Test that ExperimentConfig hash remains stable after execution."""
+        experiment = ExperimentConfig(
+            data=self.data_config,
+            model=self.model_config,
+            attack=self.attack_config,
+            files=self.file_config,
+            experiment_name="test_experiment",
+        )
+        original_hash = hash(experiment)
+        cls = experiment.__class__
+        original_call = cls.__call__
+
+        def fake_call(self):
+            self._execution_time = 5.0
+            self._runtime_field = {"executed": True}
+            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                self.score_dict["runtime"] = 1
+            return {"ok": 1}
+
+        setattr(cls, "__call__", fake_call)
+        try:
+            experiment.execute_without_mercy()
+        finally:
+            setattr(cls, "__call__", original_call)
+
+        self.assertEqual(
+            original_hash,
+            hash(experiment),
+            msg="Hash changed after call for ExperimentConfig",
+        )
+
     def test_data_dict_with_pipeline_infers_data_pipeline_config(self):
         exp = ExperimentConfig(
             data={

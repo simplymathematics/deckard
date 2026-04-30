@@ -312,6 +312,36 @@ class TestAttackConfig(unittest.TestCase):
         inferred_keys = [k for k in scores.keys() if k.startswith("inferred_")]
         self.assertTrue(len(inferred_keys) > 0)
 
+    def test_hash_stable_after_call_for_attack_config(self):
+        attack = AttackConfig(
+            attack_type="art.attacks.evasion.FastGradientMethod",
+            attack_params={},
+        )
+        original_hash = hash(attack)
+        cls = attack.__class__
+        original_call = cls.__call__
+
+        def fake_call(self, data, model):
+            self.attack_time = 0.1
+            self.attack_prediction_time = 0.05
+            self.attack_score_time = 0.02
+            self._random_runtime_field = {"seen": True}
+            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                self.score_dict["runtime"] = 1
+            return {"ok": 1}
+
+        setattr(cls, "__call__", fake_call)
+        try:
+            attack.execute_without_mercy()
+        finally:
+            setattr(cls, "__call__", original_call)
+
+        self.assertEqual(
+            original_hash,
+            hash(attack),
+            msg="Hash changed after call for AttackConfig",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

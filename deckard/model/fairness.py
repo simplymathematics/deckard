@@ -50,9 +50,9 @@ class _FairnessBehaviorMixin:
         batch_index = getattr(batch, "index", None)
 
         candidates = [
-            getattr(self.data, "sensitive_train_", None),
-            getattr(self.data, "sensitive_test_", None),
-            getattr(self.data, "sensitive_all_", None),
+            getattr(self.data, "_sensitive_train", None),
+            getattr(self.data, "_sensitive_test", None),
+            getattr(self.data, "_sensitive_all", None),
         ]
 
         positional_matches = []
@@ -256,9 +256,9 @@ class _FairnessBehaviorMixin:
         y_true_n = len(y_true_series)
         y_index = getattr(y_true, "index", None)
         candidates = [
-            getattr(self.data, "sensitive_test_", None),
-            getattr(self.data, "sensitive_train_", None),
-            getattr(self.data, "sensitive_all_", None),
+            getattr(self.data, "_sensitive_test", None),
+            getattr(self.data, "_sensitive_train", None),
+            getattr(self.data, "_sensitive_all", None),
         ]
         positional_matches = []
         for sensitive in candidates:

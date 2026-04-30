@@ -361,6 +361,32 @@ class TestDataConfig(unittest.TestCase):
         self.assertGreater(len(cfg.X), 0)
         self.assertEqual(len(cfg.X), len(cfg.y))
 
+    def test_hash_stable_after_call_for_data_config(self):
+        cfg = self.basic_config()
+        original_hash = hash(cfg)
+        cls = cfg.__class__
+        original_call = cls.__call__
+
+        def fake_call(self):
+            self.data_load_time = 0.5
+            self.data_sample_time = 0.1
+            self._random_runtime_field = {"seen": True}
+            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                self.score_dict["runtime"] = 1
+            return {"ok": 1}
+
+        setattr(cls, "__call__", fake_call)
+        try:
+            cfg.execute_without_mercy()
+        finally:
+            setattr(cls, "__call__", original_call)
+
+        self.assertEqual(
+            original_hash,
+            hash(cfg),
+            msg="Hash changed after call for DataConfig",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

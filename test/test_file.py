@@ -71,5 +71,5 @@ class TestFileConfig(unittest.TestCase):
 
     def test_unused_directory_removed(self):
         config = FileConfig()
-        with self.assertRaises(KeyError):
+        with self.assertRaises(AttributeError):
             getattr(config, "foo")

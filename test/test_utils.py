@@ -8,6 +8,16 @@ from pathlib import Path
 import pandas as pd
 
 from deckard import utils
+from deckard import (
+    DataConfig,
+    ModelConfig,
+    DefenseConfig,
+    AttackConfig,
+    ExperimentConfig,
+    SurvivalExperimentConfig,
+    FileConfig,
+    ScorerDictConfig,
+)
 from deckard.utils import (
     ConfigBase,
     create_parser_from_function,
@@ -52,6 +62,81 @@ class TypeBConfig(ConfigBase):
 
 
 class TestUtilsAdditional(unittest.TestCase):
+    def test_hash_stable_after_call_for_core_configbase_objects(self):
+        configs = [
+            DataConfig(),
+            ModelConfig(model_type="sklearn.linear_model.LogisticRegression"),
+            DefenseConfig(),
+            AttackConfig(),
+            FileConfig(),
+            ScorerDictConfig(scorers={}),
+            ExperimentConfig(data=DataConfig()),
+            SurvivalExperimentConfig(data=DataConfig()),
+        ]
+
+        for cfg in configs:
+            original_hash = hash(cfg)
+            cls = cfg.__class__
+            original_call = cls.__call__
+
+            def fake_call(self):
+                # Simulate runtime-only side effects commonly produced during execution.
+                self.training_time = 1.23
+                self.prediction_time = 2.34
+                self.probabilities = [0.1, 0.9]
+                self.predictions = [1, 0]
+                self._random_runtime_field = {"seen": True}
+                if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                    self.score_dict["runtime"] = 1
+                return {"ok": 1}
+
+            setattr(cls, "__call__", fake_call)
+            try:
+                cfg.execute_without_mercy()
+            finally:
+                setattr(cls, "__call__", original_call)
+
+            self.assertEqual(
+                original_hash,
+                hash(cfg),
+                msg=f"Hash changed after call for {cls.__name__}",
+            )
+
+    def test_hash_conf_values_stable_across_dict_order_and_set_order(self):
+        left = {
+            "b": [3, 2, 1],
+            "a": {"y": "yes", "x": {3, 1, 2}},
+        }
+        right = {
+            "a": {"x": {2, 3, 1}, "y": "yes"},
+            "b": [3, 2, 1],
+        }
+
+        h1 = utils.hash_conf_values(left)
+        h2 = utils.hash_conf_values(right)
+
+        self.assertEqual(h1, h2)
+
+    def test_hash_conf_values_stable_for_path_and_bytes(self):
+        value = {
+            "path": Path("a") / "b" / "c.txt",
+            "payload": b"deckard",
+        }
+
+        h1 = utils.hash_conf_values(value)
+        h2 = utils.hash_conf_values(value)
+
+        self.assertEqual(h1, h2)
+
+    def test_configbase_hash_deterministic_for_equal_content(self):
+        cfg1 = BaseConfig(score_dict={"alpha": 1, "beta": 2})
+        cfg2 = BaseConfig(score_dict={"beta": 2, "alpha": 1})
+
+        cfg1.custom = {"z": [1, 2], "a": {"m": 9, "n": 8}}
+        cfg2.custom = {"a": {"n": 8, "m": 9}, "z": [1, 2]}
+
+        self.assertEqual(hash(cfg1), hash(cfg2))
+
     def test_get_call_params_success(self):
         cfg = ParamsConfig()
         params = cfg.get_call_params()

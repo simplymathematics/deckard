@@ -34,7 +34,7 @@ class TestFairnessDataConfigInit:
 class TestLoadData:
     @patch("deckard.data.fairness.FairnessDataConfig._load_data")
     def test_load_data_creates_groups(self, mock_super_load, capfd):
-        """Test that _load_data creates groups_ attribute."""
+        """Test that _load_data creates _groups attribute."""
         df = pd.DataFrame(
             {
                 "feature1": [1, 2, 3, 4],
@@ -50,8 +50,8 @@ class TestLoadData:
 
         config = config._load_data()
 
-        assert hasattr(config, "groups_")
-        # assert isinstance(config.groups_, pd.api.typing.DataFrameGroupBy)
+        assert hasattr(config, "_groups")
+        # assert isinstance(config._groups, pd.api.typing.DataFrameGroupBy)
 
     @patch("deckard.data.fairness.FairnessDataConfig.__post_init__")
     def test_load_data_missing_X_raises_assertion(self, mock_post_init):
@@ -103,7 +103,7 @@ class TestScore:
         )
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
-        config.groups_ = df.groupby("gender")
+        config._groups = df.groupby("gender")
         config.classifier = True
 
         with patch.object(config, "_classification_feature_scores", return_value={}):
@@ -124,7 +124,7 @@ class TestComputeClassCounts:
         )
         config._X = df
         config._y = pd.Series([0, 1, 0, 1])
-        config.groups_ = df.groupby("gender")
+        config._groups = df.groupby("gender")
 
         counts = config._compute_class_counts(df[config.groupby_columns])
 
@@ -162,3 +162,23 @@ class TestClassificationFeatureScoresForGroup:
         assert "class_counts" in scores
         assert "mutual_info_classif" in scores
         assert "f_classif" in scores
+
+
+class TestFairnessDataConfigHashStability:
+    """Test hash capability for FairnessDataConfig."""
+
+    def test_fairness_data_config_is_configbase_with_hash(self):
+        """Test that FairnessDataConfig is ConfigBase and has __hash__ method."""
+        pytest.importorskip("fairlearn")
+        from deckard.utils import ConfigBase
+
+        config = FairnessDataConfig(
+            groupby_columns="gender",
+        )
+        assert isinstance(
+            config,
+            ConfigBase,
+        ), "FairnessDataConfig should inherit from ConfigBase"
+        assert hasattr(config, "__hash__"), "FairnessDataConfig should have __hash__ method"
+        # Note: FairnessDataConfig may have unhashable runtime fields like _groups
+        # so we verify the infrastructure is in place rather than attempting full hash

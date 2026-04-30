@@ -196,12 +196,6 @@ class FileConfig(ConfigBase):
                 count += 1
         return count
 
-    def __getattr__(self, name):
-        if not hasattr(self, "_file_dict"):
-            self.__post_init__()
-        if not hasattr(self._file_dict, name):
-            raise KeyError(f"FileConfig does not have a {name} attribute")
-        return self._file_dict[name]
 
     def __hash__(self):
         return super().__hash__()

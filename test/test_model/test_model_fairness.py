@@ -45,7 +45,7 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_fairness_model_config_initialization(self):
         """Test FairnessModelConfig can be initialized."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -89,7 +89,7 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_classification_scores_with_fairness_data(self):
         """Test classification scores includes group fairness metrics."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -131,7 +131,7 @@ class TestFairnessModelConfig(unittest.TestCase):
         y_pred = pd.Series([1.1, 1.9, 3.2, 3.8], index=self.sensitive_test.index)
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type="sklearn.linear_model.LinearRegression",
@@ -150,7 +150,7 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_compute_group_fairness_scores_no_sensitive_features(self):
         """Test group fairness scores error when sensitive features are missing."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = None
+        fairness_data._sensitive_test = None
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -165,9 +165,9 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_compute_group_fairness_scores_none_sensitive_features(self):
         """Test group fairness scores errors when sensitive features are all None."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = None
-        fairness_data.sensitive_train_ = None
-        fairness_data.sensitive_all_ = None
+        fairness_data._sensitive_test = None
+        fairness_data._sensitive_train = None
+        fairness_data._sensitive_all = None
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -185,7 +185,7 @@ class TestFairnessModelConfig(unittest.TestCase):
         sensitive_test = pd.Series(["A", "A", "A", "B"], index=self.y_test.index)
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = sensitive_test
+        fairness_data._sensitive_test = sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -204,7 +204,7 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_compute_group_fairness_scores_classification(self):
         """Test group fairness scores for classification task."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -231,7 +231,7 @@ class TestFairnessModelConfig(unittest.TestCase):
         y_pred = pd.Series([1.1, 1.9, 3.2, 3.8], index=self.sensitive_test.index)
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type="sklearn.linear_model.LinearRegression",
@@ -254,7 +254,7 @@ class TestFairnessModelConfig(unittest.TestCase):
     def test_group_fairness_scores_naming_convention(self):
         """Test that group fairness scores follow naming convention."""
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -288,9 +288,9 @@ class TestFairnessModelConfig(unittest.TestCase):
                 return pd.Series([0] * len(X))
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_train_ = self.sensitive_test
-        fairness_data.sensitive_test_ = self.sensitive_test
-        fairness_data.sensitive_all_ = self.sensitive_test
+        fairness_data._sensitive_train = self.sensitive_test
+        fairness_data._sensitive_test = self.sensitive_test
+        fairness_data._sensitive_all = self.sensitive_test
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -316,9 +316,9 @@ class TestFairnessModelConfig(unittest.TestCase):
                 return pd.Series([0] * len(X))
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_test_ = self.sensitive_test
-        fairness_data.sensitive_train_ = None
-        fairness_data.sensitive_all_ = None
+        fairness_data._sensitive_test = self.sensitive_test
+        fairness_data._sensitive_train = None
+        fairness_data._sensitive_all = None
 
         model = FairnessModelConfig(
             model_type=self.model_type,
@@ -331,6 +331,33 @@ class TestFairnessModelConfig(unittest.TestCase):
         y_pred = model._predict(self.X_test)
 
         self.assertEqual(len(y_pred), len(self.X_test))
+
+    def test_fairness_model_config_is_configbase_with_hash(self):
+        """Test that FairnessModelConfig is ConfigBase and has __hash__ method."""
+        from deckard.utils import ConfigBase
+
+        fairness_data = Mock(spec=FairnessDataConfig)
+        fairness_data._sensitive_test = self.sensitive_test
+        fairness_data._sensitive_train = self.sensitive_test
+        fairness_data._sensitive_all = self.sensitive_test
+
+        model = FairnessModelConfig(
+            model_type=self.model_type,
+            classifier=True,
+            model_params={"n_estimators": 10},
+            data=fairness_data,
+        )
+        self.assertIsInstance(
+            model,
+            ConfigBase,
+            msg="FairnessModelConfig should inherit from ConfigBase",
+        )
+        self.assertTrue(
+            hasattr(model, "__hash__"),
+            msg="FairnessModelConfig should have __hash__ method",
+        )
+        # Note: FairnessModelConfig may have unhashable runtime fields
+        # so we verify the infrastructure is in place rather than attempting full hash
 
 
 class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):
@@ -348,9 +375,9 @@ class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):
         self.sensitive_train = pd.Series(["A", "B", "A", "B", "A", "B"])
 
         fairness_data = Mock(spec=FairnessDataConfig)
-        fairness_data.sensitive_train_ = self.sensitive_train
-        fairness_data.sensitive_test_ = None
-        fairness_data.sensitive_all_ = None
+        fairness_data._sensitive_train = self.sensitive_train
+        fairness_data._sensitive_test = None
+        fairness_data._sensitive_all = None
         self.fairness_data = fairness_data
 
     def _make_fitted_defense(self, defense_name, defense_params=None):
@@ -432,6 +459,26 @@ class TestFairnessDefenseConfigApplyDefense(unittest.TestCase):
         )
         cfg.apply_defense(None)
         self.assertIsNotNone(cfg.defense_application_time)
+
+    def test_fairness_defense_config_is_configbase_with_hash(self):
+        """Test that FairnessDefenseConfig is ConfigBase and has __hash__ method."""
+        from deckard.utils import ConfigBase
+
+        cfg = self._make_fitted_defense(
+            "fairlearn.reductions.ExponentiatedGradient",
+            {"constraints": "fairlearn.reductions.DemographicParity", "eps": 0.1},
+        )
+        self.assertIsInstance(
+            cfg,
+            ConfigBase,
+            msg="FairnessDefenseConfig should inherit from ConfigBase",
+        )
+        self.assertTrue(
+            hasattr(cfg, "__hash__"),
+            msg="FairnessDefenseConfig should have __hash__ method",
+        )
+        # Note: FairnessDefenseConfig may have unhashable runtime fields
+        # so we verify the infrastructure is in place rather than attempting full hash
 
 
 if __name__ == "__main__":

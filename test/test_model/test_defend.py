@@ -132,3 +132,30 @@ class TestDefenseConfig(unittest.TestCase):
         ]
         self.assertIn("postprocessor", supported_types)
         self.assertNotIn("unsupported_type", supported_types)
+
+    def test_hash_stable_after_call_for_defense_config(self):
+        """Test that DefenseConfig hash remains stable after defense application."""
+        original_hash = hash(self.defense_config)
+        cls = self.defense_config.__class__
+        original_call = cls.__call__
+
+        def fake_call(self, data, **kwargs):
+            # Simulate runtime attributes that should not affect hash
+            self.defense_application_time = 1.23
+            self._defense_applied_at = 1234567890.5
+            self._runtime_defense_state = {"applied": True}
+            if hasattr(self, "score_dict") and isinstance(self.score_dict, dict):
+                self.score_dict["runtime"] = 1
+            return {"ok": 1}
+
+        setattr(cls, "__call__", fake_call)
+        try:
+            self.defense_config(data=self.data)
+        finally:
+            setattr(cls, "__call__", original_call)
+
+        self.assertEqual(
+            original_hash,
+            hash(self.defense_config),
+            msg="Hash changed after defense application",
+        )

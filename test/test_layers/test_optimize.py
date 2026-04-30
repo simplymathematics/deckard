@@ -61,9 +61,10 @@ class DummyStorage:
 
 
 class DummyTrial:
-    def __init__(self, number, trial_id):
+    def __init__(self, number, trial_id, user_attrs=None):
         self.number = number
         self._trial_id = trial_id
+        self.user_attrs = user_attrs or {}
 
 
 def test_filter_scores_returns_original_scores_when_no_optimizers():
@@ -212,6 +213,7 @@ def test_save_params_file_requires_params_file():
 
 def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     conf = DummyConf()
+    conf.experiment_name = "security_classification_linear_hsj"
     hydra_cfg = SimpleNamespace(
         job=SimpleNamespace(num=7, name="optimize"),
         sweep=SimpleNamespace(dir=str(tmp_path), subdir="run_7"),
@@ -220,7 +222,9 @@ def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     result = optimize_module.prepare_multirun_file_paths(hydra_cfg, conf)
 
     assert result is conf
-    assert conf.experiment_name == "7"
+    assert conf.experiment_name == optimize_module.hash_conf_values(
+        "security_classification_linear_hsj",
+    )
     assert conf.post_init_calls == 1
     assert conf.files.log_file == str(tmp_path / "run_7" / "optimize.log")
     assert conf.files.score_file == str(tmp_path / "run_7" / "scores.json")
@@ -237,6 +241,7 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
             self.files = DummyFiles(tmp_path)
             self.optimizers = ["loss"]
             self.directions = ["minimize"]
+            self.experiment_name = "security_classification_linear_hsj"
 
         def execute_without_mercy(self):
             return {"loss": 0.25, "accuracy": 0.9}
@@ -270,7 +275,7 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
     monkeypatch.setattr(
         optimize_module,
         "set_trial_attributes",
-        lambda study, attrs, trial_number: study.user_attrs.update(attrs),
+        lambda study, attrs, experiment_name: study.user_attrs.update(attrs),
     )
 
     result = optimize_module.optimize_multirun(
@@ -287,7 +292,10 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
         "optimizers": ["loss"],
     }
     assert study.metric_names == ["loss"]
-    assert study.user_attrs == {"accuracy": 0.9}
+    assert study.user_attrs == {
+        "accuracy": 0.9,
+        "experiment_name": conf.experiment_name,
+    }
     assert json.loads((tmp_path / "scores.json").read_text()) == {
         "loss": 0.25,
         "accuracy": 0.9,
@@ -297,7 +305,13 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
 
 def test_set_trial_attributes_persists_all_attrs_via_storage():
     storage = DummyStorage()
-    trial = DummyTrial(number=7, trial_id=101)
+    experiment_name = "security_classification_linear_hsj"
+    exp_hash = optimize_module.hash_conf_values(experiment_name)
+    trial = DummyTrial(
+        number=7,
+        trial_id=101,
+        user_attrs={"experiment_name": exp_hash},
+    )
     study = SimpleNamespace(
         study_name="demo-study",
         _storage=storage,
@@ -308,22 +322,34 @@ def test_set_trial_attributes_persists_all_attrs_via_storage():
         {"accuracy": 0.91, "latency_ms": 12.5, "meta": {"fold": 1}},
     )
 
-    optimize_module.set_trial_attributes(study, attrs, trial_number=7)
+    optimize_module.set_trial_attributes(
+        study,
+        attrs,
+        experiment_name=experiment_name,
+    )
 
     assert storage.attrs[(101, "accuracy")] == 0.91
     assert storage.attrs[(101, "latency_ms")] == 12.5
     assert storage.attrs[(101, "meta")] == {"fold": 1}
+    assert storage.attrs[(101, "experiment_name")] == exp_hash
 
 
-def test_set_trial_attributes_raises_when_trial_number_missing():
+def test_set_trial_attributes_raises_when_experiment_uuid_missing():
+    experiment_name = "security_classification_linear_hsj"
     study = SimpleNamespace(
         study_name="demo-study",
         _storage=DummyStorage(),
-        get_trials=lambda deepcopy=False: [DummyTrial(number=1, trial_id=11)],
+        get_trials=lambda deepcopy=False: [
+            DummyTrial(number=1, trial_id=11, user_attrs={"experiment_name": "different_hash"}),
+        ],
     )
 
-    with pytest.raises(ValueError, match="Trial 7 not found"):
-        optimize_module.set_trial_attributes(study, {"accuracy": 0.9}, trial_number=7)
+    with pytest.raises(ValueError, match="Trial with experiment_name"):
+        optimize_module.set_trial_attributes(
+            study,
+            {"accuracy": 0.9},
+            experiment_name=experiment_name,
+        )
 
 
 def test_optimize_main_executes_conf_object_in_single_run(monkeypatch):
@@ -386,3 +412,7 @@ def test_optimize_main_uses_multirun_path(monkeypatch):
     assert captured["hydra_cfg"] is hydra_cfg
     assert isinstance(captured["multirun_cfg"], str)
     assert "name: demo" in captured["multirun_cfg"]
+    assert "experiment_name:" in captured["multirun_cfg"]
+    assert captured["cfg"]["experiment_name"] == optimize_module.hash_conf_values(
+        _root_={"name": "demo"},
+    )

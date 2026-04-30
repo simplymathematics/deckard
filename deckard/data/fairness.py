@@ -159,33 +159,33 @@ class FairnessDataConfig(DataPipelineConfig):
         super()._sample()
 
         # Cache sensitive labels before pipeline transforms can drop sensitive columns.
-        self.sensitive_train_ = self._group_labels_from_frame(self.X_train)
-        self.sensitive_test_ = self._group_labels_from_frame(self.X_test)
-        self.sensitive_all_ = self._group_labels_from_frame(self._X)
-        self.sensitive_train_ = self._validate_sensitive_runtime(
-            self.sensitive_train_,
+        self._sensitive_train = self._group_labels_from_frame(self.X_train)
+        self._sensitive_test = self._group_labels_from_frame(self.X_test)
+        self._sensitive_all = self._group_labels_from_frame(self._X)
+        self._sensitive_train = self._validate_sensitive_runtime(
+            self._sensitive_train,
             "train sampling",
         )
-        self.sensitive_test_ = self._validate_sensitive_runtime(
-            self.sensitive_test_,
+        self._sensitive_test = self._validate_sensitive_runtime(
+            self._sensitive_test,
             "test sampling",
         )
-        self.sensitive_all_ = self._validate_sensitive_runtime(
-            self.sensitive_all_,
+        self._sensitive_all = self._validate_sensitive_runtime(
+            self._sensitive_all,
             "full-data sampling",
         )
 
         # Store the original X_test and y_test
-        self.X_test_groups = {}
-        self.y_test_groups = {}
+        self._X_test_groups = {}
+        self._y_test_groups = {}
 
         # Create grouped versions of test data
         X_test_grouped = self.X_test.groupby(by=self.groupby_columns)
 
         for group_name, group_data in X_test_grouped:
             group_indices = group_data.index
-            self.X_test_groups[group_name] = group_data
-            self.y_test_groups[group_name] = self.y_test.loc[group_indices]
+            self._X_test_groups[group_name] = group_data
+            self._y_test_groups[group_name] = self.y_test.loc[group_indices]
 
     def _score(self) -> dict:
         """Compute dataset-only fairness metrics using fairlearn."""
@@ -197,19 +197,21 @@ class FairnessDataConfig(DataPipelineConfig):
         ):
             X_eval = self.X_test
             y_eval = self.y_test
-            if hasattr(self, "sensitive_test_") and len(self.sensitive_test_) == len(
+            sensitive_test = getattr(self, "_sensitive_test", None)
+            if sensitive_test is not None and len(sensitive_test) == len(
                 y_eval,
             ):
-                sensitive = self.sensitive_test_
+                sensitive = sensitive_test
             else:
                 sensitive = self._group_labels_from_frame(X_eval)
         else:
             X_eval = self._X
             y_eval = self._y
-            if hasattr(self, "sensitive_all_") and len(self.sensitive_all_) == len(
+            sensitive_all = getattr(self, "_sensitive_all", None)
+            if sensitive_all is not None and len(sensitive_all) == len(
                 y_eval,
             ):
-                sensitive = self.sensitive_all_
+                sensitive = sensitive_all
             else:
                 sensitive = self._group_labels_from_frame(X_eval)
         sensitive = self._validate_sensitive_runtime(sensitive, "fairness scoring")
