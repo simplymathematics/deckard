@@ -232,24 +232,20 @@ def set_study_attributes(study, attrs):
 def optimize_main(
     cfg: Any,
 ) -> dict | tuple[dict, ConfigBase]:
-    """
-        Parameters
-        ----------
-    ƒ    cfg : ConfigBase
-            The configuration object to be used for optimization. It is converted
-            to a dictionary-like structure for processing.
+    """Run the optimize layer entrypoint for single-run or Hydra multirun modes.
 
-        Returns
-        ----------
-        dict: returns the scores as a dictionary.
+    Parameters
+    ----------
+    cfg : Any
+        Layer configuration payload. This may be a ``DictConfig`` or any
+        mapping-like object that can be normalized into a dictionary and then
+        instantiated via Hydra.
 
-        Notes
-        ----
-        - If the `cfg` contains an "optimizers" key, the scores are filtered to include
-          only those corresponding to the specified optimizers.
-        - If the `cfg` contains a "files" key, it is used to initialize a `FileConfig` object.
-        - The function initializes an experiment configuration or conf_obj based on the `cfg`
-          and executes the optimization process.
+    Returns
+    -------
+    dict | tuple[dict, ConfigBase]
+        Optimization results produced by the instantiated configuration object
+        (single-run) or by :func:`optimize_multirun` (multirun).
     """
     hydra_cfg = HydraConfig.get()
     if isinstance(cfg, DictConfig):

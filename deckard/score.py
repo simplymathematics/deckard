@@ -92,32 +92,23 @@ class ScorerDictConfig(ConfigBase):
     """
 
     def __init__(self, scorers: dict):
-        """
-        ----
-        Initializes the instance with a dictionary of scoring functions.
+        """Initialize the scorer registry.
 
         Parameters
         ----------
         scorers : dict
-            A dictionary mapping metric names to scoring functions or callables.
-
-        ----
+            Mapping from metric names to ``ScorerConfig`` instances.
         """
         self._scorers = scorers
         self.__post_init__()
 
     def __post_init__(self):
-        """
-        ----
-        Post-initialization hook for the class.
-
-        Iterates over all items in the `_scorers` dictionary, ensuring each value is an instance of `ScorerConfig`.
-        Calls the `__post_init__` method of each `ScorerConfig` to perform any additional setup required.
+        """Validate scorer entries and initialize child scorers.
 
         Raises
         ------
         AssertionError
-            If any value in `_scorers` is not an instance of `ScorerConfig`.
+            If any entry in ``_scorers`` is not a ``ScorerConfig`` instance.
         """
         for key, value in self._scorers.items():
             assert isinstance(
@@ -133,18 +124,12 @@ class ScorerDictConfig(ConfigBase):
         return self._scorers[key]
 
     def get_callables(self):
-        """
-        ----
-        Returns a dictionary of all available scoring functions.
-
-        Each key in the returned dictionary corresponds to a scoring metric name,
-        and the value is the associated callable scorer function.
+        """Return the configured scorer callables.
 
         Returns
         -------
         dict
-            A mapping from metric names to scorer callables.
-        ----
+            Mapping from metric names to ``ScorerConfig`` objects.
         """
         return {key: scorer for key, scorer in self._scorers.items()}
 
@@ -159,9 +144,7 @@ class ScorerDictConfig(ConfigBase):
         score_file=None,
         **kwargs,
     ) -> Dict[str, float]:
-        """
-        ----
-        Computes and returns a dictionary of scores for the given true and predicted labels.
+        """Compute and return scores for true and predicted labels.
 
         Parameters
         ----------
@@ -190,7 +173,6 @@ class ScorerDictConfig(ConfigBase):
         -------
         Dict[str, float]
             A dictionary mapping scorer names to their computed score values.
-        ----
         """
         if score_file is not None:
             if Path(score_file).exists():
@@ -277,9 +259,7 @@ class ScorerDictConfig(ConfigBase):
 
 class DefaultClassifierDict:
     """
-    ----
     DefaultClassifierDict
-    ----
 
     Provides a default dictionary of scoring metrics for classification tasks.
 
@@ -343,7 +323,6 @@ class DefaultClassifierDict:
 
 class DefaultRegressorDict:
     """
-    ----
     Provides a default dictionary of regression scorers for model evaluation.
 
     Attributes
@@ -357,7 +336,6 @@ class DefaultRegressorDict:
     Usage
     -----
     Used to supply common regression metrics for scoring models in Deckard.
-    ----
     """
 
     scorers: ScorerDictConfig = ScorerDictConfig(

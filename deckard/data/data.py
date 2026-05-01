@@ -156,13 +156,13 @@ class DataConfig(ConfigBase):
 
     Examples
     --------
-    config = DataConfig(dataset_name="adult", **kwargs)
-    config()
-    X_train = config.X_train
-    y_train = config.y_train
-    X_test = config.X_test
-    y_test = config.y_test
-    score_dict = config.score_dict
+    >>> config = DataConfig(dataset_name="adult", **kwargs)
+    >>> config()
+    >>> X_train = config.X_train
+    >>> y_train = config.y_train
+    >>> X_test = config.X_test
+    >>> y_test = config.y_test
+    >>> score_dict = config.score_dict
     """
 
     # Configuration fields

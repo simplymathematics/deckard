@@ -124,7 +124,7 @@ class ModelConfig(ConfigBase):
     _target_ : str
         Internal identifier for the class.
 
-    Methods:
+    Methods
     -------
     __post_init__(): Initializes the model based on the provided type and parameters.
     __hash__(): Computes a hash value for the instance based on its attributes.
