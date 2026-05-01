@@ -8,6 +8,7 @@ defaults:
     - model: rf
     - defense: feature-squeezing
     - attack: membership
+    - score: classification
     - files: null
     - search/models: ${model}
     - search/defenses: ${defense}

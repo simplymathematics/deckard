@@ -7,7 +7,7 @@ pipelines.
 
 from dataclasses import dataclass, field
 import logging
-from typing import Literal, Dict
+from typing import Literal, Dict, Any
 from pathlib import Path
 from sklearn.metrics import (
     accuracy_score,
@@ -24,6 +24,7 @@ from .data import DataConfig
 from .model import ModelConfig
 from .attack import AttackConfig
 from .utils import ConfigBase
+from .utils import load_class
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,123 @@ __all__ = [
     "ScorerDictConfig",
     "DefaultClassifierDict",
     "DefaultRegressorDict",
+    "survival_concordance_score",
+    "survival_aic_score",
+    "survival_bic_score",
+    "fairness_demographic_parity_difference",
+    "fairness_equalized_odds_difference",
 ]
+
+
+def survival_concordance_score(y_true, y_pred, **kwargs):
+    """Return survival concordance from a fitted lifelines model when available."""
+    if hasattr(y_pred, "concordance_index_"):
+        return float(y_pred.concordance_index_)
+    raise ValueError("y_pred must be a fitted survival model with concordance_index_")
+
+
+def survival_aic_score(y_true, y_pred, **kwargs):
+    """Return survival AIC from a fitted lifelines model when available."""
+    if hasattr(y_pred, "AIC_"):
+        return float(y_pred.AIC_)
+    if hasattr(y_pred, "partial_AIC_"):
+        return float(y_pred.partial_AIC_)
+    if hasattr(y_pred, "log_likelihood_"):
+        k = None
+        if hasattr(y_pred, "params_"):
+            k = len(getattr(y_pred, "params_"))
+        elif hasattr(y_pred, "params") and callable(getattr(y_pred, "params")):
+            k = len(y_pred.params())
+        if k is not None:
+            return float(-2.0 * float(y_pred.log_likelihood_) + 2.0 * float(k))
+    raise ValueError("y_pred must expose AIC_ or enough information to compute AIC")
+
+
+def survival_bic_score(y_true, y_pred, **kwargs):
+    """Return survival BIC from a fitted lifelines model when available."""
+    if hasattr(y_pred, "BIC_"):
+        return float(y_pred.BIC_)
+
+    n = kwargs.get("n_samples")
+    if n is None and y_true is not None:
+        try:
+            n = len(y_true)
+        except TypeError:
+            n = None
+
+    if n is not None and hasattr(y_pred, "log_likelihood_"):
+        k = None
+        if hasattr(y_pred, "params_"):
+            k = len(getattr(y_pred, "params_"))
+        elif hasattr(y_pred, "params") and callable(getattr(y_pred, "params")):
+            k = len(y_pred.params())
+        if k is not None and n > 0:
+            import math
+
+            return float(-2.0 * float(y_pred.log_likelihood_) + float(k) * math.log(n))
+
+    raise ValueError("y_pred must expose BIC_ or enough information to compute BIC")
+
+
+def _resolve_sensitive_features(data, y_true):
+    if data is None:
+        return None
+    y_len = len(y_true)
+    candidates = [
+        getattr(data, "_sensitive_test", None),
+        getattr(data, "_sensitive_train", None),
+        getattr(data, "_sensitive_all", None),
+    ]
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        if len(candidate) == y_len:
+            return candidate
+    return None
+
+
+def fairness_demographic_parity_difference(y_true, y_pred, data=None, **kwargs):
+    """Compute demographic parity difference for fairness-aware configurations."""
+    try:
+        from fairlearn.metrics import demographic_parity_difference
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError(
+            "Fairness scorer requires optional dependency deckard[fairlearn]",
+        ) from exc
+    sensitive_features = kwargs.get("sensitive_features")
+    if sensitive_features is None:
+        sensitive_features = _resolve_sensitive_features(data, y_true)
+    if sensitive_features is None:
+        raise ValueError("sensitive_features are required for fairness scoring")
+    return float(
+        demographic_parity_difference(
+            y_true=y_true,
+            y_pred=y_pred,
+            sensitive_features=sensitive_features,
+        ),
+    )
+
+
+def fairness_equalized_odds_difference(y_true, y_pred, data=None, **kwargs):
+    """Compute equalized odds difference for fairness-aware configurations."""
+    try:
+        from fairlearn.metrics import equalized_odds_difference
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError(
+            "Fairness scorer requires optional dependency deckard[fairlearn]",
+        ) from exc
+    sensitive_features = kwargs.get("sensitive_features")
+    if sensitive_features is None:
+        sensitive_features = _resolve_sensitive_features(data, y_true)
+    if sensitive_features is None:
+        raise ValueError("sensitive_features are required for fairness scoring")
+    return float(
+        equalized_odds_difference(
+            y_true=y_true,
+            y_pred=y_pred,
+            sensitive_features=sensitive_features,
+        ),
+    )
 
 
 @dataclass
@@ -110,12 +227,34 @@ class ScorerDictConfig(ConfigBase):
         AssertionError
             If any entry in ``_scorers`` is not a ``ScorerConfig`` instance.
         """
+        normalized_scorers = {}
         for key, value in self._scorers.items():
-            assert isinstance(
-                value,
-                ScorerConfig,
-            ), f"Value for key '{key}' must be an instance of ScorerConfig"
-            value.__post_init__()
+            if isinstance(value, ScorerConfig):
+                scorer = value
+            elif isinstance(value, dict):
+                scorer_dict = dict(value)
+                score_name = scorer_dict.pop("score_name", key)
+                score_function = scorer_dict.pop("score_function", None)
+                if isinstance(score_function, str):
+                    score_function = load_class(score_function)
+                if not callable(score_function):
+                    raise TypeError(
+                        f"score_function for scorer '{key}' must be callable or import path string",
+                    )
+                scorer = ScorerConfig(
+                    score_name=score_name,
+                    score_function=score_function,
+                    score_params=scorer_dict.pop("score_params", {}),
+                    greater_is_better=scorer_dict.pop("greater_is_better", True),
+                    needs_proba=scorer_dict.pop("needs_proba", False),
+                )
+            else:
+                raise TypeError(
+                    f"Value for key '{key}' must be ScorerConfig or dict, got {type(value)}",
+                )
+            scorer.__post_init__()
+            normalized_scorers[key] = scorer
+        self._scorers = normalized_scorers
 
     def __iter__(self):
         return iter(self._scorers.items())
@@ -143,7 +282,7 @@ class ScorerDictConfig(ConfigBase):
         y_true=None,
         score_file=None,
         **kwargs,
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         """Compute and return scores for true and predicted labels.
 
         Parameters
@@ -174,11 +313,9 @@ class ScorerDictConfig(ConfigBase):
         Dict[str, float]
             A dictionary mapping scorer names to their computed score values.
         """
-        if score_file is not None:
-            if Path(score_file).exists():
-                results = self.load_scores(score_file)
-        else:
-            results = {}
+        results = {}
+        if score_file is not None and Path(score_file).exists():
+            results = self.load_scores(score_file)
         if y_pred is not None:
             assert (
                 y_true is not None
@@ -211,9 +348,6 @@ class ScorerDictConfig(ConfigBase):
                 ), "model must have predictions attribute. Call model() first."
                 loaded_model = model._model
                 # Replace the {model} placeholder in kwargs if present
-                assert (
-                    "{model}" in kwargs.values()
-                ), "If model is provided, '{model}' must be in kwargs"
                 for k, v in kwargs.items():
                     if v == "{model}":
                         kwargs[k] = loaded_model
@@ -244,7 +378,7 @@ class ScorerDictConfig(ConfigBase):
         for key, scorer in self._scorers.items():
             if mode == "test":
                 pass
-            elif model == "train":
+            elif mode == "train":
                 key = f"training_{key}"
             elif mode == "attack":
                 key = f"attack_{key}"
@@ -253,7 +387,7 @@ class ScorerDictConfig(ConfigBase):
             else:
                 pass
         if score_file is not None:
-            self.save_scores(score_file, results)
+            self.save_scores(results, score_file)
         return results
 
 

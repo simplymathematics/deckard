@@ -6,7 +6,7 @@ import importlib
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, TYPE_CHECKING
 from omegaconf import DictConfig
 
 import numpy as np
@@ -38,6 +38,9 @@ from ..utils import ConfigBase, data_supported_filetypes, load_class
 
 # Setup logger
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from ..score import ScorerDictConfig
 
 
 def _discover_lifelines_dataset_loaders() -> dict:
@@ -178,6 +181,7 @@ class DataConfig(ConfigBase):
     keep: list = None
     plugins: list = field(default_factory=list)
     alias: Union[str, None] = None
+    scorer: Union["ScorerDictConfig", None] = None
 
     # Runtime state fields
     score_dict: dict = field(init=False, repr=True)
@@ -784,7 +788,14 @@ class DataConfig(ConfigBase):
             A dictionary containing feature importance scores.
         """
         self._run_plugin_hook("before_score")
-        if self.classifier:
+        if self.scorer is not None:
+            result_dict = self.scorer(
+                y_true=self.y_train,
+                y_pred=self.y_train,
+                mode=None,
+                data=self,
+            )
+        elif self.classifier:
             if isinstance(self.X_train, (pd.DataFrame, pd.Series)):
                 result_dict = self._classification_feature_scores()
             else:

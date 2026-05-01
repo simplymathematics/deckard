@@ -28,7 +28,13 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
     env["DECKARD_DEFAULT_CONFIG_FILE"] = "survival.yaml"
     env["MPLBACKEND"] = "Agg"
 
-    cmd = ["deckard", "survival", f"data={dataset_name}", f"model={survival_model}"]
+    cmd = [
+        "deckard",
+        "survival",
+        f"data={dataset_name}",
+        f"model={survival_model}",
+        "score=survival",
+    ]
     if shutil.which("deckard") is None:
         cmd = [
             sys.executable,
@@ -37,6 +43,7 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
             "survival",
             f"data={dataset_name}",
             f"model={survival_model}",
+            "score=survival",
         ]
 
     completed = subprocess.run(
@@ -57,3 +64,8 @@ def test_survival_cli_in_examples_sklearn(dataset_name, survival_model, tmp_path
     expected_table = examples_dir / "plots" / "survival" / "aft_comparison.csv"
     assert expected_plot.exists()
     assert expected_table.exists()
+
+    # The survival score profile now includes information-criterion metrics.
+    with expected_table.open("r", encoding="utf-8") as handle:
+        header = handle.readline().strip().split(",")
+    assert "AIC" in header

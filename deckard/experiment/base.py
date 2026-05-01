@@ -7,7 +7,7 @@ model, defense, attack, files, and scorers into a single executable unit.
 import logging
 import warnings
 import hashlib
-from typing import List, Union, Literal
+from typing import List, Union, Literal, Any
 from omegaconf import DictConfig, OmegaConf
 import os
 import yaml
@@ -22,7 +22,6 @@ try:
 except ImportError:  # pragma: no cover
     FairnessDataConfig = None
 
-import pandas as pd
 from ..model import ModelConfig
 
 try:
@@ -192,6 +191,23 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
     random_state: int = 42
     library: Literal["sklearn", "tensorflow", "pytorch"] = "sklearn"
     classifier: Union[str, bool] = True
+
+    def _coerce_scorer_config(self, scorer_obj: Any):
+        if scorer_obj is None:
+            return None
+        if isinstance(scorer_obj, ScorerDictConfig):
+            return scorer_obj
+        if isinstance(scorer_obj, DictConfig):
+            scorer_obj = OmegaConf.to_container(scorer_obj, resolve=True)
+        if isinstance(scorer_obj, ConfigBase):
+            scorer_obj = scorer_obj.to_dict()
+        if isinstance(scorer_obj, str):
+            scorer_obj = ScorerDictConfig.from_yaml(scorer_obj).to_dict()
+        if isinstance(scorer_obj, dict):
+            if "scorers" in scorer_obj:
+                return ScorerDictConfig(**scorer_obj)
+            return ScorerDictConfig(scorers=scorer_obj)
+        raise ValueError(f"Unsupported scorer config type: {type(scorer_obj)}")
 
     def set_device(self, device: Union[str, int] = "cpu"):
         """
@@ -439,22 +455,33 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         self.files.__post_init__()
 
         # Set scorers
-        if isinstance(self.score, DictConfig):
-            score_dict = OmegaConf.to_container(self.score)
-            self.score = ScorerDictConfig(**score_dict)
-        elif isinstance(self.score, ConfigBase):
-            score_dict = self.score.to_dict()
-            self.score = ScorerDictConfig(**score_dict)
-        elif isinstance(self.score, str):
-            score_dict = ScorerDictConfig.from_yaml(self.score).to_dict()
-            self.score = ScorerDictConfig(**score_dict)
-        elif isinstance(self.score, dict):
-            score_dict = self.score
-            self.score = ScorerDictConfig(**score_dict)
-        elif self.score is None:
-            pass
-        else:
-            raise ValueError(f"Unsupported type for score: {type(self.score)}")
+        self.data_scorer = None
+        self.model_scorer = None
+        self.experiment_scorer = None
+        if self.score is not None:
+            score_cfg = self.score
+            if isinstance(score_cfg, DictConfig):
+                score_cfg = OmegaConf.to_container(score_cfg, resolve=True)
+            if isinstance(score_cfg, dict) and any(
+                key in score_cfg for key in ["data", "model", "experiment"]
+            ):
+                self.data_scorer = self._coerce_scorer_config(score_cfg.get("data"))
+                self.model_scorer = self._coerce_scorer_config(score_cfg.get("model"))
+                self.experiment_scorer = self._coerce_scorer_config(
+                    score_cfg.get("experiment"),
+                )
+            else:
+                # Backward-compatible shorthand: a single score config targets model scoring.
+                self.model_scorer = self._coerce_scorer_config(score_cfg)
+
+        # Attach component scorers so DataConfig/ModelConfig execute runtime-configured scoring.
+        if self.data_scorer is not None:
+            self.data.scorer = self.data_scorer
+        if self.model is not None and self.model_scorer is not None:
+            self.model.scorer = self.model_scorer
+
+        # Keep `score` as experiment-level scorer only.
+        self.score = self.experiment_scorer
 
     def set_random_seed(self):
         if self.library in ["sklearn"]:

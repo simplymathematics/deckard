@@ -1,0 +1,22 @@
+scorers:
+  accuracy:
+    score_function: sklearn.metrics.accuracy_score
+  precision:
+    score_function: sklearn.metrics.precision_score
+    score_params:
+      average: weighted
+      zero_division: 0
+  recall:
+    score_function: sklearn.metrics.recall_score
+    score_params:
+      average: weighted
+      zero_division: 0
+  f1:
+    score_function: sklearn.metrics.f1_score
+    score_params:
+      average: weighted
+      zero_division: 0
+  log_loss:
+    score_function: sklearn.metrics.log_loss
+    score_params:
+      labels: null

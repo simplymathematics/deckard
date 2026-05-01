@@ -4,11 +4,11 @@ attack_alias: ${attack.alias}
 defense_alias: ${defense.alias}
 defaults:
   - _self_
-  - data: adult
+  - data: fair-adult
   - model: rf
   - defense: class-labels
   - attack: hsj
-  - score: classification
+  - score: fairness
   - search/models: ${model}
   - search/defenses: ${defense}
   - search/attacks: ${attack}
@@ -41,5 +41,3 @@ hydra:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
     n_trials: 100
     n_jobs: 1
-
-      

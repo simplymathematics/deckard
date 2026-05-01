@@ -1,0 +1,11 @@
+scorers:
+  mse:
+    score_function: sklearn.metrics.mean_squared_error
+  rmse:
+    score_function: sklearn.metrics.mean_squared_error
+    score_params:
+      squared: false
+  mae:
+    score_function: sklearn.metrics.mean_absolute_error
+  r2:
+    score_function: sklearn.metrics.r2_score

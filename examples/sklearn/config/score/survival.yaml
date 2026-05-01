@@ -1,0 +1,9 @@
+scorers:
+  concordance:
+    score_function: deckard.score.survival_concordance_score
+  aic:
+    score_function: deckard.score.survival_aic_score
+    greater_is_better: false
+  bic:
+    score_function: deckard.score.survival_bic_score
+    greater_is_better: false

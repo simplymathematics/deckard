@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Any, Union
+from typing import Any, Union, TYPE_CHECKING
 from pathlib import Path
 from dataclasses import dataclass
 from omegaconf import DictConfig
@@ -41,6 +41,9 @@ from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
 from ..utils import ConfigBase, load_class
+
+if TYPE_CHECKING:
+    from ..score import ScorerDictConfig
 
 art_model_types = tuple(
     [
@@ -162,6 +165,7 @@ class ModelConfig(ConfigBase):
     probability: bool = False
     alias: Union[str, None] = None
     defense: Union[dict, None] = None
+    scorer: Union["ScorerDictConfig", None] = None
 
     # Runtime/model state fields
     _model: Union[BaseEstimator, None] = None
@@ -571,7 +575,7 @@ class ModelConfig(ConfigBase):
         }
         return scores
 
-    def _score(self, y_true: pd.Series, y_pred: pd.Series) -> dict:
+    def _score(self, y_true: pd.Series, y_pred: pd.Series, **kwargs) -> dict:
         """
         Compute and log performance scores for classification or regression.
 
@@ -591,9 +595,10 @@ class ModelConfig(ConfigBase):
             - Rounds scores based on the size of `y_true`.
             - Logs each rounded score.
         """
-        if self.classifier:
+        if self.scorer is not None:
+            scores = self.scorer(y_true=y_true, y_pred=y_pred, mode=None, **kwargs)
+        elif self.classifier:
             scores = self._classification_scores(y_true, y_pred)
-
         else:
             scores = self._regression_scores(y_true, y_pred)
         sig_figs = np.log10(len(y_true)) + 1
@@ -601,10 +606,13 @@ class ModelConfig(ConfigBase):
             sig_figs = 1
         logger.info(f"Rounding scores to {int(sig_figs)} significant figures")
         logger.info("Scores:")
-        for score in scores:
-            rounded = round(scores[score], int(sig_figs))
-            logger.info(f"{score}: {rounded}")
-            scores[score] = rounded
+        for score, value in list(scores.items()):
+            if isinstance(value, (int, float, np.integer, np.floating)):
+                rounded = round(float(value), int(sig_figs))
+                logger.info(f"{score}: {rounded}")
+                scores[score] = rounded
+            else:
+                logger.info(f"{score}: {value}")
         return scores
 
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
@@ -930,7 +938,7 @@ class ModelConfig(ConfigBase):
         # Score training predictions from current run.
         if train_predictions is not None:
             start = time.process_time()
-            train_scores = self._score(data.y_train, train_predictions)
+            train_scores = self._score(data.y_train, train_predictions, data=data)
             self.training_score_time = time.process_time() - start
             # Prefix training scores with 'train_'
             train_scores = {
@@ -996,7 +1004,7 @@ class ModelConfig(ConfigBase):
         # Score test predictions from current run.
         if data.y_test is not None and test_predictions is not None:
             start = time.process_time()
-            test_scores = self._score(data.y_test, test_predictions)
+            test_scores = self._score(data.y_test, test_predictions, data=data)
             if self.score_dict is None:
                 self.score_dict = {}
             self.score_dict = {**self.score_dict, **test_scores}

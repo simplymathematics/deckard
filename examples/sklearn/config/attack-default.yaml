@@ -8,6 +8,7 @@ defaults:
   - model: rf
   - defense: class-labels
   - attack: hsj
+  - score: classification
   - search/models: ${model}
   - search/defenses: ${defense}
   - search/attacks: ${attack}

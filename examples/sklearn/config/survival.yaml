@@ -2,6 +2,7 @@ defaults:
   - _self_
   - data: lung
   - model: weibull
+  - score: survival
 
 plots_folder: plots/survival
 target: E

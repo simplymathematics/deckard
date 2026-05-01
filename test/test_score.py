@@ -4,6 +4,9 @@ from deckard.score import (
     ScorerDictConfig,
     DefaultClassifierDict,
     DefaultRegressorDict,
+    survival_concordance_score,
+    survival_aic_score,
+    survival_bic_score,
 )
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
@@ -126,6 +129,31 @@ class TestDefaultScorerDicts(unittest.TestCase):
         y_pred = []
         with self.assertRaises(ValueError):
             DefaultRegressorDict.scorers(y_true=y_true, y_pred=y_pred)
+
+
+class TestSurvivalScorers(unittest.TestCase):
+    class _MockFitter:
+        def __init__(self):
+            self.concordance_index_ = 0.71
+            self.AIC_ = 123.4
+            self.log_likelihood_ = -50.0
+            self.params_ = [1.0, 2.0, 3.0]
+
+    def test_survival_concordance_score(self):
+        fitter = self._MockFitter()
+        score = survival_concordance_score(y_true=[1, 2, 3], y_pred=fitter)
+        self.assertEqual(score, fitter.concordance_index_)
+
+    def test_survival_aic_score(self):
+        fitter = self._MockFitter()
+        score = survival_aic_score(y_true=[1, 2, 3], y_pred=fitter)
+        self.assertEqual(score, fitter.AIC_)
+
+    def test_survival_bic_score_computed(self):
+        fitter = self._MockFitter()
+        score = survival_bic_score(y_true=[1, 2, 3, 4, 5], y_pred=fitter)
+        self.assertIsInstance(score, float)
+        self.assertGreater(score, 0)
 
 
 if __name__ == "__main__":
