@@ -19,6 +19,42 @@ from .experiment import ExperimentConfig
 logger = logging.getLogger(__name__)
 
 
+def _forward_hydra_control_args(parsed_args) -> list[str]:
+    """Rebuild Hydra control CLI flags parsed by Hydra's own parser.
+
+    `get_args_parser()` consumes flags like `--multirun` and `--cfg` into
+    parsed_args fields. When we later rebuild `sys.argv` for `@hydra.main`,
+    these flags must be forwarded explicitly or Hydra falls back to single-run
+    mode.
+    """
+    forwarded: list[str] = []
+
+    bool_flags = {
+        "run": "--run",
+        "multirun": "--multirun",
+        "shell_completion": "--shell-completion",
+        "hydra_help": "--hydra-help",
+        "help": "--help",
+        "resolve": "--resolve",
+    }
+    for attr, cli_flag in bool_flags.items():
+        if bool(getattr(parsed_args, attr, False)):
+            forwarded.append(cli_flag)
+
+    value_flags = {
+        "cfg": "--cfg",
+        "package": "--package",
+        "info": "--info",
+        "experimental_rerun": "--experimental-rerun",
+    }
+    for attr, cli_flag in value_flags.items():
+        value = getattr(parsed_args, attr, None)
+        if value not in [None, ""]:
+            forwarded.extend([cli_flag, str(value)])
+
+    return forwarded
+
+
 def get_configuration_paths():
     """ """
     # Get config dir from environment variable if set
@@ -116,7 +152,13 @@ def generate_hydra_main(layer):
     if hasattr(parsed_args, "overrides") and isinstance(parsed_args.overrides, list):
         # get_args_parser may parse Hydra key=value arguments into `overrides`.
         forwarded_overrides = parsed_args.overrides
-    sys.argv = [sys.argv[0], *hydra_args, *forwarded_overrides]
+    forwarded_control_args = _forward_hydra_control_args(parsed_args)
+    sys.argv = [
+        sys.argv[0],
+        *forwarded_control_args,
+        *hydra_args,
+        *forwarded_overrides,
+    ]
 
     @hydra.main(
         config_path=(

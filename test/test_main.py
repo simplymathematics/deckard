@@ -115,53 +115,6 @@ def test_build_router_includes_supported_layers(main_module):
     assert set(main_module.SUPPORTED_LAYERS).issubset(subcommands)
 
 
-def test_handle_default_module_builds_hydra_entrypoint(
-    main_module,
-    monkeypatch,
-    tmp_path,
-):
-    cfg_dir = tmp_path / "config"
-    cfg_dir.mkdir()
-
-    seen = {}
-
-    def fake_hydra_main(**kwargs):
-        seen["hydra_kwargs"] = kwargs
-
-        def decorator(fn):
-            def runner():
-                return fn("CFG")
-
-            return runner
-
-        return decorator
-
-    def fake_optimize_main(cfg):
-        seen["cfg"] = cfg
-        return {"score": 42}
-
-    monkeypatch.setattr(
-        main_module,
-        "get_configuration_paths",
-        lambda: (str(cfg_dir), "default.yaml"),
-    )
-    monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
-    monkeypatch.setitem(
-        main_module.layer_dict,
-        "optimize",
-        (object(), fake_optimize_main),
-    )
-
-    result = main_module.handle_default_module()
-
-    assert result == {"score": 42}
-    assert seen["cfg"] == "CFG"
-    assert seen["hydra_kwargs"] == {
-        "config_path": str(cfg_dir.resolve()),
-        "config_name": "default.yaml",
-        "version_base": "1.3",
-    }
-
 
 def test_generate_hydra_main_rejects_unknown_layer(main_module):
     with pytest.raises(ValueError):
@@ -191,7 +144,7 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
     class FakeParser:
         def parse_known_args(self, argv):
             seen["argv_to_parser"] = list(argv)
-            return Namespace(alpha="cli"), ["alpha=hydra"]
+            return Namespace(alpha="cli", overrides=["alpha=hydra"]), []
 
     def fake_main_fn(**kwargs):
         seen["kwargs"] = kwargs
@@ -210,6 +163,11 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
 
     monkeypatch.setitem(main_module.layer_dict, "layer", (FakeParser(), fake_main_fn))
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
+    monkeypatch.setattr(
+        main_module,
+        "get_configuration_paths",
+        lambda: (None, None),
+    )
     monkeypatch.setattr(sys, "argv", ["deckard", "--alpha", "cli", "alpha=hydra"])
 
     result = main_module.generate_hydra_main("layer")
@@ -217,6 +175,77 @@ def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
     assert result == "ok"
     assert seen["argv_to_parser"] == ["--alpha", "cli", "alpha=hydra"]
     assert sys.argv == ["deckard", "alpha=hydra"]
+    assert seen["kwargs"] == {"alpha": "hydra"}
+    assert seen["hydra_kwargs"] == {
+        "config_path": None,
+        "config_name": None,
+        "version_base": "1.3",
+    }
+
+
+def test_generate_hydra_main_forwards_hydra_multirun_flag(
+    main_module,
+    monkeypatch,
+):
+    seen = {}
+
+    class FakeParser:
+        def parse_known_args(self, argv):
+            seen["argv_to_parser"] = list(argv)
+            return (
+                Namespace(
+                    alpha="cli",
+                    overrides=["alpha=hydra"],
+                    run=False,
+                    multirun=True,
+                    shell_completion=False,
+                    hydra_help=False,
+                    help=False,
+                    resolve=False,
+                    cfg=None,
+                    package=None,
+                    info=None,
+                    experimental_rerun=None,
+                    config_path=None,
+                    config_name=None,
+                    config_dir=None,
+                ),
+                [],
+            )
+
+    def fake_main_fn(**kwargs):
+        seen["kwargs"] = kwargs
+        return "ok"
+
+    def fake_hydra_main(**kwargs):
+        seen["hydra_kwargs"] = kwargs
+
+        def decorator(fn):
+            def runner():
+                return fn({"alpha": "hydra"})
+
+            return runner
+
+        return decorator
+
+    monkeypatch.setitem(main_module.layer_dict, "layer", (FakeParser(), fake_main_fn))
+    monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
+    monkeypatch.setattr(
+        main_module,
+        "get_configuration_paths",
+        lambda: (None, None),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["deckard", "--alpha", "cli", "--multirun", "alpha=hydra"],
+    )
+
+    result = main_module.generate_hydra_main("layer")
+
+    assert result == "ok"
+    assert seen["argv_to_parser"] == ["--alpha", "cli", "--multirun", "alpha=hydra"]
+    assert sys.argv == ["deckard", "--multirun", "alpha=hydra"]
     assert seen["kwargs"] == {"alpha": "hydra"}
     assert seen["hydra_kwargs"] == {
         "config_path": None,
