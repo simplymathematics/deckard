@@ -10,7 +10,6 @@ pytest.importorskip("lifelines")
 from deckard.attack import AttackConfig  # NOQA E402
 from deckard.data import DataConfig  # NOQA E402
 from deckard.layers.survival import (  # NOQA E402
-    _build_runtime_survival_data_config,
     calculate_failures_under_attack,
     fit_aft,
     survival_main,
@@ -159,12 +158,19 @@ def test_survival_main_with_attack_uses_separate_survival_model(tmp_path):
 
 def test_runtime_survival_data_split_uses_dataconfig():
     data = _make_survival_dataframe(n=40)
-    runtime_data = _build_runtime_survival_data_config(
-        data=data,
+    runtime_data = DataConfig(
+        dataset_name="make_regression",
         target="event",
+        classifier=False,
+        stratify=False,
+        train_size=0.75,
         test_size=0.25,
         random_state=42,
     )
+    runtime_data._X = data.drop(columns=["event"]).reset_index(drop=True)
+    runtime_data._y = data["event"].reset_index(drop=True)
+    runtime_data.data_load_time = 0.0
+    runtime_data._sample()
 
     assert isinstance(runtime_data, DataConfig)
     assert runtime_data.X_train is not None

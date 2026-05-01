@@ -1,9 +1,7 @@
 """Experiment orchestration primitives for Deckard's Python API.
 
-This module contains the high-level experiment configuration objects that tie
-data, model, defense, attack, files, and scorers into a single executable unit.
-``ExperimentConfig`` is the main entrypoint for standard experiments and
-``SurvivalExperimentConfig`` specializes that workflow for survival analysis.
+This module contains the base experiment configuration object that ties data,
+model, defense, attack, files, and scorers into a single executable unit.
 """
 
 import logging
@@ -17,23 +15,25 @@ import numpy as np
 from pathlib import Path
 from hydra.utils import instantiate
 
-from .data import DataConfig, DataPipelineConfig
+from ..data import DataConfig, DataPipelineConfig
 
 try:
-    from .data import FairnessDataConfig
+    from ..data import FairnessDataConfig
 except ImportError:  # pragma: no cover
     FairnessDataConfig = None
-from .model import ModelConfig
+
+import pandas as pd
+from ..model import ModelConfig
 
 try:
-    from .model import FairnessModelConfig
+    from ..model import FairnessModelConfig
 except ImportError:  # pragma: no cover
     FairnessModelConfig = None
-from .model.defend import DefenseConfig
-from .attack import AttackConfig
-from .score import ScorerDictConfig
-from .file import FileConfig, data_files, model_files, attack_files
-from .utils import ConfigBase
+from ..model.defend import DefenseConfig
+from ..attack import AttackConfig
+from ..score import ScorerDictConfig
+from ..file import FileConfig, data_files, model_files, attack_files
+from ..utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -611,37 +611,3 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
         else:
             logger.info("No score_file specified, skipping score saving.")
         return scores
-
-
-class SurvivalExperimentConfig(ExperimentConfig):
-    """ExperimentConfig specialization for survival-analysis workflows."""
-
-    """Experiment configuration tailored for survival analyses.
-
-    This config enforces that both `data` and `model` are provided and valid,
-    while allowing survival-specific settings to be carried alongside standard
-    experiment settings.
-    """
-
-    survival_model = "weibull"
-    duration_col = "T"
-    event_col = "E"
-
-    def __post_init__(self):
-        super().__post_init__()
-        if self.data is None:
-            raise ValueError("SurvivalExperimentConfig requires a data config")
-        if self.attack is not None and self.model is None:
-            raise ValueError(
-                "SurvivalExperimentConfig requires a model config when an attack is specified",
-            )
-        if not isinstance(self.data, DataConfig):
-            raise TypeError(
-                f"Expected data to resolve to DataConfig, got {type(self.data)}",
-            )
-        if self.model is not None and not isinstance(self.model, ModelConfig):
-            raise TypeError(
-                f"Expected model to resolve to ModelConfig, got {type(self.model)}",
-            )
-        if self.duration_col in [None, ""]:
-            raise ValueError("duration_col must be provided for survival experiments")

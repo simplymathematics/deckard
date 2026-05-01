@@ -12,6 +12,11 @@ from .defend import DefenseConfig
 logger = logging.getLogger(__name__)
 
 try:
+    from .survival import SurvivalModelConfig
+except ImportError:  # pragma: no cover
+    logger.debug("Lifelines not found. Survival model configs are unavailable.")
+
+try:
     from .fairness import FairnessDefenseConfig, FairnessModelConfig
 except ImportError:  # pragma: no cover
     logger.debug("Fairlearn not found. Fairness model configs are unavailable.")

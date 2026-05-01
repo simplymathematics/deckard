@@ -8,7 +8,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Union
+from typing import Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -232,6 +232,39 @@ class AttackConfig(ConfigBase):
         """
         self._target_ = "deckard.attack.AttackConfig"
 
+    def _parse_attack_path(self) -> tuple[str, str]:
+        parts = (self.attack_type or "").split("attacks.")[-1].split(".")
+        attack_type = parts[0] if len(parts) > 0 else ""
+        attack_subtype = parts[1] if len(parts) > 1 else ""
+        return attack_type, attack_subtype
+
+    @property
+    def attack_family(self) -> Optional[str]:
+        if self._attack_type:
+            return self._attack_type
+        attack_type, _ = self._parse_attack_path()
+        return attack_type or None
+
+    @property
+    def attack_subtype(self) -> Optional[str]:
+        if self._attack_subtype:
+            return self._attack_subtype
+        _, attack_subtype = self._parse_attack_path()
+        return attack_subtype or None
+
+    @property
+    def attack_kind(self) -> Optional[str]:
+        attack_type = (self.attack_family or "").lower()
+        subtype = (self.attack_subtype or "").lower()
+
+        if attack_type == "evasion":
+            return "evasion"
+        if attack_type == "inference" and "membership" in subtype:
+            return "membership"
+        if attack_type == "inference" and "attribute" in subtype:
+            return "attribute"
+        return None
+
     def _initialize_attack(self, model, data):
         """
         Initialize an attack instance for a given model.
@@ -268,8 +301,8 @@ class AttackConfig(ConfigBase):
             art_model = build_torch_art_model(model=model, data=data)
         else:
             check_is_fitted(model)
-        attack_type = self.attack_type.split("attacks.")[-1].split(".")[0]
-        attack_subtype = self.attack_type.split("attacks.")[-1].split(".")[1]
+        attack_type = self.attack_family or ""
+        attack_subtype = self.attack_subtype or ""
 
         # Validate attack type
         if attack_type not in ["evasion", "poisoning", "extraction", "inference"]:

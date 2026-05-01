@@ -40,7 +40,12 @@ from .data import DataConfig
 from .model import ModelConfig
 from .model.defend import DefenseConfig
 from .attack import AttackConfig
-from .experiment import ExperimentConfig, SurvivalExperimentConfig
+from .experiment import ExperimentConfig
+
+try:
+    from .experiment import SurvivalExperimentConfig
+except ImportError:  # pragma: no cover
+    SurvivalExperimentConfig = None
 from .file import FileConfig
 from .score import ScorerDictConfig
 from .utils import *
@@ -135,11 +140,13 @@ __all__ = [
     "ModelConfig",
     "AttackConfig",
     "ExperimentConfig",
-    "SurvivalExperimentConfig",
     "DefenseConfig",
     "FileConfig",
     "ScorerDictConfig",
 ]
+
+if SurvivalExperimentConfig is not None:
+    __all__.append("SurvivalExperimentConfig")
 
 LOGGING = {
     "version": 1,

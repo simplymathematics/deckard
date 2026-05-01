@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
-PytorchDataConfig = pytest.importorskip("deckard.layers.pytorch").PytorchDataConfig
+PytorchDataConfig = pytest.importorskip("deckard.data.pytorch").PytorchDataConfig
 
 
 class TestPytorchDataConfig(unittest.TestCase):

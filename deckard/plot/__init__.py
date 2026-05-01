@@ -17,11 +17,17 @@ try:
     from .seaborn_plots import (
         SeabornPlotConfig,
         SeabornPlotConfigList,
-        SurvivalSeabornPlotterConfig,
     )
 except ImportError:  # pragma: no cover
     SeabornPlotConfig = None
     SeabornPlotConfigList = None
+
+try:
+    import lifelines  # noqa: F401
+    from .survival import SurvivalSeabornPlotConfigList, SurvivalSeabornPlotterConfig
+except ImportError:  # pragma: no cover
+    logger.debug("Lifelines not found. Survival plotting configs are unavailable.")
+    SurvivalSeabornPlotConfigList = None
     SurvivalSeabornPlotterConfig = None
 
 try:
@@ -102,6 +108,7 @@ __all__ = [
     "PlotConfig",
     "SeabornPlotConfig",
     "SeabornPlotConfigList",
+    "SurvivalSeabornPlotConfigList",
     "SurvivalSeabornPlotterConfig",
     "YellowbrickConfigList",
     "YellowbrickPlotConfig",
