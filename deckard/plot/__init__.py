@@ -1,3 +1,11 @@
+"""Public plotting configuration exports.
+
+``PlotConfig`` is the stable wrapper entrypoint for Deckard plotting from Python.
+It dispatches to seaborn-backed or yellowbrick-backed concrete plot config
+implementations depending on the provided inputs and installed optional
+dependencies.
+"""
+
 import logging
 from dataclasses import dataclass, field
 from typing import Union, Optional
@@ -88,3 +96,13 @@ class PlotConfig(ConfigBase):
 
     def __len__(self):
         return len(self.config)
+
+
+__all__ = [
+    "PlotConfig",
+    "SeabornPlotConfig",
+    "SeabornPlotConfigList",
+    "SurvivalSeabornPlotterConfig",
+    "YellowbrickConfigList",
+    "YellowbrickPlotConfig",
+]

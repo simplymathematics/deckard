@@ -1,3 +1,10 @@
+"""Public model and defense configuration exports.
+
+The :mod:`deckard.model` package exposes the standard model pipeline together
+with optional fairness-aware and PyTorch-backed variants when those optional
+dependencies are installed.
+"""
+
 import logging
 from .base import ModelConfig
 from .defend import DefenseConfig
@@ -11,6 +18,14 @@ except ImportError:  # pragma: no cover
 
 try:
     import torch
-    from .pytorch import PytorchCustomPretrainedModelConfig, PytorchModelConfig
+    from .pytorch import PytorchModelConfig
 except ImportError:
     logger.debug("Torch not found. Cannot use torch features.")
+
+
+__all__ = ["ModelConfig", "DefenseConfig"]
+
+if "FairnessDefenseConfig" in globals():
+    __all__.extend(["FairnessDefenseConfig", "FairnessModelConfig"])
+if "PytorchModelConfig" in globals():
+    __all__.extend(["PytorchModelConfig"])

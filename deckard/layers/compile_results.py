@@ -85,6 +85,7 @@ def parse_studies(optuna_db: str, schema: Union[str, dict]) -> pd.DataFrame:
 
 
 def compile_results_main(output_file: str, optuna_db: str, schema: str = None):
+    """Compile Optuna studies into a single tabular results file."""
     # Check if schema is string or dict
     if schema is not None:
         schema_yaml = yaml.safe_dump(schema)

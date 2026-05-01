@@ -1,3 +1,10 @@
+"""Public data configuration exports.
+
+The :mod:`deckard.data` package provides the default tabular data pipeline along
+with optional fairness-aware and PyTorch-specific data configuration classes.
+Optional exports are only available when their dependencies are installed.
+"""
+
 import logging
 
 from .data import DataConfig, DataPipelineConfig
@@ -14,3 +21,11 @@ try:
     from .pytorch import PytorchDataConfig, PytorchCustomDataConfig
 except ImportError:
     logger.debug("Torch not found.")
+
+
+__all__ = ["DataConfig", "DataPipelineConfig"]
+
+if "FairnessDataConfig" in globals():
+    __all__.append("FairnessDataConfig")
+if "PytorchDataConfig" in globals():
+    __all__.extend(["PytorchDataConfig", "PytorchCustomDataConfig"])

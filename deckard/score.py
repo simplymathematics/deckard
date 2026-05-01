@@ -1,3 +1,10 @@
+"""Scoring configuration primitives for Deckard models and attacks.
+
+This module provides small wrappers around callable metrics and the default
+classifier/regressor scorer collections used throughout the experiment and model
+pipelines.
+"""
+
 from dataclasses import dataclass, field
 import logging
 from typing import Literal, Dict
@@ -20,23 +27,21 @@ from .utils import ConfigBase
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "ScorerConfig",
+    "ScorerDictConfig",
+    "DefaultClassifierDict",
+    "DefaultRegressorDict",
+]
+
 
 @dataclass
 class ScorerConfig:
-    """
-    ScorerConfig is a data class that encapsulates a scoring function along with its name and runtime parameters.
-     It ensures the provided scoring function is callable and initializes a scorer using the specified function and parameters.
+    """Wrap a metric callable together with its runtime parameters.
 
-     Attributes
-     ----------
-         score_name (str): The name of the scoring function.
-         score_function (callable): The scoring function to be used.
-         score_params (dict, optional): Runtime parameters for the scoring function. Defaults to an empty dictionary.
-
-     Methods
-     -------
-         __post_init__(): Validates the scoring function and initializes the scorer using make_scorer.
-     class ScorerConfig(ConfigBase):
+    ``ScorerConfig`` is the atomic scoring unit used by ``ScorerDictConfig``.
+    It stores the metric name, the callable itself, and any static keyword
+    arguments that should be supplied on every invocation.
     """
 
     score_name: str
@@ -80,39 +85,10 @@ class ScorerConfig:
 
 
 class ScorerDictConfig(ConfigBase):
-    """
-    ----
-    ScorerDictConfig manages a dictionary of ScorerConfig instances for batch scoring.
+    """Container of named ``ScorerConfig`` instances.
 
-    This class provides a container for multiple scoring functions, allowing you to apply
-    all configured scorers to a set of predictions and ground truth labels in a single call.
-    It ensures type safety by validating that all values in the dictionary are ScorerConfig instances.
-
-    Parameters
-    ----------
-    scorers : dict
-        A dictionary mapping string keys to ScorerConfig instances.
-
-    Methods
-    -------
-    __post_init__():
-        Validates that all values in the scorers dictionary are instances of ScorerConfig and
-        calls their __post_init__ methods.
-
-    __iter__():
-        Returns an iterator over the (key, ScorerConfig) pairs in the scorers dictionary.
-
-    __getitem__(key):
-        Retrieves the ScorerConfig instance associated with the given key.
-
-    get_callables():
-        Returns a dictionary mapping keys to their corresponding ScorerConfig instances.
-
-    __call__(y_true, y_pred, **kwargs) -> Dict[str, float]:
-        Applies each scorer to the provided true and predicted labels, returning a dictionary
-        of scores keyed by scorer name.
-
-    ----
+    The object behaves like a small registry for metrics and is the public score
+    configuration type accepted by experiments, models, and attacks.
     """
 
     def __init__(self, scorers: dict):

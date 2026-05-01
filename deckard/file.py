@@ -1,3 +1,10 @@
+"""File path configuration utilities for Deckard experiments.
+
+``FileConfig`` centralizes the paths used to persist datasets, models,
+predictions, attack outputs, parameters, scores, and logs across the Deckard
+pipeline.
+"""
+
 from dataclasses import dataclass, field
 import time
 import hashlib
@@ -36,10 +43,21 @@ all_files = (
     data_files + model_files + defense_files + log_files + attack_files + other_files
 )
 
+__all__ = [
+    "FileConfig",
+    "data_files",
+    "model_files",
+    "defense_files",
+    "log_files",
+    "attack_files",
+    "other_files",
+    "all_files",
+]
+
 
 @dataclass
 class FileConfig(ConfigBase):
-    """Configuration for file paths used in the experiment."""
+    """Configuration object for Deckard artifact and log file paths."""
 
     data_file: str = field(
         default_factory=str,

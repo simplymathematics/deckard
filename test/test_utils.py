@@ -268,6 +268,46 @@ class TestUtilsAdditional(unittest.TestCase):
         self.assertEqual(args.name, "alice")
         self.assertEqual(args.count, 1)
 
+    def test_create_parser_uses_function_docstring_for_description(self):
+        def fn(name: str):
+            """Create a parser description from the function docstring.
+
+            Parameters
+            ----------
+            name : str
+                Name to echo.
+            """
+
+            return name
+
+        parser = create_parser_from_function(fn)
+
+        self.assertEqual(
+            parser.description,
+            "Create a parser description from the function docstring.",
+        )
+
+    def test_create_parser_uses_parameter_docstrings_for_help_text(self):
+        def fn(name: str, count: int = 1):
+            """Build parser argument help from docstring parameter descriptions.
+
+            Parameters
+            ----------
+            name : str
+                Name to echo in the command output.
+            count : int, optional
+                Number of iterations to run.
+            """
+
+            return name, count
+
+        parser = create_parser_from_function(fn)
+        name_action = next(a for a in parser._actions if a.dest == "name")
+        count_action = next(a for a in parser._actions if a.dest == "count")
+
+        self.assertEqual(name_action.help, "Name to echo in the command output.")
+        self.assertEqual(count_action.help, "Number of iterations to run.")
+
 
 if __name__ == "__main__":
     unittest.main()

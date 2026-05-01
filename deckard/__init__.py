@@ -1,3 +1,20 @@
+"""Public package entrypoint for Deckard.
+
+This module configures warning filters, registers the OmegaConf resolvers used
+throughout Deckard configs, and re-exports the primary configuration objects
+that make up the supported public API:
+
+- ``DataConfig`` and related data configuration classes
+- ``ModelConfig`` and ``DefenseConfig``
+- ``AttackConfig``
+- ``ExperimentConfig`` and ``SurvivalExperimentConfig``
+- ``FileConfig``
+- ``ScorerDictConfig``
+
+Importing :mod:`deckard` is the supported top-level entrypoint for most users
+who construct experiments from Python instead of the CLI.
+"""
+
 import logging
 import os
 from pathlib import Path
@@ -38,100 +55,21 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "default.yaml",
 )
 
-"""
-deckard
-=======
-
-Main package initializer for the deckard adversarial machine learning framework.
-
-This module configures logging, suppresses common warnings, and exposes the primary
-public API classes for data, model, defense, attack, experiment, file, and scoring
-configurations.
-
-Logging Configuration
----------------------
-Logging is configured via :func:`logging.config.dictConfig` with the following setup:
-
-- **File handler** (``default``):
-    - Uses :class:`logging.handlers.RotatingFileHandler`.
-    - Writes to ``deckard.log`` in the current working directory.
-    - Log level: ``INFO``.
-    - Max file size: 10 MB, with up to 5 rotating backups.
-
-- **Stream handler** (``stream``):
-    - Writes to stdout via :class:`logging.StreamHandler`.
-    - Log level: ``DEBUG``.
-
-- **Logger ``deckard``**:
-    - Handlers: ``["default"]`` (file only).
-    - Level: ``INFO``.
-    - ``propagate=True``.
-
-- **Logger ``tests``**:
-    - Handlers: ``["stream"]`` (stdout only).
-    - Level: ``DEBUG``.
-    - ``propagate=True``.
-
-.. warning::
-    The ``propagate=True`` setting on child loggers (e.g., ``deckard.attack``,
-    ``deckard.model``, ``deckard.data``) causes their log records to bubble up
-    to the root logger. If the root logger has a ``StreamHandler`` attached
-    (which Python adds by default via :func:`logging.basicConfig` or third-party
-    libraries such as ``optuna``, ``art``, or ``sklearn``), **all** ``logger.info``
-    calls from submodules like ``deckard.attack``, ``deckard.model``, and
-    ``deckard.data`` will appear on stdout in addition to being written to the
-    log file.
-
-    To suppress stdout output from submodule loggers, set ``propagate=False``
-    on the ``deckard`` logger, or explicitly remove any ``StreamHandler`` from
-    the root logger after calling :func:`logging.config.dictConfig`.
-
-    Example fix::
-
-        # Remove StreamHandlers from root logger to prevent stdout leakage:
-        root = logging.getLogger()
-        root.handlers = [h for h in root.handlers if not isinstance(h, logging.StreamHandler)]
-
-Warning Suppression
--------------------
-The following warning categories are suppressed globally:
-
-- :class:`FutureWarning`
-- :class:`DeprecationWarning`
-- :class:`sklearn.exceptions.UndefinedMetricWarning`
-- :class:`RuntimeWarning`
-- :class:`sklearn.exceptions.ConvergenceWarning`
-- :class:`optuna.exceptions.ExperimentalWarning`
-
-Additionally, numpy divide-by-zero and invalid-value errors are silenced via
-:func:`numpy.seterr`.
-
-Public API
-----------
-.. autosummary::
-    :toctree: _autosummary
-
-    DataConfig
-    ModelConfig
-    AttackConfig
-    ExperimentConfig
-    DefenseConfig
-    FileConfig
-    ScorerDictConfig
-"""
-
 
 def _load_yaml_file(path: Path):
+    """Load a YAML file from disk and return the parsed Python object."""
     with path.open("r") as f:
         return yaml.safe_load(f)
 
 
 def _file_resolver(arg: str):
-    """
-    Usage:
-      ${file:search/rf.yaml:model_search}
-      ${file:./configs/search/rf.yaml:model_search.subkey}
-      ${file:/abs/path/to/file.yaml}       -> returns whole file
+    """Resolve ``${file:...}`` OmegaConf interpolations relative to Deckard config.
+
+    Supported forms::
+
+        ${file:search/rf.yaml:model_search}
+        ${file:./configs/search/rf.yaml:model_search.subkey}
+        ${file:/abs/path/to/file.yaml}
     """
     if not arg:
         raise ValueError(
@@ -171,11 +109,7 @@ OmegaConf.register_new_resolver("file", _file_resolver, replace=True, use_cache=
 
 
 def _merge_resolver(*args):
-    """
-    Merge multiple OmegaConf or dict objects into a single OmegaConf dict.
-    Usage:
-      ${merge:${file:search/rf.yaml:model_search}, ${file:search/class_labels.yaml:model_search}}
-    """
+    """Resolve and merge multiple config fragments into a single OmegaConf node."""
     merged = OmegaConf.create()
     for arg in args:
         # Resolve any interpolations
@@ -188,6 +122,7 @@ OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
 def _hash_conf(*values, _root_=None):
+    """Resolver wrapper for :func:`deckard.utils.hash_conf_values`."""
     return hash_conf_values(*values, _root_=_root_)
 
 

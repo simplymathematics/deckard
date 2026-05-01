@@ -1,3 +1,11 @@
+"""Experiment orchestration primitives for Deckard's Python API.
+
+This module contains the high-level experiment configuration objects that tie
+data, model, defense, attack, files, and scorers into a single executable unit.
+``ExperimentConfig`` is the main entrypoint for standard experiments and
+``SurvivalExperimentConfig`` specializes that workflow for survival analysis.
+"""
+
 import logging
 import warnings
 import hashlib
@@ -165,6 +173,13 @@ class DataConfigResolutionMixin:
 
 
 class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
+    """Compose and execute a complete Deckard experiment.
+
+    An experiment coordinates data loading, optional defense application, model
+    training or loading, adversarial attack execution, scoring, and artifact
+    persistence through ``FileConfig``.
+    """
+
     data: Union[DataConfig, DataPipelineConfig]
     experiment_name: str = "{hash}"
     model: ModelConfig = None
@@ -597,6 +612,7 @@ class ExperimentConfig(DataConfigResolutionMixin, ConfigBase):
 
 
 class SurvivalExperimentConfig(ExperimentConfig):
+    """ExperimentConfig specialization for survival-analysis workflows."""
     """Experiment configuration tailored for survival analyses.
 
     This config enforces that both `data` and `model` are provided and valid,

@@ -1,3 +1,10 @@
+"""Shared utility layer for Deckard's public Python API.
+
+This module contains the base configuration protocol used across the project,
+stable hashing helpers for config identity, file IO helpers, and utility
+functions for dynamically resolving and instantiating classes.
+"""
+
 import logging
 import argparse
 import inspect
@@ -16,6 +23,19 @@ from hydra.utils import instantiate, get_class
 from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "ConfigBase",
+    "normalize_for_hash",
+    "hash_conf_values",
+    "data_supported_filetypes",
+    "save_data",
+    "load_data",
+    "import_class_from_file",
+    "resolve_class",
+    "load_class",
+    "create_parser_from_function",
+]
 
 
 def _canonicalize_for_hash(value):
@@ -114,6 +134,13 @@ data_supported_filetypes = [
 
 @dataclass
 class ConfigBase:
+    """Base class for Deckard configuration objects.
+
+    ``ConfigBase`` provides a common lifecycle for config dataclasses: argument
+    hydration, post-init hooks, stable hashing based on configuration state, and
+    serialization helpers used throughout Deckard.
+    """
+
     # _target_: str = "deckard.utils.ConfigBase"
     score_dict: dict = field(default_factory=dict)
     HASH_EXCLUDE_FIELDS = {
@@ -573,6 +600,7 @@ def save_data(
     filepath: Union[str, None] = None,
     **kwargs,
 ) -> None:
+    """Persist tabular data to one of Deckard's supported file formats."""
     supported_filetypes = [
         ".csv",
         ".parquet",
@@ -672,6 +700,7 @@ def import_class_from_file(
     instantiate_class: bool = True,
     **kwargs,
 ):
+    """Import a class from a Python file path and optionally instantiate it."""
     file_path = Path(file_path).resolve()
 
     if not file_path.exists():
@@ -720,6 +749,7 @@ def resolve_class(cls: str):
 
 
 def load_class(cls, *args, **kwargs):
+    """Instantiate a class from a class object, dotted import path, or file path."""
     if isinstance(cls, type):
         return cls(*args, **kwargs)
 
@@ -734,6 +764,55 @@ def load_class(cls, *args, **kwargs):
     if args:
         instantiate_kwargs["_args_"] = list(args)
     return instantiate({"_target_": cls, **instantiate_kwargs})
+
+
+def _extract_param_help_from_docstring(docstring: str) -> dict[str, str]:
+    """Parse NumPy-style ``Parameters`` doc blocks into ``name -> help`` text."""
+    if not docstring:
+        return {}
+
+    lines = docstring.splitlines()
+    in_params = False
+    current_name = None
+    current_desc: list[str] = []
+    help_map: dict[str, str] = {}
+
+    def _flush_current():
+        nonlocal current_name, current_desc
+        if current_name:
+            description = " ".join(part.strip() for part in current_desc if part.strip())
+            if description:
+                help_map[current_name] = description
+        current_name = None
+        current_desc = []
+
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+
+        if not in_params:
+            if stripped == "Parameters":
+                next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                if set(next_line) == {"-"} and len(next_line) >= 3:
+                    in_params = True
+                    i += 2
+                    continue
+        else:
+            if stripped in {"Returns", "Raises", "Notes", "Examples", "See Also"}:
+                _flush_current()
+                break
+
+            # Parameter declaration line: "name : type" or "name: type"
+            if stripped and not lines[i].startswith((" ", "\t")) and (":" in stripped):
+                _flush_current()
+                current_name = stripped.split(":", 1)[0].strip()
+            elif current_name is not None:
+                current_desc.append(stripped)
+
+        i += 1
+
+    _flush_current()
+    return help_map
 
 
 def create_parser_from_function(
@@ -767,16 +846,33 @@ def create_parser_from_function(
     argparse.ArgumentParser
         The updated parser with arguments corresponding to the function's signature.
     """
+    if not callable(func):
+        raise ValueError(f"func must be callable. Got {type(func)}")
+
     if exclude is None:
         exclude = []
+
+    docstring = inspect.getdoc(func)
+    parser_description = None
+    param_help = {}
+    if docstring:
+        parser_description = docstring.split("\n\n", 1)[0].strip()
+        param_help = _extract_param_help_from_docstring(docstring)
+
     # Validate the parser
     conflict_handler = kwargs.pop("conflict_handler", "resolve")
     add_help = kwargs.pop("add_help", False)
+    formatter_class = kwargs.pop(
+        "formatter_class",
+        argparse.RawDescriptionHelpFormatter,
+    )
     if parser is None:
         parser = argparse.ArgumentParser(
             **kwargs,
             conflict_handler=conflict_handler,
             add_help=add_help,
+            description=parser_description,
+            formatter_class=formatter_class,
         )
     else:
         if len(kwargs) > 0:
@@ -785,6 +881,8 @@ def create_parser_from_function(
             raise ValueError(
                 f"parser must be an instance of argparse.ArgumentParser or None. Got {type(parser)}",
             )
+        if parser.description in [None, ""] and parser_description:
+            parser.description = parser_description
     sig = inspect.signature(func)
     for name, param in sig.parameters.items():
         if name == "self" or name in exclude:
@@ -793,8 +891,19 @@ def create_parser_from_function(
             arg_type = param.annotation
         else:
             arg_type = str  # Default to string if no annotation
+        help_text = param_help.get(name)
         if param.default is inspect._empty:
-            parser.add_argument(f"--{name}", type=arg_type, required=True)
+            parser.add_argument(
+                f"--{name}",
+                type=arg_type,
+                required=True,
+                help=help_text,
+            )
         else:
-            parser.add_argument(f"--{name}", type=arg_type, default=param.default)
+            parser.add_argument(
+                f"--{name}",
+                type=arg_type,
+                default=param.default,
+                help=help_text,
+            )
     return parser
