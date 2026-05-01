@@ -7,6 +7,7 @@ from typing import Optional
 
 import optuna
 import yaml
+from omegaconf import OmegaConf
 from tqdm.auto import tqdm
 
 from ..utils import create_parser_from_function
@@ -318,15 +319,46 @@ def _get_hydra_sweeper_config(hydra_cfg_file: str) -> tuple:
     assert cfg_path.exists(), f"Missing Hydra config: {cfg_path}"
 
     with cfg_path.open("r") as f:
-        raw_cfg = yaml.safe_load(f) or {}
+        loaded_cfg = yaml.safe_load(f) or {}
 
-    hydra_section = raw_cfg.get("hydra", raw_cfg)
+    if not isinstance(loaded_cfg, dict):
+        raise ValueError(f"Expected mapping at root of Hydra config: {cfg_path}")
+
+    raw_cfg = loaded_cfg
+
+    resolved_cfg = raw_cfg
+    try:
+        maybe_resolved = OmegaConf.to_container(
+            OmegaConf.create(raw_cfg),
+            resolve=True,
+        )
+        if isinstance(maybe_resolved, dict):
+            resolved_cfg = maybe_resolved
+    except Exception as exc:
+        logger.warning(
+            "Could not fully resolve interpolations in %s (%s); using unresolved values.",
+            cfg_path,
+            exc,
+        )
+
+    hydra_section = resolved_cfg.get("hydra", {})
+    if not isinstance(hydra_section, dict):
+        hydra_section = {}
+
+    if "sweeper" not in hydra_section and "sweeper" in resolved_cfg:
+        # Support configs where sweeper is top-level instead of under hydra.
+        hydra_section = resolved_cfg
+
     sweeper = hydra_section.get("sweeper", {})
+    if not isinstance(sweeper, dict):
+        sweeper = {}
+
     storage = sweeper.get("storage")
+
     n_trials = int(sweeper.get("n_trials", 100))
     sampler_target = str(sweeper.get("sampler", {}).get("_target_", ""))
-    is_grid_sampler = "GridSampler" in sampler_target
-
+    defaults = resolved_cfg.get("defaults", [])
+    is_grid_sampler = "GridSampler" in sampler_target or "grid" in str(defaults)
     if is_grid_sampler:
         grid_n_trials = _calculate_grid_search_n_trials(sweeper.get("params", {}))
         if grid_n_trials is not None:
