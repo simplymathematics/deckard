@@ -1,0 +1,13 @@
+data: ${data}
+model: ${model}
+_target_ : deckard.base.attack.Attack
+init:
+    model: ${model}
+    _target_: deckard.base.attack.AttackInitializer
+    name: art.attacks.evasion.FastGradientMethod
+    eps: .99
+    batch_size : ${model.trainer.batch_size}
+    targeted : false
+    minimal : true
+attack_size : 10
+method : evasion

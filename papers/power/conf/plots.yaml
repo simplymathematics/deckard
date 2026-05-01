@@ -1,0 +1,63 @@
+# cat_plot:
+# - file: Device_vs_adv_accuracy.pdf
+#   hue: device_id
+#   kind: "box"
+#   set:
+#     yscale: linear
+#   titles: Adversarial Accuracy vs Device
+#   x: device_id
+#   xlabels: Attack Distance
+#   y: adv_accuracy
+#   ylabels: Adv. Accuracy
+#   rotation : 90
+#   hue_order:
+#   - nvidia-tesla-p100
+#   - nvidia-tesla-v100
+
+line_plot:
+- file: train_time_vs_accuracy.pdf
+  hue: device_id
+  legend: {"bbox_to_anchor": [1.05, 1], "title": "Train Time"}
+  title:  Train Time vs Ben. Accuracy
+  x: train_time
+  x_scale: linear 
+  xlabel: Train Time
+  y: accuracy
+  y_scale: 
+  ylabel: $Ben. Accuracy$
+  hue_order:
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
+  - "Nvidia L4"
+scatter_plot:
+- x: train_time_per_sample
+  y: adv_failure_rate
+  hue: device_id
+  xlabel: $t_{train}$
+  ylabel: $f_{adv}$
+  title: $f_{adv}$ vs $t_{train}$
+  file: adv_failure_rate_vs_train_time.pdf
+  y_scale: log
+  x_scale: log
+  legend: 
+    title: Hardware Device
+    bbox_to_anchor: [1.05, 1]
+  hue_order:
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
+- x: train_time_per_sample
+  y: failure_rate
+  hue: device_id
+  xlabel: $t_{train}$
+  ylabel: $f_{ben}$
+  title: $f_{adv}$ vs $t_{train}$
+  file: ben_failure_rate_vs_train_time.pdf
+  y_scale: log
+  x_scale: log
+  legend: 
+    title: Hardware Device
+    bbox_to_anchor: [1.05, 1]
+  hue_order:
+  - "Nvidia Tesla V100"
+  - "Nvidia Tesla P100"
+  - 

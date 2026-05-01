@@ -1,0 +1,25 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "hostRequirements": {
+    "cpus": 32
+  },
+  "waitFor": "onCreateCommand",
+  "updateContentCommand": "bash setup.sh",
+  "postCreateCommand": "",
+  "customizations": {
+    "codespaces": {
+      "openFiles": []
+    },
+    "vscode": {
+      "extensions": [
+        "ms-toolsai.jupyter",
+        "ms-python.python"
+      ]
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/nvidia-cuda:1": {
+        "installCudnn": true
+      }
+    }
+  }
+}
