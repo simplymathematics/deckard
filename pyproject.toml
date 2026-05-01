@@ -23,6 +23,7 @@ dependencies = [
     "hydra-joblib-launcher",
     "hydra-optuna-sweeper @ git+https://github.com/simplymathematics/hydra-optuna-sweeper.git",
     "optuna>=3",
+    "paretoset",
 ]
 
 [build-system]
@@ -100,6 +101,7 @@ all  = [
     "matplotlib",
     "dvc",
     "optuna",
+    "paretoset",
     "ipykernel",
     "kagglehub",
     "sphinx",
