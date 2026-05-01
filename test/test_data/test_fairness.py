@@ -179,6 +179,9 @@ class TestFairnessDataConfigHashStability:
             config,
             ConfigBase,
         ), "FairnessDataConfig should inherit from ConfigBase"
-        assert hasattr(config, "__hash__"), "FairnessDataConfig should have __hash__ method"
+        assert hasattr(
+            config,
+            "__hash__",
+        ), "FairnessDataConfig should have __hash__ method"
         # Note: FairnessDataConfig may have unhashable runtime fields like _groups
         # so we verify the infrastructure is in place rather than attempting full hash

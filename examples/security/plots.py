@@ -57,7 +57,17 @@ def load_trial_frame(logs_dir: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _safe_lineplot(df: pd.DataFrame, x: str, y: str, style: str, output_name: str, xlabel: str, ylabel: str, xlog: bool = False, ylog: bool = False) -> None:
+def _safe_lineplot(
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    style: str,
+    output_name: str,
+    xlabel: str,
+    ylabel: str,
+    xlog: bool = False,
+    ylog: bool = False,
+) -> None:
     if any(col not in df.columns for col in [x, y, style]):
         logger.warning("Skipping %s due to missing columns", output_name)
         return

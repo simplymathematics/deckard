@@ -13,7 +13,7 @@ from pathlib import Path
 from . import DECKARD_CONFIG_DIR, DECKARD_DEFAULT_CONFIG_FILE
 
 from .layers import SUPPORTED_LAYERS, layer_dict
-from .experiment import ExperimentConfig
+from .experiment import ExperimentConfig  # NOQA F401
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -95,7 +95,8 @@ def get_configuration_paths():
 def _build_router() -> argparse.ArgumentParser:
     """Minimal routing parser: recognises the subcommand name and passes everything else through."""
     parser = argparse.ArgumentParser(
-        prog="deckard", description="Deckard command-line interface"
+        prog="deckard",
+        description="Deckard command-line interface",
     )
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:
@@ -123,7 +124,7 @@ def main():
         generate_hydra_main(module)
     else:
         raise ValueError(
-            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}"
+            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}",
         )
 
 

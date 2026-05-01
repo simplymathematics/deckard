@@ -55,7 +55,8 @@ def _canonicalize_for_hash(value):
     if isinstance(value, (set, frozenset)):
         items = [_canonicalize_for_hash(v) for v in value]
         return sorted(
-            items, key=lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"))
+            items,
+            key=lambda x: json.dumps(x, sort_keys=True, separators=(",", ":")),
         )
 
     if isinstance(value, Path):

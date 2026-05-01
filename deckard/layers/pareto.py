@@ -53,7 +53,9 @@ def _resolve_study(optuna_db: str, study_name: Optional[str]) -> optuna.study.St
         )
 
     inferred_name = getattr(
-        summaries[0], "study_name", getattr(summaries[0], "name", None)
+        summaries[0],
+        "study_name",
+        getattr(summaries[0], "name", None),
     )
     if inferred_name is None:
         raise ValueError("Could not infer study name from summary")
@@ -62,7 +64,8 @@ def _resolve_study(optuna_db: str, study_name: Optional[str]) -> optuna.study.St
 
 
 def _infer_default_optimizers(
-    study: optuna.study.Study, trials_df: pd.DataFrame
+    study: optuna.study.Study,
+    trials_df: pd.DataFrame,
 ) -> list[str]:
     metric_names = list(getattr(study, "metric_names", []) or [])
     if len(metric_names) > 0:
@@ -175,7 +178,8 @@ def _objective_to_column(
 
 
 def _coerce_objective_columns_numeric(
-    trial_df: pd.DataFrame, objective_columns: list[str]
+    trial_df: pd.DataFrame,
+    objective_columns: list[str],
 ) -> pd.DataFrame:
     result = trial_df.copy()
     for col in objective_columns:

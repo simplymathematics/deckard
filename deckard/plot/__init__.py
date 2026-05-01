@@ -8,7 +8,7 @@ dependencies.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Union, Optional
+from typing import Union
 
 from ..utils import ConfigBase
 from ..experiment import ExperimentConfig

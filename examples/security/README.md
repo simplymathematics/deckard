@@ -35,4 +35,3 @@ deckard optimize \
   ++model.model_params.kernel=rbf \
   --multirun
 ```
-

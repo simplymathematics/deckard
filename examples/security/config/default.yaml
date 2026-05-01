@@ -51,4 +51,3 @@ hydra:
       study_name: ${hydra.sweeper.study_name}
       directions: ${directions}
       optimizers: ${optimizers}
-

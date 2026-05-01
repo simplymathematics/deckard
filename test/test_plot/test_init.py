@@ -5,8 +5,8 @@ import pytest
 pytest.importorskip("seaborn")
 pytest.importorskip("yellowbrick")
 
-from deckard.plot import PlotConfig  # noqa 402
-from deckard.utils import ConfigBase
+from deckard.plot import PlotConfig  # noqa E402
+from deckard.utils import ConfigBase  # noqa E402
 
 
 class TestPlotConfig(unittest.TestCase):
@@ -149,10 +149,10 @@ class TestPlotConfig(unittest.TestCase):
         plot_cfg_new = PlotConfig.__new__(PlotConfig)
         plot_cfg_new.kwargs = {"plot_type": "confusion_matrix"}
         plot_cfg_new.config = None  # Prevent config instantiation
-        
+
         # Verify PlotConfig inherits from ConfigBase
         self.assertTrue(isinstance(plot_cfg_new, ConfigBase))
-        
+
         # Verify it has the hash method
         self.assertTrue(hasattr(plot_cfg_new, "__hash__"))
 

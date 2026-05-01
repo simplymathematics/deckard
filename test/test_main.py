@@ -1,7 +1,6 @@
 import importlib
 import sys
 from argparse import Namespace
-from pathlib import Path
 import pytest
 
 
@@ -113,7 +112,6 @@ def test_build_router_includes_supported_layers(main_module):
     subcommands = set(subparser_action.choices.keys())
 
     assert set(main_module.SUPPORTED_LAYERS).issubset(subcommands)
-
 
 
 def test_generate_hydra_main_rejects_unknown_layer(main_module):

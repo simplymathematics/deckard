@@ -24,7 +24,11 @@ class OptunaStudyCallback(HydraCallback):
     """Hydra-native callback that syncs study setup and metric names for multirun."""
 
     def __init__(
-        self, study_name: str, storage: str, directions: list, optimizers: list
+        self,
+        study_name: str,
+        storage: str,
+        directions: list,
+        optimizers: list,
     ):
         self.study_name = study_name
         self.storage = storage
@@ -93,7 +97,8 @@ class OptunaStudyCallback(HydraCallback):
             return
 
         score_payload = _extract_scores_from_job_end_kwargs(
-            job_return=job_return, kwargs=kwargs
+            job_return=job_return,
+            kwargs=kwargs,
         )
         if score_payload is None:
             return
@@ -261,7 +266,8 @@ def optimize_main(
     else:
         cfg_dict = OmegaConf.to_container(OmegaConf.create(cfg), resolve=False)
     assert isinstance(
-        cfg_dict, dict
+        cfg_dict,
+        dict,
     ), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
     if _is_multirun_mode(hydra_cfg):

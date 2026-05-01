@@ -225,7 +225,7 @@ def _unwrap_outer_call(expr: str, func_name: str) -> Optional[str]:
     prefix = f"{func_name}("
     if not (expr.startswith(prefix) and expr.endswith(")")):
         return None
-    return expr[len(prefix) : -1].strip()
+    return expr[len(prefix) : -1].strip()  # Noqa E203
 
 
 def _safe_float(value: str) -> Optional[float]:

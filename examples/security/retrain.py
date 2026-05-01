@@ -76,7 +76,9 @@ def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
         clf.fit(X_train, y_train_cat)
         ben_time = (process_time() - start) / len(X_train)
         ben_predictions = clf.predict(X_test)
-        ben_score = np.mean(np.argmax(ben_predictions, axis=1) == np.argmax(y_test_cat, axis=1))
+        ben_score = np.mean(
+            np.argmax(ben_predictions, axis=1) == np.argmax(y_test_cat, axis=1),
+        )
         ben_loss = np.mean(ben_predictions[:, 0] - y_test_cat[:, 0])
 
         logger.info("Epoch: %s - Adversarial Training", i)
@@ -85,7 +87,8 @@ def retrain_loop(clf, X_train, y_train, X_test, y_test, atk, attack_size, epochs
         adv_time = (process_time() - start) / attack_size
         adv_predictions = clf.predict(adv)
         adv_score = np.mean(
-            np.argmax(adv_predictions, axis=1) == np.argmax(y_test_cat[:attack_size], axis=1),
+            np.argmax(adv_predictions, axis=1)
+            == np.argmax(y_test_cat[:attack_size], axis=1),
         )
         adv_loss = np.mean(adv_predictions[:, 0] - y_test_cat[:attack_size, 0])
 

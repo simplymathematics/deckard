@@ -1,7 +1,6 @@
 # A BaseConfig class for Configuration of Models using adversarial-robustness-toolbox (ART)
 # https://adversarial-robustness-toolbox.readthedocs.io/en/latest
 
-import pandas as pd
 import time
 import logging
 import warnings
@@ -284,7 +283,7 @@ class _DefenseBehaviorMixin:
     def get_art_class(self, data):
         if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
             raise ValueError(
-                "model_type must be set before creating an ART defense estimator"
+                "model_type must be set before creating an ART defense estimator",
             )
         assert self.model_type is not None
         art_class = (

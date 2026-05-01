@@ -326,7 +326,10 @@ def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     assert conf.files.post_init_calls == 1
 
 
-def test_optimize_multirun_relies_on_callback_for_params_and_scores(monkeypatch, tmp_path):
+def test_optimize_multirun_relies_on_callback_for_params_and_scores(
+    monkeypatch,
+    tmp_path,
+):
     class MultirunConf:
         def __init__(self):
             self.files = DummyFiles(tmp_path)
@@ -365,7 +368,10 @@ def test_optimize_multirun_relies_on_callback_for_params_and_scores(monkeypatch,
     assert not (tmp_path / "params.yaml").exists()
 
 
-def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(monkeypatch, tmp_path):
+def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
+    monkeypatch,
+    tmp_path,
+):
     hydra_cfg = SimpleNamespace(
         mode="RunMode.MULTIRUN",
         sweeper={"storage": "sqlite:///study.sqlite3", "study_name": "demo-study"},
@@ -481,7 +487,11 @@ def test_set_trial_attributes_skips_when_experiment_uuid_missing(caplog):
         study_name="demo-study",
         _storage=storage,
         get_trials=lambda deepcopy=False: [
-            DummyTrial(number=1, trial_id=11, user_attrs={"experiment_name": "different_hash"}),
+            DummyTrial(
+                number=1,
+                trial_id=11,
+                user_attrs={"experiment_name": "different_hash"},
+            ),
         ],
     )
 
