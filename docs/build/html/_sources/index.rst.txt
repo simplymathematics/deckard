@@ -13,4 +13,5 @@ Use the sections below to explore the different modules.
    :maxdepth: 2
    :caption: Contents:
 
+   package
    modules

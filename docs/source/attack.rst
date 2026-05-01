@@ -47,7 +47,7 @@ You can run attacks directly from the terminal:
 .. code-block:: bash
 
    # from the project root
-   python -m deckard.attack --attack_config_file blackbox_evasion --attack_size 50
+   python -m deckard optimize --config-name experiment attack.attack_size=50
 
 
 Programmatic example:
@@ -94,7 +94,7 @@ Example inline overrides:
 
 .. code-block:: bash
 
-   python -m deckard.attack --attack_name art.attacks.evasion.HopSkipJump --attack_size 100 --attack_params.max_iter 10 --attack_params.max_eval 100 --attack_params.init_eval 10 --attack_params.verbose True
+   python -m deckard optimize --config-name experiment attack.attack_name=art.attacks.evasion.HopSkipJump attack.attack_size=100 attack.attack_params.max_iter=10 attack.attack_params.max_eval=100 attack.attack_params.init_eval=10 attack.attack_params.verbose=True
 
 Internals
 ---------

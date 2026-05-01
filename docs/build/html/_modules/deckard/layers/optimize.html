@@ -94,7 +94,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">OptunaStudyCallback</span><span class="p">(</span><span class="n">HydraCallback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Hydra-native callback that syncs study setup and metric names for multirun.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">study_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">storage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">study_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">storage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">study_name</span> <span class="o">=</span> <span class="n">study_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">storage</span> <span class="o">=</span> <span class="n">storage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">directions</span> <span class="o">=</span> <span class="n">directions</span>
@@ -102,6 +108,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">study</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_multirun_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the Optuna study and initialize objective metric names.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">study</span> <span class="o">=</span> <span class="n">create_study</span><span class="p">(</span>
             <span class="n">study_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">study_name</span><span class="p">,</span>
             <span class="n">storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">,</span>
@@ -115,13 +122,15 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_compose_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare per-job naming and output paths for multirun composition.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_multirun_mode</span><span class="p">(</span><span class="n">HydraConfig</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
             <span class="k">return</span>
         <span class="n">hydra_cfg</span> <span class="o">=</span> <span class="n">HydraConfig</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
         <span class="n">_assert_multirun_sweeper</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">)</span>
         <span class="n">_prepare_multirun_cfg</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">hydra_cfg</span><span class="p">,</span> <span class="n">include_file_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">on_multirun_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure metric names remain attached after the multirun completes.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">study</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">set_study_metric_names</span><span class="p">(</span>
@@ -131,6 +140,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_job_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist the per-job parameter snapshot before execution.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_multirun_mode</span><span class="p">(</span><span class="n">HydraConfig</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
             <span class="k">return</span>
         <span class="n">files_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;files&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -152,6 +162,7 @@
         <span class="n">job_return</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist per-job score payload after execution when available.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_multirun_mode</span><span class="p">(</span><span class="n">HydraConfig</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
             <span class="k">return</span>
         <span class="n">files_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;files&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -161,7 +172,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">score_file</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">score_payload</span> <span class="o">=</span> <span class="n">_extract_scores_from_job_end_kwargs</span><span class="p">(</span><span class="n">job_return</span><span class="o">=</span><span class="n">job_return</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">score_payload</span> <span class="o">=</span> <span class="n">_extract_scores_from_job_end_kwargs</span><span class="p">(</span>
+            <span class="n">job_return</span><span class="o">=</span><span class="n">job_return</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">score_payload</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -194,7 +208,9 @@
     <span class="n">sweeper</span> <span class="o">=</span> <span class="n">_get_sweeper_cfg</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">sweeper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Sweeper must be specified in multirun mode.&quot;</span>
     <span class="k">assert</span> <span class="s2">&quot;storage&quot;</span> <span class="ow">in</span> <span class="n">sweeper</span><span class="p">,</span> <span class="s2">&quot;Storage must be specified in the sweeper config.&quot;</span>
-    <span class="k">assert</span> <span class="s2">&quot;study_name&quot;</span> <span class="ow">in</span> <span class="n">sweeper</span><span class="p">,</span> <span class="s2">&quot;Study name must be specified in the sweeper config.&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="s2">&quot;study_name&quot;</span> <span class="ow">in</span> <span class="n">sweeper</span>
+    <span class="p">),</span> <span class="s2">&quot;Study name must be specified in the sweeper config.&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_multirun_paths</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -249,7 +265,7 @@
     <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">hydra_cfg</span><span class="p">,</span>
     <span class="n">conf_obj</span><span class="p">:</span> <span class="n">ExperimentConfig</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handles optimization in multirun mode.</span>
 
@@ -293,7 +309,11 @@
     <span class="k">return</span> <span class="n">filtered_scores</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">set_study_attributes</span><span class="p">(</span><span class="n">study</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_study_attributes</span><span class="p">(</span>
+    <span class="n">study</span><span class="p">:</span> <span class="n">optuna</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">Study</span><span class="p">,</span>
+    <span class="n">attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">DictConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attach user attributes to an Optuna study.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -327,7 +347,10 @@
         <span class="n">cfg_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">cfg</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;cfg must resolve to a dictionary. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg_dict</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">cfg_dict</span><span class="p">,</span>
+        <span class="nb">dict</span><span class="p">,</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;cfg must resolve to a dictionary. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg_dict</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="k">if</span> <span class="n">_is_multirun_mode</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">):</span>
         <span class="n">_assert_multirun_sweeper</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">)</span>
@@ -350,7 +373,11 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">prepare_multirun_file_paths</span><span class="p">(</span><span class="n">hydra_cfg</span><span class="p">,</span> <span class="n">conf_obj</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_multirun_file_paths</span><span class="p">(</span>
+    <span class="n">hydra_cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">conf_obj</span><span class="p">:</span> <span class="n">ExperimentConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExperimentConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Populate standard output file paths for a Hydra multirun job.&quot;&quot;&quot;</span>
     <span class="n">current_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">conf_obj</span><span class="p">,</span> <span class="s2">&quot;experiment_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">current_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">current_name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">conf_obj</span><span class="p">,</span> <span class="s2">&quot;to_dict&quot;</span><span class="p">):</span>
@@ -375,7 +402,13 @@
     <span class="k">return</span> <span class="n">conf_obj</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">create_study</span><span class="p">(</span><span class="n">study_name</span><span class="p">,</span> <span class="n">storage</span><span class="p">,</span> <span class="n">directions</span><span class="p">,</span> <span class="n">optimizers</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_study</span><span class="p">(</span>
+    <span class="n">study_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">storage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">ListConfig</span><span class="p">,</span>
+    <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">ListConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">optuna</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">Study</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create or load an Optuna study after filtering non-optimizing objectives.&quot;&quot;&quot;</span>
     <span class="n">directions</span><span class="p">,</span> <span class="n">optimizers</span> <span class="o">=</span> <span class="n">_filter_optuna_objectives</span><span class="p">(</span><span class="n">directions</span><span class="p">,</span> <span class="n">optimizers</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">directions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
         <span class="n">optimizers</span><span class="p">,</span>
@@ -448,7 +481,12 @@
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">filtered_directions</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">filtered_optimizers</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">set_study_metric_names</span><span class="p">(</span><span class="n">study</span><span class="p">,</span> <span class="n">optimizers</span><span class="p">,</span> <span class="n">directions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_study_metric_names</span><span class="p">(</span>
+    <span class="n">study</span><span class="p">,</span>
+    <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">ListConfig</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">ListConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set Optuna metric names using optimizer keys after direction filtering.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">):</span>
         <span class="n">optimizers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">optimizers</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -469,7 +507,8 @@
         <span class="n">study</span><span class="o">.</span><span class="n">set_metric_names</span><span class="p">(</span><span class="n">optimizers</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">set_trial_attributes</span><span class="p">(</span><span class="n">study</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_trial_attributes</span><span class="p">(</span><span class="n">study</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist per-trial user attributes for the trial matching an experiment hash.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -482,7 +521,11 @@
     <span class="n">exp_uuid</span> <span class="o">=</span> <span class="n">_ensure_experiment_hash</span><span class="p">(</span><span class="n">experiment_name</span><span class="p">)</span>
     <span class="n">trials</span> <span class="o">=</span> <span class="n">study</span><span class="o">.</span><span class="n">get_trials</span><span class="p">(</span><span class="n">deepcopy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">trial</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trials</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;user_attrs&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment_name&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp_uuid</span><span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">t</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trials</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;user_attrs&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;experiment_name&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp_uuid</span>
+        <span class="p">),</span>
         <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -517,7 +560,8 @@
             <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">save_params_file</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">files</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_params_file</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DictConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist run parameters to ``files[&#39;params_file&#39;]`` and return DictConfig.&quot;&quot;&quot;</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;params_file&quot;</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
@@ -528,7 +572,11 @@
     <span class="k">return</span> <span class="n">cfg</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">filter_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_scores</span><span class="p">(</span>
+    <span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">optimizers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">directions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview</span>
 <span class="sd">    ---</span>

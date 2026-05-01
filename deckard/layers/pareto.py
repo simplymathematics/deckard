@@ -211,7 +211,7 @@ def pareto_main(
     optimizers: str = None,
     directions: str = None,
     top_k: int = 1,
-):
+) -> None:
     """Select best Optuna trials by one or more optimization criteria.
 
     Parameters

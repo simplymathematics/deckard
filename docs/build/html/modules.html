@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Experiment" href="experiment.html" />
-    <link rel="prev" title="deckard documentation" href="index.html" /> 
+    <link rel="prev" title="Package Overview" href="package.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,13 +44,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">deckard</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
@@ -91,10 +92,18 @@
 <li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.DataConfigResolutionMixin"><code class="docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="experiment.html#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="file.html">File</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="file.html#deckard.file.FileConfig"><code class="docutils literal notranslate"><span class="pre">FileConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="data.html">Data</a><ul>
@@ -103,6 +112,7 @@
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.FairnessDataConfig"><code class="docutils literal notranslate"><span class="pre">FairnessDataConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchCustomDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchCustomDataConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#deckard.data.PytorchDataConfig"><code class="docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#extensions">Extensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html#internals">Internals</a></li>
@@ -115,6 +125,7 @@
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.FairnessModelConfig"><code class="docutils literal notranslate"><span class="pre">FairnessModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#deckard.model.PytorchModelConfig"><code class="docutils literal notranslate"><span class="pre">PytorchModelConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#extensions">Extensions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#usage">Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html#internals">Internals</a></li>
@@ -131,8 +142,12 @@
 <li class="toctree-l2"><a class="reference internal" href="attack.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="plot.html">plot</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="plot.html#plotting-apis">Plotting APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="score.html">Score</a><ul>
@@ -140,6 +155,10 @@
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.DefaultRegressorDict"><code class="docutils literal notranslate"><span class="pre">DefaultRegressorDict</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a><ul>
@@ -152,6 +171,10 @@
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.normalize_for_hash"><code class="docutils literal notranslate"><span class="pre">normalize_for_hash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.resolve_class"><code class="docutils literal notranslate"><span class="pre">resolve_class()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html#deckard.utils.save_data"><code class="docutils literal notranslate"><span class="pre">save_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a><ul>
@@ -162,6 +185,10 @@
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.plot_main"><code class="docutils literal notranslate"><span class="pre">plot_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.progress_bar_main"><code class="docutils literal notranslate"><span class="pre">progress_bar_main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html#deckard.layers.survival_main"><code class="docutils literal notranslate"><span class="pre">survival_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 </ul>
@@ -172,7 +199,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="deckard documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="package.html" class="btn btn-neutral float-left" title="Package Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="experiment.html" class="btn btn-neutral float-right" title="Experiment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

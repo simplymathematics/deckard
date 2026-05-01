@@ -2,7 +2,7 @@ import warnings
 import optuna
 import logging
 import pandas as pd
-from typing import Union
+from typing import Any, Union
 from pathlib import Path
 import yaml
 
@@ -14,8 +14,27 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 logger = logging.getLogger(__name__)
 
 
-def parse_study_name(study_name: str, schema: Union[dict, str] = {}) -> pd.DataFrame:
-    """Parses a study name using a dictionary, returning a pd.DataFrame with columns dictated by the schema keys and values given by the schema variables"""
+def parse_study_name(
+    study_name: str,
+    schema: Union[dict[str, Any], str, None] = None,
+) -> pd.DataFrame:
+    """Parse Optuna study metadata from a study name.
+
+    Parameters
+    ----------
+    study_name : str
+        Study name to parse.
+    schema : dict[str, Any] | str
+        Mapping of output column names to indices/ranges, or a YAML file path
+        containing a ``schema`` mapping.
+
+    Returns
+    -------
+    pd.DataFrame
+        Single-row dataframe with parsed metadata columns.
+    """
+    if schema is None:
+        schema = {}
     if isinstance(schema, str):
         assert Path(
             schema,
@@ -49,7 +68,8 @@ def parse_study_name(study_name: str, schema: Union[dict, str] = {}) -> pd.DataF
     return meta_df
 
 
-def clean_column_names(df):
+def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize Optuna trial dataframe column prefixes for reporting."""
     cols = df.columns
     clean_cols = []
     for col in cols:
@@ -68,7 +88,8 @@ def clean_column_names(df):
     return df
 
 
-def parse_studies(optuna_db: str, schema: Union[str, dict]) -> pd.DataFrame:
+def parse_studies(optuna_db: str, schema: Union[str, dict[str, Any]]) -> pd.DataFrame:
+    """Load and merge all studies from an Optuna storage into one dataframe."""
     studies = optuna.study.get_all_study_summaries(storage=optuna_db)
     assert len(studies) > 0, f"No studies found in {optuna_db}"
     df = pd.DataFrame()
@@ -84,8 +105,22 @@ def parse_studies(optuna_db: str, schema: Union[str, dict]) -> pd.DataFrame:
     return df
 
 
-def compile_results_main(output_file: str, optuna_db: str, schema: str = None):
-    """Compile Optuna studies into a single tabular results file."""
+def compile_results_main(
+    output_file: str,
+    optuna_db: str,
+    schema: Union[str, dict[str, Any], None] = None,
+) -> None:
+    """Compile Optuna studies into a single tabular results file.
+
+    Parameters
+    ----------
+    output_file : str
+        Destination path for compiled results.
+    optuna_db : str
+        Optuna storage URI.
+    schema : str | dict[str, Any] | None, optional
+        Optional schema map (or file path) for parsing study names.
+    """
     # Check if schema is string or dict
     if schema is not None:
         schema_yaml = yaml.safe_dump(schema)

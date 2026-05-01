@@ -10,6 +10,29 @@ and integration with the :mod:`deckard.data` module.
    :members:
    :show-inheritance:
 
+Extensions
+----------
+
+Fairness Extension
+~~~~~~~~~~~~~~~~~~
+
+The fairness extension provides fairness-aware model behavior, including
+group-sensitive fitting, scoring, and fairlearn defense wrappers.
+
+.. automodule:: deckard.model.fairness
+   :members:
+   :show-inheritance:
+
+Torch Extension
+~~~~~~~~~~~~~~~
+
+The torch extension provides PyTorch-native model training, prediction, and
+scoring through a ``ModelConfig``-compatible API.
+
+.. automodule:: deckard.model.pytorch
+   :members:
+   :show-inheritance:
+
 Overview
 --------
 
@@ -40,15 +63,16 @@ You can train and evaluate models directly from the terminal:
 .. code-block:: bash
 
    # Train and evaluate using defaults (Logistic Regression)
-   python -m deckard.model --model_filepath models/model.pkl
+   python -m deckard optimize --config-name experiment model.model_type=sklearn.linear_model.LogisticRegression
 
    # Override model type and parameters
-   python -m deckard.model \
-         --model_params model_type=sklearn.ensemble.RandomForestClassifier n_estimators=100 max_depth=5 \
-         --model_filepath models/rf.pkl
+   python -m deckard optimize --config-name experiment \
+      model.model_type=sklearn.ensemble.RandomForestClassifier \
+      model.model_params.n_estimators=100 \
+      model.model_params.max_depth=5
 
    # Use a custom Hydra/YAML configuration
-   python -m deckard.model --model_config_file configs/model/rf.yaml --data_config_file configs/data/adult.yaml
+   python -m deckard optimize --config-path configs --config-name experiment
 
 
 Programmatic example

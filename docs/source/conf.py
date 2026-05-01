@@ -29,6 +29,15 @@ extensions = [
     "myst_parser",  # (optional) Markdown support
 ]
 
+# Allow autodoc pages for optional extension modules to build without requiring
+# heavy/runtime-optional dependencies in the docs environment.
+autodoc_mock_imports = [
+    "fairlearn",
+    "torch",
+    "torchvision",
+    "torchaudio",
+]
+
 templates_path = []
 exclude_patterns = []
 

@@ -44,28 +44,24 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Experiment</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.DataConfigResolutionMixin"><code class="docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.attack"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.attack</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.classifier"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.classifier</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.data"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.data</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.defense"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.defense</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.experiment_name"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.experiment_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.files"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.files</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.library"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.library</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.model"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.model</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.random_state"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.random_state</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.score"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.score</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.set_device"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.set_device()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.set_random_seed"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.set_random_seed()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.duration_col"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.duration_col</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.event_col"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.event_col</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.survival_model"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.survival_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
@@ -74,7 +70,7 @@
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
@@ -131,56 +127,6 @@ data, model, defense, attack, files, and scorers into a single executable unit.
 <p>An experiment coordinates data loading, optional defense application, model
 training or loading, adversarial attack execution, scoring, and artifact
 persistence through <code class="docutils literal notranslate"><span class="pre">FileConfig</span></code>.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.attack">
-<span class="sig-name descname"><span class="pre">attack</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="attack.html#deckard.attack.AttackConfig" title="deckard.attack.base.AttackConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">AttackConfig</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.attack" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.classifier">
-<span class="sig-name descname"><span class="pre">classifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.classifier" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.data">
-<span class="sig-name descname"><span class="pre">data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><a class="reference internal" href="data.html#deckard.data.DataConfig" title="deckard.data.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a><span class="pre">,</span> <a class="reference internal" href="data.html#deckard.data.DataPipelineConfig" title="deckard.data.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a><span class="pre">]</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.data" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.defense">
-<span class="sig-name descname"><span class="pre">defense</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="model.html#deckard.model.DefenseConfig" title="deckard.model.defend.DefenseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefenseConfig</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.defense" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.experiment_name">
-<span class="sig-name descname"><span class="pre">experiment_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{hash}'</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.experiment_name" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.files">
-<span class="sig-name descname"><span class="pre">files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileConfig</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.files" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.library">
-<span class="sig-name descname"><span class="pre">library</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'sklearn'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'tensorflow'</span></code><span class="pre">,</span> <code class="docutils literal notranslate"><span class="pre">'pytorch'</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sklearn'</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.library" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.model">
-<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="model.html#deckard.model.ModelConfig" title="deckard.model.base.ModelConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelConfig</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.model" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.random_state">
-<span class="sig-name descname"><span class="pre">random_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">42</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.random_state" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.score">
-<span class="sig-name descname"><span class="pre">score</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="score.html#deckard.score.ScorerDictConfig" title="deckard.score.ScorerDictConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.experiment.ExperimentConfig.score" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.set_device">
 <span class="sig-name descname"><span class="pre">set_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#ExperimentConfig.set_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig.set_device" title="Link to this definition"></a></dt>
@@ -191,11 +137,6 @@ For TensorFlow, configures GPU/CPU usage.
 :type device: Union[str, int]</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.set_random_seed">
-<span class="sig-name descname"><span class="pre">set_random_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#ExperimentConfig.set_random_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig.set_random_seed" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -203,23 +144,64 @@ For TensorFlow, configures GPU/CPU usage.
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">SurvivalExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#SurvivalExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></p>
 <p>ExperimentConfig specialization for survival-analysis workflows.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig.duration_col">
-<span class="sig-name descname"><span class="pre">duration_col</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'T'</span></em><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig.duration_col" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig.event_col">
-<span class="sig-name descname"><span class="pre">event_col</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'E'</span></em><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig.event_col" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig.survival_model">
-<span class="sig-name descname"><span class="pre">survival_model</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'weibull'</span></em><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig.survival_model" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The experiment layer coordinates the full Deckard workflow by composing:</p>
+<ul class="simple">
+<li><p>data loading and sampling via <a class="reference internal" href="data.html#module-deckard.data" title="deckard.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.data</span></code></a></p></li>
+<li><p>model training/evaluation via <a class="reference internal" href="model.html#module-deckard.model" title="deckard.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.model</span></code></a></p></li>
+<li><p>optional attack execution via <a class="reference internal" href="attack.html#module-deckard.attack" title="deckard.attack"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.attack</span></code></a></p></li>
+<li><p>score aggregation and file outputs via <a class="reference internal" href="file.html#module-deckard.file" title="deckard.file"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.file</span></code></a></p></li>
+</ul>
+<p>It is the primary integration point for reproducible end-to-end runs.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="command-line-example">
+<h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
+<p>Run an experiment from the project root:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment
+</pre></div>
+</div>
+</section>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<p>Use the experiment config directly in Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentConfig</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">ExperimentConfig</span><span class="p">()</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<p>The module resolves nested config objects, applies runtime overrides, and
+normalizes outputs for downstream scoring/serialization.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Verify config paths and override keys when Hydra/OmegaConf resolution fails.</p></li>
+<li><p>Ensure optional dependencies are installed for selected model/attack backends.</p></li>
+<li><p>Check file output paths in <a class="reference internal" href="file.html#deckard.file.FileConfig" title="deckard.file.FileConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">deckard.file.FileConfig</span></code></a> if artifacts are missing.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+<li><p><a class="reference internal" href="file.html"><span class="doc">File</span></a></p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a></p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a></p></li>
+</ul>
+</section>
+</section>
 </section>
 
 

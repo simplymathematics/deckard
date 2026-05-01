@@ -3,7 +3,7 @@ import math
 import shlex
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import optuna
 import yaml
@@ -24,7 +24,20 @@ def _load_dvc_config(dvc_file: str) -> dict:
 
 
 def calculate_number_of_studies_per_stage(stage: str, dvc_file: str) -> int:
-    """Return the number of studies expected for a DVC stage definition."""
+    """Return the number of studies expected for a DVC stage definition.
+
+    Parameters
+    ----------
+    stage : str
+        DVC stage name.
+    dvc_file : str
+        Path to the DVC pipeline file.
+
+    Returns
+    -------
+    int
+        Number of expected studies derived from matrix/foreach declarations.
+    """
     dvc_conf = _load_dvc_config(dvc_file)
     dvc_path = Path(dvc_file)
 
@@ -382,7 +395,7 @@ def progress_bar_main(
     stages: str = "",
     poll_interval: float = 5.0,
     complete_states: str = "COMPLETE,FAILED,PRUNED",
-) -> dict:
+) -> dict[str, Any]:
     """Track Optuna progress for expected studies/trials and render tqdm progress bars."""
     dvc_conf = _load_dvc_config(dvc_file)
     stages_conf = dvc_conf.get("stages", {})

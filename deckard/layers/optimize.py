@@ -37,6 +37,7 @@ class OptunaStudyCallback(HydraCallback):
         self.study = None
 
     def on_multirun_start(self, config: DictConfig, **kwargs: Any) -> None:
+        """Create the Optuna study and initialize objective metric names."""
         self.study = create_study(
             study_name=self.study_name,
             storage=self.storage,
@@ -50,6 +51,7 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_compose_config(self, config: DictConfig, **kwargs: Any) -> None:
+        """Prepare per-job naming and output paths for multirun composition."""
         if not _is_multirun_mode(HydraConfig.get()):
             return
         hydra_cfg = HydraConfig.get()
@@ -57,6 +59,7 @@ class OptunaStudyCallback(HydraCallback):
         _prepare_multirun_cfg(config, hydra_cfg, include_file_paths=True)
 
     def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
+        """Ensure metric names remain attached after the multirun completes."""
         if self.study is None:
             return
         set_study_metric_names(
@@ -66,6 +69,7 @@ class OptunaStudyCallback(HydraCallback):
         )
 
     def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
+        """Persist the per-job parameter snapshot before execution."""
         if not _is_multirun_mode(HydraConfig.get()):
             return
         files_cfg = getattr(config, "files", None)
@@ -87,6 +91,7 @@ class OptunaStudyCallback(HydraCallback):
         job_return,
         **kwargs: Any,
     ) -> None:
+        """Persist per-job score payload after execution when available."""
         if not _is_multirun_mode(HydraConfig.get()):
             return
         files_cfg = getattr(config, "files", None)
@@ -189,7 +194,7 @@ def optimize_multirun(
     cfg: Any,
     hydra_cfg,
     conf_obj: ExperimentConfig,
-) -> dict:
+) -> dict[str, Any]:
     """
     Handles optimization in multirun mode.
 
@@ -233,7 +238,11 @@ def optimize_multirun(
     return filtered_scores
 
 
-def set_study_attributes(study, attrs):
+def set_study_attributes(
+    study: optuna.study.Study,
+    attrs: dict[str, Any] | DictConfig,
+) -> None:
+    """Attach user attributes to an Optuna study."""
     if isinstance(attrs, DictConfig):
         attrs = dict(attrs)
     for k, v in attrs.items():
@@ -290,7 +299,11 @@ def optimize_main(
     return scores
 
 
-def prepare_multirun_file_paths(hydra_cfg, conf_obj):
+def prepare_multirun_file_paths(
+    hydra_cfg: Any,
+    conf_obj: ExperimentConfig,
+) -> ExperimentConfig:
+    """Populate standard output file paths for a Hydra multirun job."""
     current_name = getattr(conf_obj, "experiment_name", None)
     if current_name is None or str(current_name).strip() == "":
         if hasattr(conf_obj, "to_dict"):
@@ -315,7 +328,13 @@ def prepare_multirun_file_paths(hydra_cfg, conf_obj):
     return conf_obj
 
 
-def create_study(study_name, storage, directions, optimizers):
+def create_study(
+    study_name: str,
+    storage: str,
+    directions: list[str] | tuple[str, ...] | ListConfig,
+    optimizers: list[str] | tuple[str, ...] | ListConfig,
+) -> optuna.study.Study:
+    """Create or load an Optuna study after filtering non-optimizing objectives."""
     directions, optimizers = _filter_optuna_objectives(directions, optimizers)
     assert len(directions) == len(
         optimizers,
@@ -388,7 +407,12 @@ def _filter_optuna_objectives(directions, optimizers):
     return list(filtered_directions), list(filtered_optimizers)
 
 
-def set_study_metric_names(study, optimizers, directions=None):
+def set_study_metric_names(
+    study,
+    optimizers: list[str] | tuple[str, ...] | ListConfig | str,
+    directions: list[str] | tuple[str, ...] | ListConfig | None = None,
+) -> None:
+    """Set Optuna metric names using optimizer keys after direction filtering."""
     if isinstance(optimizers, ListConfig):
         optimizers = list(optimizers)
     elif isinstance(optimizers, str):
@@ -409,7 +433,8 @@ def set_study_metric_names(study, optimizers, directions=None):
         study.set_metric_names(optimizers)
 
 
-def set_trial_attributes(study, attrs, experiment_name):
+def set_trial_attributes(study, attrs, experiment_name: str) -> None:
+    """Persist per-trial user attributes for the trial matching an experiment hash."""
     if isinstance(attrs, DictConfig):
         attrs = OmegaConf.to_container(attrs, resolve=True)
 
@@ -461,7 +486,8 @@ def set_trial_attributes(study, attrs, experiment_name):
             )
 
 
-def save_params_file(cfg, files):
+def save_params_file(cfg: dict[str, Any], files: dict[str, str]) -> DictConfig:
+    """Persist run parameters to ``files['params_file']`` and return DictConfig."""
     _ = cfg.pop("params", None)
     if "params_file" in files:
         cfg = OmegaConf.create(cfg)
@@ -472,7 +498,11 @@ def save_params_file(cfg, files):
     return cfg
 
 
-def filter_scores(scores: dict, optimizers: list, directions: list) -> tuple[Any, dict]:
+def filter_scores(
+    scores: dict[str, Any],
+    optimizers: list[str],
+    directions: list[str],
+) -> tuple[Any, dict[str, Any]]:
     """
     Overview
     ---

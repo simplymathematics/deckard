@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Utils" href="utils.html" />
-    <link rel="prev" title="plot" href="plot.html" /> 
+    <link rel="prev" title="Plot" href="plot.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,13 +44,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Score</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.DefaultClassifierDict"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.score.DefaultClassifierDict.scorers"><code class="docutils literal notranslate"><span class="pre">DefaultClassifierDict.scorers</span></code></a></li>
@@ -65,6 +66,16 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerConfig"><code class="docutils literal notranslate"><span class="pre">ScorerConfig</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.score.ScorerDictConfig"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.score.ScorerDictConfig.get_callables"><code class="docutils literal notranslate"><span class="pre">ScorerDictConfig.get_callables()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
@@ -230,13 +241,53 @@ configuration type accepted by experiments, models, and attacks.</p>
 
 </dd></dl>
 
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The score layer provides configurable scorer wrappers so data/model/attack
+components can use a consistent scoring interface without hard-coding metric
+implementations.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScorerDictConfig</span>
+
+<span class="n">scorers</span> <span class="o">=</span> <span class="n">ScorerDictConfig</span><span class="p">()</span>
+<span class="n">callables</span> <span class="o">=</span> <span class="n">scorers</span><span class="o">.</span><span class="n">get_callables</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">callables</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<p>Score configs normalize definitions into callable maps and support both
+classification and regression defaults through dedicated config classes.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Ensure metric names map to importable scorer callables.</p></li>
+<li><p>Check expected prediction shape/type for selected metrics.</p></li>
+<li><p>Confirm task type (classifier/regressor) matches the active default scorer set.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+</ul>
+</section>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="plot.html" class="btn btn-neutral float-left" title="plot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plot.html" class="btn btn-neutral float-left" title="Plot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

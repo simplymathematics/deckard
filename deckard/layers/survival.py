@@ -2,7 +2,7 @@ import logging
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -75,7 +75,7 @@ def survival_probability_calibration(
     color: str = "red",
     return_curve: bool = False,
     plot: bool = True,
-):
+) -> tuple[Any, float, float] | tuple[Any, float, float, pd.DataFrame]:
     """Compute survival calibration metrics and optionally render a calibration curve."""
     if ax is None:
         _, ax = plt.subplots()
@@ -220,7 +220,7 @@ def fit_aft(
     summary_file: Optional[str] = None,
     folder: Optional[str] = None,
     **kwargs,
-):
+) -> RegressionFitter:
     """Fit a survival model and optionally persist its summary."""
     if duration_col not in df.columns:
         raise ValueError(f"Column {duration_col} not found in data")
@@ -260,16 +260,17 @@ def fit_aft(
 
 
 def plot_aft(
-    aft,
-    title,
-    file,
-    xlabel,
-    ylabel,
-    replacement_dict=None,
-    dummy_dict=None,
-    folder=None,
-    filetype=".pdf",
-):
+    aft: RegressionFitter,
+    title: str,
+    file: str,
+    xlabel: str,
+    ylabel: str,
+    replacement_dict: Optional[dict[str, str]] = None,
+    dummy_dict: Optional[dict[str, str]] = None,
+    folder: Optional[str] = None,
+    filetype: str = ".pdf",
+) -> Any:
+    """Render and save a coefficient plot for a fitted AFT model."""
     replacement_dict = replacement_dict or {}
     dummy_dict = dummy_dict or {}
     file_path = Path(file)
@@ -312,15 +313,16 @@ def plot_aft(
 
 
 def plot_summary(
-    aft,
-    title,
-    file,
-    xlabel,
-    ylabel,
-    replacement_dict=None,
-    folder=None,
-    filetype=".pdf",
-):
+    aft: RegressionFitter,
+    title: str,
+    file: str,
+    xlabel: str,
+    ylabel: str,
+    replacement_dict: Optional[dict[str, str]] = None,
+    folder: Optional[str] = None,
+    filetype: str = ".pdf",
+) -> Any:
+    """Render and save a summary p-value plot for a fitted survival model."""
     replacement_dict = replacement_dict or {}
     file_path = Path(file)
     if file_path.suffix == "":
@@ -348,18 +350,19 @@ def plot_summary(
 
 
 def plot_qq(
-    X_train,
-    aft,
-    title,
-    file,
-    X_test=None,
-    xlabel=None,
-    ylabel=None,
-    folder=None,
+    X_train: pd.DataFrame,
+    aft: RegressionFitter,
+    title: str,
+    file: str,
+    X_test: Optional[pd.DataFrame] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    folder: Optional[str] = None,
     ax=None,
-    filetype=".pdf",
-    t0=0.35,
-):
+    filetype: str = ".pdf",
+    t0: float = 0.35,
+) -> Any:
+    """Render and save calibration (QQ-style) curves for train/test datasets."""
     file_path = Path(file)
     if file_path.suffix == "":
         file_path = file_path.with_suffix(filetype)
@@ -413,20 +416,21 @@ def plot_qq(
 
 
 def plot_partial_effects(
-    aft,
-    covariate_array,
-    values_array,
-    title=None,
-    file="partial_effects.pdf",
-    xlabel="Covariate",
-    ylabel="Failure rate",
-    legend_kwargs=None,
-    replacement_dict=None,
-    cmap="coolwarm",
-    folder=".",
-    filetype=".pdf",
+    aft: RegressionFitter,
+    covariate_array: Any,
+    values_array: Any,
+    title: Optional[str] = None,
+    file: str = "partial_effects.pdf",
+    xlabel: str = "Covariate",
+    ylabel: str = "Failure rate",
+    legend_kwargs: Optional[dict[str, Any]] = None,
+    replacement_dict: Optional[dict[str, str]] = None,
+    cmap: str = "coolwarm",
+    folder: str = ".",
+    filetype: str = ".pdf",
     **kwargs,
-):
+) -> Any:
+    """Render and save partial-effects plots for selected covariates."""
     legend_kwargs = legend_kwargs or {"loc": "upper left"}
     replacement_dict = replacement_dict or {}
     file_path = Path(folder, file).with_suffix(filetype)
@@ -452,7 +456,14 @@ def plot_partial_effects(
     return ax
 
 
-def score_model(aft, train, test, t0=0.35, method="concordance_index"):
+def score_model(
+    aft: RegressionFitter,
+    train: pd.DataFrame,
+    test: pd.DataFrame,
+    t0: float = 0.35,
+    method: str = "concordance_index",
+) -> dict[str, float]:
+    """Score a fitted survival model on train/test frames with calibration metrics."""
     train_score = aft.score(train, scoring_method=method)
     test_score = aft.score(test, scoring_method=method)
     _, train_ici, train_e50 = survival_probability_calibration(aft, train, t0=t0)
@@ -468,14 +479,15 @@ def score_model(aft, train, test, t0=0.35, method="concordance_index"):
 
 
 def make_survival_model_table(
-    aft_dict,
-    dataset,
-    X_train,
-    X_test,
-    t0s,
-    folder=".",
-    span_columns=True,
+    aft_dict: dict[str, RegressionFitter],
+    dataset: Optional[str],
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    t0s: dict[str, float],
+    folder: str = ".",
+    span_columns: bool = True,
 ) -> pd.DataFrame:
+    """Build and persist a summary comparison table across survival models."""
     folder_path = Path(folder)
     data = pd.DataFrame(index=[k.replace("_", " ").title() for k in aft_dict.keys()])
     data.index.name = "Model"
@@ -550,10 +562,11 @@ def make_survival_model_table(
 
 def clean_data_for_aft(
     data: pd.DataFrame,
-    covariate_list,
-    target="adv_failure_rate",
-    dummy_dict=None,
-):
+    covariate_list: list[str],
+    target: str = "adv_failure_rate",
+    dummy_dict: Optional[dict[str, str]] = None,
+) -> pd.DataFrame:
+    """Clean and encode tabular data for AFT-style survival fitting."""
     dummy_dict = dummy_dict or {}
     if target not in data.columns:
         raise ValueError(f"Target {target} not in dataframe")
@@ -596,7 +609,8 @@ def split_data_for_survival_model(
     duration_col: str,
     test_size: float = 0.25,
     random_state: int = 42,
-):
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split a survival dataframe into train/test partitions with validation."""
     if not isinstance(test_size, float) or not (0 < test_size < 1):
         raise ValueError("test_size must be a float between 0 and 1")
     if target not in data.columns:
@@ -614,16 +628,17 @@ def split_data_for_survival_model(
 
 
 def run_survival_model_experiment(
-    mtype,
-    config,
-    X_train,
-    target,
-    duration_col,
-    t0,
-    X_test=None,
-    dummy_dict=None,
-    folder=".",
-):
+    mtype: str,
+    config: dict[str, Any],
+    X_train: pd.DataFrame,
+    target: str,
+    duration_col: str,
+    t0: float,
+    X_test: Optional[pd.DataFrame] = None,
+    dummy_dict: Optional[dict[str, str]] = None,
+    folder: str = ".",
+) -> tuple[RegressionFitter, list[Any]]:
+    """Fit one survival model variant and render its configured plots."""
     dummy_dict = dummy_dict or {}
     config = dict(config or {})
     plots = []
@@ -702,15 +717,16 @@ def run_survival_model_experiment(
 
 
 def render_all_survival_model_plots(
-    config,
-    duration_col,
-    target,
-    data,
-    dataset,
-    test_size=0.25,
-    folder=".",
-    dummy_dict=None,
-):
+    config: dict[str, Any],
+    duration_col: str,
+    target: str,
+    data: pd.DataFrame,
+    dataset: Optional[str],
+    test_size: float = 0.25,
+    folder: str = ".",
+    dummy_dict: Optional[dict[str, str]] = None,
+) -> dict[str, Any]:
+    """Run all configured survival model variants and collect outputs."""
     dummy_dict = dummy_dict or {}
     if target not in data.columns:
         raise ValueError(f"{target} not in data columns")
@@ -884,14 +900,11 @@ def _infer_attack_kind_from_label(label: Optional[str]) -> Optional[str]:
     value = str(label).strip().lower()
     if value == "":
         return None
-    if any(token in value for token in ["membership", "member"]):
+    elif any(token in value for token in ["membership", "member"]):
         return "membership"
-    if any(token in value for token in ["attribute", "attr"]):
+    elif any(token in value for token in ["attribute", "attr"]):
         return "attribute"
-    if any(
-        token in value
-        for token in ["evasion", "fgm", "hsj", "hopskipjump", "boundary", "zoo"]
-    ):
+    else:
         return "evasion"
     return None
 
@@ -1047,15 +1060,15 @@ def survival_main(
     target: str = "E",
     duration_col: str = "T",
     dataset: Optional[str] = None,
-    model_config=None,
+    model_config: Optional[dict[str, Any]] = None,
     survival_model: Optional[str] = None,
-    attack=None,
+    attack: Optional[Union[dict[str, Any], AttackConfig]] = None,
     calculate_attack_failures: bool = False,
     data_file: Optional[str] = None,
     attack_optuna_db: Optional[str] = None,
-    attack_schema: Optional[Union[str, dict]] = None,
+    attack_schema: Optional[Union[str, dict[str, Any]]] = None,
     attack_query: Optional[str] = None,
-):
+) -> dict[str, Any]:
     """Run survival model experiments from config and persist plots and summary tables.
 
     Supports both modern `data`/`model` arguments and legacy `data_file` usage.

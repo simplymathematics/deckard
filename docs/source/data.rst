@@ -10,6 +10,35 @@ It supports both real and synthetic datasets, as well as YAML/Hydra-based config
    :members:
    :show-inheritance:
 
+Extensions
+----------
+
+Pipeline Extension
+~~~~~~~~~~~~~~~~~~
+
+Deckard exposes a configurable pipeline layer for data preprocessing via
+:class:`~deckard.data.DataPipelineConfig`.
+
+Fairness Extension
+~~~~~~~~~~~~~~~~~~
+
+The fairness extension adds group-aware sampling and fairness metrics with
+``fairlearn`` integration.
+
+.. automodule:: deckard.data.fairness
+   :members:
+   :show-inheritance:
+
+Torch Extension
+~~~~~~~~~~~~~~~
+
+The torch extension provides dataset loading and sampling for PyTorch and
+torchvision-backed workflows.
+
+.. automodule:: deckard.data.pytorch
+   :members:
+   :show-inheritance:
+
 Overview
 --------
 
@@ -34,10 +63,10 @@ Run data setup directly from the terminal:
 .. code-block:: bash
 
    # Load the Adult dataset with default settings
-   python -m deckard data --data_config_file configs/data/adult.yaml
+   python -m deckard optimize --config-name experiment data.dataset_name=adult data.test_size=0.2
 
    # Override configuration parameters inline
-   python -m deckard.data --data_params dataset_name=make_classification test_size=0.25
+   python -m deckard optimize --config-name experiment data.dataset_name=make_classification data.test_size=0.25
 
 Programmatic usage
 ~~~~~~~~~~~~~~~~~~
@@ -79,7 +108,7 @@ Example inline overrides:
 
 .. code-block:: bash
 
-   python -m deckard.data --data_params dataset_name=make_classification n_samples=2000 n_features=20 
+   python -m deckard optimize --config-name experiment data.dataset_name=make_classification data.data_params.n_samples=2000 data.data_params.n_features=20
 
 Internals
 ---------

@@ -43,13 +43,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Layers</a><ul>
@@ -60,6 +61,17 @@
 <li class="toctree-l3"><a class="reference internal" href="#deckard.layers.plot_main"><code class="docutils literal notranslate"><span class="pre">plot_main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.layers.progress_bar_main"><code class="docutils literal notranslate"><span class="pre">progress_bar_main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.layers.survival_main"><code class="docutils literal notranslate"><span class="pre">survival_main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -100,7 +112,7 @@ registry used by the top-level CLI router.</p>
 the top-level <code class="docutils literal notranslate"><span class="pre">deckard</span></code> CLI router.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="deckard.layers.SUPPORTED_LAYERS">
-<span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">SUPPORTED_LAYERS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['compile_results',</span> <span class="pre">'progress_bar',</span> <span class="pre">'plot',</span> <span class="pre">'optimize',</span> <span class="pre">'survival']</span></em><a class="headerlink" href="#deckard.layers.SUPPORTED_LAYERS" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">SUPPORTED_LAYERS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['compile_results',</span> <span class="pre">'progress_bar',</span> <span class="pre">'plot',</span> <span class="pre">'optimize',</span> <span class="pre">'survival']</span></em><a class="headerlink" href="#deckard.layers.SUPPORTED_LAYERS" title="Link to this definition"></a></dt>
 <dd><p>Ordered list of supported CLI layer names derived from <a class="reference internal" href="#deckard.layers.layer_dict" title="deckard.layers.layer_dict"><code class="xref py py-data docutils literal notranslate"><span class="pre">layer_dict</span></code></a>.</p>
 </dd></dl>
 
@@ -108,13 +120,24 @@ the top-level <code class="docutils literal notranslate"><span class="pre">decka
 <dt class="sig sig-object py" id="deckard.layers.compile_results_main">
 <span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">compile_results_main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/layers/compile_results.html#compile_results_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.layers.compile_results_main" title="Link to this definition"></a></dt>
 <dd><p>Compile Optuna studies into a single tabular results file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_file</strong> (<em>str</em>) – Destination path for compiled results.</p></li>
+<li><p><strong>optuna_db</strong> (<em>str</em>) – Optuna storage URI.</p></li>
+<li><p><strong>schema</strong> (<em>str</em><em> | </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Optional schema map (or file path) for parsing study names.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="deckard.layers.layer_dict">
-<span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">layer_dict</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'compile_results':</span> <span class="pre">[ArgumentParser(prog='sphinx-build',</span> <span class="pre">usage=None,</span> <span class="pre">description='Compile</span> <span class="pre">Optuna</span> <span class="pre">studies</span> <span class="pre">into</span> <span class="pre">a</span> <span class="pre">single</span> <span class="pre">tabular</span> <span class="pre">results</span> <span class="pre">file.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">compile_results_main&gt;],</span> <span class="pre">'optimize':</span> <span class="pre">[ArgumentParser(prog='sphinx-build',</span> <span class="pre">usage='deckard</span> <span class="pre">optimize</span> <span class="pre">--config-dir=conf</span> <span class="pre">--config-name=default.yaml',</span> <span class="pre">description=None,</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.HelpFormatter'&gt;,</span> <span class="pre">conflict_handler='error',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">optimize_main&gt;],</span> <span class="pre">'plot':</span> <span class="pre">[ArgumentParser(prog='sphinx-build',</span> <span class="pre">usage='deckard</span> <span class="pre">plot</span> <span class="pre">--config-dir=conf</span> <span class="pre">--config-name=default.yaml</span> <span class="pre">plot.plot_type=pairplot',</span> <span class="pre">description=None,</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.HelpFormatter'&gt;,</span> <span class="pre">conflict_handler='error',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">plot_main&gt;],</span> <span class="pre">'progress_bar':</span> <span class="pre">[ArgumentParser(prog='sphinx-build',</span> <span class="pre">usage=None,</span> <span class="pre">description='Track</span> <span class="pre">Optuna</span> <span class="pre">progress</span> <span class="pre">for</span> <span class="pre">expected</span> <span class="pre">studies/trials</span> <span class="pre">and</span> <span class="pre">render</span> <span class="pre">tqdm</span> <span class="pre">progress</span> <span class="pre">bars.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">progress_bar_main&gt;],</span> <span class="pre">'survival':</span> <span class="pre">[ArgumentParser(prog='sphinx-build',</span> <span class="pre">usage=None,</span> <span class="pre">description='Run</span> <span class="pre">survival</span> <span class="pre">model</span> <span class="pre">experiments</span> <span class="pre">from</span> <span class="pre">config</span> <span class="pre">and</span> <span class="pre">persist</span> <span class="pre">plots</span> <span class="pre">and</span> <span class="pre">summary</span> <span class="pre">tables.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">survival_main&gt;]}</span></em><a class="headerlink" href="#deckard.layers.layer_dict" title="Link to this definition"></a></dt>
-<dd><p>Map CLI subcommand names to <code class="docutils literal notranslate"><span class="pre">[parser,</span> <span class="pre">main_function]</span></code> pairs consumed by
-<code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.__main__</span></code> during subcommand routing.</p>
+<span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">layer_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'compile_results':</span> <span class="pre">[ArgumentParser(prog='__main__.py',</span> <span class="pre">usage=None,</span> <span class="pre">description='Compile</span> <span class="pre">Optuna</span> <span class="pre">studies</span> <span class="pre">into</span> <span class="pre">a</span> <span class="pre">single</span> <span class="pre">tabular</span> <span class="pre">results</span> <span class="pre">file.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">compile_results_main&gt;],</span> <span class="pre">'optimize':</span> <span class="pre">[ArgumentParser(prog='__main__.py',</span> <span class="pre">usage='deckard</span> <span class="pre">optimize</span> <span class="pre">--config-dir=conf</span> <span class="pre">--config-name=default.yaml',</span> <span class="pre">description=None,</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.HelpFormatter'&gt;,</span> <span class="pre">conflict_handler='error',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">optimize_main&gt;],</span> <span class="pre">'plot':</span> <span class="pre">[ArgumentParser(prog='__main__.py',</span> <span class="pre">usage='deckard</span> <span class="pre">plot</span> <span class="pre">--config-dir=conf</span> <span class="pre">--config-name=default.yaml</span> <span class="pre">plot.plot_type=pairplot',</span> <span class="pre">description=None,</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.HelpFormatter'&gt;,</span> <span class="pre">conflict_handler='error',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">plot_main&gt;],</span> <span class="pre">'progress_bar':</span> <span class="pre">[ArgumentParser(prog='__main__.py',</span> <span class="pre">usage=None,</span> <span class="pre">description='Track</span> <span class="pre">Optuna</span> <span class="pre">progress</span> <span class="pre">for</span> <span class="pre">expected</span> <span class="pre">studies/trials</span> <span class="pre">and</span> <span class="pre">render</span> <span class="pre">tqdm</span> <span class="pre">progress</span> <span class="pre">bars.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">progress_bar_main&gt;],</span> <span class="pre">'survival':</span> <span class="pre">[ArgumentParser(prog='__main__.py',</span> <span class="pre">usage=None,</span> <span class="pre">description='Run</span> <span class="pre">survival</span> <span class="pre">model</span> <span class="pre">experiments</span> <span class="pre">from</span> <span class="pre">config</span> <span class="pre">and</span> <span class="pre">persist</span> <span class="pre">plots</span> <span class="pre">and</span> <span class="pre">summary</span> <span class="pre">tables.',</span> <span class="pre">formatter_class=&lt;class</span> <span class="pre">'argparse.RawDescriptionHelpFormatter'&gt;,</span> <span class="pre">conflict_handler='resolve',</span> <span class="pre">add_help=False),</span> <span class="pre">&lt;function</span> <span class="pre">survival_main&gt;]}</span></em><a class="headerlink" href="#deckard.layers.layer_dict" title="Link to this definition"></a></dt>
+<dd><p>Mapping from CLI subcommand name to <code class="docutils literal notranslate"><span class="pre">[parser,</span> <span class="pre">main]</span></code> callables.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -181,7 +204,7 @@ instantiated via Hydra.</p>
 <dd><p>Track Optuna progress for expected studies/trials and render tqdm progress bars.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -191,8 +214,68 @@ instantiated via Hydra.</p>
 <span class="sig-prename descclassname"><span class="pre">deckard.layers.</span></span><span class="sig-name descname"><span class="pre">survival_main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lung'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weibull'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plots_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plots/survival'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'T'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survival_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculate_attack_failures</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_optuna_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/layers/survival.html#survival_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.layers.survival_main" title="Link to this definition"></a></dt>
 <dd><p>Run survival model experiments from config and persist plots and summary tables.</p>
 <p>Supports both modern <cite>data</cite>/<cite>model</cite> arguments and legacy <cite>data_file</cite> usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span></p>
+</dd>
+</dl>
 </dd></dl>
 
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Layers are thin orchestration entrypoints for higher-level tasks, such as:</p>
+<ul class="simple">
+<li><p>optimization runs</p></li>
+<li><p>result compilation</p></li>
+<li><p>plotting</p></li>
+<li><p>survival analysis</p></li>
+<li><p>progress monitoring</p></li>
+</ul>
+<p>Each layer is registered in <a class="reference internal" href="#deckard.layers.layer_dict" title="deckard.layers.layer_dict"><code class="xref py py-data docutils literal notranslate"><span class="pre">deckard.layers.layer_dict</span></code></a> as a
+<code class="docutils literal notranslate"><span class="pre">[parser,</span> <span class="pre">main]</span></code> pair consumed by the top-level CLI.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="command-line-example">
+<h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
+<p>Invoke a registered layer through the top-level CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment
+</pre></div>
+</div>
+</section>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<p>Access layer dispatch metadata directly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">layer_dict</span><span class="p">,</span> <span class="n">SUPPORTED_LAYERS</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">SUPPORTED_LAYERS</span><span class="p">)</span>
+<span class="n">parser_fn</span><span class="p">,</span> <span class="n">main_fn</span> <span class="o">=</span> <span class="n">layer_dict</span><span class="p">[</span><span class="s2">&quot;optimize&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">parser_fn</span><span class="p">,</span> <span class="n">main_fn</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<p>Layer functions are intentionally small wrappers that parse runtime arguments,
+delegate to domain modules, and normalize outputs for CLI and automation.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Ensure the requested subcommand exists in <a class="reference internal" href="#deckard.layers.layer_dict" title="deckard.layers.layer_dict"><code class="xref py py-data docutils literal notranslate"><span class="pre">deckard.layers.layer_dict</span></code></a>.</p></li>
+<li><p>Check config compatibility with the selected layer.</p></li>
+<li><p>Verify optional dependencies for survival/plotting extensions are installed.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+<li><p><a class="reference internal" href="plot.html"><span class="doc">Plot</span></a></p></li>
+<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils</span></a></p></li>
+</ul>
+</section>
+</section>
 </section>
 
 

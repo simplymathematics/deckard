@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>plot &mdash; deckard .91 documentation</title>
+  <title>Plot &mdash; deckard .91 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -44,13 +44,14 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">plot</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Plot</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#plotting-apis">Plotting APIs</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.PlotConfig"><code class="docutils literal notranslate"><span class="pre">PlotConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.SeabornPlotConfig"><code class="docutils literal notranslate"><span class="pre">SeabornPlotConfig</span></code></a></li>
@@ -60,6 +61,16 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.YellowbrickPlotConfig"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList"><code class="docutils literal notranslate"><span class="pre">YellowbrickConfigList</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig"><code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
@@ -86,7 +97,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="modules.html">deckard</a></li>
-      <li class="breadcrumb-item active">plot</li>
+      <li class="breadcrumb-item active">Plot</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/plot.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -97,7 +108,7 @@
            <div itemprop="articleBody">
              
   <section id="plot">
-<h1>plot<a class="headerlink" href="#plot" title="Link to this heading"></a></h1>
+<h1>Plot<a class="headerlink" href="#plot" title="Link to this heading"></a></h1>
 <section id="plotting-apis">
 <h2>Plotting APIs<a class="headerlink" href="#plotting-apis" title="Link to this heading"></a></h2>
 <p>The plotting package exposes two public entry points:</p>
@@ -422,31 +433,6 @@ then reuse that prepared state across multiple plot renders.</p>
 <p>This config composes an ExperimentConfig and prepares it once, then fans that
 state out into child <code class="docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code> objects so each plot render
 reuses the same trained data/model/attack artifacts.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickConfigList.experiment">
-<span class="sig-name descname"><span class="pre">experiment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList.experiment" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickConfigList.plot_folder">
-<span class="sig-name descname"><span class="pre">plot_folder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList.plot_folder" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickConfigList.plots">
-<span class="sig-name descname"><span class="pre">plots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <a class="reference internal" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig" title="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">YellowbrickPlotConfig</span></code></a><span class="pre">],</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'all'</span></code><span class="pre">],</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'all'</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList.plots" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickConfigList.rc_config">
-<span class="sig-name descname"><span class="pre">rc_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code><span class="pre">]</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList.rc_config" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickConfigList.score_dict">
-<span class="sig-name descname"><span class="pre">score_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickConfigList.score_dict" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -457,66 +443,6 @@ reuses the same trained data/model/attack artifacts.</p>
 <p>This config composes an ExperimentConfig and prepares missing experiment
 outputs on first call. Later calls reuse the prepared state and only render
 the plot again.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.classes">
-<span class="sig-name descname"><span class="pre">classes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">],</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'all'</span></code><span class="pre">]]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'all'</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.classes" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.experiment">
-<span class="sig-name descname"><span class="pre">experiment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="experiment.html#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.experiment" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.features">
-<span class="sig-name descname"><span class="pre">features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">],</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code><span class="pre">[</span><code class="docutils literal notranslate"><span class="pre">'all'</span></code><span class="pre">]]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'all'</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.features" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.parse_cv">
-<span class="sig-name descname"><span class="pre">parse_cv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.parse_cv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.parse_cv" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.parse_range">
-<span class="sig-name descname"><span class="pre">parse_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.parse_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.parse_range" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.plot_params">
-<span class="sig-name descname"><span class="pre">plot_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code><span class="pre">]</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.plot_params" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.plot_type">
-<span class="sig-name descname"><span class="pre">plot_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.plot_type" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.rc_config">
-<span class="sig-name descname"><span class="pre">rc_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code><span class="pre">]</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.rc_config" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.save_path">
-<span class="sig-name descname"><span class="pre">save_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'yellowbrick_plot.png'</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.save_path" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.score_dict">
-<span class="sig-name descname"><span class="pre">score_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.score_dict" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.show">
-<span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">visualizer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.show"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.show" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.title">
-<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Yellowbrick</span> <span class="pre">Plot'</span></em><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.title" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize">
 <span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize" title="Link to this definition"></a></dt>
@@ -524,38 +450,57 @@ the plot again.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_classifiers">
-<span class="sig-name descname"><span class="pre">visualize_classifiers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_classifiers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_classifiers" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_clusters">
-<span class="sig-name descname"><span class="pre">visualize_clusters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_clusters" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_features">
 <span class="sig-name descname"><span class="pre">visualize_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_features" title="Link to this definition"></a></dt>
 <dd><p>Generates and saves the Yellowbrick data plot.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_model_selection">
-<span class="sig-name descname"><span class="pre">visualize_model_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_model_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_model_selection" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_regressors">
-<span class="sig-name descname"><span class="pre">visualize_regressors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_regressors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_regressors" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_targets">
-<span class="sig-name descname"><span class="pre">visualize_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/plot/yellowbrick_plots.html#YellowbrickPlotConfig.visualize_targets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.plot.yellowbrick_plots.YellowbrickPlotConfig.visualize_targets" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Plot configs separate plotting intent from execution details. They support:</p>
+<ul class="simple">
+<li><p>Seaborn-driven exploratory and report plots</p></li>
+<li><p>Yellowbrick visualizers for model diagnostics</p></li>
+<li><p>shared style and rc parameter configuration</p></li>
+<li><p>optional experiment-aware setup for plotting from prior outputs</p></li>
+</ul>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlotConfig</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">PlotConfig</span><span class="p">()</span>
+<span class="n">cfg</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<p>The plotting module routes to backend-specific config objects and ensures
+output files are written consistently. Yellowbrick plotting can hydrate
+experiment context lazily before rendering to avoid repeated setup.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Confirm plotting dependencies are installed for the selected backend.</p></li>
+<li><p>Verify input score/data files exist and are in expected schema.</p></li>
+<li><p>Use explicit output paths to avoid confusion in multirun directories.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="layers.html"><span class="doc">Layers</span></a></p></li>
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a></p></li>
+</ul>
+</section>
 </section>
 </section>
 

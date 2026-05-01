@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="plot" href="plot.html" />
+    <link rel="next" title="Plot" href="plot.html" />
     <link rel="prev" title="Model" href="model.html" /> 
 </head>
 
@@ -44,6 +44,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -105,7 +106,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
@@ -511,7 +512,7 @@ Attribute Inference Attacks:
 .. code-block:: bash</p>
 <blockquote>
 <div><p># from the project root
-python -m deckard.attack –attack_config_file blackbox_evasion –attack_size 50</p>
+python -m deckard optimize –config-name experiment attack.attack_size=50</p>
 </div></blockquote>
 </section>
 <section id="programmatic-example">
@@ -552,7 +553,7 @@ Example minimal YAML (<cite>blackbox_evasion.yaml</cite>):</p>
 </pre></div>
 </div>
 <p>Example inline overrides:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard.attack<span class="w"> </span>--attack_name<span class="w"> </span>art.attacks.evasion.HopSkipJump<span class="w"> </span>--attack_size<span class="w"> </span><span class="m">100</span><span class="w"> </span>--attack_params.max_iter<span class="w"> </span><span class="m">10</span><span class="w"> </span>--attack_params.max_eval<span class="w"> </span><span class="m">100</span><span class="w"> </span>--attack_params.init_eval<span class="w"> </span><span class="m">10</span><span class="w"> </span>--attack_params.verbose<span class="w"> </span>True
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span>attack.attack_name<span class="o">=</span>art.attacks.evasion.HopSkipJump<span class="w"> </span>attack.attack_size<span class="o">=</span><span class="m">100</span><span class="w"> </span>attack.attack_params.max_iter<span class="o">=</span><span class="m">10</span><span class="w"> </span>attack.attack_params.max_eval<span class="o">=</span><span class="m">100</span><span class="w"> </span>attack.attack_params.init_eval<span class="o">=</span><span class="m">10</span><span class="w"> </span>attack.attack_params.verbose<span class="o">=</span>True
 </pre></div>
 </div>
 </section>
@@ -594,7 +595,7 @@ using Python’s built-in <cite>logging</cite> module.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="model.html" class="btn btn-neutral float-left" title="Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="plot.html" class="btn btn-neutral float-right" title="plot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="plot.html" class="btn btn-neutral float-right" title="Plot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

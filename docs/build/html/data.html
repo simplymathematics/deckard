@@ -44,6 +44,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file.html">File</a></li>
@@ -104,6 +105,12 @@
 <li class="toctree-l4"><a class="reference internal" href="#deckard.data.PytorchDataConfig.pipeline"><code class="docutils literal notranslate"><span class="pre">PytorchDataConfig.pipeline</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#extensions">Extensions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pipeline-extension">Pipeline Extension</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fairness-extension">Fairness Extension</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#torch-extension">Torch Extension</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
@@ -123,7 +130,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
@@ -579,7 +586,7 @@ Optional exports are only available when their dependencies are installed.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.data.PytorchCustomDataConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.</span></span><span class="sig-name descname"><span class="pre">PytorchCustomDataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='torchvision.datasets.MNIST'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device='cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_dir='./raw_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_transform=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_transform=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_params=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/pytorch.html#PytorchCustomDataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.PytorchCustomDataConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.data.PytorchDataConfig" title="deckard.data.pytorch.PytorchDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.pytorch.PytorchDataConfig" title="deckard.data.pytorch.PytorchDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></p>
 <p>Configuration for HuggingFace datasets loaded via DataLoader.</p>
 <p>Extends PytorchDataConfig to support HuggingFace datasets with custom
 transforms and DataLoader-based loading.</p>
@@ -670,6 +677,132 @@ transforms and DataLoader-based loading.</p>
 
 </dd></dl>
 
+<section id="extensions">
+<h2>Extensions<a class="headerlink" href="#extensions" title="Link to this heading"></a></h2>
+<section id="pipeline-extension">
+<h3>Pipeline Extension<a class="headerlink" href="#pipeline-extension" title="Link to this heading"></a></h3>
+<p>Deckard exposes a configurable pipeline layer for data preprocessing via
+<a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a>.</p>
+</section>
+<section id="fairness-extension">
+<h3>Fairness Extension<a class="headerlink" href="#fairness-extension" title="Link to this heading"></a></h3>
+<p>The fairness extension adds group-aware sampling and fairness metrics with
+<code class="docutils literal notranslate"><span class="pre">fairlearn</span></code> integration.</p>
+<dl class="py class" id="module-deckard.data.fairness">
+<dt class="sig sig-object py" id="deckard.data.fairness.FairnessDataConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.fairness.</span></span><span class="sig-name descname"><span class="pre">FairnessDataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groupby_columns=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitive_columns=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fairness_defense=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/fairness.html#FairnessDataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.fairness.FairnessDataConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a></p>
+<p>Extended DataConfig class that overloads key methods to operate on pandas groupby objects.</p>
+<p>This allows stratified analysis of fairness metrics across different demographic groups.</p>
+</dd></dl>
+
+</section>
+<section id="torch-extension">
+<h3>Torch Extension<a class="headerlink" href="#torch-extension" title="Link to this heading"></a></h3>
+<p>The torch extension provides dataset loading and sampling for PyTorch and
+torchvision-backed workflows.</p>
+<dl class="py class" id="module-deckard.data.pytorch">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchCustomDataConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.pytorch.</span></span><span class="sig-name descname"><span class="pre">PytorchCustomDataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='torchvision.datasets.MNIST'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device='cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_dir='./raw_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_transform=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_transform=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_params=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/pytorch.html#PytorchCustomDataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.pytorch.PytorchCustomDataConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.pytorch.PytorchDataConfig" title="deckard.data.pytorch.PytorchDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PytorchDataConfig</span></code></a></p>
+<p>Configuration for HuggingFace datasets loaded via DataLoader.</p>
+<p>Extends PytorchDataConfig to support HuggingFace datasets with custom
+transforms and DataLoader-based loading.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.pytorch.</span></span><span class="sig-name descname"><span class="pre">PytorchDataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='torchvision.datasets.MNIST'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device='cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_dir='./raw_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/pytorch.html#PytorchDataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a></p>
+<p>Configuration for PyTorch datasets.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.dataset_name">
+<span class="sig-name descname"><span class="pre">dataset_name</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.dataset_name" title="Link to this definition"></a></dt>
+<dd><p>Fully qualified class name of dataset
+(e.g., “torchvision.datasets.MNIST” or “custom_module.CustomDataset”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.data_params">
+<span class="sig-name descname"><span class="pre">data_params</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.data_params" title="Link to this definition"></a></dt>
+<dd><p>Additional parameters for dataset loading.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.test_size">
+<span class="sig-name descname"><span class="pre">test_size</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.test_size" title="Link to this definition"></a></dt>
+<dd><p>Proportion or absolute number of test samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[float, int, None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.train_size">
+<span class="sig-name descname"><span class="pre">train_size</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.train_size" title="Link to this definition"></a></dt>
+<dd><p>Proportion or absolute number of train samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[float, int, None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.random_state">
+<span class="sig-name descname"><span class="pre">random_state</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.random_state" title="Link to this definition"></a></dt>
+<dd><p>Random seed for reproducibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.stratify">
+<span class="sig-name descname"><span class="pre">stratify</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.stratify" title="Link to this definition"></a></dt>
+<dd><p>Whether to stratify the split.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[None, str, bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataConfig.pipeline">
+<span class="sig-name descname"><span class="pre">pipeline</span></span><a class="headerlink" href="#deckard.data.pytorch.PytorchDataConfig.pipeline" title="Link to this definition"></a></dt>
+<dd><p>Data processing pipelines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, <a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.DataPipelineConfig">DataPipelineConfig</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.pytorch.PytorchDataPipelineConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.pytorch.</span></span><span class="sig-name descname"><span class="pre">PytorchDataPipelineConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/pytorch.html#PytorchDataPipelineConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.pytorch.PytorchDataPipelineConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.DataPipelineConfig" title="deckard.data.data.DataPipelineConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataPipelineConfig</span></code></a></p>
+</dd></dl>
+
+</section>
+</section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
 <p><a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> can load well-known datasets such as:</p>
@@ -688,10 +821,10 @@ timing instrumentation, and hashing for config tracking.</p>
 <h3>Command-line example<a class="headerlink" href="#command-line-example" title="Link to this heading"></a></h3>
 <p>Run data setup directly from the terminal:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the Adult dataset with default settings</span>
-python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>data<span class="w"> </span>--data_config_file<span class="w"> </span>configs/data/adult.yaml
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span>data.dataset_name<span class="o">=</span>adult<span class="w"> </span>data.test_size<span class="o">=</span><span class="m">0</span>.2
 
 <span class="c1"># Override configuration parameters inline</span>
-python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_params<span class="w"> </span><span class="nv">dataset_name</span><span class="o">=</span>make_classification<span class="w"> </span><span class="nv">test_size</span><span class="o">=</span><span class="m">0</span>.25
+python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span>data.dataset_name<span class="o">=</span>make_classification<span class="w"> </span>data.test_size<span class="o">=</span><span class="m">0</span>.25
 </pre></div>
 </div>
 </section>
@@ -726,7 +859,7 @@ python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class=
 </pre></div>
 </div>
 <p>Example inline overrides:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard.data<span class="w"> </span>--data_params<span class="w"> </span><span class="nv">dataset_name</span><span class="o">=</span>make_classification<span class="w"> </span><span class="nv">n_samples</span><span class="o">=</span><span class="m">2000</span><span class="w"> </span><span class="nv">n_features</span><span class="o">=</span><span class="m">20</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>deckard<span class="w"> </span>optimize<span class="w"> </span>--config-name<span class="w"> </span>experiment<span class="w"> </span>data.dataset_name<span class="o">=</span>make_classification<span class="w"> </span>data.data_params.n_samples<span class="o">=</span><span class="m">2000</span><span class="w"> </span>data.data_params.n_features<span class="o">=</span><span class="m">20</span>
 </pre></div>
 </div>
 </section>

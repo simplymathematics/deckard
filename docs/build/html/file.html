@@ -44,26 +44,23 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">File</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.file.FileConfig"><code class="docutils literal notranslate"><span class="pre">FileConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.attack_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.attack_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.attack_predictions_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.attack_predictions_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.data_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.data_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.defense_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.defense_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.error_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.error_file</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.generate_file_hash"><code class="docutils literal notranslate"><span class="pre">FileConfig.generate_file_hash()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.get_hydra_job_num"><code class="docutils literal notranslate"><span class="pre">FileConfig.get_hydra_job_num()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.log_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.log_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.model_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.model_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.params_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.params_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.replace"><code class="docutils literal notranslate"><span class="pre">FileConfig.replace</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.score_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.score_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.test_predictions_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.test_predictions_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.test_probabilities_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.test_probabilities_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.training_predictions_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.training_predictions_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#deckard.file.FileConfig.training_probabilities_file"><code class="docutils literal notranslate"><span class="pre">FileConfig.training_probabilities_file</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#programmatic-example">Programmatic example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internals">Internals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
@@ -71,7 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">Plot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score.html">Score</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
@@ -117,31 +114,6 @@ pipeline.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.file.</span></span><span class="sig-name descname"><span class="pre">FileConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_dict=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_predictions_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_predictions_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_probabilities_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_probabilities_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_predictions_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_file=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/file.html#FileConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.file.FileConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Configuration object for Deckard artifact and log file paths.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.attack_file">
-<span class="sig-name descname"><span class="pre">attack_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.attack_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.attack_predictions_file">
-<span class="sig-name descname"><span class="pre">attack_predictions_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.attack_predictions_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.data_file">
-<span class="sig-name descname"><span class="pre">data_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.data_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.defense_file">
-<span class="sig-name descname"><span class="pre">defense_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.defense_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.error_file">
-<span class="sig-name descname"><span class="pre">error_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.error_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.file.FileConfig.generate_file_hash">
 <span class="sig-name descname"><span class="pre">generate_file_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/file.html#FileConfig.generate_file_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.file.FileConfig.generate_file_hash" title="Link to this definition"></a></dt>
@@ -170,53 +142,50 @@ pipeline.</p>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.log_file">
-<span class="sig-name descname"><span class="pre">log_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.log_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.model_file">
-<span class="sig-name descname"><span class="pre">model_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.model_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.params_file">
-<span class="sig-name descname"><span class="pre">params_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.params_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.replace">
-<span class="sig-name descname"><span class="pre">replace</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code><span class="pre">[</span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">,</span> <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><span class="pre">]</span></em><a class="headerlink" href="#deckard.file.FileConfig.replace" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.score_file">
-<span class="sig-name descname"><span class="pre">score_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.score_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.test_predictions_file">
-<span class="sig-name descname"><span class="pre">test_predictions_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.test_predictions_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.test_probabilities_file">
-<span class="sig-name descname"><span class="pre">test_probabilities_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.test_probabilities_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.training_predictions_file">
-<span class="sig-name descname"><span class="pre">training_predictions_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.training_predictions_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="deckard.file.FileConfig.training_probabilities_file">
-<span class="sig-name descname"><span class="pre">training_probabilities_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#deckard.file.FileConfig.training_probabilities_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The file layer centralizes artifact naming and output-path management across
+experiment components. It helps keep runs reproducible and avoids ad-hoc path
+construction in data/model/attack code.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="programmatic-example">
+<h3>Programmatic example<a class="headerlink" href="#programmatic-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deckard.file</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileConfig</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">FileConfig</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">files</span><span class="o">.</span><span class="n">score_file</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">files</span><span class="o">.</span><span class="n">model_file</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+<p>The module provides helpers for deterministic path construction and job-aware
+output naming (for example in Hydra multirun contexts).</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Confirm the working directory and configured output folders are writable.</p></li>
+<li><p>Validate that generated parent directories exist when running outside default layouts.</p></li>
+<li><p>Use absolute paths in config for external storage locations.</p></li>
+</ul>
+<section id="see-also">
+<h3>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="experiment.html"><span class="doc">Experiment</span></a></p></li>
+<li><p><a class="reference internal" href="data.html"><span class="doc">Data</span></a></p></li>
+<li><p><a class="reference internal" href="model.html"><span class="doc">Model</span></a></p></li>
+<li><p><a class="reference internal" href="attack.html"><span class="doc">Attack</span></a></p></li>
+<li><p><a class="reference internal" href="score.html"><span class="doc">Score</span></a></p></li>
+</ul>
+</section>
+</section>
 </section>
 
 
