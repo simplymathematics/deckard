@@ -972,15 +972,52 @@ def _load_optuna_survival_frame(
     return frame
 
 
+def _resolve_attack_size(
+    output: pd.DataFrame,
+    row_index: Optional[Any] = None,
+    attack_config: Optional[AttackConfig] = None,
+) -> float:
+    if row_index is not None and "attack_size" in output.columns:
+        attack_size = output.at[row_index, "attack_size"]
+        if not pd.isna(attack_size):
+            return float(attack_size)
+    if "attack_size" in output.columns and output["attack_size"].notna().all():
+        unique_sizes = output["attack_size"].dropna().unique()
+        if len(unique_sizes) == 1:
+            return float(unique_sizes[0])
+    if attack_config is not None:
+        return float(attack_config.attack_size)
+    return 1.0
+
+
+def _failure_count_from_metric(
+    value: float,
+    metric: str,
+    attack_size: float,
+) -> float:
+    failure_rate = value if metric.endswith("_success") else 1 - value
+    return attack_size * failure_rate
+
+
 def calculate_failures_under_attack(
     data: pd.DataFrame,
     attack_config: Optional[AttackConfig] = None,
     benign_metric: str = "accuracy",
 ) -> pd.DataFrame:
-    """Optionally derive ben/adv failure columns from attack-specific metrics."""
+    """Optionally derive ben/adv failure counts from attack-specific accuracy metrics."""
     output = data.copy()
     if benign_metric in output.columns and "ben_failures" not in output.columns:
-        output["ben_failures"] = 1 - output[benign_metric]
+        if "attack_size" in output.columns:
+            attack_sizes = output["attack_size"].fillna(
+                _resolve_attack_size(output, attack_config=attack_config),
+            )
+        else:
+            attack_sizes = pd.Series(
+                _resolve_attack_size(output, attack_config=attack_config),
+                index=output.index,
+                dtype=float,
+            )
+        output["ben_failures"] = attack_sizes * (1 - output[benign_metric])
 
     attack_label_col = _get_attack_label_column(output)
     attack_kind = _attack_kind_from_config(attack_config)
@@ -995,8 +1032,14 @@ def calculate_failures_under_attack(
                 ):
                     continue
                 value = output.at[row_index, metric]
-                adv_failures.at[row_index] = (
-                    value if metric.endswith("_success") else 1 - value
+                adv_failures.at[row_index] = _failure_count_from_metric(
+                    value=value,
+                    metric=metric,
+                    attack_size=_resolve_attack_size(
+                        output,
+                        row_index=row_index,
+                        attack_config=attack_config,
+                    ),
                 )
                 break
         if adv_failures.notna().any():
@@ -1005,10 +1048,21 @@ def calculate_failures_under_attack(
 
     for metric in _candidate_attack_metrics_for_kind(attack_kind):
         if metric in output.columns:
-            if metric.endswith("_success"):
-                output["adv_failures"] = output[metric]
+            if "attack_size" in output.columns:
+                attack_sizes = output["attack_size"].fillna(
+                    _resolve_attack_size(output, attack_config=attack_config),
+                )
             else:
-                output["adv_failures"] = 1 - output[metric]
+                attack_sizes = pd.Series(
+                    _resolve_attack_size(output, attack_config=attack_config),
+                    index=output.index,
+                    dtype=float,
+                )
+            output["adv_failures"] = attack_sizes * (
+                output[metric]
+                if metric.endswith("_success")
+                else 1 - output[metric]
+            )
             break
     return output
 

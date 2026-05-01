@@ -183,18 +183,22 @@ def test_calculate_failures_under_attack_evasion():
             "evasion_accuracy": [0.6, 0.5],
         },
     )
-    attack = AttackConfig(attack_type="art.attacks.evasion.HopSkipJump")
+    attack = AttackConfig(
+        attack_type="art.attacks.evasion.HopSkipJump",
+        attack_size=10,
+    )
     output = calculate_failures_under_attack(df, attack)
     assert "ben_failures" in output.columns
     assert "adv_failures" in output.columns
-    assert np.allclose(output["ben_failures"].values, [0.1, 0.2])
-    assert np.allclose(output["adv_failures"].values, [0.4, 0.5])
+    assert np.allclose(output["ben_failures"].values, [1.0, 2.0])
+    assert np.allclose(output["adv_failures"].values, [4.0, 5.0])
 
 
 def test_calculate_failures_under_attack_mixed_attack_rows():
     df = pd.DataFrame(
         {
             "accuracy": [1.0, 1.0, 1.0],
+            "attack_size": [10, 20, 5],
             "evasion_accuracy": [0.0, np.nan, np.nan],
             "membership_inference_accuracy": [np.nan, 1.0, np.nan],
             "sex_inference_accuracy": [np.nan, np.nan, 0.0],
@@ -205,7 +209,7 @@ def test_calculate_failures_under_attack_mixed_attack_rows():
     output = calculate_failures_under_attack(df)
 
     assert np.allclose(output["ben_failures"].values, [0.0, 0.0, 0.0])
-    assert np.allclose(output["adv_failures"].values, [1.0, 0.0, 1.0])
+    assert np.allclose(output["adv_failures"].values, [10.0, 0.0, 5.0])
 
 
 def test_survival_main_from_optuna_attack_db(tmp_path):
