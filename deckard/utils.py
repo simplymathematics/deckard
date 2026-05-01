@@ -21,6 +21,7 @@ from typing import Union, Any
 from dataclasses import dataclass, field
 from hydra.utils import instantiate, get_class
 from omegaconf import OmegaConf
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,38 @@ __all__ = [
     "resolve_class",
     "load_class",
     "create_parser_from_function",
+    "round_scores",
 ]
+
+
+def round_scores(scores: dict, n_samples: int, logger_obj=None) -> dict:
+    """Round numeric score values using a sample-size-aware precision rule.
+
+    The number of decimal places is derived from ``log10(n_samples) + 1`` and
+    clamped to at least one decimal place.
+    """
+    if n_samples is None or n_samples <= 0:
+        sig_figs = 1
+    else:
+        sig_figs = np.log10(n_samples) + 1
+        if sig_figs < 1:
+            sig_figs = 1
+    decimals = int(sig_figs)
+
+    if logger_obj is not None:
+        logger_obj.info(f"Rounding scores to {decimals} significant figures")
+        logger_obj.info("Scores:")
+
+    rounded_scores = dict(scores)
+    for score, value in list(rounded_scores.items()):
+        if isinstance(value, (int, float, np.integer, np.floating)):
+            rounded = round(float(value), decimals)
+            rounded_scores[score] = rounded
+            if logger_obj is not None:
+                logger_obj.info(f"{score}: {rounded}")
+        elif logger_obj is not None:
+            logger_obj.info(f"{score}: {value}")
+    return rounded_scores
 
 
 def _canonicalize_for_hash(value):
