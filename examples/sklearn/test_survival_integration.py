@@ -14,6 +14,7 @@ import pytest
 @pytest.mark.parametrize(
     "dataset_name,survival_model",
     [
+        ("diabetes", "weibull"),
         ("leukemia", "weibull"),
         ("lung", "cox"),
         ("lifelines_diabetes", "weibull"),

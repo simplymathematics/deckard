@@ -1,6 +1,5 @@
 import logging
 import warnings
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -23,7 +22,6 @@ from lifelines import (
 from lifelines.exceptions import ConvergenceError
 from lifelines.fitters import RegressionFitter
 from lifelines.utils import CensoringType
-from sklearn.model_selection import train_test_split
 
 from ..attack import AttackConfig
 from ..data import DataConfig
@@ -53,14 +51,6 @@ AFT_MODEL_TYPES = {
     "gamma": GeneralizedGammaRegressionFitter,
     "exponential": PiecewiseExponentialRegressionFitter,
 }
-
-
-@dataclass
-class _SimpleDataBundle:
-    X_train: pd.DataFrame
-    y_train: pd.Series
-    X_test: pd.DataFrame
-    y_test: pd.Series
 
 
 def _ccl(probabilities: np.ndarray) -> np.ndarray:
@@ -603,28 +593,32 @@ def clean_data_for_aft(
     return cleaned
 
 
-def split_data_for_survival_model(
+def _build_runtime_survival_data_config(
     data: pd.DataFrame,
     target: str,
-    duration_col: str,
     test_size: float = 0.25,
     random_state: int = 42,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split a survival dataframe into train/test partitions with validation."""
+) -> DataConfig:
+    """Create a DataConfig-backed train/test split from an in-memory survival dataframe."""
     if not isinstance(test_size, float) or not (0 < test_size < 1):
         raise ValueError("test_size must be a float between 0 and 1")
     if target not in data.columns:
         raise ValueError(f"Target {target} not in dataframe")
-    if duration_col not in data.columns:
-        raise ValueError(f"Duration {duration_col} not in dataframe")
 
-    X_train, X_test = train_test_split(
-        data,
+    runtime_data = DataConfig(
+        dataset_name="make_regression",
+        target=target,
+        classifier=False,
+        stratify=False,
         train_size=(1 - test_size),
         test_size=test_size,
         random_state=random_state,
     )
-    return X_train.dropna(axis=0, how="any"), X_test.dropna(axis=0, how="any")
+    runtime_data._X = data.drop(columns=[target]).reset_index(drop=True)
+    runtime_data._y = data[target].reset_index(drop=True)
+    runtime_data.data_load_time = 0.0
+    runtime_data._sample()
+    return runtime_data
 
 
 def run_survival_model_experiment(
@@ -733,13 +727,26 @@ def render_all_survival_model_plots(
     if duration_col not in data.columns:
         raise ValueError(f"{duration_col} not in data columns")
 
-    X_train, X_test = split_data_for_survival_model(
-        data,
-        target,
-        duration_col,
+    runtime_data = _build_runtime_survival_data_config(
+        data=data,
+        target=target,
         test_size=test_size,
         random_state=42,
     )
+    if (
+        runtime_data.X_train is None
+        or runtime_data.X_test is None
+        or runtime_data.y_train is None
+        or runtime_data.y_test is None
+    ):
+        raise ValueError("Runtime survival split did not produce train/test partitions")
+
+    X_train = pd.DataFrame(runtime_data.X_train).copy()
+    X_test = pd.DataFrame(runtime_data.X_test).copy()
+    X_train[target] = runtime_data.y_train.values
+    X_test[target] = runtime_data.y_test.values
+    X_train = X_train.dropna(axis=0, how="any")
+    X_test = X_test.dropna(axis=0, how="any")
 
     models = {}
     plots = {}
@@ -770,7 +777,12 @@ def render_all_survival_model_plots(
         folder=folder,
         t0s=t0s,
     )
-    return {"models": models, "plots": plots, "table": summary_table}
+    return {
+        "models": models,
+        "plots": plots,
+        "table": summary_table,
+        "runtime_data": runtime_data,
+    }
 
 
 def _resolve_survival_model_name(model: Union[str, dict, ModelConfig]) -> str:
@@ -1031,25 +1043,8 @@ def _build_data_config(
     return data_cfg
 
 
-def _evaluate_aux_model(
-    model_config: dict,
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
-    X_test: pd.DataFrame,
-    y_test: pd.Series,
-):
-    cfg = dict(model_config)
-    if "model_type" not in cfg:
-        raise ValueError("model_config requires model_type")
-
-    model_cfg = ModelConfig(**cfg)
-    bundle = _SimpleDataBundle(
-        X_train=X_train,
-        y_train=y_train,
-        X_test=X_test,
-        y_test=y_test,
-    )
-    return model_cfg(bundle)
+def _evaluate_aux_model(model_config: ModelConfig, data_config: DataConfig):
+    return model_config(data_config)
 
 
 def survival_main(
@@ -1222,24 +1217,18 @@ def survival_main(
 
     model_scores = None
     if aux_model is not None:
-        X_train, X_test = split_data_for_survival_model(
-            cleaned,
-            target,
-            duration_col,
-            test_size=test_size,
-            random_state=random_state,
-        )
-        y_train = X_train[target].astype(int)
-        y_test = X_test[target].astype(int)
-        aux_X_train = X_train.drop(columns=[target])
-        aux_X_test = X_test.drop(columns=[target])
+        runtime_data = run_results["runtime_data"]
+        if (
+            runtime_data.X_train is None
+            or runtime_data.X_test is None
+            or runtime_data.y_train is None
+            or runtime_data.y_test is None
+        ):
+            raise ValueError("Runtime survival split unavailable for auxiliary model")
         try:
             model_scores = _evaluate_aux_model(
-                model_config=aux_model.to_dict(),
-                X_train=aux_X_train,
-                y_train=y_train,
-                X_test=aux_X_test,
-                y_test=y_test,
+                model_config=aux_model,
+                data_config=runtime_data,
             )
         except Exception as error:
             logger.warning("Aux model evaluation failed: %s", error)

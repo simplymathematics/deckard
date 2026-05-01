@@ -8,7 +8,9 @@ import yaml
 pytest.importorskip("lifelines")
 
 from deckard.attack import AttackConfig  # NOQA E402
+from deckard.data import DataConfig  # NOQA E402
 from deckard.layers.survival import (  # NOQA E402
+    _build_runtime_survival_data_config,
     calculate_failures_under_attack,
     fit_aft,
     survival_main,
@@ -153,6 +155,25 @@ def test_survival_main_with_attack_uses_separate_survival_model(tmp_path):
     assert not result["aft_table"].empty
     assert result["model_scores"] is not None
     assert (plots_folder / "cox_summary.csv").exists()
+
+
+def test_runtime_survival_data_split_uses_dataconfig():
+    data = _make_survival_dataframe(n=40)
+    runtime_data = _build_runtime_survival_data_config(
+        data=data,
+        target="event",
+        test_size=0.25,
+        random_state=42,
+    )
+
+    assert isinstance(runtime_data, DataConfig)
+    assert runtime_data.X_train is not None
+    assert runtime_data.X_test is not None
+    assert runtime_data.y_train is not None
+    assert runtime_data.y_test is not None
+    assert "event" not in runtime_data.X_train.columns
+    assert "event" not in runtime_data.X_test.columns
+    assert len(runtime_data.X_train) + len(runtime_data.X_test) == len(data)
 
 
 def test_calculate_failures_under_attack_evasion():
