@@ -7,7 +7,7 @@ import logging
 import warnings
 from sklearn.base import BaseEstimator
 from dataclasses import dataclass, field
-from typing import Union
+from typing import Any, Union
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
@@ -28,7 +28,7 @@ from art.estimators.regression.scikitlearn import (
 )
 from ..data import DataConfig
 from . import ModelConfig
-from ..utils import resolve_class
+from ..utils import ConfigBase, resolve_class
 
 warnings.filterwarnings("ignore", category=UserWarning)
 logger = logging.getLogger(__name__)
@@ -64,111 +64,56 @@ supported_defense_types = [
 ]
 
 
-@dataclass
-class DefenseConfig(ModelConfig):
-    model_type: Union[str, None] = None
-    classifier: bool = True
-    model_params: dict = field(
-        default_factory=dict,
-        metadata={"help": "Parameters for the model."},
-    )
-    probability: bool = False
-    clip_values: tuple | None = field(
-        default=None,
-        metadata={"help": "Tuple of the form (min, max) to clip input features."},
-    )
-    defense_name: str = field(
-        default_factory=str,
-        metadata={"help": "Name of the defense to apply."},
-    )
-    defense_params: dict = field(
-        default_factory=dict,
-        metadata={"help": "Parameters for the defense."},
-    )
-    alias: str = field(default_factory=str)
-    """
-    Overview
-    --------
-    Configuration class for applying defenses to machine learning models using the Adversarial Robustness Toolbox (ART).
-    Inherits from ModelConfig and extends it to include defense mechanisms.
+class _DefenseBehaviorMixin:
+    """Reusable defense workflow behavior mixed into concrete config dataclasses."""
 
-    Parameters
-    ----------
-    model_type : str
-        The type of model to be used (e.g., 'sklearn.linear_model.LogisticRegression').
-    classifier : bool
-        Indicates whether the model is a classifier (True) or regressor (False).
-    model_params : dict
-        Parameters to initialize the model.
-    probability : bool
-        Whether to use probability estimates (for classifiers).
-    clip_values : tuple
-        Tuple specifying the minimum and maximum values for input features.
-    defense_name : str
-        The full class path of the defense to apply (e.g., 'art.defences.preprocessor.JPEGCompression').
-    defense_params : dict
-        Parameters to initialize the defense.
+    # Declared for static analyzers; concrete dataclass provides these fields.
+    model_type: Union[str, None]
+    classifier: Union[bool, str, None]
+    model_params: dict
+    probability: bool
+    alias: str
+    defense_name: Union[str, None]
+    defense_params: dict
+    _model: Union[BaseEstimator, None]
+    score_dict: dict
+    _target_: Union[str, None]
+    _model_config: Union[ModelConfig, None]
 
-    Attributes
-    ----------
-    _model : BaseEstimator
-        The model's estimator after applying the defense.
-    defense_training_time : float
-        Time taken to train the model with the defense.
-    defense_application_time : float
-        Time taken to apply the defense to the model.
-    defense_prediction_time : float
-        Time taken to make predictions with the defended model.
-    defense_scoring_time : float
-        Time taken to score the defended model.
-    score_dict : dict
-        Dictionary to store scores and metrics related to the defense.
-
-    Methods
-    -------
-    apply_defense(defense, estimator=None, defense_params) -> BaseEstimator
-        Apply the specified defense to the model's estimator.
-    __post_init__()
-        Validate the configuration after initialization.
-    __hash__()
-        Generate a hash for the configuration instance.
-    __call__(data, model_file=None, test_predictions_file=None, train_predictions_file=None, score_file=None) -> Union[pd.Series, pd.DataFrame]
-        Execute the model workflow: training, prediction, scoring, and model persistence.
-    save(model_file=None, test_predictions_file=None, train_predictions_file=None, score_file=None)
-        Save the model, predictions, and scores to specified file paths.
-    _load_or_train_model(data, model_file=None, times=None) -> dict
-        Load a model from a file or train a new model if not available.
-    _load_all_predictions(train_predictions_file=None, test_predictions_file=None, times=None) -> dict
-        Load predictions from specified file paths and update timing information.
-    _load_score_file(score_file=None) -> dict
-        Load scores from a specified file path and update timing information.
-    _evaluate_and_score(data, times=None) -> dict
-        Evaluate the model on the provided data and update scores and timing information.
-    """
+    def _get_model_config(self) -> ModelConfig:
+        if getattr(self, "_model_config", None) is None:
+            self._model_config = ModelConfig(
+                model_type=self.model_type,
+                classifier=self.classifier,
+                model_params=self.model_params,
+                probability=self.probability,
+                alias=self.alias,
+            )
+            self._model_config.defense = None
+        assert self._model_config is not None
+        return self._model_config
 
     def __post_init__(self):
-        # Some Hydra configs instantiate `defense` as a standalone config object
-        # and do not provide model_type. In that case, defer base model init
-        # until a concrete model is attached by Experiment/Model orchestration.
-        if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
-            if not hasattr(self, "_model"):
-                self._model = None
-            if not hasattr(self, "score_dict") or self.score_dict is None:
-                self.score_dict = {}
-            if not hasattr(self, "_target_") or self._target_ is None:
-                self._target_ = "deckard.DefenseConfig"
-        else:
-            super().__post_init__()
+        if self.model_type not in [None, "", "None", "null", "Null", "NULL"]:
+            model_cfg = self._get_model_config()
+            self.classifier = model_cfg.classifier
+            self.model_params = model_cfg.model_params
+            self._model = model_cfg._model
+        elif not hasattr(self, "_model"):
+            self._model = None
+
+        if not hasattr(self, "score_dict") or self.score_dict is None:
+            self.score_dict = {}
+        if not hasattr(self, "_target_") or self._target_ is None:
+            self._target_ = "deckard.DefenseConfig"
+
         # Initialize times, scores, and defended model
         self.defense_training_time = None
         self.defense_application_time = None
         self.defense_prediction_time = None
         self.defense_scoring_time = None
         self.defense_params = self.defense_params or {}
-        self.score_dict = {}
         self._apply_fit = True  # Whether to apply fit during defense application
-        if self._target_ is None:
-            self._target_ = "deckard.DefenseConfig"
 
     def __hash__(self):
         return super().__hash__()
@@ -184,6 +129,16 @@ class DefenseConfig(ModelConfig):
         if self._model is None:
             raise ValueError("Model is not fitted yet.")
         return self._model
+
+    def apply_to(self, estimator: BaseEstimator, data) -> BaseEstimator:
+        """Apply this defense to a pre-fitted estimator."""
+        if estimator is None:
+            raise ValueError("estimator must be provided before applying defense")
+        self._model = estimator
+        model_cfg = getattr(self, "_model_config", None)
+        if model_cfg is not None:
+            model_cfg._model = estimator
+        return self.apply_defense(data)
 
     def apply_defense(self, data) -> BaseEstimator:
         """Apply the specified defense to the model's estimator.
@@ -218,8 +173,11 @@ class DefenseConfig(ModelConfig):
                 "ModelConfig must have a fitted estimator before applying defense",
             ) from e
         start = time.process_time()
+        defense = None
+        defended_estimator = None
         match defense_type:  # Note: only one defense can be applied at a time
             case "preprocessor":
+                assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
                 defended_estimator = art_class(
                     self.get_model(),
@@ -228,6 +186,7 @@ class DefenseConfig(ModelConfig):
                     **init_params,
                 )
             case "postprocessor":
+                assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
                 defended_estimator = art_class(
                     self.get_model(),
@@ -235,6 +194,7 @@ class DefenseConfig(ModelConfig):
                     **init_params,
                 )
             case "detector":
+                assert defense_class is not None
                 match defense_subtype:
                     case "evasion":
                         defense = defense_class(**(self.defense_params or {}))
@@ -248,9 +208,11 @@ class DefenseConfig(ModelConfig):
                         )
                 # Overwrite the _score method to handle each
             case "trainer":
+                assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
                 defended_estimator = defense(self._model, **init_params)
             case "transformer":
+                assert defense_class is not None
                 defense = defense_class(**(self.defense_params or {}))
                 defended_estimator = defense(
                     self._model,
@@ -272,12 +234,16 @@ class DefenseConfig(ModelConfig):
                 raise NotImplementedError(
                     f"Defense type '{defense_type}' is not implemented yet.",
                 )
+        if defended_estimator is None:
+            raise RuntimeError("Defense application did not produce an estimator")
         # Some defences can optionally be applied during training or prediction
         end = time.process_time()
         self._apply_fit = getattr(defense, "_apply_fit", True)
 
         self.defense_application_time = end - start
-        end = time.process_time()
+        model_cfg = getattr(self, "_model_config", None)
+        if model_cfg is not None:
+            model_cfg._model = defended_estimator
         return defended_estimator
 
     def parse_defense_name(self):
@@ -301,6 +267,7 @@ class DefenseConfig(ModelConfig):
             defense_subtype = None
         if defense_type is not None:
             try:
+                assert self.defense_name is not None
                 defense_class = resolve_class(self.defense_name)
             except (ImportError, AttributeError) as e:
                 raise ImportError(
@@ -317,6 +284,7 @@ class DefenseConfig(ModelConfig):
     def get_art_class(self, data):
         if self.model_type in [None, "", "None", "null", "Null", "NULL"]:
             raise ValueError("model_type must be set before creating an ART defense estimator")
+        assert self.model_type is not None
         art_class = (
             classifier_dict[self.model_type.split(".")[-1]]
             if self.classifier
@@ -338,7 +306,7 @@ class DefenseConfig(ModelConfig):
         test_predictions_file: Union[str, None] = None,
         train_predictions_file: Union[str, None] = None,
         score_file: Union[str, None] = None,
-    ) -> Union[pd.Series, pd.DataFrame]:
+    ) -> dict[str, Any]:
         """
         Executes the model workflow: training, prediction, scoring, and model persistence.
 
@@ -369,27 +337,83 @@ class DefenseConfig(ModelConfig):
                 "Data not loaded. Please load data before calling the model.",
             )
 
+        model_cfg = self._get_model_config()
+        model_cfg.defense = None
+        model_cfg.classifier = self.classifier
+        model_cfg.probability = self.probability
+        model_cfg.model_params = self.model_params
+        if self._model is not None:
+            model_cfg._model = self._model
+
         # Load the score_file if provided
-        times = self._load_score_file(score_file)
+        times = model_cfg._load_score_file(score_file)
 
         # Load predictions from filepaths and update times
-        times = self._load_all_predictions(
+        times = model_cfg._load_all_predictions(
             train_predictions_file,
             test_predictions_file,
             times,
         )
 
         # Train the model if training data is provided and model is not already trained
-        times = self._load_or_train_model(data, model_file, times)
-        self._model = self.apply_defense(data)
-        self._evaluate_and_score(data, times)
+        times = model_cfg._load_or_train_model(data, model_file, times)
+        self._model = model_cfg._model
+        model_cfg._model = self.apply_to(model_cfg._model, data)
+        self._model = model_cfg._model
+
+        model_cfg._evaluate_and_score(data, times)
+        self.score_dict = model_cfg.score_dict
+        self.training_predictions = model_cfg.training_predictions
+        self.predictions = model_cfg.predictions
+        self.training_time = model_cfg.training_time
+        self.prediction_time = model_cfg.prediction_time
+        self.training_score_time = model_cfg.training_score_time
+        self.prediction_score_time = model_cfg.prediction_score_time
+        self.training_n = model_cfg.training_n
+        self.prediction_n = model_cfg.prediction_n
+
         if train_predictions_file is not None:
-            self.save_data(
+            model_cfg.save_data(
                 self.training_predictions,
                 train_predictions_file,
             )
         if test_predictions_file is not None:
-            self.save_data(self.predictions, test_predictions_file)
+            model_cfg.save_data(self.predictions, test_predictions_file)
         if score_file is not None:
-            self.save_scores(self.score_dict, score_file)
+            model_cfg.save_scores(self.score_dict, score_file)
         return self.score_dict
+
+
+@dataclass(eq=False)
+class DefenseConfig(_DefenseBehaviorMixin, ConfigBase):
+    """Concrete defense config dataclass that uses shared defense behavior mixin."""
+
+    model_type: Union[str, None] = None
+    classifier: Union[bool, str, None] = True
+    model_params: dict = field(
+        default_factory=dict,
+        metadata={"help": "Parameters for the model."},
+    )
+    probability: bool = False
+    clip_values: tuple | None = field(
+        default=None,
+        metadata={"help": "Tuple of the form (min, max) to clip input features."},
+    )
+    defense_name: Union[str, None] = field(
+        default=None,
+        metadata={"help": "Name of the defense to apply."},
+    )
+    defense_params: dict = field(
+        default_factory=dict,
+        metadata={"help": "Parameters for the defense."},
+    )
+    alias: str = field(default_factory=str)
+    _model: Union[BaseEstimator, None] = field(default=None, repr=False)
+    score_dict: dict = field(default_factory=dict)
+    _target_: Union[str, None] = field(default=None, repr=False)
+    _model_config: Union[ModelConfig, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+    )

@@ -40,7 +40,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
-from ..utils import ConfigBase, load_class, resolve_class
+from ..utils import ConfigBase, load_class
 
 art_model_types = tuple(
     [
@@ -76,17 +76,6 @@ regressor_dict = {
 
 sklearn_dict = {**classifier_dict, **regressor_dict}
 sklearn_models = list(sklearn_dict.values())
-
-supported_defense_types = [
-    "detector",
-    "preprocessor",
-    "postprocessor",
-    "trainer",
-    "regularizer",
-    "transformer",
-    None,
-]
-
 
 @dataclass
 class ModelConfig(ConfigBase):
@@ -264,42 +253,6 @@ class ModelConfig(ConfigBase):
     def __hash__(self):
         return super().__hash__()
 
-    def parse_defense_name(self):
-        defense_name = self.defense.defense_name if self.defense is not None else None
-        assert defense_name is not None, "defense_type must be provided in ModelConfig"
-        if defense_name is not None and len(defense_name.rsplit(".", 1)) > 0:
-            module_name, class_name = defense_name.rsplit(".", 1)
-        else:
-            module_name = None
-            class_name = None
-        if module_name is None or class_name is None:
-            defense_type = None
-        else:
-            try:
-                defense_type = module_name.split(".")[2]  # e.g., 'preprocessor'
-            except IndexError:
-                raise ImportError(
-                    f"Could not parse defense type from defense name {defense_name}",
-                )
-        if module_name is not None and len(module_name.split(".")) >= 4:
-            defense_subtype = module_name.split(".")[3]  # e.g., 'FeatureSqueezing'
-        else:
-            defense_subtype = None
-        if defense_type is not None:
-            try:
-                defense_class = resolve_class(defense_name)
-            except (ImportError, AttributeError) as e:
-                raise ImportError(
-                    f"Could not import defense class {class_name} from module {module_name}",
-                ) from e
-        else:
-            defense_class = None
-        assert (
-            defense_type in supported_defense_types
-        ), f"Unsupported defense type: {defense_type}. Supported types are: {supported_defense_types}"
-
-        return defense_type, defense_subtype, defense_class
-
     def get_art_class(self, data):
 
         art_class = (
@@ -354,86 +307,26 @@ class ModelConfig(ConfigBase):
             return self._model
 
     def _apply_defense(self, data) -> BaseEstimator:
-        """Apply the specified defense to the model's estimator.
+        """Delegate defense application to the configured defense object."""
 
-        Returns
-        -------
-        BaseEstimator
-            The estimator wrapped with the specified defense.
-        Raises
-        ------
-        ValueError
-            If the model is not fitted before applying the defense.
-        """
-
+        if self.defense is None:
+            return self._model
         if self._model is None:
             raise ValueError(
                 "ModelConfig must have a fitted estimator before applying defense",
             )
-        # Dynamically import the defense class with defense_params as kwargs
-        defense_type, defense_subtype, defense_class = self.parse_defense_name()
-        art_class, init_params = self.get_art_class(data)
-        start = time.process_time()
-        match defense_type:  # Note: only one defense can be applied at a time
-            case "preprocessor":
-                defense = defense_class(**(self.defense.defense_params or {}))
-                defended_estimator = art_class(
-                    self.get_model(),
-                    preprocessing_defences=[defense],
-                    **init_params,
-                )
-            case "postprocessor":
-                defense = defense_class(**(self.defense.defense_params or {}))
-                defended_estimator = art_class(
-                    self.get_model(),
-                    postprocessing_defences=[defense],
-                    **init_params,
-                )
-            case "detector":
-                match defense_subtype:
-                    case "evasion":
-                        defense = defense_class(**(self.defense.defense_params or {}))
-                        defended_estimator = defense(self.get_model(), **init_params)
-                    case "poison":
-                        defense = defense_class(**(self.defense.defense_params or {}))
-                        defended_estimator = defense(self.get_model(), **init_params)
-                    case _:
-                        raise NotImplementedError(
-                            f"Detector subtype '{defense_subtype}' is not implemented yet.",
-                        )
-                # Overwrite the _score method to handle each
-            case "trainer":
-                defense = defense_class(**(self.defense.defense_params or {}))
-                defended_estimator = defense(self._model, **init_params)
-            case "transformer":
-                defense = defense_class(**(self.defense.defense_params or {}))
-                defended_estimator = defense(
-                    self._model,
-                    input_transformations=[defense],
-                    **init_params,
-                )
-            case "regularizer":
-                raise NotImplementedError(
-                    "Regularizer defenses are not implemented yet.",
-                )
-            case None:
-                defense = None
-                defense_params = {**self.defense.defense_params, **init_params}
-                defended_estimator = art_class(
-                    self.get_model(),
-                    **defense_params,
-                )
-            case "_":
-                raise NotImplementedError(
-                    f"Defense type '{defense_type}' is not implemented yet.",
-                )
-        # Some defences can optionally be applied during training or prediction
-        end = time.process_time()
-        self._apply_fit = getattr(defense, "_apply_fit", True)
+        apply_to = getattr(self.defense, "apply_to", None)
+        if not callable(apply_to):
+            raise TypeError(
+                "Configured defense must implement apply_to(estimator, data)",
+            )
 
-        self.defense_application_time = end - start
-        end = time.process_time()
-        logger.info(f"Defense applied in {self.defense_application_time:.2f} seconds.")
+        defended_estimator = apply_to(estimator=self._model, data=data)
+        self.defense_application_time = getattr(
+            self.defense,
+            "defense_application_time",
+            self.defense_application_time,
+        )
         return defended_estimator
 
     def _train(self, X: pd.DataFrame, y: pd.Series):
