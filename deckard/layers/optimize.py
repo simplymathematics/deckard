@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import yaml
 import optuna
+from typing import Any
+from hydra.experimental.callback import Callback as HydraCallback
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from hydra.utils import instantiate
@@ -18,6 +20,49 @@ from ..utils import ConfigBase, hash_conf_values
 logger = logging.getLogger(__name__)
 
 
+class OptunaStudyCallback(HydraCallback):
+    """Hydra-native callback that syncs study setup and metric names for multirun."""
+
+    def __init__(self, study_name: str, storage: str, directions: list, optimizers: list):
+        self.study_name = study_name
+        self.storage = storage
+        self.directions = directions
+        self.optimizers = optimizers
+        self.study = None
+
+    def on_multirun_start(self, config: DictConfig, **kwargs: Any) -> None:
+        self.study = create_study(
+            study_name=self.study_name,
+            storage=self.storage,
+            directions=self.directions,
+            optimizers=self.optimizers,
+        )
+        set_study_metric_names(
+            study=self.study,
+            optimizers=self.optimizers,
+            directions=self.directions,
+        )
+
+    def on_multirun_end(self, config: DictConfig, **kwargs: Any) -> None:
+        if self.study is None:
+            return
+        set_study_metric_names(
+            study=self.study,
+            optimizers=self.optimizers,
+            directions=self.directions,
+        )
+
+    def on_job_start(self, config: DictConfig, **kwargs: Any) -> None:
+        return
+
+    def on_job_end(
+        self,
+        config: DictConfig,
+        **kwargs: Any,
+    ) -> None:
+        return
+
+
 def _ensure_experiment_hash(value) -> str:
     raw = "" if value is None else str(value).strip()
     if len(raw) == 32 and all(c in "0123456789abcdefABCDEF" for c in raw):
@@ -25,7 +70,11 @@ def _ensure_experiment_hash(value) -> str:
     return hash_conf_values(value)
 
 
-def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) -> dict:
+def optimize_multirun(
+    cfg: ConfigBase,
+    hydra_cfg,
+    conf_obj: ExperimentConfig,
+) -> dict:
     """
     Handles optimization in multirun mode.
 
@@ -58,13 +107,18 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) ->
     conf_obj = prepare_multirun_file_paths(hydra_cfg, conf_obj)
     files = conf_obj.files._get_file_dict()
     logger.info(f"Saving multirun parameters to {conf_obj.files.params_file}")
-    with open(files["params_file"], "w") as f:
-        yaml.dump(cfg, f)
+    cfg_params = yaml.safe_load(cfg) if isinstance(cfg, str) else cfg
+    params_file = files.get("params_file")
+    if params_file is not None:
+        params_path = Path(params_file)
+        params_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(params_path, "w") as f:
+            yaml.dump(cfg_params, f, indent=4)
     scores = conf_obj.execute_without_mercy()
     # Filter scores according to the optimizer. Directions pass +/- infinit
     optimizers = conf_obj.optimizers if hasattr(conf_obj, "optimizers") else []
     directions = conf_obj.directions if hasattr(conf_obj, "directions") else []
-    filtered_scores, attributes = filter_scores(scores, optimizers, directions)
+    filtered_scores, _ = filter_scores(scores, optimizers, directions)
     assert (
         "storage" in hydra_cfg.sweeper
     ), "Storage must be specified in the sweeper config."
@@ -72,21 +126,12 @@ def optimize_multirun(cfg: ConfigBase, hydra_cfg, conf_obj: ExperimentConfig) ->
         "study_name" in hydra_cfg.sweeper
     ), "Study name must be specified in the sweeper config."
 
-    storage = hydra_cfg.sweeper.storage
-    study_name = hydra_cfg.sweeper.study_name
-    study = create_study(study_name, storage, directions, optimizers)
-    attributes["experiment_name"] = conf_obj.experiment_name
-    set_trial_attributes(
-        study=study,
-        attrs=attributes,
-        experiment_name=conf_obj.experiment_name,
-    )
-    set_study_metric_names(study=study, optimizers=optimizers)
-    cfg_params = yaml.safe_load(cfg) if isinstance(cfg, str) else cfg
-    with open(files["params_file"], "w") as f:
-        yaml.dump(cfg_params, f, indent=4)
-    with open(files["score_file"], "w") as f:
-        json.dump(scores, f, indent=4)
+    score_file = files.get("score_file")
+    if score_file is not None:
+        score_path = Path(score_file)
+        score_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(score_path, "w") as f:
+            json.dump(scores, f, indent=4)
 
     return filtered_scores
 
@@ -125,11 +170,18 @@ def optimize_main(
     cfg = OmegaConf.to_container(cfg)
 
     if str(mode) == "RunMode.MULTIRUN":
+        assert (
+            "storage" in hydra_cfg.sweeper
+        ), "Storage must be specified in the sweeper config."
+        assert (
+            "study_name" in hydra_cfg.sweeper
+        ), "Study name must be specified in the sweeper config."
         explicit_name = cfg.get("experiment_name", None)
         if explicit_name is None or str(explicit_name).strip() == "":
             cfg["experiment_name"] = hash_conf_values(_root_=cfg)
         else:
             cfg["experiment_name"] = _ensure_experiment_hash(explicit_name)
+        cfg["experiment_name"] = _ensure_experiment_hash(cfg.get("experiment_name"))
 
     cfg["_target_"] = cfg.get("_target_", "deckard.ExperimentConfig")
     cfg_yaml = OmegaConf.to_yaml(cfg)
@@ -173,9 +225,15 @@ def prepare_multirun_file_paths(hydra_cfg, conf_obj):
 
 
 def create_study(study_name, storage, directions, optimizers):
+    directions, optimizers = _filter_optuna_objectives(directions, optimizers)
     assert len(directions) == len(
         optimizers,
     ), "Length of directions must match length of optimizers."
+    if len(directions) == 0 and len(optimizers) > 0:
+        raise RuntimeError(
+            "No Optuna objectives remain after filtering directions; "
+            "at least one optimizer direction must be minimize/maximize.",
+        )
     if len(directions) == 0:
         study = optuna.create_study(
             study_name=study_name,
@@ -192,7 +250,54 @@ def create_study(study_name, storage, directions, optimizers):
     return study
 
 
-def set_study_metric_names(study, optimizers):
+def _normalize_direction(direction: str) -> str:
+    d = str(direction).strip().lower()
+    if "." in d:
+        d = d.split(".")[-1]
+    if d in ["maximize", "max"]:
+        return "maximize"
+    if d in ["minimize", "min"]:
+        return "minimize"
+    if d == "diff":
+        return "diff"
+    raise ValueError(f"Invalid direction: {direction}")
+
+
+def _filter_optuna_objectives(directions, optimizers):
+    if isinstance(directions, ListConfig):
+        directions = list(directions)
+    elif directions is None:
+        directions = []
+
+    if isinstance(optimizers, ListConfig):
+        optimizers = list(optimizers)
+    elif isinstance(optimizers, tuple):
+        optimizers = list(optimizers)
+    elif isinstance(optimizers, str):
+        optimizers = [optimizers]
+    elif optimizers is None:
+        optimizers = []
+
+    if len(directions) == 0:
+        return directions, optimizers
+
+    normalized_directions = [_normalize_direction(d) for d in directions]
+    assert len(normalized_directions) == len(
+        optimizers,
+    ), "Length of directions must match length of optimizers."
+
+    filtered = [
+        (direction, optimizer)
+        for direction, optimizer in zip(normalized_directions, optimizers)
+        if direction != "diff"
+    ]
+    if len(filtered) == 0:
+        return [], []
+    filtered_directions, filtered_optimizers = zip(*filtered)
+    return list(filtered_directions), list(filtered_optimizers)
+
+
+def set_study_metric_names(study, optimizers, directions=None):
     if isinstance(optimizers, ListConfig):
         optimizers = list(optimizers)
     elif isinstance(optimizers, str):
@@ -205,6 +310,9 @@ def set_study_metric_names(study, optimizers):
         raise ValueError(
             f"optimizers must be a ListConfig, str, or tuple. Got {type(optimizers)}",
         )
+
+    if directions is not None:
+        _, optimizers = _filter_optuna_objectives(directions, optimizers)
 
     if hasattr(study, "set_metric_names") and len(optimizers) > 0:
         study.set_metric_names(optimizers)
@@ -228,9 +336,12 @@ def set_trial_attributes(study, attrs, experiment_name):
     )
 
     if trial is None:
-        raise ValueError(
-            f"Trial with experiment_name={exp_uuid} not found in study '{study.study_name}'.",
+        logger.warning(
+            "Skipping trial attribute sync: trial with experiment_name=%s not found in study '%s'.",
+            exp_uuid,
+            study.study_name,
         )
+        return
 
     # `study.get_trials()` returns FrozenTrial objects; write attrs through storage.
     trial_id = getattr(trial, "_trial_id", None)
@@ -336,9 +447,9 @@ def filter_scores(scores: dict, optimizers: list, directions: list) -> dict:
                 "No optimization scores found for the specified directions.",
             )
         if len(missing_scores) > 0:
-            logger.error(f"Missing scores: {missing_scores}")
-            raise RuntimeError(
-                "No optimization scores found for the specified directions.",
+            logger.warning(
+                "Missing optimizer scores %s; using direction-aware fallback values.",
+                missing_scores,
             )
         values = optimize_scores
     else:

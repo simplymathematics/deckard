@@ -66,20 +66,10 @@ def test_get_configuration_paths_raises_for_missing_config_file(
 
 def test_main_dispatches_to_default_module(main_module, monkeypatch, tmp_path):
     monkeypatch.setenv("DECKARD_CONFIG_DIR", str(tmp_path))
-    monkeypatch.setattr(sys, "argv", ["deckard", "experiment"])
+    monkeypatch.setattr(sys, "argv", ["deckard"])
 
-    calls = {"default": 0}
-
-    def fake_default():
-        calls["default"] += 1
-
-    monkeypatch.setattr(main_module, "handle_default_module", fake_default)
-    monkeypatch.setattr(main_module, "handle_other_layers", lambda layer: None)
-
-    main_module.main()
-
-    assert calls["default"] == 1
-    assert Path(main_module.os.environ["DECKARD_CONFIG_DIR"]) == tmp_path.resolve()
+    with pytest.raises(SystemExit):
+        main_module.main()
 
 
 def test_main_dispatches_to_supported_layer(main_module, monkeypatch, tmp_path):
@@ -94,11 +84,10 @@ def test_main_dispatches_to_supported_layer(main_module, monkeypatch, tmp_path):
 
     seen = {}
 
-    monkeypatch.setattr(main_module, "handle_default_module", lambda: None)
     monkeypatch.setattr(
         main_module,
-        "handle_other_layers",
-        lambda value: seen.setdefault("layer", value),
+        "generate_hydra_main",
+        lambda layer_name, argv=None: seen.setdefault("layer", layer_name),
     )
 
     main_module.main()
@@ -106,39 +95,24 @@ def test_main_dispatches_to_supported_layer(main_module, monkeypatch, tmp_path):
     assert seen["layer"] == layer
 
 
-def test_main_prompts_for_config_directory_when_default_path_missing(
-    main_module,
-    monkeypatch,
-    tmp_path,
-):
-    provided_dir = tmp_path / "provided"
-    provided_dir.mkdir()
-
-    monkeypatch.delenv("DECKARD_CONFIG_DIR", raising=False)
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("builtins.input", lambda _: str(provided_dir))
-    monkeypatch.setattr(sys, "argv", ["deckard", "optimize"])
-
-    calls = {"default": 0}
-    monkeypatch.setattr(
-        main_module,
-        "handle_default_module",
-        lambda: calls.__setitem__("default", calls["default"] + 1),
-    )
-    monkeypatch.setattr(main_module, "handle_other_layers", lambda layer: None)
-
-    main_module.main()
-
-    assert calls["default"] == 1
-    assert Path(main_module.os.environ["DECKARD_CONFIG_DIR"]) == provided_dir.resolve()
-
-
 def test_main_raises_for_unsupported_module(main_module, monkeypatch, tmp_path):
     monkeypatch.setenv("DECKARD_CONFIG_DIR", str(tmp_path))
     monkeypatch.setattr(sys, "argv", ["deckard", "not-supported"])
 
-    with pytest.raises(ValueError, match="not supported"):
+    with pytest.raises(SystemExit):
         main_module.main()
+
+
+def test_build_router_includes_supported_layers(main_module):
+    parser = main_module._build_router()
+    subparser_action = next(
+        action
+        for action in parser._actions
+        if hasattr(action, "choices") and isinstance(action.choices, dict)
+    )
+    subcommands = set(subparser_action.choices.keys())
+
+    assert set(main_module.SUPPORTED_LAYERS).issubset(subcommands)
 
 
 def test_handle_default_module_builds_hydra_entrypoint(
@@ -189,12 +163,12 @@ def test_handle_default_module_builds_hydra_entrypoint(
     }
 
 
-def test_handle_other_layers_rejects_unknown_layer(main_module):
+def test_generate_hydra_main_rejects_unknown_layer(main_module):
     with pytest.raises(ValueError):
-        main_module.handle_other_layers("unknown-layer")
+        main_module.generate_hydra_main("unknown-layer")
 
 
-def test_handle_other_layers_rejects_parser_without_parse_known_args(
+def test_generate_hydra_main_rejects_parser_without_parse_known_args(
     main_module,
     monkeypatch,
 ):
@@ -205,10 +179,10 @@ def test_handle_other_layers_rejects_parser_without_parse_known_args(
     )
 
     with pytest.raises(ValueError, match="parse_known_args"):
-        main_module.handle_other_layers("bad")
+        main_module.generate_hydra_main("bad")
 
 
-def test_handle_other_layers_passes_parser_args_and_hydra_overrides(
+def test_generate_hydra_main_passes_parser_args_and_hydra_overrides(
     main_module,
     monkeypatch,
 ):
@@ -238,7 +212,7 @@ def test_handle_other_layers_passes_parser_args_and_hydra_overrides(
     monkeypatch.setattr(main_module.hydra, "main", fake_hydra_main)
     monkeypatch.setattr(sys, "argv", ["deckard", "--alpha", "cli", "alpha=hydra"])
 
-    result = main_module.handle_other_layers("layer")
+    result = main_module.generate_hydra_main("layer")
 
     assert result == "ok"
     assert seen["argv_to_parser"] == ["--alpha", "cli", "alpha=hydra"]

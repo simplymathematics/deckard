@@ -160,12 +160,82 @@ def test_create_study_with_directions(monkeypatch):
     }
 
 
+def test_create_study_filters_diff_direction_for_optuna(monkeypatch):
+    calls = {}
+
+    def fake_create_study(**kwargs):
+        calls.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+
+    optimize_module.create_study(
+        "study",
+        "sqlite:///db.sqlite3",
+        ["minimize", "diff", "maximize"],
+        ["loss", "latency_delta", "accuracy"],
+    )
+
+    assert calls == {
+        "study_name": "study",
+        "storage": "sqlite:///db.sqlite3",
+        "directions": ["minimize", "maximize"],
+        "load_if_exists": True,
+    }
+
+
+def test_create_study_raises_when_only_diff_directions(monkeypatch):
+    def fake_create_study(**kwargs):
+        return object()
+
+    monkeypatch.setattr(optimize_module.optuna, "create_study", fake_create_study)
+
+    with pytest.raises(RuntimeError, match="No Optuna objectives remain"):
+        optimize_module.create_study(
+            "study",
+            "sqlite:///db.sqlite3",
+            ["diff"],
+            ["latency_delta"],
+        )
+
+
 def test_create_study_requires_matching_directions_and_optimizers():
     with pytest.raises(
         AssertionError,
         match="Length of directions must match length of optimizers",
     ):
         optimize_module.create_study("study", "sqlite:///db.sqlite3", ["minimize"], [])
+
+
+def test_hydra_optuna_callback_sets_up_study(monkeypatch):
+    study = DummyStudy()
+    captured = {}
+
+    def fake_create_study(study_name, storage, directions, optimizers):
+        captured["study_name"] = study_name
+        captured["storage"] = storage
+        captured["directions"] = directions
+        captured["optimizers"] = optimizers
+        return study
+
+    monkeypatch.setattr(optimize_module, "create_study", fake_create_study)
+
+    callback = optimize_module.OptunaStudyCallback(
+        study_name="demo-study",
+        storage="sqlite:///db.sqlite3",
+        directions=["minimize", "diff", "maximize"],
+        optimizers=["loss", "delta", "accuracy"],
+    )
+
+    callback.on_multirun_start(OmegaConf.create({}))
+
+    assert captured == {
+        "study_name": "demo-study",
+        "storage": "sqlite:///db.sqlite3",
+        "directions": ["minimize", "diff", "maximize"],
+        "optimizers": ["loss", "delta", "accuracy"],
+    }
+    assert study.metric_names == ["loss", "accuracy"]
 
 
 @pytest.mark.parametrize(
@@ -182,6 +252,18 @@ def test_set_study_metric_names_accepts_supported_types(optimizers, expected):
     optimize_module.set_study_metric_names(study, optimizers)
 
     assert study.metric_names == expected
+
+
+def test_set_study_metric_names_filters_diff_direction():
+    study = DummyStudy()
+
+    optimize_module.set_study_metric_names(
+        study,
+        ["loss", "latency_delta", "accuracy"],
+        ["minimize", "diff", "maximize"],
+    )
+
+    assert study.metric_names == ["loss", "accuracy"]
 
 
 def test_set_user_attrs_accepts_dictconfig():
@@ -233,9 +315,7 @@ def test_prepare_multirun_file_paths_updates_conf_and_files(tmp_path):
     assert conf.files.post_init_calls == 1
 
 
-def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path):
-    study = DummyStudy()
-
+def test_optimize_multirun_writes_params_scores_without_manual_callbacks(monkeypatch, tmp_path):
     class MultirunConf:
         def __init__(self):
             self.files = DummyFiles(tmp_path)
@@ -256,26 +336,11 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
             "job": {"id": 0},
         },
     )
-    captured = {}
 
     monkeypatch.setattr(
         optimize_module,
         "prepare_multirun_file_paths",
         lambda hydra_cfg, conf_obj: conf_obj,
-    )
-
-    def fake_create_study(study_name, storage, directions, optimizers):
-        captured["study_name"] = study_name
-        captured["storage"] = storage
-        captured["directions"] = directions
-        captured["optimizers"] = optimizers
-        return study
-
-    monkeypatch.setattr(optimize_module, "create_study", fake_create_study)
-    monkeypatch.setattr(
-        optimize_module,
-        "set_trial_attributes",
-        lambda study, attrs, experiment_name: study.user_attrs.update(attrs),
     )
 
     result = optimize_module.optimize_multirun(
@@ -285,17 +350,6 @@ def test_optimize_multirun_writes_files_and_updates_study(monkeypatch, tmp_path)
     )
 
     assert result == 0.25
-    assert captured == {
-        "study_name": "demo-study",
-        "storage": "sqlite:///study.sqlite3",
-        "directions": ["minimize"],
-        "optimizers": ["loss"],
-    }
-    assert study.metric_names == ["loss"]
-    assert study.user_attrs == {
-        "accuracy": 0.9,
-        "experiment_name": conf.experiment_name,
-    }
     assert json.loads((tmp_path / "scores.json").read_text()) == {
         "loss": 0.25,
         "accuracy": 0.9,

@@ -1,5 +1,7 @@
+#!/usr/bin/env python
+
+import argparse
 import logging
-import logging.config
 import os
 import sys
 import inspect
@@ -54,100 +56,38 @@ def get_configuration_paths():
     return config_dir, config_file
 
 
+def _build_router() -> argparse.ArgumentParser:
+    """Minimal routing parser: recognises the subcommand name and passes everything else through."""
+    parser = argparse.ArgumentParser(prog="deckard", description="Deckard command-line interface")
+    subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
+    for name in layer_dict:
+        sub = subs.add_parser(name, help=f"Run the {name} layer", add_help=False)
+        sub.add_argument("remainder", nargs=argparse.REMAINDER)
+    return parser
+
+
 def main():
-    """
-    Main entry point for the application.
-    Overview
-    ---------
-    This function retrieves the configuration directory from the environment variable
-    `DECKARD_CONFIG_DIR`, resolves its absolute path, and processes optional arguments
-    and modules. Depending on the specified modules, it delegates handling to appropriate
-    functions.
+    parser = _build_router()
 
-    ----
-    Raises
-    ------
-    ValueError
-        If the `DECKARD_CONFIG_DIR` environment variable is not set.
-
-    ----
-    Notes
-    -----
-    - If no modules are specified, a default module is used.
-    - Handles specific modules ("experiment", "optimize") differently from other modules.
-
-    ----
-    """
-    # Get config dir from environment variable if set
-    config_dir = os.environ.get(
-        "DECKARD_CONFIG_DIR",
-        "config",
-    )
-    if config_dir is None:
-        config_dir = input("Please enter the config directory path: ")
+    config_dir = os.environ.get("DECKARD_CONFIG_DIR", "config")
     while not Path(config_dir).exists():
-        # Deckard_config dir does not exist, have the user set it using input()
         config_dir = input(
-            f"The provided config directory path '{config_dir}' does not exist. Please enter a valid config directory path: ",
+            f"Config directory '{config_dir}' does not exist. "
+            "Please enter a valid config directory path: ",
         )
-        # Prompt user to confirm the path exists
-        if not Path(config_dir).exists():
-            config_dir = None
-    # Set the environment variable for future use
     os.environ["DECKARD_CONFIG_DIR"] = Path(config_dir).resolve().as_posix()
-    # strip the username from the path for logging
-    module = sys.argv[1]
-    sys.argv.pop(1)
-    if module in [None, "experiment", "optimize"]:
-        handle_default_module()
-    elif module in SUPPORTED_LAYERS:
-        handle_other_layers(module)
+
+    parsed, _ = parser.parse_known_args()
+    module = parsed.module
+
+    sys.argv.pop(sys.argv.index(module))
+    if module in SUPPORTED_LAYERS:
+        generate_hydra_main(module)
     else:
-        raise ValueError(
-            f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}",
-        )
+        raise ValueError(f"Module: {module} not supported. Must be one of {SUPPORTED_LAYERS}")
 
 
-def handle_default_module():
-    """
-    Overview
-    ----
-    Handles the default module execution for Deckard by resolving the configuration file
-    and initializing the Hydra main function.
-
-    Returns
-    -------
-    None
-        Executes the Hydra main function and exits the program if the configuration file
-        does not exist.
-
-    Raises
-    --------
-    SystemExit
-        If the resolved configuration file does not exist.
-
-    Environment Variables
-    ---------------------
-    DECKARD_DEFAULT_CONFIG_FILE : str mandatory
-        Specifies the default configuration file name (default is "default.yaml").
-    DECKARD_CONFIG_DIR : str, mandatory
-    """
-    config_dir, config_file = get_configuration_paths()
-
-    @hydra.main(
-        config_path=str(Path(config_dir).resolve()),
-        config_name=config_file,
-        version_base="1.3",
-    )
-    def main_hydra(cfg: ExperimentConfig) -> None:
-        optimize_main = layer_dict["optimize"][1]
-        scores = optimize_main(cfg=cfg)
-        return scores
-
-    return main_hydra()
-
-
-def handle_other_layers(layer):
+def generate_hydra_main(layer):
     """Run the parser and main entrypoint for the specified layer via Hydra."""
     if layer not in layer_dict:
         logger.error(
@@ -168,10 +108,7 @@ def handle_other_layers(layer):
         None,
     )
     cli_config_name = getattr(parsed_args, "config_name", None)
-    default_config_dir = None
-    default_config_file = None
-    if cli_config_path or cli_config_name:
-        default_config_dir, default_config_file = get_configuration_paths()
+    default_config_dir, default_config_file = get_configuration_paths()
     config_dir = cli_config_path if cli_config_path else default_config_dir
     config_file = cli_config_name if cli_config_name else default_config_file
 
