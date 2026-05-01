@@ -40,7 +40,7 @@ from art.estimators.regression import PyTorchRegressor
 from art.config import ART_NUMPY_DTYPE
 
 from ..data import DataConfig
-from ..utils import ConfigBase, load_class
+from ..utils import ConfigBase, load_class, round_scores
 
 if TYPE_CHECKING:
     from ..score import ScorerDictConfig
@@ -601,19 +601,7 @@ class ModelConfig(ConfigBase):
             scores = self._classification_scores(y_true, y_pred)
         else:
             scores = self._regression_scores(y_true, y_pred)
-        sig_figs = np.log10(len(y_true)) + 1
-        if sig_figs < 1:
-            sig_figs = 1
-        logger.info(f"Rounding scores to {int(sig_figs)} significant figures")
-        logger.info("Scores:")
-        for score, value in list(scores.items()):
-            if isinstance(value, (int, float, np.integer, np.floating)):
-                rounded = round(float(value), int(sig_figs))
-                logger.info(f"{score}: {rounded}")
-                scores[score] = rounded
-            else:
-                logger.info(f"{score}: {value}")
-        return scores
+        return round_scores(scores=scores, n_samples=len(y_true), logger_obj=logger)
 
     def _decode_predictions_for_persistence(self, y_pred, y_true=None):
         """Convert classifier score/probability matrices into label vectors for file output."""

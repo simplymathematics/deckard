@@ -1,9 +1,11 @@
 import unittest
+from hydra.core.config_store import ConfigStore
 from deckard.score import (
     ScorerConfig,
     ScorerDictConfig,
     DefaultClassifierDict,
     DefaultRegressorDict,
+    AttackScorerConfig,
     survival_concordance_score,
     survival_aic_score,
     survival_bic_score,
@@ -154,6 +156,81 @@ class TestSurvivalScorers(unittest.TestCase):
         score = survival_bic_score(y_true=[1, 2, 3, 4, 5], y_pred=fitter)
         self.assertIsInstance(score, float)
         self.assertGreater(score, 0)
+
+
+class TestAttackScorers(unittest.TestCase):
+    def test_attack_scorer_evasion(self):
+        scorer = AttackScorerConfig()
+        scores = scorer.score_evasion(
+            ben_pred_labels=[0, 1, 0, 1],
+            adv_pred_labels=[0, 0, 0, 1],
+            y_true=[0, 1, 0, 1],
+            attack_size=4,
+        )
+        self.assertIn("evasion_accuracy", scores)
+        self.assertIn("evasion_success", scores)
+        self.assertIn("attack_score_time", scores)
+
+    def test_attack_scorer_evasion_regression(self):
+        scorer = AttackScorerConfig()
+        scores = scorer.score_evasion(
+            ben_pred_labels=[1.0, 2.0, 3.0, 4.0],
+            adv_pred_labels=[1.1, 1.9, 3.2, 3.8],
+            y_true=[1.0, 2.0, 3.0, 4.0],
+            attack_size=4,
+            is_classification=False,
+        )
+        self.assertIn("evasion_mse", scores)
+        self.assertIn("evasion_mae", scores)
+        self.assertIn("evasion_r2", scores)
+        self.assertNotIn("evasion_success", scores)
+        self.assertIn("attack_score_time", scores)
+
+    def test_attack_scorer_membership(self):
+        scorer = AttackScorerConfig()
+        scores = scorer.score_membership(
+            labels=[1, 1, 0, 0],
+            inferred=[1, 0, 0, 0],
+            attack_size=4,
+        )
+        self.assertIn("membership_inference_accuracy", scores)
+        self.assertIn("membership_inference_precision", scores)
+        self.assertIn("attack_score_time", scores)
+
+    def test_attack_scorer_attribute_classification(self):
+        scorer = AttackScorerConfig()
+        scores = scorer.score_attribute(
+            target=[1, 0, 1, 0],
+            inferred=[1, 1, 1, 0],
+            attack_size=4,
+            targeted_attribute="age",
+            is_classification=True,
+            attack_generation_time=0.1,
+        )
+        self.assertIn("inferred_age_accuracy", scores)
+        self.assertIn("inferred_age_f1", scores)
+        self.assertIn("attack_generation_time", scores)
+
+    def test_attack_scorer_attribute_regression(self):
+        scorer = AttackScorerConfig()
+        scores = scorer.score_attribute(
+            target=[1.0, 2.0, 3.0, 4.0],
+            inferred=[1.1, 1.9, 3.2, 3.8],
+            attack_size=4,
+            targeted_attribute="income",
+            is_classification=False,
+        )
+        self.assertIn("inferred_income_mse", scores)
+        self.assertIn("inferred_income_r2", scores)
+        self.assertIn("attack_score_time", scores)
+
+    def test_attack_score_configstores_registered(self):
+        scorer = AttackScorerConfig()
+        cs = ConfigStore.instance()
+        self.assertIsNotNone(cs)
+        self.assertIsNotNone(scorer.evasion)
+        self.assertIsNotNone(scorer.membership_inference)
+        self.assertIsNotNone(scorer.attribute_inference)
 
 
 if __name__ == "__main__":

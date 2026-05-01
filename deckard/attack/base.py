@@ -8,19 +8,10 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score,
-)
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 import numpy as np
@@ -44,6 +35,9 @@ from .pytorch import (
 )
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from ..score.attack import AttackScorerConfig
 
 
 class SensitiveFeaturesWrapper(BaseEstimator):
@@ -204,6 +198,7 @@ class AttackConfig(ConfigBase):
         default_factory=str,
         metadata={"help": "Targeted attribute for inference attacks."},
     )
+    scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
 
     # Runtime state fields
@@ -231,6 +226,11 @@ class AttackConfig(ConfigBase):
         initializes it as an empty dictionary.
         """
         self._target_ = "deckard.attack.AttackConfig"
+        attack_scorer_cls = resolve_class("deckard.score.attack.AttackScorerConfig")
+        if self.scorer is None:
+            self.scorer = attack_scorer_cls()
+        elif isinstance(self.scorer, dict):
+            self.scorer = attack_scorer_cls(**self.scorer)
 
     def _parse_attack_path(self) -> tuple[str, str]:
         parts = (self.attack_type or "").split("attacks.")[-1].split(".")
@@ -665,47 +665,47 @@ class AttackConfig(ConfigBase):
         None
             The function updates the instance's score_dict attribute with the computed metrics.
         """
-        start_time = time.process_time()
-        adv_accuracy = accuracy_score(y_test_numeric, adv_pred_labels)
-        adv_precision = precision_score(
-            y_test_numeric,
-            adv_pred_labels,
-            zero_division=0,
-            average="weighted",
+        score_dict = self._score(
+            attack_kind="evasion",
+            y_true=y_test_numeric,
+            y_pred=adv_pred_labels,
+            ben_pred_labels=ben_pred_labels,
         )
-        adv_recall = recall_score(
-            y_test_numeric,
-            adv_pred_labels,
-            zero_division=0,
-            average="weighted",
-        )
-        adv_f1 = f1_score(
-            y_test_numeric,
-            adv_pred_labels,
-            zero_division=0,
-            average="weighted",
-        )
-        adv_success = 1 - accuracy_score(ben_pred_labels, adv_pred_labels)
-        end_time = time.process_time()
-        self.attack_score_time = end_time - start_time
-        score_dict = {
-            "evasion_accuracy": adv_accuracy,
-            "evasion_precision": adv_precision,
-            "evasion_recall": adv_recall,
-            "evasion_f1-score": adv_f1,
-            "evasion_success": adv_success,
-        }
-        sig_figs = np.floor(np.log10(len(adv_pred_labels))) + 1
-        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
-        # Add attack size and timing info
-        score_dict["attack_size"] = self.attack_size
-        score_dict["attack_score_time"] = self.attack_score_time
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
+
+    def _score(self, attack_kind: str, y_true, y_pred, **kwargs) -> dict:
+        """Dispatch attack scoring through the configured AttackScorerConfig."""
+        score_dict = self.scorer._score(
+            attack_kind=attack_kind,
+            y_true=y_true,
+            y_pred=y_pred,
+            attack_size=self.attack_size,
+            **kwargs,
+        )
+        self.attack_score_time = score_dict.get("attack_score_time")
+        return score_dict
+
+    @staticmethod
+    def _is_regression_prediction_output(y_true, predictions) -> bool:
+        """Infer whether attack predictions represent regression outputs."""
+        preds = np.asarray(predictions)
+        labels = np.asarray(y_true)
+        if preds.ndim > 1 and preds.shape[1] > 1:
+            return False
+        if preds.ndim > 1 and preds.shape[1] == 1:
+            return True
+        if preds.dtype.kind == "f" and labels.dtype.kind == "f":
+            return True
+        return False
+
+    def _score_attack_legacy(self, ben_pred_labels, adv_pred_labels, y_test_numeric):
+        """Backward-compatible alias retained for older call sites."""
+        return self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
 
     def _evade(self, data, art_model, attack):
         """
@@ -757,7 +757,11 @@ class AttackConfig(ConfigBase):
                 (list, np.ndarray),
             ), f"Expected labels to be a list of np.ndarray. Got {type(y_subset)}"
         ben_preds = art_model.predict(x_subset)
-        ben_pred_labels = ben_preds.argmax(axis=1)
+        is_regression = self._is_regression_prediction_output(y_subset, ben_preds)
+        if is_regression:
+            ben_pred_labels = np.asarray(ben_preds).reshape(-1)
+        else:
+            ben_pred_labels = np.asarray(ben_preds).argmax(axis=1)
         if is_tensor(ben_pred_labels):
             ben_pred_labels = tensor_to_numpy(ben_pred_labels, dtype=ART_NUMPY_DTYPE)
         if "AdversarialPatch" in str(type(attack)):
@@ -792,20 +796,41 @@ class AttackConfig(ConfigBase):
         logger.info(
             f"Adversarial prediction took {self.attack_prediction_time} seconds for {n} samples",
         )
-        adv_pred_labels = adv_pred.argmax(axis=1)
+        if is_regression:
+            adv_pred_labels = np.asarray(adv_pred).reshape(-1)
+        else:
+            adv_pred_labels = np.asarray(adv_pred).argmax(axis=1)
         if isinstance(y_subset, pd.Series):
-            y_test_numeric = y_subset.astype("category").cat.codes
+            if is_regression:
+                y_test_numeric = y_subset.astype(float).values
+            else:
+                y_test_numeric = y_subset.astype("category").cat.codes
         elif isinstance(y_subset, pd.DataFrame):
-            y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
+            if is_regression:
+                y_test_numeric = y_subset.iloc[:, 0].astype(float).values
+            else:
+                y_test_numeric = y_subset.iloc[:, 0].astype("category").cat.codes
         elif isinstance(y_subset, np.ndarray):
-            y_test_numeric = y_subset
+            y_test_numeric = np.asarray(y_subset).reshape(-1)
         elif is_tensor(y_subset):
-            y_test_numeric = y_subset
+            y_test_numeric = tensor_to_numpy(y_subset).reshape(-1)
         else:
             raise TypeError(
                 f"Unsupported type for y_subset: {type(y_subset)}",
             )
-        self._score_attack(ben_pred_labels, adv_pred_labels, y_test_numeric)
+        score_dict = self._score(
+            attack_kind="evasion",
+            y_true=y_test_numeric,
+            y_pred=adv_pred_labels,
+            ben_pred_labels=ben_pred_labels,
+            is_classification=not is_regression,
+        )
+        logger.info(
+            f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
+        )
+        self.score_dict = {**self.score_dict, **score_dict}
+        for score in self.score_dict:
+            logger.info(f"{score}: {self.score_dict[score]}")
         self.attack = adv_pred
         return self.score_dict
 
@@ -871,6 +896,7 @@ class AttackConfig(ConfigBase):
             data,
             "y_train",
         ), "DataConfig must have X_train, y_train attributes. Please ensure data() has been called."
+        targeted_attribute_string = str(targeted_attribute)
         if isinstance(targeted_attribute, str):
             assert targeted_attribute in data.X_test.columns, (
                 f"Targeted attribute '{targeted_attribute}' not found in test data columns.",
@@ -980,54 +1006,14 @@ class AttackConfig(ConfigBase):
         )
         # Determine if the target is categorical or continuous
         is_classification = not attack._is_continuous
-        start_time = time.process_time()
-
-        if is_classification:
-            inferred_accuracy = accuracy_score(target, inferred)
-            inferred_precision = precision_score(
-                target,
-                inferred,
-                zero_division=0,
-                average="weighted",
-            )
-            inferred_recall = recall_score(
-                target,
-                inferred,
-                zero_division=0,
-                average="weighted",
-            )
-            inferred_f1 = f1_score(
-                target,
-                inferred,
-                zero_division=0,
-                average="weighted",
-            )
-            end_time = time.process_time()
-            self.attack_score_time = end_time - start_time
-            score_dict = {
-                f"inferred_{targeted_attribute_string}_accuracy": inferred_accuracy,
-                f"inferred_{targeted_attribute_string}_precision": inferred_precision,
-                f"inferred_{targeted_attribute_string}_recall": inferred_recall,
-                f"inferred_{targeted_attribute_string}_f1": inferred_f1,
-            }
-        else:
-
-            inferred_mse = mean_squared_error(target, inferred)
-            inferred_mae = mean_absolute_error(target, inferred)
-            inferred_r2 = r2_score(target, inferred)
-            end_time = time.process_time()
-            self.attack_score_time = end_time - start_time
-            score_dict = {
-                f"inferred_{targeted_attribute_string}_mse": inferred_mse,
-                f"inferred_{targeted_attribute_string}_mae": inferred_mae,
-                f"inferred_{targeted_attribute_string}_r2": inferred_r2,
-            }
-        sig_figs = np.floor(np.log10(len(target))) + 1
-        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
-        # Add attack size and timing info
-        score_dict["attack_size"] = self.attack_size
-        score_dict["attack_score_time"] = self.attack_score_time
-        score_dict["attack_generation_time"] = self.attack_time
+        score_dict = self._score(
+            attack_kind="attribute",
+            y_true=target,
+            y_pred=inferred,
+            targeted_attribute=targeted_attribute_string,
+            is_classification=is_classification,
+            attack_generation_time=self.attack_time,
+        )
         self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
@@ -1148,45 +1134,14 @@ class AttackConfig(ConfigBase):
             pass
         self.predictions = inferred
         self.labels
-        inferred_accuracy = accuracy_score(
-            labels,
-            inferred,
+        score_dict = self._score(
+            attack_kind="membership",
+            y_true=labels,
+            y_pred=inferred,
         )
-        inferred_precision = precision_score(
-            labels,
-            inferred,
-            zero_division=0,
-            average="weighted",
-        )
-        inferred_recall = recall_score(
-            labels,
-            inferred,
-            zero_division=0,
-            average="weighted",
-        )
-        inferred_f1 = f1_score(
-            labels,
-            inferred,
-            zero_division=0,
-            average="weighted",
-        )
-        end_time = time.process_time()
-        self.attack_score_time = end_time - start_time
-        score_dict = {
-            "membership_inference_accuracy": inferred_accuracy,
-            "membership_inference_precision": inferred_precision,
-            "membership_inference_recall": inferred_recall,
-            "membership_inference_f1": inferred_f1,
-        }
-        # Calculate the number of significant figures
-        sig_figs = np.floor(np.log10(len(labels))) + 1
-        score_dict = {k: round(v, int(sig_figs)) for k, v in score_dict.items()}
+        self.score_dict = {**self.score_dict, **score_dict}
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")
-        # Add attack size and timing info
-        score_dict["attack_size"] = self.attack_size
-        score_dict["attack_score_time"] = self.attack_score_time
-        self.score_dict = {**self.score_dict, **score_dict}
         logger.info(
             f"Membership inference attack scoring took {self.attack_score_time} seconds for {self.attack_size} samples",
         )
