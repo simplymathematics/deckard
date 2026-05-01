@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
 </ul>
 
@@ -88,11 +89,17 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.seaborn_plots</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">SeabornPlotConfig</span><span class="p">,</span>
         <span class="n">SeabornPlotConfigList</span><span class="p">,</span>
-        <span class="n">SurvivalSeabornPlotterConfig</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">SeabornPlotConfig</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">SeabornPlotConfigList</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">lifelines</span>  <span class="c1"># noqa: F401</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.survival</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurvivalSeabornPlotConfigList</span><span class="p">,</span> <span class="n">SurvivalSeabornPlotterConfig</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Lifelines not found. Survival plotting configs are unavailable.&quot;</span><span class="p">)</span>
+    <span class="n">SurvivalSeabornPlotConfigList</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">SurvivalSeabornPlotterConfig</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">try</span><span class="p">:</span>
@@ -176,6 +183,7 @@
     <span class="s2">&quot;PlotConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;SeabornPlotConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;SeabornPlotConfigList&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SurvivalSeabornPlotConfigList&quot;</span><span class="p">,</span>
     <span class="s2">&quot;SurvivalSeabornPlotterConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;YellowbrickConfigList&quot;</span><span class="p">,</span>
     <span class="s2">&quot;YellowbrickPlotConfig&quot;</span><span class="p">,</span>

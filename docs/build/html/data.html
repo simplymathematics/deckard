@@ -111,7 +111,13 @@
 <li class="toctree-l4"><a class="reference internal" href="#torch-extension">Torch Extension</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.survival.SurvivalDataConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalDataConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.data.survival.SurvivalDataMode"><code class="docutils literal notranslate"><span class="pre">SurvivalDataMode</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#programmatic-usage">Programmatic usage</a></li>
@@ -803,8 +809,207 @@ transforms and DataLoader-based loading.</p>
 
 </section>
 </section>
+<section id="survival-extension">
+<h2>Survival Extension<a class="headerlink" href="#survival-extension" title="Link to this heading"></a></h2>
+<p>Survival-specific experiment orchestration is split into a dedicated optional
+module.</p>
+<p id="module-deckard.data.survival">Survival-specific data configuration and mode management.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.survival.</span></span><span class="sig-name descname"><span class="pre">SurvivalDataConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name='adult'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_size=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratify=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classifier=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_load_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample_time=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_X=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_indices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_train=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_test=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_n=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target_=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_plugin_objects=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode=SurvivalDataMode.NATIVE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col='T'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_col='E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benign_metric='accuracy'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_config=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_db=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_schema=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_query=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a></p>
+<p>DataConfig specialization for survival analysis with explicit mode handling.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.mode" title="Link to this definition"></a></dt>
+<dd><p>The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deckard.data.survival.SurvivalDataMode" title="deckard.data.survival.SurvivalDataMode">SurvivalDataMode</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.duration_col">
+<span class="sig-name descname"><span class="pre">duration_col</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.duration_col" title="Link to this definition"></a></dt>
+<dd><p>Column name for duration/time values. Required for NATIVE mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.event_col">
+<span class="sig-name descname"><span class="pre">event_col</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.event_col" title="Link to this definition"></a></dt>
+<dd><p>Column name for event indicators. Required for NATIVE mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.benign_metric">
+<span class="sig-name descname"><span class="pre">benign_metric</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.benign_metric" title="Link to this definition"></a></dt>
+<dd><p>Metric to use for benign failures. Used in AUXILIARY_MODEL mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.attack_config">
+<span class="sig-name descname"><span class="pre">attack_config</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.attack_config" title="Link to this definition"></a></dt>
+<dd><p>Attack configuration. Used in AUXILIARY_ATTACK mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.optuna_db">
+<span class="sig-name descname"><span class="pre">optuna_db</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.optuna_db" title="Link to this definition"></a></dt>
+<dd><p>Path to Optuna database. Used in OPTUNA_DB mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.optuna_schema">
+<span class="sig-name descname"><span class="pre">optuna_schema</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.optuna_schema" title="Link to this definition"></a></dt>
+<dd><p>Optional Optuna schema filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[Union[str, dict]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.optuna_query">
+<span class="sig-name descname"><span class="pre">optuna_query</span></span><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.optuna_query" title="Link to this definition"></a></dt>
+<dd><p>Optional Optuna query to filter results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.from_auxiliary_attack">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_auxiliary_attack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.from_auxiliary_attack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.from_auxiliary_attack" title="Link to this definition"></a></dt>
+<dd><p>Create AUXILIARY_ATTACK mode config from DataConfig and attack config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.data.survival.SurvivalDataConfig" title="deckard.data.survival.SurvivalDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalDataConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.from_auxiliary_model">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_auxiliary_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benign_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'accuracy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.from_auxiliary_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.from_auxiliary_model" title="Link to this definition"></a></dt>
+<dd><p>Create AUXILIARY_MODEL mode config from DataConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.data.survival.SurvivalDataConfig" title="deckard.data.survival.SurvivalDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalDataConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.from_data_and_model">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_data_and_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'T'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.from_data_and_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.from_data_and_model" title="Link to this definition"></a></dt>
+<dd><p>Create NATIVE mode config from DataConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.data.survival.SurvivalDataConfig" title="deckard.data.survival.SurvivalDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalDataConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.from_optuna_db">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_optuna_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optuna_db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'optuna'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optuna_query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.from_optuna_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.from_optuna_db" title="Link to this definition"></a></dt>
+<dd><p>Create OPTUNA_DB mode config from Optuna database path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#deckard.data.survival.SurvivalDataConfig" title="deckard.data.survival.SurvivalDataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalDataConfig</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.has_auxiliary_attack">
+<span class="sig-name descname"><span class="pre">has_auxiliary_attack</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.has_auxiliary_attack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.has_auxiliary_attack" title="Link to this definition"></a></dt>
+<dd><p>Check if using auxiliary attack for failure computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.has_auxiliary_model">
+<span class="sig-name descname"><span class="pre">has_auxiliary_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.has_auxiliary_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.has_auxiliary_model" title="Link to this definition"></a></dt>
+<dd><p>Check if using auxiliary model for failure computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.is_native_survival_data">
+<span class="sig-name descname"><span class="pre">is_native_survival_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.is_native_survival_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.is_native_survival_data" title="Link to this definition"></a></dt>
+<dd><p>Check if data is native survival data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataConfig.is_optuna_db">
+<span class="sig-name descname"><span class="pre">is_optuna_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataConfig.is_optuna_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataConfig.is_optuna_db" title="Link to this definition"></a></dt>
+<dd><p>Check if data is from Optuna database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.data.survival.SurvivalDataMode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.data.survival.</span></span><span class="sig-name descname"><span class="pre">SurvivalDataMode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/data/survival.html#SurvivalDataMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.data.survival.SurvivalDataMode" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Enumeration of survival analysis data modes.</p>
+</dd></dl>
+
+</section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+</section>
+<section id="id1">
+<h2>Overview<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
 <p><a class="reference internal" href="#deckard.data.DataConfig" title="deckard.data.DataConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfig</span></code></a> can load well-known datasets such as:</p>
 <ul class="simple">
 <li><p><strong>Adult Income</strong> (via OpenML)</p></li>

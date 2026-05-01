@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -133,7 +134,7 @@
 
 
 <div class="viewcode-block" id="DataConfig">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -320,7 +321,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="DataConfig.__post_init__">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__post_init__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig.__post_init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_init</span><span class="p">()</span></div>
 
@@ -370,13 +371,13 @@
         <span class="k">return</span> <span class="n">hook_outputs</span>
 
 <div class="viewcode-block" id="DataConfig.__hash__">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__hash__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig.__hash__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="DataConfig._load_adult_income_data">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_adult_income_data">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._load_adult_income_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_adult_income_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads and preprocesses the Adult Income dataset from OpenML.</span>
@@ -430,7 +431,7 @@
 
 
 <div class="viewcode-block" id="DataConfig._make_classification_data">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._make_classification_data">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._make_classification_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_make_classification_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
@@ -488,7 +489,7 @@
 
 
 <div class="viewcode-block" id="DataConfig._make_regression_data">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._make_regression_data">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._make_regression_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_make_regression_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
@@ -534,7 +535,7 @@
 
 
 <div class="viewcode-block" id="DataConfig._sample">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._sample">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._sample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_sample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">):</span>
@@ -634,7 +635,7 @@
 
 
 <div class="viewcode-block" id="DataConfig._load_generic_sklearn">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_generic_sklearn">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._load_generic_sklearn">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_generic_sklearn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loader_func</span><span class="p">,</span> <span class="o">**</span><span class="n">loader_params</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads a dataset using a generic scikit-learn loader function.</span>
@@ -667,7 +668,7 @@
 
 
 <div class="viewcode-block" id="DataConfig._load_generic_openml">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_generic_openml">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._load_generic_openml">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_generic_openml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">loader_params</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads a dataset from OpenML using the specified dataset name and version.</span>
@@ -742,7 +743,7 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="DataConfig._load_data">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig._load_data">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig._load_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads dataset based on the provided dataset name or file type.</span>
@@ -1026,7 +1027,7 @@
         <span class="k">return</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="DataConfig.__call__">
-<a class="viewcode-back" href="../../../data.html#deckard.data.DataConfig.__call__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.data.DataConfig.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data_file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

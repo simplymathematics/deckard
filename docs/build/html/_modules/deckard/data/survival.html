@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deckard.data.survival &mdash; deckard .91 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8f098830"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            deckard
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">deckard</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">deckard.data.survival</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for deckard.data.survival</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Survival-specific data configuration and mode management.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataConfig</span>
+
+
+<div class="viewcode-block" id="SurvivalDataMode">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurvivalDataMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of survival analysis data modes.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Native survival data (duration_col + event_col already present)</span>
+    <span class="n">NATIVE</span> <span class="o">=</span> <span class="s2">&quot;native&quot;</span>
+    <span class="c1"># Auxiliary model for arbitrary dataset (use accuracy as failure measure)</span>
+    <span class="n">AUXILIARY_MODEL</span> <span class="o">=</span> <span class="s2">&quot;auxiliary_model&quot;</span>
+    <span class="c1"># Auxiliary attack (use attack metrics as failure measure)</span>
+    <span class="n">AUXILIARY_ATTACK</span> <span class="o">=</span> <span class="s2">&quot;auxiliary_attack&quot;</span>
+    <span class="c1"># Optuna database with pre-computed results</span>
+    <span class="n">OPTUNA_DB</span> <span class="o">=</span> <span class="s2">&quot;optuna_db&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SurvivalDataConfig">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurvivalDataConfig</span><span class="p">(</span><span class="n">DataConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;DataConfig specialization for survival analysis with explicit mode handling.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mode : SurvivalDataMode</span>
+<span class="sd">        The survival data mode (NATIVE, AUXILIARY_MODEL, AUXILIARY_ATTACK, OPTUNA_DB).</span>
+<span class="sd">    duration_col : str</span>
+<span class="sd">        Column name for duration/time values. Required for NATIVE mode.</span>
+<span class="sd">    event_col : str</span>
+<span class="sd">        Column name for event indicators. Required for NATIVE mode.</span>
+<span class="sd">    benign_metric : str</span>
+<span class="sd">        Metric to use for benign failures. Used in AUXILIARY_MODEL mode.</span>
+<span class="sd">    attack_config : Optional[dict]</span>
+<span class="sd">        Attack configuration. Used in AUXILIARY_ATTACK mode.</span>
+<span class="sd">    optuna_db : Optional[str]</span>
+<span class="sd">        Path to Optuna database. Used in OPTUNA_DB mode.</span>
+<span class="sd">    optuna_schema : Optional[Union[str, dict]]</span>
+<span class="sd">        Optional Optuna schema filter.</span>
+<span class="sd">    optuna_query : Optional[str]</span>
+<span class="sd">        Optional Optuna query to filter results.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mode</span><span class="p">:</span> <span class="n">SurvivalDataMode</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">)</span>
+    <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span>
+    <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span>
+    <span class="n">benign_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span>
+    <span class="n">attack_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">optuna_db</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">optuna_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">optuna_query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate mode-specific requirements.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+
+        <span class="c1"># Validate mode-specific parameters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_col</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;duration_col required for NATIVE mode&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_col</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;event_col required for NATIVE mode&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">benign_metric</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;benign_metric required for AUXILIARY_MODEL mode&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;attack_config required for AUXILIARY_ATTACK mode&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optuna_db</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;optuna_db path required for OPTUNA_DB mode&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SurvivalDataConfig.from_data_and_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_data_and_model">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_data_and_model</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
+        <span class="n">duration_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>
+        <span class="n">event_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create NATIVE mode config from DataConfig.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">duration_col</span><span class="o">=</span><span class="n">duration_col</span><span class="p">,</span>
+            <span class="n">event_col</span><span class="o">=</span><span class="n">event_col</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.from_auxiliary_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_model">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_auxiliary_model</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
+        <span class="n">benign_metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AUXILIARY_MODEL mode config from DataConfig.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">classifier</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
+            <span class="n">benign_metric</span><span class="o">=</span><span class="n">benign_metric</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.from_auxiliary_attack">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_auxiliary_attack">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_auxiliary_attack</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">data_config</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">,</span>
+        <span class="n">attack_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AUXILIARY_ATTACK mode config from DataConfig and attack config.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">classifier</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">classifier</span><span class="p">,</span>
+            <span class="n">attack_config</span><span class="o">=</span><span class="n">attack_config</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.from_optuna_db">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.from_optuna_db">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_optuna_db</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">optuna_db</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;optuna&quot;</span><span class="p">,</span>
+        <span class="n">optuna_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optuna_query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SurvivalDataConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create OPTUNA_DB mode config from Optuna database path.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="s2">&quot;optuna_result&quot;</span><span class="p">,</span>
+            <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">optuna_db</span><span class="o">=</span><span class="n">optuna_db</span><span class="p">,</span>
+            <span class="n">optuna_schema</span><span class="o">=</span><span class="n">optuna_schema</span><span class="p">,</span>
+            <span class="n">optuna_query</span><span class="o">=</span><span class="n">optuna_query</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.is_native_survival_data">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.is_native_survival_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_native_survival_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if data is native survival data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">NATIVE</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.has_auxiliary_model">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_auxiliary_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if using auxiliary model for failure computation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_MODEL</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.has_auxiliary_attack">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.has_auxiliary_attack">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_auxiliary_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if using auxiliary attack for failure computation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">AUXILIARY_ATTACK</span></div>
+
+
+<div class="viewcode-block" id="SurvivalDataConfig.is_optuna_db">
+<a class="viewcode-back" href="../../../data.html#deckard.data.survival.SurvivalDataConfig.is_optuna_db">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_optuna_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if data is from Optuna database.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SurvivalDataMode</span><span class="o">.</span><span class="n">OPTUNA_DB</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, simplymathematics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

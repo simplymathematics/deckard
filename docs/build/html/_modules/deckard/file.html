@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
 </ul>
 
@@ -127,7 +128,7 @@
 
 
 <div class="viewcode-block" id="FileConfig">
-<a class="viewcode-back" href="../../file.html#deckard.file.FileConfig">[docs]</a>
+<a class="viewcode-back" href="../../package.html#deckard.file.FileConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FileConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration object for Deckard artifact and log file paths.&quot;&quot;&quot;</span>
@@ -204,7 +205,7 @@
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FileConfig.generate_file_hash">
-<a class="viewcode-back" href="../../file.html#deckard.file.FileConfig.generate_file_hash">[docs]</a>
+<a class="viewcode-back" href="../../package.html#deckard.file.FileConfig.generate_file_hash">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a hash for the object in the given file path.</span>
@@ -224,7 +225,7 @@
 
 
 <div class="viewcode-block" id="FileConfig.get_hydra_job_num">
-<a class="viewcode-back" href="../../file.html#deckard.file.FileConfig.get_hydra_job_num">[docs]</a>
+<a class="viewcode-back" href="../../package.html#deckard.file.FileConfig.get_hydra_job_num">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_hydra_job_num</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the Hydra job number from the environment variable.&quot;&quot;&quot;</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -292,7 +293,6 @@
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_attr</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">count</span>
-
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span></div>

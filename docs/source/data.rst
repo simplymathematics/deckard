@@ -39,6 +39,19 @@ torchvision-backed workflows.
    :members:
    :show-inheritance:
 
+Survival Extension
+------------------
+
+Survival-specific experiment orchestration is split into a dedicated optional
+module.
+
+.. automodule:: deckard.data.survival
+   :members:
+   :show-inheritance:
+
+Overview
+--------
+
 Overview
 --------
 

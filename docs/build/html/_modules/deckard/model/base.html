@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -148,8 +149,9 @@
 <span class="n">sklearn_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">classifier_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">regressor_dict</span><span class="p">}</span>
 <span class="n">sklearn_models</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sklearn_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
+
 <div class="viewcode-block" id="ModelConfig">
-<a class="viewcode-back" href="../../../model.html#deckard.model.ModelConfig">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.model.ModelConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -345,7 +347,7 @@
         <span class="k">return</span> <span class="n">art_class</span><span class="p">,</span> <span class="n">init_params</span>
 
 <div class="viewcode-block" id="ModelConfig.get_art_model">
-<a class="viewcode-back" href="../../../model.html#deckard.model.ModelConfig.get_art_model">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.model.ModelConfig.get_art_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_art_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">DataConfig</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the ART model estimator.</span>
 
@@ -368,7 +370,7 @@
 
 
 <div class="viewcode-block" id="ModelConfig.get_model">
-<a class="viewcode-back" href="../../../model.html#deckard.model.ModelConfig.get_model">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.model.ModelConfig.get_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseEstimator</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the model&#39;s estimator.</span>
 

@@ -14,6 +14,15 @@ The plotting package exposes two public entry points:
    :undoc-members:
    :show-inheritance:
 
+Survival Plot Extension
+-----------------------
+
+Survival plotting configs are provided in a dedicated optional module.
+
+.. automodule:: deckard.plot.survival
+   :members:
+   :show-inheritance:
+
 .. automodule:: deckard.plot.yellowbrick_plots
    :members:
    :show-inheritance:

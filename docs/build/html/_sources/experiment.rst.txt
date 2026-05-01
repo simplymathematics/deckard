@@ -8,6 +8,16 @@ entrypoints for end-to-end experiment execution.
    :members:
    :show-inheritance:
 
+Survival Extension
+------------------
+
+Survival-specific experiment orchestration is split into a dedicated optional
+module.
+
+.. automodule:: deckard.experiment.survival
+   :members:
+   :show-inheritance:
+
 Overview
 --------
 

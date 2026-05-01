@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">deckard</a></li>
 </ul>
 
@@ -336,8 +337,6 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scores saved to </span><span class="si">{</span><span class="n">score_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ConfigBase.save_data">
-<a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.save_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -378,8 +377,7 @@
                     <span class="sa">f</span><span class="s2">&quot;Unsupported file type </span><span class="si">{</span><span class="n">data_path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">. Supported types: </span><span class="si">{</span><span class="n">supported_filetypes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;Failed to save data to </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data saved to </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data saved to </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ConfigBase.read_or_initialize_scores">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.read_or_initialize_scores">[docs]</a>
@@ -482,11 +480,8 @@
         <span class="k">return</span> <span class="n">scores</span></div>
 
 
-<div class="viewcode-block" id="ConfigBase.load_data">
-<a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.load_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">load_data</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
+        <span class="k">return</span> <span class="n">load_data</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ConfigBase.save_object">
 <a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.save_object">[docs]</a>
@@ -695,8 +690,6 @@
         <span class="k">return</span> <span class="n">dict_</span></div>
 
 
-<div class="viewcode-block" id="ConfigBase.execute_without_mercy">
-<a class="viewcode-back" href="../../utils.html#deckard.utils.ConfigBase.execute_without_mercy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">execute_without_mercy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Get log_file from logger</span>
         <span class="n">log_file</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
@@ -721,7 +714,6 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="n">scores</span></div>
-</div>
 
 
 

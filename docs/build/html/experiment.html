@@ -47,12 +47,19 @@
 <li class="toctree-l1"><a class="reference internal" href="package.html">Package Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">deckard</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Experiment</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.DataConfigResolutionMixin"><code class="docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.ExperimentConfig"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.ExperimentConfig.set_device"><code class="docutils literal notranslate"><span class="pre">ExperimentConfig.set_device()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.calculate_failures_under_attack"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.calculate_failures_under_attack()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.SurvivalExperimentConfig.make_survival_model_table"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig.make_survival_model_table()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#survival-extension">Survival Extension</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig"><code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#command-line-example">Command-line example</a></li>
@@ -107,29 +114,20 @@
 <h1>Experiment<a class="headerlink" href="#experiment" title="Link to this heading"></a></h1>
 <p>The <a class="reference internal" href="#module-deckard.experiment" title="deckard.experiment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.experiment</span></code></a> module contains the high-level orchestration
 entrypoints for end-to-end experiment execution.</p>
-<p id="module-deckard.experiment">Experiment orchestration primitives for Deckard’s Python API.</p>
-<p>This module contains the high-level experiment configuration objects that tie
-data, model, defense, attack, files, and scorers into a single executable unit.
-<code class="docutils literal notranslate"><span class="pre">ExperimentConfig</span></code> is the main entrypoint for standard experiments and
-<code class="docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code> specializes that workflow for survival analysis.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="deckard.experiment.DataConfigResolutionMixin">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">DataConfigResolutionMixin</span></span><a class="reference internal" href="_modules/deckard/experiment.html#DataConfigResolutionMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.DataConfigResolutionMixin" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Resolve ExperimentConfig.data into the appropriate DataConfig subtype.</p>
-</dd></dl>
-
+<p id="module-deckard.experiment">Public experiment configuration exports.</p>
+<p>The <a class="reference internal" href="#module-deckard.experiment" title="deckard.experiment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deckard.experiment</span></code></a> package exposes the default experiment
+orchestration config and an optional survival-specific extension.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">ExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#ExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.experiment.DataConfigResolutionMixin" title="deckard.experiment.DataConfigResolutionMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code></a>, <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">ExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/base.html#ExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DataConfigResolutionMixin</span></code>, <a class="reference internal" href="utils.html#deckard.utils.ConfigBase" title="deckard.utils.ConfigBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigBase</span></code></a></p>
 <p>Compose and execute a complete Deckard experiment.</p>
 <p>An experiment coordinates data loading, optional defense application, model
 training or loading, adversarial attack execution, scoring, and artifact
 persistence through <code class="docutils literal notranslate"><span class="pre">FileConfig</span></code>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="deckard.experiment.ExperimentConfig.set_device">
-<span class="sig-name descname"><span class="pre">set_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#ExperimentConfig.set_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig.set_device" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/base.html#ExperimentConfig.set_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.ExperimentConfig.set_device" title="Link to this definition"></a></dt>
 <dd><p>Set the computation device for the experiment based on the selected library.
 For TensorFlow, configures GPU/CPU usage.
 :type device: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>
@@ -141,11 +139,70 @@ For TensorFlow, configures GPU/CPU usage.
 
 <dl class="py class">
 <dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">SurvivalExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment.html#SurvivalExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.</span></span><span class="sig-name descname"><span class="pre">SurvivalExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.base.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></p>
 <p>ExperimentConfig specialization for survival-analysis workflows.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig.calculate_failures_under_attack">
+<span class="sig-name descname"><span class="pre">calculate_failures_under_attack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benign_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'accuracy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig.calculate_failures_under_attack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig.calculate_failures_under_attack" title="Link to this definition"></a></dt>
+<dd><p>Optionally derive ben/adv failure counts from attack-specific accuracy metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.experiment.SurvivalExperimentConfig.make_survival_model_table">
+<span class="sig-name descname"><span class="pre">make_survival_model_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig.make_survival_model_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.SurvivalExperimentConfig.make_survival_model_table" title="Link to this definition"></a></dt>
+<dd><p>Build comparison table with AIC/BIC/Concordance/ICI/E50 columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="survival-extension">
+<h2>Survival Extension<a class="headerlink" href="#survival-extension" title="Link to this heading"></a></h2>
+<p>Survival-specific experiment orchestration is split into a dedicated optional
+module.</p>
+<p id="module-deckard.experiment.survival">Survival-specific experiment orchestration.</p>
+<p>This module contains <a class="reference internal" href="#deckard.experiment.survival.SurvivalExperimentConfig" title="deckard.experiment.survival.SurvivalExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalExperimentConfig</span></code></a>, separated from the core
+experiment module so survival workflows can be treated as an optional extension.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="deckard.experiment.survival.SurvivalExperimentConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">deckard.experiment.survival.</span></span><span class="sig-name descname"><span class="pre">SurvivalExperimentConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.survival.SurvivalExperimentConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deckard.experiment.ExperimentConfig" title="deckard.experiment.base.ExperimentConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentConfig</span></code></a></p>
+<p>ExperimentConfig specialization for survival-analysis workflows.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.experiment.survival.SurvivalExperimentConfig.calculate_failures_under_attack">
+<span class="sig-name descname"><span class="pre">calculate_failures_under_attack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attack_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benign_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'accuracy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig.calculate_failures_under_attack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.survival.SurvivalExperimentConfig.calculate_failures_under_attack" title="Link to this definition"></a></dt>
+<dd><p>Optionally derive ben/adv failure counts from attack-specific accuracy metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="deckard.experiment.survival.SurvivalExperimentConfig.make_survival_model_table">
+<span class="sig-name descname"><span class="pre">make_survival_model_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/deckard/experiment/survival.html#SurvivalExperimentConfig.make_survival_model_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deckard.experiment.survival.SurvivalExperimentConfig.make_survival_model_table" title="Link to this definition"></a></dt>
+<dd><p>Build comparison table with AIC/BIC/Concordance/ICI/E50 columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
 <p>The experiment layer coordinates the full Deckard workflow by composing:</p>

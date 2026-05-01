@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../package.html">Package Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">deckard</a></li>
 </ul>
 
@@ -79,7 +80,7 @@
 
 <span class="c1"># Typing imports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="c1"># Sklearn and numpy imports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">RegressorMixin</span>
@@ -186,7 +187,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AttackConfig</span><span class="p">(</span><span class="n">ConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -303,13 +304,13 @@
     <span class="n">_target_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="AttackConfig.__hash__">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig.__hash__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig.__hash__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="AttackConfig.__post_init__">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig.__post_init__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig.__post_init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes post-construction attributes for the class.</span>
@@ -319,6 +320,39 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_</span> <span class="o">=</span> <span class="s2">&quot;deckard.attack.AttackConfig&quot;</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_attack_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_type</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;attacks.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">attack_type</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">attack_subtype</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">attack_type</span><span class="p">,</span> <span class="n">attack_subtype</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">attack_family</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attack_type</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attack_type</span>
+        <span class="n">attack_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_attack_path</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">attack_type</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">attack_subtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attack_subtype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attack_subtype</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">attack_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_attack_path</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">attack_subtype</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">attack_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">attack_type</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_family</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">subtype</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack_subtype</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;evasion&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;evasion&quot;</span>
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;inference&quot;</span> <span class="ow">and</span> <span class="s2">&quot;membership&quot;</span> <span class="ow">in</span> <span class="n">subtype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;membership&quot;</span>
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;inference&quot;</span> <span class="ow">and</span> <span class="s2">&quot;attribute&quot;</span> <span class="ow">in</span> <span class="n">subtype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;attribute&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -356,8 +390,8 @@
             <span class="n">art_model</span> <span class="o">=</span> <span class="n">build_torch_art_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">check_is_fitted</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">attack_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;attacks.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">attack_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;attacks.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">attack_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_family</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">attack_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_subtype</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
 
         <span class="c1"># Validate attack type</span>
         <span class="k">if</span> <span class="n">attack_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;evasion&quot;</span><span class="p">,</span> <span class="s2">&quot;poisoning&quot;</span><span class="p">,</span> <span class="s2">&quot;extraction&quot;</span><span class="p">,</span> <span class="s2">&quot;inference&quot;</span><span class="p">]:</span>
@@ -471,7 +505,7 @@
         <span class="k">return</span> <span class="n">attack</span><span class="p">,</span> <span class="n">art_model</span><span class="p">,</span> <span class="n">attack_type</span><span class="p">,</span> <span class="n">attack_subtype</span>
 
 <div class="viewcode-block" id="AttackConfig.__call__">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig.__call__">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">,</span>
@@ -588,7 +622,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._get_benign_preds">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._get_benign_preds">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._get_benign_preds">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_benign_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">art_model</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate benign predictions and corresponding labels for a subset of data.</span>
@@ -642,7 +676,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._get_feature_vector_preds">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._get_feature_vector_preds">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._get_feature_vector_preds">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_feature_vector_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">targeted_attribute</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extracts a subset of feature vectors, labels, and attributes from the provided data for either training or testing.</span>
@@ -705,7 +739,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._score_attack">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._score_attack">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._score_attack">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_score_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ben_pred_labels</span><span class="p">,</span> <span class="n">adv_pred_labels</span><span class="p">,</span> <span class="n">y_test_numeric</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes and logs various performance metrics for adversarial attack predictions.</span>
@@ -775,7 +809,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._evade">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._evade">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._evade">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_evade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">art_model</span><span class="p">,</span> <span class="n">attack</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Executes an evasion attack on a given dataset using the specified ART model and attack method.</span>
@@ -899,7 +933,7 @@
         <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">x_subset</span><span class="p">,</span> <span class="n">y_subset</span>
 
 <div class="viewcode-block" id="AttackConfig._infer_attribute">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._infer_attribute">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._infer_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_infer_attribute</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">,</span>
@@ -1108,7 +1142,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._infer_membership">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._infer_membership">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._infer_membership">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_infer_membership</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">attack</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform membership inference attack on the given dataset using the specified attack and model.</span>
@@ -1270,7 +1304,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._poison">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._poison">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._poison">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_poison</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Not implemented yet.</span>
@@ -1279,7 +1313,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._extract">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._extract">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._extract">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Not implemented yet.</span>
@@ -1288,7 +1322,7 @@
 
 
 <div class="viewcode-block" id="AttackConfig._save">
-<a class="viewcode-back" href="../../../attack.html#deckard.attack.AttackConfig._save">[docs]</a>
+<a class="viewcode-back" href="../../../package.html#deckard.attack.AttackConfig._save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the current object to a pickle file.</span>

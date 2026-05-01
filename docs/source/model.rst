@@ -33,6 +33,19 @@ scoring through a ``ModelConfig``-compatible API.
    :members:
    :show-inheritance:
 
+Survival Extension
+------------------
+
+Survival-specific experiment orchestration is split into a dedicated optional
+module.
+
+.. automodule:: deckard.model.survival
+   :members:
+   :show-inheritance:
+
+Overview
+--------
+
 Overview
 --------
 
