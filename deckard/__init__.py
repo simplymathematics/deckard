@@ -9,6 +9,17 @@ from omegaconf import OmegaConf
 import yaml
 
 
+# Install library warning filters before importing deckard submodules, since
+# those imports can transitively import sklearn/art and emit warnings.
+warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
+warnings.filterwarnings("ignore", module=r"^art(\.|$)")
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
+)
+
+
 from .data import DataConfig
 from .model import ModelConfig
 from .model.defend import DefenseConfig
@@ -249,4 +260,7 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
+# Suppress third-party warnings from sklearn and ART internals.
+warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
+warnings.filterwarnings("ignore", module=r"^art(\.|$)")
 np.seterr(divide="ignore", invalid="ignore")
